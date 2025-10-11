@@ -8,11 +8,11 @@
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org)
 
-> **Note:** Remplacez `VOTRE_USERNAME` dans les badges ci-dessus par votre nom d'utilisateur GitHub.
+> **Note:** Remplacez `elmarce` dans les badges ci-dessus par votre nom d'utilisateur GitHub.
 
 ## À Propos
 
-AIG-App est une plateforme complète de gestion organisationnelle construite avec Laravel, Inertia.js, React et TypeScript. Elle offre une suite d'outils pour gérer les événements, les livres, les articles, et faciliter la communication entre les membres de l'organisation.
+ICC-Munich-App est une plateforme complète de gestion organisationnelle construite avec Laravel, Inertia.js, React et TypeScript. Elle offre une suite d'outils pour gérer les événements, les livres, les articles, et faciliter la communication entre les membres de l'organisation.
 
 ### Fonctionnalités Principales
 
@@ -65,7 +65,7 @@ AIG-App est une plateforme complète de gestion organisationnelle construite ave
 
 1. **Cloner le repository**
    ```bash
-   git clone <votre-repo-url>
+   git clone <git@github.com:ICC-Munich/icc-munich.git>
    cd icc-munich
    ```
 
