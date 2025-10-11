@@ -1,0 +1,209 @@
+name: Dependency Review & Update
+
+on:
+  # Exécuter tous les lundis à 9h00
+  schedule:
+    - cron: '0 9 * * 1'
+  # Permettre l'exécution manuelle
+  workflow_dispatch:
+  # Exécuter sur les PRs qui modifient les fichiers de dépendances
+  pull_request:
+    paths:
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  # Job pour vérifier les dépendances obsolètes
+  check-outdated:
+    name: Check Outdated Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+
+      - name: Check outdated PHP dependencies
+        run: |
+          composer outdated --direct --strict > composer_outdated.txt 2>&1 || true
+          echo "## PHP Dependencies Status" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat composer_outdated.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check outdated npm dependencies
+        run: |
+          npm outdated > npm_outdated.txt 2>&1 || true
+          echo "## npm Dependencies Status" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat npm_outdated.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload dependency reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-reports
+          path: |
+            composer_outdated.txt
+            npm_outdated.txt
+
+  # Job pour analyser les vulnérabilités de sécurité
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --prefer-dist
+
+      - name: Run Composer security audit
+        continue-on-error: true
+        run: |
+          composer audit --format=json > composer_audit.json 2>&1 || true
+          composer audit > composer_audit.txt 2>&1 || true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Run npm security audit
+        continue-on-error: true
+        run: |
+          npm audit --json > npm_audit.json 2>&1 || true
+          npm audit > npm_audit.txt 2>&1 || true
+
+      - name: Create security summary
+        if: always()
+        run: |
+          echo "# 🔒 Security Audit Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f composer_audit.txt ]; then
+            echo "## PHP/Composer Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat composer_audit.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f npm_audit.txt ]; then
+            echo "## Node.js/npm Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat npm_audit.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            composer_audit.json
+            composer_audit.txt
+            npm_audit.json
+            npm_audit.txt
+
+      - name: Fail on high/critical vulnerabilities
+        run: |
+          # Vérifier les vulnérabilités critiques dans Composer
+          if grep -q "critical" composer_audit.txt 2>/dev/null; then
+            echo "❌ Critical vulnerabilities found in PHP dependencies!"
+            exit 1
+          fi
+
+          # Vérifier les vulnérabilités critiques dans npm
+          if [ -f npm_audit.json ]; then
+            CRITICAL=$(jq -r '.metadata.vulnerabilities.critical // 0' npm_audit.json)
+            HIGH=$(jq -r '.metadata.vulnerabilities.high // 0' npm_audit.json)
+            if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+              echo "❌ High or critical vulnerabilities found in npm dependencies!"
+              exit 1
+            fi
+          fi
+
+          echo "✅ No critical vulnerabilities found"
+
+  # Job pour vérifier les licences
+  license-check:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --prefer-dist
+
+      - name: Check PHP licenses
+        run: |
+          composer licenses --format=json > composer_licenses.json
+          composer licenses > composer_licenses.txt
+
+          echo "## PHP Package Licenses" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          head -50 composer_licenses.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Check npm licenses
+        run: |
+          npx license-checker --json > npm_licenses.json 2>&1 || true
+          npx license-checker --summary > npm_licenses.txt 2>&1 || true
+
+          if [ -f npm_licenses.txt ]; then
+            echo "## npm Package Licenses" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat npm_licenses.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload license reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-reports
+          path: |
+            composer_licenses.json
+            composer_licenses.txt
+            npm_licenses.json
+            npm_licenses.txt

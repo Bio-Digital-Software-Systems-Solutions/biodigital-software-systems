@@ -1,0 +1,189 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  # Job pour vérifier et commenter les changements
+  pr-analysis:
+    name: PR Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} > changed_files.txt
+          echo "Changed files:"
+          cat changed_files.txt
+
+      - name: Run PHPStan on changed files
+        continue-on-error: true
+        run: |
+          if grep -q ".php$" changed_files.txt; then
+            echo "Running PHPStan on changed PHP files..."
+            make phpstan > phpstan_output.txt 2>&1 || true
+          else
+            echo "No PHP files changed"
+          fi
+
+      - name: Run PHP_CodeSniffer on changed files
+        continue-on-error: true
+        run: |
+          if grep -q ".php$" changed_files.txt; then
+            echo "Running PHPCS on changed PHP files..."
+            make phpcs > phpcs_output.txt 2>&1 || true
+          else
+            echo "No PHP files changed"
+          fi
+
+      - name: Comment PR with analysis
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            let comment = '## 🤖 Code Quality Analysis\n\n';
+
+            // PHPStan results
+            if (fs.existsSync('phpstan_output.txt')) {
+              const phpstan = fs.readFileSync('phpstan_output.txt', 'utf8');
+              comment += '### PHPStan Analysis\n';
+              if (phpstan.includes('OK')) {
+                comment += '✅ No issues found\n\n';
+              } else {
+                comment += '```\n' + phpstan.substring(0, 2000) + '\n```\n\n';
+              }
+            }
+
+            // PHPCS results
+            if (fs.existsSync('phpcs_output.txt')) {
+              const phpcs = fs.readFileSync('phpcs_output.txt', 'utf8');
+              comment += '### PHP_CodeSniffer\n';
+              if (phpcs.includes('0 ERRORS, 0 WARNINGS')) {
+                comment += '✅ Code style is compliant with PSR-12\n\n';
+              } else {
+                comment += '```\n' + phpcs.substring(0, 2000) + '\n```\n\n';
+              }
+            }
+
+            comment += '\n---\n*This analysis was performed automatically by the CI/CD pipeline*';
+
+            // Post or update comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c => c.user.type === 'Bot' && c.body.includes('Code Quality Analysis'));
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+  # Job pour vérifier la taille des changements
+  pr-size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        id: pr-size
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} | wc -l)
+          LINES_ADDED=$(git diff --shortstat origin/${{ github.base_ref }}...${{ github.sha }} | grep -oP '\d+(?= insertion)' || echo "0")
+          LINES_DELETED=$(git diff --shortstat origin/${{ github.base_ref }}...${{ github.sha }} | grep -oP '\d+(?= deletion)' || echo "0")
+
+          echo "files_changed=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "lines_added=$LINES_ADDED" >> $GITHUB_OUTPUT
+          echo "lines_deleted=$LINES_DELETED" >> $GITHUB_OUTPUT
+
+          echo "Changed files: $CHANGED_FILES"
+          echo "Lines added: $LINES_ADDED"
+          echo "Lines deleted: $LINES_DELETED"
+
+      - name: Add PR labels based on size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const filesChanged = ${{ steps.pr-size.outputs.files_changed }};
+            const linesAdded = ${{ steps.pr-size.outputs.lines_added }};
+
+            let sizeLabel = '';
+
+            if (filesChanged <= 5 && linesAdded <= 50) {
+              sizeLabel = 'size/XS';
+            } else if (filesChanged <= 10 && linesAdded <= 200) {
+              sizeLabel = 'size/S';
+            } else if (filesChanged <= 20 && linesAdded <= 500) {
+              sizeLabel = 'size/M';
+            } else if (filesChanged <= 40 && linesAdded <= 1000) {
+              sizeLabel = 'size/L';
+            } else {
+              sizeLabel = 'size/XL';
+            }
+
+            // Remove old size labels
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            for (const label of labels) {
+              if (label.name.startsWith('size/')) {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  name: label.name
+                });
+              }
+            }
+
+            // Add new size label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: [sizeLabel]
+            });
