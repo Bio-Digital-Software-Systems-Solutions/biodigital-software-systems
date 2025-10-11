@@ -1,0 +1,13 @@
+=== TEST DES PAGES - Di.  7 Okt. 2025 16:37:09 CEST ===
+
+✓ Homepage - HTTP 200
+✓ Login - HTTP 200
+✓ Register - HTTP 200
+✗ Dashboard - HTTP 401
+✗ User Dashboard - HTTP 401
+✗ Articles Index - HTTP 401
+✗ Events Index - HTTP 401
+✗ Books Index - HTTP 401
+✗ Trainings Index - HTTP 401
+✗ Chat - HTTP 401
+✗ Profile - HTTP 401

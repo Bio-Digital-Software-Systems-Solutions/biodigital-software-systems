@@ -1,0 +1,11 @@
+parameters:
+    level: 10
+    paths:
+        - app
+        - config
+        - database
+        - routes
+    excludePaths:
+        - bootstrap/cache
+        - storage
+        - vendor
