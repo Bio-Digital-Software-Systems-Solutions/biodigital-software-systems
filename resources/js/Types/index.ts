@@ -1,4 +1,5 @@
 import { Config } from 'ziggy-js';
+import { Department } from './models';
 
 export interface User {
     id: number;
@@ -11,7 +12,7 @@ export interface User {
     avatar?: string;
     roles: string[];
     permissions: string[];
-    departments?: any[];
+    departments?: Department[];
     full_name?: string;
 }
 

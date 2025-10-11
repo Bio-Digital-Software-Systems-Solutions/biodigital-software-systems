@@ -98,7 +98,7 @@ return [
     |
     */
 
-    'client' => env('REDIS_CLIENT', 'phpredis'),
+    'client' => env('REDIS_CLIENT', 'predis'),
 
     /*
     |--------------------------------------------------------------------------
@@ -110,10 +110,12 @@ return [
     |
     */
 
-    'options' => [
+    'options' => extension_loaded('redis') && env('REDIS_CLIENT', 'phpredis') === 'phpredis' ? [
         'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
         'serializer' => Redis::SERIALIZER_PHP, // Better performance than igbinary
         'compression' => Redis::COMPRESSION_LZ4, // Compress data for better memory usage
+    ] : [
+        'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
     ],
 
 ];

@@ -427,10 +427,32 @@ Si vous découvrez une vulnérabilité de sécurité, veuillez envoyer un email 
 
 Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
+## Documentation
+
+### Guides Techniques
+
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Documentation complète de l'architecture du projet
+- **[CI_CD.md](./CI_CD.md)** - Pipeline CI/CD et workflows GitHub Actions
+- **[MONITORING.md](./MONITORING.md)** - Monitoring avec Telescope, APM, et Sentry
+- **[PERFORMANCE.md](./PERFORMANCE.md)** - Optimisations de performance et détection N+1
+
+### Guides de Développement
+
+- **[CLAUDE.md](./CLAUDE.md)** - Guide de développement et notes du projet
+- **[UI_GUIDELINES.md](./UI_GUIDELINES.md)** - Standards UI/UX et composants
+- **[PHPDOC_STANDARDS.md](./PHPDOC_STANDARDS.md)** - Standards de documentation PHPDoc
+- **[CODE_DUPLICATION_REFACTORING.md](./CODE_DUPLICATION_REFACTORING.md)** - Guide de refactoring et traits
+- **[TYPESCRIPT_ANY_ELIMINATION.md](./TYPESCRIPT_ANY_ELIMINATION.md)** - Élimination des types `any` en TypeScript
+
+### API Documentation
+
+- **[API Documentation](http://localhost:8000/api/documentation)** - Documentation Swagger/OpenAPI (en développement)
+- **[Health Check](http://localhost:8000/health)** - Endpoint de santé de l'application
+
 ## Support
 
 Pour obtenir de l'aide :
-- Consultez la [documentation CI/CD](./CI_CD.md)
+- Consultez la documentation technique ci-dessus
 - Consultez le [guide du projet](./CLAUDE.md)
 - Ouvrez une issue sur GitHub
 
