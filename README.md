@@ -3,6 +3,7 @@
 ![CI/CD Pipeline](https://github.com/VOTRE_USERNAME/icc-munich/actions/workflows/ci.yml/badge.svg)
 ![PR Checks](https://github.com/VOTRE_USERNAME/icc-munich/actions/workflows/pr-checks.yml/badge.svg)
 ![Dependency Review](https://github.com/VOTRE_USERNAME/icc-munich/actions/workflows/dependency-review.yml/badge.svg)
+![Automated Backup](https://github.com/VOTRE_USERNAME/icc-munich/actions/workflows/backup.yml/badge.svg)
 [![Laravel](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://www.php.net)
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org)
@@ -33,8 +34,16 @@ ICC-Munich-App est une plateforme complète de gestion organisationnelle constru
 - **Inertia.js** - SSR avec expérience SPA
 - **Spatie Laravel Permission** - Gestion des rôles et permissions
 - **Spatie Laravel Activity Log** - Tracking des activités
+- **Spatie Laravel Backup** - Sauvegardes automatiques
+- **Laravel Telescope** - Debugging et monitoring local
 - **Sentry** - Monitoring des erreurs et performances
 - **MySQL** - Base de données
+
+### Monitoring & APM
+- **New Relic** - Application Performance Monitoring (optionnel)
+- **Datadog** - APM et infrastructure monitoring (optionnel)
+- **Health Check** - Endpoint de santé pour load balancers
+- **Custom Metrics** - Tracking des performances et requêtes lentes
 
 ### Frontend
 - **React 18** - Bibliothèque UI
@@ -165,6 +174,7 @@ Le projet utilise **GitHub Actions** pour l'intégration et la livraison continu
 - **`ci.yml`** - Pipeline principal (tests, qualité, sécurité)
 - **`pr-checks.yml`** - Analyse des PRs avec commentaires automatiques
 - **`dependency-review.yml`** - Revue des dépendances (hebdomadaire)
+- **`backup.yml`** - Sauvegardes automatiques (quotidien)
 
 ### Ce qui est vérifié
 
@@ -245,7 +255,47 @@ icc-munich/
 - Articles: `view`, `create`, `edit`, `delete`
 - Chat: `use-chat`
 
-## Monitoring
+## Monitoring & Backup
+
+### Laravel Telescope
+Telescope est intégré pour le debugging et le monitoring local :
+- Vue détaillée des requêtes HTTP
+- Analyse des requêtes SQL
+- Suivi des jobs et queues
+- Monitoring du cache
+- Tracking des exceptions
+- Accès : `http://localhost:8000/telescope`
+
+### APM (Application Performance Monitoring)
+Support pour deux providers majeurs :
+
+**New Relic :**
+- Response time monitoring
+- Transaction traces
+- Database monitoring
+- Error analytics
+- Custom instrumentation
+
+**Datadog :**
+- Distributed tracing
+- Services map
+- Logs management
+- Infrastructure monitoring
+- Real User Monitoring (RUM)
+
+### Health Check
+Endpoint de santé pour load balancers :
+- `/health` - Vérifie database, cache, storage, queue
+- Retourne 200 (healthy) ou 503 (unhealthy)
+
+### Automated Backups
+Sauvegardes automatiques via Spatie Laravel Backup :
+- Base de données MySQL
+- Fichiers de l'application
+- Upload vers S3/Google Cloud
+- Chiffrement des backups
+- Politique de rétention configurable
+- Exécution quotidienne via GitHub Actions
 
 ### Sentry
 L'application est configurée avec Sentry pour :
@@ -261,6 +311,8 @@ Toutes les modifications sur les 52 modèles de l'application sont tracées avec
 - Création, modification, suppression
 - Attributs modifiés uniquement
 - Historique complet d'audit
+
+**Documentation complète :** Voir [MONITORING.md](./MONITORING.md)
 
 ## Internationalisation
 

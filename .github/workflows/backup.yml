@@ -1,0 +1,127 @@
+name: Automated Database Backup
+
+on:
+  # Exécution quotidienne à 2h00 du matin
+  schedule:
+    - cron: '0 2 * * *'
+
+  # Exécution manuelle
+  workflow_dispatch:
+    inputs:
+      backup_type:
+        description: 'Type of backup'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - database-only
+          - files-only
+
+jobs:
+  backup-database:
+    name: Backup Database and Files
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath, gd, pdo, mysql, zip
+          tools: composer:v2
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --no-dev
+
+      - name: Create backup directories
+        run: |
+          mkdir -p storage/app/backups
+          chmod -R 775 storage
+
+      - name: Configure backup settings
+        run: |
+          echo "BACKUP_ARCHIVE_PASSWORD=${{ secrets.BACKUP_PASSWORD }}" >> .env
+          echo "BACKUP_NOTIFICATION_MAIL=${{ secrets.BACKUP_NOTIFICATION_EMAIL }}" >> .env
+
+      - name: Run full backup
+        if: ${{ github.event.inputs.backup_type == 'full' || github.event.inputs.backup_type == '' }}
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: php artisan backup:run
+
+      - name: Run database-only backup
+        if: ${{ github.event.inputs.backup_type == 'database-only' }}
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: php artisan backup:database --only-db
+
+      - name: Run files-only backup
+        if: ${{ github.event.inputs.backup_type == 'files-only' }}
+        run: php artisan backup:database --only-files
+
+      - name: Upload backup to artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ github.run_number }}-${{ github.run_attempt }}
+          path: storage/app/backups/
+          retention-days: 30
+
+      - name: Configure AWS credentials
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload backup to S3
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}
+        run: |
+          aws s3 sync storage/app/backups/ s3://${{ secrets.AWS_BACKUP_BUCKET }}/backups/$(date +%Y-%m-%d)/ --delete
+
+      - name: Clean old backups (keep last 7 days)
+        run: php artisan backup:clean
+
+      - name: Backup summary
+        if: always()
+        run: |
+          echo "## Backup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Type:** ${{ github.event.inputs.backup_type || 'full' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ -d "storage/app/backups" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Backup Files" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            ls -lh storage/app/backups/ >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+  notify-on-failure:
+    name: Notify on Backup Failure
+    runs-on: ubuntu-latest
+    needs: backup-database
+    if: failure()
+
+    steps:
+      - name: Send notification
+        run: |
+          echo "Backup failed! Manual intervention required."
+          echo "Check the workflow logs for details."
+          # Ajoutez ici l'envoi de notification (Slack, Discord, Email, etc.)
