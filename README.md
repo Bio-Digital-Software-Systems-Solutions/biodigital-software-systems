@@ -61,6 +61,13 @@ ICC-Munich-App est une plateforme complète de gestion organisationnelle constru
 - **Pest / PHPUnit** - Tests backend
 - **Jest** - Tests frontend
 
+### Performance & Optimization
+- **Redis** - Cache, sessions, et queues
+- **Laravel Debugbar** - Toolbar de debugging (dev only)
+- **Query Detector** - Détection automatique N+1 queries
+- **HasEagerLoading Trait** - Trait pour faciliter l'eager loading
+- **Performance Analyzer** - Commande d'analyse des performances
+
 ## Installation
 
 ### Prérequis
@@ -313,6 +320,62 @@ Toutes les modifications sur les 52 modèles de l'application sont tracées avec
 - Historique complet d'audit
 
 **Documentation complète :** Voir [MONITORING.md](./MONITORING.md)
+
+## Performance Optimization
+
+### N+1 Query Detection
+Outils intégrés pour détecter et résoudre les problèmes N+1 :
+- **Laravel Debugbar** - Affiche toutes les queries avec highlighting des N+1
+- **Query Detector** - Alerts automatiques dans les logs
+- **Telescope** - Tracking des queries avec analyse détaillée
+
+### Eager Loading
+Trait personnalisé pour faciliter l'eager loading :
+
+```php
+use App\Traits\HasEagerLoading;
+
+class Event extends Model
+{
+    use HasEagerLoading;
+
+    // Toujours eager load ces relations
+    protected $with = ['organizer', 'location'];
+}
+```
+
+### Redis Configuration
+Cache, sessions et queues configurés sur Redis pour de meilleures performances :
+
+```env
+CACHE_STORE=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+```
+
+### Performance Analysis
+Commande pour analyser les performances :
+
+```bash
+# Analyse complète
+php artisan analyze:performance
+
+# Analyser les queries
+php artisan analyze:performance --queries
+
+# Analyser le cache
+php artisan analyze:performance --cache
+```
+
+### Optimizations Implémentées
+- ✅ Redis pour cache/sessions/queues
+- ✅ Détection automatique des N+1 queries
+- ✅ Trait HasEagerLoading pour eager loading facile
+- ✅ Indexes sur colonnes fréquemment requêtées
+- ✅ Query result caching
+- ✅ Chunking pour grandes datasets
+
+**Documentation complète :** Voir [PERFORMANCE.md](./PERFORMANCE.md)
 
 ## Internationalisation
 
