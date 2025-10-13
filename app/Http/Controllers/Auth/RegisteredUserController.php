@@ -58,7 +58,7 @@ class RegisteredUserController extends Controller
             'email_verified_at' => null, // Email not verified yet
         ]);
 
-        $user->assignRole(Role::MEMBER); // Assign default role
+        $user->assignRole('member'); // Assign default role
 
         // Generate email verification URL
         $verificationUrl = URL::temporarySignedRoute(

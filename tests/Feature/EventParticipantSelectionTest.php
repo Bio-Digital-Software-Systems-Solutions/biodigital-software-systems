@@ -173,4 +173,151 @@ class EventParticipantSelectionTest extends TestCase
         $this->assertNotNull($attachedParticipant->pivot->created_at);
         $this->assertNotNull($attachedParticipant->pivot->updated_at);
     }
+
+    public function test_event_participants_can_be_updated(): void
+    {
+        Permission::create(['name' => 'edit events']);
+
+        $creator = User::factory()->create();
+        $creator->givePermissionTo(['create events', 'edit events']);
+
+        $participant1 = User::factory()->create();
+        $participant2 = User::factory()->create();
+        $participant3 = User::factory()->create();
+
+        // Create event with initial participants
+        $this->actingAs($creator)->post(route('events.store'), [
+            'title' => 'Event to Update',
+            'start_date' => now()->addDay()->format('Y-m-d H:i:s'),
+            'end_date' => now()->addDay()->addHour()->format('Y-m-d H:i:s'),
+            'is_public' => true,
+            'participant_ids' => [$participant1->id, $participant2->id],
+        ]);
+
+        $event = \App\Models\Event::where('title', 'Event to Update')->first();
+        $this->assertEquals(2, $event->participants()->count());
+
+        // Update with different participants
+        $response = $this->actingAs($creator)->put(route('events.update', $event->uuid), [
+            'title' => 'Event to Update',
+            'start_date' => $event->start_date,
+            'end_date' => $event->end_date,
+            'is_public' => true,
+            'status' => 'planned',
+            'participant_ids' => [$participant2->id, $participant3->id],
+        ]);
+
+        $response->assertRedirect(route('events.index'));
+
+        $event->refresh();
+        $this->assertEquals(2, $event->participants()->count());
+        $this->assertFalse($event->participants->contains($participant1));
+        $this->assertTrue($event->participants->contains($participant2));
+        $this->assertTrue($event->participants->contains($participant3));
+    }
+
+    public function test_event_participants_can_be_removed_on_update(): void
+    {
+        Permission::create(['name' => 'edit events']);
+
+        $creator = User::factory()->create();
+        $creator->givePermissionTo(['create events', 'edit events']);
+
+        $participant1 = User::factory()->create();
+        $participant2 = User::factory()->create();
+
+        // Create event with participants
+        $this->actingAs($creator)->post(route('events.store'), [
+            'title' => 'Event to Remove Participants',
+            'start_date' => now()->addDay()->format('Y-m-d H:i:s'),
+            'end_date' => now()->addDay()->addHour()->format('Y-m-d H:i:s'),
+            'is_public' => true,
+            'participant_ids' => [$participant1->id, $participant2->id],
+        ]);
+
+        $event = \App\Models\Event::where('title', 'Event to Remove Participants')->first();
+        $this->assertEquals(2, $event->participants()->count());
+
+        // Update with no participants
+        $response = $this->actingAs($creator)->put(route('events.update', $event->uuid), [
+            'title' => 'Event to Remove Participants',
+            'start_date' => $event->start_date,
+            'end_date' => $event->end_date,
+            'is_public' => true,
+            'status' => 'planned',
+            'participant_ids' => [],
+        ]);
+
+        $response->assertRedirect(route('events.index'));
+
+        $event->refresh();
+        $this->assertEquals(0, $event->participants()->count());
+    }
+
+    public function test_event_participants_can_be_added_on_update(): void
+    {
+        Permission::create(['name' => 'edit events']);
+
+        $creator = User::factory()->create();
+        $creator->givePermissionTo(['create events', 'edit events']);
+
+        $participant1 = User::factory()->create();
+        $participant2 = User::factory()->create();
+
+        // Create event without participants
+        $this->actingAs($creator)->post(route('events.store'), [
+            'title' => 'Event to Add Participants',
+            'start_date' => now()->addDay()->format('Y-m-d H:i:s'),
+            'end_date' => now()->addDay()->addHour()->format('Y-m-d H:i:s'),
+            'is_public' => true,
+        ]);
+
+        $event = \App\Models\Event::where('title', 'Event to Add Participants')->first();
+        $this->assertEquals(0, $event->participants()->count());
+
+        // Update with participants
+        $response = $this->actingAs($creator)->put(route('events.update', $event->uuid), [
+            'title' => 'Event to Add Participants',
+            'start_date' => $event->start_date,
+            'end_date' => $event->end_date,
+            'is_public' => true,
+            'status' => 'planned',
+            'participant_ids' => [$participant1->id, $participant2->id],
+        ]);
+
+        $response->assertRedirect(route('events.index'));
+
+        $event->refresh();
+        $this->assertEquals(2, $event->participants()->count());
+        $this->assertTrue($event->participants->contains($participant1));
+        $this->assertTrue($event->participants->contains($participant2));
+    }
+
+    public function test_validation_fails_for_invalid_participant_ids_on_update(): void
+    {
+        Permission::create(['name' => 'edit events']);
+
+        $creator = User::factory()->create();
+        $creator->givePermissionTo(['create events', 'edit events']);
+
+        $this->actingAs($creator)->post(route('events.store'), [
+            'title' => 'Event to Update with Invalid IDs',
+            'start_date' => now()->addDay()->format('Y-m-d H:i:s'),
+            'end_date' => now()->addDay()->addHour()->format('Y-m-d H:i:s'),
+            'is_public' => true,
+        ]);
+
+        $event = \App\Models\Event::where('title', 'Event to Update with Invalid IDs')->first();
+
+        $response = $this->actingAs($creator)->put(route('events.update', $event->uuid), [
+            'title' => 'Event to Update with Invalid IDs',
+            'start_date' => $event->start_date,
+            'end_date' => $event->end_date,
+            'is_public' => true,
+            'status' => 'planned',
+            'participant_ids' => [99999, 88888], // Non-existent user IDs
+        ]);
+
+        $response->assertSessionHasErrors('participant_ids.0');
+    }
 }

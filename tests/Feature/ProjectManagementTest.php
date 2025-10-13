@@ -71,7 +71,7 @@ class ProjectManagementTest extends TestCase
             'status' => 'todo',
         ]);
 
-        $response = $this->actingAs($user)->patchJson("/api/tasks/{$task->id}/status", [
+        $response = $this->actingAs($user)->patchJson("/api/tasks/{$task->uuid}/status", [
             'status' => 'in_progress',
         ]);
 

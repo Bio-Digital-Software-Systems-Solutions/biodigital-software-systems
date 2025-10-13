@@ -12,9 +12,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // List of tables to add UUID to
+        // List of tables to add UUID to (users already has uuid in initial migration)
         $tables = [
-            'users',
             'events',
             'trainings',
             'articles',
@@ -52,7 +51,6 @@ return new class extends Migration
     public function down(): void
     {
         $tables = [
-            'users',
             'events',
             'trainings',
             'articles',

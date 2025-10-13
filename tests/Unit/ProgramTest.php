@@ -16,7 +16,7 @@ class ProgramTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed();
+        // No seeding needed for unit tests
     }
 
     public function test_program_belongs_to_user(): void

@@ -20,7 +20,6 @@ class ArticleController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('can:view articles')->only(['index', 'show']);
         $this->middleware('can:create articles')->only(['create', 'store']);
         $this->middleware('can:edit articles')->only(['edit', 'update']);
         $this->middleware('can:delete articles')->only(['destroy']);
@@ -53,8 +52,8 @@ class ArticleController extends Controller
             }
         }
 
-        // Default to published articles for non-admin users
-        if (! Auth::user()->can('edit articles') && ! $request->status) {
+        // Default to published articles for guests and non-admin users
+        if ((! Auth::check() || ! Auth::user()->can('edit articles')) && ! $request->status) {
             $query->whereNotNull('published_at');
         }
 
@@ -110,6 +109,8 @@ class ArticleController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'excerpt' => 'nullable|string',
+            'status' => 'nullable|string|in:draft,published,pending,scheduled',
             'category_id' => 'required|exists:categories,id',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2097152',
             'video_file' => 'nullable|file|mimes:mp4,mov,avi,wmv,flv,webm|max:2097152',
@@ -149,7 +150,9 @@ class ArticleController extends Controller
             $counter++;
         }
 
-        $publishedAt = $validated['is_published'] ?? false ? now() : null;
+        // Handle publication status
+        $status = $validated['status'] ?? ($validated['is_published'] ?? false ? 'published' : 'draft');
+        $publishedAt = ($status === 'published' || ($validated['is_published'] ?? false)) ? now() : null;
 
         // Sanitize HTML content to prevent XSS
         $sanitizedContent = Purifier::clean($validated['content']);
@@ -158,6 +161,8 @@ class ArticleController extends Controller
             'title' => $validated['title'],
             'slug' => $slug,
             'content' => $sanitizedContent,
+            'excerpt' => $validated['excerpt'] ?? null,
+            'status' => $status,
             'category_id' => $validated['category_id'],
             'cover_image' => $coverImagePath,
             'video_file' => $videoFilePath,
@@ -183,9 +188,13 @@ class ArticleController extends Controller
      */
     public function show(Article $article): Response
     {
-        // Check if article is published or user can edit articles
-        if (! $article->published_at && ! Auth::user()->can('edit articles')) {
-            abort(404);
+        // Check if article is published and not scheduled for future
+        $isPublished = $article->published_at && $article->published_at->isPast();
+        $canEdit = Auth::check() && Auth::user()->can('edit articles');
+        $isAuthor = Auth::check() && Auth::user()->id === $article->user_id;
+
+        if (! $isPublished && ! $canEdit && ! $isAuthor) {
+            abort(403);
         }
 
         $article->load(['category', 'user', 'tags']);
@@ -206,8 +215,8 @@ class ArticleController extends Controller
         return Inertia::render('Articles/Show', [
             'article' => $article,
             'relatedArticles' => $relatedArticles,
-            'isLiked' => \Maize\Markable\Models\Like::has($article, Auth::user()),
-            'isFavorited' => \Maize\Markable\Models\Bookmark::has($article, Auth::user()),
+            'isLiked' => Auth::check() ? \Maize\Markable\Models\Like::has($article, Auth::user()) : false,
+            'isFavorited' => Auth::check() ? \Maize\Markable\Models\Bookmark::has($article, Auth::user()) : false,
             'likesCount' => \Maize\Markable\Models\Like::count($article),
         ]);
     }
@@ -217,6 +226,8 @@ class ArticleController extends Controller
      */
     public function edit(Article $article): Response
     {
+        $this->authorize('update', $article);
+
         $article->load(['category', 'tags']);
 
         // Cache categories and tags (1 hour cache)
@@ -249,6 +260,8 @@ class ArticleController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'excerpt' => 'nullable|string',
+            'status' => 'nullable|string|in:draft,published,pending,scheduled',
             'category_id' => 'required|exists:categories,id',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2097152',
             'video_file' => 'nullable|file|mimes:mp4,mov,avi,wmv,flv,webm|max:2097152',
@@ -299,12 +312,15 @@ class ArticleController extends Controller
             }
         }
 
-        // Set published_at when publishing for the first time
+        // Handle publication status
+        $status = $validated['status'] ?? ($validated['is_published'] ?? false ? 'published' : 'draft');
         $publishedAt = $article->published_at;
-        $isPublished = $validated['is_published'] ?? false;
-        if ($isPublished && ! $article->published_at) {
-            $publishedAt = now();
-        } elseif (! $isPublished) {
+
+        if ($status === 'published' || ($validated['is_published'] ?? false)) {
+            if (! $article->published_at) {
+                $publishedAt = now();
+            }
+        } else {
             $publishedAt = null;
         }
 
@@ -315,6 +331,8 @@ class ArticleController extends Controller
             'title' => $validated['title'],
             'slug' => $slug,
             'content' => $sanitizedContent,
+            'excerpt' => $validated['excerpt'] ?? $article->excerpt,
+            'status' => $status,
             'category_id' => $validated['category_id'],
             'cover_image' => $coverImagePath,
             'video_file' => $videoFilePath,

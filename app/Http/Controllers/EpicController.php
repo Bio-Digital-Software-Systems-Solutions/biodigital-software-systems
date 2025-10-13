@@ -42,6 +42,7 @@ class EpicController extends Controller
 
             return [
                 'id' => $epic->id,
+                'uuid' => $epic->uuid,
                 'key' => $epic->key,
                 'title' => $epic->title,
                 'description' => $epic->description,
@@ -123,12 +124,18 @@ class EpicController extends Controller
         $project = Project::find($validated['project_id']);
         $projectKey = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
 
-        // Find the highest number for this key prefix across all tasks (not just epics)
-        $lastTask = ProjectTask::where('key', 'like', $projectKey.'-%')
-            ->orderByRaw('CAST(SUBSTR(key, '.(strlen($projectKey) + 2).') AS INTEGER) DESC')
-            ->first();
+        // Find the highest number for this key prefix across all tasks (including soft deleted ones)
+        $existingKeys = ProjectTask::withTrashed()
+            ->where('key', 'like', $projectKey.'-%')
+            ->pluck('key')
+            ->map(function ($key) use ($projectKey) {
+                // Extract the number after the dash
+                $parts = explode('-', $key);
+                return isset($parts[1]) ? (int) $parts[1] : 0;
+            })
+            ->filter();
 
-        $nextNumber = $lastTask ? ((int) substr($lastTask->key, strpos($lastTask->key, '-') + 1)) + 1 : 1;
+        $nextNumber = $existingKeys->isEmpty() ? 1 : $existingKeys->max() + 1;
         $validated['key'] = $projectKey.'-'.$nextNumber;
 
         $epic = ProjectTask::create($validated);
@@ -136,11 +143,11 @@ class EpicController extends Controller
         return redirect()->route('epics.index')->with('success', 'Epic créé avec succès.');
     }
 
-    public function update(Request $request, ProjectTask $epic)
+    public function update(Request $request, string $epic)
     {
-        if ($epic->type !== 'epic') {
-            abort(404);
-        }
+        $epic = ProjectTask::where('uuid', $epic)
+            ->where('type', 'epic')
+            ->firstOrFail();
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -156,11 +163,11 @@ class EpicController extends Controller
         return redirect()->route('epics.index')->with('success', 'Epic mis à jour avec succès.');
     }
 
-    public function destroy(ProjectTask $epic)
+    public function destroy(string $epic)
     {
-        if ($epic->type !== 'epic') {
-            abort(404);
-        }
+        $epic = ProjectTask::where('uuid', $epic)
+            ->where('type', 'epic')
+            ->firstOrFail();
 
         $epic->delete();
 

@@ -85,6 +85,7 @@ class EventParticipationTest extends TestCase
 
         $event = Event::factory()->create([
             'max_participants' => null,
+            'is_public' => true,
         ]);
 
         $response = $this->actingAs($user)->post(route('events.toggle-participation', $event));
@@ -172,7 +173,7 @@ class EventParticipationTest extends TestCase
         $user = User::factory()->create();
         $user->givePermissionTo('view events');
 
-        $event = Event::factory()->create();
+        $event = Event::factory()->create(['is_public' => true]);
 
         $this->actingAs($user)->post(route('events.toggle-participation', $event));
 

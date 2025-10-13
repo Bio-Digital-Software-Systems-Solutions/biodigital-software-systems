@@ -27,12 +27,21 @@ class EventController extends Controller
     public function index(Request $request): Response
     {
         $page = $request->get('page', 1);
+        $search = $request->get('search');
 
         // Cache events list per page (5 minutes cache)
+        $cacheKey = $search ? 'events.index.search.' . md5($search) : 'events.index';
         $events = CacheService::rememberPaginated(
-            'events.index',
+            $cacheKey,
             $page,
             fn() => Event::with(['creator', 'address', 'participants'])
+                ->when($search, function ($query, $search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('title', 'like', "%{$search}%")
+                          ->orWhere('description', 'like', "%{$search}%")
+                          ->orWhere('location', 'like', "%{$search}%");
+                    });
+                })
                 ->latest()
                 ->paginate(10),
             CacheService::SHORT_CACHE
@@ -61,7 +70,7 @@ class EventController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
+            'end_date' => 'required|date|after_or_equal:start_date',
             'location' => 'nullable|string',
             'max_participants' => 'nullable|integer|min:1',
             'is_public' => 'boolean',
@@ -133,7 +142,7 @@ class EventController extends Controller
      */
     public function edit(Event $event): Response
     {
-        $event->load('address');
+        $event->load('address', 'participants');
 
         return Inertia::render('Events/Edit', [
             'event' => $event,
@@ -151,12 +160,14 @@ class EventController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
+            'end_date' => 'required|date|after_or_equal:start_date',
             'location' => 'nullable|string',
             'max_participants' => 'nullable|integer|min:1',
             'is_public' => 'boolean',
             'status' => 'required|in:planned,ongoing,completed,cancelled',
             'avatar' => 'nullable',
+            'participant_ids' => 'nullable|array',
+            'participant_ids.*' => 'exists:users,id',
             'address' => 'nullable|array',
             'address.street' => 'nullable|string',
             'address.city' => 'nullable|string',
@@ -192,6 +203,11 @@ class EventController extends Controller
         }
 
         $event->update($validated);
+
+        // Sync participants if provided
+        if ($request->has('participant_ids')) {
+            $event->participants()->sync($request->participant_ids ?? []);
+        }
 
         // Invalidate events cache
         CacheService::forgetPattern('events');
@@ -245,5 +261,54 @@ class EventController extends Controller
         CacheService::forgetPattern('events');
 
         return back()->with('message', $message);
+    }
+
+    /**
+     * Join an event
+     */
+    public function join(Event $event): RedirectResponse
+    {
+        $this->authorize('participate', $event);
+
+        $user = Auth::user();
+
+        // Check if user is already a participant
+        if ($event->participants->contains($user)) {
+            return back()->with('message', 'Vous participez déjà à cet événement.');
+        }
+
+        // Check if event is full
+        if ($event->max_participants && $event->participants->count() >= $event->max_participants) {
+            return back()->with('error', 'L\'événement est complet.');
+        }
+
+        $event->participants()->attach($user);
+
+        // Invalidate events cache
+        CacheService::forgetPattern('events');
+
+        return back()->with('message', 'Vous participez maintenant à l\'événement.');
+    }
+
+    /**
+     * Leave an event
+     */
+    public function leave(Event $event): RedirectResponse
+    {
+        $this->authorize('participate', $event);
+
+        $user = Auth::user();
+
+        // Check if user is a participant
+        if (!$event->participants->contains($user)) {
+            return back()->with('error', 'Vous ne participez pas à cet événement.');
+        }
+
+        $event->participants()->detach($user);
+
+        // Invalidate events cache
+        CacheService::forgetPattern('events');
+
+        return back()->with('message', 'Vous avez quitté l\'événement.');
     }
 }

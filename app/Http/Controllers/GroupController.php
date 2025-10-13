@@ -85,14 +85,23 @@ class GroupController extends Controller
         $group->load(['leader', 'users']);
 
         // Get all users not in the group
-        $availableUsers = User::select('id', 'name', 'email')
+        $availableUsers = User::select('id', 'uuid', 'first_name', 'last_name', 'email')
             ->whereNotIn('id', $group->users->pluck('id'))
-            ->orderBy('name')
-            ->get();
+            ->orderBy('first_name')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'uuid' => $user->uuid,
+                    'name' => $user->name, // Uses the accessor
+                    'email' => $user->email,
+                ];
+            });
 
         return Inertia::render('Groups/Show', [
             'group' => [
                 'id' => $group->id,
+                'uuid' => $group->uuid,
                 'name' => $group->name,
                 'code' => $group->code,
                 'description' => $group->description,
@@ -100,12 +109,14 @@ class GroupController extends Controller
                 'is_active' => $group->is_active,
                 'leader' => $group->leader ? [
                     'id' => $group->leader->id,
+                    'uuid' => $group->leader->uuid,
                     'name' => $group->leader->name,
                     'email' => $group->leader->email,
                 ] : null,
                 'users' => $group->users->map(function ($user) {
                     return [
                         'id' => $user->id,
+                        'uuid' => $user->uuid,
                         'name' => $user->name,
                         'email' => $user->email,
                         'joined_at' => $user->pivot->joined_at,

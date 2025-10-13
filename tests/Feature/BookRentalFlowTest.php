@@ -53,7 +53,7 @@ class BookRentalFlowTest extends TestCase
         $book->libraries()->attach($library->id);
 
         // Step 1: User views book details
-        $response = $this->actingAs($user)->get(route('books.show', $book->id));
+        $response = $this->actingAs($user)->get(route('books.show', $book->uuid));
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page->component('Books/Show')
             ->has('book')
@@ -67,8 +67,8 @@ class BookRentalFlowTest extends TestCase
             'rental_days' => 7,
         ];
 
-        $response = $this->actingAs($user)->post(route('books.rent', $book->id), $rentalData);
-        $response->assertRedirect(route('books.show', $book->id));
+        $response = $this->actingAs($user)->post(route('books.rent', $book->uuid), $rentalData);
+        $response->assertRedirect(route('books.show', $book->uuid));
         $response->assertSessionHas('success');
 
         // Verify rental was created

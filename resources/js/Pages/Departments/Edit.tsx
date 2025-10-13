@@ -13,6 +13,7 @@ interface User {
 
 interface Department {
     id: number;
+    uuid: string;
     name: string;
     code: string;
     description?: string;
@@ -38,7 +39,7 @@ export default function Edit({ department, users }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('departments.update', department.code));
+        put(route('departments.update', department.uuid));
     };
 
     return (

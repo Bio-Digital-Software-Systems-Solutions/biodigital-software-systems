@@ -89,6 +89,7 @@ class Event extends Model
         'user_id',
         'address_id',
         'images',
+        'avatar',
     ];
 
     /**

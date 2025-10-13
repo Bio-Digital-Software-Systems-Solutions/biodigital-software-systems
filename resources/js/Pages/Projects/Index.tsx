@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Squares2X2Icon, ListBulletIcon, TableCellsIcon } from '@heroicons/react/24/outline';
+import { Squares2X2Icon, ListBulletIcon, TableCellsIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface Project {
   id: number;
@@ -24,12 +24,41 @@ interface Project {
 
 interface Props {
   projects: Project[];
+  filters: {
+    sort_by?: string;
+    sort_direction?: string;
+  };
 }
 
 type ViewMode = 'grid' | 'list' | 'table';
 
-export default function ProjectsIndex({ projects }: Props) {
+export default function ProjectsIndex({ projects, filters }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+
+  const handleSort = (column: string) => {
+    const currentDirection = filters.sort_by === column ? filters.sort_direction : null;
+    const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+
+    router.get(route('projects.index'), {
+      ...filters,
+      sort_by: column,
+      sort_direction: newDirection,
+    }, {
+      preserveState: true,
+      replace: true,
+    });
+  };
+
+  const getSortIcon = (column: string) => {
+    if (filters.sort_by !== column) {
+      return null;
+    }
+    return filters.sort_direction === 'asc' ? (
+      <ChevronUpIcon className="w-4 h-4 inline ml-1" />
+    ) : (
+      <ChevronDownIcon className="w-4 h-4 inline ml-1" />
+    );
+  };
 
   return (
     <DashboardLayout
@@ -235,20 +264,35 @@ export default function ProjectsIndex({ projects }: Props) {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Projet
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                    onClick={() => handleSort('name')}
+                  >
+                    Projet {getSortIcon('name')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Statut
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                    onClick={() => handleSort('status')}
+                  >
+                    Statut {getSortIcon('status')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Manager
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                    onClick={() => handleSort('manager')}
+                  >
+                    Manager {getSortIcon('manager')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Tâches
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                    onClick={() => handleSort('tasks_count')}
+                  >
+                    Tâches {getSortIcon('tasks_count')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Progression
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                    onClick={() => handleSort('progress')}
+                  >
+                    Progression {getSortIcon('progress')}
                   </th>
                 </tr>
               </thead>

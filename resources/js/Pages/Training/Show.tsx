@@ -26,7 +26,11 @@ import {
   Info,
   Euro,
   X,
-  ArrowLeft
+  ArrowLeft,
+  ClipboardList,
+  Play,
+  Settings,
+  Target
 } from 'lucide-react';
 
 interface Topic {
@@ -45,6 +49,26 @@ interface TrainingClass {
   notes?: string;
 }
 
+interface Quiz {
+  id: number;
+  uuid: string;
+  title: string;
+  description: string | null;
+  duration_minutes: number;
+  max_score: number;
+  passing_score: number;
+  available_from: string | null;
+  available_until: string | null;
+  is_active: boolean;
+  status: 'draft' | 'published' | 'archived';
+  user_attempt?: {
+    score: number;
+    max_score: number;
+    passed: boolean;
+    completed_at: string;
+  } | null;
+}
+
 interface Training {
   id: number;
   uuid: string;
@@ -54,11 +78,13 @@ interface Training {
   level: 'beginner' | 'intermediate' | 'advanced';
   price: number;
   image?: string;
+  image_url?: string;
   category?: string;
   rating: number;
   students_count: number;
   topics: Topic[];
   classes: TrainingClass[];
+  quizzes?: Quiz[];
   materials?: any[];
   evaluations?: any[];
 }
@@ -71,6 +97,7 @@ interface Props {
       email: string;
       first_name?: string;
       last_name?: string;
+      permissions?: string[];
     };
   };
   training: Training;
@@ -628,6 +655,11 @@ const TrainingShow: React.FC<Props> = ({ auth, training }) => {
   // Modal is closed by default, only opens when user clicks enroll button
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Helper function to check if user has a permission
+  const hasPermission = (permission: string): boolean => {
+    return auth?.user?.permissions?.includes(permission) || false;
+  };
+
   const getLevelLabel = (level: string) => {
     switch (level) {
       case 'beginner': return 'Débutant';
@@ -663,6 +695,15 @@ const TrainingShow: React.FC<Props> = ({ auth, training }) => {
 
         {/* En-tête de la formation */}
         <Card>
+          {training.image_url && (
+            <div className="w-full h-64 overflow-hidden rounded-t-lg">
+              <img
+                src={training.image_url}
+                alt={training.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -779,6 +820,166 @@ const TrainingShow: React.FC<Props> = ({ auth, training }) => {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quiz & Évaluations - Only visible to teachers, admins, and students with take quizzes permission */}
+        {(hasPermission('view quizzes') || hasPermission('manage quizzes') || hasPermission('take quizzes')) && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardList className="h-5 w-5" />
+                  Quiz & Évaluations
+                </CardTitle>
+                {hasPermission('create quizzes') && (
+                  <div className="flex gap-2">
+                    <Link href={route('trainings.quizzes.create', training.uuid)}>
+                      <Button size="sm">
+                        <Play className="h-4 w-4 mr-2" />
+                        Créer un quiz
+                      </Button>
+                    </Link>
+                    {training.quizzes && training.quizzes.length > 0 && (
+                      <Link href={route('trainings.quizzes.index', training.uuid)}>
+                        <Button variant="outline" size="sm">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Gérer les quiz
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {training.quizzes && training.quizzes.length > 0 ? (
+                <div className="space-y-4">
+                  {training.quizzes.map((quiz) => {
+                    const isPublished = quiz.status === 'published';
+                    const isAvailable = isPublished &&
+                      quiz.is_active &&
+                      (!quiz.available_from || new Date(quiz.available_from) <= new Date()) &&
+                      (!quiz.available_until || new Date(quiz.available_until) >= new Date());
+
+                    const hasCompleted = !!quiz.user_attempt;
+
+                    return (
+                      <Card key={quiz.id} className="border-2">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h4 className="font-semibold text-lg dark:text-white">
+                                  {quiz.title}
+                                </h4>
+                                {quiz.status === 'draft' && (
+                                  <Badge variant="secondary" className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                                    Brouillon
+                                  </Badge>
+                                )}
+                                {!isAvailable && isPublished && (
+                                  <Badge variant="secondary">Non disponible</Badge>
+                                )}
+                                {hasCompleted && (
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      quiz.user_attempt?.passed
+                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                        : 'bg-red-50 text-red-700 border-red-200'
+                                    }
+                                  >
+                                    {quiz.user_attempt?.passed ? '✓ Réussi' : '✗ Échoué'}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {quiz.description && (
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                  {quiz.description}
+                                </p>
+                              )}
+
+                              <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  {quiz.duration_minutes} min
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Target className="h-4 w-4" />
+                                  {quiz.passing_score}/{quiz.max_score} pts pour réussir
+                                </span>
+                              </div>
+
+                              {quiz.available_from && quiz.available_until && (
+                                <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                                  Disponible du {new Date(quiz.available_from).toLocaleDateString('fr-FR')}
+                                  {' au '}
+                                  {new Date(quiz.available_until).toLocaleDateString('fr-FR')}
+                                </div>
+                              )}
+
+                              {hasCompleted && quiz.user_attempt && (
+                                <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                                  <div className="text-sm">
+                                    <span className="text-gray-600 dark:text-gray-400">Votre score: </span>
+                                    <span className={`font-semibold ${
+                                      quiz.user_attempt.passed
+                                        ? 'text-green-600 dark:text-green-400'
+                                        : 'text-red-600 dark:text-red-400'
+                                    }`}>
+                                      {quiz.user_attempt.score}/{quiz.user_attempt.max_score} points
+                                      {' '}
+                                      ({((quiz.user_attempt.score / quiz.user_attempt.max_score) * 100).toFixed(1)}%)
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Complété le {new Date(quiz.user_attempt.completed_at).toLocaleDateString('fr-FR')}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {auth?.user && !hasCompleted && isAvailable && hasPermission('take quizzes') && (
+                              <Link href={route('quizzes.start', quiz.uuid)}>
+                                <Button className="bg-blue-600 hover:bg-blue-700">
+                                  <Play className="h-4 w-4 mr-2" />
+                                  Commencer
+                                </Button>
+                              </Link>
+                            )}
+
+                            {!auth?.user && (
+                              <Link href="/login">
+                                <Button variant="outline">
+                                  Se connecter
+                                </Button>
+                              </Link>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <ClipboardList className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Aucun quiz n'a encore été créé pour cette formation.
+                  </p>
+                  {hasPermission('create quizzes') && (
+                    <Link href={route('trainings.quizzes.create', training.uuid)}>
+                      <Button>
+                        <Play className="h-4 w-4 mr-2" />
+                        Créer le premier quiz
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

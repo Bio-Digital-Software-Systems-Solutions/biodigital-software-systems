@@ -82,6 +82,7 @@ class Library extends Model
         'capacity',
         'is_active',
         'address_id',
+        'image',
     ];
 
     /**

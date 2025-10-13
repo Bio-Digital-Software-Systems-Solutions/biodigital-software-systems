@@ -13,6 +13,7 @@ export interface TrainingClass {
     training_name: string;
     teacher_id: number | null;
     teacher_name: string;
+    name: string;
     date: string;
     start_time: string;
     end_time: string;

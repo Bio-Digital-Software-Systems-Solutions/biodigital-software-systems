@@ -79,6 +79,9 @@ class BookRentalController extends Controller
             'status' => 'returned',
         ]);
 
+        // Increment available copies
+        $rental->book->increment('available_copies');
+
         $message = 'Livre retourné avec succès.';
         if ($lateFee > 0) {
             $message .= " Frais de retard: {$lateFee}€";

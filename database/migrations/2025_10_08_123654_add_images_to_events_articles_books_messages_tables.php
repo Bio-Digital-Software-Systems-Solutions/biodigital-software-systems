@@ -23,9 +23,9 @@ return new class extends Migration
             $table->json('documents')->nullable()->after('images'); // Attached documents
         });
 
-        // Add images to books (already has cover_image, add gallery)
+        // Add images to books
         Schema::table('books', function (Blueprint $table) {
-            $table->json('images')->nullable()->after('cover_image'); // Additional images for book gallery
+            $table->json('images')->nullable()->after('description'); // Additional images for book gallery
         });
 
         // Add attachments to messages

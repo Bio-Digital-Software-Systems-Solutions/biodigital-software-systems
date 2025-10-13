@@ -62,17 +62,18 @@ class EventPolicy
      */
     public function participate(User $user, Event $event): bool
     {
-        // L'utilisateur doit avoir la permission 'attend events'
+        // Pour les événements publics, tout utilisateur authentifié peut participer
+        if ($event->is_public) {
+            return true;
+        }
+
+        // Pour les événements privés, vérifier les permissions
         if (! $user->can('attend events')) {
             return false;
         }
 
-        // Vérifier si l'événement est public ou si l'utilisateur est invité
-        if (! $event->is_public) {
-            return $event->participants->contains($user) || $user->can('manage event participants');
-        }
-
-        return true;
+        // Vérifier si l'utilisateur est déjà participant ou peut gérer les participants
+        return $event->participants->contains($user) || $user->can('manage event participants');
     }
 
     /**

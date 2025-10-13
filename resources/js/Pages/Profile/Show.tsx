@@ -21,12 +21,14 @@ import {
 
 interface Department {
     id: number;
+    uuid: string;
     name: string;
     code: string;
 }
 
 interface Group {
     id: number;
+    uuid: string;
     name: string;
     code: string;
 }
@@ -301,7 +303,7 @@ export default function ShowProfile({ user }: Props) {
                                     {user.departments.map((dept) => (
                                         <Link
                                             key={dept.id}
-                                            href={`/departments/${dept.code}`}
+                                            href={`/departments/${dept.uuid}`}
                                             className="block p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                         >
                                             <div className="font-medium text-gray-900 dark:text-white">
@@ -339,7 +341,7 @@ export default function ShowProfile({ user }: Props) {
                                     {user.groups.map((group) => (
                                         <Link
                                             key={group.id}
-                                            href={`/groups/${group.code}`}
+                                            href={`/groups/${group.uuid}`}
                                             className="block p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                         >
                                             <div className="font-medium text-gray-900 dark:text-white">

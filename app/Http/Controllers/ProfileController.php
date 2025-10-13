@@ -19,7 +19,7 @@ class ProfileController extends Controller
      */
     public function show(User $user): Response
     {
-        $user->load(['departments', 'roles']);
+        $user->load(['departments', 'groups', 'roles']);
 
         return Inertia::render('Profile/Show', [
             'user' => [
@@ -40,8 +40,15 @@ class ProfileController extends Controller
                 'last_login_user_agent' => $user->last_login_user_agent,
                 'departments' => $user->departments->map(fn ($dept) => [
                     'id' => $dept->id,
+                    'uuid' => $dept->uuid,
                     'name' => $dept->name,
                     'code' => $dept->code,
+                ]),
+                'groups' => $user->groups->map(fn ($group) => [
+                    'id' => $group->id,
+                    'uuid' => $group->uuid,
+                    'name' => $group->name,
+                    'code' => $group->code,
                 ]),
                 'roles' => $user->roles->pluck('name'),
             ],

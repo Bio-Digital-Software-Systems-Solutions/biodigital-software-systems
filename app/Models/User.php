@@ -199,6 +199,17 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * User's groups relationship.
+     */
+    public function groups(): BelongsToMany
+    {
+        return $this->belongsToMany(Group::class, 'group_user')
+            ->using(\App\Models\Pivots\GroupUser::class)
+            ->withPivot('joined_at')
+            ->withTimestamps();
+    }
+
+    /**
      * User's created articles.
      */
     public function articles(): HasMany

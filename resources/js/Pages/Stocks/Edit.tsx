@@ -39,7 +39,7 @@ export default function Edit({ stock, categories }: Props) {
         unit_price: stock.unit_price || 0,
         supplier: stock.supplier || '',
         supplier_contact: stock.supplier_contact || '',
-        expiry_date: stock.expiry_date || '',
+        expiry_date: stock.expiry_date ? stock.expiry_date.substring(0, 10) : '',
         location: stock.location || '',
         is_active: stock.is_active ?? true,
         category_id: stock.category?.id || '',

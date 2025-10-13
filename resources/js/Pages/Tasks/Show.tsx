@@ -3,9 +3,16 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Task, Program, Status, User, PageProps } from '@/types';
 
+interface Project {
+    id: number;
+    uuid: string;
+    name: string;
+}
+
 interface Props extends PageProps {
     task: Task & {
-        program: Program;
+        program?: Program;
+        project?: Project;
         status: Status;
         assigned_user: User;
     };
@@ -77,10 +84,33 @@ export default function Show({ task }: Props) {
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">Task Details</h3>
                                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-4">
-                                    <div>
-                                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Program</dt>
-                                        <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">{task.program?.name}</dd>
-                                    </div>
+                                    {task.project && (
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Project</dt>
+                                            <dd className="mt-1">
+                                                <Link
+                                                    href={route('projects.show', task.project.uuid)}
+                                                    className="text-sm text-primary hover:text-primary-dark hover:underline"
+                                                >
+                                                    {task.project.name}
+                                                </Link>
+                                            </dd>
+                                        </div>
+                                    )}
+
+                                    {task.program && (
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Program</dt>
+                                            <dd className="mt-1">
+                                                <Link
+                                                    href={route('programs.show', task.program.uuid)}
+                                                    className="text-sm text-primary hover:text-primary-dark hover:underline"
+                                                >
+                                                    {task.program.name}
+                                                </Link>
+                                            </dd>
+                                        </div>
+                                    )}
                                     
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>

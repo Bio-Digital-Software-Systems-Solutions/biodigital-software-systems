@@ -1,4 +1,4 @@
-.PHONY: phpstan phpcs phpmd pint pest test clear quality fix help
+.PHONY: phpstan phpcs phpmd pint pest test clear quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e
 
 # PHPStan static analysis (level 10)
 phpstan:
@@ -30,6 +30,35 @@ test:
 	@echo "Running PHPUnit tests..."
 	@php artisan test
 
+# PHPUnit tests with coverage
+test-coverage-back:
+	@echo "Running backend tests with coverage..."
+	@php artisan test --coverage
+
+# PHPUnit E2E tests only
+test-e2e:
+	@echo "Running E2E tests..."
+	@php artisan test tests/Feature/E2E
+
+# Frontend tests - All tests
+test-front:
+	@echo "Running frontend tests..."
+	@npm test
+
+# Frontend tests - With coverage
+test-coverage:
+	@echo "Running frontend tests with coverage..."
+	@npm run test:coverage
+
+# Frontend tests - Accessibility (WCAG)
+test-wcag:
+	@echo "Running accessibility tests (WCAG 2.1 AA)..."
+	@npm test -- WCAG.test
+
+# Run all tests (backend + frontend)
+test-all: test test-front
+	@echo "All tests completed!"
+
 # Fix code style automatically
 fix:
 	@echo "Fixing code style with Laravel Pint..."
@@ -55,14 +84,30 @@ quality-fix: fix phpstan phpcs phpmd pest
 # Display help
 help:
 	@echo "Available commands:"
-	@echo "  make phpstan       - Run PHPStan static analysis (level 10)"
-	@echo "  make phpcs         - Run PHP_CodeSniffer (PSR-12 compliance)"
-	@echo "  make phpmd         - Run PHP Mess Detector (complexity, design)"
-	@echo "  make pint          - Run Laravel Pint (check code style)"
-	@echo "  make pest          - Run Pest tests"
-	@echo "  make test          - Run PHPUnit tests (legacy)"
-	@echo "  make fix           - Auto-fix code style with Pint"
-	@echo "  make clear         - Clear all Laravel caches"
-	@echo "  make quality       - Run all quality checks"
-	@echo "  make quality-fix   - Fix code style + run all checks"
-	@echo "  make help          - Display this help message"
+	@echo ""
+	@echo "📊 Code Quality:"
+	@echo "  make phpstan            - Run PHPStan static analysis (level 10)"
+	@echo "  make phpcs              - Run PHP_CodeSniffer (PSR-12 compliance)"
+	@echo "  make phpmd              - Run PHP Mess Detector (complexity, design)"
+	@echo "  make pint               - Run Laravel Pint (check code style)"
+	@echo "  make fix                - Auto-fix code style with Pint"
+	@echo "  make quality            - Run all quality checks"
+	@echo "  make quality-fix        - Fix code style + run all checks"
+	@echo ""
+	@echo "🧪 Backend Tests:"
+	@echo "  make pest               - Run Pest tests"
+	@echo "  make test               - Run PHPUnit tests"
+	@echo "  make test-coverage-back - Run backend tests with coverage"
+	@echo "  make test-e2e           - Run E2E tests only"
+	@echo ""
+	@echo "🎨 Frontend Tests:"
+	@echo "  make test-front         - Run all frontend tests"
+	@echo "  make test-coverage      - Run frontend tests with coverage"
+	@echo "  make test-wcag          - Run accessibility tests (WCAG 2.1 AA)"
+	@echo ""
+	@echo "🚀 All Tests:"
+	@echo "  make test-all           - Run all tests (backend + frontend)"
+	@echo ""
+	@echo "🔧 Utilities:"
+	@echo "  make clear              - Clear all Laravel caches"
+	@echo "  make help               - Display this help message"

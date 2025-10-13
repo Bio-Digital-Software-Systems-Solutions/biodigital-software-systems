@@ -20,7 +20,14 @@ class TrainingClassController extends Controller
      */
     public function index(): Response
     {
-        $classes = TrainingClass::with(['training', 'teacher', 'attendances', 'schedules'])
+        $classes = TrainingClass::with([
+            'training.students' => function ($query) {
+                $query->where('status', 'approved');
+            },
+            'teacher',
+            'attendances',
+            'schedules'
+        ])
             ->orderBy('date', 'desc')
             ->get()
             ->map(function ($class) {
@@ -49,7 +56,7 @@ class TrainingClassController extends Controller
                     'room' => $class->room,
                     'max_students' => $class->max_students,
                     'notes' => $class->notes,
-                    'students_count' => $class->training->students()->where('status', 'approved')->count(),
+                    'students_count' => $class->training->students->count(),
                     'status' => $class->date >= now()->toDateString() ? 'À venir' : 'Passée',
                     'schedules' => $schedules,
                 ];
@@ -70,11 +77,15 @@ class TrainingClassController extends Controller
      */
     public function show(TrainingClass $trainingClass): Response
     {
-        $trainingClass->load(['training', 'teacher', 'attendances.student']);
+        $trainingClass->load([
+            'training.students' => function ($query) {
+                $query->where('status', 'approved');
+            },
+            'teacher',
+            'attendances.student'
+        ]);
 
-        $students = $trainingClass->training->students()
-            ->where('status', 'approved')
-            ->get()
+        $students = $trainingClass->training->students
             ->map(function ($student) use ($trainingClass) {
                 $attendance = $trainingClass->attendances->firstWhere('student_id', $student->id);
 
@@ -163,7 +174,12 @@ class TrainingClassController extends Controller
             }
         }
 
-        $class->load(['training', 'teacher']);
+        $class->load([
+            'training.students' => function ($query) {
+                $query->where('status', 'approved');
+            },
+            'teacher'
+        ]);
 
         return response()->json([
             'success' => true,
@@ -182,7 +198,7 @@ class TrainingClassController extends Controller
                 'room' => $class->room,
                 'max_students' => $class->max_students,
                 'notes' => $class->notes,
-                'students_count' => $class->training->students()->where('status', 'approved')->count(),
+                'students_count' => $class->training->students->count(),
                 'status' => $class->date >= now()->toDateString() ? 'À venir' : 'Passée',
             ],
         ]);
@@ -204,7 +220,7 @@ class TrainingClassController extends Controller
             'max_students' => 'nullable|integer|min:1',
             'notes' => 'nullable|string',
             'schedules' => 'nullable|array',
-            'schedules.*.id' => 'nullable|exists:training_class_schedules,id',
+            'schedules.*.uuid' => 'nullable|exists:training_class_schedules,uuid',
             'schedules.*.day_of_week' => 'required_with:schedules|string',
             'schedules.*.start_time' => 'required_with:schedules',
             'schedules.*.end_time' => 'required_with:schedules',
@@ -217,18 +233,18 @@ class TrainingClassController extends Controller
 
         if (isset($validated['schedules']) && count($validated['schedules']) > 0) {
             // Delete existing schedules not in the new list
-            $newScheduleIds = array_filter(array_column($validated['schedules'], 'id'));
-            if (!empty($newScheduleIds)) {
-                $trainingClass->schedules()->whereNotIn('id', $newScheduleIds)->delete();
+            $newScheduleUuids = array_filter(array_column($validated['schedules'], 'uuid'));
+            if (!empty($newScheduleUuids)) {
+                $trainingClass->schedules()->whereNotIn('uuid', $newScheduleUuids)->delete();
             } else {
                 $trainingClass->schedules()->delete();
             }
 
             // Update or create schedules
             foreach ($validated['schedules'] as $scheduleData) {
-                if (isset($scheduleData['id'])) {
+                if (isset($scheduleData['uuid'])) {
                     // Update existing schedule
-                    $schedule = TrainingClassSchedule::find($scheduleData['id']);
+                    $schedule = TrainingClassSchedule::where('uuid', $scheduleData['uuid'])->first();
                     if ($schedule && $schedule->training_class_id === $trainingClass->id) {
                         $schedule->update([
                             'day_of_week' => $scheduleData['day_of_week'],
@@ -268,7 +284,13 @@ class TrainingClassController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $trainingClass->load(['training', 'teacher', 'schedules']);
+        $trainingClass->load([
+            'training.students' => function ($query) {
+                $query->where('status', 'approved');
+            },
+            'teacher',
+            'schedules'
+        ]);
 
         // Get schedules information
         $schedules = $trainingClass->schedules->map(function ($schedule) {
@@ -298,7 +320,7 @@ class TrainingClassController extends Controller
                 'room' => $trainingClass->room,
                 'max_students' => $trainingClass->max_students,
                 'notes' => $trainingClass->notes,
-                'students_count' => $trainingClass->training->students()->where('status', 'approved')->count(),
+                'students_count' => $trainingClass->training->students->count(),
                 'status' => $trainingClass->date >= now()->toDateString() ? 'À venir' : 'Passée',
                 'schedules' => $schedules,
             ],
@@ -387,6 +409,7 @@ class TrainingClassController extends Controller
     {
         $trainings = Training::with(['classes' => function ($query) {
             $query->where('date', '>=', now()->toDateString())
+                ->with('teacher')
                 ->orderBy('date')
                 ->orderBy('start_time');
         }])->get();
@@ -419,7 +442,7 @@ class TrainingClassController extends Controller
     {
         $schedules = $trainingClass->schedules()->get()->map(function ($schedule) {
             return [
-                'id' => $schedule->id,
+                'uuid' => $schedule->uuid,
                 'day_of_week' => $schedule->day_of_week,
                 'start_time' => $schedule->start_time,
                 'end_time' => $schedule->end_time,
@@ -446,7 +469,7 @@ class TrainingClassController extends Controller
             $schedule = $schedules->get($day);
 
             return [
-                'id' => $schedule ? $schedule->id : null,
+                'uuid' => $schedule ? $schedule->uuid : null,
                 'day_name' => $day,
                 'start_time' => $schedule ? $schedule->start_time : null,
                 'end_time' => $schedule ? $schedule->end_time : null,

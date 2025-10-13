@@ -12,7 +12,7 @@ class DepartmentController extends Controller
     public function __construct()
     {
         $this->middleware('can:view departments')->only(['index', 'show']);
-        $this->middleware('can:edit departments')->only(['create', 'store', 'edit', 'update', 'destroy', 'assignUser', 'removeUser']);
+        $this->middleware('can:manage departments')->only(['create', 'store', 'edit', 'update', 'destroy', 'assignUser', 'removeUser']);
     }
 
     public function index()
@@ -74,14 +74,22 @@ class DepartmentController extends Controller
         $department->load(['users', 'headOfDepartment']);
 
         // Get all users for adding members
-        $allUsers = User::select('id', 'name', 'email')
+        $allUsers = User::select('id', 'first_name', 'last_name', 'email')
             ->whereNotIn('id', $department->users->pluck('id'))
-            ->orderBy('name')
-            ->get();
+            ->orderBy('first_name')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name, // Uses the accessor
+                    'email' => $user->email,
+                ];
+            });
 
         return Inertia::render('Departments/Show', [
             'department' => [
                 'id' => $department->id,
+                'uuid' => $department->uuid,
                 'name' => $department->name,
                 'code' => $department->code,
                 'description' => $department->description,
@@ -102,7 +110,7 @@ class DepartmentController extends Controller
                 'users_count' => $department->users->count(),
             ],
             'availableUsers' => $allUsers,
-            'canManage' => auth()->user()->can('edit departments'),
+            'canManage' => auth()->user()->can('manage departments'),
         ]);
     }
 

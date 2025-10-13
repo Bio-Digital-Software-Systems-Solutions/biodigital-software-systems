@@ -12,11 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('attendances', function (Blueprint $table) {
+            // Drop foreign keys first
+            $table->dropForeign(['training_class_id']);
+            $table->dropForeign(['student_id']);
+
             // Drop old unique constraint
             $table->dropUnique(['training_class_id', 'student_id']);
 
             // Add new unique constraint on training_class_schedule_id and student_id
             $table->unique(['training_class_schedule_id', 'student_id']);
+
+            // Re-add foreign keys
+            $table->foreign('training_class_id')->references('id')->on('training_classes')->onDelete('cascade');
+            $table->foreign('student_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

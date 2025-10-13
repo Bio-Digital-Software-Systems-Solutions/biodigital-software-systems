@@ -18,7 +18,7 @@ interface DaySchedule {
     day: string;
     start_time: string;
     end_time: string;
-    schedule_id?: number;
+    schedule_uuid?: string;
 }
 
 export default function EditClassModal({ trainingClass, trainings, teachers, onClose, onClassUpdated }: Props) {
@@ -35,7 +35,10 @@ export default function EditClassModal({ trainingClass, trainings, teachers, onC
     const [formData, setFormData] = useState({
         training_id: trainingClass.training_id.toString(),
         teacher_id: trainingClass.teacher_id?.toString() || '',
+        name: trainingClass.name || '',
         date: formatDateForInput(trainingClass.date),
+        start_time: trainingClass.start_time || '',
+        end_time: trainingClass.end_time || '',
         room: trainingClass.room || '',
         max_students: trainingClass.max_students?.toString() || '',
         notes: trainingClass.notes || '',
@@ -53,7 +56,7 @@ export default function EditClassModal({ trainingClass, trainings, teachers, onC
     useEffect(() => {
         const loadSchedules = async () => {
             try {
-                const response = await axios.get(route('training-classes.class-schedules', trainingClass.id));
+                const response = await axios.get(route('training-classes.class-schedules', trainingClass.uuid));
                 const schedules = response.data;
 
                 if (schedules && schedules.length > 0) {
@@ -61,7 +64,7 @@ export default function EditClassModal({ trainingClass, trainings, teachers, onC
                         day: s.day_of_week,
                         start_time: s.start_time,
                         end_time: s.end_time,
-                        schedule_id: s.id,
+                        schedule_uuid: s.uuid,
                     }));
                     setDaySchedules(formattedSchedules);
 
@@ -89,7 +92,7 @@ export default function EditClassModal({ trainingClass, trainings, teachers, onC
         };
 
         loadSchedules();
-    }, [trainingClass.id]);
+    }, [trainingClass.uuid]);
 
     const toggleDay = (day: string) => {
         setDaySchedules(prev => {
@@ -151,12 +154,12 @@ export default function EditClassModal({ trainingClass, trainings, teachers, onC
         }
 
         try {
-            const response = await axios.put(route('training-classes.update', trainingClass.id), {
+            const response = await axios.put(route('training-classes.update', trainingClass.uuid), {
                 ...formData,
                 teacher_id: formData.teacher_id || null,
                 max_students: formData.max_students ? parseInt(formData.max_students) : null,
                 schedules: daySchedules.map(schedule => ({
-                    id: schedule.schedule_id,
+                    uuid: schedule.schedule_uuid,
                     day_of_week: schedule.day,
                     start_time: schedule.start_time,
                     end_time: schedule.end_time,
@@ -228,6 +231,20 @@ export default function EditClassModal({ trainingClass, trainings, teachers, onC
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Nom de la classe *
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="Ex: Session du lundi matin"
+                                className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-violet-500"
+                                required
+                            />
                         </div>
 
                         <div className="md:col-span-2">

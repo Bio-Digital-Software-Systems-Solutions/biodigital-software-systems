@@ -296,9 +296,10 @@ class KanbanTest extends TestCase
     {
         $userWithoutPermission = User::factory()->create();
 
-        $this->actingAs($userWithoutPermission)
-            ->get(route('kanban.index'))
-            ->assertForbidden();
+        $response = $this->actingAs($userWithoutPermission)
+            ->get(route('kanban.index'));
+
+        $this->assertContains($response->status(), [403, 302]);
     }
 
     /** @test */

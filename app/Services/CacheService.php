@@ -25,6 +25,13 @@ class CacheService
     public static function remember(string $key, callable $callback, int $ttl = self::MEDIUM_CACHE)
     {
         try {
+            // Track cache keys for pattern-based deletion
+            $cacheKeys = Cache::get('cache_keys', []);
+            if (!in_array($key, $cacheKeys)) {
+                $cacheKeys[] = $key;
+                Cache::put('cache_keys', $cacheKeys, self::LONG_CACHE);
+            }
+
             return Cache::remember($key, $ttl, $callback);
         } catch (\Exception $e) {
             Log::error('Cache error: ' . $e->getMessage());
@@ -50,10 +57,16 @@ class CacheService
         try {
             $keys = Cache::get('cache_keys', []);
             $matchingKeys = array_filter($keys, fn($key) => str_contains($key, $pattern));
-            
+
             foreach ($matchingKeys as $key) {
                 Cache::forget($key);
             }
+
+            // Update the cache_keys list by removing matched keys
+            $remainingKeys = array_diff($keys, $matchingKeys);
+            Cache::put('cache_keys', array_values($remainingKeys), self::LONG_CACHE);
+
+            Log::info("Cache pattern '{$pattern}' cleared: " . count($matchingKeys) . " keys removed");
         } catch (\Exception $e) {
             Log::error('Cache forget error: ' . $e->getMessage());
         }

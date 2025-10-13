@@ -56,6 +56,7 @@ class SprintController extends Controller
 
             return [
                 'id' => $sprint->id,
+                'uuid' => $sprint->uuid,
                 'name' => $sprint->name,
                 'goal' => $sprint->goal,
                 'start_date' => $sprint->start_date,

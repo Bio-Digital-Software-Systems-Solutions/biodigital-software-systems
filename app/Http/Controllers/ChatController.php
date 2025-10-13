@@ -54,7 +54,7 @@ class ChatController extends Controller
     public function createRoom(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => 'nullable|string|max:255',
+            'name' => 'required_if:type,group|nullable|string|max:255',
             'type' => 'required|in:direct,group',
             'participant_ids' => 'required|array',
             'participant_ids.*' => 'exists:users,id',
@@ -136,10 +136,13 @@ class ChatController extends Controller
             'content' => 'required|string|max:1000',
         ]);
 
+        // Sanitize content to prevent XSS
+        $sanitizedContent = strip_tags($validated['content']);
+
         $message = ChatMessage::create([
             'room_id' => $room->id,
             'sender_id' => Auth::id(),
-            'content' => $validated['content'],
+            'content' => $sanitizedContent,
             'is_read' => false,
         ]);
 

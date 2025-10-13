@@ -117,6 +117,7 @@ class TrainingTest extends TestCase
 
         $class = TrainingClass::create([
             'training_id' => $training->id,
+            'name' => 'Test Class',
             'date' => now()->addDays(7)->toDateString(),
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
@@ -214,6 +215,7 @@ class TrainingTest extends TestCase
 
         $class = TrainingClass::create([
             'training_id' => $training->id,
+            'name' => 'Test Class',
             'date' => now()->addDays(7)->toDateString(),
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
@@ -246,6 +248,7 @@ class TrainingTest extends TestCase
 
         $class = TrainingClass::create([
             'training_id' => $training->id,
+            'name' => 'Test Class',
             'date' => now()->addDays(7)->toDateString(),
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
@@ -278,6 +281,7 @@ class TrainingTest extends TestCase
 
         $class = TrainingClass::create([
             'training_id' => $training->id,
+            'name' => 'Test Class',
             'date' => now()->addDays(7)->toDateString(),
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
@@ -310,6 +314,7 @@ class TrainingTest extends TestCase
 
         $class = TrainingClass::create([
             'training_id' => $training->id,
+            'name' => 'Test Class',
             'date' => now()->addDays(7)->toDateString(),
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',
@@ -342,6 +347,7 @@ class TrainingTest extends TestCase
 
         $class = TrainingClass::create([
             'training_id' => $training->id,
+            'name' => 'Test Class',
             'date' => now()->addDays(7)->toDateString(),
             'start_time' => '09:00:00',
             'end_time' => '17:00:00',

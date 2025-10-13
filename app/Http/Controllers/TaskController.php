@@ -21,23 +21,61 @@ class TaskController extends Controller
 
     public function index()
     {
-        $tasks = Task::with(['status', 'program', 'assignedUser'])
-            ->when(request('status'), function ($query, $status) {
-                $query->whereHas('status', function ($q) use ($status) {
-                    $q->where('name', $status);
-                });
-            })
-            ->when(request('program'), function ($query, $program) {
-                $query->where('program_id', $program);
-            })
-            ->when(request('priority'), function ($query, $priority) {
-                $query->where('priority', $priority);
-            })
-            ->when(request('assigned_to'), function ($query, $userId) {
-                $query->where('assigned_to', $userId);
-            })
-            ->orderBy('due_date')
-            ->paginate(10);
+        // Build the base query
+        $query = Task::query();
+
+        // Apply filters
+        $query->when(request('status'), function ($query, $status) {
+            $query->whereHas('status', function ($q) use ($status) {
+                $q->where('name', $status);
+            });
+        })
+        ->when(request('program'), function ($query, $program) {
+            $query->where('program_id', $program);
+        })
+        ->when(request('priority'), function ($query, $priority) {
+            $query->where('priority', $priority);
+        })
+        ->when(request('assigned_to'), function ($query, $userId) {
+            $query->where('assigned_to', $userId);
+        });
+
+        // Apply sorting
+        $sortBy = request('sort_by');
+        $direction = request('sort_direction', 'asc');
+
+        if ($sortBy === 'title') {
+            $query->orderBy('tasks.title', $direction);
+        } elseif ($sortBy === 'priority') {
+            $query->orderBy('tasks.priority', $direction);
+        } elseif ($sortBy === 'due_date') {
+            $query->orderBy('tasks.due_date', $direction);
+        } elseif ($sortBy === 'status') {
+            $query->leftJoin('statuses', 'tasks.status_id', '=', 'statuses.id')
+                  ->orderBy('statuses.name', $direction)
+                  ->select('tasks.*');
+        } elseif ($sortBy === 'assigned_to') {
+            $query->leftJoin('users', 'tasks.assigned_to', '=', 'users.id')
+                  ->orderBy('users.first_name', $direction)
+                  ->select('tasks.*');
+        } elseif ($sortBy === 'program') {
+            $query->leftJoin('programs', 'tasks.program_id', '=', 'programs.id')
+                  ->orderBy('programs.name', $direction)
+                  ->select('tasks.*');
+        } elseif ($sortBy === 'project') {
+            $query->leftJoin('projects', 'tasks.project_id', '=', 'projects.id')
+                  ->orderBy('projects.name', $direction)
+                  ->select('tasks.*');
+        } else {
+            // Default sorting when no sort specified
+            $query->orderBy('tasks.created_at', 'desc');
+        }
+
+        // Execute query with pagination
+        $tasks = $query->paginate(10);
+
+        // Eager load relationships after pagination to avoid N+1
+        $tasks->load(['status', 'program', 'project', 'assignedUser']);
 
         $programs = Program::active()->get();
         $statuses = Status::all();
@@ -48,21 +86,21 @@ class TaskController extends Controller
             'programs' => $programs,
             'statuses' => $statuses,
             'users' => $users,
-            'filters' => request()->only(['status', 'program', 'priority', 'assigned_to']),
+            'filters' => request()->only(['status', 'program', 'priority', 'assigned_to', 'sort_by', 'sort_direction']),
         ]);
     }
 
     public function create(Request $request)
     {
-        $programs = Program::active()->get();
+        $projects = \App\Models\Project::where('status', '!=', 'cancelled')->get();
         $statuses = Status::all();
         $users = User::all();
 
         return Inertia::render('Tasks/Create', [
-            'programs' => $programs,
+            'projects' => $projects,
             'statuses' => $statuses,
             'users' => $users,
-            'programId' => $request->query('program'),
+            'projectId' => $request->query('project'),
         ]);
     }
 
@@ -76,7 +114,7 @@ class TaskController extends Controller
             'estimated_hours' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'status_id' => 'required|exists:statuses,id',
-            'program_id' => 'required|exists:programs,id',
+            'project_id' => 'nullable|exists:projects,id',
             'assigned_to' => 'nullable|exists:users,id',
             'image' => 'nullable',
         ]);
@@ -93,10 +131,13 @@ class TaskController extends Controller
 
         $task = Task::create($validated);
 
-        // Redirect to program if task was created from a program page
-        if ($request->input('program_id')) {
-            return redirect()->route('programs.show', $request->input('program_id'))
-                ->with('success', 'Task created successfully.');
+        // Redirect to project if task was created from a project page
+        if ($request->input('project_id') && $request->has('from_project')) {
+            $project = \App\Models\Project::find($request->input('project_id'));
+            if ($project) {
+                return redirect()->route('projects.show', $project->uuid)
+                    ->with('success', 'Task created successfully.');
+            }
         }
 
         return redirect()->route('tasks.index')
@@ -105,7 +146,7 @@ class TaskController extends Controller
 
     public function show(Task $task)
     {
-        $task->load(['status', 'program', 'assignedUser']);
+        $task->load(['status', 'program', 'project', 'assignedUser']);
 
         return Inertia::render('Tasks/Show', [
             'task' => $task,

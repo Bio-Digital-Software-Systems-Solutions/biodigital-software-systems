@@ -28,6 +28,7 @@ interface User {
 
 interface Department {
     id: number;
+    uuid: string;
     name: string;
     code: string;
     description: string | null;
@@ -55,7 +56,7 @@ export default function ShowDepartment({ department, availableUsers, canManage }
         e.preventDefault();
         if (!selectedUserId) return;
 
-        router.post(`/departments/${department.code}/assign-user`, {
+        router.post(`/departments/${department.uuid}/assign-user`, {
             user_id: selectedUserId,
         }, {
             onSuccess: () => {
@@ -80,7 +81,7 @@ export default function ShowDepartment({ department, availableUsers, canManage }
 
         if (!confirmed) return;
 
-        router.delete(`/departments/${department.code}/users/${userId}`, {
+        router.delete(`/departments/${department.uuid}/users/${userId}`, {
             onSuccess: () => {
                 showSuccess('Membre retiré avec succès du département');
             },
@@ -91,7 +92,7 @@ export default function ShowDepartment({ department, availableUsers, canManage }
     };
 
     const handleToggleStatus = () => {
-        router.patch(`/departments/${department.code}`, {
+        router.patch(`/departments/${department.uuid}`, {
             ...department,
             is_active: !department.is_active,
         }, {
@@ -153,7 +154,7 @@ export default function ShowDepartment({ department, availableUsers, canManage }
                     {canManage && (
                 <div className="flex gap-2">
                     <Button variant="outline" asChild>
-                        <Link href={`/departments/${department.code}/edit`}>
+                        <Link href={`/departments/${department.uuid}/edit`}>
                             <PencilIcon className="h-4 w-4 mr-2" />
                             Modifier
                         </Link>

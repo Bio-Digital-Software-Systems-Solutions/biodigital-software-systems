@@ -21,6 +21,7 @@ import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 
 interface User {
     id: number;
+    uuid: string;
     name: string;
     email: string;
     joined_at?: string;
@@ -28,6 +29,7 @@ interface User {
 
 interface Group {
     id: number;
+    uuid: string;
     name: string;
     code: string;
     description: string | null;
@@ -57,7 +59,7 @@ export default function ShowGroup({ group, availableUsers, canManage }: Props) {
         e.preventDefault();
         if (!selectedUserId) return;
 
-        router.post(`/groups/${group.code}/add-member`, {
+        router.post(`/groups/${group.uuid}/add-member`, {
             user_id: selectedUserId,
         }, {
             onSuccess: () => {
@@ -71,7 +73,7 @@ export default function ShowGroup({ group, availableUsers, canManage }: Props) {
         });
     };
 
-    const handleRemoveMember = async (userId: number) => {
+    const handleRemoveMember = async (userUuid: string) => {
         const confirmed = await confirm({
             title: 'Retirer le membre',
             message: 'Êtes-vous sûr de vouloir retirer ce membre du groupe ?',
@@ -82,7 +84,7 @@ export default function ShowGroup({ group, availableUsers, canManage }: Props) {
 
         if (!confirmed) return;
 
-        router.delete(`/groups/${group.code}/users/${userId}`, {
+        router.delete(`/groups/${group.uuid}/users/${userUuid}`, {
             onSuccess: () => {
                 showSuccess('Membre retiré avec succès du groupe');
             },
@@ -93,7 +95,7 @@ export default function ShowGroup({ group, availableUsers, canManage }: Props) {
     };
 
     const handleToggleStatus = () => {
-        router.patch(`/groups/${group.code}`, {
+        router.patch(`/groups/${group.uuid}`, {
             ...group,
             is_active: !group.is_active,
         }, {
@@ -161,7 +163,7 @@ export default function ShowGroup({ group, availableUsers, canManage }: Props) {
                 {canManage && (
                     <>
                         <Button variant="outline" asChild>
-                            <Link href={`/groups/${group.code}/edit`}>
+                            <Link href={`/groups/${group.uuid}/edit`}>
                                 <PencilIcon className="h-4 w-4 mr-2" />
                                 Modifier
                             </Link>
@@ -303,7 +305,7 @@ export default function ShowGroup({ group, availableUsers, canManage }: Props) {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handleRemoveMember(user.id)}
+                                        onClick={() => handleRemoveMember(user.uuid)}
                                     >
                                         <UserMinusIcon className="h-4 w-4 mr-2" />
                                         Retirer

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { PageProps } from '@/Types';
+import { PageProps, User } from '@/Types';
 import { ArrowLeftIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import UserMultiSelect from '@/Components/UserMultiSelect';
 
 interface Event {
     id: number;
@@ -15,6 +16,7 @@ interface Event {
     max_participants?: number;
     is_public: boolean;
     status: string;
+    participants?: User[];
     address?: {
         street?: string;
         city?: string;
@@ -39,6 +41,7 @@ export default function Edit({ event }: Props) {
         max_participants: event.max_participants?.toString() || '',
         is_public: event.is_public ?? true,
         status: event.status || 'planned',
+        participant_ids: event.participants?.map(p => p.id) || [] as number[],
         address: {
             street: event.address?.street || '',
             city: event.address?.city || '',
@@ -241,6 +244,17 @@ export default function Edit({ event }: Props) {
                                         </div>
                                     </div>
                                 )}
+                            </div>
+
+                            {/* Participants Selection */}
+                            <div>
+                                <UserMultiSelect
+                                    selectedUserIds={data.participant_ids}
+                                    onChange={(userIds) => setData('participant_ids', userIds)}
+                                    error={errors.participant_ids}
+                                    label="Participants"
+                                    placeholder="Rechercher des participants..."
+                                />
                             </div>
 
                             {/* Event Settings */}

@@ -107,7 +107,9 @@ class Task extends Model
         'status_id',
         'program_id',
         'program_step_id',
+        'project_id',
         'assigned_to',
+        'image',
     ];
 
     /**
@@ -146,6 +148,14 @@ class Task extends Model
     public function programStep(): BelongsTo
     {
         return $this->belongsTo(ProgramStep::class);
+    }
+
+    /**
+     * Get the project that owns the task.
+     */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Project::class);
     }
 
     /**

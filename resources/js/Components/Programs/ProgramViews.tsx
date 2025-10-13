@@ -30,7 +30,7 @@ export const TimelineView = ({ steps, getStatusBadgeClass, getPriorityBadgeClass
             router.patch(route('programs.steps.tasks.update-status', {
                 program: programId,
                 step: stepId,
-                task: task.id
+                task: task.uuid
             }), {
                 status_id: newStatusId
             }, {
@@ -437,7 +437,7 @@ export const KanbanView = ({ steps, getStatusBadgeClass, getTaskStatusBadgeClass
                 router.patch(route('programs.steps.tasks.update-status', {
                     program: programId,
                     step: taskData.stepId,
-                    task: taskData.id
+                    task: taskData.uuid
                 }), {
                     status_id: newStatus.id
                 }, {

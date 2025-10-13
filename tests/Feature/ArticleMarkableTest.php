@@ -129,10 +129,10 @@ class ArticleMarkableTest extends TestCase
         ]);
 
         // User 1 likes
-        $this->actingAs($user1)->postJson(route('articles.like', $article->id));
+        $this->actingAs($user1)->postJson(route('articles.like', $article->slug));
 
         // User 2 likes
-        $response = $this->actingAs($user2)->postJson(route('articles.like', $article->id));
+        $response = $this->actingAs($user2)->postJson(route('articles.like', $article->slug));
 
         $response->assertStatus(200)
             ->assertJson([
@@ -141,7 +141,7 @@ class ArticleMarkableTest extends TestCase
             ]);
 
         // User 1 unlikes
-        $response = $this->actingAs($user1)->postJson(route('articles.like', $article->id));
+        $response = $this->actingAs($user1)->postJson(route('articles.like', $article->slug));
 
         $response->assertStatus(200)
             ->assertJson([
@@ -256,10 +256,10 @@ class ArticleMarkableTest extends TestCase
         ]);
 
         // User 1 bookmarks
-        $this->actingAs($user1)->postJson(route('articles.favorite', $article->id));
+        $this->actingAs($user1)->postJson(route('articles.favorite', $article->slug));
 
         // User 2 bookmarks
-        $response = $this->actingAs($user2)->postJson(route('articles.favorite', $article->id));
+        $response = $this->actingAs($user2)->postJson(route('articles.favorite', $article->slug));
 
         $response->assertStatus(200)
             ->assertJson([

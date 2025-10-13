@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Quiz;
 use App\Models\Task;
+use App\Observers\QuizObserver;
 use App\Observers\TaskObserver;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
@@ -39,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Register observers
         Task::observe(TaskObserver::class);
+        Quiz::observe(QuizObserver::class);
 
         // Register policies
         foreach ($this->policies as $model => $policy) {

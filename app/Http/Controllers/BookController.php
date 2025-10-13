@@ -100,6 +100,7 @@ class BookController extends Controller
             'rental_price' => 'nullable|numeric|min:0',
             'max_rental_days' => 'required|integer|min:1',
             'stock_quantity' => 'required|integer|min:0',
+            'library_id' => 'nullable|exists:libraries,id',
             'category_id' => 'nullable|exists:categories,id',
         ]);
 
@@ -193,6 +194,7 @@ class BookController extends Controller
             'rental_price' => 'nullable|numeric|min:0',
             'max_rental_days' => 'required|integer|min:1',
             'stock_quantity' => 'required|integer|min:0',
+            'library_id' => 'nullable|exists:libraries,id',
             'category_id' => 'nullable|exists:categories,id',
         ]);
 
@@ -282,16 +284,18 @@ class BookController extends Controller
         $this->authorize('rent', $book);
 
         $validated = $request->validate([
-            'library_id' => 'required|exists:libraries,id',
-            'rental_days' => 'required|integer|min:1|max:'.$book->max_rental_days,
+            'library_id' => 'nullable|exists:libraries,id',
+            'rental_days' => 'nullable|integer|min:1|max:'.$book->max_rental_days,
         ]);
 
-        // Check if book is available
-        $activeRentals = BookRental::where('book_id', $book->id)
-            ->where('status', 'active')
-            ->count();
+        // Use book's library_id if not provided
+        $libraryId = $validated['library_id'] ?? $book->library_id;
 
-        if ($activeRentals >= $book->stock_quantity) {
+        // Use book's default rental days if not provided
+        $rentalDays = $validated['rental_days'] ?? min($book->max_rental_days, 14);
+
+        // Check if book is available using available_copies
+        if ($book->available_copies <= 0) {
             return back()->with('error', 'Ce livre n\'est plus disponible à la location.');
         }
 
@@ -305,20 +309,15 @@ class BookController extends Controller
             return back()->with('error', 'Vous avez déjà loué ce livre.');
         }
 
-        // Verify that the library has this book
-        if (! $book->libraries()->where('library_id', $validated['library_id'])->exists()) {
-            return back()->withErrors(['library_id' => 'Ce livre n\'est pas disponible dans cette bibliothèque.']);
-        }
-
         $rentalDate = now();
-        $dueDate = $rentalDate->copy()->addDays($validated['rental_days']);
-        $rentalFee = ($book->rental_price ?? 0) * $validated['rental_days'];
+        $dueDate = $rentalDate->copy()->addDays($rentalDays);
+        $rentalFee = ($book->rental_price ?? 0) * $rentalDays;
 
         try {
             BookRental::create([
                 'book_id' => $book->id,
                 'user_id' => Auth::id(),
-                'library_id' => $validated['library_id'],
+                'library_id' => $libraryId,
                 'rental_date' => $rentalDate,
                 'due_date' => $dueDate,
                 'rental_fee' => $rentalFee,
@@ -326,7 +325,10 @@ class BookController extends Controller
                 'status' => 'active',
             ]);
 
-            return redirect()->route('books.show', $book->id)
+            // Decrement available copies
+            $book->decrement('available_copies');
+
+            return redirect()->route('books.show', $book->uuid)
                 ->with('success', 'Livre loué avec succès jusqu\'au '.$dueDate->format('d/m/Y').'.');
         } catch (\Exception $e) {
             return back()->with('error', 'Une erreur est survenue lors de la location. Veuillez réessayer.');

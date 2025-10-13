@@ -57,7 +57,7 @@ export default function StepDetailModal({
     const handleTaskSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingTask) {
-            patchTask(route('programs.steps.tasks.update', { program: programId, step: step.id, task: editingTask.id }), {
+            patchTask(route('programs.steps.tasks.update', { program: programId, step: step.id, task: editingTask.uuid }), {
                 onSuccess: () => {
                     setShowTaskForm(false);
                     setEditingTask(null);
@@ -74,9 +74,9 @@ export default function StepDetailModal({
         }
     };
 
-    const handleTaskDelete = (taskId: number) => {
+    const handleTaskDelete = (taskUuid: string) => {
         if (confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-            router.delete(route('programs.steps.tasks.destroy', { program: programId, step: step.id, task: taskId }));
+            router.delete(route('programs.steps.tasks.destroy', { program: programId, step: step.id, task: taskUuid }));
         }
     };
 
@@ -120,7 +120,7 @@ export default function StepDetailModal({
             router.patch(route('programs.steps.tasks.update-status', {
                 program: programId,
                 step: step.id,
-                task: task.id
+                task: task.uuid
             }), {
                 status_id: newStatusId
             }, {
@@ -142,7 +142,7 @@ export default function StepDetailModal({
                     router.patch(route('programs.steps.tasks.update-status', {
                         program: programId,
                         step: step.id,
-                        task: task.id
+                        task: task.uuid
                     }), {
                         status_id: targetStatusId
                     }, {
@@ -375,7 +375,7 @@ export default function StepDetailModal({
                                                 <PencilIcon className="w-4 h-4" />
                                             </button>
                                             <button
-                                                onClick={() => handleTaskDelete(task.id)}
+                                                onClick={() => handleTaskDelete(task.uuid)}
                                                 className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                                             >
                                                 <TrashIcon className="w-4 h-4" />

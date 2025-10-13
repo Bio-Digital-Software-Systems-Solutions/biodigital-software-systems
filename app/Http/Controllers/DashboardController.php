@@ -7,6 +7,9 @@ use App\Models\Book;
 use App\Models\BookRental;
 use App\Models\ChatMessage;
 use App\Models\Event;
+use App\Models\Quiz;
+use App\Models\QuizAttempt;
+use App\Models\Training;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -73,6 +76,10 @@ class DashboardController extends Controller
         $articlesViewedThisMonth = $this->getArticlesViewedThisMonth();
         $booksBorrowed = $this->getBooksBorrowedThisMonth($user);
 
+        // Quiz metrics for students
+        $upcomingQuizzes = $this->getUpcomingQuizzes($user);
+        $quizStats = $this->getQuizStats($user);
+
         return Inertia::render('Dashboard', [
             'stats' => [
                 'upcomingEvents' => [
@@ -98,6 +105,8 @@ class DashboardController extends Controller
                 'articlesViewedThisMonth' => $articlesViewedThisMonth,
                 'booksBorrowed' => $booksBorrowed,
             ],
+            'upcomingQuizzes' => $upcomingQuizzes,
+            'quizStats' => $quizStats,
         ]);
     }
 
@@ -223,5 +232,99 @@ class DashboardController extends Controller
     {
         // Return total books borrowed by user (all time)
         return BookRental::where('user_id', $user->id)->count();
+    }
+
+    private function getUpcomingQuizzes($user): array
+    {
+        $now = Carbon::now();
+
+        // Get all active quizzes that are available and not yet taken by the user
+        $quizzes = Quiz::with('training')
+            ->where('is_active', true)
+            ->where(function ($query) use ($now) {
+                $query->where('available_from', '<=', $now)
+                    ->orWhereNull('available_from');
+            })
+            ->where(function ($query) use ($now) {
+                $query->where('available_until', '>=', $now)
+                    ->orWhereNull('available_until');
+            })
+            ->whereDoesntHave('attempts', function ($query) use ($user) {
+                $query->where('student_id', $user->id)
+                    ->where('status', 'completed');
+            })
+            ->orderBy('available_until', 'asc')
+            ->limit(5)
+            ->get()
+            ->map(function ($quiz) use ($now) {
+                $daysUntilDeadline = $quiz->available_until
+                    ? $now->diffInDays($quiz->available_until, false)
+                    : null;
+
+                return [
+                    'id' => $quiz->id,
+                    'uuid' => $quiz->uuid,
+                    'title' => $quiz->title,
+                    'description' => $quiz->description,
+                    'duration_minutes' => $quiz->duration_minutes,
+                    'max_score' => $quiz->max_score,
+                    'passing_score' => $quiz->passing_score,
+                    'available_until' => $quiz->available_until?->toISOString(),
+                    'days_until_deadline' => $daysUntilDeadline,
+                    'is_urgent' => $daysUntilDeadline !== null && $daysUntilDeadline <= 3,
+                    'training' => [
+                        'id' => $quiz->training->id,
+                        'uuid' => $quiz->training->uuid,
+                        'title' => $quiz->training->title,
+                    ],
+                ];
+            })
+            ->toArray();
+
+        return $quizzes;
+    }
+
+    private function getQuizStats($user): array
+    {
+        $totalAttempts = QuizAttempt::where('student_id', $user->id)
+            ->where('status', 'completed')
+            ->count();
+
+        // Count passed attempts (where score >= passing_score of the quiz)
+        $passedAttempts = QuizAttempt::where('student_id', $user->id)
+            ->where('status', 'completed')
+            ->whereHas('quiz', function ($query) {
+                $query->whereColumn('quiz_attempts.score', '>=', 'quizzes.passing_score');
+            })
+            ->count();
+
+        $averageScore = QuizAttempt::where('student_id', $user->id)
+            ->where('status', 'completed')
+            ->avg('score');
+
+        $pendingQuizzes = Quiz::where('is_active', true)
+            ->where(function ($query) {
+                $now = Carbon::now();
+                $query->where('available_from', '<=', $now)
+                    ->orWhereNull('available_from');
+            })
+            ->where(function ($query) {
+                $now = Carbon::now();
+                $query->where('available_until', '>=', $now)
+                    ->orWhereNull('available_until');
+            })
+            ->whereDoesntHave('attempts', function ($query) use ($user) {
+                $query->where('student_id', $user->id)
+                    ->where('status', 'completed');
+            })
+            ->count();
+
+        return [
+            'total_completed' => $totalAttempts,
+            'total_passed' => $passedAttempts,
+            'average_score' => $averageScore ? round($averageScore, 1) : 0,
+            'pending_quizzes' => $pendingQuizzes,
+            'pass_rate' => $totalAttempts > 0 ? round(($passedAttempts / $totalAttempts) * 100, 1) : 0,
+        ];
     }
 }

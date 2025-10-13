@@ -43,6 +43,7 @@ interface Attachment {
 
 interface Epic {
     id: number;
+    uuid: string;
     key: string;
     title: string;
     description: string | null;
@@ -164,7 +165,7 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
             due_date: formData.due_date,
         };
 
-        router.patch(`/epics/${selectedEpic.id}`, submitData, {
+        router.patch(`/epics/${selectedEpic.uuid}`, submitData, {
             preserveScroll: true,
             onSuccess: () => {
                 setIsEditModalOpen(false);
@@ -180,7 +181,7 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
     const handleDelete = () => {
         if (!selectedEpic) return;
 
-        router.delete(`/epics/${selectedEpic.id}`, {
+        router.delete(`/epics/${selectedEpic.uuid}`, {
             preserveScroll: true,
             onSuccess: () => {
                 setIsDeleteModalOpen(false);

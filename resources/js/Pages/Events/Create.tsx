@@ -4,6 +4,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
 import { ArrowLeftIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import DateTimePicker from '@/Components/DateTimePicker';
+import UserMultiSelect from '@/Components/UserMultiSelect';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { registerLocale } from 'react-datepicker';
@@ -23,6 +24,7 @@ export default function Create() {
         location: '',
         max_participants: '',
         is_public: true,
+        participant_ids: [] as number[],
         address: {
             street: '',
             city: '',
@@ -231,6 +233,17 @@ export default function Create() {
                                         </div>
                                     </div>
                                 )}
+                            </div>
+
+                            {/* Participants Selection */}
+                            <div>
+                                <UserMultiSelect
+                                    selectedUserIds={data.participant_ids}
+                                    onChange={(userIds) => setData('participant_ids', userIds)}
+                                    error={errors.participant_ids}
+                                    label="Participants"
+                                    placeholder="Rechercher des participants..."
+                                />
                             </div>
 
                             {/* Event Settings */}

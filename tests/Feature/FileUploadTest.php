@@ -58,11 +58,14 @@ test('article can be created with featured image and documents', function () {
     $user = User::factory()->create();
     $user->givePermissionTo('create articles');
 
+    $category = \App\Models\Category::factory()->create(['type' => 'article']);
+
     $response = $this->actingAs($user)
         ->post(route('articles.store'), [
             'title' => 'Test Article with Media',
             'content' => 'Article with media uploads',
             'status' => 'published',
+            'category_id' => $category->id,
             'featured_image' => 'articles/images/featured.jpg',
             'images' => ['articles/images/gallery-1.jpg'],
             'documents' => ['articles/documents/document.pdf'],

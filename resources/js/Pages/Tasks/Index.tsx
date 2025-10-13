@@ -1,6 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { PlusIcon, FunnelIcon, EyeIcon, PencilIcon, TrashIcon, Squares2X2Icon, ListBulletIcon, TableCellsIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, FunnelIcon, EyeIcon, PencilIcon, TrashIcon, Squares2X2Icon, ListBulletIcon, TableCellsIcon, ArrowLeftIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { Task, Program, Status, User, PageProps } from '@/types';
 import { Button } from '@/Components/ui/button';
@@ -22,6 +22,8 @@ interface Props extends PageProps {
         program?: string;
         priority?: string;
         assigned_to?: string;
+        sort_by?: string;
+        sort_direction?: string;
     };
 }
 
@@ -39,6 +41,31 @@ export default function Index({ tasks, programs, statuses, users, filters }: Pro
             preserveState: true,
             replace: true,
         });
+    };
+
+    const handleSort = (column: string) => {
+        const currentDirection = filters.sort_by === column ? filters.sort_direction : null;
+        const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+
+        router.get(route('tasks.index'), {
+            ...filters,
+            sort_by: column,
+            sort_direction: newDirection,
+        }, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const getSortIcon = (column: string) => {
+        if (filters.sort_by !== column) {
+            return null;
+        }
+        return filters.sort_direction === 'asc' ? (
+            <ChevronUpIcon className="w-4 h-4 inline ml-1" />
+        ) : (
+            <ChevronDownIcon className="w-4 h-4 inline ml-1" />
+        );
     };
 
     const handleDelete = (task: Task) => {
@@ -216,23 +243,41 @@ export default function Index({ tasks, programs, statuses, users, filters }: Pro
                                                         Complete
                                                     </span>
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    Task
+                                                <th
+                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    onClick={() => handleSort('title')}
+                                                >
+                                                    Task {getSortIcon('title')}
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    Program
+                                                <th
+                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    onClick={() => handleSort('program')}
+                                                >
+                                                    Program {getSortIcon('program')}
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    Status
+                                                <th
+                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    onClick={() => handleSort('status')}
+                                                >
+                                                    Status {getSortIcon('status')}
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    Priority
+                                                <th
+                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    onClick={() => handleSort('priority')}
+                                                >
+                                                    Priority {getSortIcon('priority')}
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    Due Date
+                                                <th
+                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    onClick={() => handleSort('due_date')}
+                                                >
+                                                    Due Date {getSortIcon('due_date')}
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    Assigned To
+                                                <th
+                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    onClick={() => handleSort('assigned_to')}
+                                                >
+                                                    Assigned To {getSortIcon('assigned_to')}
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                                     Actions

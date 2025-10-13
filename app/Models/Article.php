@@ -87,11 +87,14 @@ class Article extends Model
         'title',
         'slug',
         'content',
+        'excerpt',
+        'status',
         'cover_image',
         'video_file',
         'published_at',
         'is_featured',
         'views_count',
+        'views',
         'user_id',
         'category_id',
     ];
@@ -188,5 +191,147 @@ class Article extends Model
     public function getRouteKeyName(): string
     {
         return 'slug';
+    }
+
+    /**
+     * Accessor for author_id (maps to user_id for compatibility).
+     */
+    public function getAuthorIdAttribute()
+    {
+        return $this->user_id;
+    }
+
+    /**
+     * Mutator for author_id (maps to user_id for compatibility).
+     */
+    public function setAuthorIdAttribute($value)
+    {
+        $this->attributes['user_id'] = $value;
+    }
+
+    /**
+     * Get the author relationship (alias for user).
+     */
+    public function author()
+    {
+        return $this->user();
+    }
+
+    /**
+     * Accessor for featured (maps to is_featured).
+     */
+    public function getFeaturedAttribute()
+    {
+        return $this->is_featured;
+    }
+
+    /**
+     * Mutator for featured (maps to is_featured).
+     */
+    public function setFeaturedAttribute($value)
+    {
+        $this->attributes['is_featured'] = $value;
+    }
+
+    /**
+     * Accessor for views (maps to views_count for backward compatibility).
+     */
+    public function getViewsAttribute()
+    {
+        return $this->views_count ?? 0;
+    }
+
+    /**
+     * Mutator for views (maps to views_count for backward compatibility).
+     */
+    public function setViewsAttribute($value)
+    {
+        $this->attributes['views_count'] = $value;
+    }
+
+    /**
+     * Scope to filter by status.
+     */
+    public function scopeDraft($query)
+    {
+        return $query->where('status', 'draft');
+    }
+
+    /**
+     * Scope to search articles.
+     */
+    public function scopeSearch($query, $term)
+    {
+        return $query->where(function ($q) use ($term) {
+            $q->where('title', 'like', "%{$term}%")
+              ->orWhere('content', 'like', "%{$term}%");
+        });
+    }
+
+    /**
+     * Get the reading time in minutes.
+     */
+    public function getReadingTimeAttribute(): int
+    {
+        // Average reading speed: 200 words per minute
+        $wordCount = str_word_count(strip_tags($this->content));
+        return (int) ceil($wordCount / 200);
+    }
+
+    /**
+     * Get the article excerpt.
+     * If no excerpt is set, generate one from content.
+     */
+    public function getExcerptAttribute($value): ?string
+    {
+        if ($value) {
+            return $value;
+        }
+
+        // Generate excerpt from content (first 150 characters)
+        $text = strip_tags($this->content);
+        if (strlen($text) <= 150) {
+            return $text;
+        }
+
+        return substr($text, 0, 150) . '...';
+    }
+
+    /**
+     * Scope to filter by author.
+     */
+    public function scopeByAuthor($query, $authorId)
+    {
+        return $query->where('user_id', $authorId);
+    }
+
+    /**
+     * Check if article is published.
+     */
+    public function getIsPublishedAttribute(): bool
+    {
+        return $this->status === 'published' && $this->published_at !== null;
+    }
+
+    /**
+     * Publish the article.
+     */
+    public function publish(): void
+    {
+        $this->update([
+            'status' => 'published',
+            'published_at' => now(),
+        ]);
+    }
+
+    /**
+     * Unpublish the article.
+     */
+    public function unpublish(): void
+    {
+        $this->update([
+            'status' => 'draft',
+            'published_at' => null,
+        ]);
     }
 }

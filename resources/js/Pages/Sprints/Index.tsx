@@ -43,6 +43,7 @@ interface Attachment {
 
 interface Sprint {
     id: number;
+    uuid: string;
     name: string;
     goal: string | null;
     start_date: string;
@@ -120,7 +121,7 @@ export default function SprintsIndex({ sprintsByStatus, projects, filters }: Pro
         e.preventDefault();
         if (!selectedSprint) return;
 
-        router.patch(`/sprints/${selectedSprint.id}`, {
+        router.patch(`/sprints/${selectedSprint.uuid}`, {
             name: formData.name,
             goal: formData.goal,
             start_date: formData.start_date,
@@ -141,7 +142,7 @@ export default function SprintsIndex({ sprintsByStatus, projects, filters }: Pro
     const handleDelete = () => {
         if (!selectedSprint) return;
 
-        router.delete(`/sprints/${selectedSprint.id}`, {
+        router.delete(`/sprints/${selectedSprint.uuid}`, {
             preserveScroll: true,
             onSuccess: () => {
                 setIsDeleteModalOpen(false);

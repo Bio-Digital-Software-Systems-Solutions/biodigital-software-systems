@@ -1,4 +1,4 @@
-import DOMPurify from 'dompurify';
+import DOMPurify from 'isomorphic-dompurify';
 
 /**
  * Sanitize HTML content to prevent XSS attacks
@@ -24,6 +24,8 @@ export const sanitizeHtml = (html: string, config?: DOMPurify.Config): string =>
             'src', 'alt', 'width', 'height',
             'class', 'id'
         ],
+        FORBID_TAGS: ['script', 'style'],
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
         ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
         ALLOW_DATA_ATTR: false,
         ALLOW_UNKNOWN_PROTOCOLS: false,
@@ -33,7 +35,6 @@ export const sanitizeHtml = (html: string, config?: DOMPurify.Config): string =>
         RETURN_DOM_FRAGMENT: false,
         FORCE_BODY: false,
         SANITIZE_DOM: true,
-        KEEP_CONTENT: true,
         IN_PLACE: false
     };
 
@@ -81,7 +82,7 @@ export const sanitizePlainText = (text: string): string => {
     return DOMPurify.sanitize(text, {
         ALLOWED_TAGS: [],
         ALLOWED_ATTR: [],
-        KEEP_CONTENT: true
+        FORBID_TAGS: ['script', 'style']
     });
 };
 

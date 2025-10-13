@@ -45,6 +45,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('events', App\Http\Controllers\EventController::class);
     Route::post('events/{event}/toggle-participation', [App\Http\Controllers\EventController::class, 'toggleParticipation'])
         ->name('events.toggle-participation');
+    Route::post('events/{event}/join', [App\Http\Controllers\EventController::class, 'join'])
+        ->name('events.join');
+    Route::delete('events/{event}/leave', [App\Http\Controllers\EventController::class, 'leave'])
+        ->name('events.leave');
 
     // Book routes
     Route::resource('books', App\Http\Controllers\BookController::class);
@@ -69,8 +73,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('admin.book-rentals.destroy')
         ->middleware('can:manage library');
 
-    // Article routes (excluding store/update to apply throttle middleware separately)
-    Route::resource('articles', App\Http\Controllers\ArticleController::class)->except(['store', 'update']);
+    // Article routes - order matters: specific routes before generic ones
+    Route::get('articles', [App\Http\Controllers\ArticleController::class, 'index'])->name('articles.index');
+    Route::get('articles/create', [App\Http\Controllers\ArticleController::class, 'create'])->name('articles.create');
+    Route::get('articles/{article}', [App\Http\Controllers\ArticleController::class, 'show'])->name('articles.show');
+    Route::get('articles/{article}/edit', [App\Http\Controllers\ArticleController::class, 'edit'])->name('articles.edit');
+    Route::delete('articles/{article}', [App\Http\Controllers\ArticleController::class, 'destroy'])->name('articles.destroy');
     Route::post('articles/{article}/like', [App\Http\Controllers\MarkController::class, 'toggleLike'])
         ->name('articles.like');
     Route::post('articles/{article}/favorite', [App\Http\Controllers\MarkController::class, 'toggleBookmark'])
@@ -332,18 +340,44 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('training-class-schedules/{schedule}', [App\Http\Controllers\TrainingClassController::class, 'destroySchedule'])
         ->middleware('restrict.member')
         ->name('training-class-schedules.destroy');
-    Route::get('training-class-schedules/{schedule}/attendance', [App\Http\Controllers\TrainingClassController::class, 'scheduleAttendance'])
+    Route::get('training-class-schedules/{trainingClassSchedule}/attendance', [App\Http\Controllers\TrainingClassScheduleController::class, 'attendance'])
         ->middleware('restrict.member')
         ->name('training-class-schedules.attendance');
-    Route::post('training-class-schedules/{schedule}/mark-attendance', [App\Http\Controllers\TrainingClassController::class, 'markScheduleAttendance'])
+    Route::post('training-class-schedules/{trainingClassSchedule}/mark-attendance', [App\Http\Controllers\TrainingClassScheduleController::class, 'markAttendance'])
         ->middleware('restrict.member')
         ->name('training-class-schedules.mark-attendance');
 
-    // Quiz routes
+    // Quiz Management routes (for teachers/admins)
+    Route::prefix('trainings/{training}/quizzes')->group(function () {
+        Route::get('/', [App\Http\Controllers\QuizController::class, 'index'])
+            ->name('trainings.quizzes.index');
+        Route::get('/create', [App\Http\Controllers\QuizController::class, 'create'])
+            ->name('trainings.quizzes.create');
+        Route::post('/', [App\Http\Controllers\QuizController::class, 'store'])
+            ->name('trainings.quizzes.store');
+        Route::get('/{quiz}/edit', [App\Http\Controllers\QuizController::class, 'edit'])
+            ->name('trainings.quizzes.edit');
+        Route::put('/{quiz}', [App\Http\Controllers\QuizController::class, 'update'])
+            ->name('trainings.quizzes.update');
+        Route::delete('/{quiz}', [App\Http\Controllers\QuizController::class, 'destroy'])
+            ->name('trainings.quizzes.destroy');
+        Route::get('/{quiz}/results', [App\Http\Controllers\QuizController::class, 'results'])
+            ->name('trainings.quizzes.results');
+        Route::get('/{quiz}/export-csv', [App\Http\Controllers\QuizController::class, 'exportCSV'])
+            ->name('trainings.quizzes.export-csv');
+    });
+
+    // Quiz Taking routes (for students)
     Route::get('quizzes/{quiz}/start', [App\Http\Controllers\QuizController::class, 'start'])
         ->name('quizzes.start');
     Route::post('quiz-attempts/{attempt}/submit', [App\Http\Controllers\QuizController::class, 'submit'])
         ->name('quiz-attempts.submit');
+    Route::get('quiz-attempts/{attempt}', [App\Http\Controllers\QuizController::class, 'showAttempt'])
+        ->name('quiz-attempts.show');
+
+    // Quiz Teacher Dashboard
+    Route::get('quizzes/teacher/dashboard', [App\Http\Controllers\QuizController::class, 'teacherDashboard'])
+        ->name('quizzes.teacher-dashboard');
 
     // Training Enrollment Management routes
     Route::get('training-enrollments', [App\Http\Controllers\TrainingEnrollmentController::class, 'index'])

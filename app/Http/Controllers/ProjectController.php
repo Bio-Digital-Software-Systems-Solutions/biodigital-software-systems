@@ -22,7 +22,13 @@ class ProjectController extends Controller
     public function index()
     {
         $projects = Project::with(['manager', 'members'])
-            ->withCount(['tasks', 'members'])
+            ->withCount([
+                'tasks',
+                'members',
+                'tasks as completed_tasks_count' => function ($query) {
+                    $query->where('status', 'done');
+                },
+            ])
             ->get();
 
         // Calculate statistics
@@ -58,14 +64,20 @@ class ProjectController extends Controller
 
         // Get recent projects
         $recentProjects = Project::with(['manager', 'members'])
-            ->withCount(['tasks', 'members'])
+            ->withCount([
+                'tasks',
+                'members',
+                'tasks as completed_tasks_count' => function ($query) {
+                    $query->where('status', 'done');
+                },
+            ])
             ->latest()
             ->take(5)
             ->get()
             ->map(function ($project) {
-                $completedTasks = $project->tasks()->where('status', 'done')->count();
-                $totalTasks = $project->tasks_count;
-                $project->progress = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
+                $project->progress = $project->tasks_count > 0
+                    ? round(($project->completed_tasks_count / $project->tasks_count) * 100)
+                    : 0;
 
                 return $project;
             });
@@ -80,22 +92,55 @@ class ProjectController extends Controller
     public function list()
     {
         $projects = Project::with(['manager', 'members'])
-            ->withCount(['tasks', 'members'])
+            ->withCount([
+                'tasks',
+                'members',
+                'tasks as completed_tasks_count' => function ($query) {
+                    $query->where('status', 'done');
+                },
+            ])
             ->when(request('status'), function ($query, $status) {
                 $query->where('status', $status);
             })
-            ->latest()
+            ->when(request('sort_by'), function ($query) {
+                $sortBy = request('sort_by');
+                $direction = request('sort_direction', 'asc');
+
+                if ($sortBy === 'name') {
+                    $query->orderBy('projects.name', $direction);
+                } elseif ($sortBy === 'status') {
+                    $query->orderBy('projects.status', $direction);
+                } elseif ($sortBy === 'tasks_count') {
+                    $query->orderBy('tasks_count', $direction);
+                } elseif ($sortBy === 'manager') {
+                    $query->leftJoin('users', 'projects.project_manager_id', '=', 'users.id')
+                          ->orderBy('users.first_name', $direction)
+                          ->select('projects.*');
+                }
+            }, function ($query) {
+                // Default sorting when no sort specified
+                $query->latest();
+            })
             ->get()
             ->map(function ($project) {
-                $completedTasks = $project->tasks()->where('status', 'done')->count();
-                $totalTasks = $project->tasks_count;
-                $project->progress = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
+                $project->progress = $project->tasks_count > 0
+                    ? round(($project->completed_tasks_count / $project->tasks_count) * 100)
+                    : 0;
 
                 return $project;
             });
 
+        // Sort by progress if requested (needs to be done after calculation)
+        if (request('sort_by') === 'progress') {
+            $direction = request('sort_direction', 'asc');
+            $projects = $direction === 'asc'
+                ? $projects->sortBy('progress')->values()
+                : $projects->sortByDesc('progress')->values();
+        }
+
         return Inertia::render('Projects/Index', [
             'projects' => $projects,
+            'filters' => request()->only(['status', 'sort_by', 'sort_direction']),
         ]);
     }
 

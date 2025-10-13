@@ -19,6 +19,7 @@ class DashboardStatisticsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
         $this->user = User::factory()->create();
     }
 
@@ -41,8 +42,14 @@ class DashboardStatisticsTest extends TestCase
     public function it_calculates_published_articles_correctly()
     {
         // Create 8 published articles and 2 drafts
-        Article::factory()->count(8)->create(['published_at' => Carbon::now()]);
-        Article::factory()->count(2)->create(['published_at' => null]);
+        Article::factory()->count(8)->create([
+            'status' => 'published',
+            'published_at' => Carbon::now(),
+        ]);
+        Article::factory()->count(2)->create([
+            'status' => 'draft',
+            'published_at' => null,
+        ]);
 
         $response = $this->actingAs($this->user)->get('/dashboard');
 
@@ -101,7 +108,10 @@ class DashboardStatisticsTest extends TestCase
     public function it_calculates_total_published_articles()
     {
         // Create 10 articles published at different times
-        Article::factory()->count(10)->create(['published_at' => Carbon::now()]);
+        Article::factory()->count(10)->create([
+            'status' => 'published',
+            'published_at' => Carbon::now(),
+        ]);
 
         $response = $this->actingAs($this->user)->get('/dashboard');
 

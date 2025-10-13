@@ -103,6 +103,7 @@ class Project extends Model
         'reviewer_id',
         'is_template',
         'settings',
+        'image',
     ];
 
     protected $casts = [
@@ -174,6 +175,27 @@ class Project extends Model
     // Accessors
     public function getProgressAttribute(): float
     {
+        // Use the withCount result if available to avoid N+1 queries
+        if (isset($this->attributes['tasks_count'])) {
+            $totalTasks = $this->attributes['tasks_count'];
+            if ($totalTasks === 0) {
+                return 0;
+            }
+
+            // If completed_tasks_count was loaded via withCount, use it
+            if (isset($this->attributes['completed_tasks_count'])) {
+                $completedTasks = $this->attributes['completed_tasks_count'];
+            } else {
+                // Fall back to query if not loaded
+                $completedTasks = $this->tasks()
+                    ->whereIn('status', ['done', 'cancelled'])
+                    ->count();
+            }
+
+            return round(($completedTasks / $totalTasks) * 100, 2);
+        }
+
+        // Fall back to query if tasks_count not loaded
         $totalTasks = $this->tasks()->count();
         if ($totalTasks === 0) {
             return 0;

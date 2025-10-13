@@ -81,7 +81,10 @@ class Book extends Model
         'rental_price',
         'max_rental_days',
         'stock_quantity',
+        'total_copies',
+        'available_copies',
         'category_id',
+        'library_id',
     ];
 
     /**
@@ -103,6 +106,14 @@ class Book extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Get the library that owns the book.
+     */
+    public function library(): BelongsTo
+    {
+        return $this->belongsTo(Library::class);
     }
 
     /**

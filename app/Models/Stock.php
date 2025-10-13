@@ -102,6 +102,7 @@ class Stock extends Model
         'location',
         'is_active',
         'category_id',
+        'image',
     ];
 
     /**

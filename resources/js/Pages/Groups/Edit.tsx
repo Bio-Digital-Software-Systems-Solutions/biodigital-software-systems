@@ -13,6 +13,7 @@ interface User {
 
 interface Group {
     id: number;
+    uuid: string;
     name: string;
     code: string;
     description?: string;
@@ -38,7 +39,7 @@ export default function Edit({ group, users }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('groups.update', group.code));
+        put(route('groups.update', group.uuid));
     };
 
     return (

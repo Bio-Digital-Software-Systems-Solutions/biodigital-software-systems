@@ -8,6 +8,7 @@ import EventQuickCreateModal from '@/Components/EventQuickCreateModal';
 
 interface Event {
     id: number;
+    uuid: string;
     title: string;
     description?: string;
     start_date: string;
@@ -66,8 +67,8 @@ export default function CalendarView({ events, canCreateEvents = false }: Calend
         return { top, height };
     };
 
-    const handleEventClick = (eventId: number) => {
-        router.visit(route('events.show', eventId));
+    const handleEventClick = (eventUuid: string) => {
+        router.visit(route('events.show', eventUuid));
     };
 
     const handleCreateEvent = (date?: Date, hour?: number) => {
@@ -325,7 +326,7 @@ export default function CalendarView({ events, canCreateEvents = false }: Calend
                                                             backgroundColor: eventColor,
                                                             borderLeftColor: eventColor,
                                                         }}
-                                                        onClick={() => handleEventClick(event.id)}
+                                                        onClick={() => handleEventClick(event.uuid)}
                                                     >
                                                         <div className="text-xs font-semibold truncate">
                                                             {format(parseISO(event.start_date), 'HH:mm')} {event.title}

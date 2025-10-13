@@ -29,6 +29,7 @@ class LibraryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:libraries',
             'description' => 'nullable|string',
             'image' => 'nullable',
         ]);
@@ -44,7 +45,7 @@ class LibraryController extends Controller
         }
 
         // Create library logic here
-        // $library = Library::create($validated);
+        $library = \App\Models\Library::create($validated);
 
         return redirect()->back()->with('success', 'Library created successfully.');
     }

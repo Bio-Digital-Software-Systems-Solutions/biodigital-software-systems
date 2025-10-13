@@ -74,6 +74,7 @@ class Group extends Model
         'max_members',
         'leader_id',
         'is_active',
+        'image',
     ];
 
     protected function casts(): array
@@ -92,6 +93,7 @@ class Group extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'group_user')
+            ->using(\App\Models\Pivots\GroupUser::class)
             ->withPivot('joined_at')
             ->withTimestamps();
     }

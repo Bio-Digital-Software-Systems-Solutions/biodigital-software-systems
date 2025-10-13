@@ -31,13 +31,16 @@ class RolesAndPermissionsSeeder extends Seeder
             'view groups', 'create groups', 'edit groups', 'delete groups', 'manage group members',
             // Users & Departments
             'view users', 'create users', 'edit users', 'delete users',
-            'view departments', 'create departments', 'edit departments', 'delete departments', 'assign department members',
+            'view departments', 'create departments', 'edit departments', 'delete departments', 'manage departments', 'assign department members',
             // Books & Library
             'view books', 'rent books', 'create books', 'edit books', 'delete books', 'manage library', 'approve rentals',
             // Videos
             'view videos', 'upload videos', 'edit videos', 'delete videos',
             // Trainings
             'view trainings', 'create trainings', 'edit trainings', 'delete trainings', 'manage trainings',
+            // Quiz & Evaluations
+            'view quizzes', 'create quizzes', 'edit quizzes', 'delete quizzes', 'manage quizzes', 'take quizzes', 'grade quizzes',
+            'view evaluations', 'create evaluations', 'edit evaluations', 'delete evaluations', 'manage evaluations',
             // Messages
             'view messages', 'create messages', 'edit messages', 'delete messages',
             // Chat
@@ -55,12 +58,8 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // Super Admin - All permissions
-        $superAdmin = Role::firstOrCreate(['name' => 'SuperAdmin']);
-        $superAdmin->syncPermissions(Permission::all());
-
-        // Admin - Almost all permissions except critical system settings
-        $admin = Role::firstOrCreate(['name' => 'Admin']);
+        // Admin - All permissions (lowercase)
+        $admin = Role::firstOrCreate(['name' => 'admin']);
         $admin->syncPermissions([
             // Articles
             'view articles', 'create articles', 'edit articles', 'delete articles', 'publish articles',
@@ -75,13 +74,16 @@ class RolesAndPermissionsSeeder extends Seeder
             'view groups', 'create groups', 'edit groups', 'delete groups', 'manage group members',
             // Users & Departments
             'view users', 'edit users',
-            'view departments', 'create departments', 'edit departments', 'assign department members',
+            'view departments', 'create departments', 'edit departments', 'manage departments', 'assign department members',
             // Books & Library
             'view books', 'rent books', 'create books', 'edit books', 'delete books', 'manage library', 'approve rentals',
             // Videos
             'view videos', 'upload videos', 'edit videos', 'delete videos',
             // Trainings
             'view trainings', 'create trainings', 'edit trainings', 'delete trainings', 'manage trainings',
+            // Quiz & Evaluations
+            'view quizzes', 'create quizzes', 'edit quizzes', 'delete quizzes', 'manage quizzes', 'take quizzes', 'grade quizzes',
+            'view evaluations', 'create evaluations', 'edit evaluations', 'delete evaluations', 'manage evaluations',
             // Messages
             'view messages', 'create messages', 'edit messages', 'delete messages',
             // Chat
@@ -94,9 +96,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'view reports', 'generate reports',
         ]);
 
-        // Editor - Content management focused
-        $editor = Role::firstOrCreate(['name' => 'Editor']);
-        $editor->syncPermissions([
+        // Writer - Content management focused
+        $writer = Role::firstOrCreate(['name' => 'writer']);
+        $writer->syncPermissions([
             // Articles
             'view articles', 'create articles', 'edit articles', 'delete articles', 'publish articles',
             // Videos
@@ -113,7 +115,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         // Project Manager - Projects, tasks, and team management
-        $projectManager = Role::firstOrCreate(['name' => 'ProjectManager']);
+        $projectManager = Role::firstOrCreate(['name' => 'project-manager']);
         $projectManager->syncPermissions([
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
@@ -138,7 +140,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         // Event Manager - Events and related activities
-        $eventManager = Role::firstOrCreate(['name' => 'EventManager']);
+        $eventManager = Role::firstOrCreate(['name' => 'event-manager']);
         $eventManager->syncPermissions([
             // Events
             'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
@@ -156,7 +158,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         // Library Manager - Library and books management
-        $libraryManager = Role::firstOrCreate(['name' => 'LibraryManager']);
+        $libraryManager = Role::firstOrCreate(['name' => 'library-manager']);
         $libraryManager->syncPermissions([
             // Books & Library
             'view books', 'rent books', 'create books', 'edit books', 'delete books', 'manage library', 'approve rentals',
@@ -172,7 +174,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         // Group Leader - Manage assigned group
-        $groupLeader = Role::firstOrCreate(['name' => 'GroupLeader']);
+        $groupLeader = Role::firstOrCreate(['name' => 'group-leader']);
         $groupLeader->syncPermissions([
             // Groups
             'view groups', 'edit groups', 'manage group members',
@@ -190,10 +192,10 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         // Department Leader - Manage department
-        $departmentLeader = Role::firstOrCreate(['name' => 'DepartmentLeader']);
+        $departmentLeader = Role::firstOrCreate(['name' => 'department-leader']);
         $departmentLeader->syncPermissions([
             // Departments
-            'view departments', 'edit departments', 'assign department members',
+            'view departments', 'edit departments', 'manage departments', 'assign department members',
             // Users
             'view users',
             // Tasks & Programs
@@ -213,7 +215,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         // Impact Family Leader - Manage impact families and related activities
-        $impactFamilyLeader = Role::firstOrCreate(['name' => 'ImpactFamilyLeader']);
+        $impactFamilyLeader = Role::firstOrCreate(['name' => 'impact-family-leader']);
         $impactFamilyLeader->syncPermissions([
             // Groups (Impact Families)
             'view groups', 'edit groups', 'manage group members',
@@ -236,7 +238,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         // Member - Basic access for regular users
-        $member = Role::firstOrCreate(['name' => 'Member']);
+        $member = Role::firstOrCreate(['name' => 'member']);
         $member->syncPermissions([
             // Viewing permissions
             'view articles',
@@ -250,7 +252,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         // Student - Access to student dashboard and training materials
-        $student = Role::firstOrCreate(['name' => 'Student']);
+        $student = Role::firstOrCreate(['name' => 'student']);
         $student->syncPermissions([
             // Viewing permissions
             'view articles', 'view events', 'attend events', 'view videos', 'view books', 'view departments',
@@ -258,13 +260,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'rent books',
             // Trainings
             'view trainings',
+            // Quiz & Evaluations
+            'take quizzes',
             // Messages & Chat
             'view messages', 'create messages', 'delete messages',
             'use chat',
         ]);
 
         // Teacher - Access to teacher dashboard and training class management
-        $teacher = Role::firstOrCreate(['name' => 'Teacher']);
+        $teacher = Role::firstOrCreate(['name' => 'teacher']);
         $teacher->syncPermissions([
             // Viewing permissions
             'view articles', 'view events', 'attend events', 'view videos', 'view books', 'view users', 'view departments',
@@ -274,11 +278,39 @@ class RolesAndPermissionsSeeder extends Seeder
             'view books', 'rent books',
             // Trainings
             'view trainings', 'create trainings', 'edit trainings', 'manage trainings',
+            // Quiz & Evaluations
+            'view quizzes', 'create quizzes', 'edit quizzes', 'delete quizzes', 'manage quizzes', 'take quizzes', 'grade quizzes',
+            'view evaluations', 'create evaluations', 'edit evaluations', 'delete evaluations', 'manage evaluations',
             // Messages & Chat
             'view messages', 'create messages', 'edit messages', 'delete messages',
             'use chat',
             // Reports
             'view reports',
         ]);
+
+        // Backward compatibility aliases for PascalCase role names
+        $superAdmin = Role::firstOrCreate(['name' => 'SuperAdmin']);
+        $superAdmin->syncPermissions(Permission::all());
+
+        $adminAlias = Role::firstOrCreate(['name' => 'Admin']);
+        $adminAlias->syncPermissions($admin->permissions);
+
+        $memberAlias = Role::firstOrCreate(['name' => 'Member']);
+        $memberAlias->syncPermissions($member->permissions);
+
+        $studentAlias = Role::firstOrCreate(['name' => 'Student']);
+        $studentAlias->syncPermissions($student->permissions);
+
+        $teacherAlias = Role::firstOrCreate(['name' => 'Teacher']);
+        $teacherAlias->syncPermissions($teacher->permissions);
+
+        $projectManagerAlias = Role::firstOrCreate(['name' => 'ProjectManager']);
+        $projectManagerAlias->syncPermissions($projectManager->permissions);
+
+        $eventManagerAlias = Role::firstOrCreate(['name' => 'EventManager']);
+        $eventManagerAlias->syncPermissions($eventManager->permissions);
+
+        $editorAlias = Role::firstOrCreate(['name' => 'Editor']);
+        $editorAlias->syncPermissions($writer->permissions);
     }
 }

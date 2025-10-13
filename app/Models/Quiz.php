@@ -68,6 +68,9 @@ class Quiz extends Model
         'available_from',
         'available_until',
         'is_active',
+        'max_attempts',
+        'score_display',
+        'status',
     ];
 
     protected $casts = [
@@ -84,5 +87,10 @@ class Quiz extends Model
     public function attempts(): HasMany
     {
         return $this->hasMany(QuizAttempt::class);
+    }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(QuizQuestion::class)->orderBy('order');
     }
 }

@@ -68,7 +68,7 @@ export default function Show({ class: trainingClass, students: initialStudents }
     const [loadingDays, setLoadingDays] = useState(false);
     const [scheduleStudents, setScheduleStudents] = useState<any[]>([]);
     const [loadingScheduleStudents, setLoadingScheduleStudents] = useState(false);
-    const previousScheduleIdRef = useRef<number | null>(null);
+    const previousScheduleIdRef = useRef<string | null>(null);
 
     // Fetch week days schedule on mount
     useEffect(() => {
@@ -79,13 +79,13 @@ export default function Show({ class: trainingClass, students: initialStudents }
     useEffect(() => {
         if (selectedDay && weekDays.length > 0) {
             const selectedDayData = weekDays.find(d => d.day_name === selectedDay);
-            const scheduleId = selectedDayData?.has_schedule ? selectedDayData.id : null;
+            const scheduleUuid = selectedDayData?.has_schedule ? selectedDayData.uuid : null;
 
-            // Only fetch if schedule ID changed
-            if (scheduleId !== previousScheduleIdRef.current) {
-                previousScheduleIdRef.current = scheduleId;
-                if (scheduleId) {
-                    fetchScheduleStudents(scheduleId);
+            // Only fetch if schedule UUID changed
+            if (scheduleUuid !== previousScheduleIdRef.current) {
+                previousScheduleIdRef.current = scheduleUuid;
+                if (scheduleUuid) {
+                    fetchScheduleStudents(scheduleUuid);
                 } else {
                     setScheduleStudents([]);
                     setAttendance({});
@@ -151,10 +151,10 @@ export default function Show({ class: trainingClass, students: initialStudents }
         }
     };
 
-    const fetchScheduleStudents = useCallback(async (scheduleId: number) => {
+    const fetchScheduleStudents = useCallback(async (scheduleUuid: string) => {
         setLoadingScheduleStudents(true);
         try {
-            const response = await axios.get(route('training-class-schedules.attendance', scheduleId));
+            const response = await axios.get(route('training-class-schedules.attendance', scheduleUuid));
             setScheduleStudents(response.data);
 
             // Update attendance state with schedule students
@@ -211,7 +211,7 @@ export default function Show({ class: trainingClass, students: initialStudents }
         setSaving(true);
         try {
             const selectedDayData = weekDays.find(d => d.day_name === selectedDay);
-            if (!selectedDayData || !selectedDayData.id) {
+            if (!selectedDayData || !selectedDayData.uuid) {
                 toast.error('Erreur', {
                     description: 'Aucun horaire sélectionné pour ce jour.',
                 });
@@ -219,13 +219,13 @@ export default function Show({ class: trainingClass, students: initialStudents }
             }
 
             const attendances = Object.values(attendance);
-            await axios.post(route('training-class-schedules.mark-attendance', selectedDayData.id), { attendances });
+            await axios.post(route('training-class-schedules.mark-attendance', selectedDayData.uuid), { attendances });
             toast.success('Présences enregistrées avec succès', {
                 description: `Les présences ont été mises à jour pour ${selectedDay}.`,
             });
 
             // Refresh schedule students
-            fetchScheduleStudents(selectedDayData.id);
+            fetchScheduleStudents(selectedDayData.uuid);
         } catch (error) {
             apiLogger.error('Error saving attendance:', error);
             toast.error('Erreur lors de l\'enregistrement', {
@@ -639,7 +639,7 @@ export default function Show({ class: trainingClass, students: initialStudents }
                                                 {attendance[student.id]
                                                     ? `${calculateAttendanceRate(student.id).toFixed(0)}%`
                                                     : (student.attendance_rate !== null && student.attendance_rate !== undefined
-                                                        ? `${student.attendance_rate.toFixed(0)}%`
+                                                        ? `${Number(student.attendance_rate).toFixed(0)}%`
                                                         : 'N/A')}
                                             </span>
                                         </td>
@@ -656,6 +656,8 @@ export default function Show({ class: trainingClass, students: initialStudents }
                     </div>
                 </>
                     )}
+                </div>
+            </div>
         </DashboardLayout>
     );
 }

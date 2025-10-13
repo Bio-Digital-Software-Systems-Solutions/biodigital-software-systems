@@ -1,16 +1,22 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Program, Status, User, PageProps } from '@/types';
+import { Status, User, PageProps } from '@/types';
 
-interface Props extends PageProps {
-    programs: Program[];
-    statuses: Status[];
-    users: User[];
-    programId?: string;
+interface Project {
+    id: number;
+    uuid: string;
+    name: string;
 }
 
-export default function Create({ programs, statuses, users, programId }: Props) {
+interface Props extends PageProps {
+    projects: Project[];
+    statuses: Status[];
+    users: User[];
+    projectId?: string;
+}
+
+export default function Create({ projects, statuses, users, projectId }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         description: '',
@@ -19,19 +25,14 @@ export default function Create({ programs, statuses, users, programId }: Props) 
         estimated_hours: '',
         notes: '',
         status_id: '',
-        program_id: programId || '',
+        project_id: projectId || '',
         assigned_to: '',
+        from_project: projectId || '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('tasks.store'), {
-            onSuccess: () => {
-                if (programId) {
-                    window.location.href = route('programs.show', programId);
-                }
-            },
-        });
+        post(route('tasks.store'));
     };
 
     return (
@@ -44,11 +45,15 @@ export default function Create({ programs, statuses, users, programId }: Props) 
                         <div className="p-6 text-gray-900 dark:text-gray-100">
                             <div className="flex items-center mb-6">
                                 <Link
-                                    href={programId ? route('programs.show', programId) : route('project-tasks.index')}
+                                    href={
+                                        projectId
+                                            ? route('projects.show', projectId)
+                                            : route('tasks.index')
+                                    }
                                     className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 mr-4"
                                 >
                                     <ArrowLeftIcon className="w-4 h-4 mr-1" />
-                                    {programId ? 'Back to Program' : 'Back to Tasks'}
+                                    {projectId ? 'Back to Project' : 'Back to Tasks'}
                                 </Link>
                                 <h1 className="text-2xl font-semibold">Create Task</h1>
                             </div>
@@ -71,24 +76,23 @@ export default function Create({ programs, statuses, users, programId }: Props) 
                                     </div>
 
                                     <div>
-                                        <label htmlFor="program_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            Program *
+                                        <label htmlFor="project_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Project
                                         </label>
                                         <select
-                                            id="program_id"
-                                            value={data.program_id}
-                                            onChange={(e) => setData('program_id', e.target.value)}
+                                            id="project_id"
+                                            value={data.project_id}
+                                            onChange={(e) => setData('project_id', e.target.value)}
                                             className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                            required
                                         >
-                                            <option value="">Select a program</option>
-                                            {programs.map(program => (
-                                                <option key={program.id} value={program.id}>
-                                                    {program.name}
+                                            <option value="">Select a project (optional)</option>
+                                            {projects.map(project => (
+                                                <option key={project.id} value={project.id}>
+                                                    {project.name}
                                                 </option>
                                             ))}
                                         </select>
-                                        {errors.program_id && <p className="mt-1 text-sm text-red-600">{errors.program_id}</p>}
+                                        {errors.project_id && <p className="mt-1 text-sm text-red-600">{errors.project_id}</p>}
                                     </div>
                                 </div>
 
@@ -215,7 +219,11 @@ export default function Create({ programs, statuses, users, programId }: Props) 
 
                                 <div className="flex justify-end space-x-3">
                                     <Link
-                                        href={programId ? route('programs.show', programId) : route('project-tasks.index')}
+                                        href={
+                                            projectId
+                                                ? route('projects.show', projectId)
+                                                : route('tasks.index')
+                                        }
                                         className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                                     >
                                         Cancel

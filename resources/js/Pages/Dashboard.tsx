@@ -12,7 +12,12 @@ import {
     ChartBarIcon,
     ArrowUpIcon,
     ArrowDownIcon,
+    ClockIcon,
+    AcademicCapIcon,
+    ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
+import { Badge } from '@/Components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 
 interface DashboardStats {
     title: string;
@@ -29,6 +34,32 @@ interface StatData {
         value: string;
         type: 'increase' | 'decrease' | 'stable';
     };
+}
+
+interface Quiz {
+    id: number;
+    uuid: string;
+    title: string;
+    description: string | null;
+    duration_minutes: number;
+    max_score: number;
+    passing_score: number;
+    available_until: string | null;
+    days_until_deadline: number | null;
+    is_urgent: boolean;
+    training: {
+        id: number;
+        uuid: string;
+        title: string;
+    };
+}
+
+interface QuizStats {
+    total_completed: number;
+    total_passed: number;
+    average_score: number;
+    pending_quizzes: number;
+    pass_rate: number;
 }
 
 interface DashboardProps extends PageProps {
@@ -52,10 +83,12 @@ interface DashboardProps extends PageProps {
         articlesViewedThisMonth: number;
         booksBorrowed: number;
     };
+    upcomingQuizzes?: Quiz[];
+    quizStats?: QuizStats;
 }
 
 export default function Dashboard() {
-    const { auth, stats: statsData, recentActivities: activitiesData, performance } = usePage<DashboardProps>().props;
+    const { auth, stats: statsData, recentActivities: activitiesData, performance, upcomingQuizzes, quizStats } = usePage<DashboardProps>().props;
 
     const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
         'CalendarDaysIcon': CalendarDaysIcon,
@@ -286,6 +319,154 @@ export default function Dashboard() {
                         </div>
                     </div>
                 </div>
+
+                {/* Quiz Section */}
+                {upcomingQuizzes && upcomingQuizzes.length > 0 && (
+                    <div className="mt-8">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <AcademicCapIcon className="h-6 w-6" />
+                                Quiz à venir
+                            </h3>
+                        </div>
+
+                        {/* Quiz Stats Cards */}
+                        {quizStats && (
+                            <div className="grid gap-4 mb-6 grid-cols-2 md:grid-cols-4">
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            À faire
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                                            {quizStats.pending_quizzes}
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">quiz disponibles</p>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            Complétés
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                            {quizStats.total_completed}
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">quiz passés</p>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            Taux de réussite
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                            {quizStats.pass_rate}%
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">{quizStats.total_passed}/{quizStats.total_completed} réussis</p>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            Score moyen
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                                            {quizStats.average_score}
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">points en moyenne</p>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        )}
+
+                        {/* Quiz List */}
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            {upcomingQuizzes.map((quiz) => (
+                                <Card key={quiz.id} className={quiz.is_urgent ? 'border-2 border-red-300 dark:border-red-800' : ''}>
+                                    <CardContent className="p-4">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <h4 className="font-semibold text-gray-900 dark:text-white">
+                                                        {quiz.title}
+                                                    </h4>
+                                                    {quiz.is_urgent && (
+                                                        <Badge variant="destructive" className="gap-1">
+                                                            <ExclamationTriangleIcon className="h-3 w-3" />
+                                                            Urgent
+                                                        </Badge>
+                                                    )}
+                                                </div>
+
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                                    {quiz.training.title}
+                                                </p>
+
+                                                {quiz.description && (
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                                                        {quiz.description}
+                                                    </p>
+                                                )}
+
+                                                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                                    <span className="flex items-center gap-1">
+                                                        <ClockIcon className="h-3 w-3" />
+                                                        {quiz.duration_minutes} min
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <AcademicCapIcon className="h-3 w-3" />
+                                                        {quiz.passing_score}/{quiz.max_score} pts requis
+                                                    </span>
+                                                </div>
+
+                                                {quiz.available_until && (
+                                                    <div className={`mt-2 text-xs font-medium ${
+                                                        quiz.is_urgent
+                                                            ? 'text-red-600 dark:text-red-400'
+                                                            : 'text-gray-600 dark:text-gray-400'
+                                                    }`}>
+                                                        {quiz.days_until_deadline !== null && quiz.days_until_deadline >= 0 ? (
+                                                            quiz.days_until_deadline === 0 ? (
+                                                                <span className="flex items-center gap-1">
+                                                                    <ExclamationTriangleIcon className="h-3 w-3" />
+                                                                    Dernier jour !
+                                                                </span>
+                                                            ) : quiz.days_until_deadline === 1 ? (
+                                                                `Reste 1 jour`
+                                                            ) : (
+                                                                `Reste ${quiz.days_until_deadline} jours`
+                                                            )
+                                                        ) : (
+                                                            'Expiré'
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <Link href={route('quizzes.start', quiz.uuid)}>
+                                                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                                    Commencer
+                                                </button>
+                                            </Link>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
         </DashboardLayout>
     );
 }

@@ -22,6 +22,7 @@ export default function AddClassModal({ trainings, teachers, onClose, onClassAdd
     const [formData, setFormData] = useState({
         training_id: '',
         teacher_id: '',
+        name: '',
         date: '',
         room: '',
         max_students: '',
@@ -99,9 +100,13 @@ export default function AddClassModal({ trainings, teachers, onClose, onClassAdd
 
         try {
             const response = await axios.post(route('training-classes.store'), {
-                ...formData,
+                training_id: formData.training_id,
                 teacher_id: formData.teacher_id || null,
+                name: formData.name,
+                date: formData.date,
+                room: formData.room || null,
                 max_students: formData.max_students ? parseInt(formData.max_students) : null,
+                notes: formData.notes || null,
                 schedules: daySchedules.map(schedule => ({
                     day_of_week: schedule.day,
                     start_time: schedule.start_time,
@@ -183,6 +188,20 @@ export default function AddClassModal({ trainings, teachers, onClose, onClassAdd
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Nom de la classe *
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                placeholder="Ex: Classe Avancée - Groupe A"
+                                className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-violet-500"
+                                required
+                            />
                         </div>
 
                         <div>

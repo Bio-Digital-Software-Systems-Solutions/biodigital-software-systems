@@ -85,6 +85,7 @@ class Department extends Model
         'head_of_department',
         'budget',
         'is_active',
+        'image',
     ];
 
     /**

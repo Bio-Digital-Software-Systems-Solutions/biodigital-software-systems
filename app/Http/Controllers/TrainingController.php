@@ -94,12 +94,55 @@ class TrainingController extends Controller
         return response()->json($trainings);
     }
 
-    public function show(Training $training)
+    public function show(Training $training, Request $request)
     {
         $training->load(['topics', 'materials', 'evaluations', 'classes']);
 
+        $user = $request->user();
+
+        // Load quizzes with user attempts (eager loaded to prevent N+1)
+        $quizzes = $training->quizzes()->with(['attempts' => function ($query) use ($user) {
+            if ($user) {
+                $query->where('student_id', $user->id)
+                    ->where('status', 'completed')
+                    ->latest();
+            }
+        }])->get()->map(function ($quiz) use ($user) {
+            $userAttempt = null;
+
+            if ($user) {
+                $attempt = $quiz->attempts->first();
+
+                if ($attempt) {
+                    $userAttempt = [
+                        'score' => $attempt->score,
+                        'max_score' => $quiz->max_score,
+                        'passed' => $attempt->score >= $quiz->passing_score,
+                        'completed_at' => $attempt->completed_at->toISOString(),
+                    ];
+                }
+            }
+
+            return [
+                'id' => $quiz->id,
+                'uuid' => $quiz->uuid,
+                'title' => $quiz->title,
+                'description' => $quiz->description,
+                'duration_minutes' => $quiz->duration_minutes,
+                'max_score' => $quiz->max_score,
+                'passing_score' => $quiz->passing_score,
+                'available_from' => $quiz->available_from?->format('Y-m-d'),
+                'available_until' => $quiz->available_until?->format('Y-m-d'),
+                'is_active' => $quiz->is_active,
+                'status' => $quiz->status,
+                'user_attempt' => $userAttempt,
+            ];
+        });
+
         return Inertia::render('Training/Show', [
-            'training' => $training,
+            'training' => array_merge($training->toArray(), [
+                'quizzes' => $quizzes,
+            ]),
         ]);
     }
 
@@ -336,17 +379,20 @@ class TrainingController extends Controller
     {
         $user = $request->user();
 
-        // Check if user has Student, Teacher, or Admin role
-        if (! $user->hasAnyRole([
-            \App\Enums\Role::STUDENT->value,
-            \App\Enums\Role::TEACHER->value,
-            \App\Enums\Role::ADMIN->value,
-            \App\Enums\Role::SUPER_ADMIN->value
-        ])) {
-            abort(403, 'Accès refusé. Seuls les étudiants, enseignants et administrateurs peuvent accéder à cet espace.');
+        // Check if user can view trainings
+        if (! $user->can('view trainings')) {
+            abort(403, 'Accès refusé. Vous n\'avez pas la permission d\'accéder à cet espace.');
         }
 
-        $trainings = Training::with(['topics', 'classes', 'materials', 'quizzes', 'teacher'])
+        $trainings = Training::with([
+                'topics',
+                'classes',
+                'materials',
+                'quizzes.attempts' => function ($query) use ($user) {
+                    $query->where('student_id', $user->id)->latest();
+                },
+                'teacher'
+            ])
             ->whereHas('students', function ($query) use ($user) {
                 $query->where('user_id', $user->id)
                     ->where('status', 'approved');
@@ -359,12 +405,9 @@ class TrainingController extends Controller
                     ->where('date', '>=', now()->toDateString())
                     ->first();
 
-                // Récupérer les quizzes avec leurs tentatives
+                // Récupérer les quizzes avec leurs tentatives (eager loaded to prevent N+1)
                 $quizzes = $training->quizzes->map(function ($quiz) use ($user) {
-                    $attempt = $quiz->attempts()
-                        ->where('student_id', $user->id)
-                        ->latest()
-                        ->first();
+                    $attempt = $quiz->attempts->first();
 
                     return [
                         'id' => $quiz->id,
@@ -420,13 +463,9 @@ class TrainingController extends Controller
     {
         $user = $request->user();
 
-        // Check if user has Teacher or Admin role
-        if (! $user->hasAnyRole([
-            \App\Enums\Role::TEACHER->value,
-            \App\Enums\Role::ADMIN->value,
-            \App\Enums\Role::SUPER_ADMIN->value
-        ])) {
-            abort(403, 'Accès refusé. Seuls les enseignants et administrateurs peuvent accéder à cet espace.');
+        // Check if user can manage trainings
+        if (! $user->can('manage trainings')) {
+            abort(403, 'Accès refusé. Vous n\'avez pas la permission d\'accéder à cet espace.');
         }
 
         // Get trainings assigned to this teacher
@@ -691,11 +730,16 @@ class TrainingController extends Controller
 
     public function teacherEvaluations(Request $request)
     {
+        $this->authorize('view evaluations');
+
         $user = $request->user();
 
         $evaluations = \App\Models\Evaluation::with(['student', 'training', 'training_topic'])
             ->whereHas('training.classes', function ($query) use ($user) {
-                $query->where('teacher_id', $user->id);
+                // If user can't manage all trainings, filter by their trainings
+                if (!$user->can('manage system settings')) {
+                    $query->where('teacher_id', $user->id);
+                }
             })
             ->orderBy('created_at', 'desc')
             ->get()
@@ -717,6 +761,8 @@ class TrainingController extends Controller
 
     public function gradeStudent(Request $request, $studentId)
     {
+        $this->authorize('create evaluations');
+
         $validated = $request->validate([
             'training_id' => 'required|exists:trainings,id',
             'training_topic_id' => 'nullable|exists:training_topics,id',

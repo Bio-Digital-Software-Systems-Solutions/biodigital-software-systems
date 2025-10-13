@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -76,6 +77,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return $response;
         });
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        // Send quiz deadline reminders daily at 9 AM
+        $schedule->command('quiz:send-deadline-reminders')
+            ->dailyAt('09:00')
+            ->timezone('Europe/Paris');
     })
     ->booting(function () {
         Event::listen(
