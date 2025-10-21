@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "ankitpokhrel/tus-php": "^2.4",
+        "darkaonline/l5-swagger": "^9.0",
         "inertiajs/inertia-laravel": "^2.0",
         "intervention/image": "^3.11",
         "laravel/fortify": "^1.31",
@@ -27,7 +28,6 @@
         "barryvdh/laravel-debugbar": "^3.16",
         "barryvdh/laravel-ide-helper": "^3.6",
         "beyondcode/laravel-query-detector": "^2.1",
-        "darkaonline/l5-swagger": "*",
         "fakerphp/faker": "^1.23",
         "laravel/breeze": "^2.3",
         "laravel/pail": "^1.2.2",
