@@ -13,7 +13,7 @@ import { SearchableSelect } from '@/Components/ui/searchable-select';
 
 interface StepDetailModalProps {
     step: any;
-    programId: number;
+    programId: string | number;
     onClose: () => void;
     onEdit: () => void;
     getStatusBadgeClass: (status: string) => string;
@@ -266,7 +266,7 @@ export default function StepDetailModal({
                                     <SearchableSelect
                                         options={userOptions}
                                         value={participantData.user_id}
-                                        onChange={(value) => setParticipantData('user_id', value)}
+                                        onChange={(value) => setParticipantData('user_id', String(value))}
                                         placeholder="Sélectionner un utilisateur..."
                                     />
                                 </div>
@@ -464,7 +464,7 @@ export default function StepDetailModal({
                                                 ...userOptions
                                             ]}
                                             value={taskData.assigned_to}
-                                            onChange={(value) => setTaskData('assigned_to', value)}
+                                            onChange={(value) => setTaskData('assigned_to', String(value))}
                                             placeholder="Sélectionner un utilisateur..."
                                         />
                                     </div>

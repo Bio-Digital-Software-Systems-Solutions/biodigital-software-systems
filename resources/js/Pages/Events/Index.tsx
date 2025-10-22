@@ -14,6 +14,7 @@ import {
     PencilIcon,
     TrashIcon
 } from '@heroicons/react/24/outline';
+import { userHasPermission } from '@/Enums/Permission';
 
 type ViewMode = 'grid' | 'list' | 'calendar';
 
@@ -101,8 +102,7 @@ export default function Index() {
         });
     };
 
-    const canManageEvents = auth.user?.permissions?.includes('create events') || 
-                           auth.user?.roles?.includes('admin');
+    const canManageEvents = userHasPermission(auth.user, 'create events');
 
     return (
         <DashboardLayout
@@ -110,7 +110,7 @@ export default function Index() {
             description="Gérez et participez aux événements de votre organisation"
             actions={
                 <>
-                    <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} showCalendar={true} />
+                    <ViewSwitcher currentView={viewMode} onViewChange={(view) => setViewMode(view)} showCalendar={true} />
                     {canManageEvents && (
                         <Link
                             href={route('events.create')}
@@ -212,8 +212,7 @@ export default function Index() {
                                                         <EyeIcon className="h-5 w-5" />
                                                     </Link>
                                                     {(auth.user?.id === event.creator.id ||
-                                                      auth.user?.permissions?.includes('edit events') ||
-                                                      auth.user?.roles?.includes('admin')) && (
+                                                      userHasPermission(auth.user, 'edit events')) && (
                                                         <>
                                                             <Link
                                                                 href={route('events.edit', event.uuid)}
@@ -327,8 +326,7 @@ export default function Index() {
                                         </Link>
 
                                         {(auth.user?.id === event.creator.id ||
-                                          auth.user?.permissions?.includes('edit events') ||
-                                          auth.user?.roles?.includes('admin')) && (
+                                          userHasPermission(auth.user, 'edit events')) && (
                                             <div className="flex space-x-2">
                                                 <Link
                                                     href={route('events.edit', event.uuid)}

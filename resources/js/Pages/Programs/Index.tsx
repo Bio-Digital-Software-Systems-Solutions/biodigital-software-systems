@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PlusIcon, FunnelIcon, EyeIcon, PencilIcon, TrashIcon, TableCellsIcon, Squares2X2Icon, ListBulletIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { Program, PageProps } from '@/types';
+import { Program, PageProps } from '@/Types';
 
 interface Props extends PageProps {
     programs: {
@@ -14,6 +14,7 @@ interface Props extends PageProps {
         total: number;
     };
     filters: {
+        [key: string]: string | undefined;
         status?: string;
         priority?: string;
     };

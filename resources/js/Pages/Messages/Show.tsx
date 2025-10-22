@@ -29,8 +29,8 @@ interface Props extends PageProps {
 }
 
 export default function Show({ message, auth }: Props) {
-    const isCurrentUserSender = message.sender.id === auth.user.id;
-    const isCurrentUserReceiver = message.receiver.id === auth.user.id;
+    const isCurrentUserSender = message.sender.id === auth.user?.id;
+    const isCurrentUserReceiver = message.receiver.id === auth.user?.id;
 
     const getTypeColor = (type: string) => {
         switch (type) {

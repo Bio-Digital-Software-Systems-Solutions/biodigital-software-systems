@@ -47,6 +47,7 @@ interface Props {
     ganttData: GanttItem[];
     projects: Array<{ id: number; name: string }>;
     filters: {
+        [key: string]: string | undefined;
         project_id?: string;
         status?: string;
         search?: string;

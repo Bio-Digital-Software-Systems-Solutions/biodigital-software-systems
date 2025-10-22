@@ -1,20 +1,5 @@
 import { Config } from 'ziggy-js';
-import { Department } from './models';
-
-export interface User {
-    id: number;
-    uuid: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-    email_verified_at?: string;
-    birth_date?: string;
-    avatar?: string;
-    roles: string[];
-    permissions: string[];
-    departments?: Department[];
-    full_name?: string;
-}
+import { User } from './models';
 
 export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
     auth: {
@@ -24,6 +9,7 @@ export type PageProps<T extends Record<string, unknown> = Record<string, unknown
     flash?: {
         message?: string;
         error?: string;
+        success?: string;
     };
 };
 

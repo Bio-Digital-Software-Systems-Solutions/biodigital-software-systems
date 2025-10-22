@@ -14,7 +14,7 @@ import {
     ListBulletIcon,
     Bars3BottomLeftIcon
 } from '@heroicons/react/24/outline';
-import { Program, PageProps } from '@/types';
+import { Program, PageProps } from '@/Types';
 import ProgramStepForm from '@/Components/Programs/ProgramStepForm';
 import StepDetailModal from '@/Components/Programs/StepDetailModal';
 import { TimelineView, ListView, KanbanView } from '@/Components/Programs/ProgramViews';
@@ -23,6 +23,7 @@ import { Button } from '@/Components/ui/button';
 import { Badge } from '@/Components/ui/badge';
 import { Progress } from '@/Components/ui/progress';
 import { isAdmin } from '@/Enums/Role';
+import { userHasPermission } from '@/Enums/Permission';
 
 interface Props extends PageProps {
     program: Program & {
@@ -41,7 +42,7 @@ export default function Show({ program, users = [], statuses = [] }: Props) {
     const [viewMode, setViewMode] = useState<'list' | 'timeline' | 'kanban'>('timeline');
 
     // Permission checks
-    const canEditProgram = auth.user?.permissions?.includes('edit programs') || isAdmin(auth.user?.roles);
+    const canEditProgram = userHasPermission(auth.user, 'edit programs');
 
     const handleStepClick = (step: any) => {
         setSelectedStep(step);
@@ -55,7 +56,7 @@ export default function Show({ program, users = [], statuses = [] }: Props) {
     };
 
     const getStatusBadgeClass = (status: string) => {
-        const classes = {
+        const classes: { [key: string]: string } = {
             'draft': 'bg-gray-100 text-gray-800 border border-gray-200',
             'active': 'bg-primary text-white',
             'paused': 'bg-yellow-100 text-yellow-800 border border-yellow-200',
@@ -68,7 +69,7 @@ export default function Show({ program, users = [], statuses = [] }: Props) {
     };
 
     const getPriorityBadgeClass = (priority: string) => {
-        const classes = {
+        const classes: { [key: string]: string } = {
             'low': 'bg-green-100 text-green-800',
             'medium': 'bg-yellow-100 text-yellow-800',
             'high': 'bg-red-100 text-red-800',
@@ -77,7 +78,7 @@ export default function Show({ program, users = [], statuses = [] }: Props) {
     };
 
     const getTaskStatusBadgeClass = (status: string) => {
-        const classes = {
+        const classes: { [key: string]: string } = {
             'todo': 'bg-orange-100 text-orange-800 border border-orange-200',
             'in_progress': 'bg-primary text-white',
             'completed': 'bg-green-600 text-white',

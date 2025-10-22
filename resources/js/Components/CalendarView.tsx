@@ -388,7 +388,7 @@ export default function CalendarView({ events, canCreateEvents = false }: Calend
                                                             style={{ backgroundColor: eventColor }}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                handleEventClick(event.id);
+                                                                handleEventClick(event.uuid);
                                                             }}
                                                         >
                                                             {format(parseISO(event.start_date), 'HH:mm')} {event.title}
@@ -440,7 +440,7 @@ export default function CalendarView({ events, canCreateEvents = false }: Calend
                                                     backgroundColor: eventColor,
                                                     borderLeftColor: eventColor,
                                                 }}
-                                                onClick={() => handleEventClick(event.id)}
+                                                onClick={() => handleEventClick(event.uuid)}
                                             >
                                                 <div className="font-semibold">{format(parseISO(event.start_date), 'HH:mm')} {event.title}</div>
                                                 {event.location && <div className="text-sm opacity-90">{event.location}</div>}

@@ -59,33 +59,33 @@ const DialogContent = ({ children, className = "", onClose }: DialogContentProps
   )
 }
 
-const DialogHeader = ({ children }: { children: React.ReactNode }) => {
+const DialogHeader = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
   return (
-    <div className="px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+    <div className={`px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-700 ${className}`}>
       {children}
     </div>
   )
 }
 
-const DialogTitle = ({ children }: { children: React.ReactNode }) => {
+const DialogTitle = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
   return (
-    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+    <h2 className={`text-xl font-semibold text-gray-900 dark:text-white ${className}`}>
       {children}
     </h2>
   )
 }
 
-const DialogDescription = ({ children }: { children: React.ReactNode }) => {
+const DialogDescription = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
   return (
-    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+    <p className={`mt-2 text-sm text-gray-500 dark:text-gray-400 ${className}`}>
       {children}
     </p>
   )
 }
 
-const DialogFooter = ({ children }: { children: React.ReactNode }) => {
+const DialogFooter = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
   return (
-    <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-3 rounded-b-lg">
+    <div className={`px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-3 rounded-b-lg ${className}`}>
       {children}
     </div>
   )

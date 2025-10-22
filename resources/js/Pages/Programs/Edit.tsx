@@ -1,7 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Program, User, PageProps } from '@/types';
+import { Program, User, PageProps } from '@/Types';
 
 interface Props extends PageProps {
     program: Program;
@@ -68,7 +68,7 @@ export default function Edit({ program, users }: Props) {
                                         <select
                                             id="status"
                                             value={data.status}
-                                            onChange={(e) => setData('status', e.target.value)}
+                                            onChange={(e) => setData('status', e.target.value as 'planning' | 'active' | 'completed' | 'cancelled' | 'in_progress')}
                                             className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                                             required
                                         >
@@ -137,7 +137,7 @@ export default function Edit({ program, users }: Props) {
                                         <select
                                             id="priority"
                                             value={data.priority}
-                                            onChange={(e) => setData('priority', e.target.value)}
+                                            onChange={(e) => setData('priority', e.target.value as 'low' | 'medium' | 'high')}
                                             className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                                             required
                                         >

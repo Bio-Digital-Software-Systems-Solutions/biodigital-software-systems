@@ -17,8 +17,9 @@ import {
     TrashIcon,
     TagIcon
 } from '@heroicons/react/24/outline';
+import { userHasPermission } from '@/Enums/Permission';
 
-type ViewMode = 'grid' | 'list';
+type ViewMode = 'grid' | 'list' | 'calendar';
 
 interface Book {
     id: number;
@@ -118,10 +119,9 @@ export default function Index() {
         }
     };
 
-    const canManageLibrary = auth.user?.permissions?.includes('manage library') ||
-                            auth.user?.roles?.includes('admin');
+    const canManageLibrary = userHasPermission(auth.user, 'manage library');
 
-    const canRentBooks = auth.user?.permissions?.includes('rent books');
+    const canRentBooks = userHasPermission(auth.user, 'rent books');
 
     return (
         <DashboardLayout
@@ -129,7 +129,7 @@ export default function Index() {
             description="Découvrez et louez des livres de votre organisation"
             actions={
                 <>
-                    <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} />
+                    <ViewSwitcher currentView={viewMode} onViewChange={(view) => setViewMode(view)} />
                     {canManageLibrary && (
                         <Link
                             href={route('books.create')}

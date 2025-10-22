@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Task, Program, Status, User, PageProps } from '@/types';
+import { Task, Program, Status, User, PageProps } from '@/Types';
 
 interface Project {
     id: number;

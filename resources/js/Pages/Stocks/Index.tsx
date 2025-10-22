@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PlusIcon, FunnelIcon, EyeIcon, PencilIcon, TrashIcon, ExclamationTriangleIcon, Squares2X2Icon, TableCellsIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { Stock, Category, PageProps } from '@/types';
+import { Stock, Category, PageProps } from '@/Types';
 
 interface Props extends PageProps {
     stocks: {
@@ -15,6 +15,7 @@ interface Props extends PageProps {
     };
     categories: Category[];
     filters: {
+        [key: string]: string | undefined;
         category?: string;
         status?: string;
         supplier?: string;

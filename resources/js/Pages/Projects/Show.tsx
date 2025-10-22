@@ -54,7 +54,7 @@ export default function ShowProject({ project, users }: Props) {
                 body: JSON.stringify({ status }),
             });
             showSuccess('Statut du projet mis à jour avec succès');
-            router.reload({ preserveScroll: true });
+            router.reload({ preserveState: true, preserveScroll: true } as any);
         } catch (error) {
             apiLogger.error('Failed to update status:', error);
             showError('Échec de la mise à jour du statut');
@@ -77,7 +77,7 @@ export default function ShowProject({ project, users }: Props) {
                 }),
             });
             showSuccess('Participant ajouté avec succès');
-            router.reload({ preserveScroll: true });
+            router.reload({ preserveState: true, preserveScroll: true } as any);
             setShowAddParticipant(false);
             setSelectedUserId('');
         } catch (error) {
@@ -105,7 +105,7 @@ export default function ShowProject({ project, users }: Props) {
                 },
             });
             showSuccess('Participant retiré avec succès');
-            router.reload({ preserveScroll: true });
+            router.reload({ preserveState: true, preserveScroll: true } as any);
         } catch (error) {
             apiLogger.error('Failed to remove participant:', error);
             showError('Échec du retrait du participant');
@@ -136,7 +136,7 @@ export default function ShowProject({ project, users }: Props) {
             } else {
                 setCommentContent('');
             }
-            router.reload({ preserveScroll: true });
+            router.reload({ preserveState: true, preserveScroll: true } as any);
         } catch (error) {
             apiLogger.error('Failed to add comment:', error);
             showError('Échec de l\'ajout du commentaire');
@@ -162,7 +162,7 @@ export default function ShowProject({ project, users }: Props) {
                 },
             });
             showSuccess('Commentaire supprimé avec succès');
-            router.reload({ preserveScroll: true });
+            router.reload({ preserveState: true, preserveScroll: true } as any);
         } catch (error) {
             apiLogger.error('Failed to delete comment:', error);
             showError('Échec de la suppression du commentaire');
@@ -186,7 +186,7 @@ export default function ShowProject({ project, users }: Props) {
                 },
             });
             showSuccess('Fichier téléchargé avec succès');
-            router.reload({ preserveScroll: true });
+            router.reload({ preserveState: true, preserveScroll: true } as any);
         } catch (error) {
             apiLogger.error('Upload failed:', error);
             showError('Échec du téléchargement du fichier');
@@ -215,7 +215,7 @@ export default function ShowProject({ project, users }: Props) {
                 },
             });
             showSuccess('Fichier supprimé avec succès');
-            router.reload({ preserveScroll: true });
+            router.reload({ preserveState: true, preserveScroll: true } as any);
         } catch (error) {
             apiLogger.error('Failed to delete attachment:', error);
             showError('Échec de la suppression du fichier');

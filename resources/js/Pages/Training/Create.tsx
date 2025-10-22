@@ -21,17 +21,28 @@ interface Props {
 }
 
 export default function Create({ teachers = [] }: Props) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors } = useForm<{
+        title: string;
+        description: string;
+        duration: string;
+        level: string;
+        price: string;
+        category: string;
+        image: File | null;
+        is_active: boolean;
+        teacher_id: number | null;
+        topics: Topic[];
+    }>({
         title: '',
         description: '',
         duration: '',
         level: 'beginner',
         price: '',
         category: '',
-        image: '',
+        image: null,
         is_active: true,
-        teacher_id: null as number | null,
-        topics: [] as Topic[],
+        teacher_id: null,
+        topics: [],
     });
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);

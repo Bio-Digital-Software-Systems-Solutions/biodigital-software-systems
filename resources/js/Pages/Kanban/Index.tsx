@@ -47,6 +47,7 @@ interface Props {
     users: Array<{ id: number; first_name: string; last_name: string }>;
     sprints: Array<{ id: number; name: string; project_id: number }>;
     filters: {
+        [key: string]: string | undefined;
         project_id?: string;
         assignee_id?: string;
         priority?: string;
@@ -135,7 +136,7 @@ export default function KanbanIndex({ tasksByStatus, projects, users, sprints, f
             await axios.patch(route('kanban.tasks.update-status', draggedTask.uuid), {
                 status
             });
-            router.reload({ preserveScroll: true });
+            router.reload({ preserveState: true, preserveScroll: true } as any);
         } catch (error) {
             apiLogger.error('Error updating task status:', error);
             alert('Erreur lors de la mise à jour du statut de la tâche');

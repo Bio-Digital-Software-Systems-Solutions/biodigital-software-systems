@@ -21,6 +21,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { PageProps } from '@/Types';
 import { sanitizeArticleContent } from '@/utils/sanitize';
+import { userHasPermission } from '@/Enums/Permission';
 
 interface Tag {
     id: number;
@@ -61,8 +62,7 @@ interface Props extends PageProps {
 }
 
 export default function Show({ article, relatedArticles, auth, isLiked: initialIsLiked, isFavorited: initialIsFavorited, likesCount: initialLikesCount }: Props) {
-    const canEditArticles = auth.user?.permissions?.includes('edit articles') ||
-                           auth.user?.roles?.includes('admin');
+    const canEditArticles = userHasPermission(auth.user, 'edit articles');
 
     const [isLiked, setIsLiked] = useState(initialIsLiked);
     const [isFavorited, setIsFavorited] = useState(initialIsFavorited);

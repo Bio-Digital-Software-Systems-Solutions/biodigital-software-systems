@@ -58,7 +58,7 @@ export default function DashboardLayout({ children, title, description, actions 
     const { notificationCount } = useNotifications();
 
     const navigation: NavItem[] = [
-        { name: t('dashboard'), href: '/dashboard', icon: HomeIcon, current: true, excludeRoles: ['Member'] },
+        { name: t('dashboard'), href: '/dashboard', icon: HomeIcon, current: true, excludeRoles: [Role.MEMBER] },
         { name: t('events'), href: '/events', icon: CalendarDaysIcon, permission: 'view events' },
         { name: t('articles'), href: '/articles', icon: PencilSquareIcon, permission: 'view articles' },
         { name: t('books'), href: '/books', icon: BookOpenIcon, permission: 'view books' },
@@ -79,7 +79,8 @@ export default function DashboardLayout({ children, title, description, actions 
 
     const hasPermission = (permission?: string) => {
         if (!permission) return true;
-        return auth.user?.permissions?.includes(permission) || isAdmin(auth.user?.roles);
+        const userPermissions = auth.user?.permissions?.map((p: any) => typeof p === 'string' ? p : p.name) || [];
+        return userPermissions.includes(permission) || isAdmin(auth.user?.roles);
     };
 
     const isRoleExcluded = (excludeRoles?: Role[]) => {
@@ -90,7 +91,9 @@ export default function DashboardLayout({ children, title, description, actions 
         if (userRoles.length === 0) return false;
 
         // If user has only one role and it's in the excluded list
-        if (userRoles.length === 1 && excludeRoles.some(role => userRoles.includes(role))) {
+        if (userRoles.length === 1 && excludeRoles.some(role =>
+            userRoles.some(ur => ur.name === role)
+        )) {
             return true;
         }
 
@@ -147,7 +150,7 @@ export default function DashboardLayout({ children, title, description, actions 
                             {auth.user?.first_name} {auth.user?.last_name}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {auth.user?.roles?.[0] || 'Utilisateur'}
+                            {typeof auth.user?.roles?.[0] === 'string' ? auth.user?.roles?.[0] : auth.user?.roles?.[0]?.name || 'Utilisateur'}
                         </p>
                     </div>
                 </div>

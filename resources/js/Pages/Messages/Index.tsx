@@ -46,6 +46,7 @@ interface Props extends PageProps {
         total: number;
     };
     filters: {
+        [key: string]: string | undefined;
         type?: string;
         status?: string;
         search?: string;
@@ -88,11 +89,11 @@ export default function Index({ messages, filters, auth }: Props) {
     };
 
     const isCurrentUserSender = (message: Message) => {
-        return message.sender.id === auth.user.id;
+        return message.sender.id === auth.user?.id;
     };
 
     const isCurrentUserReceiver = (message: Message) => {
-        return message.receiver.id === auth.user.id;
+        return message.receiver.id === auth.user?.id;
     };
 
     return (

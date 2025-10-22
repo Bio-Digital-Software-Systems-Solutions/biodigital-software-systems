@@ -384,7 +384,7 @@ export default function QuizCreate({ training }: Props) {
                                         </Label>
                                         <Select
                                             value={scoreDisplay}
-                                            onValueChange={(value: 'best' | 'last' | 'average') => setScoreDisplay(value)}
+                                            onValueChange={(value) => setScoreDisplay(value as 'best' | 'last' | 'average')}
                                         >
                                             <SelectTrigger id="score_display">
                                                 <SelectValue />
@@ -419,7 +419,7 @@ export default function QuizCreate({ training }: Props) {
                                     <Label htmlFor="status">Statut</Label>
                                     <Select
                                         value={status}
-                                        onValueChange={(value: 'draft' | 'published' | 'archived') => setStatus(value)}
+                                        onValueChange={(value) => setStatus(value as 'draft' | 'published' | 'archived')}
                                     >
                                         <SelectTrigger id="status">
                                             <SelectValue />

@@ -38,15 +38,15 @@ export default function LoadingBar() {
             }, 300);
         };
 
-        router.on('start', handleStart);
-        router.on('progress', handleProgress);
-        router.on('finish', handleFinish);
+        const removeStart = router.on('start', handleStart);
+        const removeProgress = router.on('progress', handleProgress);
+        const removeFinish = router.on('finish', handleFinish);
 
         return () => {
             clearInterval(progressInterval);
-            router.off('start', handleStart);
-            router.off('progress', handleProgress);
-            router.off('finish', handleFinish);
+            removeStart();
+            removeProgress();
+            removeFinish();
         };
     }, []);
 

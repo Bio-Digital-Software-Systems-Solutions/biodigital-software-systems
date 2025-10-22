@@ -1148,7 +1148,7 @@ const TrainingBrowseSection: React.FC = () => {
                     {selectedTraining.sessions
                       .filter(session => session.status === 'upcoming')
                       .map((session) => {
-                        const availableSpots = session.max_participants - session.enrolled_count;
+                        const availableSpots = (session.max_participants ?? 0) - (session.enrolled_count ?? 0);
                         const isDisabled = availableSpots <= 0;
 
                         return (

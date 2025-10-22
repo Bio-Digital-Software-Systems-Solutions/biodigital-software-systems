@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { PageProps } from '@/Types';
 import { isAdmin } from '@/Enums/Role';
+import { userHasPermission } from '@/Enums/Permission';
 
 interface Training {
     id: number;
@@ -45,9 +46,9 @@ export default function Index({ trainings, filters }: Props) {
     const [viewMode, setViewMode] = useState<'table' | 'list' | 'grid'>('table');
 
     // Permission checks
-    const canCreateTrainings = auth.user?.permissions?.includes('create trainings') || isAdmin(auth.user?.roles);
-    const canEditTrainings = auth.user?.permissions?.includes('edit trainings') || isAdmin(auth.user?.roles);
-    const canDeleteTrainings = auth.user?.permissions?.includes('delete trainings') || isAdmin(auth.user?.roles);
+    const canCreateTrainings = userHasPermission(auth.user, 'create trainings');
+    const canEditTrainings = userHasPermission(auth.user, 'edit trainings');
+    const canDeleteTrainings = userHasPermission(auth.user, 'delete trainings');
 
     const debouncedSearch = useDebouncedCallback((value: string) => {
         router.get('/trainings',

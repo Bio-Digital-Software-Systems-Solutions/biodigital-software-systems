@@ -15,8 +15,9 @@ import {
     UserIcon,
     BanknotesIcon
 } from '@heroicons/react/24/outline';
+import { userHasPermission } from '@/Enums/Permission';
 
-type ViewMode = 'grid' | 'list';
+type ViewMode = 'grid' | 'list' | 'calendar';
 
 interface User {
     id: number;
@@ -56,12 +57,9 @@ const Index: React.FC<IndexProps> = ({ departments, filters }) => {
     const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-    const canCreateDepartments = auth.user?.permissions?.includes('create departments') ||
-                                auth.user?.roles?.includes('admin');
-    const canEditDepartments = auth.user?.permissions?.includes('edit departments') ||
-                              auth.user?.roles?.includes('admin');
-    const canDeleteDepartments = auth.user?.permissions?.includes('delete departments') ||
-                                auth.user?.roles?.includes('admin');
+    const canCreateDepartments = userHasPermission(auth.user, 'create departments');
+    const canEditDepartments = userHasPermission(auth.user, 'edit departments');
+    const canDeleteDepartments = userHasPermission(auth.user, 'delete departments');
 
     const handleFilter = (status: string) => {
         setSelectedStatus(status);
@@ -99,7 +97,7 @@ const Index: React.FC<IndexProps> = ({ departments, filters }) => {
             description="Gérez les départements et leurs membres"
             actions={
                 <>
-                    <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} />
+                    <ViewSwitcher currentView={viewMode} onViewChange={(view) => setViewMode(view)} />
                     {canCreateDepartments && (
                         <Link
                             href={route('departments.create')}

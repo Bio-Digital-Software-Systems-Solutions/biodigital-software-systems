@@ -1,7 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Category, PageProps } from '@/types';
+import { Category, PageProps } from '@/Types';
 
 interface Props extends PageProps {
     categories: Category[];

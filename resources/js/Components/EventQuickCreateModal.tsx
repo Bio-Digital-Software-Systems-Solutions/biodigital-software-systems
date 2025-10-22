@@ -81,14 +81,15 @@ export default function EventQuickCreateModal({
         }
 
         // Submit with all data including participants
+        setData({
+            ...data,
+            type: eventType,
+            start_date: format(startDate, 'yyyy-MM-dd HH:mm:ss'),
+            end_date: format(endDate, 'yyyy-MM-dd HH:mm:ss'),
+            participant_ids: selectedParticipants.map(p => p.id),
+        } as any);
+
         post(route('events.store'), {
-            data: {
-                ...data,
-                type: eventType,
-                start_date: format(startDate, 'yyyy-MM-dd HH:mm:ss'),
-                end_date: format(endDate, 'yyyy-MM-dd HH:mm:ss'),
-                participant_ids: selectedParticipants.map(p => p.id),
-            },
             onSuccess: () => {
                 reset();
                 setSelectedParticipants([]);

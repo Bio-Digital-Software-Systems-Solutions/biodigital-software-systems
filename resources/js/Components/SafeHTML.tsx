@@ -104,9 +104,9 @@ export const sanitizeHTML = (
     const mergedConfig = {
         ...DEFAULT_CONFIG,
         ...config,
-    };
+    } as DOMPurify.Config;
 
-    return DOMPurify.sanitize(html, mergedConfig);
+    return DOMPurify.sanitize(html, mergedConfig as any) as unknown as string;
 };
 
 /**

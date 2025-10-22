@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PlusIcon, FunnelIcon, EyeIcon, PencilIcon, TrashIcon, Squares2X2Icon, ListBulletIcon, TableCellsIcon, ArrowLeftIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
-import { Task, Program, Status, User, PageProps } from '@/types';
+import { Task, Program, Status, User, PageProps } from '@/Types';
 import { Button } from '@/Components/ui/button';
 
 interface Props extends PageProps {
@@ -18,6 +18,7 @@ interface Props extends PageProps {
     statuses: Status[];
     users: User[];
     filters: {
+        [key: string]: string | undefined;
         status?: string;
         program?: string;
         priority?: string;

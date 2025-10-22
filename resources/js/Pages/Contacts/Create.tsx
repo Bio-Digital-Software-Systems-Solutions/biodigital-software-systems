@@ -49,7 +49,7 @@ export default function Create() {
         e.preventDefault();
         setProcessing(true);
 
-        router.post(route('contacts.store'), data, {
+        router.post(route('contacts.store'), data as any, {
             onSuccess: () => {
                 setShowSuccess(true);
                 setData({ name: '', email: '', phone: '', subject: '', message: '' });

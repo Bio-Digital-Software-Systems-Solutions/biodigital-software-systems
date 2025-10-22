@@ -32,6 +32,9 @@ interface ProjectTask {
     type: string;
     due_date: string | null;
     estimated_hours: number | null;
+    assignee_id?: number;
+    epic_id?: number;
+    sprint_id?: number;
     started_at: string | null;
     paused_at: string | null;
     stopped_at: string | null;
@@ -231,18 +234,18 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
         e.preventDefault();
 
         // Convert empty strings to null for epic_id and sprint_id
-        const formData = {
-            ...editForm.data,
-            epic_id: editForm.data.epic_id === '' ? null : editForm.data.epic_id,
-            sprint_id: editForm.data.sprint_id === '' ? null : editForm.data.sprint_id,
-        };
+        editForm.transform((data) => ({
+            ...data,
+            epic_id: data.epic_id === '' ? null : data.epic_id,
+            sprint_id: data.sprint_id === '' ? null : data.sprint_id,
+        }));
 
-        editForm.transform(() => formData).patch(`/api/tasks/${task.uuid}`, {
+        editForm.patch(`/api/tasks/${task.uuid}`, {
             preserveScroll: true,
             onSuccess: () => {
                 setShowEditModal(false);
             },
-            onError: (errors) => {
+            onError: (errors: Record<string, string>) => {
                 apiLogger.error('Erreur lors de la mise à jour:', errors);
                 // Display first error message
                 const firstError = Object.values(errors)[0];
@@ -269,7 +272,7 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
             if (response.ok) {
                 setSelectedUser('');
                 setShowAddParticipant(false);
-                router.reload({ preserveScroll: true });
+                router.reload({ preserveState: true, preserveScroll: true } as any);
             } else {
                 alert('Erreur lors de l\'ajout du participant');
             }
@@ -289,7 +292,7 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
             });
 
             if (response.ok) {
-                router.reload({ preserveScroll: true });
+                router.reload({ preserveState: true, preserveScroll: true } as any);
             } else {
                 alert('Erreur lors de la suppression du participant');
             }
@@ -318,7 +321,7 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
 
             if (response.ok) {
                 setCommentContent('');
-                router.reload({ preserveScroll: true });
+                router.reload({ preserveState: true, preserveScroll: true } as any);
             } else {
                 alert('Erreur lors de l\'ajout du commentaire');
             }
@@ -348,7 +351,7 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
                 },
             });
 
-            router.reload({ preserveScroll: true });
+            router.reload({ preserveState: true, preserveScroll: true } as any);
         } catch (error) {
             apiLogger.error('Upload failed:', error);
             alert('Échec du téléchargement');

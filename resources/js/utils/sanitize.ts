@@ -39,7 +39,7 @@ export const sanitizeHtml = (html: string, config?: DOMPurify.Config): string =>
     };
 
     // Merge with custom config if provided
-    const finalConfig = { ...defaultConfig, ...config };
+    const finalConfig = { ...defaultConfig, ...config } as DOMPurify.Config;
 
     // Add hooks to further sanitize
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
@@ -56,12 +56,12 @@ export const sanitizeHtml = (html: string, config?: DOMPurify.Config): string =>
     });
 
     // Sanitize the HTML
-    const sanitized = DOMPurify.sanitize(html, finalConfig);
+    const sanitized = DOMPurify.sanitize(html, finalConfig as any);
 
     // Remove hooks after sanitization
     DOMPurify.removeAllHooks();
 
-    return sanitized;
+    return sanitized as unknown as string;
 };
 
 /**

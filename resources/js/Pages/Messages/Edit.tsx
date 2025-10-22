@@ -92,7 +92,7 @@ export default function Edit({ message, users }: Props) {
                                 <select
                                     id="type"
                                     value={data.type}
-                                    onChange={(e) => setData('type', e.target.value)}
+                                    onChange={(e) => setData('type', e.target.value as 'system' | 'direct' | 'broadcast')}
                                     className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                                     required
                                 >

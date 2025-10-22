@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
-import { 
+import {
     ArrowLeftIcon,
     BookOpenIcon,
     TagIcon,
@@ -14,6 +14,7 @@ import {
     PencilIcon,
     TrashIcon
 } from '@heroicons/react/24/outline';
+import { userHasPermission } from '@/Enums/Permission';
 
 interface Book {
     id: number;
@@ -70,8 +71,7 @@ export default function Show() {
         rental_days: 1,
     });
 
-    const canManageLibrary = auth.user?.permissions?.includes('manage library') || 
-                            auth.user?.roles?.includes('admin');
+    const canManageLibrary = userHasPermission(auth.user, 'manage library');
 
     const availableQuantity = book.stock_quantity - activeRentals.length;
     const canRentThisBook = canRent && availableQuantity > 0;
@@ -305,9 +305,9 @@ export default function Show() {
                                     </button>
                                 ) : (
                                     <form onSubmit={handleRent} className="space-y-4">
-                                        {(flash?.error || errors.error) && (
+                                        {flash?.error && (
                                             <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-3">
-                                                <p className="text-red-800 dark:text-red-200 text-sm">{flash?.error || errors.error}</p>
+                                                <p className="text-red-800 dark:text-red-200 text-sm">{flash.error}</p>
                                             </div>
                                         )}
                                         

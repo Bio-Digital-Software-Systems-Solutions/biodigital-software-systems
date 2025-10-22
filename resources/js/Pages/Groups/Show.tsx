@@ -98,7 +98,7 @@ export default function ShowGroup({ group, availableUsers, canManage }: Props) {
         router.patch(`/groups/${group.uuid}`, {
             ...group,
             is_active: !group.is_active,
-        }, {
+        } as any, {
             onSuccess: () => {
                 setIsToggleStatusModalOpen(false);
                 showSuccess(`Groupe ${group.is_active ? 'désactivé' : 'activé'} avec succès`);

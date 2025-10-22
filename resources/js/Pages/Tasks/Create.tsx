@@ -1,7 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Status, User, PageProps } from '@/types';
+import { Status, User, PageProps } from '@/Types';
 
 interface Project {
     id: number;

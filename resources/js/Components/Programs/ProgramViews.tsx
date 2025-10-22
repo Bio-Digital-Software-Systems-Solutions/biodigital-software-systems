@@ -13,11 +13,11 @@ interface ViewProps {
     formatDateTime: (date: string) => string;
     onStepClick?: (step: any) => void;
     statuses?: any[];
-    programId?: number;
+    programId?: string | number;
 }
 
 export const TimelineView = ({ steps, getStatusBadgeClass, getPriorityBadgeClass, getTaskStatusBadgeClass, formatDateTime, onStepClick, statuses = [], programId }: ViewProps) => {
-    const handleTaskToggle = (e: React.MouseEvent, task: any, stepId: number) => {
+    const handleTaskToggle = (e: React.MouseEvent | React.ChangeEvent, task: any, stepId: number) => {
         e.stopPropagation(); // Empêche l'ouverture du modal
 
         const completedStatus = statuses.find((s: any) => s.name === 'completed');

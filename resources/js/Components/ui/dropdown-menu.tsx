@@ -1,8 +1,15 @@
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
-import { CheckIcon, ChevronRightIcon, DotFilledIcon } from "@heroicons/react/24/outline"
+import { CheckIcon, ChevronRightIcon } from "@heroicons/react/24/outline"
 
 import { cn } from "@/lib/utils"
+
+// Dot icon replacement (heroicons doesn't have DotFilledIcon)
+const DotFilledIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="12" cy="12" r="5" />
+  </svg>
+)
 
 const DropdownMenu = DropdownMenuPrimitive.Root
 

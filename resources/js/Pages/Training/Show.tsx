@@ -104,7 +104,14 @@ interface Props {
 }
 
 // Composant modal d'inscription
-const EnrollmentModal = ({ isOpen, onClose, training, auth }) => {
+interface EnrollmentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  training: Training;
+  auth?: Props['auth'];
+}
+
+const EnrollmentModal = ({ isOpen, onClose, training, auth }: EnrollmentModalProps) => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<any>({});
@@ -344,7 +351,7 @@ const EnrollmentModal = ({ isOpen, onClose, training, auth }) => {
 
                 {training.classes && training.classes.length > 0 ? (
                   <div className="space-y-3">
-                    {training.classes.map((classItem) => (
+                    {training.classes.map((classItem: TrainingClass) => (
                       <Card
                 key={classItem.id}
                 className={`cursor-pointer border-2 transition-all ${

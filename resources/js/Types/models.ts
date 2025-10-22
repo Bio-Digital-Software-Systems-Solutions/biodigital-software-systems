@@ -3,7 +3,9 @@ export interface User {
     uuid: string;
     first_name: string;
     last_name: string;
+    name: string; // Full name for compatibility
     email: string;
+    email_verified_at?: string;
     birth_date?: string;
     avatar?: string;
     roles: Role[];
@@ -26,6 +28,7 @@ export interface Permission {
 export interface Article {
     id: number;
     uuid: string;
+    slug: string;
     title: string;
     excerpt?: string;
     content: string;
@@ -179,13 +182,22 @@ export interface Program {
 export interface Task {
     id: number;
     uuid: string;
-    name: string;
-    description?: string;
-    start_date: string;
-    end_date: string;
+    title: string;
+    description: string;
+    due_date: string | null;
+    priority: 'low' | 'medium' | 'high';
+    estimated_hours: number | null;
+    actual_hours: number | null;
+    notes: string | null;
+    status_id: number;
+    program_id: number | null;
+    project_id?: number | null;
+    assigned_to: number;
     status: Status;
-    program: Program;
-    assigned_to?: User;
+    program?: Program;
+    assigned_user?: User;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface Stock {
@@ -238,3 +250,6 @@ export interface Group {
     created_at: string;
     updated_at: string;
 }
+
+// Re-export all types from Project.ts
+export * from './Project';

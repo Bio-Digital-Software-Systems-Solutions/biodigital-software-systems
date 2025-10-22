@@ -54,7 +54,7 @@ export const withLazyLoad = <P extends object>(
     return (props: P) => (
         <ErrorBoundary>
             <Suspense fallback={<ComponentLoader message={loadingMessage} />}>
-                <LazyComponent {...props} />
+                <LazyComponent {...props as any} />
             </Suspense>
         </ErrorBoundary>
     );

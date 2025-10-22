@@ -95,7 +95,7 @@ export default function ShowDepartment({ department, availableUsers, canManage }
         router.patch(`/departments/${department.uuid}`, {
             ...department,
             is_active: !department.is_active,
-        }, {
+        } as any, {
             onSuccess: () => {
                 setIsDeactivateModalOpen(false);
                 showSuccess(`Département ${department.is_active ? 'désactivé' : 'activé'} avec succès`);

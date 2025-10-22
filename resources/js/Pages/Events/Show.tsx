@@ -17,6 +17,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { isAdmin } from '@/Enums/Role';
+import { userHasPermission } from '@/Enums/Permission';
 
 interface Address {
     id: number;
@@ -78,12 +79,10 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
 
     // Permission checks
     const canEditEvent = auth.user?.id === event.creator?.id ||
-                        auth.user?.permissions?.includes('edit events') ||
-                        isAdmin(auth.user?.roles);
+                        userHasPermission(auth.user, 'edit events');
 
     const canDeleteEvent = auth.user?.id === event.creator?.id ||
-                          auth.user?.permissions?.includes('delete events') ||
-                          isAdmin(auth.user?.roles);
+                          userHasPermission(auth.user, 'delete events');
 
     const getStatusBadge = (status: string) => {
         const statusConfig = {
@@ -148,7 +147,7 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
     };
 
     return (
-        <DashboardLayout user={auth.user}>
+        <DashboardLayout>
             <Head title={event.title} />
 
             <div className="p-4">

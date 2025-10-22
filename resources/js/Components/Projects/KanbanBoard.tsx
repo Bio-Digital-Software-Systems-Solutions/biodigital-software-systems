@@ -5,7 +5,7 @@ import { useTasks } from '@/Hooks/useTasks';
 import { apiLogger } from '@/utils/logger';
 
 interface KanbanBoardProps {
-  projectId: number;
+  projectId: string | number;
 }
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {

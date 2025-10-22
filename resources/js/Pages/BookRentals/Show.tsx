@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
-import { 
+import {
     ArrowLeftIcon,
     BookOpenIcon,
     UserIcon,
@@ -15,6 +15,7 @@ import {
     ArrowPathIcon,
     TagIcon
 } from '@heroicons/react/24/outline';
+import { userHasPermission } from '@/Enums/Permission';
 
 interface BookRental {
     id: number;
@@ -57,8 +58,7 @@ export default function Show() {
     const [showExtendForm, setShowExtendForm] = useState(false);
 
     const isOwnRental = rental.user.id === auth.user?.id;
-    const canManageLibrary = auth.user?.permissions?.includes('manage library') || 
-                            auth.user?.roles?.includes('admin');
+    const canManageLibrary = userHasPermission(auth.user, 'manage library');
 
     const { data: returnData, post: postReturn, processing: returningBook } = useForm({});
     const { data: extendData, setData: setExtendData, post: postExtend, processing: extendingRental, errors: extendErrors } = useForm({

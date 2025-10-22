@@ -3,7 +3,7 @@ import { useForm, router } from '@inertiajs/react';
 import { XMarkIcon, TrashIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 
 interface ProgramStepFormProps {
-    programId: number;
+    programId: string | number;
     onClose: () => void;
     step?: any;
     users?: any[];
@@ -14,7 +14,15 @@ export default function ProgramStepForm({ programId, onClose, step, users = [], 
     const isEditing = !!step;
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-    const { data, setData, post, patch, processing, errors } = useForm({
+    const { data, setData, post, patch, processing, errors } = useForm<{
+        name: string;
+        description: string;
+        order_index: number;
+        start_datetime: string;
+        end_datetime: string;
+        duration_minutes: number;
+        status: string;
+    }>({
         name: step?.name || '',
         description: step?.description || '',
         order_index: step?.order_index || 1,

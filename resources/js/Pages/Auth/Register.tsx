@@ -5,12 +5,20 @@ import { FormEventHandler } from 'react';
 import { Button } from '@/Components/ui/button';
 
 export default function Register() {
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm<{
+        first_name: string;
+        last_name: string;
+        email: string;
+        birth_date: string;
+        avatar: File | null;
+        password: string;
+        password_confirmation: string;
+    }>({
         first_name: '',
         last_name: '',
         email: '',
         birth_date: '',
-        avatar: '',
+        avatar: null,
         password: '',
         password_confirmation: '',
     });
@@ -123,7 +131,7 @@ export default function Register() {
                                         name="avatar"
                                         accept="image/*"
                                         className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring transition-all"
-                                        onChange={(e) => setData('avatar', e.target.files?.[0] || '')}
+                                        onChange={(e) => setData('avatar', e.target.files?.[0] || null)}
                                     />
                                     <InputError message={errors.avatar} className="mt-2" />
                                 </div>

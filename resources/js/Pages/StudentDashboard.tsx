@@ -315,7 +315,7 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
                       >
                         <Card
                           className={`cursor-pointer transition-all h-full hover:border-blue-400 hover:shadow-md ${
-                            activeTraining === training.id
+                            activeTraining === training.id.toString()
                               ? 'border-primary bg-blue-50 dark:bg-blue-900/20'
                               : ''
                           }`}
@@ -365,7 +365,7 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
                       >
                         <Card
                           className={`cursor-pointer transition-all hover:border-blue-400 hover:shadow-md ${
-                            activeTraining === training.id
+                            activeTraining === training.id.toString()
                               ? 'border-primary bg-blue-50 dark:bg-blue-900/20'
                               : ''
                           }`}
@@ -425,7 +425,7 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
                           <tr
                             key={training.id}
                             className={`border-b dark:border-gray-700 cursor-pointer transition-colors ${
-                              activeTraining === training.id
+                              activeTraining === training.id.toString()
                                 ? 'bg-blue-50 dark:bg-blue-900/20'
                                 : 'hover:bg-blue-50 dark:hover:bg-blue-900/10'
                             }`}

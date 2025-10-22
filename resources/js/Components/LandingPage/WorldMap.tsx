@@ -142,7 +142,7 @@ const WorldMap: React.FC = () => {
           .attr('stroke', 'none')
           .on('mouseover', function(event, d) {
             // Animate the actual bubble (sibling element)
-            d3.select(this.parentNode).select('.church')
+            d3.select(this.parentNode as Element).select('.church')
               .transition()
               .duration(200)
               .attr('r', sizeScale(d.members || 100) * 1.3)
@@ -174,7 +174,7 @@ const WorldMap: React.FC = () => {
           })
           .on('mouseout', function(event, d) {
             // Animate the actual bubble back
-            d3.select(this.parentNode).select('.church')
+            d3.select(this.parentNode as Element).select('.church')
               .transition()
               .duration(200)
               .attr('r', sizeScale(d.members || 100))
@@ -203,7 +203,7 @@ const WorldMap: React.FC = () => {
           .transition()
           .duration(1200)
           .delay((d, i) => i * 30)
-          .attr('r', d => sizeScale(d.members || 100) + 4)
+          .attr('r', (d: any) => sizeScale(d.members || 100) + 4)
           .ease(d3.easeElasticOut);
 
         // Add subtle pulse animation to bubbles only (simplified to avoid crash)

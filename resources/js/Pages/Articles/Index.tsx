@@ -17,12 +17,14 @@ import {
     HeartIcon
 } from '@heroicons/react/24/outline';
 import { debounce } from 'lodash';
+import { userHasPermission } from '@/Enums/Permission';
 
-type ViewMode = 'grid' | 'list';
+type ViewMode = 'grid' | 'list' | 'calendar';
 
 interface Article {
     id: number;
     uuid: string;
+    slug: string;
     title: string;
     content: string;
     cover_image?: string;
@@ -108,11 +110,9 @@ export default function Index() {
         setSelectedStatus('');
     };
 
-    const canCreateArticles = auth.user?.permissions?.includes('create articles') || 
-                             auth.user?.roles?.includes('admin');
+    const canCreateArticles = userHasPermission(auth.user, 'create articles');
 
-    const canEditArticles = auth.user?.permissions?.includes('edit articles') || 
-                           auth.user?.roles?.includes('admin');
+    const canEditArticles = userHasPermission(auth.user, 'edit articles');
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -155,7 +155,7 @@ export default function Index() {
             description="Découvrez et partagez des articles avec votre organisation"
             actions={
                 <>
-                    <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} />
+                    <ViewSwitcher currentView={viewMode} onViewChange={(view) => setViewMode(view)} />
                     {canCreateArticles && (
                         <Link
                             href={route('articles.create')}

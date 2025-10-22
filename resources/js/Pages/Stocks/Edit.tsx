@@ -10,6 +10,7 @@ interface Category {
 
 interface Stock {
     id: number;
+    uuid: string;
     name: string;
     sku: string;
     description?: string;

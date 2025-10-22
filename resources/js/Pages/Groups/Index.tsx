@@ -14,8 +14,9 @@ import {
     CheckCircleIcon,
     XCircleIcon
 } from '@heroicons/react/24/outline';
+import { userHasPermission } from '@/Enums/Permission';
 
-type ViewMode = 'grid' | 'list';
+type ViewMode = 'grid' | 'list' | 'calendar';
 
 interface User {
     id: number;
@@ -54,12 +55,9 @@ const Index: React.FC<IndexProps> = ({ groups, filters }) => {
     const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-    const canCreateGroups = auth.user?.permissions?.includes('create groups') || 
-                           auth.user?.roles?.includes('admin');
-    const canEditGroups = auth.user?.permissions?.includes('edit groups') || 
-                         auth.user?.roles?.includes('admin');
-    const canDeleteGroups = auth.user?.permissions?.includes('delete groups') || 
-                           auth.user?.roles?.includes('admin');
+    const canCreateGroups = userHasPermission(auth.user, 'create groups');
+    const canEditGroups = userHasPermission(auth.user, 'edit groups');
+    const canDeleteGroups = userHasPermission(auth.user, 'delete groups');
 
     const handleFilter = (status: string) => {
         setSelectedStatus(status);
@@ -89,7 +87,7 @@ const Index: React.FC<IndexProps> = ({ groups, filters }) => {
             description="Gérez les groupes et leurs membres"
             actions={
                 <>
-                    <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} />
+                    <ViewSwitcher currentView={viewMode} onViewChange={(view) => setViewMode(view)} />
                     {canCreateGroups && (
                         <Link
                             href={route('groups.create')}

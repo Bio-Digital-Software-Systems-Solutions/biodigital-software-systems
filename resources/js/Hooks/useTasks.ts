@@ -3,7 +3,7 @@ import axios from 'axios';
 import { ProjectTask, TaskStatus, TaskFilters } from '@/Types/Project';
 import { apiLogger } from '@/utils/logger';
 
-export const useTasks = (projectId?: number, filters?: TaskFilters) => {
+export const useTasks = (projectId?: string | number, filters?: TaskFilters) => {
   const [tasks, setTasks] = useState<ProjectTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

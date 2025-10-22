@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon, PencilIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { PageProps } from '@/Types';
+import { userHasPermission } from '@/Enums/Permission';
 
 interface Category {
     id: number;
@@ -10,6 +11,7 @@ interface Category {
 
 interface Stock {
     id: number;
+    uuid: string;
     name: string;
     sku: string;
     description?: string;
@@ -63,7 +65,7 @@ export default function Show({ stock, auth }: Props) {
     };
 
     const status = getStockStatus();
-    const canEdit = auth.user?.permissions?.includes('manage stocks') || auth.user?.roles?.includes('admin');
+    const canEdit = userHasPermission(auth.user, 'manage stocks');
 
     return (
         <DashboardLayout>

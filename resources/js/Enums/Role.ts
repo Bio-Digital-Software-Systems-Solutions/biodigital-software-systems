@@ -20,22 +20,32 @@ export enum Role {
 /**
  * Helper function to check if a user has any of the specified roles
  */
-export function hasAnyRole(userRoles: string[] | undefined, roles: Role[]): boolean {
+export function hasAnyRole(userRoles: any[] | undefined, roles: Role[]): boolean {
     if (!userRoles || userRoles.length === 0) return false;
-    return roles.some(role => userRoles.includes(role));
+    return roles.some(role => {
+        return userRoles.some(ur => {
+            if (typeof ur === 'string') return ur === role;
+            if (ur && typeof ur === 'object' && 'name' in ur) return ur.name === role;
+            return false;
+        });
+    });
 }
 
 /**
  * Helper function to check if a user has a specific role
  */
-export function hasRole(userRoles: string[] | undefined, role: Role): boolean {
+export function hasRole(userRoles: any[] | undefined, role: Role): boolean {
     if (!userRoles || userRoles.length === 0) return false;
-    return userRoles.includes(role);
+    return userRoles.some(ur => {
+        if (typeof ur === 'string') return ur === role;
+        if (ur && typeof ur === 'object' && 'name' in ur) return ur.name === role;
+        return false;
+    });
 }
 
 /**
  * Helper function to check if user is admin or super admin
  */
-export function isAdmin(userRoles: string[] | undefined): boolean {
+export function isAdmin(userRoles: any[] | undefined): boolean {
     return hasAnyRole(userRoles, [Role.ADMIN, Role.SUPER_ADMIN]);
 }

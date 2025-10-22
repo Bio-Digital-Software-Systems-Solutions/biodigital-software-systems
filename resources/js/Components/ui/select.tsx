@@ -10,6 +10,7 @@ interface SelectProps {
 interface SelectTriggerProps {
   children: React.ReactNode
   className?: string
+  id?: string
 }
 
 interface SelectContentProps {
@@ -44,13 +45,14 @@ const Select = ({ value, onValueChange, children }: SelectProps) => {
   )
 }
 
-const SelectTrigger = ({ children, className = "" }: SelectTriggerProps) => {
+const SelectTrigger = ({ children, className = "", id }: SelectTriggerProps) => {
   const context = React.useContext(SelectContext)
   if (!context) throw new Error("SelectTrigger must be used within Select")
 
   return (
     <button
       type="button"
+      id={id}
       onClick={() => context.setIsOpen(!context.isOpen)}
       className={`flex items-center justify-between w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary ${className}`}
     >
