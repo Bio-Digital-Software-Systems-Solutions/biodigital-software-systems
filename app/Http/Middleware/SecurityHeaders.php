@@ -41,11 +41,13 @@ class SecurityHeaders
                 "form-action 'self';"
             );
         } else {
-            // Production: Strict CSP with nonces for inline scripts/styles
+            // Production: CSP with 'unsafe-inline' for Ziggy routes
+            // Note: 'unsafe-inline' is needed for @routes directive from Ziggy
+            // Vite-generated inline styles also need 'unsafe-inline'
             $response->headers->set('Content-Security-Policy',
                 "default-src 'self'; ".
-                "script-src 'self' 'nonce-{$nonce}' https://www.youtube.com https://www.youtube-nocookie.com; ".
-                "style-src 'self' 'nonce-{$nonce}' https://fonts.bunny.net; ". // Allow external fonts
+                "script-src 'self' 'unsafe-inline' https://www.youtube.com https://www.youtube-nocookie.com; ".
+                "style-src 'self' 'unsafe-inline' https://fonts.bunny.net; ". // Allow external fonts
                 "img-src 'self' data: https: blob:; ".
                 "font-src 'self' data: https://fonts.bunny.net; ". // Allow external fonts
                 "connect-src 'self'; ".
