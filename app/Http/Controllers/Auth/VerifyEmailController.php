@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -15,7 +16,7 @@ class VerifyEmailController extends Controller
     public function __invoke(EmailVerificationRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $dashboardRoute = ($user->hasRole('member') && $user->roles->count() === 1)
+        $dashboardRoute = ($user->hasRole(Role::MEMBER) && $user->roles->count() === 1)
             ? route('user.dashboard', absolute: false)
             : route('dashboard', absolute: false);
 

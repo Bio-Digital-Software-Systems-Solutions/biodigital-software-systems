@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class EmailVerificationPromptController extends Controller
     {
         if ($request->user()->hasVerifiedEmail()) {
             $user = $request->user();
-            if ($user->hasRole('member') && $user->roles->count() === 1) {
+            if ($user->hasRole(Role::MEMBER) && $user->roles->count() === 1) {
                 return redirect()->intended(route('user.dashboard', absolute: false));
             }
             return redirect()->intended(route('dashboard', absolute: false));

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Role;
 use App\Mail\TrainingEnrollmentApproved;
 use App\Mail\TrainingEnrollmentRejected;
 use App\Models\Training;
@@ -82,8 +83,8 @@ class TrainingEnrollmentController extends Controller
                 ]);
 
             // Assign Student role to user if they don't have it
-            if (! $user->hasRole('Student')) {
-                $user->assignRole('Student');
+            if (! $user->hasRole(Role::STUDENT)) {
+                $user->assignRole(Role::STUDENT);
             }
 
             // Get training class information if available

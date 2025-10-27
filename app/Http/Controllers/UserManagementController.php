@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Role as RoleEnum;
 use App\Models\User;
 use App\Services\CacheService;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,7 @@ class UserManagementController extends Controller
     {
         // Only SuperAdmin can access
         $this->middleware(function ($request, $next) {
-            if (!$request->user()->hasRole('SuperAdmin')) {
+            if (!$request->user()->hasRole(RoleEnum::SUPER_ADMIN)) {
                 abort(403, 'Access denied. SuperAdmin role required.');
             }
             return $next($request);
@@ -243,7 +244,7 @@ class UserManagementController extends Controller
         ]);
 
         // Prevent modification of SuperAdmin users
-        if ($user->hasRole('SuperAdmin')) {
+        if ($user->hasRole(RoleEnum::SUPER_ADMIN)) {
             return response()->json([
                 'message' => 'Cannot modify SuperAdmin user status',
             ], 403);
@@ -290,7 +291,7 @@ class UserManagementController extends Controller
     public function deleteUser(User $user): JsonResponse
     {
         // Prevent deletion of SuperAdmin users
-        if ($user->hasRole('SuperAdmin')) {
+        if ($user->hasRole(RoleEnum::SUPER_ADMIN)) {
             return response()->json([
                 'message' => 'Cannot delete SuperAdmin user',
             ], 403);
