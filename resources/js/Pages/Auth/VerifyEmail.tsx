@@ -1,15 +1,29 @@
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState, useEffect } from 'react';
 import { Button } from '@/Components/ui/button';
 import { Mail, CheckCircle } from 'lucide-react';
 
 export default function VerifyEmail({ status }: { status?: string }) {
     const { post, processing } = useForm({});
+    const [cooldown, setCooldown] = useState(0);
+
+    useEffect(() => {
+        if (cooldown > 0) {
+            const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [cooldown]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('verification.send'));
+        if (cooldown > 0) return;
+
+        post(route('verification.send'), {
+            onSuccess: () => {
+                setCooldown(60); // 60 secondes de cooldown
+            },
+        });
     };
 
     return (
@@ -58,11 +72,15 @@ export default function VerifyEmail({ status }: { status?: string }) {
 
                                     <Button
                                         type="submit"
-                                        disabled={processing}
+                                        disabled={processing || cooldown > 0}
                                         className="w-full py-3"
                                         variant="outline"
                                     >
-                                        {processing ? 'Envoi en cours...' : 'Renvoyer l\'email de vérification'}
+                                        {processing
+                                            ? 'Envoi en cours...'
+                                            : cooldown > 0
+                                            ? `Réessayer dans ${cooldown}s`
+                                            : 'Renvoyer l\'email de vérification'}
                                     </Button>
                                 </div>
 
