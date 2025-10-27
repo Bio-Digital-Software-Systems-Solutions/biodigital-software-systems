@@ -54,8 +54,8 @@ class UserDashboardController extends Controller
             });
 
         // Available trainings (active ones) - Optimized with eager loading
-        $availableTrainings = Training::where('status', 'active')
-            ->with(['topic:id,name', 'enrollments' => function ($query) use ($user) {
+        $availableTrainings = Training::active()
+            ->with(['enrollments' => function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             }])
             ->orderBy('created_at', 'desc')
@@ -66,8 +66,8 @@ class UserDashboardController extends Controller
                     'id' => $training->id,
                     'title' => $training->title,
                     'description' => $training->description,
-                    'topic' => $training->topic?->name ?? 'Non catégorisé',
-                    'duration_hours' => $training->duration_hours,
+                    'category' => $training->category ?? 'Non catégorisé',
+                    'duration' => $training->duration,
                     'is_enrolled' => $training->enrollments->isNotEmpty(),
                 ];
             });
@@ -75,7 +75,6 @@ class UserDashboardController extends Controller
         // User's enrolled trainings
         $myTrainings = $user->trainings()
             ->wherePivot('status', '!=', 'rejected')
-            ->with('topic:id,name')
             ->take(5)
             ->get()
             ->map(function ($training) {
@@ -84,7 +83,7 @@ class UserDashboardController extends Controller
                     'title' => $training->title,
                     'status' => $training->pivot->status,
                     'progress' => $training->pivot->progress ?? 0,
-                    'topic' => $training->topic?->name ?? 'Non catégorisé',
+                    'category' => $training->category ?? 'Non catégorisé',
                 ];
             });
 
@@ -108,7 +107,7 @@ class UserDashboardController extends Controller
             'totalEvents' => Event::where('start_date', '>', Carbon::now())->count(),
             'myEvents' => $user->participatingEvents()->where('start_date', '>', Carbon::now())->count(),
             'totalArticles' => Article::whereNotNull('published_at')->count(),
-            'totalTrainings' => Training::where('status', 'active')->count(),
+            'totalTrainings' => Training::active()->count(),
             'myTrainings' => $user->trainings()->wherePivot('status', '!=', 'rejected')->count(),
         ];
 
