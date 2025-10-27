@@ -29,3 +29,6 @@ Homestead.json
 auth.json
 .history/
 buildlog
+
+# Ziggy routes - generated per environment
+resources/js/ziggy.js

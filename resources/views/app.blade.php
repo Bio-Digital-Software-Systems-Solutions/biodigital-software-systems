@@ -15,6 +15,7 @@
         @php
             $nonce = request()->attributes->get('csp_nonce');
         @endphp
+        @routes(['nonce' => $nonce])
         @viteReactRefresh(['nonce' => $nonce])
         @vite(['resources/js/app.tsx', "resources/js/Pages/{$page['component']}.tsx"], null, ['nonce' => $nonce])
         @inertiaHead
