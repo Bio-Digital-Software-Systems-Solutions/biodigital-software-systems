@@ -31,6 +31,7 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
+            'cspNonce' => $request->attributes->get('csp_nonce'),
             'auth' => [
                 'user' => $request->user() ? [
                     'id' => $request->user()->id,

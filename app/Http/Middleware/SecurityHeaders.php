@@ -41,11 +41,11 @@ class SecurityHeaders
                 "form-action 'self';"
             );
         } else {
-            // Production: Strict CSP with external fonts and YouTube
+            // Production: Strict CSP with nonces for inline scripts/styles
             $response->headers->set('Content-Security-Policy',
                 "default-src 'self'; ".
-                "script-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; ".
-                "style-src 'self' https://fonts.bunny.net; ". // Allow external fonts
+                "script-src 'self' 'nonce-{$nonce}' https://www.youtube.com https://www.youtube-nocookie.com; ".
+                "style-src 'self' 'nonce-{$nonce}' https://fonts.bunny.net; ". // Allow external fonts
                 "img-src 'self' data: https: blob:; ".
                 "font-src 'self' data: https://fonts.bunny.net; ". // Allow external fonts
                 "connect-src 'self'; ".
