@@ -17,7 +17,7 @@ class EmailVerificationPromptController extends Controller
     {
         if ($request->user()->hasVerifiedEmail()) {
             $user = $request->user();
-            if ($user->hasRole('Member') && $user->roles->count() === 1) {
+            if ($user->hasRole('member') && $user->roles->count() === 1) {
                 return redirect()->intended(route('user.dashboard', absolute: false));
             }
             return redirect()->intended(route('dashboard', absolute: false));
