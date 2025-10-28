@@ -1,20 +1,43 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Task, Program, Status, User, PageProps } from '@/Types';
+import { Task, Program, Project, Status, User, PageProps } from '@/Types';
+import { useState } from 'react';
 
 interface Props extends PageProps {
     task: Task & {
-        program: Program;
+        program?: Program;
+        project?: Project;
         status: Status;
         assigned_user: User;
+        taskable_type?: string;
+        taskable_id?: number;
     };
     programs: Program[];
+    projects: Project[];
     statuses: Status[];
     users: User[];
 }
 
-export default function Edit({ task, programs, statuses, users }: Props) {
+export default function Edit({ task, programs, projects, statuses, users }: Props) {
+    // Determine initial taskable type
+    const getInitialTaskableType = () => {
+        if (task.taskable_type === 'App\\Models\\Project') return 'project';
+        if (task.taskable_type === 'App\\Models\\Program') return 'program';
+        if (task.project_id) return 'project';
+        if (task.program_id) return 'program';
+        return 'none';
+    };
+
+    const getInitialTaskableId = () => {
+        if (task.taskable_id) return task.taskable_id;
+        if (task.project_id) return task.project_id;
+        if (task.program_id) return task.program_id;
+        return '';
+    };
+
+    const [taskableType, setTaskableType] = useState<'none' | 'project' | 'program'>(getInitialTaskableType());
+
     const { data, setData, put, processing, errors } = useForm({
         title: task.title || '',
         description: task.description || '',
@@ -24,9 +47,40 @@ export default function Edit({ task, programs, statuses, users }: Props) {
         actual_hours: task.actual_hours || '',
         notes: task.notes || '',
         status_id: task.status_id || '',
+        taskable_type: task.taskable_type || '',
+        taskable_id: getInitialTaskableId(),
         program_id: task.program_id || '',
+        project_id: task.project_id || '',
         assigned_to: task.assigned_to || '',
     });
+
+    const handleTaskableTypeChange = (type: 'none' | 'project' | 'program') => {
+        setTaskableType(type);
+        if (type === 'none') {
+            setData({
+                ...data,
+                taskable_type: '',
+                taskable_id: '',
+                project_id: '',
+                program_id: '',
+            });
+        } else {
+            setData({
+                ...data,
+                taskable_id: '',
+            });
+        }
+    };
+
+    const handleTaskableIdChange = (id: string) => {
+        setData({
+            ...data,
+            taskable_id: Number(id),
+            ...(taskableType === 'project' ? { project_id: id } : {}),
+            ...(taskableType === 'program' ? { program_id: id } : {}),
+            taskable_type: taskableType === 'project' ? 'App\\Models\\Project' : (taskableType === 'program' ? 'App\\Models\\Program' : ''),
+        });
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -70,25 +124,67 @@ export default function Edit({ task, programs, statuses, users }: Props) {
                                     </div>
 
                                     <div>
-                                        <label htmlFor="program_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            Program *
+                                        <label htmlFor="taskable_type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Associate with
                                         </label>
                                         <select
-                                            id="program_id"
-                                            value={data.program_id}
-                                            onChange={(e) => setData('program_id', e.target.value)}
+                                            id="taskable_type"
+                                            value={taskableType}
+                                            onChange={(e) => handleTaskableTypeChange(e.target.value as 'none' | 'project' | 'program')}
                                             className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                            required
                                         >
-                                            <option value="">Select a program</option>
-                                            {programs.map(program => (
-                                                <option key={program.id} value={program.id}>
-                                                    {program.name}
-                                                </option>
-                                            ))}
+                                            <option value="none">None (standalone task)</option>
+                                            <option value="project">Project</option>
+                                            <option value="program">Program</option>
                                         </select>
-                                        {errors.program_id && <p className="mt-1 text-sm text-red-600">{errors.program_id}</p>}
+                                        {errors.taskable_type && <p className="mt-1 text-sm text-red-600">{errors.taskable_type}</p>}
                                     </div>
+
+                                    {taskableType === 'project' && (
+                                        <div>
+                                            <label htmlFor="taskable_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Project *
+                                            </label>
+                                            <select
+                                                id="taskable_id"
+                                                value={data.taskable_id || ''}
+                                                onChange={(e) => handleTaskableIdChange(e.target.value)}
+                                                className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                                required
+                                            >
+                                                <option value="">Select a project</option>
+                                                {projects.map(project => (
+                                                    <option key={project.id} value={project.id}>
+                                                        {project.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {errors.taskable_id && <p className="mt-1 text-sm text-red-600">{errors.taskable_id}</p>}
+                                        </div>
+                                    )}
+
+                                    {taskableType === 'program' && (
+                                        <div>
+                                            <label htmlFor="taskable_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Program *
+                                            </label>
+                                            <select
+                                                id="taskable_id"
+                                                value={data.taskable_id || ''}
+                                                onChange={(e) => handleTaskableIdChange(e.target.value)}
+                                                className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                                required
+                                            >
+                                                <option value="">Select a program</option>
+                                                {programs.map(program => (
+                                                    <option key={program.id} value={program.id}>
+                                                        {program.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {errors.taskable_id && <p className="mt-1 text-sm text-red-600">{errors.taskable_id}</p>}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>

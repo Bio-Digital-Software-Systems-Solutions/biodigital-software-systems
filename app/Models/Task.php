@@ -99,6 +99,7 @@ class Task extends Model
     protected $fillable = [
         'uuid',
         'title',
+        'key',
         'description',
         'due_date',
         'priority',
@@ -113,6 +114,15 @@ class Task extends Model
         'image',
         'taskable_type',
         'taskable_id',
+        'parent_id',
+        'reporter_id',
+        'type',
+        'story_points',
+        'sprint_id',
+        'epic_id',
+        'labels',
+        'custom_fields',
+        'position',
     ];
 
     /**
@@ -126,6 +136,8 @@ class Task extends Model
             'due_date' => 'datetime',
             'estimated_hours' => 'decimal:2',
             'actual_hours' => 'decimal:2',
+            'labels' => 'array',
+            'custom_fields' => 'array',
         ];
     }
 
@@ -167,6 +179,46 @@ class Task extends Model
     public function assignedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * Alias for assignedUser for backward compatibility with ProjectTask.
+     */
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * Get the user who reported/created the task.
+     */
+    public function reporter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reporter_id');
+    }
+
+    /**
+     * Get the parent task.
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'parent_id');
+    }
+
+    /**
+     * Get the epic task.
+     */
+    public function epic(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'epic_id');
+    }
+
+    /**
+     * Get the sprint this task belongs to.
+     */
+    public function sprint(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Sprint::class);
     }
 
     /**

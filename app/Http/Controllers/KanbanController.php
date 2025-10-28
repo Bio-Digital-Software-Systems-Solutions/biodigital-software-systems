@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use App\Models\ProjectTask;
+use App\Models\Task;
+use App\Models\Status;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,7 +19,7 @@ class KanbanController extends Controller
 
     public function index(Request $request)
     {
-        $query = ProjectTask::with(['project', 'assignee', 'reporter', 'sprint']);
+        $query = Task::with(['project', 'assignee', 'reporter', 'sprint', 'status']);
 
         // Apply filters
         if ($request->has('project_id') && $request->project_id) {
@@ -26,7 +27,7 @@ class KanbanController extends Controller
         }
 
         if ($request->has('assignee_id') && $request->assignee_id) {
-            $query->where('assignee_id', $request->assignee_id);
+            $query->where('assigned_to', $request->assignee_id);
         }
 
         if ($request->has('priority') && $request->priority) {
@@ -51,13 +52,36 @@ class KanbanController extends Controller
 
         $tasks = $query->latest()->get();
 
-        // Group tasks by status
+        // Get status name-to-id mapping
+        $statuses = Status::all()->pluck('id', 'name');
+
+        // Group tasks by status name (for frontend compatibility)
         $tasksByStatus = [
-            'todo' => $tasks->where('status', 'todo')->values(),
-            'in_progress' => $tasks->where('status', 'in_progress')->values(),
-            'in_review' => $tasks->where('status', 'in_review')->values(),
-            'blocked' => $tasks->where('status', 'blocked')->values(),
-            'done' => $tasks->where('status', 'done')->values(),
+            'todo' => $tasks->filter(function ($task) {
+                return $task->status && $task->status->name === 'todo';
+            })->values()->map(function ($task) {
+                return $this->formatTaskForFrontend($task);
+            }),
+            'in_progress' => $tasks->filter(function ($task) {
+                return $task->status && $task->status->name === 'in_progress';
+            })->values()->map(function ($task) {
+                return $this->formatTaskForFrontend($task);
+            }),
+            'in_review' => $tasks->filter(function ($task) {
+                return $task->status && $task->status->name === 'in_review';
+            })->values()->map(function ($task) {
+                return $this->formatTaskForFrontend($task);
+            }),
+            'blocked' => $tasks->filter(function ($task) {
+                return $task->status && $task->status->name === 'blocked';
+            })->values()->map(function ($task) {
+                return $this->formatTaskForFrontend($task);
+            }),
+            'done' => $tasks->filter(function ($task) {
+                return $task->status && $task->status->name === 'done';
+            })->values()->map(function ($task) {
+                return $this->formatTaskForFrontend($task);
+            }),
         ];
 
         // Get filter data
@@ -78,17 +102,53 @@ class KanbanController extends Controller
         ]);
     }
 
-    public function updateStatus(Request $request, ProjectTask $task)
+    public function updateStatus(Request $request, Task $task)
     {
         $validated = $request->validate([
             'status' => 'required|in:todo,in_progress,in_review,blocked,done',
         ]);
 
-        $task->update($validated);
+        // Find the status ID from the status name
+        $status = Status::where('name', $validated['status'])->first();
+
+        if (!$status) {
+            return response()->json([
+                'message' => 'Invalid status',
+            ], 422);
+        }
+
+        $task->update(['status_id' => $status->id]);
 
         return response()->json([
             'message' => 'Task status updated successfully',
-            'task' => $task->load(['project', 'assignee', 'reporter']),
+            'task' => $this->formatTaskForFrontend($task->fresh()->load(['project', 'assignee', 'reporter', 'status'])),
         ]);
+    }
+
+    /**
+     * Format task data for frontend consumption
+     */
+    private function formatTaskForFrontend(Task $task): array
+    {
+        return [
+            'id' => $task->id,
+            'uuid' => $task->uuid,
+            'title' => $task->title,
+            'description' => $task->description,
+            'status' => $task->status ? $task->status->name : null,
+            'priority' => $task->priority ?? 'medium',
+            'type' => $task->type ?? 'task',
+            'assignee' => $task->assignee ? [
+                'id' => $task->assignee->id,
+                'first_name' => $task->assignee->first_name,
+                'last_name' => $task->assignee->last_name,
+            ] : null,
+            'project' => $task->project ? [
+                'id' => $task->project->id,
+                'name' => $task->project->name,
+                'color' => $task->project->color ?? null,
+            ] : null,
+            'due_date' => $task->due_date ? $task->due_date->toDateString() : null,
+        ];
     }
 }

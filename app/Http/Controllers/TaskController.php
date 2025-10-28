@@ -93,14 +93,18 @@ class TaskController extends Controller
     public function create(Request $request)
     {
         $projects = \App\Models\Project::where('status', '!=', 'cancelled')->get();
+        $programs = Program::active()->get();
         $statuses = Status::all();
         $users = User::all();
 
         return Inertia::render('Tasks/Create', [
             'projects' => $projects,
+            'programs' => $programs,
             'statuses' => $statuses,
             'users' => $users,
             'projectId' => $request->query('project'),
+            'taskableType' => $request->query('taskable_type'),
+            'taskableId' => $request->query('taskable_id'),
         ]);
     }
 
@@ -114,10 +118,22 @@ class TaskController extends Controller
             'estimated_hours' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'status_id' => 'required|exists:statuses,id',
-            'project_id' => 'nullable|exists:projects,id',
+            'taskable_type' => 'nullable|string|in:App\\Models\\Project,App\\Models\\Program',
+            'taskable_id' => 'nullable|integer',
             'assigned_to' => 'nullable|exists:users,id',
             'image' => 'nullable',
         ]);
+
+        // Backward compatibility: if project_id or program_id is provided, set taskable
+        if ($request->filled('project_id')) {
+            $validated['taskable_type'] = 'App\\Models\\Project';
+            $validated['taskable_id'] = $request->input('project_id');
+            $validated['project_id'] = $request->input('project_id');
+        } elseif ($request->filled('program_id')) {
+            $validated['taskable_type'] = 'App\\Models\\Program';
+            $validated['taskable_id'] = $request->input('program_id');
+            $validated['program_id'] = $request->input('program_id');
+        }
 
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -132,8 +148,8 @@ class TaskController extends Controller
         $task = Task::create($validated);
 
         // Redirect to project if task was created from a project page
-        if ($request->input('project_id') && $request->has('from_project')) {
-            $project = \App\Models\Project::find($request->input('project_id'));
+        if ($validated['taskable_type'] === 'App\\Models\\Project' && $request->has('from_project')) {
+            $project = \App\Models\Project::find($validated['taskable_id']);
             if ($project) {
                 return redirect()->route('projects.show', $project->uuid)
                     ->with('success', 'Task created successfully.');
@@ -155,14 +171,16 @@ class TaskController extends Controller
 
     public function edit(Task $task)
     {
-        $task->load(['status', 'program', 'assignedUser']);
+        $task->load(['status', 'program', 'project', 'assignedUser', 'taskable']);
         $programs = Program::active()->get();
+        $projects = \App\Models\Project::where('status', '!=', 'cancelled')->get();
         $statuses = Status::all();
         $users = User::all();
 
         return Inertia::render('Tasks/Edit', [
             'task' => $task,
             'programs' => $programs,
+            'projects' => $projects,
             'statuses' => $statuses,
             'users' => $users,
         ]);
@@ -179,10 +197,22 @@ class TaskController extends Controller
             'actual_hours' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'status_id' => 'required|exists:statuses,id',
-            'program_id' => 'required|exists:programs,id',
+            'taskable_type' => 'nullable|string|in:App\\Models\\Project,App\\Models\\Program',
+            'taskable_id' => 'nullable|integer',
             'assigned_to' => 'nullable|exists:users,id',
             'image' => 'nullable',
         ]);
+
+        // Backward compatibility: if project_id or program_id is provided, set taskable
+        if ($request->filled('project_id')) {
+            $validated['taskable_type'] = 'App\\Models\\Project';
+            $validated['taskable_id'] = $request->input('project_id');
+            $validated['project_id'] = $request->input('project_id');
+        } elseif ($request->filled('program_id')) {
+            $validated['taskable_type'] = 'App\\Models\\Program';
+            $validated['taskable_id'] = $request->input('program_id');
+            $validated['program_id'] = $request->input('program_id');
+        }
 
         // Handle image upload
         if ($request->hasFile('image')) {
