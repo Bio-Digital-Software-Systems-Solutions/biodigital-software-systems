@@ -14,17 +14,25 @@ class UserController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $users = User::select('id', 'name', 'first_name', 'last_name', 'email')
+        $users = User::select('id', 'first_name', 'last_name', 'email')
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('first_name', 'like', "%{$search}%")
+                    $q->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
                 });
             })
             ->limit(50)
-            ->get();
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name, // Uses the accessor
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                ];
+            });
 
         return response()->json($users);
     }
