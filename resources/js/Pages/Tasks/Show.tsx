@@ -52,7 +52,7 @@ export default function Show({ task }: Props) {
                     <div className="flex justify-between items-start mb-6">
                         <div className="flex items-center">
                             <Link
-                                href={route('project-tasks.index')}
+                                href={route('tasks.index')}
                                 className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 mr-4"
                             >
                                 <ArrowLeftIcon className="w-4 h-4 mr-1" />

@@ -97,7 +97,7 @@ export default function Edit({ task, programs, projects, statuses, users }: Prop
                         <div className="p-6 text-gray-900 dark:text-gray-100">
                             <div className="flex items-center mb-6">
                                 <Link
-                                    href={route('project-tasks.index')}
+                                    href={route('tasks.index')}
                                     className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 mr-4"
                                 >
                                     <ArrowLeftIcon className="w-4 h-4 mr-1" />
@@ -326,7 +326,7 @@ export default function Edit({ task, programs, projects, statuses, users }: Prop
 
                                 <div className="flex justify-end space-x-3">
                                     <Link
-                                        href={route('project-tasks.index')}
+                                        href={route('tasks.index')}
                                         className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                                     >
                                         Cancel

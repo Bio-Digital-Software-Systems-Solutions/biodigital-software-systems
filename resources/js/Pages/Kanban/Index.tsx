@@ -359,7 +359,7 @@ export default function KanbanIndex({ tasksByStatus, projects, users, sprints, f
                                             )}
 
                                             <Link
-                                                href={`/project-tasks/${task.uuid}`}
+                                                href={`/tasks/${task.uuid}`}
                                                 className="font-medium text-gray-900 dark:text-white hover:text-primary dark:hover:text-blue-400 transition-colors block"
                                             >
                                                 {task.title}
