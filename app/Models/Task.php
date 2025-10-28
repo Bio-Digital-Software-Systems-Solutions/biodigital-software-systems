@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -110,6 +111,8 @@ class Task extends Model
         'project_id',
         'assigned_to',
         'image',
+        'taskable_type',
+        'taskable_id',
     ];
 
     /**
@@ -164,6 +167,14 @@ class Task extends Model
     public function assignedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * Get the parent taskable model (Project, Program, etc.).
+     */
+    public function taskable(): MorphTo
+    {
+        return $this->morphTo();
     }
 
     /**

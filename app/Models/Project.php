@@ -122,6 +122,14 @@ class Project extends Model
         return $this->hasMany(ProjectTask::class);
     }
 
+    /**
+     * Get all tasks associated with this project (polymorphic).
+     */
+    public function morphTasks(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(Task::class, 'taskable');
+    }
+
     public function sprints(): HasMany
     {
         return $this->hasMany(Sprint::class)->orderBy('start_date');

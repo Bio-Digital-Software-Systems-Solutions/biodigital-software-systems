@@ -126,11 +126,19 @@ class Program extends Model
     }
 
     /**
-     * Get the tasks for the program.
+     * Get the tasks for the program (via program_id foreign key).
      */
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    /**
+     * Get all tasks associated with this program (polymorphic).
+     */
+    public function morphTasks(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(Task::class, 'taskable');
     }
 
     /**
