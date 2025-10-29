@@ -237,6 +237,14 @@ class Task extends Model
     }
 
     /**
+     * Get all attachments for this task.
+     */
+    public function attachments(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    /**
      * Check if the task is overdue.
      */
     public function isOverdue(): bool

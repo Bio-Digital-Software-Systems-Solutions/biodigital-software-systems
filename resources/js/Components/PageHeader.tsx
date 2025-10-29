@@ -32,9 +32,6 @@ export default function PageHeader({ title, description, actions }: PageHeaderPr
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                             {title || defaultTitle}
                         </h1>
-                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                            {description || defaultDescription}
-                        </p>
                     </div>
                 </div>
                 {actions && (
@@ -43,6 +40,13 @@ export default function PageHeader({ title, description, actions }: PageHeaderPr
                     </div>
                 )}
             </div>
+            {description && (
+                <div className="mt-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                        {description}
+                    </p>
+                </div>
+            )}
         </div>
     );
 }

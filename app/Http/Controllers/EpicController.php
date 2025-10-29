@@ -2,12 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EpicStatus;
+use App\Enums\TaskStatus;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+/**
+ * Epic Controller
+ *
+ * Epics are high-level tasks that use the EpicStatus enum for their status values.
+ * Valid epic statuses: todo, pending, in_progress, under_review, completed, cancelled
+ */
 class EpicController extends Controller
 {
     public function __construct()
@@ -39,10 +47,13 @@ class EpicController extends Controller
 
         $epics = $query->latest()->get()->map(function ($epic) {
             // Get child tasks (tasks that belong to this epic)
-            $childTasks = Task::where('epic_id', $epic->id)->with('status')->get();
+            $childTasks = Task::where('epic_id', $epic->id)->with(['status', 'assignee'])->get();
             $totalTasks = $childTasks->count();
             $completedTasks = $childTasks->filter(function ($task) {
-                return $task->status && $task->status->name === 'completed';
+                return $task->status && in_array($task->status->name, [
+                    TaskStatus::COMPLETED->value,
+                    TaskStatus::DONE->value
+                ]);
             })->count();
 
             return [
@@ -61,7 +72,19 @@ class EpicController extends Controller
                 'total_tasks' => $totalTasks,
                 'completed_tasks' => $completedTasks,
                 'progress' => $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0,
-                'child_tasks' => $childTasks,
+                'child_tasks' => $childTasks->map(function ($task) {
+                    return [
+                        'id' => $task->id,
+                        'uuid' => $task->uuid,
+                        'key' => $task->key,
+                        'title' => $task->title,
+                        'description' => $task->description,
+                        'status' => $task->status?->name,
+                        'priority' => $task->priority,
+                        'type' => $task->type,
+                        'assignee' => $task->assignee,
+                    ];
+                }),
                 'attachments' => $epic->attachments->map(function ($attachment) {
                     return [
                         'id' => $attachment->id,
@@ -79,11 +102,11 @@ class EpicController extends Controller
 
         // Group epics by status
         $epicsByStatus = [
-            'todo' => $epics->where('status_name', 'todo')->values(),
-            'pending' => $epics->where('status_name', 'pending')->values(),
-            'in_progress' => $epics->where('status_name', 'in_progress')->values(),
-            'under_review' => $epics->where('status_name', 'under_review')->values(),
-            'completed' => $epics->where('status_name', 'completed')->values(),
+            'todo' => $epics->where('status_name', EpicStatus::TODO->value)->values(),
+            'pending' => $epics->where('status_name', EpicStatus::PENDING->value)->values(),
+            'in_progress' => $epics->where('status_name', EpicStatus::IN_PROGRESS->value)->values(),
+            'under_review' => $epics->where('status_name', EpicStatus::UNDER_REVIEW->value)->values(),
+            'completed' => $epics->where('status_name', EpicStatus::COMPLETED->value)->values(),
         ];
 
         // Get all projects for filter
@@ -122,8 +145,8 @@ class EpicController extends Controller
         ]);
 
         // Get default status (todo or pending)
-        $defaultStatus = \App\Models\Status::where('name', 'todo')
-            ->orWhere('name', 'pending')
+        $defaultStatus = \App\Models\Status::where('name', EpicStatus::TODO->value)
+            ->orWhere('name', EpicStatus::PENDING->value)
             ->first();
 
         $validated['type'] = 'epic';
@@ -162,10 +185,13 @@ class EpicController extends Controller
             ->where('type', 'epic')
             ->firstOrFail();
 
+        // Get all valid epic status enum values
+        $validStatuses = collect(EpicStatus::cases())->map(fn($status) => $status->value)->toArray();
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|string',
+            'status' => 'required|in:' . implode(',', $validStatuses),
             'priority' => 'required|in:lowest,low,medium,high,highest',
             'assignee_id' => 'nullable|exists:users,id',
             'due_date' => 'nullable|date',

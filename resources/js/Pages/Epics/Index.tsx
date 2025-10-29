@@ -48,7 +48,11 @@ interface Epic {
     key: string;
     title: string;
     description: string | null;
-    status: 'todo' | 'in_progress' | 'in_review' | 'done';
+    status: {
+        id: number;
+        name: string;
+    } | null;
+    status_name: 'todo' | 'pending' | 'in_progress' | 'under_review' | 'completed';
     priority: 'lowest' | 'low' | 'medium' | 'high' | 'highest';
     project: {
         id: number;
@@ -85,9 +89,10 @@ interface User {
 interface Props {
     epicsByStatus: {
         todo: Epic[];
+        pending: Epic[];
         in_progress: Epic[];
-        in_review: Epic[];
-        done: Epic[];
+        under_review: Epic[];
+        completed: Epic[];
     };
     projects: Project[];
     users: User[];
@@ -123,9 +128,10 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
 
     const allEpics = [
         ...epicsByStatus.todo,
+        ...epicsByStatus.pending,
         ...epicsByStatus.in_progress,
-        ...epicsByStatus.in_review,
-        ...epicsByStatus.done,
+        ...epicsByStatus.under_review,
+        ...epicsByStatus.completed,
     ];
 
     // Format users for SearchableSelect component
@@ -210,7 +216,7 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
             priority: epic.priority,
             assignee_id: epic.assignee?.id.toString() || '',
             due_date: formatDateForInput(epic.due_date),
-            status: epic.status,
+            status: epic.status_name,
         });
         setErrors({});
         setIsEditModalOpen(true);
@@ -242,9 +248,10 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
     const getStatusBadge = (status: string) => {
         const variants = {
             todo: { icon: ClockIcon, label: 'À faire', color: 'bg-gray-500' },
+            pending: { icon: ClockIcon, label: 'En attente', color: 'bg-gray-400' },
             in_progress: { icon: PlayIcon, label: 'En cours', color: 'bg-primary' },
-            in_review: { icon: RocketLaunchIcon, label: 'En revue', color: 'bg-purple-500' },
-            done: { icon: CheckCircleIcon, label: 'Terminé', color: 'bg-green-500' },
+            under_review: { icon: RocketLaunchIcon, label: 'En revue', color: 'bg-purple-500' },
+            completed: { icon: CheckCircleIcon, label: 'Terminé', color: 'bg-green-500' },
         };
         const variant = variants[status as keyof typeof variants];
         const Icon = variant.icon;
@@ -399,18 +406,20 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Tous les statuts">
                                 {filters.status === 'todo' && 'À faire'}
+                                {filters.status === 'pending' && 'En attente'}
                                 {filters.status === 'in_progress' && 'En cours'}
-                                {filters.status === 'in_review' && 'En revue'}
-                                {filters.status === 'done' && 'Terminé'}
+                                {filters.status === 'under_review' && 'En revue'}
+                                {filters.status === 'completed' && 'Terminé'}
                                 {(!filters.status || filters.status === 'all') && 'Tous les statuts'}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Tous les statuts</SelectItem>
                             <SelectItem value="todo">À faire</SelectItem>
+                            <SelectItem value="pending">En attente</SelectItem>
                             <SelectItem value="in_progress">En cours</SelectItem>
-                            <SelectItem value="in_review">En revue</SelectItem>
-                            <SelectItem value="done">Terminé</SelectItem>
+                            <SelectItem value="under_review">En revue</SelectItem>
+                            <SelectItem value="completed">Terminé</SelectItem>
                         </SelectContent>
                     </Select>
 
@@ -479,7 +488,7 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        {getStatusBadge(epic.status)}
+                                        {getStatusBadge(epic.status_name)}
                                         {getPriorityBadge(epic.priority)}
                                     </div>
                                 </CardHeader>
@@ -556,7 +565,7 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
                                                 <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                                                     {epic.title}
                                                 </h3>
-                                                {getStatusBadge(epic.status)}
+                                                {getStatusBadge(epic.status_name)}
                                                 {getPriorityBadge(epic.priority)}
                                             </div>
                                             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -663,7 +672,7 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
                                                     {getPriorityBadge(epic.priority)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    {getStatusBadge(epic.status)}
+                                                    {getStatusBadge(epic.status_name)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                                                     {epic.completed_tasks} / {epic.total_tasks}
@@ -894,16 +903,18 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
                                         <SelectTrigger>
                                             <SelectValue>
                                                 {formData.status === 'todo' && 'À faire'}
+                                                {formData.status === 'pending' && 'En attente'}
                                                 {formData.status === 'in_progress' && 'En cours'}
-                                                {formData.status === 'in_review' && 'En revue'}
-                                                {formData.status === 'done' && 'Terminé'}
+                                                {formData.status === 'under_review' && 'En revue'}
+                                                {formData.status === 'completed' && 'Terminé'}
                                             </SelectValue>
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="todo">À faire</SelectItem>
+                                            <SelectItem value="pending">En attente</SelectItem>
                                             <SelectItem value="in_progress">En cours</SelectItem>
-                                            <SelectItem value="in_review">En revue</SelectItem>
-                                            <SelectItem value="done">Terminé</SelectItem>
+                                            <SelectItem value="under_review">En revue</SelectItem>
+                                            <SelectItem value="completed">Terminé</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -1015,7 +1026,7 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
                                         </DialogDescription>
                                     </div>
                                     <div className="flex gap-2">
-                                        {getStatusBadge(selectedEpic.status)}
+                                        {getStatusBadge(selectedEpic.status_name)}
                                         {getPriorityBadge(selectedEpic.priority)}
                                     </div>
                                 </div>
