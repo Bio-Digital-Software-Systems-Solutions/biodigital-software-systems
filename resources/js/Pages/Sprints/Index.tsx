@@ -27,6 +27,7 @@ import {
     XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, ClockIcon, RocketLaunchIcon } from '@heroicons/react/24/solid';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface Attachment {
     id: number;
@@ -88,6 +89,8 @@ export default function SprintsIndex({ sprintsByStatus, projects, filters }: Pro
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [selectedSprint, setSelectedSprint] = useState<Sprint | null>(null);
     const [uploadingFile, setUploadingFile] = useState(false);
+    const [deleteAttachmentDialogOpen, setDeleteAttachmentDialogOpen] = useState(false);
+    const [attachmentToDelete, setAttachmentToDelete] = useState<number | null>(null);
     const [formData, setFormData] = useState({
         project_id: '',
         name: '',
@@ -253,11 +256,20 @@ export default function SprintsIndex({ sprintsByStatus, projects, filters }: Pro
     };
 
     const handleDeleteAttachment = (attachmentId: number) => {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer ce fichier ?')) return;
+        setAttachmentToDelete(attachmentId);
+        setDeleteAttachmentDialogOpen(true);
+    };
 
-        router.delete(`/attachments/${attachmentId}`, {
-            preserveScroll: true,
-        });
+    const confirmDeleteAttachment = () => {
+        if (attachmentToDelete) {
+            router.delete(`/attachments/${attachmentToDelete}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setDeleteAttachmentDialogOpen(false);
+                    setAttachmentToDelete(null);
+                },
+            });
+        }
     };
 
     const getFileIcon = (fileType: string) => {
@@ -1137,6 +1149,14 @@ export default function SprintsIndex({ sprintsByStatus, projects, filters }: Pro
                     )}
                 </DialogContent>
             </Dialog>
+
+            <DeleteConfirmationDialog
+                open={deleteAttachmentDialogOpen}
+                onOpenChange={setDeleteAttachmentDialogOpen}
+                onConfirm={confirmDeleteAttachment}
+                title="Supprimer le fichier"
+                description="Êtes-vous sûr de vouloir supprimer ce fichier ? Cette action est irréversible."
+            />
         </DashboardLayout>
     );
 }

@@ -3,6 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
 import ViewSwitcher from '@/Components/ViewSwitcher';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import {
     PlusIcon,
     EyeIcon,
@@ -54,6 +55,8 @@ const Index: React.FC<IndexProps> = ({ groups, filters }) => {
     const { auth } = usePage<PageProps>().props;
     const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [groupToDelete, setGroupToDelete] = useState<Group | null>(null);
 
     const canCreateGroups = userHasPermission(auth.user, 'create groups');
     const canEditGroups = userHasPermission(auth.user, 'edit groups');
@@ -68,8 +71,18 @@ const Index: React.FC<IndexProps> = ({ groups, filters }) => {
     };
 
     const handleDelete = (group: Group) => {
-        if (confirm(`Êtes-vous sûr de vouloir supprimer le groupe "${group.name}" ?`)) {
-            router.delete(route('groups.destroy', group.uuid));
+        setGroupToDelete(group);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (groupToDelete) {
+            router.delete(route('groups.destroy', groupToDelete.uuid), {
+                onSuccess: () => {
+                    setDeleteDialogOpen(false);
+                    setGroupToDelete(null);
+                },
+            });
         }
     };
 
@@ -441,6 +454,14 @@ const Index: React.FC<IndexProps> = ({ groups, filters }) => {
                             </nav>
                         </div>
                     )}
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer le groupe"
+                description={`Êtes-vous sûr de vouloir supprimer le groupe "${groupToDelete?.name}" ? Cette action est irréversible.`}
+            />
         </DashboardLayout>
     );
 };

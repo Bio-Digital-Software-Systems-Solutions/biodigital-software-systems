@@ -1,7 +1,8 @@
-import React, { useState, PropsWithChildren, ReactNode } from 'react';
+import React, { useState, useEffect, PropsWithChildren, ReactNode } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { PageProps } from '@/Types';
+import { toast } from 'sonner';
 import {
     HomeIcon,
     CalendarDaysIcon,
@@ -52,10 +53,23 @@ interface DashboardLayoutProps extends PropsWithChildren {
 }
 
 export default function DashboardLayout({ children, title, description, actions }: DashboardLayoutProps) {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, flash } = usePage<PageProps>().props;
     const { t } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { notificationCount } = useNotifications();
+
+    // Display flash messages as toasts
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+        if (flash?.message) {
+            toast.info(flash.message);
+        }
+    }, [flash]);
 
     const navigation: NavItem[] = [
         { name: t('dashboard'), href: '/dashboard', icon: HomeIcon, current: true, excludeRoles: [Role.MEMBER] },

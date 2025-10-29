@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
@@ -18,6 +18,7 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { isAdmin } from '@/Enums/Role';
 import { userHasPermission } from '@/Enums/Permission';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface Address {
     id: number;
@@ -68,6 +69,7 @@ interface ShowProps extends PageProps {
 }
 
 const Show: React.FC<ShowProps> = ({ auth, event }) => {
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const eventColor = event.color || '#3b82f6';
     const startDate = parseISO(event.start_date);
     const endDate = parseISO(event.end_date);
@@ -102,9 +104,15 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
     };
 
     const handleDelete = () => {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')) {
-            router.delete(route('events.destroy', event.uuid));
-        }
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        router.delete(route('events.destroy', event.uuid), {
+            onSuccess: () => {
+                setDeleteDialogOpen(false);
+            },
+        });
     };
 
     const handleToggleParticipation = () => {
@@ -389,6 +397,14 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
                     </div>
                 </div>
             </div>
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer l'événement"
+                description={`Êtes-vous sûr de vouloir supprimer l'événement "${event.title}" ? Cette action est irréversible.`}
+            />
         </DashboardLayout>
     );
 };

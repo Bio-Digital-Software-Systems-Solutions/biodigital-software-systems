@@ -4,6 +4,7 @@ import { PlusIcon, FunnelIcon, EyeIcon, PencilIcon, TrashIcon, Squares2X2Icon, L
 import { useState } from 'react';
 import { Task, Program, Status, User, PageProps } from '@/Types';
 import { Button } from '@/Components/ui/button';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface Props extends PageProps {
     tasks: {
@@ -33,6 +34,8 @@ type ViewMode = 'table' | 'list' | 'grid';
 export default function Index({ tasks, programs, statuses, users, filters }: Props) {
     const [showFilters, setShowFilters] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('table');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
     const handleFilter = (key: string, value: string) => {
         const newFilters = { ...filters, [key]: value };
@@ -70,8 +73,18 @@ export default function Index({ tasks, programs, statuses, users, filters }: Pro
     };
 
     const handleDelete = (task: Task) => {
-        if (confirm('Are you sure you want to delete this task?')) {
-            router.delete(route('tasks.destroy', task.uuid));
+        setTaskToDelete(task);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (taskToDelete) {
+            router.delete(route('tasks.destroy', taskToDelete.uuid), {
+                onSuccess: () => {
+                    setDeleteDialogOpen(false);
+                    setTaskToDelete(null);
+                },
+            });
         }
     };
 
@@ -509,6 +522,14 @@ export default function Index({ tasks, programs, statuses, users, filters }: Pro
                     </div>
                 </div>
             </div>
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer la tâche"
+                description={`Êtes-vous sûr de vouloir supprimer la tâche "${taskToDelete?.title}" ? Cette action est irréversible.`}
+            />
         </DashboardLayout>
     );
 }

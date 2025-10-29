@@ -61,7 +61,7 @@ return new class extends Migration
                 ->value('id');
 
             DB::table('tasks')->insert([
-                'uuid' => \Illuminate\Support\Str::uuid()->toString(),
+                'uuid' => $pt->uuid, // Preserve original UUID
                 'title' => $pt->title,
                 'key' => $pt->key,
                 'description' => $pt->description,

@@ -13,6 +13,7 @@ import {
     TrashIcon,
     UserIcon,
 } from '@heroicons/react/24/outline';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface Contact {
     id: number;
@@ -42,15 +43,24 @@ const statusConfig = {
 };
 
 export default function Show({ contact }: Props) {
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
     const handleDelete = () => {
-        if (confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) {
-            setDeleting(true);
-            router.delete(route('contacts.destroy', contact.id), {
-                onFinish: () => setDeleting(false),
-            });
-        }
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        setDeleting(true);
+        router.delete(route('contacts.destroy', contact.id), {
+            onSuccess: () => {
+                setDeleteDialogOpen(false);
+                setDeleting(false);
+            },
+            onError: () => {
+                setDeleting(false);
+            },
+        });
     };
 
     return (
@@ -194,6 +204,15 @@ export default function Show({ contact }: Props) {
                 </div>
                 </div>
             </div>
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer le message"
+                description={`Êtes-vous sûr de vouloir supprimer le message "${contact.subject}" ? Cette action est irréversible.`}
+                isDeleting={deleting}
+            />
         </DashboardLayout>
     );
 }

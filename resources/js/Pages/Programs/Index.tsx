@@ -3,6 +3,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PlusIcon, FunnelIcon, EyeIcon, PencilIcon, TrashIcon, TableCellsIcon, Squares2X2Icon, ListBulletIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { Program, PageProps } from '@/Types';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface Props extends PageProps {
     programs: {
@@ -23,6 +24,8 @@ interface Props extends PageProps {
 export default function Index({ programs, filters }: Props) {
     const [showFilters, setShowFilters] = useState(false);
     const [viewMode, setViewMode] = useState<'table' | 'grid' | 'list'>('table');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [programToDelete, setProgramToDelete] = useState<Program | null>(null);
 
     const handleFilter = (key: string, value: string) => {
         const newFilters = { ...filters, [key]: value };
@@ -35,8 +38,18 @@ export default function Index({ programs, filters }: Props) {
     };
 
     const handleDelete = (program: Program) => {
-        if (confirm('Are you sure you want to delete this program?')) {
-            router.delete(route('programs.destroy', program.uuid));
+        setProgramToDelete(program);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (programToDelete) {
+            router.delete(route('programs.destroy', programToDelete.uuid), {
+                onSuccess: () => {
+                    setDeleteDialogOpen(false);
+                    setProgramToDelete(null);
+                },
+            });
         }
     };
 
@@ -439,6 +452,14 @@ export default function Index({ programs, filters }: Props) {
                                     </div>
                                 </div>
                             )}
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer le programme"
+                description={`Êtes-vous sûr de vouloir supprimer le programme "${programToDelete?.name}" ? Cette action est irréversible.`}
+            />
         </DashboardLayout>
     );
 }

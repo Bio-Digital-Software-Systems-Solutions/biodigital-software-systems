@@ -3,6 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
 import ViewSwitcher from '@/Components/ViewSwitcher';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import {
     PlusIcon,
     EyeIcon,
@@ -56,6 +57,8 @@ const Index: React.FC<IndexProps> = ({ departments, filters }) => {
     const { auth } = usePage<PageProps>().props;
     const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
 
     const canCreateDepartments = userHasPermission(auth.user, 'create departments');
     const canEditDepartments = userHasPermission(auth.user, 'edit departments');
@@ -70,8 +73,18 @@ const Index: React.FC<IndexProps> = ({ departments, filters }) => {
     };
 
     const handleDelete = (department: Department) => {
-        if (confirm(`Êtes-vous sûr de vouloir supprimer le département "${department.name}" ?`)) {
-            router.delete(route('departments.destroy', department.uuid));
+        setDepartmentToDelete(department);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (departmentToDelete) {
+            router.delete(route('departments.destroy', departmentToDelete.uuid), {
+                onSuccess: () => {
+                    setDeleteDialogOpen(false);
+                    setDepartmentToDelete(null);
+                },
+            });
         }
     };
 
@@ -423,6 +436,14 @@ const Index: React.FC<IndexProps> = ({ departments, filters }) => {
                             </nav>
                         </div>
                     )}
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer le département"
+                description={`Êtes-vous sûr de vouloir supprimer le département "${departmentToDelete?.name}" ? Cette action est irréversible.`}
+            />
         </DashboardLayout>
     );
 };

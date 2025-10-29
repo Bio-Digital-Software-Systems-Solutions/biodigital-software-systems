@@ -371,7 +371,7 @@ export default function ShowProject({ project, users }: Props) {
                                             {project.tasks.map((task) => (
                                                 <Link
                                                     key={task.id}
-                                                    href={route('project-tasks.show', task.uuid)}
+                                                    href={route('tasks.show', task.uuid)}
                                                     className="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-primary dark:hover:border-blue-400 hover:shadow-md transition-all"
                                                 >
                                                     <div className="flex items-start justify-between">

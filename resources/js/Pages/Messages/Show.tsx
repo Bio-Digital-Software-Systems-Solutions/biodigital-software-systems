@@ -1,8 +1,9 @@
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import React, { useState } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
 import { ArrowLeftIcon, PencilIcon, TrashIcon, EnvelopeIcon, ClockIcon, UserIcon, ArrowUturnRightIcon } from '@heroicons/react/24/outline';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface User {
     id: number;
@@ -29,6 +30,7 @@ interface Props extends PageProps {
 }
 
 export default function Show({ message, auth }: Props) {
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const isCurrentUserSender = message.sender.id === auth.user?.id;
     const isCurrentUserReceiver = message.receiver.id === auth.user?.id;
 
@@ -42,9 +44,15 @@ export default function Show({ message, auth }: Props) {
     };
 
     const handleDelete = () => {
-        if (confirm('Are you sure you want to delete this message?')) {
-            window.location.href = route('messages.destroy', message.id);
-        }
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        router.delete(route('messages.destroy', message.id), {
+            onSuccess: () => {
+                setDeleteDialogOpen(false);
+            },
+        });
     };
 
     return (
@@ -206,6 +214,14 @@ export default function Show({ message, auth }: Props) {
                     </div>
                 </div>
             </div>
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer le message"
+                description={`Êtes-vous sûr de vouloir supprimer le message "${message.subject || 'sans sujet'}" ? Cette action est irréversible.`}
+            />
         </DashboardLayout>
     );
 }

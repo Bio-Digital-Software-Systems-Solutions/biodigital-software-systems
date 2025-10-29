@@ -3,6 +3,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PlusIcon, FunnelIcon, EyeIcon, PencilIcon, TrashIcon, ExclamationTriangleIcon, Squares2X2Icon, TableCellsIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { Stock, Category, PageProps } from '@/Types';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface Props extends PageProps {
     stocks: {
@@ -25,6 +26,8 @@ interface Props extends PageProps {
 export default function Index({ stocks, categories, filters }: Props) {
     const [showFilters, setShowFilters] = useState(false);
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [stockToDelete, setStockToDelete] = useState<Stock | null>(null);
 
     const handleFilter = (key: string, value: string) => {
         const newFilters = { ...filters, [key]: value };
@@ -37,8 +40,18 @@ export default function Index({ stocks, categories, filters }: Props) {
     };
 
     const handleDelete = (stock: Stock) => {
-        if (confirm('Are you sure you want to delete this stock item?')) {
-            router.delete(route('stocks.destroy', stock.uuid));
+        setStockToDelete(stock);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (stockToDelete) {
+            router.delete(route('stocks.destroy', stockToDelete.uuid), {
+                onSuccess: () => {
+                    setDeleteDialogOpen(false);
+                    setStockToDelete(null);
+                },
+            });
         }
     };
 
@@ -440,6 +453,14 @@ export default function Index({ stocks, categories, filters }: Props) {
                                     </div>
                                 </div>
                             )}
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer l'article"
+                description={`Êtes-vous sûr de vouloir supprimer l'article "${stockToDelete?.name}" ? Cette action est irréversible.`}
+            />
         </DashboardLayout>
     );
 }

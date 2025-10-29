@@ -2,6 +2,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Task, Program, Status, User, PageProps } from '@/Types';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import { useState } from 'react';
 
 interface Project {
     id: number;
@@ -19,10 +21,18 @@ interface Props extends PageProps {
 }
 
 export default function Show({ task }: Props) {
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
     const handleDelete = () => {
-        if (confirm('Are you sure you want to delete this task?')) {
-            router.delete(route('tasks.destroy', task.uuid));
-        }
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        router.delete(route('tasks.destroy', task.uuid), {
+            onSuccess: () => {
+                setDeleteDialogOpen(false);
+            },
+        });
     };
 
     const getPriorityColor = (priority: string) => {
@@ -232,6 +242,14 @@ export default function Show({ task }: Props) {
                     </div>
                 </div>
                     </div>
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer la tâche"
+                description={`Êtes-vous sûr de vouloir supprimer la tâche "${task.title}" ? Cette action est irréversible.`}
+            />
         </DashboardLayout>
     );
 }

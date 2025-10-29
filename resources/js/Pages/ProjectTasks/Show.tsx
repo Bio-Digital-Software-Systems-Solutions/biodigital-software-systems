@@ -4,6 +4,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Button } from '@/Components/ui/button';
 import { apiLogger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import {
     ArrowLeftIcon,
     PencilIcon,
@@ -124,6 +125,9 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
     const [showEditModal, setShowEditModal] = useState(false);
     const [commentContent, setCommentContent] = useState('');
     const [submittingComment, setSubmittingComment] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deleteAttachmentDialogOpen, setDeleteAttachmentDialogOpen] = useState(false);
+    const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
 
     // Déterminer l'URL de retour intelligente
     const getBackUrl = () => {
@@ -189,9 +193,15 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
     });
 
     const handleDelete = () => {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cette tâche?')) {
-            router.delete(`/api/tasks/${task.uuid}`);
-        }
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        router.delete(route('tasks.destroy', task.uuid), {
+            onSuccess: () => {
+                setDeleteDialogOpen(false);
+            },
+        });
     };
 
     const handleStatusAction = (action: string) => {
@@ -362,11 +372,20 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
     };
 
     const handleDeleteAttachment = (attachmentUuid: string) => {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer ce fichier?')) return;
+        setAttachmentToDelete(attachmentUuid);
+        setDeleteAttachmentDialogOpen(true);
+    };
 
-        router.delete(`/api/tasks/${task.uuid}/attachments/${attachmentUuid}`, {
-            preserveScroll: true,
-        });
+    const confirmDeleteAttachment = () => {
+        if (attachmentToDelete) {
+            router.delete(route('attachments.destroy', attachmentToDelete), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setDeleteAttachmentDialogOpen(false);
+                    setAttachmentToDelete(null);
+                },
+            });
+        }
     };
 
     const getFileIcon = (fileType: string) => {
@@ -974,6 +993,22 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
                     </div>
                 )}
             </div>
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer la tâche"
+                description={`Êtes-vous sûr de vouloir supprimer la tâche "${task.title}" ? Cette action est irréversible.`}
+            />
+
+            <DeleteConfirmationDialog
+                open={deleteAttachmentDialogOpen}
+                onOpenChange={setDeleteAttachmentDialogOpen}
+                onConfirm={confirmDeleteAttachment}
+                title="Supprimer le fichier"
+                description="Êtes-vous sûr de vouloir supprimer ce fichier ? Cette action est irréversible."
+            />
         </DashboardLayout>
     );
 }

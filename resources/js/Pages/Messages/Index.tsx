@@ -3,6 +3,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PlusIcon, FunnelIcon, EyeIcon, PencilIcon, TrashIcon, EnvelopeIcon, EnvelopeOpenIcon, PaperAirplaneIcon, InboxIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { PageProps } from '@/Types';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface User {
     id: number;
@@ -56,6 +57,8 @@ interface Props extends PageProps {
 
 export default function Index({ messages, filters, auth }: Props) {
     const [showFilters, setShowFilters] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
 
     const handleFilter = (key: string, value: string) => {
         const newFilters = { ...filters, [key]: value };
@@ -68,8 +71,18 @@ export default function Index({ messages, filters, auth }: Props) {
     };
 
     const handleDelete = (message: Message) => {
-        if (confirm('Are you sure you want to delete this message?')) {
-            router.delete(route('messages.destroy', message.uuid));
+        setMessageToDelete(message);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (messageToDelete) {
+            router.delete(route('messages.destroy', messageToDelete.uuid), {
+                onSuccess: () => {
+                    setDeleteDialogOpen(false);
+                    setMessageToDelete(null);
+                },
+            });
         }
     };
 
@@ -453,6 +466,14 @@ export default function Index({ messages, filters, auth }: Props) {
                                     </div>
                                 </div>
                             )}
+
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={confirmDelete}
+                title="Supprimer le message"
+                description={`Êtes-vous sûr de vouloir supprimer le message "${messageToDelete?.subject || 'sans sujet'}" ? Cette action est irréversible.`}
+            />
         </DashboardLayout>
     );
 }

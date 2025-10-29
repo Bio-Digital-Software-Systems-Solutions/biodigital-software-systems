@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Badge } from '@/Components/ui/badge';
 import { SearchableSelect } from '@/Components/ui/searchable-select';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface StepDetailModalProps {
     step: any;
@@ -39,6 +40,10 @@ export default function StepDetailModal({
     const [showTaskForm, setShowTaskForm] = useState(false);
     const [showParticipantForm, setShowParticipantForm] = useState(false);
     const [editingTask, setEditingTask] = useState<any>(null);
+    const [deleteTaskDialogOpen, setDeleteTaskDialogOpen] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
+    const [deleteParticipantDialogOpen, setDeleteParticipantDialogOpen] = useState(false);
+    const [participantToRemove, setParticipantToRemove] = useState<number | null>(null);
 
     const { data: taskData, setData: setTaskData, post: postTask, patch: patchTask, processing: taskProcessing, errors: taskErrors, reset: resetTask } = useForm({
         title: '',
@@ -75,8 +80,18 @@ export default function StepDetailModal({
     };
 
     const handleTaskDelete = (taskUuid: string) => {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-            router.delete(route('programs.steps.tasks.destroy', { program: programId, step: step.id, task: taskUuid }));
+        setTaskToDelete(taskUuid);
+        setDeleteTaskDialogOpen(true);
+    };
+
+    const confirmTaskDelete = () => {
+        if (taskToDelete) {
+            router.delete(route('programs.steps.tasks.destroy', { program: programId, step: step.id, task: taskToDelete }), {
+                onSuccess: () => {
+                    setDeleteTaskDialogOpen(false);
+                    setTaskToDelete(null);
+                },
+            });
         }
     };
 
@@ -104,8 +119,18 @@ export default function StepDetailModal({
     };
 
     const handleParticipantRemove = (userId: number) => {
-        if (confirm('Êtes-vous sûr de vouloir retirer cet intervenant ?')) {
-            router.delete(route('programs.steps.participants.detach', { program: programId, step: step.id, participant: userId }));
+        setParticipantToRemove(userId);
+        setDeleteParticipantDialogOpen(true);
+    };
+
+    const confirmParticipantRemove = () => {
+        if (participantToRemove) {
+            router.delete(route('programs.steps.participants.detach', { program: programId, step: step.id, participant: participantToRemove }), {
+                onSuccess: () => {
+                    setDeleteParticipantDialogOpen(false);
+                    setParticipantToRemove(null);
+                },
+            });
         }
     };
 
@@ -494,6 +519,22 @@ export default function StepDetailModal({
                     </div>
                 </div>
             </div>
+
+            <DeleteConfirmationDialog
+                open={deleteTaskDialogOpen}
+                onOpenChange={setDeleteTaskDialogOpen}
+                onConfirm={confirmTaskDelete}
+                title="Supprimer la tâche"
+                description="Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible."
+            />
+
+            <DeleteConfirmationDialog
+                open={deleteParticipantDialogOpen}
+                onOpenChange={setDeleteParticipantDialogOpen}
+                onConfirm={confirmParticipantRemove}
+                title="Retirer l'intervenant"
+                description="Êtes-vous sûr de vouloir retirer cet intervenant ? Cette action est irréversible."
+            />
         </div>
     );
 }
