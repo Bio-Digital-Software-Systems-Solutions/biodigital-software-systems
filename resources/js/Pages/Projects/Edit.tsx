@@ -25,14 +25,22 @@ interface Props {
 }
 
 export default function EditProject({ project }: Props) {
+    // Helper function to format date for input[type="date"]
+    const formatDateForInput = (dateString?: string): string => {
+        if (!dateString) return '';
+        // Extract YYYY-MM-DD from various date formats
+        // Handles: "2025-10-09", "2025-10-09 14:30:00", "2025-10-09T14:30:00"
+        return dateString.substring(0, 10);
+    };
+
     const { data, setData, put, processing, errors } = useForm({
         name: project.name || '',
         description: project.description || '',
         status: project.status || 'planning',
         priority: project.priority || 'medium',
         color: project.color || '#3B82F6',
-        start_date: project.start_date || '',
-        end_date: project.end_date || '',
+        start_date: formatDateForInput(project.start_date),
+        end_date: formatDateForInput(project.end_date),
         budget: project.budget?.toString() || '',
     });
 
