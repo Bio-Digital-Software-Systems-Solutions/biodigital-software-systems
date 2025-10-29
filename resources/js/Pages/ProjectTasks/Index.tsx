@@ -57,10 +57,14 @@ export default function Index({ tasks, projects, users, filters }: Props) {
     };
 
     const statusConfig: Record<TaskStatus, { label: string; color: string }> = {
+        [TaskStatus.PENDING]: { label: 'En attente', color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300' },
         [TaskStatus.TODO]: { label: 'À faire', color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300' },
         [TaskStatus.IN_PROGRESS]: { label: 'En cours', color: 'bg-blue-100 text-primary dark:bg-blue-900/30 dark:text-blue-300' },
+        [TaskStatus.UNDER_REVIEW]: { label: 'En révision', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
         [TaskStatus.IN_REVIEW]: { label: 'En révision', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
         [TaskStatus.BLOCKED]: { label: 'Bloqué', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' },
+        [TaskStatus.ON_HOLD]: { label: 'En pause', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' },
+        [TaskStatus.COMPLETED]: { label: 'Terminé', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
         [TaskStatus.DONE]: { label: 'Terminé', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
         [TaskStatus.CANCELLED]: { label: 'Annulé', color: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300' },
     };
@@ -117,7 +121,7 @@ export default function Index({ tasks, projects, users, filters }: Props) {
     const toggleTaskCompletion = (task: ProjectTask, e: React.ChangeEvent<HTMLInputElement>) => {
         e.stopPropagation();
 
-        const newStatus = task.status === TaskStatus.DONE ? TaskStatus.TODO : TaskStatus.DONE;
+        const newStatus = task.status?.name === TaskStatus.COMPLETED ? TaskStatus.TODO : TaskStatus.COMPLETED;
 
         router.post('/tasks/bulk-update', {
             task_ids: [task.id],
@@ -340,7 +344,7 @@ export default function Index({ tasks, projects, users, filters }: Props) {
                                         <div className="flex items-start pt-1">
                                             <input
                                                 type="checkbox"
-                                                checked={task.status === TaskStatus.DONE}
+                                                checked={task.status?.name === TaskStatus.COMPLETED}
                                                 onChange={(e) => toggleTaskCompletion(task, e)}
                                                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 cursor-pointer"
                                             />
@@ -395,8 +399,8 @@ export default function Index({ tasks, projects, users, filters }: Props) {
                                         </div>
 
                                         <div className="flex flex-col gap-2 items-end flex-shrink-0">
-                                            <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusConfig[task.status]?.color}`}>
-                                                {statusConfig[task.status]?.label}
+                                            <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusConfig[task.status?.name as TaskStatus]?.color}`}>
+                                                {statusConfig[task.status?.name as TaskStatus]?.label}
                                             </span>
                                             <span className={`text-xs px-3 py-1 rounded-full font-medium ${priorityConfig[task.priority]?.color}`}>
                                                 {priorityConfig[task.priority]?.label}
@@ -466,7 +470,7 @@ export default function Index({ tasks, projects, users, filters }: Props) {
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             <input
                                                 type="checkbox"
-                                                checked={task.status === TaskStatus.DONE}
+                                                checked={task.status?.name === TaskStatus.COMPLETED}
                                                 onChange={(e) => toggleTaskCompletion(task, e)}
                                                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 cursor-pointer"
                                             />
@@ -493,8 +497,8 @@ export default function Index({ tasks, projects, users, filters }: Props) {
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.id}?from=/tasks`}>
-                                            <span className={`text-xs px-2 py-1 rounded-full ${statusConfig[task.status]?.color}`}>
-                                                {statusConfig[task.status]?.label}
+                                            <span className={`text-xs px-2 py-1 rounded-full ${statusConfig[task.status?.name as TaskStatus]?.color}`}>
+                                                {statusConfig[task.status?.name as TaskStatus]?.label}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.id}?from=/tasks`}>
@@ -541,7 +545,7 @@ export default function Index({ tasks, projects, users, filters }: Props) {
                                         <div className="flex items-start gap-3 mb-3">
                                             <input
                                                 type="checkbox"
-                                                checked={task.status === TaskStatus.DONE}
+                                                checked={task.status?.name === TaskStatus.COMPLETED}
                                                 onChange={(e) => toggleTaskCompletion(task, e)}
                                                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 cursor-pointer mt-1"
                                             />
@@ -579,8 +583,8 @@ export default function Index({ tasks, projects, users, filters }: Props) {
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                                     Statut
                                                 </span>
-                                                <span className={`text-xs px-2 py-1 rounded-full ${statusConfig[task.status]?.color}`}>
-                                                    {statusConfig[task.status]?.label}
+                                                <span className={`text-xs px-2 py-1 rounded-full ${statusConfig[task.status?.name as TaskStatus]?.color}`}>
+                                                    {statusConfig[task.status?.name as TaskStatus]?.label}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between">

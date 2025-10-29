@@ -210,12 +210,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('api/users', [App\Http\Controllers\Api\UserController::class, 'index'])
         ->name('api.users.index');
 
-    // Project Task routes (web view)
-    Route::get('project-tasks', [App\Http\Controllers\ProjectTaskController::class, 'index'])
+    // Task routes (web view) - now using unified Task model
+    Route::get('project-tasks', [App\Http\Controllers\TaskController::class, 'index'])
         ->name('project-tasks.index');
-    Route::post('project-tasks/bulk-update', [App\Http\Controllers\ProjectTaskController::class, 'bulkUpdate'])
+    Route::post('project-tasks/bulk-update', [App\Http\Controllers\TaskController::class, 'bulkUpdate'])
         ->name('project-tasks.bulk-update');
-    Route::get('project-tasks/{task}', [App\Http\Controllers\ProjectTaskController::class, 'show'])
+    Route::get('project-tasks/{task}', [App\Http\Controllers\TaskController::class, 'show'])
         ->name('project-tasks.show');
 
     // Attachment routes

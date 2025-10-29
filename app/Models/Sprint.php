@@ -26,7 +26,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read int|null $attachments_count
  * @property-read int $velocity
  * @property-read \App\Models\Project $project
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProjectTask> $tasks
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $tasks
  * @property-read int|null $tasks_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Sprint active()
  * @method static \Database\Factories\SprintFactory factory($count = null, $state = [])
@@ -84,7 +84,7 @@ class Sprint extends Model
 
     public function tasks(): HasMany
     {
-        return $this->hasMany(ProjectTask::class);
+        return $this->hasMany(Task::class);
     }
 
     public function attachments(): MorphMany
@@ -113,7 +113,9 @@ class Sprint extends Model
     public function getVelocityAttribute(): int
     {
         return $this->tasks()
-            ->where('status', 'done')
+            ->whereHas('status', function ($query) {
+                $query->where('name', 'completed');
+            })
             ->sum('story_points') ?? 0;
     }
 }

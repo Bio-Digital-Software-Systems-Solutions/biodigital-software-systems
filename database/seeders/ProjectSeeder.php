@@ -3,7 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Project;
-use App\Models\ProjectTask;
+use App\Models\Status;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -109,7 +110,8 @@ class ProjectSeeder extends Seeder
             }
 
             // Create tasks for each project
-            $taskStatuses = ['todo', 'in_progress', 'in_review', 'done'];
+            $statuses = Status::all();
+            $taskStatusNames = ['todo', 'in_progress', 'under_review', 'completed'];
             $taskTypes = ['feature', 'bug', 'task', 'story'];
             $taskPriorities = ['lowest', 'low', 'medium', 'high', 'highest'];
 
@@ -119,14 +121,16 @@ class ProjectSeeder extends Seeder
             $projectKey = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
 
             for ($i = 1; $i <= $numberOfTasks; $i++) {
-                $status = $project->status === 'completed' ? 'done' : $taskStatuses[array_rand($taskStatuses)];
+                $statusName = $project->status === 'completed' ? 'completed' : $taskStatusNames[array_rand($taskStatusNames)];
+                $status = $statuses->firstWhere('name', $statusName);
 
-                ProjectTask::create([
-                    'project_id' => $project->id,
+                Task::create([
+                    'taskable_type' => Project::class,
+                    'taskable_id' => $project->id,
                     'key' => $projectKey.'-'.$i,
                     'title' => "Tâche #{$i} - {$project->name}",
                     'description' => "Description détaillée de la tâche {$i} pour le projet {$project->name}",
-                    'status' => $status,
+                    'status_id' => $status?->id,
                     'type' => $taskTypes[array_rand($taskTypes)],
                     'priority' => $taskPriorities[array_rand($taskPriorities)],
                     'assignee_id' => $project->members->random()->id,

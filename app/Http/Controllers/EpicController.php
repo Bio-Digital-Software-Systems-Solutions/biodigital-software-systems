@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use App\Models\ProjectTask;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,16 +18,19 @@ class EpicController extends Controller
 
     public function index(Request $request)
     {
-        $query = ProjectTask::with(['project', 'assignee', 'reporter', 'attachments.uploader'])
-            ->where('type', 'epic');
+        $query = Task::with(['taskable', 'assignee', 'reporter', 'status', 'attachments.user'])
+            ->where('type', 'epic')
+            ->where('taskable_type', 'App\Models\Project');
 
         // Apply filters
         if ($request->has('project_id') && $request->project_id) {
-            $query->where('project_id', $request->project_id);
+            $query->where('taskable_id', $request->project_id);
         }
 
         if ($request->has('status') && $request->status) {
-            $query->where('status', $request->status);
+            $query->whereHas('status', function ($q) use ($request) {
+                $q->where('name', $request->status);
+            });
         }
 
         if ($request->has('priority') && $request->priority) {
@@ -36,9 +39,11 @@ class EpicController extends Controller
 
         $epics = $query->latest()->get()->map(function ($epic) {
             // Get child tasks (tasks that belong to this epic)
-            $childTasks = ProjectTask::where('epic_id', $epic->id)->get();
+            $childTasks = Task::where('epic_id', $epic->id)->with('status')->get();
             $totalTasks = $childTasks->count();
-            $completedTasks = $childTasks->where('status', 'done')->count();
+            $completedTasks = $childTasks->filter(function ($task) {
+                return $task->status && $task->status->name === 'completed';
+            })->count();
 
             return [
                 'id' => $epic->id,
@@ -47,8 +52,9 @@ class EpicController extends Controller
                 'title' => $epic->title,
                 'description' => $epic->description,
                 'status' => $epic->status,
+                'status_name' => $epic->status?->name,
                 'priority' => $epic->priority,
-                'project' => $epic->project,
+                'project' => $epic->taskable, // taskable is the project for epics
                 'assignee' => $epic->assignee,
                 'reporter' => $epic->reporter,
                 'due_date' => $epic->due_date,
@@ -59,14 +65,12 @@ class EpicController extends Controller
                 'attachments' => $epic->attachments->map(function ($attachment) {
                     return [
                         'id' => $attachment->id,
-                        'name' => $attachment->name,
+                        'file_name' => $attachment->file_name,
                         'file_type' => $attachment->file_type,
                         'mime_type' => $attachment->mime_type,
                         'file_size' => $attachment->file_size,
-                        'human_file_size' => $attachment->human_file_size,
-                        'file_path' => asset('storage/'.$attachment->file_path),
-                        'download_url' => route('attachments.download', $attachment),
-                        'uploaded_by' => $attachment->uploader->name,
+                        'file_url' => $attachment->file_url,
+                        'uploaded_by' => $attachment->user ? $attachment->user->name : 'Unknown',
                         'created_at' => $attachment->created_at->format('d/m/Y H:i'),
                     ];
                 }),
@@ -75,10 +79,11 @@ class EpicController extends Controller
 
         // Group epics by status
         $epicsByStatus = [
-            'todo' => $epics->where('status', 'todo')->values(),
-            'in_progress' => $epics->where('status', 'in_progress')->values(),
-            'in_review' => $epics->where('status', 'in_review')->values(),
-            'done' => $epics->where('status', 'done')->values(),
+            'todo' => $epics->where('status_name', 'todo')->values(),
+            'pending' => $epics->where('status_name', 'pending')->values(),
+            'in_progress' => $epics->where('status_name', 'in_progress')->values(),
+            'under_review' => $epics->where('status_name', 'under_review')->values(),
+            'completed' => $epics->where('status_name', 'completed')->values(),
         ];
 
         // Get all projects for filter
@@ -116,16 +121,24 @@ class EpicController extends Controller
             'due_date' => 'nullable|date',
         ]);
 
+        // Get default status (todo or pending)
+        $defaultStatus = \App\Models\Status::where('name', 'todo')
+            ->orWhere('name', 'pending')
+            ->first();
+
         $validated['type'] = 'epic';
-        $validated['status'] = 'todo';
+        $validated['status_id'] = $defaultStatus?->id;
         $validated['reporter_id'] = auth()->id();
+        $validated['taskable_type'] = 'App\Models\Project';
+        $validated['taskable_id'] = $validated['project_id'];
+        unset($validated['project_id']);
 
         // Generate key
-        $project = Project::find($validated['project_id']);
+        $project = Project::find($validated['taskable_id']);
         $projectKey = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
 
         // Find the highest number for this key prefix across all tasks (including soft deleted ones)
-        $existingKeys = ProjectTask::withTrashed()
+        $existingKeys = Task::withTrashed()
             ->where('key', 'like', $projectKey.'-%')
             ->pluck('key')
             ->map(function ($key) use ($projectKey) {
@@ -138,25 +151,32 @@ class EpicController extends Controller
         $nextNumber = $existingKeys->isEmpty() ? 1 : $existingKeys->max() + 1;
         $validated['key'] = $projectKey.'-'.$nextNumber;
 
-        $epic = ProjectTask::create($validated);
+        $epic = Task::create($validated);
 
         return redirect()->route('epics.index')->with('success', 'Epic créé avec succès.');
     }
 
     public function update(Request $request, string $epic)
     {
-        $epic = ProjectTask::where('uuid', $epic)
+        $epic = Task::where('uuid', $epic)
             ->where('type', 'epic')
             ->firstOrFail();
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|in:todo,in_progress,in_review,done',
+            'status' => 'required|string',
             'priority' => 'required|in:lowest,low,medium,high,highest',
             'assignee_id' => 'nullable|exists:users,id',
             'due_date' => 'nullable|date',
         ]);
+
+        // Convert status name to status_id
+        if (isset($validated['status'])) {
+            $status = \App\Models\Status::where('name', $validated['status'])->first();
+            $validated['status_id'] = $status?->id;
+            unset($validated['status']);
+        }
 
         $epic->update($validated);
 
@@ -165,7 +185,7 @@ class EpicController extends Controller
 
     public function destroy(string $epic)
     {
-        $epic = ProjectTask::where('uuid', $epic)
+        $epic = Task::where('uuid', $epic)
             ->where('type', 'epic')
             ->firstOrFail();
 

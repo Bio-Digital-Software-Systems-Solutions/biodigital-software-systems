@@ -71,6 +71,13 @@ class Task extends Model
     use HasFactory, SoftDeletes, LogsActivity;
 
     /**
+     * The relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $with = ['status'];
+
+    /**
      * Configure activity log options.
      */
     public function getActivitylogOptions(): LogOptions

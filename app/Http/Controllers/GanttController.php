@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TaskStatus;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\Request;
@@ -17,7 +18,14 @@ class GanttController extends Controller
 
     public function index(Request $request)
     {
-        $query = Project::with(['manager']);
+        // Eager load projects with their tasks (using polymorphic relation)
+        $query = Project::with([
+            'manager',
+            'tasks' => function ($query) {
+                $query->whereNotNull('due_date')
+                      ->with(['assignee']);
+            }
+        ]);
 
         // Apply filters
         if ($request->has('project_id') && $request->project_id) {
@@ -32,11 +40,8 @@ class GanttController extends Controller
 
         // Transform projects and tasks for Gantt chart
         $ganttData = $projects->map(function ($project) {
-            // Load tasks for this project using the polymorphic relation
-            $tasks = Task::where('project_id', $project->id)
-                ->whereNotNull('due_date')
-                ->with(['assignee', 'status'])
-                ->get();
+            // Tasks are already loaded via eager loading
+            $tasks = $project->tasks;
 
             return [
                 'id' => 'project-'.$project->uuid,
@@ -82,7 +87,10 @@ class GanttController extends Controller
         }
 
         $completedTasks = $tasks->filter(function ($task) {
-            return $task->status && $task->status->name === 'done';
+            return $task->status && in_array($task->status->name, [
+                TaskStatus::COMPLETED->value,
+                TaskStatus::DONE->value
+            ]);
         })->count();
 
         return round(($completedTasks / $totalTasks) * 100);
@@ -95,9 +103,9 @@ class GanttController extends Controller
         }
 
         return match ($task->status->name) {
-            'done', 'completed' => 100,
-            'in_progress' => 50,
-            'in_review' => 75,
+            TaskStatus::DONE->value, TaskStatus::COMPLETED->value => 100,
+            TaskStatus::IN_PROGRESS->value => 50,
+            TaskStatus::UNDER_REVIEW->value, TaskStatus::IN_REVIEW->value => 75,
             default => 0,
         };
     }

@@ -17,7 +17,7 @@ class SprintController extends Controller
 
     public function index(Request $request)
     {
-        $query = Sprint::with(['project', 'tasks.assignee', 'attachments.uploader']);
+        $query = Sprint::with(['project', 'tasks.assignee', 'tasks.status', 'attachments.user']);
 
         // Apply filters
         if ($request->has('project_id') && $request->project_id) {
@@ -44,7 +44,9 @@ class SprintController extends Controller
 
         $sprints = $query->latest('start_date')->get()->map(function ($sprint) {
             $totalTasks = $sprint->tasks->count();
-            $completedTasks = $sprint->tasks->where('status', 'done')->count();
+            $completedTasks = $sprint->tasks->filter(function ($task) {
+                return $task->status && $task->status->name === 'completed';
+            })->count();
 
             $now = now();
             $status = 'upcoming';
@@ -70,14 +72,12 @@ class SprintController extends Controller
                 'attachments' => $sprint->attachments->map(function ($attachment) {
                     return [
                         'id' => $attachment->id,
-                        'name' => $attachment->name,
+                        'file_name' => $attachment->file_name,
                         'file_type' => $attachment->file_type,
                         'mime_type' => $attachment->mime_type,
                         'file_size' => $attachment->file_size,
-                        'human_file_size' => $attachment->human_file_size,
-                        'file_path' => asset('storage/'.$attachment->file_path),
-                        'download_url' => route('attachments.download', $attachment),
-                        'uploaded_by' => $attachment->uploader->name,
+                        'file_url' => $attachment->file_url,
+                        'uploaded_by' => $attachment->user ? $attachment->user->name : 'Unknown',
                         'created_at' => $attachment->created_at->format('d/m/Y H:i'),
                     ];
                 }),

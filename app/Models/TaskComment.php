@@ -15,7 +15,7 @@ use Spatie\Activitylog\LogOptions;
  * @property string $content
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\ProjectTask $task
+ * @property-read \App\Models\Task $task
  * @property-read \App\Models\User $user
  * @method static \Database\Factories\TaskCommentFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskComment newModelQuery()
@@ -51,7 +51,7 @@ class TaskComment extends Model
 
     public function task(): BelongsTo
     {
-        return $this->belongsTo(ProjectTask::class, 'task_id');
+        return $this->belongsTo(Task::class, 'task_id');
     }
 
     public function user(): BelongsTo

@@ -9,12 +9,27 @@ export enum ProjectStatus {
 }
 
 export enum TaskStatus {
+  PENDING = 'pending',
   TODO = 'todo',
   IN_PROGRESS = 'in_progress',
-  IN_REVIEW = 'in_review',
+  UNDER_REVIEW = 'under_review',
+  IN_REVIEW = 'in_review', // Alias for backward compatibility
   BLOCKED = 'blocked',
-  DONE = 'done',
+  ON_HOLD = 'on_hold',
+  COMPLETED = 'completed',
+  DONE = 'done', // Alias for backward compatibility
   CANCELLED = 'cancelled',
+}
+
+export interface StatusObject {
+  id: number;
+  uuid: string;
+  name: string;
+  description?: string;
+  color: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export enum Priority {
@@ -81,7 +96,8 @@ export interface ProjectTask {
   reporter: User;
   reviewer_id?: number;
   reviewer?: User;
-  status: TaskStatus;
+  status?: StatusObject;
+  status_id?: number;
   priority: Priority;
   type: TaskType;
   story_points?: number;

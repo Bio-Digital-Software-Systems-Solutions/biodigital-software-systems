@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\ProjectStatus;
 use App\Models\Status;
 use App\Models\Task;
 
@@ -23,6 +24,7 @@ class TaskObserver
         // Only update step status if the task status was changed
         if ($task->isDirty('status_id')) {
             $this->updateStepStatus($task);
+            $this->updateProjectStatus($task);
         }
     }
 
@@ -59,6 +61,7 @@ class TaskObserver
         }
 
         // Get all tasks for this step (excluding soft deleted)
+        // Note: Status is auto-loaded via Task model's $with property
         $allTasks = $step->tasks()->whereNull('deleted_at')->get();
 
         // If no tasks, set step to pending
@@ -89,5 +92,41 @@ class TaskObserver
         }
 
         $step->save();
+    }
+
+    /**
+     * Update the parent project status based on tasks status
+     */
+    protected function updateProjectStatus(Task $task): void
+    {
+        // Only process if the task belongs to a project
+        if (! $task->taskable_type || $task->taskable_type !== 'App\Models\Project') {
+            return;
+        }
+
+        $project = $task->taskable;
+
+        if (! $project) {
+            return;
+        }
+
+        // Get pending status
+        $pendingStatus = Status::where('name', 'pending')->first();
+
+        // Get all tasks for this project (excluding soft deleted)
+        // Note: Status is auto-loaded via Task model's $with property
+        $allTasks = $project->tasks()->whereNull('deleted_at')->get();
+
+        // If the project is in planning status
+        if ($project->status === ProjectStatus::PLANNING) {
+            // Check if at least one task has a status other than pending
+            $hasStartedTask = $allTasks->where('status_id', '!=', $pendingStatus?->id)->isNotEmpty();
+
+            if ($hasStartedTask) {
+                // Auto-start the project
+                $project->status = ProjectStatus::ACTIVE;
+                $project->save();
+            }
+        }
     }
 }

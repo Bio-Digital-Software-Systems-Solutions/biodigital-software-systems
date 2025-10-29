@@ -21,7 +21,7 @@ use Spatie\Activitylog\LogOptions;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read string $file_url
  * @property-read string $formatted_file_size
- * @property-read \App\Models\ProjectTask $task
+ * @property-read \App\Models\Task $task
  * @property-read \App\Models\User $user
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskAttachment newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskAttachment newQuery()
@@ -66,7 +66,7 @@ class TaskAttachment extends Model
 
     public function task(): BelongsTo
     {
-        return $this->belongsTo(ProjectTask::class, 'task_id');
+        return $this->belongsTo(Task::class, 'task_id');
     }
 
     public function user(): BelongsTo

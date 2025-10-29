@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use App\Models\ProjectTask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -26,7 +25,9 @@ class ProjectController extends Controller
                 'tasks',
                 'members',
                 'tasks as completed_tasks_count' => function ($query) {
-                    $query->where('status', 'done');
+                    $query->whereHas('status', function ($q) {
+                        $q->where('name', 'completed');
+                    });
                 },
             ])
             ->get();
@@ -40,17 +41,27 @@ class ProjectController extends Controller
             'completed_projects' => $projects->where('status', 'completed')->count(),
             'on_hold_projects' => $projects->where('status', 'on_hold')->count(),
             'total_tasks' => $projects->sum('tasks_count'),
-            'completed_tasks' => ProjectTask::whereIn('project_id', $projectIds)
-                ->where('status', 'done')
+            'completed_tasks' => \App\Models\Task::where('taskable_type', 'App\Models\Project')
+                ->whereIn('taskable_id', $projectIds)
+                ->whereHas('status', function ($q) {
+                    $q->where('name', 'completed');
+                })
                 ->count(),
-            'in_progress_tasks' => ProjectTask::whereIn('project_id', $projectIds)
-                ->where('status', 'in_progress')
+            'in_progress_tasks' => \App\Models\Task::where('taskable_type', 'App\Models\Project')
+                ->whereIn('taskable_id', $projectIds)
+                ->whereHas('status', function ($q) {
+                    $q->where('name', 'in_progress');
+                })
                 ->count(),
-            'overdue_tasks' => ProjectTask::whereIn('project_id', $projectIds)
+            'overdue_tasks' => \App\Models\Task::where('taskable_type', 'App\Models\Project')
+                ->whereIn('taskable_id', $projectIds)
                 ->where('due_date', '<', now())
-                ->whereNotIn('status', ['done', 'cancelled'])
+                ->whereHas('status', function ($q) {
+                    $q->whereNotIn('name', ['completed', 'cancelled']);
+                })
                 ->count(),
-            'total_epics' => ProjectTask::whereIn('project_id', $projectIds)
+            'total_epics' => \App\Models\Task::where('taskable_type', 'App\Models\Project')
+                ->whereIn('taskable_id', $projectIds)
                 ->where('type', 'epic')
                 ->count(),
             'active_sprints' => \App\Models\Sprint::whereIn('project_id', $projectIds)
@@ -68,7 +79,9 @@ class ProjectController extends Controller
                 'tasks',
                 'members',
                 'tasks as completed_tasks_count' => function ($query) {
-                    $query->where('status', 'done');
+                    $query->whereHas('status', function ($q) {
+                        $q->where('name', 'completed');
+                    });
                 },
             ])
             ->latest()
@@ -96,7 +109,9 @@ class ProjectController extends Controller
                 'tasks',
                 'members',
                 'tasks as completed_tasks_count' => function ($query) {
-                    $query->where('status', 'done');
+                    $query->whereHas('status', function ($q) {
+                        $q->where('name', 'completed');
+                    });
                 },
             ])
             ->when(request('status'), function ($query, $status) {
@@ -194,6 +209,7 @@ class ProjectController extends Controller
             'members',
             'tasks.assignee',
             'tasks.reporter',
+            'tasks.status',
             'participants.user',
             'attachments.user',
         ]);
@@ -211,7 +227,11 @@ class ProjectController extends Controller
             ->get();
 
         // Calculate progress
-        $completedTasks = $project->tasks()->where('status', 'done')->count();
+        $completedTasks = $project->tasks()
+            ->whereHas('status', function ($query) {
+                $query->where('name', 'completed');
+            })
+            ->count();
         $totalTasks = $project->tasks()->count();
         $progress = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
 
@@ -282,7 +302,7 @@ class ProjectController extends Controller
 
     public function board(Project $project)
     {
-        $project->load(['tasks.assignee', 'tasks.reporter']);
+        $project->load(['tasks.assignee', 'tasks.reporter', 'tasks.status']);
 
         return Inertia::render('Projects/Board', [
             'project' => $project,
@@ -291,7 +311,7 @@ class ProjectController extends Controller
 
     public function gantt(Project $project)
     {
-        $project->load(['tasks.assignee', 'tasks.reporter']);
+        $project->load(['tasks.assignee', 'tasks.reporter', 'tasks.status']);
 
         return Inertia::render('Projects/Gantt', [
             'project' => $project,

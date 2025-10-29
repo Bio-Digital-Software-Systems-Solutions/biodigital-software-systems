@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -45,7 +46,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read \App\Models\User|null $reviewer
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Sprint> $sprints
  * @property-read int|null $sprints_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProjectTask> $tasks
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $tasks
  * @property-read int|null $tasks_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project active()
  * @method static \Database\Factories\ProjectFactory factory($count = null, $state = [])
@@ -117,15 +118,11 @@ class Project extends Model
     ];
 
     // Relations
-    public function tasks(): HasMany
-    {
-        return $this->hasMany(ProjectTask::class);
-    }
-
     /**
-     * Get all tasks associated with this project (polymorphic).
+     * Get all tasks associated with this project.
+     * Uses polymorphic relation to the unified Task model.
      */
-    public function morphTasks(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function tasks(): MorphMany
     {
         return $this->morphMany(Task::class, 'taskable');
     }
@@ -196,7 +193,9 @@ class Project extends Model
             } else {
                 // Fall back to query if not loaded
                 $completedTasks = $this->tasks()
-                    ->whereIn('status', ['done', 'cancelled'])
+                    ->whereHas('status', function ($query) {
+                        $query->where('name', 'completed');
+                    })
                     ->count();
             }
 
@@ -210,7 +209,9 @@ class Project extends Model
         }
 
         $completedTasks = $this->tasks()
-            ->whereIn('status', ['done', 'cancelled'])
+            ->whereHas('status', function ($query) {
+                $query->where('name', 'completed');
+            })
             ->count();
 
         return round(($completedTasks / $totalTasks) * 100, 2);

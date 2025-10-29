@@ -19,7 +19,7 @@ class KanbanController extends Controller
 
     public function index(Request $request)
     {
-        $query = Task::with(['project', 'assignee', 'reporter', 'sprint', 'status']);
+        $query = Task::with(['taskable', 'assignee', 'reporter', 'sprint']);
 
         // Apply filters
         if ($request->has('project_id') && $request->project_id) {
@@ -67,8 +67,8 @@ class KanbanController extends Controller
             })->values()->map(function ($task) {
                 return $this->formatTaskForFrontend($task);
             }),
-            'in_review' => $tasks->filter(function ($task) {
-                return $task->status && $task->status->name === 'in_review';
+            'under_review' => $tasks->filter(function ($task) {
+                return $task->status && $task->status->name === 'under_review';
             })->values()->map(function ($task) {
                 return $this->formatTaskForFrontend($task);
             }),
@@ -77,8 +77,8 @@ class KanbanController extends Controller
             })->values()->map(function ($task) {
                 return $this->formatTaskForFrontend($task);
             }),
-            'done' => $tasks->filter(function ($task) {
-                return $task->status && $task->status->name === 'done';
+            'completed' => $tasks->filter(function ($task) {
+                return $task->status && $task->status->name === 'completed';
             })->values()->map(function ($task) {
                 return $this->formatTaskForFrontend($task);
             }),
@@ -104,8 +104,11 @@ class KanbanController extends Controller
 
     public function updateStatus(Request $request, Task $task)
     {
+        // Get all valid status names from database
+        $validStatuses = Status::pluck('name')->toArray();
+
         $validated = $request->validate([
-            'status' => 'required|in:todo,in_progress,in_review,blocked,done',
+            'status' => 'required|in:' . implode(',', $validStatuses),
         ]);
 
         // Find the status ID from the status name
@@ -121,7 +124,7 @@ class KanbanController extends Controller
 
         return response()->json([
             'message' => 'Task status updated successfully',
-            'task' => $this->formatTaskForFrontend($task->fresh()->load(['project', 'assignee', 'reporter', 'status'])),
+            'task' => $this->formatTaskForFrontend($task->fresh()->load(['taskable', 'assignee', 'reporter'])),
         ]);
     }
 
@@ -130,6 +133,9 @@ class KanbanController extends Controller
      */
     private function formatTaskForFrontend(Task $task): array
     {
+        // Get project from taskable (polymorphic relation)
+        $project = $task->taskable_type === 'App\Models\Project' ? $task->taskable : null;
+
         return [
             'id' => $task->id,
             'uuid' => $task->uuid,
@@ -143,10 +149,10 @@ class KanbanController extends Controller
                 'first_name' => $task->assignee->first_name,
                 'last_name' => $task->assignee->last_name,
             ] : null,
-            'project' => $task->project ? [
-                'id' => $task->project->id,
-                'name' => $task->project->name,
-                'color' => $task->project->color ?? null,
+            'project' => $project ? [
+                'id' => $project->id,
+                'name' => $project->name,
+                'color' => $project->color ?? null,
             ] : null,
             'due_date' => $task->due_date ? $task->due_date->toDateString() : null,
         ];

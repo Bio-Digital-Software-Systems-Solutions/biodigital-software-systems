@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Project, ProjectParticipant, ProjectComment, ProjectAttachment } from '@/Types/Project';
+import { Project, ProjectParticipant, ProjectComment, ProjectAttachment, TaskStatus } from '@/Types/Project';
 import { User } from '@/Types';
 import { useToast } from '@/Components/ui/toast';
 import { useConfirm } from '@/Components/ui/confirm-dialog';
@@ -382,20 +382,20 @@ export default function ShowProject({ project, users }: Props) {
                                                                 </span>
                                                                 <span
                                                                     className={`inline-flex items-center px-2 py-0.5 text-xs rounded ${
-                                                                        task.status === 'done'
+                                                                        task.status?.name === TaskStatus.COMPLETED
                                                                             ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                                                                            : task.status === 'in_progress'
+                                                                            : task.status?.name === TaskStatus.IN_PROGRESS
                                                                             ? 'bg-blue-100 text-primary dark:bg-blue-900 dark:text-blue-300'
-                                                                            : task.status === 'in_review'
+                                                                            : task.status?.name === TaskStatus.UNDER_REVIEW || task.status?.name === TaskStatus.IN_REVIEW
                                                                             ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                                                                            : task.status === 'blocked'
+                                                                            : task.status?.name === TaskStatus.BLOCKED
                                                                             ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
                                                                             : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                                                     }`}
                                                                 >
-                                                                    {task.status === 'done' && <CheckCircleIcon className="h-3 w-3 mr-1" />}
-                                                                    {task.status === 'in_progress' && <ClockIcon className="h-3 w-3 mr-1" />}
-                                                                    {task.status}
+                                                                    {task.status?.name === TaskStatus.COMPLETED && <CheckCircleIcon className="h-3 w-3 mr-1" />}
+                                                                    {task.status?.name === TaskStatus.IN_PROGRESS && <ClockIcon className="h-3 w-3 mr-1" />}
+                                                                    {task.status?.name || 'N/A'}
                                                                 </span>
                                                                 <span
                                                                     className={`inline-block px-2 py-0.5 text-xs rounded ${

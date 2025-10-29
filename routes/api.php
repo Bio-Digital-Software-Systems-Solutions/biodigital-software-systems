@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ProjectController;
-use App\Http\Controllers\Api\ProjectTaskController;
+use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\TusUploadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -44,25 +44,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('projects/{project}/attachments', [ProjectController::class, 'uploadAttachment'])->name('api.projects.uploadAttachment');
     Route::delete('projects/{project}/attachments/{attachment}', [ProjectController::class, 'deleteAttachment'])->name('api.projects.deleteAttachment');
 
-    // Project Tasks (API)
-    Route::apiResource('tasks', ProjectTaskController::class)->names([
+    // Tasks API (unified Task model)
+    Route::apiResource('tasks', TaskController::class)->names([
         'index' => 'api.tasks.index',
         'store' => 'api.tasks.store',
         'show' => 'api.tasks.show',
         'update' => 'api.tasks.update',
         'destroy' => 'api.tasks.destroy',
     ]);
-    Route::patch('tasks/{task}/status', [ProjectTaskController::class, 'updateStatus'])->name('api.tasks.updateStatus');
+    Route::patch('tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('api.tasks.updateStatus');
 
     // Task comments
-    Route::post('tasks/{task}/comments', [ProjectTaskController::class, 'storeComment'])->name('api.tasks.storeComment');
-    Route::delete('tasks/{task}/comments/{comment}', [ProjectTaskController::class, 'deleteComment'])->name('api.tasks.deleteComment');
+    Route::post('tasks/{task}/comments', [TaskController::class, 'storeComment'])->name('api.tasks.storeComment');
+    Route::delete('tasks/{task}/comments/{comment}', [TaskController::class, 'deleteComment'])->name('api.tasks.deleteComment');
 
     // Task participants
-    Route::post('tasks/{task}/participants', [ProjectTaskController::class, 'addParticipant'])->name('api.tasks.addParticipant');
-    Route::delete('tasks/{task}/participants/{user}', [ProjectTaskController::class, 'removeParticipant'])->name('api.tasks.removeParticipant');
+    Route::post('tasks/{task}/participants', [TaskController::class, 'addParticipant'])->name('api.tasks.addParticipant');
+    Route::delete('tasks/{task}/participants/{user}', [TaskController::class, 'removeParticipant'])->name('api.tasks.removeParticipant');
 
     // Task attachments
-    Route::post('tasks/{task}/attachments', [ProjectTaskController::class, 'uploadAttachment'])->name('api.tasks.uploadAttachment');
-    Route::delete('tasks/{task}/attachments/{attachment}', [ProjectTaskController::class, 'deleteAttachment'])->name('api.tasks.deleteAttachment');
+    Route::post('tasks/{task}/attachments', [TaskController::class, 'uploadAttachment'])->name('api.tasks.uploadAttachment');
+    Route::delete('tasks/{task}/attachments/{attachment}', [TaskController::class, 'deleteAttachment'])->name('api.tasks.deleteAttachment');
 });

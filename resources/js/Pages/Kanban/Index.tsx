@@ -13,6 +13,7 @@ import {
     XMarkIcon,
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 interface Task {
     id: number;
@@ -39,9 +40,9 @@ interface Props {
     tasksByStatus: {
         todo: Task[];
         in_progress: Task[];
-        in_review: Task[];
+        under_review: Task[];
         blocked: Task[];
-        done: Task[];
+        completed: Task[];
     };
     projects: Array<{ id: number; name: string }>;
     users: Array<{ id: number; first_name: string; last_name: string }>;
@@ -70,7 +71,7 @@ const statusConfig = {
         headerColor: 'bg-blue-100 dark:bg-blue-900/40',
         textColor: 'text-primary dark:text-blue-300',
     },
-    in_review: {
+    under_review: {
         label: 'En révision',
         color: 'bg-yellow-50 dark:bg-yellow-900/20',
         headerColor: 'bg-yellow-100 dark:bg-yellow-900/40',
@@ -82,7 +83,7 @@ const statusConfig = {
         headerColor: 'bg-red-100 dark:bg-red-900/40',
         textColor: 'text-red-700 dark:text-red-300',
     },
-    done: {
+    completed: {
         label: 'Terminé',
         color: 'bg-green-50 dark:bg-green-900/20',
         headerColor: 'bg-green-100 dark:bg-green-900/40',
@@ -136,10 +137,11 @@ export default function KanbanIndex({ tasksByStatus, projects, users, sprints, f
             await axios.patch(route('kanban.tasks.update-status', draggedTask.uuid), {
                 status
             });
+            toast.success('Statut de la tâche mis à jour avec succès');
             router.reload({ preserveState: true, preserveScroll: true } as any);
         } catch (error) {
             apiLogger.error('Error updating task status:', error);
-            alert('Erreur lors de la mise à jour du statut de la tâche');
+            toast.error('Erreur lors de la mise à jour du statut de la tâche');
         }
 
         setDraggedTask(null);

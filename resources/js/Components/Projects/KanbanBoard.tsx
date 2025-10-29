@@ -14,12 +14,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
   const columns: KanbanColumn[] = useMemo(() => [
     { status: TaskStatus.TODO, label: 'À faire', color: 'gray' },
     { status: TaskStatus.IN_PROGRESS, label: 'En cours', color: 'blue' },
-    { status: TaskStatus.IN_REVIEW, label: 'En révision', color: 'yellow' },
-    { status: TaskStatus.DONE, label: 'Terminé', color: 'green' },
+    { status: TaskStatus.UNDER_REVIEW, label: 'En révision', color: 'yellow' },
+    { status: TaskStatus.COMPLETED, label: 'Terminé', color: 'green' },
   ], []);
 
   const getTasksByStatus = (status: TaskStatus) => {
-    return tasks.filter(task => task.status === status);
+    return tasks.filter(task => task.status?.name === status);
   };
 
   const handleDragEnd = async (result: DropResult) => {
