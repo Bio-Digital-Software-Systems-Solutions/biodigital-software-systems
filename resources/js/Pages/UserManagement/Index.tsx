@@ -916,7 +916,7 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
                                                             </div>
                                                         </div>
                                                         <a
-                                                            href={route('user-management.show', user.id)}
+                                                            href={route('user-management.show', user.uuid)}
                                                             className="block text-lg font-semibold text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 hover:underline mb-1"
                                                         >
                                                             {user.first_name} {user.last_name}
