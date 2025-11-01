@@ -51,6 +51,7 @@ interface Session {
 
 interface Training {
   id: string;
+  uuid: string;
   title: string;
   description: string;
   duration: string;
@@ -369,6 +370,7 @@ const TrainingBrowseSection: React.FC = () => {
           const mockTrainings: Training[] = [
             {
               id: '1',
+              uuid: 'mock-uuid-1',
               title: 'Développement Web Full Stack',
               description: 'Apprenez à créer des applications web complètes avec React, Node.js et MongoDB. Formation pratique avec projets réels.',
               duration: '6 mois',
@@ -415,6 +417,7 @@ const TrainingBrowseSection: React.FC = () => {
             },
             {
               id: '2',
+              uuid: 'mock-uuid-2',
               title: 'Data Science et Machine Learning',
               description: 'Formation complète en science des données avec Python, pandas, scikit-learn et TensorFlow.',
               duration: '4 mois',
@@ -451,6 +454,7 @@ const TrainingBrowseSection: React.FC = () => {
             },
             {
               id: '3',
+              uuid: 'mock-uuid-3',
               title: 'Design UI/UX',
               description: 'Créez des interfaces utilisateur exceptionnelles. De la recherche utilisateur au prototypage.',
               duration: '3 mois',
