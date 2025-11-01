@@ -1046,7 +1046,7 @@ const TrainingBrowseSection: React.FC = () => {
               onSubmit={(e) => {
                 e.preventDefault();
                 // Submit enrollment using Inertia
-                router.post(`/trainings/${selectedTraining.id}/enroll`, enrollmentForm, {
+                router.post(`/trainings/${selectedTraining.uuid}/enroll`, enrollmentForm, {
                   onSuccess: () => {
                     setIsEnrollmentModalOpen(false);
                     setIsDetailsModalOpen(false);

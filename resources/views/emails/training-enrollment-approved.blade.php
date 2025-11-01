@@ -143,7 +143,7 @@
             </p>
 
             <center>
-                <a href="{{ config('app.url') }}/student-dashboard" class="button">
+                <a href="{{ config('app.url') }}/student/dashboard" class="button">
                     Accéder à mon espace
                 </a>
             </center>
