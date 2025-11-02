@@ -97,6 +97,11 @@ class TrainingClass extends Model
         return $this->hasMany(TrainingClassSchedule::class);
     }
 
+    public function materials(): HasMany
+    {
+        return $this->hasMany(TrainingClassMaterial::class)->ordered();
+    }
+
     /**
      * Get the route key for the model.
      */

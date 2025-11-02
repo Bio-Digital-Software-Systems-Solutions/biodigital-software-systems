@@ -32,11 +32,15 @@ interface Topic {
 
 interface Material {
   id: number;
+  uuid: string;
   title: string;
-  type: 'video' | 'audio' | 'pdf' | 'powerpoint';
+  type: 'video' | 'audio' | 'pdf' | 'powerpoint' | 'document';
   duration?: string;
-  url: string;
+  url?: string;
+  file_url?: string;
+  description?: string;
   order: number;
+  is_active: boolean;
 }
 
 interface QuizAttempt {
@@ -139,12 +143,15 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
   const [mediaModalOpen, setMediaModalOpen] = useState(false);
   const [currentMedia, setCurrentMedia] = useState<{ url: string; type: 'video' | 'audio' | 'pdf' | 'powerpoint'; title: string } | null>(null);
 
-  const openMaterial = (url: string, type: Material['type'], title: string) => {
-    if (type === 'video' || type === 'audio') {
-      setCurrentMedia({ url, type, title });
+  const openMaterial = (material: Material) => {
+    // Use the download route for class materials
+    const downloadUrl = route('training-class-materials.download', material.uuid);
+
+    if (material.type === 'video' || material.type === 'audio') {
+      setCurrentMedia({ url: downloadUrl, type: material.type, title: material.title });
       setMediaModalOpen(true);
     } else {
-      window.open(url, '_blank');
+      window.open(downloadUrl, '_blank');
     }
   };
 
@@ -510,12 +517,17 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
                                   </Badge>
                                   {material.duration && <span>• {material.duration}</span>}
                                 </div>
+                                {material.description && (
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                    {material.description}
+                                  </p>
+                                )}
                               </div>
                             </div>
                             <Button
                               size="sm"
                               className="bg-primary hover:bg-primary"
-                              onClick={() => openMaterial(material.url, material.type, material.title)}
+                              onClick={() => openMaterial(material)}
                             >
                               {material.type === 'video' || material.type === 'audio' ? 'Lire' : 'Ouvrir'}
                             </Button>

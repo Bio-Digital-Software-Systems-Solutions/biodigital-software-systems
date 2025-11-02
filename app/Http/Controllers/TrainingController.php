@@ -386,8 +386,6 @@ class TrainingController extends Controller
 
         $trainings = Training::with([
                 'topics',
-                'classes',
-                'materials',
                 'quizzes.attempts' => function ($query) use ($user) {
                     $query->where('student_id', $user->id)->latest();
                 },
@@ -401,7 +399,16 @@ class TrainingController extends Controller
             ->map(function ($training) use ($user) {
                 $enrollment = $training->students()->where('user_id', $user->id)->first();
 
+                // Get the class for this student
+                $studentClass = $training->classes()
+                    ->where('id', $enrollment->pivot->training_class_id)
+                    ->with(['materials' => function ($query) {
+                        $query->active()->ordered();
+                    }])
+                    ->first();
+
                 $nextClass = $training->classes()
+                    ->where('id', $enrollment->pivot->training_class_id)
                     ->where('date', '>=', now()->toDateString())
                     ->first();
 
@@ -441,7 +448,12 @@ class TrainingController extends Controller
                         'email' => $training->teacher->email,
                     ] : null,
                     'topics' => $training->topics,
-                    'materials' => $training->materials,
+                    'materials' => $studentClass?->materials ?? [],
+                    'class' => $studentClass ? [
+                        'id' => $studentClass->id,
+                        'uuid' => $studentClass->uuid,
+                        'name' => $studentClass->name,
+                    ] : null,
                     'quizzes' => $quizzes,
                     'progress' => $enrollment->pivot->progress ?? 0,
                     'grade' => $enrollment->pivot->grade ?? 0,

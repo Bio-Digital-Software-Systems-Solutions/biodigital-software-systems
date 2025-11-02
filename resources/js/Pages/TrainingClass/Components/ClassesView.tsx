@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
-import { Eye, Edit, Trash2, Grid3x3, List, Table, Search, X } from 'lucide-react';
+import { Eye, Edit, Trash2, Grid3x3, List, Table, Search, X, FileText } from 'lucide-react';
 import { TrainingClass, Training, Teacher } from '../types';
 import EditClassModal from './EditClassModal';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
@@ -352,14 +352,25 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                     </div>
 
                                     <div className="flex gap-2 mt-4">
+                                        <Link
+                                            href={route('training-classes.materials.index', trainingClass.uuid)}
+                                            className="flex-1"
+                                        >
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full"
+                                            >
+                                                <FileText size={16} className="mr-1" />
+                                                Supports
+                                            </Button>
+                                        </Link>
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() => handleEdit(trainingClass)}
-                                            className="flex-1"
                                         >
-                                            <Edit size={16} className="mr-1" />
-                                            Modifier
+                                            <Edit size={16} />
                                         </Button>
                                         <Button
                                             variant="destructive"
@@ -432,6 +443,15 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                             </div>
                                         </div>
                                         <div className="flex gap-2 ml-4">
+                                            <Link href={route('training-classes.materials.index', trainingClass.uuid)}>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
+                                                    <FileText size={16} className="mr-1" />
+                                                    Supports
+                                                </Button>
+                                            </Link>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
@@ -525,10 +545,20 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div className="flex justify-end gap-2">
+                                                        <Link href={route('training-classes.materials.index', trainingClass.uuid)}>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                title="Gérer les supports de cours"
+                                                            >
+                                                                <FileText size={16} />
+                                                            </Button>
+                                                        </Link>
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
                                                             onClick={() => handleEdit(trainingClass)}
+                                                            title="Modifier la classe"
                                                         >
                                                             <Edit size={16} />
                                                         </Button>
@@ -536,6 +566,7 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                                             variant="destructive"
                                                             size="sm"
                                                             onClick={() => handleDeleteClick(trainingClass.uuid)}
+                                                            title="Supprimer la classe"
                                                         >
                                                             <Trash2 size={16} />
                                                         </Button>

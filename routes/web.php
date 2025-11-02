@@ -347,6 +347,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('restrict.member')
         ->name('training-class-schedules.mark-attendance');
 
+    // Training Class Materials routes (for teachers)
+    Route::prefix('training-classes/{trainingClass}/materials')->middleware('restrict.member')->group(function () {
+        Route::get('/', [App\Http\Controllers\TrainingClassMaterialController::class, 'index'])
+            ->name('training-classes.materials.index');
+        Route::post('/', [App\Http\Controllers\TrainingClassMaterialController::class, 'store'])
+            ->middleware('throttle:uploads')
+            ->name('training-classes.materials.store');
+        Route::get('/{material}', [App\Http\Controllers\TrainingClassMaterialController::class, 'show'])
+            ->name('training-classes.materials.show');
+        Route::put('/{material}', [App\Http\Controllers\TrainingClassMaterialController::class, 'update'])
+            ->middleware('throttle:uploads')
+            ->name('training-classes.materials.update');
+        Route::delete('/{material}', [App\Http\Controllers\TrainingClassMaterialController::class, 'destroy'])
+            ->name('training-classes.materials.destroy');
+        Route::post('/reorder', [App\Http\Controllers\TrainingClassMaterialController::class, 'reorder'])
+            ->name('training-classes.materials.reorder');
+    });
+
+    // Student access to class materials
+    Route::get('student/training-classes/{trainingClass}/materials', [App\Http\Controllers\TrainingClassMaterialController::class, 'studentIndex'])
+        ->name('student.training-classes.materials.index');
+
+    // Download/stream material (accessible to both teachers and students)
+    Route::get('training-class-materials/{material}/download', [App\Http\Controllers\TrainingClassMaterialController::class, 'download'])
+        ->name('training-class-materials.download');
+
     // Quiz Management routes (for teachers/admins)
     Route::prefix('trainings/{training}/quizzes')->group(function () {
         Route::get('/', [App\Http\Controllers\QuizController::class, 'index'])

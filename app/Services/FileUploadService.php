@@ -18,6 +18,19 @@ class FileUploadService
 
     private const ALLOWED_VIDEO_MIMES = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv', 'video/x-flv', 'video/webm'];
 
+    private const ALLOWED_DOCUMENT_MIMES = [
+        'application/pdf',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'audio/mpeg',
+        'audio/wav',
+        'audio/x-wav',
+    ];
+
+    private const MAX_DOCUMENT_SIZE = 102400; // 100MB in KB
+
     /**
      * Upload et sécuriser une image
      */
@@ -78,6 +91,33 @@ class FileUploadService
         }
 
         // 3. Générer un nom unique
+        $extension = $file->getClientOriginalExtension();
+        $filename = Str::uuid().'.'.$extension;
+
+        // 4. Stocker de manière sécurisée
+        $path = $directory.'/'.$filename;
+        Storage::disk('public')->putFileAs($directory, $file, $filename);
+
+        return $path;
+    }
+
+    /**
+     * Upload et sécuriser un fichier générique (documents, audio, etc.)
+     */
+    public function uploadFile(UploadedFile $file, string $directory = 'documents'): string
+    {
+        // 1. Valider le type MIME réel
+        $mimeType = $file->getMimeType();
+        if (! in_array($mimeType, array_merge(self::ALLOWED_DOCUMENT_MIMES, self::ALLOWED_VIDEO_MIMES))) {
+            throw new \InvalidArgumentException('Type de fichier non autorisé. Types acceptés : PDF, MP4, MP3, WAV, PPT, PPTX, DOC, DOCX');
+        }
+
+        // 2. Valider la taille
+        if ($file->getSize() > self::MAX_DOCUMENT_SIZE * 1024) {
+            throw new \InvalidArgumentException('Fichier trop volumineux. Taille maximale : '.self::MAX_DOCUMENT_SIZE.' KB');
+        }
+
+        // 3. Générer un nom unique et sécurisé
         $extension = $file->getClientOriginalExtension();
         $filename = Str::uuid().'.'.$extension;
 
