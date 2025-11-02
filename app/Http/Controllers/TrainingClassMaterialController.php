@@ -26,6 +26,9 @@ class TrainingClassMaterialController extends Controller
     {
         $this->authorize('viewAny', [TrainingClassMaterial::class, $trainingClass]);
 
+        // Load the training relationship
+        $trainingClass->load('training:id,title');
+
         $materials = $trainingClass->materials()
             ->with('uploadedBy:id,first_name,last_name')
             ->ordered()
@@ -35,7 +38,7 @@ class TrainingClassMaterialController extends Controller
         if ($request->ajax() && !$request->header('X-Inertia')) {
             return response()->json([
                 'materials' => $materials,
-                'class' => $trainingClass->load('training:id,title'),
+                'class' => $trainingClass,
             ]);
         }
 
