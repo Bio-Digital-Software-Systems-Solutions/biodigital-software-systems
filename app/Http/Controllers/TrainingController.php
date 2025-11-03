@@ -386,8 +386,14 @@ class TrainingController extends Controller
 
         $trainings = Training::with([
                 'topics',
+                'quizzes' => function ($query) {
+                    $query->where('is_active', true)
+                          ->where('status', 'published');
+                },
                 'quizzes.attempts' => function ($query) use ($user) {
-                    $query->where('student_id', $user->id)->latest();
+                    $query->where('student_id', $user->id)
+                          ->where('status', 'completed')
+                          ->orderBy('completed_at', 'desc');
                 },
                 'teacher',
                 'classes.materials' => function ($query) {
@@ -418,7 +424,11 @@ class TrainingController extends Controller
 
                 // Récupérer les quizzes avec leurs tentatives (eager loaded to prevent N+1)
                 $quizzes = $training->quizzes->map(function ($quiz) use ($user) {
-                    $attempt = $quiz->attempts->first();
+                    // Compter toutes les tentatives complétées
+                    $attemptsCount = $quiz->attempts->count();
+
+                    // Récupérer la dernière tentative
+                    $lastAttempt = $quiz->attempts->first();
 
                     return [
                         'id' => $quiz->id,
@@ -430,11 +440,14 @@ class TrainingController extends Controller
                         'passing_score' => $quiz->passing_score,
                         'available_from' => $quiz->available_from,
                         'available_until' => $quiz->available_until,
-                        'attempt' => $attempt ? [
-                            'id' => $attempt->id,
-                            'score' => $attempt->score,
-                            'status' => $attempt->status,
-                            'completed_at' => $attempt->completed_at,
+                        'max_attempts' => $quiz->max_attempts ?? 1,
+                        'attempts_count' => $attemptsCount,
+                        'can_retake' => $attemptsCount < ($quiz->max_attempts ?? 1),
+                        'attempt' => $lastAttempt ? [
+                            'id' => $lastAttempt->id,
+                            'score' => $lastAttempt->score,
+                            'status' => $lastAttempt->status,
+                            'completed_at' => $lastAttempt->completed_at,
                         ] : null,
                     ];
                 });

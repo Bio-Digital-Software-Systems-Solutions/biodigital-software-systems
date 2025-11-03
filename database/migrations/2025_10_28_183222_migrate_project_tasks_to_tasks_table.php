@@ -47,13 +47,18 @@ return new class extends Migration
         });
 
         // Migrate data from project_tasks to tasks one by one to generate UUIDs
-        $projectTasks = DB::table('project_tasks')
-            ->whereNotExists(function ($query) {
-                $query->select(DB::raw(1))
-                    ->from('tasks')
-                    ->whereColumn('tasks.key', 'project_tasks.key');
-            })
-            ->get();
+        // Only run if project_tasks table exists
+        if (Schema::hasTable('project_tasks')) {
+            $projectTasks = DB::table('project_tasks')
+                ->whereNotExists(function ($query) {
+                    $query->select(DB::raw(1))
+                        ->from('tasks')
+                        ->whereColumn('tasks.key', 'project_tasks.key');
+                })
+                ->get();
+        } else {
+            $projectTasks = collect([]);
+        }
 
         foreach ($projectTasks as $pt) {
             $statusId = DB::table('statuses')

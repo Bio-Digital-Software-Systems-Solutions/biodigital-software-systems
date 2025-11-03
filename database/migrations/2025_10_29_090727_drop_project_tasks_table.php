@@ -12,23 +12,34 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Get database name
-        $database = DB::getDatabaseName();
+        // Only attempt to drop if the table exists
+        if (!Schema::hasTable('project_tasks')) {
+            return;
+        }
 
-        // Get all foreign keys that reference project_tasks
-        $foreignKeys = DB::select("
-            SELECT TABLE_NAME, CONSTRAINT_NAME
-            FROM information_schema.KEY_COLUMN_USAGE
-            WHERE REFERENCED_TABLE_NAME = 'project_tasks'
-            AND TABLE_SCHEMA = ?
-        ", [$database]);
+        // Get database driver
+        $driver = DB::getDriverName();
 
-        // Drop each foreign key constraint
-        foreach ($foreignKeys as $fk) {
-            try {
-                DB::statement("ALTER TABLE `{$fk->TABLE_NAME}` DROP FOREIGN KEY `{$fk->CONSTRAINT_NAME}`");
-            } catch (\Exception $e) {
-                // Constraint might already be dropped, continue
+        // Only handle foreign keys for MySQL
+        if ($driver === 'mysql') {
+            // Get database name
+            $database = DB::getDatabaseName();
+
+            // Get all foreign keys that reference project_tasks
+            $foreignKeys = DB::select("
+                SELECT TABLE_NAME, CONSTRAINT_NAME
+                FROM information_schema.KEY_COLUMN_USAGE
+                WHERE REFERENCED_TABLE_NAME = 'project_tasks'
+                AND TABLE_SCHEMA = ?
+            ", [$database]);
+
+            // Drop each foreign key constraint
+            foreach ($foreignKeys as $fk) {
+                try {
+                    DB::statement("ALTER TABLE `{$fk->TABLE_NAME}` DROP FOREIGN KEY `{$fk->CONSTRAINT_NAME}`");
+                } catch (\Exception $e) {
+                    // Constraint might already be dropped, continue
+                }
             }
         }
 

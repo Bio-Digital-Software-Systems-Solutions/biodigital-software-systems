@@ -60,6 +60,9 @@ interface Quiz {
   passing_score: number;
   available_from: string | null;
   available_until: string | null;
+  max_attempts: number;
+  attempts_count: number;
+  can_retake: boolean;
   attempt: QuizAttempt | null;
 }
 
@@ -581,6 +584,19 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
                           const hasAttempt = quiz.attempt !== null;
                           const isPassed = hasAttempt && quiz.attempt?.score && quiz.attempt.score >= quiz.passing_score;
                           const isCompleted = hasAttempt && quiz.attempt?.status === 'completed';
+                          const canTakeQuiz = quiz.can_retake;
+                          const attemptsExhausted = !canTakeQuiz && hasAttempt;
+
+                          // Déterminer le texte et l'état du bouton
+                          let buttonText = 'Commencer';
+                          let buttonDisabled = false;
+
+                          if (attemptsExhausted) {
+                            buttonText = 'Terminé';
+                            buttonDisabled = true;
+                          } else if (hasAttempt && canTakeQuiz) {
+                            buttonText = 'Refaire';
+                          }
 
                           return (
                             <div
@@ -589,7 +605,11 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
                             >
                               <div className="flex items-center gap-3">
                                 <div className={`p-2 rounded-lg ${
-                                  isCompleted
+                                  attemptsExhausted
+                                    ? isPassed
+                                      ? 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400'
+                                      : 'bg-gray-100 text-gray-600 dark:bg-gray-900/50 dark:text-gray-400'
+                                    : isCompleted
                                     ? isPassed
                                       ? 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400'
                                       : 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400'
@@ -609,6 +629,7 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
                                         {quiz.attempt?.completed_at && (
                                           <span>• Fait le {new Date(quiz.attempt.completed_at).toLocaleDateString('fr-FR')}</span>
                                         )}
+                                        <span>• Tentative {quiz.attempts_count}/{quiz.max_attempts}</span>
                                       </>
                                     ) : (
                                       <>
@@ -616,20 +637,22 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
                                           <span>À rendre avant le {new Date(quiz.available_until).toLocaleDateString('fr-FR')}</span>
                                         )}
                                         <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300">En attente</Badge>
+                                        {quiz.attempts_count > 0 && (
+                                          <span>• Tentative {quiz.attempts_count}/{quiz.max_attempts}</span>
+                                        )}
                                       </>
                                     )}
                                   </div>
                                 </div>
                               </div>
-                              {!isCompleted && (
-                                <Button
-                                  size="sm"
-                                  className="bg-primary hover:bg-primary"
-                                  onClick={() => startQuiz(quiz.uuid)}
-                                >
-                                  Commencer
-                                </Button>
-                              )}
+                              <Button
+                                size="sm"
+                                className="bg-primary hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() => startQuiz(quiz.uuid)}
+                                disabled={buttonDisabled}
+                              >
+                                {buttonText}
+                              </Button>
                             </div>
                           );
                         })}
