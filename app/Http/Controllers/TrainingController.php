@@ -422,6 +422,7 @@ class TrainingController extends Controller
 
                     return [
                         'id' => $quiz->id,
+                        'uuid' => $quiz->uuid,
                         'title' => $quiz->title,
                         'description' => $quiz->description,
                         'duration_minutes' => $quiz->duration_minutes,

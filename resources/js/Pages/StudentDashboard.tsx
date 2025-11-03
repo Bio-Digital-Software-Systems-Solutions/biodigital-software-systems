@@ -52,6 +52,7 @@ interface QuizAttempt {
 
 interface Quiz {
   id: number;
+  uuid: string;
   title: string;
   description: string | null;
   duration_minutes: number;
@@ -106,7 +107,7 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
   const [activeTraining, setActiveTraining] = useState<string>(trainings[0]?.id?.toString() || '');
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>('grid');
   const [showQuizConfirm, setShowQuizConfirm] = useState(false);
-  const [selectedQuizId, setSelectedQuizId] = useState<number | null>(null);
+  const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -155,8 +156,8 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
     }
   };
 
-  const startQuiz = (quizId: number) => {
-    setSelectedQuizId(quizId);
+  const startQuiz = (quizUuid: string) => {
+    setSelectedQuizId(quizUuid);
     setShowQuizConfirm(true);
   };
 
@@ -624,7 +625,7 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
                                 <Button
                                   size="sm"
                                   className="bg-primary hover:bg-primary"
-                                  onClick={() => startQuiz(quiz.id)}
+                                  onClick={() => startQuiz(quiz.uuid)}
                                 >
                                   Commencer
                                 </Button>
