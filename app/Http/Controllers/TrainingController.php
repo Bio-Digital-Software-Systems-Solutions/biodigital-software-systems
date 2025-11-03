@@ -499,7 +499,14 @@ class TrainingController extends Controller
         }
 
         // Get trainings assigned to this teacher
-        $trainings = Training::with(['topics', 'classes', 'students'])
+        $trainings = Training::with([
+            'topics',
+            'classes',
+            'students' => function ($query) {
+                $query->where('status', 'approved');
+            },
+            'teacher'
+        ])
             ->where('teacher_id', $user->id)
             ->orWhereHas('classes', function ($query) use ($user) {
                 $query->where('teacher_id', $user->id);
@@ -508,21 +515,17 @@ class TrainingController extends Controller
 
         // Current period stats
         $totalStudents = $trainings->sum(function ($training) {
-            return $training->students()->where('status', 'approved')->count();
+            return $training->students->count();
         });
 
         $averageAttendance = $trainings->avg(function ($training) {
-            return $training->students()->avg('attendance_rate') ?? 0;
+            return $training->students->avg('attendance_rate') ?? 0;
         });
 
         $atRiskStudents = $trainings->sum(function ($training) {
-            return $training->students()
-                ->where('status', 'approved')
-                ->where(function ($query) {
-                    $query->where('grade', '<', 10)
-                        ->orWhere('attendance_rate', '<', 70);
-                })
-                ->count();
+            return $training->students->filter(function ($student) {
+                return $student->pivot->grade < 10 || $student->pivot->attendance_rate < 70;
+            })->count();
         });
 
         // Previous period stats (30 days ago)
@@ -531,10 +534,9 @@ class TrainingController extends Controller
         $thirtyDaysAgo = now()->subDays(30);
 
         $previousPeriodStudents = $trainings->sum(function ($training) use ($thirtyDaysAgo) {
-            return $training->students()
-                ->where('status', 'approved')
-                ->wherePivot('enrolled_at', '<=', $thirtyDaysAgo)
-                ->count();
+            return $training->students->filter(function ($student) use ($thirtyDaysAgo) {
+                return $student->pivot->enrolled_at <= $thirtyDaysAgo;
+            })->count();
         });
 
         // For average attendance and at-risk students, we use the same current values
@@ -643,7 +645,14 @@ class TrainingController extends Controller
         $recentActivities = array_slice($recentActivities, 0, 5);
 
         // Get teacher's formations (trainings)
-        $formations = Training::with(['topics', 'classes', 'students'])
+        $formations = Training::with([
+            'topics',
+            'classes',
+            'students' => function ($query) {
+                $query->where('status', 'approved');
+            },
+            'teacher'
+        ])
             ->where('teacher_id', $user->id)
             ->orWhereHas('classes', function ($query) use ($user) {
                 $query->where('teacher_id', $user->id);
@@ -657,10 +666,10 @@ class TrainingController extends Controller
                     'level' => $training->level,
                     'description' => $training->description,
                     'classes_count' => $training->classes->count(),
-                    'students_count' => $training->students()->where('status', 'approved')->count(),
-                    'completion_rate' => $training->students()->avg('progress') ?? 0,
-                    'average_grade' => $training->students()->avg('grade') ?? 0,
-                    'attendance_rate' => $training->students()->avg('attendance_rate') ?? 0,
+                    'students_count' => $training->students->count(),
+                    'completion_rate' => $training->students->avg('pivot.progress') ?? 0,
+                    'average_grade' => $training->students->avg('pivot.grade') ?? 0,
+                    'attendance_rate' => $training->students->avg('pivot.attendance_rate') ?? 0,
                 ];
             });
 
