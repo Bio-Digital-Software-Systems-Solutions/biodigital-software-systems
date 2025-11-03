@@ -84,7 +84,7 @@ export default function AddMaterialModal({ isOpen, onClose, classUuid }: AddMate
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto px-8">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto px-8 pb-6">
         <DialogHeader className="space-y-3">
           <DialogTitle>Ajouter un support de cours</DialogTitle>
           <DialogDescription>
