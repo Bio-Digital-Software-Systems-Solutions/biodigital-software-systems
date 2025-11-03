@@ -98,10 +98,10 @@ export default function TopicsManager({ topics, onChange, error }: TopicsManager
         <div className="space-y-4">
             <div>
                 <Label htmlFor="topics" className="text-base font-semibold">
-                    Thèmes abordés *
+                    Thèmes abordés
                 </Label>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Ajoutez les thèmes principaux qui seront abordés dans cette formation
+                    Ajoutez les thèmes principaux qui seront abordés dans cette formation (optionnel)
                 </p>
             </div>
 
@@ -217,7 +217,7 @@ export default function TopicsManager({ topics, onChange, error }: TopicsManager
                 <Card className="border-dashed">
                     <CardContent className="p-8 text-center">
                         <p className="text-gray-500 dark:text-gray-400">
-                            Aucun thème ajouté. Ajoutez au moins un thème pour cette formation.
+                            Aucun thème ajouté. Vous pouvez ajouter des thèmes pour mieux décrire le contenu de cette formation.
                         </p>
                     </CardContent>
                 </Card>
