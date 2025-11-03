@@ -672,7 +672,7 @@ const TeacherDashboard: React.FC<Props> = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Toutes les classes</SelectItem>
-                        {classes.map((classItem) => (
+                        {classes.filter(c => c.training).map((classItem) => (
                           <SelectItem key={classItem.id} value={classItem.id.toString()}>
                             {classItem.training.title} - {classItem.room}
                           </SelectItem>
