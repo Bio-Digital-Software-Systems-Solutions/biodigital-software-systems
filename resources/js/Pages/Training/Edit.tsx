@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { Button } from '@/Components/ui/button';
 import { FormEventHandler, useState } from 'react';
 import { PhotoIcon } from '@heroicons/react/24/outline';
+import TopicsManager, { Topic } from '@/Components/Training/TopicsManager';
 
 interface Training {
     id: number;
@@ -17,6 +18,7 @@ interface Training {
     image_url?: string;
     is_active: boolean;
     teacher_id?: number;
+    topics?: Topic[];
 }
 
 interface Teacher {
@@ -42,6 +44,7 @@ export default function Edit({ training, teachers = [] }: Props) {
         image: File | string;
         is_active: boolean;
         teacher_id: number | null;
+        topics: Topic[];
         _method?: string;
     }>({
         title: training.title,
@@ -53,6 +56,7 @@ export default function Edit({ training, teachers = [] }: Props) {
         image: training.image,
         is_active: training.is_active,
         teacher_id: training.teacher_id || null,
+        topics: training.topics || [],
         _method: 'PUT',
     });
 
@@ -259,6 +263,15 @@ export default function Edit({ training, teachers = [] }: Props) {
                                             </div>
                                         </div>
                                         {errors.image && <p className="text-red-500 text-sm mt-1">{errors.image}</p>}
+                                    </div>
+
+                                    {/* Topics Section */}
+                                    <div className="md:col-span-2">
+                                        <TopicsManager
+                                            topics={data.topics}
+                                            onChange={(topics) => setData('topics', topics)}
+                                            error={errors.topics}
+                                        />
                                     </div>
 
                                     {/* Active Status */}

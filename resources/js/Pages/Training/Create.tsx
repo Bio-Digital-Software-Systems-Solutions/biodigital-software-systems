@@ -2,18 +2,14 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Button } from '@/Components/ui/button';
 import { FormEventHandler, useState } from 'react';
-import { PhotoIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PhotoIcon } from '@heroicons/react/24/outline';
+import TopicsManager, { Topic } from '@/Components/Training/TopicsManager';
 
 interface Teacher {
     id: number;
     first_name: string;
     last_name: string;
     email: string;
-}
-
-interface Topic {
-    name: string;
-    description: string;
 }
 
 interface Props {
@@ -46,7 +42,6 @@ export default function Create({ teachers = [] }: Props) {
     });
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [newTopic, setNewTopic] = useState({ name: '', description: '' });
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -249,74 +244,11 @@ export default function Create({ teachers = [] }: Props) {
 
                                     {/* Topics Section */}
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                            Thèmes abordés
-                                        </label>
-
-                                        {/* Topics List */}
-                                        {data.topics.length > 0 && (
-                                            <div className="space-y-2 mb-4">
-                                                {data.topics.map((topic, index) => (
-                                                    <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                                        <div className="flex-1">
-                                                            <h4 className="font-medium text-gray-900 dark:text-white">{topic.name}</h4>
-                                                            {topic.description && (
-                                                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{topic.description}</p>
-                                                            )}
-                                                        </div>
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                const newTopics = data.topics.filter((_, i) => i !== index);
-                                                                setData('topics', newTopics);
-                                                            }}
-                                                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                        >
-                                                            <XMarkIcon className="h-5 w-5" />
-                                                        </Button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        {/* Add New Topic */}
-                                        <div className="space-y-3 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                                            <div>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Nom du thème"
-                                                    value={newTopic.name}
-                                                    onChange={(e) => setNewTopic({ ...newTopic, name: e.target.value })}
-                                                    className="w-full px-3 py-2 text-sm border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                                />
-                                            </div>
-                                            <div>
-                                                <textarea
-                                                    placeholder="Description (optionnel)"
-                                                    value={newTopic.description}
-                                                    onChange={(e) => setNewTopic({ ...newTopic, description: e.target.value })}
-                                                    rows={2}
-                                                    className="w-full px-3 py-2 text-sm border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                                />
-                                            </div>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                    if (newTopic.name.trim()) {
-                                                        setData('topics', [...data.topics, { ...newTopic }]);
-                                                        setNewTopic({ name: '', description: '' });
-                                                    }
-                                                }}
-                                                className="w-full"
-                                            >
-                                                <PlusIcon className="h-4 w-4 mr-2" />
-                                                Ajouter un thème
-                                            </Button>
-                                        </div>
+                                        <TopicsManager
+                                            topics={data.topics}
+                                            onChange={(topics) => setData('topics', topics)}
+                                            error={errors.topics}
+                                        />
                                     </div>
 
                                     {/* Active Status */}

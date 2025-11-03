@@ -256,6 +256,12 @@ class TrainingController extends Controller
             'image' => 'nullable',
             'is_active' => 'boolean',
             'teacher_id' => 'nullable|exists:users,id',
+            'topics' => 'nullable|array',
+            'topics.*.id' => 'nullable|exists:training_topics,id',
+            'topics.*.name' => 'required|string|max:255',
+            'topics.*.description' => 'nullable|string',
+            'topics.*.order' => 'required|integer|min:0',
+            'topics.*._destroy' => 'nullable|boolean',
         ]);
 
         // Handle image upload (both file upload and TUS string) with old image cleanup
@@ -298,7 +304,56 @@ class TrainingController extends Controller
             }
         }
 
+        // Handle topics separately
+        $topics = $validated['topics'] ?? [];
+        unset($validated['topics']);
+
         $training->update($validated);
+
+        // Sync topics
+        if (isset($topics)) {
+            $topicsToKeep = [];
+
+            foreach ($topics as $topicData) {
+                // Skip topics marked for deletion
+                if (isset($topicData['_destroy']) && $topicData['_destroy']) {
+                    if (isset($topicData['id'])) {
+                        // Delete existing topic
+                        $training->topics()->where('id', $topicData['id'])->delete();
+                    }
+                    continue;
+                }
+
+                // Update existing topic or create new one
+                if (isset($topicData['id'])) {
+                    $topic = $training->topics()->find($topicData['id']);
+                    if ($topic) {
+                        $topic->update([
+                            'name' => $topicData['name'],
+                            'description' => $topicData['description'] ?? null,
+                            'order' => $topicData['order'],
+                        ]);
+                        $topicsToKeep[] = $topic->id;
+                    }
+                } else {
+                    // Create new topic
+                    $newTopic = $training->topics()->create([
+                        'name' => $topicData['name'],
+                        'description' => $topicData['description'] ?? null,
+                        'order' => $topicData['order'],
+                    ]);
+                    $topicsToKeep[] = $newTopic->id;
+                }
+            }
+
+            // Delete topics that were not in the request (removed from the UI)
+            if (!empty($topicsToKeep)) {
+                $training->topics()->whereNotIn('id', $topicsToKeep)->delete();
+            } else {
+                // If no topics to keep, delete all
+                $training->topics()->delete();
+            }
+        }
 
         // Invalidate trainings cache
         CacheService::forgetPattern('trainings');
