@@ -41,7 +41,8 @@ import {
   XCircle,
   LayoutGrid,
   List,
-  Table as TableIcon
+  Table as TableIcon,
+  MapPin
 } from 'lucide-react';
 
 interface Teacher {
@@ -133,6 +134,8 @@ interface Props {
   atRiskStudents?: number;
   students?: Student[];
   recentActivities?: RecentActivity[];
+  evaluations?: any[];
+  attendanceData?: any[];
   previousPeriodStats?: {
     totalStudents?: number;
     averageAttendance?: number;
@@ -150,6 +153,8 @@ const TeacherDashboard: React.FC<Props> = ({
   atRiskStudents = 0,
   students = [],
   recentActivities = [],
+  evaluations = [],
+  attendanceData = [],
   previousPeriodStats
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -649,11 +654,108 @@ const TeacherDashboard: React.FC<Props> = ({
                   <UserCheck className="h-6 w-6 text-green-600 dark:text-green-400" />
                   Gestion des présences
                 </CardTitle>
+                <CardDescription>
+                  Suivi des présences pour toutes vos classes
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 dark:text-gray-400 text-center py-12">
-                  Interface de présences - À implémenter
-                </p>
+                {attendanceData && attendanceData.length > 0 ? (
+                  <div className="space-y-6">
+                    {attendanceData.map((classData: any) => (
+                      <div
+                        key={classData.id}
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
+                          <div className="space-y-1">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                              <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
+                              {classData.name}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Formation: {classData.training_title}
+                            </p>
+                            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                {classData.date}
+                              </span>
+                              <span>{classData.start_time} - {classData.end_time}</span>
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                {classData.room}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Badge
+                              className={`${
+                                classData.attendance_rate >= 80
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
+                                  : classData.attendance_rate >= 60
+                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+                              }`}
+                            >
+                              {classData.attendance_rate}% de présence
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total étudiants</p>
+                            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                              <Users className="h-5 w-5" />
+                              {classData.total_students}
+                            </p>
+                          </div>
+
+                          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Présents</p>
+                            <p className="text-2xl font-bold text-green-600 dark:text-green-400 flex items-center gap-2">
+                              <UserCheck className="h-5 w-5" />
+                              {classData.present_count}
+                            </p>
+                          </div>
+
+                          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Absents</p>
+                            <p className="text-2xl font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+                              <UserX className="h-5 w-5" />
+                              {classData.absent_count}
+                            </p>
+                          </div>
+
+                          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Excusés</p>
+                            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
+                              <AlertTriangle className="h-5 w-5" />
+                              {classData.excused_count}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <div className="flex items-center justify-between text-sm mb-2">
+                            <span className="text-gray-600 dark:text-gray-400">Taux de présence</span>
+                            <span className="font-semibold text-gray-900 dark:text-white">
+                              {classData.attendance_rate}%
+                            </span>
+                          </div>
+                          <Progress value={classData.attendance_rate} className="h-3" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <UserCheck className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Aucune donnée de présence disponible pour le moment
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -665,11 +767,103 @@ const TeacherDashboard: React.FC<Props> = ({
                   <GraduationCap className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                   Résultats des évaluations
                 </CardTitle>
+                <CardDescription>
+                  Vue d'ensemble des résultats de quiz pour vos formations
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 dark:text-gray-400 text-center py-12">
-                  Interface d'évaluations - À implémenter
-                </p>
+                {evaluations && evaluations.length > 0 ? (
+                  <div className="space-y-6">
+                    {evaluations.map((evaluation: any) => (
+                      <div
+                        key={evaluation.id}
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
+                          <div className="space-y-1">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                              <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                              {evaluation.title}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Formation: {evaluation.training_title}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Badge
+                              className={`${
+                                evaluation.pass_rate >= 70
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
+                                  : evaluation.pass_rate >= 50
+                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+                              }`}
+                            >
+                              {evaluation.pass_rate}% de réussite
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.location.href = route('trainings.quizzes.results', evaluation.uuid)}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              Détails
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Tentatives</p>
+                            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                              {evaluation.total_attempts}
+                            </p>
+                          </div>
+
+                          <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Moyenne</p>
+                            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                              {evaluation.average_score}/{evaluation.max_score}
+                            </p>
+                          </div>
+
+                          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Réussis</p>
+                            <p className="text-2xl font-bold text-green-600 dark:text-green-400 flex items-center gap-2">
+                              <CheckCircle className="h-5 w-5" />
+                              {evaluation.passed_count}
+                            </p>
+                          </div>
+
+                          <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Échoués</p>
+                            <p className="text-2xl font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+                              <XCircle className="h-5 w-5" />
+                              {evaluation.failed_count}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <div className="flex items-center justify-between text-sm mb-2">
+                            <span className="text-gray-600 dark:text-gray-400">Taux de réussite</span>
+                            <span className="font-semibold text-gray-900 dark:text-white">
+                              {evaluation.pass_rate}%
+                            </span>
+                          </div>
+                          <Progress value={evaluation.pass_rate} className="h-3" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <GraduationCap className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Aucune évaluation disponible pour le moment
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

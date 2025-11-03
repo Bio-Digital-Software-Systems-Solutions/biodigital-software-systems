@@ -639,6 +639,70 @@ class TrainingController extends Controller
         // Limit to 5 most recent
         $recentActivities = array_slice($recentActivities, 0, 5);
 
+        // Get quiz evaluations for teacher's trainings
+        $evaluations = \App\Models\Quiz::whereHas('training', function ($query) use ($user) {
+            $query->where('teacher_id', $user->id);
+        })
+        ->with(['attempts' => function ($query) {
+            $query->where('status', 'completed');
+        }])
+        ->get()
+        ->map(function ($quiz) {
+            $attempts = $quiz->attempts;
+            $totalAttempts = $attempts->count();
+
+            return [
+                'id' => $quiz->id,
+                'uuid' => $quiz->uuid,
+                'title' => $quiz->title,
+                'training_title' => $quiz->training->title ?? 'N/A',
+                'max_score' => $quiz->max_score,
+                'passing_score' => $quiz->passing_score,
+                'total_attempts' => $totalAttempts,
+                'average_score' => $totalAttempts > 0 ? round($attempts->avg('score'), 2) : 0,
+                'passed_count' => $attempts->where('score', '>=', $quiz->passing_score)->count(),
+                'failed_count' => $attempts->where('score', '<', $quiz->passing_score)->count(),
+                'pass_rate' => $totalAttempts > 0 ? round(($attempts->where('score', '>=', $quiz->passing_score)->count() / $totalAttempts) * 100, 2) : 0,
+            ];
+        });
+
+        // Get attendance data for teacher's classes
+        $attendanceData = \App\Models\TrainingClass::whereHas('training', function ($query) use ($user) {
+            $query->where('teacher_id', $user->id);
+        })
+        ->orWhere('teacher_id', $user->id)
+        ->with(['attendances.student', 'training'])
+        ->get()
+        ->map(function ($class) {
+            // Count students enrolled in this specific class
+            $totalStudents = \DB::table('training_enrollments')
+                ->where('training_class_id', $class->id)
+                ->where('status', 'approved')
+                ->count();
+
+            $attendances = $class->attendances;
+
+            $presentCount = $attendances->where('status', 'present')->count();
+            $absentCount = $attendances->where('status', 'absent')->count();
+            $excusedCount = $attendances->where('status', 'excused')->count();
+
+            return [
+                'id' => $class->id,
+                'uuid' => $class->uuid,
+                'name' => $class->name,
+                'training_title' => $class->training->title ?? 'N/A',
+                'date' => $class->date,
+                'start_time' => $class->start_time,
+                'end_time' => $class->end_time,
+                'room' => $class->room,
+                'total_students' => $totalStudents,
+                'present_count' => $presentCount,
+                'absent_count' => $absentCount,
+                'excused_count' => $excusedCount,
+                'attendance_rate' => $totalStudents > 0 ? round(($presentCount / $totalStudents) * 100, 2) : 0,
+            ];
+        });
+
         return Inertia::render('TeacherDashboard', [
             'totalStudents' => $totalStudents,
             'averageAttendance' => $averageAttendance,
@@ -646,6 +710,8 @@ class TrainingController extends Controller
             'classes' => $trainings->flatMap->classes,
             'students' => $students,
             'recentActivities' => $recentActivities,
+            'evaluations' => $evaluations,
+            'attendanceData' => $attendanceData,
             'previousPeriodStats' => [
                 'totalStudents' => $previousPeriodStudents,
                 'averageAttendance' => $previousPeriodAttendance,
