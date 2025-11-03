@@ -506,11 +506,35 @@ const StudentDashboard: React.FC<Props> = ({ auth, trainings }) => {
                             className="flex items-center justify-between p-4 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
                           >
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${getTypeColor(material.type)}`}>
+                              <div
+                                className={`p-2 rounded-lg ${getTypeColor(material.type)} cursor-pointer hover:opacity-80 transition-opacity`}
+                                onClick={() => openMaterial(material)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    openMaterial(material);
+                                  }
+                                }}
+                              >
                                 {getTypeIcon(material.type)}
                               </div>
                               <div>
-                                <h4 className="font-medium">{material.title}</h4>
+                                <h4
+                                  className="font-medium cursor-pointer hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                                  onClick={() => openMaterial(material)}
+                                  role="button"
+                                  tabIndex={0}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault();
+                                      openMaterial(material);
+                                    }
+                                  }}
+                                >
+                                  {material.title}
+                                </h4>
                                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                                   <Badge variant="outline" className="text-xs">
                                     {material.type.toUpperCase()}
