@@ -69,13 +69,13 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
     post(route('settings.update'), {
       preserveScroll: true,
       onSuccess: () => {
-        toast.success('Param�tre mis � jour', {
-          description: 'Vos pr�f�rences ont �t� sauvegard�es.',
+        toast.success('Paramètre mis à jour', {
+          description: 'Vos préférences ont été sauvegardées.',
         });
       },
       onError: () => {
         toast.error('Erreur', {
-          description: 'Impossible de sauvegarder vos pr�f�rences.',
+          description: 'Impossible de sauvegarder vos préférences.',
         });
         // Revert on error
         setData(key, !newValue);
@@ -85,13 +85,13 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
 
   return (
     <DashboardLayout>
-      <Head title="Param�tres" />
+      <Head title="Paramètres" />
 
       <div className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Param�tres</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Paramètres</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            G�rez vos pr�f�rences et param�tres de compte
+            Gérez vos préférences et paramètres de compte
           </p>
         </div>
 
@@ -107,11 +107,11 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
             </TabsTrigger>
             <TabsTrigger value="privacy" className="flex items-center gap-2 py-3">
               <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Confidentialit�</span>
+              <span className="hidden sm:inline">Confidentialité</span>
             </TabsTrigger>
             <TabsTrigger value="preferences" className="flex items-center gap-2 py-3">
               <Palette className="h-4 w-4" />
-              <span className="hidden sm:inline">Pr�f�rences</span>
+              <span className="hidden sm:inline">Préférences</span>
             </TabsTrigger>
           </TabsList>
 
@@ -124,7 +124,7 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
                   Notifications
                 </CardTitle>
                 <CardDescription>
-                  Choisissez comment vous souhaitez �tre notifi� des activit�s
+                  Choisissez comment vous souhaitez être notifié des activités
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -186,7 +186,7 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
                         Notifications de messages
                       </Label>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Soyez inform� quand vous recevez un nouveau message
+                        Soyez informé quand vous recevez un nouveau message
                       </p>
                     </div>
                     <Switch
@@ -200,7 +200,7 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
                   <div className="flex items-center justify-between p-4 rounded-lg border dark:border-gray-700">
                     <div className="space-y-0.5">
                       <Label htmlFor="training-updates" className="text-base font-medium">
-                        Mises � jour de formations
+                        Mises à jour de formations
                       </Label>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         Recevez des notifications sur vos formations
@@ -217,10 +217,10 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
                   <div className="flex items-center justify-between p-4 rounded-lg border dark:border-gray-700">
                     <div className="space-y-0.5">
                       <Label htmlFor="event-reminders" className="text-base font-medium">
-                        Rappels d'�v�nements
+                        Rappels d'événements
                       </Label>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Recevez des rappels pour les �v�nements � venir
+                        Recevez des rappels pour les événements à venir
                       </p>
                     </div>
                     <Switch
@@ -261,7 +261,7 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
                   Informations du compte
                 </CardTitle>
                 <CardDescription>
-                  G�rez vos informations personnelles et de s�curit�
+                  Gérez vos informations personnelles et de sécurité
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -278,7 +278,7 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
                       {auth.user.email}
                       <Badge variant="outline" className="text-xs">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
-                        V�rifi�
+                        Vérifié
                       </Badge>
                     </div>
                   </div>
@@ -319,10 +319,10 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
                   <div className="flex items-start gap-3">
                     <Shield className="h-5 w-5 text-primary mt-0.5" />
                     <div>
-                      <h3 className="font-medium mb-1">Vos donn�es sont prot�g�es</h3>
+                      <h3 className="font-medium mb-1">Vos données sont protégées</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Nous utilisons des mesures de s�curit� avanc�es pour prot�ger vos informations personnelles.
-                        Vos donn�es ne sont jamais partag�es avec des tiers sans votre consentement explicite.
+                        Nous utilisons des mesures de sécurité avancées pour protéger vos informations personnelles.
+                        Vos données ne sont jamais partagées avec des tiers sans votre consentement explicite.
                       </p>
                     </div>
                   </div>
@@ -332,7 +332,7 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
                   <Link href="/privacy-policy" target="_blank">
                     <Button variant="outline" className="w-full justify-start">
                       <Shield className="h-4 w-4 mr-2" />
-                      Politique de confidentialit�
+                      Politique de confidentialité
                     </Button>
                   </Link>
                   <Link href="/terms-of-service" target="_blank">
@@ -352,7 +352,7 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Palette className="h-5 w-5" />
-                  Pr�f�rences d'affichage
+                  Préférences d'affichage
                 </CardTitle>
                 <CardDescription>
                   Personnalisez l'apparence de l'application
@@ -362,9 +362,9 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
                 <div className="p-4 rounded-lg border dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base font-medium">Th�me</Label>
+                      <Label className="text-base font-medium">Thème</Label>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Le th�me est contr�l� par le bouton dans la barre de navigation
+                        Le thème est contrôlé par le bouton dans la barre de navigation
                       </p>
                     </div>
                     <Badge variant="outline">Automatique</Badge>
@@ -376,10 +376,10 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
                     <div>
                       <Label className="text-base font-medium">Langue</Label>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        La langue est contr�l�e par le s�lecteur dans la barre de navigation
+                        La langue est contrôlée par le sélecteur dans la barre de navigation
                       </p>
                     </div>
-                    <Badge variant="outline">Fran�ais</Badge>
+                    <Badge variant="outline">Français</Badge>
                   </div>
                 </div>
               </CardContent>
