@@ -164,7 +164,7 @@ export default function TopicsManager({ topics, onChange, error }: TopicsManager
                                             </Label>
                                             <Textarea
                                                 id={`topic-description-${index}`}
-                                                value={topic.description}
+                                                value={topic.description || ''}
                                                 onChange={(e) => updateTopic(index, 'description', e.target.value)}
                                                 placeholder="Description du thème..."
                                                 rows={2}
