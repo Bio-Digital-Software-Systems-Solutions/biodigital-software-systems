@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { apiLogger } from '@/utils/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
@@ -670,7 +670,12 @@ const TeacherDashboard: React.FC<Props> = ({
                           <div className="space-y-1">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                               <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
-                              {classData.name}
+                              <Link
+                                href={route('training-classes.show', classData.uuid)}
+                                className="hover:text-green-600 dark:hover:text-green-400 hover:underline transition-colors"
+                              >
+                                {classData.name}
+                              </Link>
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                               Formation: {classData.training_title}
