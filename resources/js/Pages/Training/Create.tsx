@@ -111,6 +111,15 @@ export default function Create({ teachers = [] }: Props) {
                                         {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
                                     </div>
 
+                                    {/* Topics Section */}
+                                    <div className="md:col-span-2">
+                                        <TopicsManager
+                                            topics={data.topics}
+                                            onChange={(topics) => setData('topics', topics)}
+                                            error={errors.topics}
+                                        />
+                                    </div>
+
                                     {/* Duration */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -240,15 +249,6 @@ export default function Create({ teachers = [] }: Props) {
                                             </div>
                                         </div>
                                         {errors.image && <p className="text-red-500 text-sm mt-1">{errors.image}</p>}
-                                    </div>
-
-                                    {/* Topics Section */}
-                                    <div className="md:col-span-2">
-                                        <TopicsManager
-                                            topics={data.topics}
-                                            onChange={(topics) => setData('topics', topics)}
-                                            error={errors.topics}
-                                        />
                                     </div>
 
                                     {/* Active Status */}
