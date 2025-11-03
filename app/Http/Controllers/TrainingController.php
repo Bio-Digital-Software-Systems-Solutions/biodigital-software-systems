@@ -389,7 +389,13 @@ class TrainingController extends Controller
                 'quizzes.attempts' => function ($query) use ($user) {
                     $query->where('student_id', $user->id)->latest();
                 },
-                'teacher'
+                'teacher',
+                'classes.materials' => function ($query) {
+                    $query->active()->ordered();
+                },
+                'students' => function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                }
             ])
             ->whereHas('students', function ($query) use ($user) {
                 $query->where('user_id', $user->id)
@@ -397,17 +403,15 @@ class TrainingController extends Controller
             })
             ->get()
             ->map(function ($training) use ($user) {
-                $enrollment = $training->students()->where('user_id', $user->id)->first();
+                $enrollment = $training->students->first();
 
-                // Get the class for this student
-                $studentClass = $training->classes()
+                // Get the class for this student (from already loaded collection)
+                $studentClass = $training->classes
                     ->where('id', $enrollment->pivot->training_class_id)
-                    ->with(['materials' => function ($query) {
-                        $query->active()->ordered();
-                    }])
                     ->first();
 
-                $nextClass = $training->classes()
+                // Get next class for this student (from already loaded collection)
+                $nextClass = $training->classes
                     ->where('id', $enrollment->pivot->training_class_id)
                     ->where('date', '>=', now()->toDateString())
                     ->first();
