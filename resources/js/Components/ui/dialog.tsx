@@ -77,9 +77,9 @@ const DialogTitle = ({ children, className = "" }: { children: React.ReactNode; 
 
 const DialogDescription = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
   return (
-    <p className={`mt-2 text-sm text-gray-500 dark:text-gray-400 ${className}`}>
+    <div className={`mt-2 text-sm text-gray-500 dark:text-gray-400 ${className}`}>
       {children}
-    </p>
+    </div>
   )
 }
 
