@@ -61,16 +61,44 @@ export default function MaterialCard({ material, onEdit, onDelete, onDownload, i
     }
   };
 
+  const handleOpen = () => {
+    if (onDownload) {
+      onDownload(material);
+    }
+  };
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">
-            <div className={`p-2 rounded-lg ${getTypeColor(material.type)}`}>
+            <div
+              className={`p-2 rounded-lg ${getTypeColor(material.type)} cursor-pointer hover:opacity-80 transition-opacity`}
+              onClick={handleOpen}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleOpen();
+                }
+              }}
+            >
               {getTypeIcon(material.type)}
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+              <h4
+                className="font-medium text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                onClick={handleOpen}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleOpen();
+                  }
+                }}
+              >
                 {material.title}
               </h4>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
