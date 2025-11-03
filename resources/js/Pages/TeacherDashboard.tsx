@@ -598,7 +598,12 @@ const TeacherDashboard: React.FC<Props> = ({
                         {filteredFormations.map((formation) => (
                           <tr key={formation.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <td className="py-3 px-4">
-                              <div className="font-bold dark:text-white">{formation.title}</div>
+                              <Link
+                                href={route('trainings.show', formation.uuid)}
+                                className="font-bold dark:text-white hover:text-primary dark:hover:text-blue-400 hover:underline transition-colors"
+                              >
+                                {formation.title}
+                              </Link>
                             </td>
                             <td className="py-3 px-4 text-center">
                               <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
