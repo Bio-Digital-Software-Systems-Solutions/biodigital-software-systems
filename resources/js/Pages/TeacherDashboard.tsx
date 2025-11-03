@@ -76,6 +76,9 @@ interface Student {
   email: string;
   phone?: string;
   avatar?: string;
+  training_id?: number;
+  training_title?: string;
+  training_class_id?: number;
   enrollment: {
     progress: number;
     grade: number;
@@ -133,6 +136,7 @@ interface Props {
   averageAttendance?: number;
   atRiskStudents?: number;
   students?: Student[];
+  formations?: Formation[];
   recentActivities?: RecentActivity[];
   evaluations?: any[];
   attendanceData?: any[];
@@ -152,41 +156,45 @@ const TeacherDashboard: React.FC<Props> = ({
   averageAttendance = 0,
   atRiskStudents = 0,
   students = [],
+  formations = [],
   recentActivities = [],
   evaluations = [],
   attendanceData = [],
   previousPeriodStats
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedClass, setSelectedClass] = useState('1');
+  const [selectedClass, setSelectedClass] = useState('all');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchFormations, setSearchFormations] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'at-risk'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>('grid');
-  const [formations, setFormations] = useState<Formation[]>([]);
+  const [formationsViewMode, setFormationsViewMode] = useState<'grid' | 'list' | 'table'>('grid');
 
   // Calculer les trends dynamiquement
   const studentsTrend = calculateTrend(totalStudents, previousPeriodStats?.totalStudents);
   const attendanceTrend = calculateTrend(averageAttendance, previousPeriodStats?.averageAttendance, true);
   const atRiskTrend = calculateTrend(atRiskStudents, previousPeriodStats?.atRiskStudents);
 
-  // Charger les formations depuis l'API
-  useEffect(() => {
-    fetch('/teacher/formations')
-      .then(res => res.json())
-      .then(data => {
-        // Ajouter le champ trend pour chaque formation
-        const formationsWithTrend = data.map((f: any) => ({
-          ...f,
-          trend: 'up' as const // Valeur par défaut, à calculer plus tard
-        }));
-        setFormations(formationsWithTrend);
-      })
-      .catch(err => apiLogger.error('Erreur lors du chargement des formations:', err));
-  }, []);
+  // Filter students by class
+  const filteredStudents = students.filter((student) => {
+    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesClass = selectedClass === 'all' || student.training_class_id?.toString() === selectedClass;
+    const matchesStatus = filterStatus === 'all' || student.enrollment.status === filterStatus;
+    return matchesSearch && matchesClass && matchesStatus;
+  });
+
+  // Filter formations
+  const filteredFormations = formations.filter((formation) => {
+    return formation.title.toLowerCase().includes(searchFormations.toLowerCase());
+  });
+
+  // Get unique classes for filter
+  const uniqueClasses = Array.from(new Set(students.map(s => s.training_class_id).filter(Boolean)));
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -430,6 +438,214 @@ const TeacherDashboard: React.FC<Props> = ({
             </div>
           </TabsContent>
 
+          {/* Onglet Formations */}
+          <TabsContent value="formations" className="space-y-6">
+            <Card className="shadow-lg border-0 dark:bg-gray-800">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-6 w-6 text-primary dark:text-blue-400" />
+                    Gestion des formations
+                  </CardTitle>
+                  <div className="flex gap-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Rechercher..."
+                        value={searchFormations}
+                        onChange={(e) => setSearchFormations(e.target.value)}
+                        className="pl-10 w-64"
+                      />
+                    </div>
+                    <div className="flex gap-1 border rounded-lg p-1 bg-gray-50 dark:bg-gray-700">
+                      <Button
+                        variant={formationsViewMode === 'grid' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setFormationsViewMode('grid')}
+                        className="h-8 w-8 p-0"
+                      >
+                        <LayoutGrid className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={formationsViewMode === 'list' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setFormationsViewMode('list')}
+                        className="h-8 w-8 p-0"
+                      >
+                        <List className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={formationsViewMode === 'table' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setFormationsViewMode('table')}
+                        className="h-8 w-8 p-0"
+                      >
+                        <TableIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button onClick={() => window.location.href = route('trainings.create')} className="bg-green-600 hover:bg-green-700">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Ajouter
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {formationsViewMode === 'grid' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredFormations.map((formation) => (
+                      <Card
+                        key={formation.id}
+                        className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border-l-4 border-l-primary dark:bg-gray-700"
+                        onClick={() => window.location.href = route('trainings.show', formation.uuid)}
+                      >
+                        <CardContent className="p-5">
+                          <div className="mb-4">
+                            <h3 className="font-bold text-lg dark:text-white mb-2">{formation.title}</h3>
+                            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                              {formation.level}
+                            </Badge>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Classes</p>
+                              <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{formation.classes_count}</p>
+                            </div>
+                            <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Étudiants</p>
+                              <p className="text-xl font-bold text-green-600 dark:text-green-400">{formation.students_count}</p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div>
+                              <div className="flex justify-between text-sm mb-1">
+                                <span className="text-gray-600 dark:text-gray-400">Progression</span>
+                                <span className="font-semibold dark:text-white">{formatNumber(formation.completion_rate)}%</span>
+                              </div>
+                              <Progress value={formation.completion_rate} className="h-2" />
+                            </div>
+                            <div className="flex justify-between items-center pt-2">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">Note moyenne</span>
+                              <span className="font-bold text-lg text-green-600 dark:text-green-400">{formatNumber(formation.average_grade)}/100</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">Assiduité</span>
+                              <span className="font-bold text-lg text-primary dark:text-blue-400">{formatNumber(formation.attendance_rate)}%</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {formationsViewMode === 'list' && (
+                  <div className="space-y-3">
+                    {filteredFormations.map((formation) => (
+                      <Card
+                        key={formation.id}
+                        className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-primary dark:bg-gray-700"
+                        onClick={() => window.location.href = route('trainings.show', formation.uuid)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-4">
+                            <div className="flex-1 grid grid-cols-5 gap-4 items-center">
+                              <div className="col-span-2">
+                                <h3 className="font-bold dark:text-white">{formation.title}</h3>
+                                <Badge className="mt-1 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                                  {formation.level}
+                                </Badge>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Classes</p>
+                                <p className="font-bold text-lg text-blue-600 dark:text-blue-400">{formation.classes_count}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Étudiants</p>
+                                <p className="font-bold text-lg text-green-600 dark:text-green-400">{formation.students_count}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">Progression</p>
+                                <p className="font-bold text-lg dark:text-white">{formatNumber(formation.completion_rate)}%</p>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {formationsViewMode === 'table' && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="border-b dark:border-gray-700">
+                        <tr>
+                          <th className="text-left py-3 px-4 font-semibold dark:text-white">Formation</th>
+                          <th className="text-center py-3 px-4 font-semibold dark:text-white">Niveau</th>
+                          <th className="text-center py-3 px-4 font-semibold dark:text-white">Classes</th>
+                          <th className="text-center py-3 px-4 font-semibold dark:text-white">Étudiants</th>
+                          <th className="text-center py-3 px-4 font-semibold dark:text-white">Progression</th>
+                          <th className="text-center py-3 px-4 font-semibold dark:text-white">Note moy.</th>
+                          <th className="text-center py-3 px-4 font-semibold dark:text-white">Assiduité</th>
+                          <th className="text-center py-3 px-4 font-semibold dark:text-white">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredFormations.map((formation) => (
+                          <tr key={formation.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td className="py-3 px-4">
+                              <div className="font-bold dark:text-white">{formation.title}</div>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                                {formation.level}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <span className="font-bold text-blue-600 dark:text-blue-400">{formation.classes_count}</span>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <span className="font-bold text-green-600 dark:text-green-400">{formation.students_count}</span>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <div className="flex items-center gap-2 justify-center">
+                                <Progress value={formation.completion_rate} className="w-20 h-2" />
+                                <span className="font-semibold dark:text-white">{formatNumber(formation.completion_rate)}%</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <span className="font-bold text-green-600 dark:text-green-400">{formatNumber(formation.average_grade)}/100</span>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <span className="font-bold text-primary dark:text-blue-400">{formatNumber(formation.attendance_rate)}%</span>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = route('trainings.show', formation.uuid);
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Voir
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Onglet Étudiants */}
           <TabsContent value="students" className="space-y-6">
             <Card className="shadow-lg border-0 dark:bg-gray-800">
@@ -450,6 +666,19 @@ const TeacherDashboard: React.FC<Props> = ({
                         className="pl-10 w-64"
                       />
                     </div>
+                    <Select value={selectedClass} onValueChange={setSelectedClass}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Filtrer par classe" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Toutes les classes</SelectItem>
+                        {classes.map((classItem) => (
+                          <SelectItem key={classItem.id} value={classItem.id.toString()}>
+                            {classItem.training.title} - {classItem.room}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <div className="flex gap-1 border rounded-lg p-1 bg-gray-50 dark:bg-gray-700">
                       <Button
                         variant={viewMode === 'grid' ? 'default' : 'ghost'}
@@ -486,7 +715,7 @@ const TeacherDashboard: React.FC<Props> = ({
               <CardContent>
                 {viewMode === 'grid' && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {students.map((student) => (
+                  {filteredStudents.map((student) => (
                     <Card
                       key={student.id}
                       className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border-l-4 border-l-gray-200 dark:border-l-gray-700 hover:border-l-blue-500 dark:bg-gray-700"
@@ -540,7 +769,7 @@ const TeacherDashboard: React.FC<Props> = ({
 
                 {viewMode === 'list' && (
                   <div className="space-y-3">
-                    {students.map((student) => (
+                    {filteredStudents.map((student) => (
                       <Card
                         key={student.id}
                         className="hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-gray-200 dark:border-l-gray-700 hover:border-l-blue-500 dark:bg-gray-700"
@@ -600,7 +829,7 @@ const TeacherDashboard: React.FC<Props> = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {students.map((student) => (
+                        {filteredStudents.map((student) => (
                           <tr key={student.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-3">

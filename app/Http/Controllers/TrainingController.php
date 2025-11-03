@@ -567,6 +567,9 @@ class TrainingController extends Controller
                 'email' => $student->email,
                 'phone' => $student->phone ?? null,
                 'avatar' => $student->avatar ?? null,
+                'training_id' => $enrollment ? $enrollment->id : null,
+                'training_title' => $enrollment ? $enrollment->title : null,
+                'training_class_id' => $enrollment ? $enrollment->pivot->training_class_id : null,
                 'enrollment' => [
                     'progress' => $enrollment ? $enrollment->pivot->progress : 0,
                     'grade' => $enrollment ? $enrollment->pivot->grade : 0,
@@ -639,6 +642,28 @@ class TrainingController extends Controller
         // Limit to 5 most recent
         $recentActivities = array_slice($recentActivities, 0, 5);
 
+        // Get teacher's formations (trainings)
+        $formations = Training::with(['topics', 'classes', 'students'])
+            ->where('teacher_id', $user->id)
+            ->orWhereHas('classes', function ($query) use ($user) {
+                $query->where('teacher_id', $user->id);
+            })
+            ->get()
+            ->map(function ($training) {
+                return [
+                    'id' => $training->id,
+                    'uuid' => $training->uuid,
+                    'title' => $training->title,
+                    'level' => $training->level,
+                    'description' => $training->description,
+                    'classes_count' => $training->classes->count(),
+                    'students_count' => $training->students()->where('status', 'approved')->count(),
+                    'completion_rate' => $training->students()->avg('progress') ?? 0,
+                    'average_grade' => $training->students()->avg('grade') ?? 0,
+                    'attendance_rate' => $training->students()->avg('attendance_rate') ?? 0,
+                ];
+            });
+
         // Get quiz evaluations for teacher's trainings
         $evaluations = \App\Models\Quiz::whereHas('training', function ($query) use ($user) {
             $query->where('teacher_id', $user->id);
@@ -709,6 +734,7 @@ class TrainingController extends Controller
             'atRiskStudents' => $atRiskStudents,
             'classes' => $trainings->flatMap->classes,
             'students' => $students,
+            'formations' => $formations,
             'recentActivities' => $recentActivities,
             'evaluations' => $evaluations,
             'attendanceData' => $attendanceData,
