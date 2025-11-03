@@ -85,15 +85,15 @@ export default function AddMaterialModal({ isOpen, onClose, classUuid }: AddMate
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="space-y-3">
           <DialogTitle>Ajouter un support de cours</DialogTitle>
           <DialogDescription>
             Ajoutez un document, vidéo, audio ou présentation pour vos étudiants.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-6 pt-2">
+          <div className="space-y-3">
             <Label htmlFor="title">Titre *</Label>
             <Input
               id="title"
@@ -104,7 +104,7 @@ export default function AddMaterialModal({ isOpen, onClose, classUuid }: AddMate
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label htmlFor="type">Type *</Label>
             <Select value={data.type} onValueChange={(value) => setData('type', value)}>
               <SelectTrigger>
@@ -120,9 +120,9 @@ export default function AddMaterialModal({ isOpen, onClose, classUuid }: AddMate
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label>Source *</Label>
-            <div className="flex gap-2 mb-2">
+            <div className="flex gap-2">
               <Button
                 type="button"
                 variant={uploadMode === 'file' ? 'default' : 'outline'}
@@ -142,29 +142,27 @@ export default function AddMaterialModal({ isOpen, onClose, classUuid }: AddMate
             </div>
 
             {uploadMode === 'file' ? (
-              <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                <div className="mt-4">
-                  <Label
-                    htmlFor="file-upload"
-                    className="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90"
-                  >
-                    Choisir un fichier
-                  </Label>
-                  <Input
-                    id="file-upload"
-                    type="file"
-                    className="sr-only"
-                    accept=".pdf,.mp4,.mp3,.wav,.ppt,.pptx,.doc,.docx"
-                    onChange={(e) => setData('file', e.target.files?.[0] || null)}
-                  />
-                  {data.file && (
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                      {data.file.name} ({(data.file.size / 1024 / 1024).toFixed(2)} MB)
-                    </p>
-                  )}
-                </div>
-                <p className="mt-2 text-xs text-gray-500">
+              <div className="border-2 border-dashed rounded-lg p-8 text-center mt-3">
+                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <Label
+                  htmlFor="file-upload"
+                  className="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90"
+                >
+                  Choisir un fichier
+                </Label>
+                <Input
+                  id="file-upload"
+                  type="file"
+                  className="sr-only"
+                  accept=".pdf,.mp4,.mp3,.wav,.ppt,.pptx,.doc,.docx"
+                  onChange={(e) => setData('file', e.target.files?.[0] || null)}
+                />
+                {data.file && (
+                  <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                    {data.file.name} ({(data.file.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                )}
+                <p className="mt-3 text-xs text-gray-500">
                   PDF, MP4, MP3, PPT, PPTX, DOC, DOCX jusqu'à 100MB
                 </p>
               </div>
@@ -175,12 +173,13 @@ export default function AddMaterialModal({ isOpen, onClose, classUuid }: AddMate
                 value={data.url}
                 onChange={(e) => setData('url', e.target.value)}
                 placeholder="https://example.com/video.mp4"
+                className="mt-3"
               />
             )}
           </div>
 
           {(data.type === 'video' || data.type === 'audio') && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label htmlFor="duration">Durée</Label>
               <Input
                 id="duration"
@@ -191,7 +190,7 @@ export default function AddMaterialModal({ isOpen, onClose, classUuid }: AddMate
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
@@ -202,20 +201,20 @@ export default function AddMaterialModal({ isOpen, onClose, classUuid }: AddMate
             />
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3 pt-2">
             <input
               type="checkbox"
               id="is_active"
               checked={data.is_active}
               onChange={(e) => setData('is_active', e.target.checked)}
-              className="rounded border-gray-300"
+              className="rounded border-gray-300 h-4 w-4"
             />
             <Label htmlFor="is_active" className="cursor-pointer">
               Visible pour les étudiants
             </Label>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={handleClose}>
               Annuler
             </Button>
