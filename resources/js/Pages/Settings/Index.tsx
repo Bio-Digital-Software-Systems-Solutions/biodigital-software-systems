@@ -274,13 +274,13 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
                   </div>
                   <div className="p-4 rounded-lg border dark:border-gray-700">
                     <Label className="text-sm text-gray-600 dark:text-gray-400">Email</Label>
-                    <p className="text-base font-medium mt-1 flex items-center gap-2">
+                    <div className="text-base font-medium mt-1 flex items-center gap-2">
                       {auth.user.email}
                       <Badge variant="outline" className="text-xs">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
                         V�rifi�
                       </Badge>
-                    </p>
+                    </div>
                   </div>
                 </div>
 
