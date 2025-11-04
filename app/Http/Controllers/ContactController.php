@@ -69,7 +69,7 @@ class ContactController extends Controller
             }
         } else {
             // Fallback to default admin email if no users with permission found
-            $defaultEmail = config('mail.from.address');
+            $defaultEmail = config('mail.from.contact');
             if ($defaultEmail) {
                 Mail::to($defaultEmail)->send(new ContactSubmitted($contact));
             }
