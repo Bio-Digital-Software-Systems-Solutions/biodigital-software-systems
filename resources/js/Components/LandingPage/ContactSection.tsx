@@ -85,8 +85,8 @@ export default function ContactSection({ isAuthenticated }: ContactSectionProps)
                                         <EnvelopeIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
                                         <div>
                                             <p className="font-medium">Email</p>
-                                            <a href="mailto:icc-munich@impactcentrechretien.eu" className="text-sm text-icc-blue hover:underline">
-                                                icc-munich@impactcentrechretien.eu
+                                            <a href="mailto:contact@icc-munich.de" className="text-sm text-icc-blue hover:underline">
+                                                contact@icc-munich.de
                                             </a>
                                         </div>
                                     </div>

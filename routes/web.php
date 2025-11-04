@@ -17,6 +17,15 @@ Route::get('/', function () {
     ]);
 });
 
+// Legal pages (public access)
+Route::get('/privacy-policy', function () {
+    return Inertia::render('Legal/PrivacyPolicy');
+})->name('privacy-policy');
+
+Route::get('/terms-of-service', function () {
+    return Inertia::render('Legal/TermsOfService');
+})->name('terms-of-service');
+
 Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'restrict.member'])
     ->name('dashboard');

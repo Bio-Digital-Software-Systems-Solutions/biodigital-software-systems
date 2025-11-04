@@ -112,3 +112,156 @@ test('settings page includes auth user data', function () {
         )
     );
 });
+
+test('user can toggle email notifications on', function () {
+    $this->user->update(['email_notifications' => false]);
+
+    $response = $this->actingAs($this->user)
+        ->post(route('settings.update'), [
+            'email_notifications' => true,
+        ]);
+
+    $response->assertRedirect();
+    $this->user->refresh();
+    expect($this->user->email_notifications)->toBeTrue();
+});
+
+test('user can toggle sms notifications on', function () {
+    $this->user->update(['sms_notifications' => false]);
+
+    $response = $this->actingAs($this->user)
+        ->post(route('settings.update'), [
+            'sms_notifications' => true,
+        ]);
+
+    $response->assertRedirect();
+    $this->user->refresh();
+    expect($this->user->sms_notifications)->toBeTrue();
+});
+
+test('user can toggle push notifications off', function () {
+    $this->user->update(['push_notifications' => true]);
+
+    $response = $this->actingAs($this->user)
+        ->post(route('settings.update'), [
+            'push_notifications' => false,
+        ]);
+
+    $response->assertRedirect();
+    $this->user->refresh();
+    expect($this->user->push_notifications)->toBeFalse();
+});
+
+test('user can subscribe to newsletter', function () {
+    $this->user->update(['newsletter' => false]);
+
+    $response = $this->actingAs($this->user)
+        ->post(route('settings.update'), [
+            'newsletter' => true,
+        ]);
+
+    $response->assertRedirect();
+    $this->user->refresh();
+    expect($this->user->newsletter)->toBeTrue();
+});
+
+test('user can unsubscribe from newsletter', function () {
+    $this->user->update(['newsletter' => true]);
+
+    $response = $this->actingAs($this->user)
+        ->post(route('settings.update'), [
+            'newsletter' => false,
+        ]);
+
+    $response->assertRedirect();
+    $this->user->refresh();
+    expect($this->user->newsletter)->toBeFalse();
+});
+
+test('user can toggle event reminders', function () {
+    $this->user->update(['event_reminders' => true]);
+
+    $response = $this->actingAs($this->user)
+        ->post(route('settings.update'), [
+            'event_reminders' => false,
+        ]);
+
+    $response->assertRedirect();
+    $this->user->refresh();
+    expect($this->user->event_reminders)->toBeFalse();
+});
+
+test('user can toggle training updates', function () {
+    $this->user->update(['training_updates' => true]);
+
+    $response = $this->actingAs($this->user)
+        ->post(route('settings.update'), [
+            'training_updates' => false,
+        ]);
+
+    $response->assertRedirect();
+    $this->user->refresh();
+    expect($this->user->training_updates)->toBeFalse();
+});
+
+test('user can toggle message notifications', function () {
+    $this->user->update(['message_notifications' => true]);
+
+    $response = $this->actingAs($this->user)
+        ->post(route('settings.update'), [
+            'message_notifications' => false,
+        ]);
+
+    $response->assertRedirect();
+    $this->user->refresh();
+    expect($this->user->message_notifications)->toBeFalse();
+});
+
+test('settings are persisted across page reloads', function () {
+    $this->actingAs($this->user)
+        ->post(route('settings.update'), [
+            'email_notifications' => false,
+            'newsletter' => true,
+        ]);
+
+    $response = $this->actingAs($this->user)
+        ->get(route('settings.index'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('settings.email_notifications', false)
+        ->where('settings.newsletter', true)
+    );
+});
+
+test('multiple users can have different settings', function () {
+    $user2 = User::factory()->create();
+
+    $this->actingAs($this->user)
+        ->post(route('settings.update'), ['email_notifications' => false]);
+
+    $this->actingAs($user2)
+        ->post(route('settings.update'), ['email_notifications' => true]);
+
+    $this->user->refresh();
+    $user2->refresh();
+
+    expect($this->user->email_notifications)->toBeFalse();
+    expect($user2->email_notifications)->toBeTrue();
+});
+
+test('all settings default to sensible values for new users', function () {
+    $newUser = User::factory()->create();
+
+    $response = $this->actingAs($newUser)
+        ->get(route('settings.index'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('settings.email_notifications', true)
+        ->where('settings.sms_notifications', false)
+        ->where('settings.push_notifications', true)
+        ->where('settings.newsletter', false)
+        ->where('settings.event_reminders', true)
+        ->where('settings.training_updates', true)
+        ->where('settings.message_notifications', true)
+    );
+});
