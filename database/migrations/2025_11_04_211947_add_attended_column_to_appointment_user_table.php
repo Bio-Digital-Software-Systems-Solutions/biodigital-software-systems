@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('appointment_user', function (Blueprint $table) {
-            $table->string('confirmation_token')->nullable()->unique();
-            $table->timestamp('notification_sent_at')->nullable();
-            $table->text('response_message')->nullable();
+            if (!Schema::hasColumn('appointment_user', 'attended')) {
+                $table->boolean('attended')->default(false)->after('notification_sent_at');
+            }
         });
     }
 
@@ -24,11 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('appointment_user', function (Blueprint $table) {
-            $table->dropColumn([
-                'confirmation_token',
-                'notification_sent_at',
-                'response_message'
-            ]);
+            if (Schema::hasColumn('appointment_user', 'attended')) {
+                $table->dropColumn('attended');
+            }
         });
     }
 };

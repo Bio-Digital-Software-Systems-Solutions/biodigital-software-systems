@@ -18,7 +18,7 @@ class AppointmentCancellation extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      */
-    public function __construct(Appointment $appointment, string $reason = null)
+    public function __construct(Appointment $appointment, ?string $reason = null)
     {
         $this->appointment = $appointment;
         $this->reason = $reason;

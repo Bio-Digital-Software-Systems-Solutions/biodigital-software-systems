@@ -106,7 +106,7 @@ class Appointment extends Model
     public function participants(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'appointment_user')
-            ->withPivot(['status', 'invited_at', 'responded_at', 'attended', 'notes'])
+            ->withPivot(['status', 'confirmation_token', 'response_message', 'invited_at', 'responded_at', 'notification_sent_at', 'attended'])
             ->withTimestamps();
     }
 

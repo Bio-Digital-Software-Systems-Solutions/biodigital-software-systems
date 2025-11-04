@@ -16,8 +16,11 @@ return new class extends Migration
             $table->foreignId('appointment_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->enum('status', ['pending', 'accepted', 'declined', 'cancelled'])->default('pending');
+            $table->string('confirmation_token')->nullable()->unique();
+            $table->text('response_message')->nullable();
             $table->timestamp('invited_at')->nullable();
             $table->timestamp('responded_at')->nullable();
+            $table->timestamp('notification_sent_at')->nullable();
             $table->boolean('attended')->default(false);
             $table->text('notes')->nullable();
             $table->timestamps();
@@ -28,6 +31,7 @@ return new class extends Migration
             // Indexes
             $table->index(['appointment_id', 'status']);
             $table->index(['user_id', 'status']);
+            $table->index('confirmation_token');
         });
     }
 
