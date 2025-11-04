@@ -6,6 +6,7 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -92,5 +93,86 @@ class Quiz extends Model
     public function questions(): HasMany
     {
         return $this->hasMany(QuizQuestion::class)->orderBy('order');
+    }
+
+    /**
+     * Get the training classes that have access to this quiz.
+     */
+    public function trainingClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(TrainingClass::class, 'quiz_training_class')
+            ->withPivot(['assigned_at', 'available_from', 'available_until', 'is_active'])
+            ->withTimestamps()
+            ->wherePivot('is_active', true);
+    }
+
+    /**
+     * Get all training classes (including inactive associations).
+     */
+    public function allTrainingClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(TrainingClass::class, 'quiz_training_class')
+            ->withPivot(['assigned_at', 'available_from', 'available_until', 'is_active'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the training class materials that have this quiz associated.
+     */
+    public function trainingClassMaterials(): BelongsToMany
+    {
+        return $this->belongsToMany(TrainingClassMaterial::class, 'quiz_training_class_material')
+            ->withPivot(['assigned_at', 'is_active', 'order'])
+            ->withTimestamps()
+            ->wherePivot('is_active', true)
+            ->orderBy('pivot_order');
+    }
+
+    /**
+     * Check if this quiz is available for a specific training class.
+     */
+    public function isAvailableForClass(TrainingClass $trainingClass): bool
+    {
+        return $this->trainingClasses()->where('training_class_id', $trainingClass->id)->exists();
+    }
+
+    /**
+     * Check if this quiz is available for a specific training class material.
+     */
+    public function isAvailableForMaterial(TrainingClassMaterial $material): bool
+    {
+        return $this->trainingClassMaterials()->where('training_class_material_id', $material->id)->exists();
+    }
+
+    /**
+     * Get quiz attempts by training class.
+     */
+    public function getAttemptsByClass(TrainingClass $trainingClass)
+    {
+        return $this->attempts()
+            ->whereHas('student.trainings', function ($query) use ($trainingClass) {
+                $query->wherePivot('training_class_id', $trainingClass->id);
+            })
+            ->with('student');
+    }
+
+    /**
+     * Get completion statistics for a specific training class.
+     */
+    public function getClassCompletionStats(TrainingClass $trainingClass): array
+    {
+        $attempts = $this->getAttemptsByClass($trainingClass)->get();
+        $totalStudents = $trainingClass->training->students()->count();
+        $completedAttempts = $attempts->where('completed_at', '!=', null)->count();
+        $passedAttempts = $attempts->where('passed', true)->count();
+
+        return [
+            'total_students' => $totalStudents,
+            'total_attempts' => $attempts->count(),
+            'completed_attempts' => $completedAttempts,
+            'passed_attempts' => $passedAttempts,
+            'completion_rate' => $totalStudents > 0 ? round(($completedAttempts / $totalStudents) * 100, 2) : 0,
+            'pass_rate' => $completedAttempts > 0 ? round(($passedAttempts / $completedAttempts) * 100, 2) : 0,
+        ];
     }
 }

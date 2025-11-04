@@ -6,6 +6,7 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -111,5 +112,35 @@ class TrainingClassMaterial extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('order', 'asc');
+    }
+
+    /**
+     * Get the quizzes associated with this material.
+     */
+    public function quizzes(): BelongsToMany
+    {
+        return $this->belongsToMany(Quiz::class, 'quiz_training_class_material')
+            ->withPivot(['assigned_at', 'is_active', 'order'])
+            ->withTimestamps()
+            ->wherePivot('is_active', true)
+            ->orderBy('pivot_order');
+    }
+
+    /**
+     * Get all quizzes (including inactive associations).
+     */
+    public function allQuizzes(): BelongsToMany
+    {
+        return $this->belongsToMany(Quiz::class, 'quiz_training_class_material')
+            ->withPivot(['assigned_at', 'is_active', 'order'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if this material has a specific quiz associated.
+     */
+    public function hasQuiz(Quiz $quiz): bool
+    {
+        return $this->quizzes()->where('quiz_id', $quiz->id)->exists();
     }
 }

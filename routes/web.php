@@ -400,6 +400,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('trainings.quizzes.results');
         Route::get('/{quiz}/export-csv', [App\Http\Controllers\QuizController::class, 'exportCSV'])
             ->name('trainings.quizzes.export-csv');
+
+        // Quiz Class Assignment routes
+        Route::get('/{quiz}/class-assignments', [App\Http\Controllers\QuizClassAssignmentController::class, 'show'])
+            ->name('trainings.quizzes.class-assignments');
+        Route::post('/{quiz}/assign-to-class/{trainingClass}', [App\Http\Controllers\QuizClassAssignmentController::class, 'assignToClass'])
+            ->name('trainings.quizzes.assign-to-class');
+        Route::delete('/{quiz}/remove-from-class/{trainingClass}', [App\Http\Controllers\QuizClassAssignmentController::class, 'removeFromClass'])
+            ->name('trainings.quizzes.remove-from-class');
+        Route::put('/{quiz}/update-class-assignment/{trainingClass}', [App\Http\Controllers\QuizClassAssignmentController::class, 'updateClassAssignment'])
+            ->name('trainings.quizzes.update-class-assignment');
+        Route::post('/{quiz}/assign-to-material/{material}', [App\Http\Controllers\QuizClassAssignmentController::class, 'assignToMaterial'])
+            ->name('trainings.quizzes.assign-to-material');
+        Route::delete('/{quiz}/remove-from-material/{material}', [App\Http\Controllers\QuizClassAssignmentController::class, 'removeFromMaterial'])
+            ->name('trainings.quizzes.remove-from-material');
+        Route::post('/{quiz}/bulk-assign-classes', [App\Http\Controllers\QuizClassAssignmentController::class, 'bulkAssignToClasses'])
+            ->name('trainings.quizzes.bulk-assign-classes');
+        Route::get('/{quiz}/stats', [App\Http\Controllers\QuizClassAssignmentController::class, 'getQuizStats'])
+            ->name('trainings.quizzes.stats');
     });
 
     // Quiz Taking routes (for students)
@@ -456,9 +474,56 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('user-management/teachers/{teacher}', [App\Http\Controllers\UserManagementController::class, 'updateTeacher'])
         ->name('user-management.update-teacher');
 
+    // Appointment routes - specific routes must come before resource routes
+    Route::get('appointments', [App\Http\Controllers\AppointmentController::class, 'index'])
+        ->name('appointments.index');
+    Route::get('appointments/create', [App\Http\Controllers\AppointmentController::class, 'create'])
+        ->name('appointments.create');
+    Route::get('appointments/calendar', [App\Http\Controllers\AppointmentController::class, 'calendar'])
+        ->name('appointments.calendar');
+    Route::post('appointments', [App\Http\Controllers\AppointmentController::class, 'store'])
+        ->name('appointments.store');
+
+    // Resource routes with UUID parameter binding
+    Route::resource('appointments', App\Http\Controllers\AppointmentController::class)
+        ->except(['index', 'create', 'store'])
+        ->parameters(['appointments' => 'appointment:uuid']);
+
+    // Appointment actions
+    Route::patch('appointments/{appointment:uuid}/cancel', [App\Http\Controllers\AppointmentController::class, 'cancel'])
+        ->name('appointments.cancel');
+    Route::patch('appointments/{appointment:uuid}/confirm', [App\Http\Controllers\AppointmentController::class, 'confirm'])
+        ->name('appointments.confirm');
+
+    // Invitation management
+    Route::patch('appointments/{appointment:uuid}/accept-invitation', [App\Http\Controllers\AppointmentController::class, 'acceptInvitation'])
+        ->name('appointments.accept-invitation');
+    Route::patch('appointments/{appointment:uuid}/decline-invitation', [App\Http\Controllers\AppointmentController::class, 'declineInvitation'])
+        ->name('appointments.decline-invitation');
+
+    // API endpoints for appointments
+    Route::get('api/appointments/available-slots', [App\Http\Controllers\AppointmentController::class, 'availableSlots'])
+        ->name('api.appointments.available-slots');
+
+    // Public agenda routes
+    Route::get('users/{user:uuid}/agenda', [App\Http\Controllers\PublicAgendaController::class, 'show'])
+        ->name('users.agenda.show');
+    Route::get('api/users/{user:uuid}/available-slots', [App\Http\Controllers\PublicAgendaController::class, 'availableSlots'])
+        ->name('api.users.available-slots');
+    Route::get('api/users/{user:uuid}/schedule', [App\Http\Controllers\PublicAgendaController::class, 'schedule'])
+        ->name('api.users.schedule');
+
 });
 
 // Public Training routes (outside auth middleware)
+
+// Public appointment confirmation routes (accessible without authentication)
+Route::get('appointments/{appointment:uuid}/confirm/{token}', [App\Http\Controllers\AppointmentParticipantController::class, 'confirm'])
+    ->name('appointments.participant.confirm');
+Route::get('appointments/{appointment:uuid}/decline/{token}', [App\Http\Controllers\AppointmentParticipantController::class, 'decline'])
+    ->name('appointments.participant.decline');
+Route::post('appointments/{appointment:uuid}/decline/{token}', [App\Http\Controllers\AppointmentParticipantController::class, 'decline'])
+    ->name('appointments.participant.decline.submit');
 
 // Sentry test routes (only available in local/development environments)
 Route::middleware(['auth'])->group(function () {

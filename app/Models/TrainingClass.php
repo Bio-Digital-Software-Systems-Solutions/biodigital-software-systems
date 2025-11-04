@@ -6,6 +6,7 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -100,6 +101,87 @@ class TrainingClass extends Model
     public function materials(): HasMany
     {
         return $this->hasMany(TrainingClassMaterial::class)->ordered();
+    }
+
+    /**
+     * Get the quizzes assigned to this training class.
+     */
+    public function quizzes(): BelongsToMany
+    {
+        return $this->belongsToMany(Quiz::class, 'quiz_training_class')
+            ->withPivot(['assigned_at', 'available_from', 'available_until', 'is_active'])
+            ->withTimestamps()
+            ->wherePivot('is_active', true);
+    }
+
+    /**
+     * Get all quizzes (including inactive associations).
+     */
+    public function allQuizzes(): BelongsToMany
+    {
+        return $this->belongsToMany(Quiz::class, 'quiz_training_class')
+            ->withPivot(['assigned_at', 'available_from', 'available_until', 'is_active'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get students enrolled in this training class.
+     */
+    public function students(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'training_enrollments', 'training_class_id', 'user_id')
+            ->where('training_id', $this->training_id)
+            ->withPivot(['status', 'progress', 'grade', 'attendance_rate', 'enrolled_at', 'completed_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the available quizzes for this class (considering date restrictions).
+     */
+    public function getAvailableQuizzes()
+    {
+        $now = now();
+
+        return $this->quizzes()
+            ->where(function ($query) use ($now) {
+                $query->whereNull('quiz_training_class.available_from')
+                      ->orWhere('quiz_training_class.available_from', '<=', $now);
+            })
+            ->where(function ($query) use ($now) {
+                $query->whereNull('quiz_training_class.available_until')
+                      ->orWhere('quiz_training_class.available_until', '>=', $now);
+            });
+    }
+
+    /**
+     * Check if a quiz is available for this class.
+     */
+    public function hasQuiz(Quiz $quiz): bool
+    {
+        return $this->quizzes()->where('quiz_id', $quiz->id)->exists();
+    }
+
+    /**
+     * Get completion statistics for all quizzes in this class.
+     */
+    public function getQuizCompletionStats(): array
+    {
+        $quizzes = $this->quizzes()->get();
+        $totalStudents = $this->students()->count();
+        $stats = [];
+
+        foreach ($quizzes as $quiz) {
+            $stats[] = array_merge(
+                ['quiz' => $quiz],
+                $quiz->getClassCompletionStats($this)
+            );
+        }
+
+        return [
+            'total_students' => $totalStudents,
+            'total_quizzes' => $quizzes->count(),
+            'quiz_stats' => $stats,
+        ];
     }
 
     /**

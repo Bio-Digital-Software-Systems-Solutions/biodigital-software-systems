@@ -37,7 +37,7 @@ class TeacherController extends Controller
     public function create(): Response
     {
         $users = User::whereDoesntHave('teacher')
-            ->select('id', 'name', 'email')
+            ->select('id', 'first_name', 'last_name', 'email')
             ->get();
 
         return Inertia::render('Teachers/Create', [
@@ -79,7 +79,7 @@ class TeacherController extends Controller
 
         $users = User::whereDoesntHave('teacher')
             ->orWhere('id', $teacher->user_id)
-            ->select('id', 'name', 'email')
+            ->select('id', 'first_name', 'last_name', 'email')
             ->get();
 
         return Inertia::render('Teachers/Edit', [

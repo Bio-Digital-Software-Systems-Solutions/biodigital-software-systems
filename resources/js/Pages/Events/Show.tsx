@@ -14,7 +14,7 @@ import {
     CheckCircleIcon,
     XCircleIcon
 } from '@heroicons/react/24/outline';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { isAdmin } from '@/Enums/Role';
 import { userHasPermission } from '@/Enums/Permission';
@@ -79,12 +79,20 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
     const isEventFull = event.max_participants ? (event.participants?.length || 0) >= event.max_participants : false;
     const canRegister = !isParticipating && !isEventFull;
 
-    // Permission checks
-    const canEditEvent = auth.user?.id === event.creator?.id ||
-                        userHasPermission(auth.user, 'edit events');
+    // Check if event is past and user permissions
+    const isEventPast = isPast(endDate);
+    const isSuperAdmin = auth.user?.roles?.some(role => role.name === 'SuperAdmin') || false;
 
-    const canDeleteEvent = auth.user?.id === event.creator?.id ||
-                          userHasPermission(auth.user, 'delete events');
+    // Permission checks
+    const canEditEvent = (auth.user?.id === event.creator?.id ||
+                        userHasPermission(auth.user, 'edit events')) &&
+                        (!isEventPast || isSuperAdmin);
+
+    const canDeleteEvent = (auth.user?.id === event.creator?.id ||
+                          userHasPermission(auth.user, 'delete events')) &&
+                          (!isEventPast || isSuperAdmin);
+
+    const canParticipate = !isEventPast || isSuperAdmin;
 
     const getStatusBadge = (status: string) => {
         const statusConfig = {
@@ -335,27 +343,34 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
                                 Actions rapides
                             </h3>
                             <div className="space-y-2">
-                                {isParticipating ? (
-                                    <button
-                                        onClick={handleToggleParticipation}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-                                    >
-                                        <XCircleIcon className="w-5 h-5" />
-                                        Se désinscrire
-                                    </button>
+                                {canParticipate ? (
+                                    isParticipating ? (
+                                        <button
+                                            onClick={handleToggleParticipation}
+                                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                                        >
+                                            <XCircleIcon className="w-5 h-5" />
+                                            Se désinscrire
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleToggleParticipation}
+                                            disabled={isEventFull}
+                                            className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-colors font-medium ${
+                                                isEventFull
+                                                    ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                                                    : 'bg-icc-blue text-white hover:bg-icc-blue/90'
+                                            }`}
+                                        >
+                                            <CheckCircleIcon className="w-5 h-5" />
+                                            {isEventFull ? 'Événement complet' : 'S\'inscrire à l\'événement'}
+                                        </button>
+                                    )
                                 ) : (
-                                    <button
-                                        onClick={handleToggleParticipation}
-                                        disabled={isEventFull}
-                                        className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-colors font-medium ${
-                                            isEventFull
-                                                ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                                                : 'bg-icc-blue text-white hover:bg-icc-blue/90'
-                                        }`}
-                                    >
-                                        <CheckCircleIcon className="w-5 h-5" />
-                                        {isEventFull ? 'Événement complet' : 'S\'inscrire à l\'événement'}
-                                    </button>
+                                    <div className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg">
+                                        <XCircleIcon className="w-5 h-5" />
+                                        {isParticipating ? 'Événement terminé - Participation non modifiable' : 'Événement terminé - Inscription fermée'}
+                                    </div>
                                 )}
                                 <button
                                     onClick={handleAddToCalendar}

@@ -44,6 +44,11 @@ class EventPolicy
      */
     public function update(User $user, Event $event): bool
     {
+        // Check if the event can be modified by this user
+        if (!$event->canBeModifiedBy($user)) {
+            return false;
+        }
+
         // Seul le créateur ou quelqu'un avec permission 'edit events' peut modifier
         return $user->id === $event->user_id || $user->can('edit events');
     }
@@ -53,6 +58,11 @@ class EventPolicy
      */
     public function delete(User $user, Event $event): bool
     {
+        // Check if the event can be modified by this user
+        if (!$event->canBeModifiedBy($user)) {
+            return false;
+        }
+
         // Seul le créateur ou quelqu'un avec permission 'delete events' peut supprimer
         return $user->id === $event->user_id || $user->can('delete events');
     }
@@ -62,6 +72,11 @@ class EventPolicy
      */
     public function participate(User $user, Event $event): bool
     {
+        // Check if participation changes are allowed for this event
+        if (!$event->canAcceptParticipationChanges($user)) {
+            return false;
+        }
+
         // Pour les événements publics, tout utilisateur authentifié peut participer
         if ($event->is_public) {
             return true;

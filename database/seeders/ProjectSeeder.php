@@ -133,7 +133,7 @@ class ProjectSeeder extends Seeder
                     'status_id' => $status?->id,
                     'type' => $taskTypes[array_rand($taskTypes)],
                     'priority' => $taskPriorities[array_rand($taskPriorities)],
-                    'assignee_id' => $project->members->random()->id,
+                    'assigned_to' => $project->members->random()->id,
                     'reporter_id' => $projectData['project_manager_id'],
                     'estimated_hours' => rand(2, 40),
                     'due_date' => now()->addDays(rand(1, 60)),

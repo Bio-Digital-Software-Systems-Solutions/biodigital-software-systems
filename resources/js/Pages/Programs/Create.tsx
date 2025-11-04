@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { User, PageProps } from '@/Types';
@@ -14,14 +14,22 @@ export default function Create({ users }: Props) {
         start_date: '',
         end_date: '',
         budget: '',
-        status: 'planning',
+        status: 'draft',
         priority: 'medium',
         progress_percentage: 0,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('programs.store'));
+
+        // Transform data to handle nullable fields properly
+        const transformedData = {
+            ...data,
+            budget: data.budget === '' ? null : parseFloat(data.budget) || null,
+            progress_percentage: data.progress_percentage || 0,
+        };
+
+        router.post(route('programs.store'), transformedData);
     };
 
     return (
@@ -71,9 +79,9 @@ export default function Create({ users }: Props) {
                                             className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                                             required
                                         >
-                                            <option value="planning">Planning</option>
+                                            <option value="draft">Draft</option>
                                             <option value="active">Active</option>
-                                            <option value="in_progress">In Progress</option>
+                                            <option value="paused">Paused</option>
                                             <option value="completed">Completed</option>
                                             <option value="cancelled">Cancelled</option>
                                         </select>

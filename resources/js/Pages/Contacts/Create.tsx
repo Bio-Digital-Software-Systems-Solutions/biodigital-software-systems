@@ -147,7 +147,7 @@ export default function Create() {
                                             <div>
                                                 <p className="font-medium">Horaires</p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    Lun - Ven : 9h00 - 18h00<br />
+                                                    Lun - Ven : 7h00 - 23h00<br />
                                                     Sam : 10h00 - 14h00
                                                 </p>
                                             </div>

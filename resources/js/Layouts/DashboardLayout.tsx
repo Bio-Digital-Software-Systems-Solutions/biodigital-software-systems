@@ -74,6 +74,7 @@ export default function DashboardLayout({ children, title, description, actions 
     const navigation: NavItem[] = [
         { name: t('dashboard'), href: '/dashboard', icon: HomeIcon, current: true, excludeRoles: [Role.MEMBER] },
         { name: t('events'), href: '/events', icon: CalendarDaysIcon, permission: 'view events' },
+        { name: t('appointments'), href: '/appointments', icon: CalendarDaysIcon, permission: 'view appointments' },
         { name: t('articles'), href: '/articles', icon: PencilSquareIcon, permission: 'view articles' },
         { name: t('books'), href: '/books', icon: BookOpenIcon, permission: 'view books' },
         { name: t('books.rent'), href: '/my-rentals', icon: BuildingLibraryIcon, permission: 'view books' },

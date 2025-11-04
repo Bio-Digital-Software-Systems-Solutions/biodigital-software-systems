@@ -24,6 +24,26 @@ interface Training {
     name: string;
 }
 
+interface TrainingClassMaterial {
+    id: number;
+    uuid: string;
+    title: string;
+    type: string;
+    order: number;
+}
+
+interface TrainingClass {
+    id: number;
+    uuid: string;
+    name: string;
+    date: string;
+    start_time: string;
+    end_time: string;
+    room?: string;
+    students_count: number;
+    materials: TrainingClassMaterial[];
+}
+
 interface QuizQuestion {
     id?: number;
     question: string;
@@ -56,6 +76,9 @@ interface Quiz {
 interface Props {
     training: Training;
     quiz: Quiz;
+    trainingClasses: TrainingClass[];
+    assignedClasses: number[];
+    assignedMaterials: number[];
 }
 
 interface Question {
@@ -69,7 +92,7 @@ interface Question {
     points: number;
 }
 
-export default function QuizEdit({ training, quiz }: Props) {
+export default function QuizEdit({ training, quiz, trainingClasses, assignedClasses: initialAssignedClasses, assignedMaterials: initialAssignedMaterials }: Props) {
     const formRef = useRef<HTMLFormElement>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -84,6 +107,10 @@ export default function QuizEdit({ training, quiz }: Props) {
     const [maxAttempts, setMaxAttempts] = useState(quiz.max_attempts || 1);
     const [scoreDisplay, setScoreDisplay] = useState<'best' | 'last' | 'average'>((quiz.score_display as 'best' | 'last' | 'average') || 'best');
     const [status, setStatus] = useState<'draft' | 'published' | 'archived'>((quiz.status as 'draft' | 'published' | 'archived') || 'draft');
+
+    // Class and material assignments
+    const [assignedClasses, setAssignedClasses] = useState<number[]>(initialAssignedClasses || []);
+    const [assignedMaterials, setAssignedMaterials] = useState<number[]>(initialAssignedMaterials || []);
 
     // Questions
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -247,7 +274,9 @@ export default function QuizEdit({ training, quiz }: Props) {
             max_attempts: maxAttempts,
             score_display: scoreDisplay,
             status: status,
-            questions: formattedQuestions
+            questions: formattedQuestions,
+            assigned_classes: assignedClasses,
+            assigned_materials: assignedMaterials
         }, {
             onSuccess: () => {
                 toast.success('Quiz mis à jour avec succès');
@@ -483,6 +512,141 @@ export default function QuizEdit({ training, quiz }: Props) {
                                     </p>
                                 </div>
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Class and Material Assignments */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Assignations</CardTitle>
+                            <CardDescription>
+                                Choisissez les classes et supports de cours pour ce quiz
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            {/* Training Classes */}
+                            <div>
+                                <Label className="text-base font-medium">Classes de formation</Label>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                    Sélectionnez les classes qui auront accès à ce quiz
+                                </p>
+                                <div className="grid gap-3">
+                                    {trainingClasses.map((trainingClass) => (
+                                        <div key={trainingClass.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                                            <input
+                                                type="checkbox"
+                                                id={`class-${trainingClass.id}`}
+                                                checked={assignedClasses.includes(trainingClass.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setAssignedClasses([...assignedClasses, trainingClass.id]);
+                                                    } else {
+                                                        setAssignedClasses(assignedClasses.filter(id => id !== trainingClass.id));
+                                                        // Also remove any materials from this class
+                                                        const materialsToRemove = trainingClass.materials.map(m => m.id);
+                                                        setAssignedMaterials(assignedMaterials.filter(id => !materialsToRemove.includes(id)));
+                                                    }
+                                                }}
+                                                className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                            />
+                                            <label htmlFor={`class-${trainingClass.id}`} className="flex-1 cursor-pointer">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="font-medium text-gray-900 dark:text-white">
+                                                            {trainingClass.name}
+                                                        </p>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                            {new Date(trainingClass.date).toLocaleDateString('fr-FR')} • {trainingClass.start_time} - {trainingClass.end_time}
+                                                            {trainingClass.room && ` • ${trainingClass.room}`}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                        {trainingClass.students_count} étudiant(s)
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                                {trainingClasses.length === 0 && (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                        Aucune classe disponible pour cette formation
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Training Class Materials */}
+                            {assignedClasses.length > 0 && (
+                                <div>
+                                    <Label className="text-base font-medium">Supports de cours (optionnel)</Label>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                        Associez le quiz à des supports de cours spécifiques
+                                    </p>
+                                    <div className="space-y-4">
+                                        {trainingClasses
+                                            .filter(tc => assignedClasses.includes(tc.id))
+                                            .map((trainingClass) => (
+                                                <div key={trainingClass.id} className="border rounded-lg p-4">
+                                                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">
+                                                        {trainingClass.name}
+                                                    </h4>
+                                                    {trainingClass.materials.length > 0 ? (
+                                                        <div className="grid gap-2">
+                                                            {trainingClass.materials.map((material) => (
+                                                                <div key={material.id} className="flex items-center space-x-3">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        id={`material-${material.id}`}
+                                                                        checked={assignedMaterials.includes(material.id)}
+                                                                        onChange={(e) => {
+                                                                            if (e.target.checked) {
+                                                                                setAssignedMaterials([...assignedMaterials, material.id]);
+                                                                            } else {
+                                                                                setAssignedMaterials(assignedMaterials.filter(id => id !== material.id));
+                                                                            }
+                                                                        }}
+                                                                        className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                                                                    />
+                                                                    <label htmlFor={`material-${material.id}`} className="flex-1 cursor-pointer">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <div>
+                                                                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                                    {material.title}
+                                                                                </p>
+                                                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                                    {material.type.toUpperCase()}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </label>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                                            Aucun support de cours disponible
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Assignment Summary */}
+                            {(assignedClasses.length > 0 || assignedMaterials.length > 0) && (
+                                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                                    <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">
+                                        Résumé des assignations
+                                    </h4>
+                                    <div className="text-sm text-blue-800 dark:text-blue-300">
+                                        <p>• {assignedClasses.length} classe(s) sélectionnée(s)</p>
+                                        {assignedMaterials.length > 0 && (
+                                            <p>• {assignedMaterials.length} support(s) de cours sélectionné(s)</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 

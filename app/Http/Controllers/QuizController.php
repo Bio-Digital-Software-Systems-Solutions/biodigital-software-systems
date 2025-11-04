@@ -52,8 +52,34 @@ class QuizController extends Controller
     {
         $this->authorize('create quizzes');
 
+        // Load training classes with their materials and student counts
+        $training->load(['classes.materials', 'classes.students']);
+
+        $trainingClasses = $training->classes->map(function ($class) {
+            return [
+                'id' => $class->id,
+                'uuid' => $class->uuid,
+                'name' => $class->name,
+                'date' => $class->date,
+                'start_time' => $class->start_time,
+                'end_time' => $class->end_time,
+                'room' => $class->room,
+                'students_count' => $class->students->count(),
+                'materials' => $class->materials->map(function ($material) {
+                    return [
+                        'id' => $material->id,
+                        'uuid' => $material->uuid,
+                        'title' => $material->title,
+                        'type' => $material->type,
+                        'order' => $material->order,
+                    ];
+                }),
+            ];
+        });
+
         return Inertia::render('Quiz/Create', [
             'training' => $training,
+            'trainingClasses' => $trainingClasses,
         ]);
     }
 
@@ -83,6 +109,10 @@ class QuizController extends Controller
             'questions.*.feedback_correct' => 'nullable|string|max:1000',
             'questions.*.feedback_incorrect' => 'nullable|string|max:1000',
             'questions.*.points' => 'required|integer|min:1',
+            'assigned_classes' => 'nullable|array',
+            'assigned_classes.*' => 'exists:training_classes,id',
+            'assigned_materials' => 'nullable|array',
+            'assigned_materials.*' => 'exists:training_class_materials,id',
         ]);
 
         // Calculate max_score from questions
@@ -116,8 +146,46 @@ class QuizController extends Controller
             ]);
         }
 
+        // Assign to training classes if specified
+        if (!empty($validated['assigned_classes'])) {
+            $classAssignments = [];
+            foreach ($validated['assigned_classes'] as $classId) {
+                $classAssignments[$classId] = [
+                    'assigned_at' => now(),
+                    'available_from' => $validated['available_from'] ?? null,
+                    'available_until' => $validated['available_until'] ?? null,
+                    'is_active' => true,
+                ];
+            }
+            $quiz->trainingClasses()->attach($classAssignments);
+        }
+
+        // Assign to training class materials if specified
+        if (!empty($validated['assigned_materials'])) {
+            $materialAssignments = [];
+            foreach ($validated['assigned_materials'] as $index => $materialId) {
+                $materialAssignments[$materialId] = [
+                    'assigned_at' => now(),
+                    'is_active' => true,
+                    'order' => $index,
+                ];
+            }
+            $quiz->trainingClassMaterials()->attach($materialAssignments);
+        }
+
+        $successMessage = 'Quiz créé avec succès';
+        $assignedClassesCount = count($validated['assigned_classes'] ?? []);
+        $assignedMaterialsCount = count($validated['assigned_materials'] ?? []);
+
+        if ($assignedClassesCount > 0) {
+            $successMessage .= " et assigné à {$assignedClassesCount} classe(s)";
+        }
+        if ($assignedMaterialsCount > 0) {
+            $successMessage .= " et {$assignedMaterialsCount} support(s) de cours";
+        }
+
         return redirect()->route('trainings.quizzes.index', $training)
-            ->with('success', 'Quiz créé avec succès');
+            ->with('success', $successMessage);
     }
 
     /**
@@ -127,10 +195,42 @@ class QuizController extends Controller
     {
         $this->authorize('edit quizzes');
 
-        $quiz->load('questions');
+        $quiz->load(['questions', 'trainingClasses', 'trainingClassMaterials']);
+
+        // Load training classes with their materials and student counts
+        $training->load(['classes.materials', 'classes.students']);
+
+        $trainingClasses = $training->classes->map(function ($class) use ($quiz) {
+            return [
+                'id' => $class->id,
+                'uuid' => $class->uuid,
+                'name' => $class->name,
+                'date' => $class->date,
+                'start_time' => $class->start_time,
+                'end_time' => $class->end_time,
+                'room' => $class->room,
+                'students_count' => $class->students->count(),
+                'materials' => $class->materials->map(function ($material) {
+                    return [
+                        'id' => $material->id,
+                        'uuid' => $material->uuid,
+                        'title' => $material->title,
+                        'type' => $material->type,
+                        'order' => $material->order,
+                    ];
+                }),
+            ];
+        });
+
+        // Get currently assigned classes and materials
+        $assignedClasses = $quiz->trainingClasses->pluck('id')->toArray();
+        $assignedMaterials = $quiz->trainingClassMaterials->pluck('id')->toArray();
 
         return Inertia::render('Quiz/Edit', [
             'training' => $training,
+            'trainingClasses' => $trainingClasses,
+            'assignedClasses' => $assignedClasses,
+            'assignedMaterials' => $assignedMaterials,
             'quiz' => [
                 'id' => $quiz->id,
                 'uuid' => $quiz->uuid,
@@ -187,6 +287,10 @@ class QuizController extends Controller
             'questions.*.feedback_correct' => 'nullable|string|max:1000',
             'questions.*.feedback_incorrect' => 'nullable|string|max:1000',
             'questions.*.points' => 'required|integer|min:1',
+            'assigned_classes' => 'nullable|array',
+            'assigned_classes.*' => 'exists:training_classes,id',
+            'assigned_materials' => 'nullable|array',
+            'assigned_materials.*' => 'exists:training_class_materials,id',
         ]);
 
         // Calculate max_score from questions
@@ -238,8 +342,78 @@ class QuizController extends Controller
             }
         }
 
+        // Update training class assignments
+        $currentAssignedClasses = $quiz->trainingClasses->pluck('id')->toArray();
+        $newAssignedClasses = $validated['assigned_classes'] ?? [];
+
+        // Remove classes that are no longer assigned
+        $classesToRemove = array_diff($currentAssignedClasses, $newAssignedClasses);
+        if (!empty($classesToRemove)) {
+            $quiz->trainingClasses()->detach($classesToRemove);
+        }
+
+        // Add new class assignments
+        $classesToAdd = array_diff($newAssignedClasses, $currentAssignedClasses);
+        if (!empty($classesToAdd)) {
+            $classAssignments = [];
+            foreach ($classesToAdd as $classId) {
+                $classAssignments[$classId] = [
+                    'assigned_at' => now(),
+                    'available_from' => $validated['available_from'] ?? null,
+                    'available_until' => $validated['available_until'] ?? null,
+                    'is_active' => true,
+                ];
+            }
+            $quiz->trainingClasses()->attach($classAssignments);
+        }
+
+        // Update training class material assignments
+        $currentAssignedMaterials = $quiz->trainingClassMaterials->pluck('id')->toArray();
+        $newAssignedMaterials = $validated['assigned_materials'] ?? [];
+
+        // Remove materials that are no longer assigned
+        $materialsToRemove = array_diff($currentAssignedMaterials, $newAssignedMaterials);
+        if (!empty($materialsToRemove)) {
+            $quiz->trainingClassMaterials()->detach($materialsToRemove);
+        }
+
+        // Add new material assignments
+        $materialsToAdd = array_diff($newAssignedMaterials, $currentAssignedMaterials);
+        if (!empty($materialsToAdd)) {
+            $materialAssignments = [];
+            foreach ($materialsToAdd as $index => $materialId) {
+                $materialAssignments[$materialId] = [
+                    'assigned_at' => now(),
+                    'is_active' => true,
+                    'order' => $index,
+                ];
+            }
+            $quiz->trainingClassMaterials()->attach($materialAssignments);
+        }
+
+        // Build success message with assignment changes
+        $successMessage = 'Quiz mis à jour avec succès';
+        $assignmentChanges = [];
+
+        if (!empty($classesToAdd)) {
+            $assignmentChanges[] = count($classesToAdd) . ' classe(s) ajoutée(s)';
+        }
+        if (!empty($classesToRemove)) {
+            $assignmentChanges[] = count($classesToRemove) . ' classe(s) retirée(s)';
+        }
+        if (!empty($materialsToAdd)) {
+            $assignmentChanges[] = count($materialsToAdd) . ' support(s) ajouté(s)';
+        }
+        if (!empty($materialsToRemove)) {
+            $assignmentChanges[] = count($materialsToRemove) . ' support(s) retiré(s)';
+        }
+
+        if (!empty($assignmentChanges)) {
+            $successMessage .= ' (' . implode(', ', $assignmentChanges) . ')';
+        }
+
         return redirect()->route('trainings.quizzes.index', $training)
-            ->with('success', 'Quiz mis à jour avec succès');
+            ->with('success', $successMessage);
     }
 
     /**

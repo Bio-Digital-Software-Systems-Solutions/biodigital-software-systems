@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 return new class extends Migration
@@ -26,6 +27,18 @@ return new class extends Migration
         ];
 
         foreach ($tables as $tableName) {
+            // Check if table exists before modifying it
+            if (!Schema::hasTable($tableName)) {
+                echo "Skipping table $tableName - does not exist\n";
+                continue;
+            }
+
+            // Check if uuid column already exists
+            if (Schema::hasColumn($tableName, 'uuid')) {
+                echo "Skipping table $tableName - uuid column already exists\n";
+                continue;
+            }
+
             // Add uuid column
             Schema::table($tableName, function (Blueprint $table) {
                 $table->uuid('uuid')->nullable()->after('id');

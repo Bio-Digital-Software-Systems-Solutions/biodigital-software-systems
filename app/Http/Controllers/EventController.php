@@ -156,6 +156,11 @@ class EventController extends Controller
     {
         $this->authorize('update', $event);
 
+        // Additional check with user-friendly message
+        if (!$event->canBeModifiedBy(Auth::user())) {
+            return back()->with('error', 'Cet événement est terminé et ne peut plus être modifié. Seuls les SuperAdmins peuvent modifier les événements passés.');
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -223,6 +228,11 @@ class EventController extends Controller
     {
         $this->authorize('delete', $event);
 
+        // Additional check with user-friendly message
+        if (!$event->canBeModifiedBy(Auth::user())) {
+            return back()->with('error', 'Cet événement est terminé et ne peut plus être supprimé. Seuls les SuperAdmins peuvent supprimer les événements passés.');
+        }
+
         // Delete avatar if it exists
         if ($event->avatar) {
             \Storage::disk('public')->delete($event->avatar);
@@ -245,6 +255,11 @@ class EventController extends Controller
         $this->authorize('participate', $event);
 
         $user = Auth::user();
+
+        // Additional check with user-friendly message
+        if (!$event->canAcceptParticipationChanges($user)) {
+            return back()->with('error', 'Cet événement est terminé et la participation ne peut plus être modifiée. Seuls les SuperAdmins peuvent gérer la participation aux événements passés.');
+        }
 
         if ($event->participants->contains($user)) {
             $event->participants()->detach($user);
@@ -272,6 +287,11 @@ class EventController extends Controller
 
         $user = Auth::user();
 
+        // Additional check with user-friendly message
+        if (!$event->canAcceptParticipationChanges($user)) {
+            return back()->with('error', 'Cet événement est terminé et vous ne pouvez plus vous y inscrire. Seuls les SuperAdmins peuvent gérer la participation aux événements passés.');
+        }
+
         // Check if user is already a participant
         if ($event->participants->contains($user)) {
             return back()->with('message', 'Vous participez déjà à cet événement.');
@@ -298,6 +318,11 @@ class EventController extends Controller
         $this->authorize('participate', $event);
 
         $user = Auth::user();
+
+        // Additional check with user-friendly message
+        if (!$event->canAcceptParticipationChanges($user)) {
+            return back()->with('error', 'Cet événement est terminé et vous ne pouvez plus vous en désinscrire. Seuls les SuperAdmins peuvent gérer la participation aux événements passés.');
+        }
 
         // Check if user is a participant
         if (!$event->participants->contains($user)) {

@@ -15,6 +15,7 @@ import {
     TrashIcon
 } from '@heroicons/react/24/outline';
 import { userHasPermission } from '@/Enums/Permission';
+import { isPast, parseISO } from 'date-fns';
 
 type ViewMode = 'grid' | 'list' | 'calendar';
 
@@ -103,6 +104,15 @@ export default function Index() {
     };
 
     const canManageEvents = userHasPermission(auth.user, 'create events');
+
+    // Check if user can modify event (past events only for SuperAdmin)
+    const canModifyEvent = (event: Event) => {
+        const isEventPast = isPast(parseISO(event.end_date));
+        const isSuperAdmin = auth.user?.roles?.some(role => role.name === 'SuperAdmin') || false;
+        const hasEditPermission = auth.user?.id === event.creator.id || userHasPermission(auth.user, 'edit events');
+
+        return hasEditPermission && (!isEventPast || isSuperAdmin);
+    };
 
     return (
         <DashboardLayout
@@ -211,8 +221,7 @@ export default function Index() {
                                                     >
                                                         <EyeIcon className="h-5 w-5" />
                                                     </Link>
-                                                    {(auth.user?.id === event.creator.id ||
-                                                      userHasPermission(auth.user, 'edit events')) && (
+                                                    {canModifyEvent(event) && (
                                                         <>
                                                             <Link
                                                                 href={route('events.edit', event.uuid)}
@@ -325,8 +334,7 @@ export default function Index() {
                                             Voir détails
                                         </Link>
 
-                                        {(auth.user?.id === event.creator.id ||
-                                          userHasPermission(auth.user, 'edit events')) && (
+                                        {canModifyEvent(event) && (
                                             <div className="flex space-x-2">
                                                 <Link
                                                     href={route('events.edit', event.uuid)}

@@ -22,6 +22,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view articles', 'create articles', 'edit articles', 'delete articles', 'publish articles',
             // Events
             'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
+            // Appointments
+            'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs',
@@ -65,6 +67,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view articles', 'create articles', 'edit articles', 'delete articles', 'publish articles',
             // Events
             'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
+            // Appointments
+            'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs',
@@ -107,6 +111,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view hero slides', 'manage hero slides',
             // Books
             'view books', 'create books', 'edit books',
+            // Appointments
+            'view appointments', 'create appointments',
             // Messages & Chat
             'view messages', 'create messages', 'edit messages', 'delete messages',
             'use chat',
@@ -128,6 +134,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view users', 'view departments',
             // Events
             'view events', 'create events', 'edit events', 'attend events',
+            // Appointments
+            'view appointments', 'create appointments', 'edit appointments', 'manage appointment participants',
             // Articles
             'view articles', 'create articles', 'edit articles',
             // Messages & Chat
@@ -144,6 +152,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $eventManager->syncPermissions([
             // Events
             'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
+            // Appointments
+            'view appointments', 'create appointments', 'edit appointments', 'manage appointment participants',
             // Groups
             'view groups', 'manage group members',
             // Users & Departments
@@ -164,6 +174,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view books', 'rent books', 'create books', 'edit books', 'delete books', 'manage library', 'approve rentals',
             // Articles for library announcements
             'view articles', 'create articles', 'edit articles',
+            // Appointments
+            'view appointments', 'create appointments',
             // Messages & Chat
             'view messages', 'create messages', 'edit messages', 'delete messages',
             'use chat',
@@ -180,6 +192,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view groups', 'edit groups', 'manage group members',
             // Events
             'view events', 'create events', 'attend events',
+            // Appointments
+            'view appointments', 'create appointments',
             // Tasks
             'view tasks', 'create tasks', 'edit tasks', 'assign tasks',
             // Messages & Chat
@@ -203,6 +217,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view programs', 'create programs', 'edit programs',
             // Events
             'view events', 'create events', 'edit events', 'attend events',
+            // Appointments
+            'view appointments', 'create appointments', 'edit appointments',
             // Messages & Chat
             'view messages', 'create messages', 'edit messages', 'delete messages',
             'use chat',
@@ -221,6 +237,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view groups', 'edit groups', 'manage group members',
             // Events
             'view events', 'create events', 'edit events', 'attend events', 'manage event participants',
+            // Appointments
+            'view appointments', 'create appointments', 'edit appointments',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'assign tasks',
             'view programs', 'view programs',
@@ -256,6 +274,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $student->syncPermissions([
             // Viewing permissions
             'view articles', 'view events', 'attend events', 'view videos', 'view books', 'view departments',
+            // Appointments
+            'view appointments',
             // Books
             'rent books',
             // Trainings
@@ -272,6 +292,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $teacher->syncPermissions([
             // Viewing permissions
             'view articles', 'view events', 'attend events', 'view videos', 'view books', 'view users', 'view departments',
+            // Appointments
+            'view appointments', 'create appointments',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'assign tasks',
             // Books

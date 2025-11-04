@@ -53,7 +53,7 @@ class ProgramController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'budget' => 'nullable|numeric|min:0',
-            'status' => 'required|in:planning,active,in_progress,completed,cancelled',
+            'status' => 'required|in:draft,active,paused,completed,cancelled',
             'priority' => 'required|in:low,medium,high',
             'progress_percentage' => 'nullable|integer|min:0|max:100',
         ]);
@@ -106,7 +106,7 @@ class ProgramController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'budget' => 'nullable|numeric|min:0',
-            'status' => 'required|in:planning,active,in_progress,completed,cancelled',
+            'status' => 'required|in:draft,active,paused,completed,cancelled',
             'priority' => 'required|in:low,medium,high',
             'progress_percentage' => 'nullable|integer|min:0|max:100',
         ]);

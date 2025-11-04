@@ -205,6 +205,56 @@ class Event extends Model
     }
 
     /**
+     * Check if the event is in the past (has ended).
+     */
+    public function isPast(): bool
+    {
+        return $this->hasEnded();
+    }
+
+    /**
+     * Check if the event can be modified.
+     * Past events can only be modified by SuperAdmin.
+     */
+    public function canBeModifiedBy(?User $user = null): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        // SuperAdmin can modify any event, even past ones
+        if ($user->hasRole('SuperAdmin')) {
+            return true;
+        }
+
+        // Past events cannot be modified by non-SuperAdmin users
+        if ($this->isPast()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if users can participate in this event.
+     * Past events cannot accept new participants or allow leaving.
+     */
+    public function canAcceptParticipationChanges(?User $user = null): bool
+    {
+        // SuperAdmin can always manage participation
+        if ($user && $user->hasRole('SuperAdmin')) {
+            return true;
+        }
+
+        // Past events don't allow participation changes
+        if ($this->isPast()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Get the event duration in hours.
      */
     public function getDurationInHoursAttribute(): float
