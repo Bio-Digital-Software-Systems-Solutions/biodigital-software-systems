@@ -197,16 +197,33 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
     };
 
     const handleCreatePermission = async () => {
+        // Validation côté frontend
+        if (!newPermissionName || newPermissionName.trim().length === 0) {
+            toast.error('Le nom de la permission est requis');
+            return;
+        }
+
         try {
+            console.log('Creating permission with name:', newPermissionName);
             await axios.post(route('user-management.create-permission'), {
-                name: newPermissionName,
+                name: newPermissionName.trim(),
             });
             toast.success('Permission créée avec succès');
             router.reload({ only: ['permissions'] });
             setShowPermissionDialog(false);
             setNewPermissionName('');
-        } catch (error) {
-            toast.error('Erreur lors de la création de la permission');
+        } catch (error: any) {
+            console.error('Permission creation error:', error);
+            if (error.response?.status === 422) {
+                const validationErrors = error.response.data?.errors;
+                if (validationErrors?.name) {
+                    toast.error(validationErrors.name[0]);
+                } else {
+                    toast.error('Erreur de validation');
+                }
+            } else {
+                toast.error('Erreur lors de la création de la permission');
+            }
         }
     };
 

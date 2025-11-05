@@ -183,11 +183,34 @@ class UserManagementController extends Controller
      */
     public function createPermission(Request $request): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|unique:permissions,name',
+        // Debug logging
+        \Log::info('Permission creation attempt', [
+            'request_data' => $request->all(),
+            'name_value' => $request->get('name'),
+            'user_id' => $request->user()?->id,
         ]);
 
+        try {
+            $request->validate([
+                'name' => 'required|string|unique:permissions,name',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Permission validation failed', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all(),
+            ]);
+            throw $e;
+        }
+
         $permission = Permission::create(['name' => $request->name]);
+
+        // Invalidate permissions cache
+        CacheService::forgetPattern('user_management.permissions');
+
+        \Log::info('Permission created successfully', [
+            'permission_id' => $permission->id,
+            'permission_name' => $permission->name,
+        ]);
 
         return response()->json([
             'message' => 'Permission created successfully',
@@ -201,6 +224,9 @@ class UserManagementController extends Controller
     public function deletePermission(Permission $permission): JsonResponse
     {
         $permission->delete();
+
+        // Invalidate permissions cache
+        CacheService::forgetPattern('user_management.permissions');
 
         return response()->json([
             'message' => 'Permission deleted successfully',
