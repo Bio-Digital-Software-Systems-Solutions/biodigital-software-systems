@@ -36,11 +36,6 @@ class StoreAppointmentRequest extends FormRequest
                         $fail('Le rendez-vous doit être entre 7h et 23h.');
                     }
 
-                    // No weekends
-                    if ($startDateTime->isWeekend()) {
-                        $fail('Les rendez-vous ne sont possibles que du lundi au vendredi.');
-                    }
-
                     // Minimum advance notice
                     if ($startDateTime->isBefore(now()->addHour())) {
                         $fail('Le rendez-vous doit être pris au minimum 1 heure à l\'avance.');

@@ -46,7 +46,7 @@ class AppointmentParticipantController extends Controller
         ]);
 
         // Notify organizer and other participants
-        $appointment->load(['organizer', 'participants']);
+        // Note: organizer and participants are already loaded via route model binding
 
         // Notify organizer
         $appointment->organizer->notify(
@@ -106,7 +106,7 @@ class AppointmentParticipantController extends Controller
         ]);
 
         // Notify organizer
-        $appointment->load(['organizer']);
+        // Note: organizer is already loaded via route model binding
         $appointment->organizer->notify(
             new AppointmentConfirmation($appointment, $participant, 'declined')
         );

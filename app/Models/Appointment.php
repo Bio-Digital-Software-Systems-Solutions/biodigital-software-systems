@@ -127,6 +127,17 @@ class Appointment extends Model
     }
 
     /**
+     * Resolve route binding with eager loading for User relationships.
+     * This prevents N+1 queries when appointment is loaded via route model binding.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->with(['organizer:id,first_name,last_name,email', 'participants:id,first_name,last_name,email'])
+                    ->where($field ?? $this->getRouteKeyName(), $value)
+                    ->first();
+    }
+
+    /**
      * Scope: Get upcoming appointments.
      */
     public function scopeUpcoming(Builder $query): Builder

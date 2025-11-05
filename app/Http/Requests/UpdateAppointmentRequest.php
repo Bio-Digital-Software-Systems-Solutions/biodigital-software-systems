@@ -41,11 +41,6 @@ class UpdateAppointmentRequest extends FormRequest
                         $fail('Le rendez-vous doit être entre 7h et 23h.');
                     }
 
-                    // No weekends
-                    if ($startDateTime->isWeekend()) {
-                        $fail('Les rendez-vous ne sont possibles que du lundi au vendredi.');
-                    }
-
                     // Minimum advance notice (only for future changes)
                     if ($startDateTime->isBefore(now()->addHours(2))) {
                         $fail('Le rendez-vous doit être modifié au minimum 2 heures à l\'avance.');
