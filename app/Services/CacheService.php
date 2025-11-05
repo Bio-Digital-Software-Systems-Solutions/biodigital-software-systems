@@ -56,7 +56,15 @@ class CacheService
     {
         try {
             $keys = Cache::get('cache_keys', []);
-            $matchingKeys = array_filter($keys, fn($key) => str_contains($key, $pattern));
+
+            // Convert wildcard pattern to prefix matching
+            if (str_ends_with($pattern, '.*')) {
+                $prefix = substr($pattern, 0, -2); // Remove '.*' suffix
+                $matchingKeys = array_filter($keys, fn($key) => str_starts_with($key, $prefix));
+            } else {
+                // Fallback to contains for exact patterns
+                $matchingKeys = array_filter($keys, fn($key) => str_contains($key, $pattern));
+            }
 
             foreach ($matchingKeys as $key) {
                 Cache::forget($key);
