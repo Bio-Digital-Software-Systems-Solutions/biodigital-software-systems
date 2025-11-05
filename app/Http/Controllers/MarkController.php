@@ -8,6 +8,11 @@ use Maize\Markable\Models\Like;
 
 class MarkController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
      * Toggle like on an article.
      */
@@ -15,16 +20,29 @@ class MarkController extends Controller
     {
         $user = auth()->user();
 
+        // This check is now redundant due to auth middleware, but keeping for safety
         if (! $user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        Like::toggle($article, $user);
+        try {
+            Like::toggle($article, $user);
 
-        return response()->json([
-            'isLiked' => Like::has($article, $user),
-            'likesCount' => Like::count($article),
-        ]);
+            return response()->json([
+                'isLiked' => Like::has($article, $user),
+                'likesCount' => Like::count($article),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error toggling like on article', [
+                'article_id' => $article->id,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Erreur lors de la modification du like'
+            ], 500);
+        }
     }
 
     /**

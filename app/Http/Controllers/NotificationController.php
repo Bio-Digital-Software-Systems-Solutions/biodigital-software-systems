@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
      * Get the total count of unread notifications (chat messages + system messages).
      */

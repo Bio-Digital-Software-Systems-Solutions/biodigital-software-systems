@@ -23,8 +23,9 @@ import {
     SelectValue,
 } from '@/Components/ui/select';
 import { Input } from '@/Components/ui/input';
-import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isSameDay, isSameMonth, isToday, getDay } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isSameDay, isSameMonth, isToday, getDay, isPast, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 import type { AppointmentCalendarProps, Appointment, AppointmentStatus, AppointmentType } from '@/Types/appointment';
 
@@ -139,6 +140,12 @@ export default function AppointmentCalendar() {
     };
 
     const handleDayClick = (day: Date) => {
+        // Empêcher la sélection de dates passées
+        if (isPast(startOfDay(day))) {
+            toast.error('Impossible de créer un rendez-vous à une date passée');
+            return;
+        }
+
         const dateStr = format(day, 'yyyy-MM-dd');
         router.get(route('appointments.create'), {
             date: dateStr,
@@ -264,17 +271,28 @@ export default function AppointmentCalendar() {
                                 const dayAppointments = getAppointmentsForDay(day);
                                 const isCurrentMonth = isSameMonth(day, currentMonth);
                                 const isDayToday = isToday(day);
+                                const isPastDay = isPast(startOfDay(day));
 
                                 return (
                                     <div
                                         key={index}
                                         className={`min-h-[120px] p-2 border-r border-b last:border-r-0 ${
                                             !isCurrentMonth ? 'bg-gray-50 dark:bg-gray-800/50' : ''
-                                        } ${isDayToday ? 'bg-blue-50 dark:bg-blue-900/20' : ''} hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors`}
-                                        onClick={() => handleDayClick(day)}
+                                        } ${isDayToday ? 'bg-blue-50 dark:bg-blue-900/20' : ''} ${
+                                            isPastDay
+                                                ? 'bg-gray-100 dark:bg-gray-700/30 cursor-not-allowed opacity-60'
+                                                : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer'
+                                        } transition-colors`}
+                                        onClick={() => !isPastDay && handleDayClick(day)}
                                     >
                                         <div className={`text-sm font-medium mb-2 ${
-                                            !isCurrentMonth ? 'text-gray-400' : isDayToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
+                                            !isCurrentMonth
+                                                ? 'text-gray-400'
+                                                : isPastDay
+                                                ? 'text-gray-400 dark:text-gray-500'
+                                                : isDayToday
+                                                ? 'text-blue-600 dark:text-blue-400'
+                                                : 'text-gray-900 dark:text-white'
                                         }`}>
                                             {format(day, 'd')}
                                         </div>
@@ -347,6 +365,8 @@ export default function AppointmentCalendar() {
                             </div>
                             <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
                                 Cliquez sur un jour pour créer un nouveau rendez-vous ou sur un rendez-vous existant pour le voir.
+                                <br />
+                                <span className="text-xs text-gray-500">Les dates passées ne sont pas sélectionnables.</span>
                             </div>
                         </CardContent>
                     </Card>

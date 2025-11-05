@@ -45,6 +45,9 @@ export default function AppointmentCreate() {
         : startOfHour(addHours(now, 1));
     const suggestedEnd = addHours(suggestedStart, 1);
 
+    // Minimum datetime for form inputs (current date and time)
+    const minDateTime = format(now, "yyyy-MM-dd'T'HH:mm");
+
     // Initialize with preselected participants if any
     const initialParticipantIds = prefilledData?.participant_ids || [];
 
@@ -295,6 +298,7 @@ export default function AppointmentCreate() {
                                         id="start_datetime"
                                         type="datetime-local"
                                         value={data.start_datetime}
+                                        min={minDateTime}
                                         onChange={(e) => setData('start_datetime', e.target.value)}
                                         className={errors.start_datetime ? 'border-red-500' : ''}
                                     />
@@ -309,6 +313,7 @@ export default function AppointmentCreate() {
                                         id="end_datetime"
                                         type="datetime-local"
                                         value={data.end_datetime}
+                                        min={minDateTime}
                                         onChange={(e) => setData('end_datetime', e.target.value)}
                                         className={errors.end_datetime ? 'border-red-500' : ''}
                                     />

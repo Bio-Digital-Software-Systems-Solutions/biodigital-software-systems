@@ -41,6 +41,10 @@ export default function AppointmentEdit() {
         return <div>Appointment not found</div>;
     }
 
+    // Minimum datetime for form inputs (current date and time)
+    const now = new Date();
+    const minDateTime = format(now, "yyyy-MM-dd'T'HH:mm");
+
     const { data, setData, patch, processing, errors, transform } = useForm<AppointmentFormData>({
         title: appointment.title,
         description: appointment.description || '',
@@ -279,6 +283,7 @@ export default function AppointmentEdit() {
                                         id="start_datetime"
                                         type="datetime-local"
                                         value={data.start_datetime}
+                                        min={minDateTime}
                                         onChange={(e) => setData('start_datetime', e.target.value)}
                                         className={errors.start_datetime ? 'border-red-500' : ''}
                                     />
@@ -293,6 +298,7 @@ export default function AppointmentEdit() {
                                         id="end_datetime"
                                         type="datetime-local"
                                         value={data.end_datetime}
+                                        min={minDateTime}
                                         onChange={(e) => setData('end_datetime', e.target.value)}
                                         className={errors.end_datetime ? 'border-red-500' : ''}
                                     />
