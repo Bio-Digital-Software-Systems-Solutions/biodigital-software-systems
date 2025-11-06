@@ -1,0 +1,1 @@
+import{j as l}from"./app-CL_83eGo.js";function a({message:r,className:t="",...e}){return r?l.jsx("p",{...e,className:"text-sm text-red-600 dark:text-red-400 "+t,role:"alert","aria-live":"polite",children:r}):null}export{a as I};

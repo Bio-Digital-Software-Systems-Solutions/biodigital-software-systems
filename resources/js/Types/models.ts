@@ -128,13 +128,21 @@ export interface Video {
 
 export interface Message {
     id: number;
+    uuid: string;
     sender?: User;
     receiver?: User;
+    receiver_id?: number;
     content: string;
     subject?: string;
-    type: 'contact' | 'chat' | 'notification';
+    type: 'contact' | 'chat' | 'notification' | 'direct' | 'broadcast' | 'system' | 'appointment';
+    type_label?: string;
+    excerpt?: string;
+    is_sent?: boolean;
+    all_recipients?: User[];
+    recipients_count?: number;
     read_at?: string;
     created_at: string;
+    updated_at?: string;
 }
 
 export interface Address {

@@ -36,9 +36,9 @@ class UpdateAppointmentRequest extends FormRequest
                 function ($attribute, $value, $fail) use ($appointment) {
                     $startDateTime = Carbon::parse($value);
 
-                    // Business hours validation (7 AM to 11 PM)
-                    if ($startDateTime->hour < 7 || $startDateTime->hour >= 23) {
-                        $fail('Le rendez-vous doit être entre 7h et 23h.');
+                    // Business hours validation (3 AM to midnight)
+                    if ($startDateTime->hour == 1 || $startDateTime->hour == 2) {
+                        $fail('Le rendez-vous doit être entre 3h et 00h.');
                     }
 
                     // Minimum advance notice (only for future changes)

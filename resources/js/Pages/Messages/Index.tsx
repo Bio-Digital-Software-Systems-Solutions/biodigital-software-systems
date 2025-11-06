@@ -23,7 +23,7 @@ interface Message {
     uuid: string;
     subject?: string;
     content: string;
-    type: 'direct' | 'broadcast' | 'system';
+    type: 'direct' | 'broadcast' | 'system' | 'appointment';
     read_at?: string;
     created_at: string;
     sender: User;
@@ -97,6 +97,7 @@ export default function Index({ messages, filters, auth }: Props) {
             case 'direct': return 'text-primary bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20';
             case 'broadcast': return 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/20';
             case 'system': return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20';
+            case 'appointment': return 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20';
             default: return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20';
         }
     };
@@ -160,9 +161,10 @@ export default function Index({ messages, filters, auth }: Props) {
                                                 className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                                             >
                                                 <option value="">All Types</option>
-                                                <option value="direct">Direct Message</option>
-                                                <option value="broadcast">Broadcast</option>
-                                                <option value="system">System Message</option>
+                                                <option value="direct">Message Direct</option>
+                                                <option value="broadcast">Diffusion</option>
+                                                <option value="system">Message Système</option>
+                                                <option value="appointment">Rendez-vous</option>
                                             </select>
                                         </div>
                                         <div>
@@ -216,9 +218,13 @@ export default function Index({ messages, filters, auth }: Props) {
                                                     ) : (
                                                         <InboxIcon className="w-4 h-4 text-gray-400" />
                                                     )}
-                                                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                    <Link
+                                                        href={route('messages.show', message.uuid)}
+                                                        onClick={() => handleMarkAsRead(message)}
+                                                        className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary-light truncate"
+                                                    >
                                                         {message.subject || 'No Subject'}
-                                                    </h3>
+                                                    </Link>
                                                 </div>
                                                 {message.is_sent && message.all_recipients ? (
                                                     <div className="mt-1">
@@ -337,9 +343,13 @@ export default function Index({ messages, filters, auth }: Props) {
                                                             <InboxIcon className="w-5 h-5 text-gray-400 mr-3" />
                                                         )}
                                                         <div>
-                                                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                            <Link
+                                                                href={route('messages.show', message.uuid)}
+                                                                onClick={() => handleMarkAsRead(message)}
+                                                                className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-primary dark:hover:text-primary-light"
+                                                            >
                                                                 {message.subject || 'No Subject'}
-                                                            </div>
+                                                            </Link>
                                                             <div className="text-sm text-gray-500 dark:text-gray-400">
                                                                 {message.excerpt}
                                                             </div>

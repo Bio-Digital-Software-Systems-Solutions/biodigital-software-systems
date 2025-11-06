@@ -18,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { debounce } from 'lodash';
 import { userHasPermission } from '@/Enums/Permission';
+import { sanitizeUserInput } from '@/utils/sanitize';
 
 type ViewMode = 'grid' | 'list' | 'calendar';
 
@@ -147,6 +148,31 @@ export default function Index() {
     const truncateText = (text: string, maxLength: number) => {
         if (text.length <= maxLength) return text;
         return text.substring(0, maxLength) + '...';
+    };
+
+    const truncateAndSanitizeHtml = (html: string, maxLength: number) => {
+        // First truncate roughly by character count (including HTML)
+        const roughTruncated = html.substring(0, maxLength * 2); // x2 to account for HTML tags
+
+        // Remove incomplete tags at the end
+        const lastOpenTag = roughTruncated.lastIndexOf('<');
+        const lastCloseTag = roughTruncated.lastIndexOf('>');
+
+        let cleanHtml = roughTruncated;
+        if (lastOpenTag > lastCloseTag) {
+            // There's an incomplete tag, remove it
+            cleanHtml = roughTruncated.substring(0, lastOpenTag);
+        }
+
+        // Sanitize the HTML for safe rendering
+        const sanitized = sanitizeUserInput(cleanHtml);
+
+        // Check if we need to add ellipsis
+        if (html.length > maxLength * 1.5) {
+            return sanitized + '...';
+        }
+
+        return sanitized;
     };
 
     return (
@@ -286,14 +312,15 @@ export default function Index() {
                                                     )}
                                                     <div className="max-w-md">
                                                         <Link
-                                                            href={route('articles.show', article.slug)}
+                                                            href={route('articles.show', article.uuid)}
                                                             className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary dark:hover:text-blue-400 truncate block"
                                                         >
                                                             {article.title}
                                                         </Link>
-                                                        <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
-                                                            {truncateText(article.content.replace(/<[^>]*>/g, ''), 60)}
-                                                        </div>
+                                                        <div
+                                                            className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1"
+                                                            dangerouslySetInnerHTML={{ __html: truncateAndSanitizeHtml(article.content, 60) }}
+                                                        />
                                                     </div>
                                                 </div>
                                             </td>
@@ -334,7 +361,7 @@ export default function Index() {
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Link
-                                                        href={route('articles.show', article.slug)}
+                                                        href={route('articles.show', article.uuid)}
                                                         className="text-primary hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                                                         title="Voir"
                                                     >
@@ -404,7 +431,7 @@ export default function Index() {
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex-1">
                                         <Link
-                                            href={route('articles.show', article.slug)}
+                                            href={route('articles.show', article.uuid)}
                                             className="text-lg font-semibold text-gray-900 dark:text-white hover:text-primary dark:hover:text-blue-400 line-clamp-2 block"
                                         >
                                             {article.title}
@@ -425,9 +452,10 @@ export default function Index() {
                                     </div>
                                 )}
 
-                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-3">
-                                    {truncateText(article.content, 150)}
-                                </p>
+                                <div
+                                    className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-3"
+                                    dangerouslySetInnerHTML={{ __html: truncateAndSanitizeHtml(article.content, 150) }}
+                                />
 
                                 {/* Article Metadata */}
                                 <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
@@ -472,7 +500,7 @@ export default function Index() {
                             <div className="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
                                 <div className="flex items-center justify-between">
                                     <Link
-                                        href={route('articles.show', article.slug)}
+                                        href={route('articles.show', article.uuid)}
                                         className="inline-flex items-center text-sm text-primary dark:text-blue-400 hover:text-primary dark:hover:text-blue-300"
                                     >
                                         <EyeIcon className="h-4 w-4 mr-1" />

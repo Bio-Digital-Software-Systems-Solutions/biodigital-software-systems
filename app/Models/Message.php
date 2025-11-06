@@ -144,10 +144,11 @@ class Message extends Model
     public function getTypeLabelAttribute(): string
     {
         return match ($this->type) {
-            'direct' => 'Direct Message',
-            'broadcast' => 'Broadcast',
-            'system' => 'System Message',
-            default => 'Direct Message'
+            'direct' => 'Message Direct',
+            'broadcast' => 'Diffusion',
+            'system' => 'Message Système',
+            'appointment' => 'Rendez-vous',
+            default => 'Message Direct'
         };
     }
 

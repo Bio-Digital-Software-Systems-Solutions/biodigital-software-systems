@@ -361,7 +361,7 @@ export default function UserDashboard() {
                                 {recentArticles.slice(0, 6).map((article) => (
                                     <Link
                                         key={article.id}
-                                        href={route('articles.show', article.slug)}
+                                        href={route('articles.show', article.uuid)}
                                         className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition"
                                     >
                                         {article.featured_image && (

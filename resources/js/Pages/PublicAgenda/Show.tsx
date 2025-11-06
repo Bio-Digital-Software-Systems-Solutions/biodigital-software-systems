@@ -164,7 +164,7 @@ export default function PublicAgendaShow({ user, appointments, currentMonth }: P
                                 Agenda de {user.name}
                             </h1>
                             <p className="text-gray-600 dark:text-gray-400">
-                                Consultez les créneaux disponibles et les rendez-vous publics
+                                Consultez les créneaux disponibles et les rendez-vous
                             </p>
                         </div>
                     </div>

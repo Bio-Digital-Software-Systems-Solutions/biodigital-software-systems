@@ -7,6 +7,7 @@ import { Calendar } from '@/Components/ui/calendar';
 
 interface Event {
     id: number;
+    uuid: string;
     title: string;
     description?: string;
     start_date: string;
@@ -56,8 +57,8 @@ export default function WeekCalendar({ events, canCreateEvents = false }: WeekCa
         return { top, height };
     };
 
-    const handleEventClick = (eventId: number) => {
-        router.visit(route('events.show', eventId));
+    const handleEventClick = (eventUuid: string) => {
+        router.visit(route('events.show', eventUuid));
     };
 
     const handleCreateEvent = (date: Date, hour: number) => {
@@ -191,7 +192,7 @@ export default function WeekCalendar({ events, canCreateEvents = false }: WeekCa
                                                         top: `${top}px`,
                                                         height: `${height}px`,
                                                     }}
-                                                    onClick={() => handleEventClick(event.id)}
+                                                    onClick={() => handleEventClick(event.uuid)}
                                                 >
                                                     <div className="text-xs font-semibold truncate">
                                                         {format(parseISO(event.start_date), 'HH:mm')} {event.title}

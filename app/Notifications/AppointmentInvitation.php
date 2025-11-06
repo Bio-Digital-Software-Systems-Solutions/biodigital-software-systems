@@ -32,7 +32,7 @@ class AppointmentInvitation extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     /**
@@ -72,14 +72,41 @@ class AppointmentInvitation extends Notification implements ShouldQueue
     }
 
     /**
+     * Get the database representation of the notification.
+     */
+    public function toDatabase(object $notifiable): array
+    {
+        $startDate = \Carbon\Carbon::parse($this->appointment->start_datetime);
+        $organizerName = $this->appointment->organizer->first_name . ' ' . $this->appointment->organizer->last_name;
+
+        $confirmUrl = url("/appointments/{$this->appointment->uuid}/confirm/{$this->confirmationToken}");
+        $declineUrl = url("/appointments/{$this->appointment->uuid}/decline/{$this->confirmationToken}");
+
+        return [
+            'type' => 'appointment_invitation',
+            'title' => "Invitation au rendez-vous : {$this->appointment->title}",
+            'message' => "Vous êtes invité(e) par {$organizerName} au rendez-vous \"{$this->appointment->title}\" le {$startDate->format('d/m/Y à H:i')}.",
+            'appointment_id' => $this->appointment->id,
+            'appointment_uuid' => $this->appointment->uuid,
+            'appointment_title' => $this->appointment->title,
+            'appointment_date' => $startDate->format('d/m/Y'),
+            'appointment_time' => $startDate->format('H:i') . ' - ' . \Carbon\Carbon::parse($this->appointment->end_datetime)->format('H:i'),
+            'organizer_name' => $organizerName,
+            'confirmation_token' => $this->confirmationToken,
+            'confirm_url' => $confirmUrl,
+            'decline_url' => $declineUrl,
+            'action_url' => route('appointments.show', $this->appointment->uuid),
+            'created_at' => now(),
+        ];
+    }
+
+    /**
      * Get the array representation of the notification.
      *
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            //
-        ];
+        return $this->toDatabase($notifiable);
     }
 }

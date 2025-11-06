@@ -296,6 +296,11 @@ class Appointment extends Model
      */
     public function getParticipantsCountAttribute(): int
     {
+        // Use preloaded count if available (from withCount), otherwise query
+        if (array_key_exists('participants_count', $this->attributes)) {
+            return $this->attributes['participants_count'];
+        }
+
         return $this->participants()->count();
     }
 
@@ -313,8 +318,8 @@ class Appointment extends Model
     public static function getAvailableSlots(
         string $date,
         int $durationMinutes = 60,
-        string $startHour = '07:00',
-        string $endHour = '23:00',
+        string $startHour = '03:00',
+        string $endHour = '00:00',
         ?User $organizer = null
     ): array {
         $date = Carbon::parse($date);
@@ -322,6 +327,11 @@ class Appointment extends Model
 
         $start = $date->copy()->setTimeFromTimeString($startHour);
         $end = $date->copy()->setTimeFromTimeString($endHour);
+
+        // If end time is 00:00, it means midnight of the next day
+        if ($endHour === '00:00') {
+            $end->addDay();
+        }
 
         $query = static::forDate($date->toDateString())
             ->whereNotIn('status', ['cancelled'])
@@ -331,28 +341,58 @@ class Appointment extends Model
             $query->forUser($organizer);
         }
 
-        $existingAppointments = $query->get(['start_datetime', 'end_datetime']);
+        $existingAppointments = $query->get(['start_datetime', 'end_datetime', 'title', 'visibility']);
 
         $current = $start->copy();
 
+        // Generate ALL time slots for the day (not just available ones)
         while ($current->addMinutes($durationMinutes)->lte($end)) {
             $slotStart = $current->copy()->subMinutes($durationMinutes);
             $slotEnd = $current->copy();
 
             $isAvailable = true;
+            $conflictingAppointment = null;
+
+            // Check if this slot conflicts with any existing appointment
             foreach ($existingAppointments as $appointment) {
                 if ($slotStart->lt($appointment->end_datetime) &&
                     $slotEnd->gt($appointment->start_datetime)) {
                     $isAvailable = false;
+                    $conflictingAppointment = $appointment;
                     break;
                 }
             }
 
-            if ($isAvailable && $slotStart->isFuture()) {
+            // Check if slot is in the past
+            $isPast = $slotStart->isPast();
+
+            // Always add the slot to show complete schedule
+            if ($isAvailable && !$isPast) {
                 $slots[] = [
                     'start_datetime' => $slotStart->toISOString(),
                     'end_datetime' => $slotEnd->toISOString(),
-                    'formatted_time' => $slotStart->format('H:i') . ' - ' . $slotEnd->format('H:i')
+                    'formatted_time' => $slotStart->format('H:i') . ' - ' . $slotEnd->format('H:i'),
+                    'available' => true
+                ];
+            } else {
+                // Show occupied or past slots with appropriate reason
+                $reason = 'Occupé';
+                if ($isPast) {
+                    $reason = 'Passé';
+                } elseif ($conflictingAppointment) {
+                    if ($conflictingAppointment->visibility === 'public') {
+                        $reason = 'Occupé - ' . $conflictingAppointment->title;
+                    } else {
+                        $reason = 'Occupé';
+                    }
+                }
+
+                $slots[] = [
+                    'start_datetime' => $slotStart->toISOString(),
+                    'end_datetime' => $slotEnd->toISOString(),
+                    'formatted_time' => $slotStart->format('H:i') . ' - ' . $slotEnd->format('H:i'),
+                    'available' => false,
+                    'reason' => $reason
                 ];
             }
         }
@@ -421,10 +461,14 @@ class Appointment extends Model
      */
     public function canBeViewedBy(User $user): bool
     {
-        // Can always view if organizer, participant, or has permission
+        // Can always view if organizer or has permission
         if ($this->user_id === $user->id ||
-            $this->participants->contains('id', $user->id) ||
             $user->hasPermissionTo('view appointments')) {
+            return true;
+        }
+
+        // Check if user is a participant without loading the collection
+        if ($this->participants()->where('user_id', $user->id)->exists()) {
             return true;
         }
 
@@ -471,14 +515,19 @@ class Appointment extends Model
         User $user,
         string $date,
         int $durationMinutes = 60,
-        string $startHour = '07:00',
-        string $endHour = '23:00'
+        string $startHour = '03:00',
+        string $endHour = '00:00'
     ): array {
         $date = Carbon::parse($date);
         $slots = [];
 
         $start = $date->copy()->setTimeFromTimeString($startHour);
         $end = $date->copy()->setTimeFromTimeString($endHour);
+
+        // If end time is 00:00, it means midnight of the next day
+        if ($endHour === '00:00') {
+            $end->addDay();
+        }
 
         // Get all appointments for this user on this date (both private and public)
         $existingAppointments = static::forDate($date->toDateString())
@@ -554,9 +603,8 @@ class Appointment extends Model
         $appointments = static::forDate($date->toDateString())
             ->forUser($user)
             ->whereNotIn('status', ['cancelled'])
-            ->public() // Only public appointments
             ->orderBy('start_datetime')
-            ->get(['start_datetime', 'end_datetime', 'title', 'type', 'status']);
+            ->get(['id', 'start_datetime', 'end_datetime', 'title', 'type', 'status', 'visibility']);
 
         return $appointments->map(function ($appointment) {
             return [
@@ -566,6 +614,7 @@ class Appointment extends Model
                 'type' => $appointment->type,
                 'formatted_time' => $appointment->formatted_time_range,
                 'status' => $appointment->status,
+                'visibility' => $appointment->visibility,
             ];
         })->toArray();
     }

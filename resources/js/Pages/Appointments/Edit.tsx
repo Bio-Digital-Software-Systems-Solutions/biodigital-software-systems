@@ -31,11 +31,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, addHours, parseISO } from 'date-fns';
+import TimeSlotPicker from '@/Components/appointments/TimeSlotPicker';
 
 import type { AppointmentCreateEditProps, AppointmentFormData, User as UserType } from '@/Types/appointment';
 
 export default function AppointmentEdit() {
-    const { appointment, users, types } = usePage<AppointmentCreateEditProps>().props;
+    const { appointment, users, types, auth } = usePage<AppointmentCreateEditProps>().props;
 
     if (!appointment) {
         return <div>Appointment not found</div>;
@@ -264,61 +265,22 @@ export default function AppointmentEdit() {
                         </CardContent>
                     </Card>
 
-                    {/* Date and Time */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center space-x-2">
-                                <Calendar className="h-5 w-5" />
-                                <span>Date et heure</span>
-                            </CardTitle>
-                            <CardDescription>
-                                Modifiez la période du rendez-vous
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="start_datetime">Début *</Label>
-                                    <Input
-                                        id="start_datetime"
-                                        type="datetime-local"
-                                        value={data.start_datetime}
-                                        min={minDateTime}
-                                        onChange={(e) => setData('start_datetime', e.target.value)}
-                                        className={errors.start_datetime ? 'border-red-500' : ''}
-                                    />
-                                    {errors.start_datetime && (
-                                        <p className="text-sm text-red-600">{errors.start_datetime}</p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="end_datetime">Fin *</Label>
-                                    <Input
-                                        id="end_datetime"
-                                        type="datetime-local"
-                                        value={data.end_datetime}
-                                        min={minDateTime}
-                                        onChange={(e) => setData('end_datetime', e.target.value)}
-                                        className={errors.end_datetime ? 'border-red-500' : ''}
-                                    />
-                                    {errors.end_datetime && (
-                                        <p className="text-sm text-red-600">{errors.end_datetime}</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Duration calculation */}
-                            {data.start_datetime && data.end_datetime && (
-                                <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                                    <Clock className="h-4 w-4" />
-                                    <span>
-                                        Durée : {Math.round((new Date(data.end_datetime).getTime() - new Date(data.start_datetime).getTime()) / (1000 * 60))} minutes
-                                    </span>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    {/* Date and Time Slot Picker */}
+                    <TimeSlotPicker
+                        selectedStartDateTime={data.start_datetime}
+                        selectedEndDateTime={data.end_datetime}
+                        onTimeSlotSelect={(startDateTime, endDateTime) => {
+                            setData('start_datetime', format(new Date(startDateTime), "yyyy-MM-dd'T'HH:mm"));
+                            setData('end_datetime', format(new Date(endDateTime), "yyyy-MM-dd'T'HH:mm"));
+                        }}
+                        duration={Math.round((new Date(data.end_datetime).getTime() - new Date(data.start_datetime).getTime()) / (1000 * 60))}
+                        organizerId={appointment.user_id}
+                        participants={selectedParticipants}
+                        errors={{
+                            start_datetime: errors.start_datetime,
+                            end_datetime: errors.end_datetime
+                        }}
+                    />
 
                     {/* Participants */}
                     <Card>

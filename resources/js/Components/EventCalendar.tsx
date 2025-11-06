@@ -7,6 +7,7 @@ import { CalendarIcon, PlusIcon, MapPinIcon, ClockIcon } from '@heroicons/react/
 
 interface Event {
     id: number;
+    uuid: string;
     title: string;
     description?: string;
     start_date: string;
@@ -44,8 +45,8 @@ export default function EventCalendar({ events, canCreateEvents = false }: Event
     };
 
     // Handle event click
-    const handleEventClick = (eventId: number) => {
-        router.visit(route('events.show', eventId));
+    const handleEventClick = (eventUuid: string) => {
+        router.visit(route('events.show', eventUuid));
     };
 
     // Handle create event
@@ -107,7 +108,7 @@ export default function EventCalendar({ events, canCreateEvents = false }: Event
                         selectedDateEvents.map(event => (
                             <div
                                 key={event.id}
-                                onClick={() => handleEventClick(event.id)}
+                                onClick={() => handleEventClick(event.uuid)}
                                 className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-icc-blue dark:hover:border-icc-blue cursor-pointer transition-all hover:shadow-md"
                             >
                                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">

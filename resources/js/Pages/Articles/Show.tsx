@@ -422,7 +422,7 @@ export default function Show({ article, relatedArticles, auth, isLiked: initialI
                             {relatedArticles.map((relatedArticle) => (
                                 <Link
                                     key={relatedArticle.id}
-                                    href={route('articles.show', relatedArticle.slug)}
+                                    href={route('articles.show', relatedArticle.uuid)}
                                     className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
                                 >
                                     {relatedArticle.cover_image ? (

@@ -27,17 +27,17 @@ class PublicAgendaController extends Controller
             'avatar' => $user->avatar,
         ];
 
-        // Get current month's public appointments
+        // Get current month's appointments (both public and private for complete agenda view)
         $currentMonth = now()->format('Y-m');
-        $publicAppointments = Appointment::forUser($user)
-            ->public()
+        $allAppointments = Appointment::with(['organizer:id,first_name,last_name,email'])
+            ->forUser($user)
             ->whereMonth('start_datetime', now()->month)
             ->whereYear('start_datetime', now()->year)
             ->whereNotIn('status', ['cancelled'])
             ->orderBy('start_datetime')
-            ->get(['start_datetime', 'end_datetime', 'title', 'type', 'status']);
+            ->get(['id', 'start_datetime', 'end_datetime', 'title', 'type', 'status', 'visibility', 'user_id']);
 
-        $calendarEvents = $publicAppointments->map(function ($appointment) {
+        $calendarEvents = $allAppointments->map(function ($appointment) {
             return [
                 'id' => $appointment->id,
                 'title' => $appointment->title,
@@ -92,24 +92,47 @@ class PublicAgendaController extends Controller
     }
 
     /**
-     * Get user's public schedule for a specific date.
+     * Get user's public schedule for a specific month.
      */
     public function schedule(Request $request, User $user): JsonResponse
     {
-        $date = $request->get('date', now()->toDateString());
+        $month = $request->get('month', now()->format('Y-m'));
 
         try {
-            $schedule = Appointment::getUserSchedule($user, $date);
+            // Get all appointments for the month (both public and private for complete agenda view)
+            $appointments = Appointment::with(['organizer:id,first_name,last_name,email'])
+                ->forUser($user)
+                ->whereYear('start_datetime', substr($month, 0, 4))
+                ->whereMonth('start_datetime', substr($month, 5, 2))
+                ->whereNotIn('status', ['cancelled'])
+                ->orderBy('start_datetime')
+                ->get(['id', 'start_datetime', 'end_datetime', 'title', 'type', 'status', 'visibility', 'user_id']);
+
+            $calendarEvents = $appointments->map(function ($appointment) {
+                return [
+                    'id' => $appointment->id,
+                    'title' => $appointment->title,
+                    'start' => $appointment->start_datetime->toISOString(),
+                    'end' => $appointment->end_datetime->toISOString(),
+                    'backgroundColor' => $this->getTypeColor($appointment->type),
+                    'borderColor' => $this->getTypeColor($appointment->type),
+                    'extendedProps' => [
+                        'type' => $appointment->type,
+                        'status' => $appointment->status,
+                        'formatted_time' => $appointment->start_datetime->format('H:i') . ' - ' . $appointment->end_datetime->format('H:i'),
+                    ],
+                ];
+            });
 
             return response()->json([
                 'success' => true,
-                'date' => $date,
+                'month' => $month,
                 'user' => [
                     'id' => $user->id,
                     'uuid' => $user->uuid,
                     'name' => $user->name,
                 ],
-                'appointments' => $schedule,
+                'appointments' => $calendarEvents,
             ]);
         } catch (\Exception $e) {
             return response()->json([

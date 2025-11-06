@@ -90,6 +90,13 @@ interface DashboardProps extends PageProps {
 export default function Dashboard() {
     const { auth, stats: statsData, recentActivities: activitiesData, performance, upcomingQuizzes, quizStats } = usePage<DashboardProps>().props;
 
+    // Function to strip HTML tags and decode HTML entities
+    const stripHtml = (html: string): string => {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || '';
+    };
+
     const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
         'CalendarDaysIcon': CalendarDaysIcon,
         'PencilSquareIcon': PencilSquareIcon,
@@ -258,7 +265,7 @@ export default function Dashboard() {
                                                     {activity.title}
                                                 </p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {activity.description}
+                                                    {stripHtml(activity.description)}
                                                 </p>
                                                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                                                     {activity.time}

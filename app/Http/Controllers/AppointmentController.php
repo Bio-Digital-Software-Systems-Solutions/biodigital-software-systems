@@ -11,6 +11,7 @@ use App\Notifications\AppointmentInvitation;
 use App\Notifications\AppointmentConfirmation;
 use App\Notifications\AppointmentCancellation;
 use App\Services\CacheService;
+use App\Services\AppointmentNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -58,6 +59,7 @@ class AppointmentController extends Controller
             $page,
             function () use ($search, $status, $type, $date) {
                 $query = Appointment::with(['organizer:id,first_name,last_name,email', 'participants:id,first_name,last_name,email'])
+                    ->withCount('participants')
                     ->select([
                         'id', 'uuid', 'title', 'description', 'start_datetime', 'end_datetime',
                         'location', 'status', 'type', 'user_id', 'created_at'
@@ -146,7 +148,7 @@ class AppointmentController extends Controller
         }
 
         // Get available users for invitations
-        $users = User::select(['id', 'first_name', 'last_name', 'email'])
+        $users = User::select(['id', 'uuid', 'first_name', 'last_name', 'email'])
             ->where('id', '!=', Auth::id())
             ->orderBy('first_name')
             ->get()
@@ -158,7 +160,7 @@ class AppointmentController extends Controller
         // Get pre-selected participants data if any
         $preselectedParticipants = [];
         if (!empty($prefilledData['participant_ids'])) {
-            $preselectedParticipants = User::select(['id', 'first_name', 'last_name', 'email'])
+            $preselectedParticipants = User::select(['id', 'uuid', 'first_name', 'last_name', 'email'])
                 ->whereIn('id', $prefilledData['participant_ids'])
                 ->get()
                 ->map(function ($user) {
@@ -187,15 +189,23 @@ class AppointmentController extends Controller
 
         // Invite participants if any
         if (!empty($data['participant_ids'])) {
+            // Bulk load users to avoid N+1 queries
+            $users = User::whereIn('id', $data['participant_ids'])->get()->keyBy('id');
             foreach ($data['participant_ids'] as $userId) {
-                $this->inviteParticipant($appointment, $userId);
+                if ($users->has($userId)) {
+                    $this->inviteParticipantWithUser($appointment, $users[$userId]);
+                }
             }
         }
+
+        // Send confirmation message to organizer
+        $notificationService = new AppointmentNotificationService();
+        $notificationService->sendOrganizerConfirmation($appointment);
 
         // Clear cache
         CacheService::forgetPattern('appointments.*');
 
-        return redirect()->route('appointments.show', $appointment->uuid)
+        return redirect()->route('appointments.index')
             ->with('message', 'Rendez-vous créé avec succès.');
     }
 
@@ -218,8 +228,30 @@ class AppointmentController extends Controller
             'notification_sent_at' => now(),
         ]);
 
-        // Send invitation notification
-        $user->notify(new AppointmentInvitation($appointment, $confirmationToken));
+        // Send complete invitation notification (email + database notification + direct message + message notification)
+        $notificationService = new AppointmentNotificationService();
+        $notificationService->sendInvitationNotification($appointment, $user, $confirmationToken);
+    }
+
+    /**
+     * Invite a participant to an appointment with confirmation token (with User object to avoid N+1).
+     */
+    private function inviteParticipantWithUser(Appointment $appointment, User $user): void
+    {
+        // Generate unique confirmation token
+        $confirmationToken = Str::random(64);
+
+        // Attach participant with confirmation token
+        $appointment->participants()->attach($user->id, [
+            'status' => 'pending',
+            'confirmation_token' => $confirmationToken,
+            'invited_at' => now(),
+            'notification_sent_at' => now(),
+        ]);
+
+        // Send complete invitation notification (email + database notification + direct message + message notification)
+        $notificationService = new AppointmentNotificationService();
+        $notificationService->sendInvitationNotification($appointment, $user, $confirmationToken);
     }
 
     /**
@@ -255,10 +287,10 @@ class AppointmentController extends Controller
             abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce rendez-vous.');
         }
 
-        $appointment->load(['participants:id,first_name,last_name,email']);
+        $appointment->load(['participants:id,uuid,first_name,last_name,email']);
 
         // Get available users for invitations
-        $users = User::select(['id', 'first_name', 'last_name', 'email'])
+        $users = User::select(['id', 'uuid', 'first_name', 'last_name', 'email'])
             ->where('id', '!=', $appointment->user_id)
             ->orderBy('first_name')
             ->get();
@@ -283,6 +315,7 @@ class AppointmentController extends Controller
         $data = $request->validated();
 
         // Store previous participants before update
+        $appointment->load('participants');
         $previousParticipants = $appointment->participants->pluck('id')->toArray();
 
         $appointment->update($data);
@@ -296,14 +329,19 @@ class AppointmentController extends Controller
             $appointment->participants()->detach();
 
             // Re-invite all participants (existing ones will get update notification)
+            // Bulk load users to avoid N+1 queries
+            $users = User::whereIn('id', $newParticipants)->get()->keyBy('id');
             foreach ($newParticipants as $userId) {
-                $this->inviteParticipant($appointment, $userId);
+                if ($users->has($userId)) {
+                    $this->inviteParticipantWithUser($appointment, $users[$userId]);
+                }
             }
 
-            // Notify about the update (re-invitation with new details)
+            // Notify about the update
             $appointment->load('participants');
+            $notificationService = new AppointmentNotificationService();
             foreach ($appointment->participants as $participant) {
-                // This is handled by inviteParticipant method above
+                $notificationService->sendUpdateNotification($appointment, $participant, 'updated');
             }
         }
 
@@ -354,8 +392,10 @@ class AppointmentController extends Controller
         $appointment->update(['status' => 'cancelled']);
 
         // Send cancellation notifications to all participants
+        $notificationService = new AppointmentNotificationService();
         foreach ($appointment->participants as $participant) {
             $participant->notify(new AppointmentCancellation($appointment, 'Rendez-vous annulé par l\'organisateur'));
+            $notificationService->sendUpdateNotification($appointment, $participant, 'cancelled');
         }
 
         // Clear cache
@@ -376,6 +416,13 @@ class AppointmentController extends Controller
         }
 
         $appointment->update(['status' => 'confirmed']);
+
+        // Send confirmation notifications to all participants
+        $appointment->load('participants');
+        $notificationService = new AppointmentNotificationService();
+        foreach ($appointment->participants as $participant) {
+            $notificationService->sendUpdateNotification($appointment, $participant, 'confirmed');
+        }
 
         // Clear cache
         CacheService::forgetPattern('appointments.*');
@@ -423,14 +470,8 @@ class AppointmentController extends Controller
 
         $organizer = $organizerId ? User::find($organizerId) : Auth::user();
 
-        if (Carbon::parse($date)->isWeekend()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Les rendez-vous ne sont pas disponibles le weekend.'
-            ], 400);
-        }
 
-        $slots = Appointment::getAvailableSlots($date, $duration, '07:00', '23:00', $organizer);
+        $slots = Appointment::getAvailableSlots($date, $duration, '03:00', '00:00', $organizer);
 
         return response()->json([
             'success' => true,

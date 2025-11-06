@@ -13,6 +13,7 @@ interface User {
 
 interface Message {
     id: number;
+    uuid: string;
     subject?: string;
     content: string;
     type: 'direct' | 'broadcast' | 'system';
@@ -35,7 +36,7 @@ export default function Edit({ message, users }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('messages.update', message.id));
+        put(route('messages.update', message.uuid));
     };
 
     return (
