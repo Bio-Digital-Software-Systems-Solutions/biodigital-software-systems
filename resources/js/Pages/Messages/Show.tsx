@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
-import { ArrowLeftIcon, PencilIcon, TrashIcon, EnvelopeIcon, ClockIcon, UserIcon, ArrowUturnRightIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PencilIcon, TrashIcon, EnvelopeIcon, ClockIcon, UserIcon, ArrowUturnRightIcon, PaperClipIcon, DocumentIcon, PhotoIcon, FilmIcon, MusicalNoteIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface User {
@@ -10,6 +10,21 @@ interface User {
     first_name: string;
     last_name: string;
     email: string;
+}
+
+interface MessageAttachment {
+    id: number;
+    uuid: string;
+    filename: string;
+    stored_filename: string;
+    file_path: string;
+    mime_type: string;
+    file_size: number;
+    file_type: string;
+    human_file_size: string;
+    file_url: string;
+    download_url: string;
+    is_image: boolean;
 }
 
 interface Message {
@@ -24,6 +39,7 @@ interface Message {
     sender: User;
     receiver: User;
     type_label: string;
+    attachments?: MessageAttachment[];
 }
 
 interface Props extends PageProps {
@@ -41,6 +57,24 @@ export default function Show({ message, auth }: Props) {
             case 'broadcast': return 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/20';
             case 'system': return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20';
             default: return 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20';
+        }
+    };
+
+    const getFileIcon = (attachment: MessageAttachment) => {
+        if (attachment.is_image) {
+            return <PhotoIcon className="h-8 w-8 text-blue-500" />;
+        } else if (attachment.mime_type.startsWith('video/')) {
+            return <FilmIcon className="h-8 w-8 text-purple-500" />;
+        } else if (attachment.mime_type.startsWith('audio/')) {
+            return <MusicalNoteIcon className="h-8 w-8 text-green-500" />;
+        } else if (
+            attachment.mime_type === 'application/zip' ||
+            attachment.mime_type === 'application/x-rar-compressed' ||
+            attachment.mime_type === 'application/x-7z-compressed'
+        ) {
+            return <ArchiveBoxIcon className="h-8 w-8 text-yellow-500" />;
+        } else {
+            return <DocumentIcon className="h-8 w-8 text-gray-500" />;
         }
     };
 
@@ -170,6 +204,57 @@ export default function Show({ message, auth }: Props) {
                                 <div dangerouslySetInnerHTML={{ __html: message.content }} />
                             </div>
                         </div>
+
+                        {/* Message Attachments */}
+                        {message.attachments && message.attachments.length > 0 && (
+                            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center mb-4">
+                                    <PaperClipIcon className="h-5 w-5 text-gray-400 mr-2" />
+                                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                                        Pièces jointes ({message.attachments.length})
+                                    </h3>
+                                </div>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {message.attachments.map((attachment) => (
+                                        <div
+                                            key={attachment.id}
+                                            className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+                                        >
+                                            {/* File Icon/Preview */}
+                                            <div className="flex-shrink-0 mr-3">
+                                                {attachment.is_image ? (
+                                                    <img
+                                                        src={attachment.file_url}
+                                                        alt={attachment.filename}
+                                                        className="h-10 w-10 object-cover rounded"
+                                                    />
+                                                ) : (
+                                                    getFileIcon(attachment)
+                                                )}
+                                            </div>
+
+                                            {/* File Info */}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                    {attachment.filename}
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {attachment.human_file_size}
+                                                </p>
+                                            </div>
+
+                                            {/* Download Button */}
+                                            <a
+                                                href={attachment.download_url}
+                                                className="ml-3 inline-flex items-center px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors"
+                                            >
+                                                Télécharger
+                                            </a>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Message Status */}
                         {isCurrentUserReceiver && !message.read_at && (

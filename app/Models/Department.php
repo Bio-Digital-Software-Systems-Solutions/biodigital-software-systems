@@ -131,11 +131,7 @@ class Department extends Model
      */
     public function getHeadOfDepartmentUserAttribute()
     {
-        if (! $this->head_of_department) {
-            return null;
-        }
-
-        return $this->users()->find($this->head_of_department);
+        return $this->headOfDepartment;
     }
 
     /**

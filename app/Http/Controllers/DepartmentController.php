@@ -17,7 +17,8 @@ class DepartmentController extends Controller
 
     public function index()
     {
-        $departments = Department::with(['users'])
+        $departments = Department::with(['users', 'headOfDepartment'])
+            ->withCount('users')
             ->when(request('status'), function ($query, $status) {
                 if ($status === 'active') {
                     $query->active();

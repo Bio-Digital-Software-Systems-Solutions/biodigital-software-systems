@@ -20,7 +20,8 @@ class GroupController extends Controller
 
     public function index()
     {
-        $groups = Group::with(['leader', 'users'])
+        $groups = Group::with(['leader'])
+            ->withCount('users')
             ->when(request('status'), function ($query, $status) {
                 if ($status === 'active') {
                     $query->active();

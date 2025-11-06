@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use App\Models\Message;
+use App\Models\MessageAttachment;
 use App\Models\User;
+use App\Mail\NewMessageMail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -82,10 +86,11 @@ class MessageController extends Controller
 
                     // Collect all recipients
                     $recipients = $relatedMessages->map(function ($m) {
+                        $receiver = $m->receiver; // Access the relationship only once
                         return [
-                            'id' => $m->receiver->id,
-                            'name' => $m->receiver->first_name . ' ' . $m->receiver->last_name,
-                            'email' => $m->receiver->email,
+                            'id' => $receiver->id,
+                            'name' => $receiver->first_name . ' ' . $receiver->last_name,
+                            'email' => $receiver->email,
                         ];
                     })->unique('id')->values();
 
@@ -193,10 +198,13 @@ class MessageController extends Controller
             'bcc_recipients' => 'nullable|array',
             'bcc_recipients.*' => 'integer|exists:users,id',
             'type' => 'required|in:direct,broadcast,system',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,txt,zip,rar,7z',
         ]);
 
         $ccRecipients = $validated['cc_recipients'] ?? [];
         $bccRecipients = $validated['bcc_recipients'] ?? [];
+        $attachments = $request->file('attachments') ?? [];
 
         // Verify recipient exists
         if ($validated['recipient_type'] === 'user') {
@@ -214,6 +222,9 @@ class MessageController extends Controller
                 'bcc_recipients' => $bccRecipients,
                 'type' => $validated['type'],
             ]);
+
+            // Handle file attachments for main message
+            $this->handleAttachments($message, $attachments);
 
             // Send copies to CC recipients
             foreach ($ccRecipients as $ccUserId) {
@@ -258,6 +269,7 @@ class MessageController extends Controller
 
             // Create a broadcast message for each member of the department
             $departmentUsers = $department->users;
+            $firstMessage = null;
 
             foreach ($departmentUsers as $user) {
                 // Don't send to self
@@ -265,7 +277,7 @@ class MessageController extends Controller
                     continue;
                 }
 
-                Message::create([
+                $message = Message::create([
                     'subject' => $validated['subject'] ?? null,
                     'content' => $validated['content'],
                     'sender_id' => Auth::id(),
@@ -276,6 +288,12 @@ class MessageController extends Controller
                     'bcc_recipients' => $bccRecipients,
                     'type' => 'broadcast',
                 ]);
+
+                // Only attach files to the first message to avoid duplicates
+                if ($firstMessage === null) {
+                    $firstMessage = $message;
+                    $this->handleAttachments($message, $attachments);
+                }
             }
 
             // Also send to CC recipients (if not already in department)
@@ -317,6 +335,9 @@ class MessageController extends Controller
             }
         }
 
+        // Send email notifications
+        $this->sendEmailNotifications($validated, $ccRecipients, $bccRecipients);
+
         return redirect()->route('messages.index')
             ->with('message', 'Message sent successfully.');
     }
@@ -331,7 +352,7 @@ class MessageController extends Controller
             abort(403, 'Unauthorized to view this message.');
         }
 
-        $message->load(['sender', 'receiver']);
+        $message->load(['sender', 'receiver', 'attachments']);
 
         // Mark as read if user is the receiver
         if ($message->receiver_id === Auth::id() && ! $message->isRead()) {
@@ -430,6 +451,25 @@ class MessageController extends Controller
     }
 
     /**
+     * Download message attachment
+     */
+    public function downloadAttachment(MessageAttachment $attachment)
+    {
+        // Check if user can access this attachment
+        $message = $attachment->message;
+        if ($message->sender_id !== Auth::id() && $message->receiver_id !== Auth::id()) {
+            abort(403, 'Unauthorized to download this attachment.');
+        }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($attachment->file_path)) {
+            abort(404, 'File not found.');
+        }
+
+        return Storage::disk('public')->download($attachment->file_path, $attachment->filename);
+    }
+
+    /**
      * Search for recipients (users and departments)
      */
     public function searchRecipients(Request $request): JsonResponse
@@ -521,5 +561,120 @@ class MessageController extends Controller
         }
 
         return response()->json($results);
+    }
+
+    /**
+     * Handle file uploads and create attachments for a message
+     */
+    private function handleAttachments(Message $message, array $attachments): void
+    {
+        if (empty($attachments)) {
+            return;
+        }
+
+        foreach ($attachments as $file) {
+            // Generate unique filename
+            $originalName = $file->getClientOriginalName();
+            $extension = $file->getClientOriginalExtension();
+            $storedFilename = uniqid() . '_' . time() . '.' . $extension;
+
+            // Store file in the public disk under message-attachments directory
+            $filePath = $file->storeAs('message-attachments', $storedFilename, 'public');
+
+            // Determine file type
+            $mimeType = $file->getMimeType();
+            $fileType = MessageAttachment::determineFileType($mimeType);
+
+            // Create attachment record
+            MessageAttachment::create([
+                'message_id' => $message->id,
+                'filename' => $originalName,
+                'stored_filename' => $storedFilename,
+                'file_path' => $filePath,
+                'mime_type' => $mimeType,
+                'file_size' => $file->getSize(),
+                'file_type' => $fileType,
+            ]);
+        }
+    }
+
+    /**
+     * Send email notifications to recipients, CC, and BCC
+     */
+    private function sendEmailNotifications(array $validated, array $ccRecipients, array $bccRecipients): void
+    {
+        $sender = Auth::user();
+
+        // Create a temporary message object for the email
+        $tempMessage = new Message([
+            'subject' => $validated['subject'] ?? null,
+            'content' => $validated['content'],
+            'sender_id' => $sender->id,
+            'type' => $validated['type'],
+        ]);
+
+        // Send to main recipient
+        if ($validated['recipient_type'] === 'user') {
+            $mainRecipient = User::find($validated['recipient_id']);
+            if ($mainRecipient && $mainRecipient->email) {
+                Mail::to($mainRecipient->email)->send(new NewMessageMail($tempMessage, $mainRecipient, $sender));
+            }
+        } else {
+            // Department - send to all members
+            $department = Department::with('users')->find($validated['recipient_id']);
+            if ($department) {
+                foreach ($department->users as $user) {
+                    if ($user->id !== $sender->id && $user->email) {
+                        Mail::to($user->email)->send(new NewMessageMail($tempMessage, $user, $sender));
+                    }
+                }
+            }
+        }
+
+        // Send to CC recipients
+        foreach ($ccRecipients as $ccUserId) {
+            if ($ccUserId === $sender->id) {
+                continue; // Skip sender
+            }
+
+            $ccUser = User::find($ccUserId);
+            if ($ccUser && $ccUser->email) {
+                // Skip if already sent to main recipient or department
+                if ($validated['recipient_type'] === 'user' && $ccUserId === $validated['recipient_id']) {
+                    continue;
+                }
+                if ($validated['recipient_type'] === 'department') {
+                    $department = Department::with('users')->find($validated['recipient_id']);
+                    if ($department && $department->users->contains('id', $ccUserId)) {
+                        continue;
+                    }
+                }
+
+                Mail::to($ccUser->email)->send(new NewMessageMail($tempMessage, $ccUser, $sender));
+            }
+        }
+
+        // Send to BCC recipients
+        foreach ($bccRecipients as $bccUserId) {
+            if ($bccUserId === $sender->id || in_array($bccUserId, $ccRecipients)) {
+                continue; // Skip sender and CC recipients
+            }
+
+            $bccUser = User::find($bccUserId);
+            if ($bccUser && $bccUser->email) {
+                // Skip if already sent to main recipient or department
+                if ($validated['recipient_type'] === 'user' && $bccUserId === $validated['recipient_id']) {
+                    continue;
+                }
+                if ($validated['recipient_type'] === 'department') {
+                    $department = Department::with('users')->find($validated['recipient_id']);
+                    if ($department && $department->users->contains('id', $bccUserId)) {
+                        continue;
+                    }
+                }
+
+                Mail::to($bccUser->email)->send(new NewMessageMail($tempMessage, $bccUser, $sender));
+            }
+        }
     }
 }

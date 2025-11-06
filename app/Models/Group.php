@@ -77,6 +77,10 @@ class Group extends Model
         'image',
     ];
 
+    protected $appends = [
+        'members_count',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -100,6 +104,11 @@ class Group extends Model
 
     public function getMembersCountAttribute(): int
     {
+        // Use users_count from withCount() if available, otherwise fall back to querying
+        if (isset($this->attributes['users_count'])) {
+            return (int) $this->attributes['users_count'];
+        }
+
         return $this->users()->count();
     }
 

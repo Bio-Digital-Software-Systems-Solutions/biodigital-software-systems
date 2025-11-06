@@ -6,6 +6,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import RecipientSelector from '@/Components/RecipientSelector';
 import MultiRecipientSelector, { Recipient } from '@/Components/MultiRecipientSelector';
 import { LazyRichTextEditor, withLazyLoad } from '@/Components/LazyComponents';
+import FileUpload, { FileUploadFile } from '@/Components/ui/file-upload';
 
 // Use lazy-loaded RichTextEditor with HOC
 const RichTextEditor = withLazyLoad(LazyRichTextEditor, 'Chargement de l\'éditeur...');
@@ -41,6 +42,7 @@ export default function Create({ reply_to, receiver_id, subject, forward, origin
     const [bccRecipients, setBccRecipients] = useState<Recipient[]>([]);
     const [showCc, setShowCc] = useState(false);
     const [showBcc, setShowBcc] = useState(false);
+    const [attachments, setAttachments] = useState<FileUploadFile[]>([]);
 
     const { data, setData, post, processing, errors } = useForm({
         subject: subject || '',
@@ -119,7 +121,31 @@ export default function Create({ reply_to, receiver_id, subject, forward, origin
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('messages.store'));
+
+        // Create FormData to handle file uploads
+        const formData = new FormData();
+        formData.append('subject', data.subject);
+        formData.append('content', data.content);
+        formData.append('recipient_type', data.recipient_type);
+        formData.append('recipient_id', data.recipient_id);
+        formData.append('type', data.type);
+
+        // Add CC recipients
+        data.cc_recipients.forEach((id, index) => {
+            formData.append(`cc_recipients[${index}]`, String(id));
+        });
+
+        // Add BCC recipients
+        data.bcc_recipients.forEach((id, index) => {
+            formData.append(`bcc_recipients[${index}]`, String(id));
+        });
+
+        // Add file attachments
+        attachments.forEach((fileUpload, index) => {
+            formData.append(`attachments[${index}]`, fileUpload.file);
+        });
+
+        router.post(route('messages.store'), formData);
     };
 
     return (
@@ -290,6 +316,28 @@ export default function Create({ reply_to, receiver_id, subject, forward, origin
                                 />
                             </div>
 
+                            {/* File Attachments */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Pièces jointes
+                                </label>
+                                <FileUpload
+                                    files={attachments}
+                                    onFilesChange={setAttachments}
+                                    maxFiles={5}
+                                    maxSizeBytes={10 * 1024 * 1024} // 10MB
+                                    acceptedFileTypes={[
+                                        'image/*',
+                                        'application/pdf',
+                                        'application/msword',
+                                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                        'application/vnd.ms-excel',
+                                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                        'text/*'
+                                    ]}
+                                />
+                                {(errors as any).attachments && <p className="mt-1 text-sm text-red-600">{(errors as any).attachments}</p>}
+                            </div>
 
                             {/* Actions */}
                             <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">

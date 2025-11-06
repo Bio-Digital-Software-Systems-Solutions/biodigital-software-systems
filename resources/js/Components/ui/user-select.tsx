@@ -104,7 +104,11 @@ export function UserSelect({ onUserSelect, selectedUser, placeholder = "Sélecti
                         <SelectTrigger className="w-full">
                             <div className="flex items-center space-x-2">
                                 <User className="h-4 w-4" />
-                                <SelectValue placeholder={placeholder} />
+                                {selectedUser ? (
+                                    <span>{selectedUser.name}</span>
+                                ) : (
+                                    <span className="text-gray-500">{placeholder}</span>
+                                )}
                             </div>
                         </SelectTrigger>
                         <SelectContent>

@@ -261,12 +261,14 @@ class RolesAndPermissionsSeeder extends Seeder
             // Viewing permissions
             'view articles',
             'view trainings',
-            //'view events', 'view videos', 'view books', 'view departments', 'view groups', 'view programs', 'view tasks',
+            'view events', 'attend events', 'view videos', 'view books', 'view departments', 'view groups', 'view programs', 'view tasks',
             // Books
-            //'rent books',
+            'rent books',
             // Messages & Chat
-            //'view messages', 'create messages', 'delete messages',
-            //'use chat',
+            'view messages', 'create messages', 'edit messages', 'delete messages',
+            'use chat',
+            // Appointments
+            'view appointments', 'create appointments',
         ]);
 
         // Student - Access to student dashboard and training materials

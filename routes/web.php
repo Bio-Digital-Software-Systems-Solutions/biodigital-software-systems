@@ -168,6 +168,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('messages.unread-count');
     Route::get('messages-search-recipients', [App\Http\Controllers\MessageController::class, 'searchRecipients'])
         ->name('messages.search-recipients');
+    Route::get('messages/attachments/{attachment:uuid}/download', [App\Http\Controllers\MessageController::class, 'downloadAttachment'])
+        ->name('messages.attachments.download');
 
     // Settings routes
     Route::get('settings', [App\Http\Controllers\SettingsController::class, 'index'])
