@@ -312,7 +312,7 @@ export default function Index() {
                                                     )}
                                                     <div className="max-w-md">
                                                         <Link
-                                                            href={route('articles.show', article.uuid)}
+                                                            href={route('articles.show', article.slug)}
                                                             className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary dark:hover:text-blue-400 truncate block"
                                                         >
                                                             {article.title}
@@ -361,7 +361,7 @@ export default function Index() {
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Link
-                                                        href={route('articles.show', article.uuid)}
+                                                        href={route('articles.show', article.slug)}
                                                         className="text-primary hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                                                         title="Voir"
                                                     >
@@ -431,7 +431,7 @@ export default function Index() {
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex-1">
                                         <Link
-                                            href={route('articles.show', article.uuid)}
+                                            href={route('articles.show', article.slug)}
                                             className="text-lg font-semibold text-gray-900 dark:text-white hover:text-primary dark:hover:text-blue-400 line-clamp-2 block"
                                         >
                                             {article.title}
@@ -500,7 +500,7 @@ export default function Index() {
                             <div className="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
                                 <div className="flex items-center justify-between">
                                     <Link
-                                        href={route('articles.show', article.uuid)}
+                                        href={route('articles.show', article.slug)}
                                         className="inline-flex items-center text-sm text-primary dark:text-blue-400 hover:text-primary dark:hover:text-blue-300"
                                     >
                                         <EyeIcon className="h-4 w-4 mr-1" />

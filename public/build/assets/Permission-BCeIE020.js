@@ -1,1 +1,0 @@
-import{R as s}from"./DashboardLayout-Z-FNT9Lj.js";function f(r,t){return r?r.roles?.some(e=>{const n=typeof e=="string"?e:e.name;return n===s.ADMIN||n===s.SUPER_ADMIN})?!0:r.permissions?.some(e=>typeof e=="string"?e===t:e&&typeof e=="object"&&"name"in e?e.name===t:!1)||!1:!1}export{f as u};

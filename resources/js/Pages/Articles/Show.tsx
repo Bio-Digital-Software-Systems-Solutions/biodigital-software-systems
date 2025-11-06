@@ -109,7 +109,7 @@ export default function Show({ article, relatedArticles, auth, isLiked: initialI
     // Handle like toggle
     const handleLike = async () => {
         try {
-            const response = await fetch(route('articles.like', article.uuid), {
+            const response = await fetch(route('articles.like', article.slug), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ export default function Show({ article, relatedArticles, auth, isLiked: initialI
     // Handle favorite toggle
     const handleFavorite = async () => {
         try {
-            const response = await fetch(route('articles.favorite', article.uuid), {
+            const response = await fetch(route('articles.favorite', article.slug), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -422,7 +422,7 @@ export default function Show({ article, relatedArticles, auth, isLiked: initialI
                             {relatedArticles.map((relatedArticle) => (
                                 <Link
                                     key={relatedArticle.id}
-                                    href={route('articles.show', relatedArticle.uuid)}
+                                    href={route('articles.show', relatedArticle.slug)}
                                     className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
                                 >
                                     {relatedArticle.cover_image ? (

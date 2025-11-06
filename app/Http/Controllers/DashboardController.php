@@ -159,7 +159,7 @@ class DashboardController extends Controller
                 'description' => 'Par '.($article->user->name ?? 'Auteur inconnu'),
                 'time' => $article->published_at?->diffForHumans() ?? $article->created_at->diffForHumans(),
                 'icon' => 'PencilSquareIcon',
-                'url' => route('articles.show', $article->uuid),
+                'url' => route('articles.show', $article->slug),
             ]);
         }
 

@@ -54,27 +54,15 @@ class AppointmentInvitation extends Notification implements ShouldQueue
 
         return (new MailMessage)
             ->subject("Invitation au rendez-vous : {$this->appointment->title}")
-            ->greeting("Bonjour {$notifiable->name},")
-            ->line("Vous êtes invité(e) au rendez-vous suivant :")
-            ->line("**{$this->appointment->title}**")
-            ->when($this->appointment->description, function ($message) {
-                return $message->line("Description : {$this->appointment->description}");
-            })
-            ->line("📅 **Date :** {$startDate->format('d/m/Y')}")
-            ->line("🕐 **Heure :** {$startDate->format('H:i')} - {$endDate->format('H:i')}")
-            ->when($this->appointment->location, function ($message) {
-                return $message->line("📍 **Lieu :** {$this->appointment->location}");
-            })
-            ->line("Type : " . ucfirst($this->appointment->type))
-            ->line('Merci de confirmer votre participation en cliquant sur l\'un des boutons ci-dessous :')
-            ->action('✅ Confirmer ma participation', $confirmUrl)
-            ->line('') // Espace
-            ->action('❌ Décliner l\'invitation', $declineUrl)
-            ->line('Si vous ne pouvez pas cliquer sur les boutons, copiez et collez les liens suivants dans votre navigateur :')
-            ->line("Confirmer : {$confirmUrl}")
-            ->line("Décliner : {$declineUrl}")
-            ->line('Merci pour votre réponse !')
-            ->salutation('L\'équipe ICC München');
+            ->view('emails.appointment-invitation', [
+                'appointment' => $this->appointment,
+                'participant' => $notifiable,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'confirmUrl' => $confirmUrl,
+                'declineUrl' => $declineUrl,
+                'confirmationToken' => $this->confirmationToken,
+            ]);
     }
 
     /**

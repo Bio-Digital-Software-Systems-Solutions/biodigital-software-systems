@@ -190,7 +190,7 @@ class Article extends Model
      */
     public function getRouteKeyName(): string
     {
-        return 'uuid';
+        return 'slug';
     }
 
     /**
