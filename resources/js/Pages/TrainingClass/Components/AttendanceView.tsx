@@ -125,7 +125,7 @@ export default function AttendanceView({ classes }: Props) {
                 >
                     <option value="">✓ Choisir une classe...</option>
                     {filteredClasses.map((cls) => (
-                        <option key={cls.id} value={cls.id}>
+                        <option key={cls.id} value={cls.uuid}>
                             {cls.training_name} - {new Date(cls.date).toLocaleDateString('fr-FR')}
                         </option>
                     ))}
