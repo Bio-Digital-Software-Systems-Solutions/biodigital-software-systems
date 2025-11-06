@@ -54,6 +54,8 @@ export interface Schedule {
 
 export interface ScheduleClass {
     id: number;
+    uuid: string;
+    name: string;
     date: string;
     day: string;
     start_time: string;

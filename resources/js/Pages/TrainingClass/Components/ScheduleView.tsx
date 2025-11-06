@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Schedule } from '../types';
 import axios from 'axios';
 import { apiLogger } from '@/utils/logger';
+import { Link } from '@inertiajs/react';
 
 export default function ScheduleView() {
     const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -49,10 +50,18 @@ export default function ScheduleView() {
                                 {schedule.classes.map((cls) => (
                                     <div
                                         key={cls.id}
-                                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                                        className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                                     >
                                         <div>
-                                            <p className="font-medium text-gray-900 dark:text-white">{cls.day}</p>
+                                            <Link
+                                                href={route('training-classes.show', cls.uuid)}
+                                                className="font-medium text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary-light transition-colors duration-200 cursor-pointer"
+                                            >
+                                                {cls.name}
+                                            </Link>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                {cls.day}
+                                            </p>
                                             <p className="text-sm text-gray-600 dark:text-gray-400">
                                                 {new Date(cls.date).toLocaleDateString()} • {cls.start_time} - {cls.end_time}
                                             </p>

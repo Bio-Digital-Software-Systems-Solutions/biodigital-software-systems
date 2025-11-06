@@ -421,6 +421,8 @@ class TrainingClassController extends Controller
                 'classes' => $training->classes->map(function ($class) {
                     return [
                         'id' => $class->id,
+                        'uuid' => $class->uuid,
+                        'name' => $class->name,
                         'date' => $class->date,
                         'day' => \Carbon\Carbon::parse($class->date)->locale('fr')->isoFormat('dddd'),
                         'start_time' => $class->start_time,
