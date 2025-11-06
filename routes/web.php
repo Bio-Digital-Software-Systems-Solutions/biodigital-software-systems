@@ -521,11 +521,50 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Public appointment confirmation routes (accessible without authentication)
 Route::get('appointments/{appointment:uuid}/confirm/{token}', [App\Http\Controllers\AppointmentParticipantController::class, 'confirm'])
-    ->name('appointments.participant.confirm');
+    ->name('appointments.participant.confirm')
+    ->missing(function (\Illuminate\Http\Request $request) {
+        $appointmentId = $request->route('appointment');
+        \Illuminate\Support\Facades\Log::warning('Appointment confirmation attempted for non-existent appointment', [
+            'appointment_uuid' => $appointmentId,
+            'token' => $request->route('token'),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'url' => $request->fullUrl(),
+        ]);
+        return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
+            'appointmentId' => $appointmentId,
+        ]);
+    });
 Route::get('appointments/{appointment:uuid}/decline/{token}', [App\Http\Controllers\AppointmentParticipantController::class, 'decline'])
-    ->name('appointments.participant.decline');
+    ->name('appointments.participant.decline')
+    ->missing(function (\Illuminate\Http\Request $request) {
+        $appointmentId = $request->route('appointment');
+        \Illuminate\Support\Facades\Log::warning('Appointment decline attempted for non-existent appointment', [
+            'appointment_uuid' => $appointmentId,
+            'token' => $request->route('token'),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'url' => $request->fullUrl(),
+        ]);
+        return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
+            'appointmentId' => $appointmentId,
+        ]);
+    });
 Route::post('appointments/{appointment:uuid}/decline/{token}', [App\Http\Controllers\AppointmentParticipantController::class, 'decline'])
-    ->name('appointments.participant.decline.submit');
+    ->name('appointments.participant.decline.submit')
+    ->missing(function (\Illuminate\Http\Request $request) {
+        $appointmentId = $request->route('appointment');
+        \Illuminate\Support\Facades\Log::warning('Appointment decline submission attempted for non-existent appointment', [
+            'appointment_uuid' => $appointmentId,
+            'token' => $request->route('token'),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'url' => $request->fullUrl(),
+        ]);
+        return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
+            'appointmentId' => $appointmentId,
+        ]);
+    });
 
 // Sentry test routes (only available in local/development environments)
 Route::middleware(['auth'])->group(function () {
