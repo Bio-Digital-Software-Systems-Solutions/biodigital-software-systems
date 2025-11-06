@@ -43,8 +43,14 @@ class AppointmentInvitation extends Notification implements ShouldQueue
         $startDate = \Carbon\Carbon::parse($this->appointment->start_datetime);
         $endDate = \Carbon\Carbon::parse($this->appointment->end_datetime);
 
-        $confirmUrl = url("/appointments/{$this->appointment->id}/confirm/{$this->confirmationToken}");
-        $declineUrl = url("/appointments/{$this->appointment->id}/decline/{$this->confirmationToken}");
+        $confirmUrl = route('appointments.participant.confirm', [
+            'appointment' => $this->appointment->uuid,
+            'token' => $this->confirmationToken
+        ]);
+        $declineUrl = route('appointments.participant.decline', [
+            'appointment' => $this->appointment->uuid,
+            'token' => $this->confirmationToken
+        ]);
 
         return (new MailMessage)
             ->subject("Invitation au rendez-vous : {$this->appointment->title}")
@@ -79,8 +85,14 @@ class AppointmentInvitation extends Notification implements ShouldQueue
         $startDate = \Carbon\Carbon::parse($this->appointment->start_datetime);
         $organizerName = $this->appointment->organizer->first_name . ' ' . $this->appointment->organizer->last_name;
 
-        $confirmUrl = url("/appointments/{$this->appointment->uuid}/confirm/{$this->confirmationToken}");
-        $declineUrl = url("/appointments/{$this->appointment->uuid}/decline/{$this->confirmationToken}");
+        $confirmUrl = route('appointments.participant.confirm', [
+            'appointment' => $this->appointment->uuid,
+            'token' => $this->confirmationToken
+        ]);
+        $declineUrl = route('appointments.participant.decline', [
+            'appointment' => $this->appointment->uuid,
+            'token' => $this->confirmationToken
+        ]);
 
         return [
             'type' => 'appointment_invitation',
