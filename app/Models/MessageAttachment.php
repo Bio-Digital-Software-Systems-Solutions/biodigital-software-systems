@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ClearsCache;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
@@ -29,7 +30,7 @@ use Spatie\Activitylog\LogOptions;
  */
 class MessageAttachment extends Model
 {
-    use LogsActivity;
+    use LogsActivity, ClearsCache;
 
     /**
      * Configure activity log options.

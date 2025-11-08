@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ClearsCache;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -34,7 +35,7 @@ use Spatie\Activitylog\LogOptions;
  */
 class Attendance extends Model
 {
-    use LogsActivity;
+    use LogsActivity, ClearsCache;
 
     /**
      * Configure activity log options.

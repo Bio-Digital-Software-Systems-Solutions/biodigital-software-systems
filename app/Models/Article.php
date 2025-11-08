@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ClearsCache;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -61,7 +62,7 @@ use Spatie\Activitylog\LogOptions;
  */
 class Article extends Model
 {
-    use HasFactory, HasUuid, Markable, LogsActivity;
+    use HasFactory, HasUuid, Markable, LogsActivity, ClearsCache;
 
     /**
      * Configure activity log options.

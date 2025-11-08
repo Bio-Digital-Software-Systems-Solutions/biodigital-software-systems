@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ClearsCache;
 use App\Enums\Priority;
 use App\Enums\ProjectStatus;
 use App\Traits\HasUuid;
@@ -78,7 +79,7 @@ use Spatie\Activitylog\LogOptions;
  */
 class Project extends Model
 {
-    use HasFactory, HasUuid, SoftDeletes, LogsActivity;
+    use HasFactory, HasUuid, SoftDeletes, LogsActivity, ClearsCache;
 
     /**
      * Configure activity log options.

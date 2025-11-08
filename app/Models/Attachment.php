@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ClearsCache;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -49,7 +50,7 @@ use Spatie\Activitylog\LogOptions;
  */
 class Attachment extends Model
 {
-    use HasFactory, HasUuid, SoftDeletes, LogsActivity;
+    use HasFactory, HasUuid, SoftDeletes, LogsActivity, ClearsCache;
 
     /**
      * Configure activity log options.

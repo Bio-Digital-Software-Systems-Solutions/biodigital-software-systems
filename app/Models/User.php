@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ClearsCache;
 use App\Traits\HasUuid;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -91,7 +92,7 @@ use Spatie\Activitylog\LogOptions;
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, HasRoles, HasUuid, Notifiable, TwoFactorAuthenticatable, LogsActivity;
+    use HasFactory, HasRoles, HasUuid, Notifiable, TwoFactorAuthenticatable, LogsActivity, ClearsCache;
 
     /**
      * Configure activity log options.
@@ -150,6 +151,20 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $appends = [
         'full_name',
         'name',
+    ];
+
+    /**
+     * Cache patterns to invalidate when this model changes.
+     * Users affect many other cached data sets.
+     */
+    protected $relatedCacheKeys = [
+        'events.*',        // Events cache (participations, creations)
+        'articles.*',      // Articles cache (author changes)
+        'books.*',         // Books cache (rental data)
+        'trainings.*',     // Training cache (enrollments)
+        'chat.*',          // Chat cache (messages, rooms)
+        'dashboard.*',     // Dashboard cache (user stats)
+        'permissions.*',   // Permission-based caches
     ];
 
     /**

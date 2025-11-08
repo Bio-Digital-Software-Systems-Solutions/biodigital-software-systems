@@ -25,6 +25,7 @@ import {
     BeakerIcon,
     EnvelopeIcon,
     ShieldCheckIcon,
+    HeartIcon,
 } from '@heroicons/react/24/outline';
 import Dropdown from '@/Components/Dropdown';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
@@ -75,6 +76,8 @@ export default function DashboardLayout({ children, title, description, actions 
         { name: t('dashboard'), href: '/dashboard', icon: HomeIcon, current: true, excludeRoles: [Role.MEMBER] },
         { name: t('events'), href: '/events', icon: CalendarDaysIcon, permission: 'view events' },
         { name: t('appointments'), href: '/appointments', icon: CalendarDaysIcon, permission: 'view appointments' },
+        { name: 'Soin Pastoral', href: '/pastoral-care/appointments', icon: HeartIcon, permission: 'view pastoral care' },
+        { name: 'Prendre RDV Pastoral', href: '/pastoral-care/book', icon: CalendarDaysIcon },
         { name: t('articles'), href: '/articles', icon: PencilSquareIcon, permission: 'view articles' },
         { name: t('books'), href: '/books', icon: BookOpenIcon, permission: 'view books' },
         { name: t('books.rent'), href: '/my-rentals', icon: BuildingLibraryIcon, permission: 'view books' },

@@ -24,6 +24,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
             // Appointments
             'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
+            // Pastoral Care
+            'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs',
@@ -69,6 +71,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
             // Appointments
             'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
+            // Pastoral Care
+            'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs',
@@ -113,6 +117,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view books', 'create books', 'edit books',
             // Appointments
             'view appointments', 'create appointments',
+            // Pastoral Care
+            'view pastoral care', 'create pastoral care', 'edit pastoral care', 'manage pastoral care',
             // Messages & Chat
             'view messages', 'create messages', 'edit messages', 'delete messages',
             'use chat',
@@ -136,6 +142,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view events', 'create events', 'edit events', 'attend events',
             // Appointments
             'view appointments', 'create appointments', 'edit appointments', 'manage appointment participants',
+            // Pastoral Care
+            'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
             // Articles
             'view articles', 'create articles', 'edit articles',
             // Messages & Chat
@@ -269,6 +277,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'use chat',
             // Appointments
             'view appointments', 'create appointments',
+            // Pastoral Care
+            'view pastoral care', 'create pastoral care',
         ]);
 
         // Student - Access to student dashboard and training materials

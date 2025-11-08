@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ClearsCache;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -50,7 +51,7 @@ use Spatie\Activitylog\LogOptions;
  */
 class BookRental extends Model
 {
-    use HasFactory, HasUuid, LogsActivity;
+    use HasFactory, HasUuid, LogsActivity, ClearsCache;
 
     /**
      * Configure activity log options.

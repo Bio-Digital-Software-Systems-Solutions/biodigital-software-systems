@@ -371,7 +371,7 @@ class TrainingController extends Controller
         // Invalidate trainings cache
         CacheService::forgetPattern('trainings');
 
-        return redirect()->route('admin.trainings.index')
+        return redirect()->route('trainings.index')
             ->with('success', 'Formation supprimée avec succès.');
     }
 

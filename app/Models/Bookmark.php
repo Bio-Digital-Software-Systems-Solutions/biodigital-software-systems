@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ClearsCache;
 use Maize\Markable\Mark;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -32,7 +33,7 @@ use Spatie\Activitylog\LogOptions;
  */
 class Bookmark extends Mark
 {
-    use LogsActivity;
+    use LogsActivity, ClearsCache;
 
     /**
      * Configure activity log options.

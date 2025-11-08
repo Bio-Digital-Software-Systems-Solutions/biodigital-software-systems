@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ClearsCache;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -20,7 +21,7 @@ use Spatie\Activitylog\LogOptions;
  */
 class ProjectRole extends Model
 {
-    use LogsActivity;
+    use LogsActivity, ClearsCache;
 
     /**
      * Configure activity log options.

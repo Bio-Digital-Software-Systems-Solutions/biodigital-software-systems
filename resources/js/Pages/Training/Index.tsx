@@ -7,6 +7,8 @@ import { useDebouncedCallback } from 'use-debounce';
 import { PageProps } from '@/Types';
 import { isAdmin } from '@/Enums/Role';
 import { userHasPermission } from '@/Enums/Permission';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import { toast } from 'sonner';
 
 interface Training {
     id: number;
@@ -44,6 +46,7 @@ export default function Index({ trainings, filters }: Props) {
     const [level, setLevel] = useState(filters.level || '');
     const [category, setCategory] = useState(filters.category || '');
     const [viewMode, setViewMode] = useState<'table' | 'list' | 'grid'>('table');
+    const [trainingToDelete, setTrainingToDelete] = useState<Training | null>(null);
 
     // Permission checks
     const canCreateTrainings = userHasPermission(auth.user, 'create trainings');
@@ -86,6 +89,25 @@ export default function Index({ trainings, filters }: Props) {
     };
 
     const hasActiveFilters = search || level || category;
+
+    const handleDelete = (training: Training) => {
+        setTrainingToDelete(training);
+    };
+
+    const confirmDelete = () => {
+        if (!trainingToDelete) return;
+
+        router.delete(`/trainings/${trainingToDelete.uuid}`, {
+            onSuccess: () => {
+                toast.success('Formation supprimée avec succès');
+                setTrainingToDelete(null);
+            },
+            onError: (errors) => {
+                toast.error('Erreur lors de la suppression');
+                console.error(errors);
+            },
+        });
+    };
 
     return (
         <DashboardLayout
@@ -306,6 +328,7 @@ export default function Index({ trainings, filters }: Props) {
                                                             )}
                                                             {canDeleteTrainings && (
                                                                 <button
+                                                                    onClick={() => handleDelete(training)}
                                                                     className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                                                                     title="Supprimer"
                                                                 >
@@ -373,6 +396,7 @@ export default function Index({ trainings, filters }: Props) {
                                                     )}
                                                     {canDeleteTrainings && (
                                                         <button
+                                                            onClick={() => handleDelete(training)}
                                                             className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                                                             title="Supprimer"
                                                         >
@@ -435,6 +459,7 @@ export default function Index({ trainings, filters }: Props) {
                                                 )}
                                                 {canDeleteTrainings && (
                                                     <button
+                                                        onClick={() => handleDelete(training)}
                                                         className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                                                         title="Supprimer"
                                                     >
@@ -465,6 +490,15 @@ export default function Index({ trainings, filters }: Props) {
                         ))}
                     </div>
                 )}
+
+            {/* Delete Confirmation Dialog */}
+            <DeleteConfirmationDialog
+                open={trainingToDelete !== null}
+                onOpenChange={(open) => !open && setTrainingToDelete(null)}
+                onConfirm={confirmDelete}
+                title="Supprimer la formation"
+                description={`Êtes-vous sûr de vouloir supprimer la formation "${trainingToDelete?.title}" ? Cette action est irréversible.`}
+            />
         </DashboardLayout>
     );
 }

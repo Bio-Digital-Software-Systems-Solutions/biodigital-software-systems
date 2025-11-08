@@ -515,6 +515,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('api/users/{user:uuid}/schedule', [App\Http\Controllers\PublicAgendaController::class, 'schedule'])
         ->name('api.users.schedule');
 
+    // Pastoral Care routes (authenticated pastors)
+    Route::prefix('pastoral-care')->name('pastoral-care.')->group(function () {
+        Route::resource('appointments', App\Http\Controllers\PastoralCareController::class)
+            ->names([
+                'index' => 'index',
+                'create' => 'create',
+                'store' => 'store',
+                'show' => 'show',
+                'edit' => 'edit',
+                'update' => 'update',
+                'destroy' => 'destroy'
+            ])
+            ->parameters(['appointments' => 'pastoralCare:uuid']);
+
+        // Additional pastoral care actions
+        Route::post('appointments/{pastoralCare:uuid}/confirm', [App\Http\Controllers\PastoralCareController::class, 'confirm'])
+            ->name('confirm');
+        Route::post('appointments/{pastoralCare:uuid}/cancel', [App\Http\Controllers\PastoralCareController::class, 'cancel'])
+            ->name('cancel');
+        Route::post('appointments/{pastoralCare:uuid}/complete', [App\Http\Controllers\PastoralCareController::class, 'complete'])
+            ->name('complete');
+        Route::post('appointments/{pastoralCare:uuid}/no-show', [App\Http\Controllers\PastoralCareController::class, 'noShow'])
+            ->name('no-show');
+
+        // AJAX endpoint for available time slots
+        Route::get('available-slots', [App\Http\Controllers\PastoralCareController::class, 'getAvailableSlots'])
+            ->name('available-slots');
+    });
+
+    // Pastoral Care booking for authenticated users
+    Route::get('pastoral-care/book', function () {
+        return \Inertia\Inertia::render('PastoralCare/PublicBook');
+    })->name('pastoral-care.book');
+
+
 });
 
 // Public Training routes (outside auth middleware)
@@ -565,6 +600,87 @@ Route::post('appointments/{appointment:uuid}/decline/{token}', [App\Http\Control
             'appointmentId' => $appointmentId,
         ]);
     });
+
+// Public Pastoral Care routes (accessible without authentication)
+Route::get('pastoral-care/appointments/{uuid}/confirm', function ($uuid) {
+    $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
+
+    if (!$appointment) {
+        return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
+            'appointmentId' => $uuid,
+        ]);
+    }
+
+    return \Inertia\Inertia::render('PastoralCare/PublicConfirm', [
+        'appointment' => $appointment->load('pastor'),
+    ]);
+})->name('pastoral-care.public.confirm');
+
+Route::post('pastoral-care/appointments/{uuid}/confirm', function (\Illuminate\Http\Request $request, $uuid) {
+    $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
+
+    if (!$appointment) {
+        return response()->json(['success' => false, 'message' => 'Rendez-vous introuvable'], 404);
+    }
+
+    try {
+        $appointment->confirm();
+        return redirect()->route('pastoral-care.public.success', ['uuid' => $uuid])
+            ->with('success', 'Rendez-vous confirmé avec succès.');
+    } catch (\Exception $e) {
+        return back()->with('error', $e->getMessage());
+    }
+})->name('pastoral-care.public.confirm.submit');
+
+Route::get('pastoral-care/appointments/{uuid}/cancel', function ($uuid) {
+    $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
+
+    if (!$appointment) {
+        return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
+            'appointmentId' => $uuid,
+        ]);
+    }
+
+    return \Inertia\Inertia::render('PastoralCare/PublicCancel', [
+        'appointment' => $appointment->load('pastor'),
+    ]);
+})->name('pastoral-care.public.cancel');
+
+Route::post('pastoral-care/appointments/{uuid}/cancel', function (\Illuminate\Http\Request $request, $uuid) {
+    $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
+
+    if (!$appointment) {
+        return response()->json(['success' => false, 'message' => 'Rendez-vous introuvable'], 404);
+    }
+
+    $validated = $request->validate([
+        'cancellation_reason' => 'nullable|string|max:500',
+    ]);
+
+    try {
+        $appointment->cancel($validated['cancellation_reason'] ?? null);
+        return redirect()->route('pastoral-care.public.success', ['uuid' => $uuid])
+            ->with('success', 'Rendez-vous annulé avec succès.');
+    } catch (\Exception $e) {
+        return back()->with('error', $e->getMessage());
+    }
+})->name('pastoral-care.public.cancel.submit');
+
+Route::get('pastoral-care/appointments/{uuid}/success', function ($uuid) {
+    $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
+
+    if (!$appointment) {
+        return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
+            'appointmentId' => $uuid,
+        ]);
+    }
+
+    return \Inertia\Inertia::render('PastoralCare/PublicSuccess', [
+        'appointment' => $appointment->load('pastor'),
+    ]);
+})->name('pastoral-care.public.success');
+
+// Public Pastoral Care booking interface (moved to authenticated section)
 
 // Sentry test routes (only available in local/development environments)
 Route::middleware(['auth'])->group(function () {

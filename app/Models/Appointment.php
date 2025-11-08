@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\ClearsCache;
 use App\Traits\HasUuid;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,7 +38,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  */
 class Appointment extends Model
 {
-    use HasFactory, HasUuid, LogsActivity;
+    use HasFactory, HasUuid, LogsActivity, ClearsCache;
 
     /**
      * Configure activity log options.

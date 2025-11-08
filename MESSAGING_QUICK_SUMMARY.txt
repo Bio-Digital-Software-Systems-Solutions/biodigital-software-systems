@@ -1,0 +1,182 @@
+================================================================================
+                MESSAGING & PASTORAL CARE SYSTEM - QUICK SUMMARY
+================================================================================
+
+MESSAGING SYSTEMS (3 Types)
+---
+1. CHAT ROOMS (Real-time, many-to-many)
+   - Models: ChatRoom, ChatMessage
+   - Features: Direct (1:1) & group chats, read tracking, XSS protection
+   - Controller: ChatController (index, createRoom, getMessages, sendMessage, etc.)
+
+2. DIRECT MESSAGES (One-to-one, one-way)
+   - Model: Message (with types: direct, broadcast, system, appointment)
+   - Features: CC/BCC, attachments, read status, scopes for filtering
+   - Used for: System notifications, broadcasts, appointment messages
+
+3. SYSTEM MESSAGES
+   - Stored in Message model with type='system'
+   - Used by AppointmentNotificationService for multi-channel notifications
+
+================================================================================
+
+PASTORAL CARE APPOINTMENT SYSTEM
+---
+Status Flow: pending → confirmed → completed (or cancelled/no_show)
+
+Key Model: PastoralCare
+  - 20 attributes (appointment date/time, duration, location type, client info)
+  - Timestamps for confirmation, reminder, cancellation tracking
+  - Relationships: user (client), pastor (assigned pastor)
+  - Methods: confirm(), cancel(), complete(), markAsNoShow()
+  - Static methods: isTimeSlotAvailable(), getAvailableTimeSlots()
+
+Controller: PastoralCareController
+  - CRUD operations
+  - Status transitions (confirm, cancel, complete, no-show)
+  - Availability checking
+  - Permission-based access control
+
+================================================================================
+
+EMAIL NOTIFICATION INFRASTRUCTURE
+---
+4 Mail Classes for Pastoral Care:
+  1. PastoralCareNewAppointmentNotification → To pastor (new appointment)
+  2. PastoralCareAppointmentConfirmation → To client (confirmation email)
+  3. PastoralCareAppointmentReminder → To client (24h before)
+  4. PastoralCareAppointmentCancellation → To client (cancellation)
+
+All configured to:
+  - Queue for async processing (ShouldQueue)
+  - Use Blade markdown templates
+  - Include church context (name, email, phone, website)
+
+Email Templates: /resources/views/emails/pastoral-care/
+  - appointment-confirmation.blade.php
+  - appointment-reminder.blade.php
+  - appointment-cancellation.blade.php
+  - new-appointment-notification.blade.php
+
+================================================================================
+
+NOTIFICATION CHANNELS (Database + Email)
+---
+Laravel Notifications Table
+  - UUID-based primary key
+  - Polymorphic notifiable (User, etc.)
+  - JSON data field for flexible payload
+  - read_at timestamp for tracking
+
+NotificationService Classes:
+  - NewDirectMessageNotification (mail + database)
+  - AppointmentInvitation, AppointmentConfirmation, AppointmentCancellation
+
+AppointmentNotificationService (Multi-channel):
+  - sendInvitationNotification() → 4 channels:
+    1. Standard Laravel notification (email + database)
+    2. System message in Messages inbox
+    3. Chat room message
+    4. Email about the chat message
+  - sendUpdateNotification() → Similar pattern
+  - sendOrganizerConfirmation() → Organizer room notification
+
+================================================================================
+
+CONFIGURATION & SETTINGS
+---
+File: /config/pastoral_care.php (400+ lines)
+
+Key Settings:
+  - Appointment duration: 30-120 minutes (default 60)
+  - Booking window: 24-60 days in advance
+  - Time slots: 30-minute intervals, 9-5 (business hours)
+  - Reminders: 24 hours before (configurable)
+  - Client confirmation required within 48 hours
+  - Business hours: Mon-Fri 9-5, Sat 10-4, Sun closed
+  - Lunch break: 12-1 daily
+
+Optional Integrations:
+  - Zoom (auto-generate meeting links)
+  - Calendar (Google, Outlook, iCal)
+  - SMS reminders (Twilio)
+
+Security & Compliance:
+  - Rate limiting (5 bookings/hour)
+  - Spam protection (honeypot, form submission time)
+  - Data encryption (personal data)
+  - Data retention policies (1-3 years depending on status)
+
+================================================================================
+
+CURRENT IMPLEMENTATION STATUS
+---
+FULLY IMPLEMENTED ✓
+  - Chat system (rooms, messages, read tracking)
+  - Pastoral care model & CRUD
+  - Email infrastructure (Mail classes, templates)
+  - Configuration system
+  - Permissions framework
+  - Time slot availability checking
+
+PARTIALLY IMPLEMENTED ⚠
+  - Reminder emails (setup but no scheduler)
+  - Email notifications on actions (classes exist, not wired to controller)
+  - Chat integration with pastoral care (not connected)
+
+NOT IMPLEMENTED ✗
+  - Automated reminder job (24h before)
+  - Client confirmation processing (routes exist, no logic)
+  - Auto-create chat rooms for appointments
+  - Dashboard notification display
+
+================================================================================
+
+KEY FILES REFERENCE
+---
+Models:
+  /app/Models/ChatRoom.php
+  /app/Models/ChatMessage.php
+  /app/Models/Message.php
+  /app/Models/PastoralCare.php
+
+Controllers:
+  /app/Http/Controllers/ChatController.php
+  /app/Http/Controllers/PastoralCareController.php
+
+Services:
+  /app/Services/AppointmentNotificationService.php
+
+Mail Classes:
+  /app/Mail/PastoralCareAppointmentConfirmation.php
+  /app/Mail/PastoralCareAppointmentReminder.php
+  /app/Mail/PastoralCareAppointmentCancellation.php
+  /app/Mail/PastoralCareNewAppointmentNotification.php
+
+Database:
+  /database/migrations/2025_11_06_143425_create_pastoral_cares_table.php
+  /database/migrations/2025_10_13_104003_create_notifications_table.php
+  /database/migrations/2025_08_22_073142_create_chat_messages_table.php
+
+Configuration:
+  /config/pastoral_care.php
+
+Permissions:
+  /database/seeders/PastoralCarePermissionsSeeder.php
+
+Routes:
+  /routes/web.php (authenticated routes)
+  /routes/web.php (public pastoral-care routes)
+
+================================================================================
+
+RECOMMENDED NEXT STEPS FOR INTEGRATION
+---
+1. Wire email sending in PastoralCareController (store, confirm, cancel)
+2. Implement public route handlers for client confirmations
+3. Create scheduled job for 24-hour reminders
+4. Add ChatRoom creation when appointment created
+5. Integrate AppointmentNotificationService pattern for pastoral care
+6. Add notification bell to dashboard UI
+
+================================================================================
