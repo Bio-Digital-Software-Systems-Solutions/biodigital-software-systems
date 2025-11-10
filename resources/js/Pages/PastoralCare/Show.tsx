@@ -47,6 +47,7 @@ interface PastoralCareAppointment {
     client_email: string;
     client_phone?: string;
     notes?: string;
+    pastor_notes?: string;
     cancellation_reason?: string;
     created_at: string;
     updated_at: string;
@@ -67,7 +68,7 @@ interface Props {
 
 export default function Show({ appointment, canEdit, canConfirm, canCancel, auth }: Props) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [pastorNotes, setPastorNotes] = useState('');
+    const [pastorNotes, setPastorNotes] = useState(appointment.pastor_notes || '');
     const [isUpdatingNotes, setIsUpdatingNotes] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
@@ -125,23 +126,112 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
         }
     };
 
-    const handleStatusUpdate = async (newStatus: string) => {
+    const handleConfirm = async () => {
         setIsUpdatingStatus(true);
 
         try {
-            await router.patch(`/pastoral-care/appointments/${appointment.uuid}`, {
-                status: newStatus
-            }, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success('Statut mis à jour avec succès');
+            const response = await fetch(`/api/pastoral-care/appointments/${appointment.uuid}/confirm`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
-                onError: () => {
-                    toast.error('Erreur lors de la mise à jour du statut');
-                }
             });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success(data.message || 'Rendez-vous confirmé avec succès');
+                router.reload({ only: ['appointment'] });
+            } else {
+                toast.error(data.message || 'Erreur lors de la confirmation');
+            }
         } catch (error) {
-            toast.error('Erreur lors de la mise à jour du statut');
+            toast.error('Erreur lors de la confirmation du rendez-vous');
+        } finally {
+            setIsUpdatingStatus(false);
+        }
+    };
+
+    const handleCancel = async () => {
+        setIsUpdatingStatus(true);
+
+        try {
+            const response = await fetch(`/api/pastoral-care/appointments/${appointment.uuid}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    cancellation_reason: 'Annulé par le pasteur'
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success(data.message || 'Rendez-vous annulé avec succès');
+                router.reload({ only: ['appointment'] });
+            } else {
+                toast.error(data.message || 'Erreur lors de l\'annulation');
+            }
+        } catch (error) {
+            toast.error('Erreur lors de l\'annulation du rendez-vous');
+        } finally {
+            setIsUpdatingStatus(false);
+        }
+    };
+
+    const handleComplete = async () => {
+        setIsUpdatingStatus(true);
+
+        try {
+            const response = await fetch(`/api/pastoral-care/appointments/${appointment.uuid}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success(data.message || 'Rendez-vous marqué comme terminé');
+                router.reload({ only: ['appointment'] });
+            } else {
+                toast.error(data.message || 'Erreur lors de la finalisation');
+            }
+        } catch (error) {
+            toast.error('Erreur lors de la finalisation du rendez-vous');
+        } finally {
+            setIsUpdatingStatus(false);
+        }
+    };
+
+    const handleNoShow = async () => {
+        setIsUpdatingStatus(true);
+
+        try {
+            const response = await fetch(`/api/pastoral-care/appointments/${appointment.uuid}/no-show`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success(data.message || 'Rendez-vous marqué comme absence');
+                router.reload({ only: ['appointment'] });
+            } else {
+                toast.error(data.message || 'Erreur lors du marquage comme absent');
+            }
+        } catch (error) {
+            toast.error('Erreur lors du marquage comme absent');
         } finally {
             setIsUpdatingStatus(false);
         }
@@ -156,18 +246,25 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
         setIsUpdatingNotes(true);
 
         try {
-            await router.patch(`/pastoral-care/appointments/${appointment.uuid}`, {
-                pastor_notes: pastorNotes
-            }, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success('Notes ajoutées avec succès');
-                    setPastorNotes('');
+            const response = await fetch(`/api/pastoral-care/appointments/${appointment.uuid}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
-                onError: () => {
-                    toast.error('Erreur lors de l\'ajout des notes');
-                }
+                body: JSON.stringify({
+                    pastor_notes: pastorNotes
+                })
             });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success(data.message || 'Notes ajoutées avec succès');
+                router.reload({ only: ['appointment'] });
+            } else {
+                toast.error(data.message || 'Erreur lors de l\'ajout des notes');
+            }
         } catch (error) {
             toast.error('Erreur lors de l\'ajout des notes');
         } finally {
@@ -448,7 +545,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                         )}
                                         {availableStatusUpdates.includes('confirmed') && (
                                             <Button
-                                                onClick={() => handleStatusUpdate('confirmed')}
+                                                onClick={handleConfirm}
                                                 disabled={isUpdatingStatus}
                                                 className="w-full bg-green-600 hover:bg-green-700 text-white"
                                             >
@@ -459,7 +556,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
 
                                         {availableStatusUpdates.includes('completed') && (
                                             <Button
-                                                onClick={() => handleStatusUpdate('completed')}
+                                                onClick={handleComplete}
                                                 disabled={isUpdatingStatus}
                                                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                                             >
@@ -470,7 +567,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
 
                                         {availableStatusUpdates.includes('no_show') && (
                                             <Button
-                                                onClick={() => handleStatusUpdate('no_show')}
+                                                onClick={handleNoShow}
                                                 disabled={isUpdatingStatus}
                                                 variant="outline"
                                                 className="w-full text-orange-600 border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
@@ -482,7 +579,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
 
                                         {availableStatusUpdates.includes('cancelled') && (
                                             <Button
-                                                onClick={() => handleStatusUpdate('cancelled')}
+                                                onClick={handleCancel}
                                                 disabled={isUpdatingStatus}
                                                 variant="outline"
                                                 className="w-full text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -529,12 +626,26 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                 <CardHeader>
                                     <CardTitle>Notes du pasteur</CardTitle>
                                     <CardDescription>
-                                        Ajoutez des notes sur cette rencontre
+                                        Notes privées sur cette rencontre
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
+                                    {/* Display existing notes */}
+                                    {appointment.pastor_notes && (
+                                        <div className="mb-4">
+                                            <Label>Notes existantes</Label>
+                                            <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                                <p className="text-blue-800 dark:text-blue-200 text-sm leading-relaxed whitespace-pre-wrap">
+                                                    {appointment.pastor_notes}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div>
-                                        <Label htmlFor="pastor_notes">Notes privées</Label>
+                                        <Label htmlFor="pastor_notes">
+                                            {appointment.pastor_notes ? 'Ajouter des notes additionnelles' : 'Notes privées'}
+                                        </Label>
                                         <Textarea
                                             id="pastor_notes"
                                             value={pastorNotes}
@@ -548,7 +659,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                         disabled={isUpdatingNotes || !pastorNotes.trim()}
                                         className="w-full"
                                     >
-                                        {isUpdatingNotes ? 'Ajout...' : 'Ajouter les notes'}
+                                        {isUpdatingNotes ? 'Ajout...' : (appointment.pastor_notes ? 'Mettre à jour les notes' : 'Ajouter les notes')}
                                     </Button>
                                 </CardContent>
                             </Card>

@@ -28,6 +28,7 @@ class PastoralCare extends Model
         'client_email',
         'client_phone',
         'notes',
+        'pastor_notes',
         'confirmation_sent_at',
         'reminder_sent_at',
         'cancelled_at',
@@ -230,65 +231,86 @@ class PastoralCare extends Model
         // Ensure durationMinutes is an integer
         $durationMinutes = (int) $durationMinutes;
 
-        $endTime = Carbon::parse($appointmentTime)->addMinutes($durationMinutes);
+        $appointmentStart = Carbon::parse($appointmentTime);
+        $appointmentEnd = $appointmentStart->copy()->addMinutes($durationMinutes);
 
-        $query = static::where('pastor_id', $pastorId)
+        // Get existing appointments for the pastor on the same day
+        $existingAppointments = static::where('pastor_id', $pastorId)
             ->whereIn('status', ['pending', 'confirmed'])
-            ->where(function ($q) use ($appointmentTime, $endTime) {
-                $q->where(function ($subQ) use ($appointmentTime, $endTime) {
-                    // Check if new appointment starts during existing appointment
-                    $subQ->where('appointment_time', '<=', $appointmentTime)
-                         ->whereRaw('DATE_ADD(appointment_time, INTERVAL duration_minutes MINUTE) > ?', [$appointmentTime]);
-                })->orWhere(function ($subQ) use ($appointmentTime, $endTime) {
-                    // Check if new appointment ends during existing appointment
-                    $subQ->where('appointment_time', '<', $endTime)
-                         ->whereRaw('DATE_ADD(appointment_time, INTERVAL duration_minutes MINUTE) >= ?', [$endTime]);
-                })->orWhere(function ($subQ) use ($appointmentTime, $endTime) {
-                    // Check if existing appointment is completely within new appointment
-                    $subQ->where('appointment_time', '>=', $appointmentTime)
-                         ->whereRaw('DATE_ADD(appointment_time, INTERVAL duration_minutes MINUTE) <= ?', [$endTime]);
-                });
-            });
+            ->whereDate('appointment_time', $appointmentStart->toDateString())
+            ->when($excludeId, function ($query, $excludeId) {
+                return $query->where('id', '!=', $excludeId);
+            })
+            ->select(['appointment_time', 'duration_minutes'])
+            ->get();
 
-        if ($excludeId) {
-            $query->where('id', '!=', $excludeId);
+        // Check for conflicts with existing appointments
+        foreach ($existingAppointments as $existing) {
+            $existingStart = Carbon::parse($existing->appointment_time);
+            $existingEnd = $existingStart->copy()->addMinutes($existing->duration_minutes);
+
+            // Check for any overlap between the time slots
+            if ($appointmentStart->lt($existingEnd) && $appointmentEnd->gt($existingStart)) {
+                return false; // Conflict found
+            }
         }
 
-        return $query->count() === 0;
+        return true; // No conflicts found
     }
 
     public static function getAvailableTimeSlots($pastorId, $date, $durationMinutes = 60)
     {
         // Ensure durationMinutes is an integer
         $durationMinutes = (int) $durationMinutes;
-
-        // Define working hours (9 AM to 5 PM)
-        $startHour = 9;
-        $endHour = 17;
         $timeSlots = [];
-
         $currentDate = Carbon::parse($date);
 
-        // Generate all possible time slots
-        for ($hour = $startHour; $hour < $endHour; $hour++) {
-            for ($minute = 0; $minute < 60; $minute += 30) { // 30-minute intervals
-                $timeSlot = $currentDate->copy()->setTime($hour, $minute);
+        // Get pastor's availability for this date
+        $availabilities = \App\Models\PastorAvailability::where('pastor_id', $pastorId)
+            ->active()
+            ->where(function ($query) use ($currentDate) {
+                // Check for weekly recurring availability
+                $query->where(function ($q) use ($currentDate) {
+                    // Convert Carbon dayOfWeek (0=Sunday) to our format (1=Monday, 7=Sunday)
+                    $dayOfWeek = $currentDate->dayOfWeek === 0 ? 7 : $currentDate->dayOfWeek;
+                    $q->where('type', 'weekly')
+                      ->where('day_of_week', $dayOfWeek);
+                })
+                // Or specific date availability
+                ->orWhere(function ($q) use ($currentDate) {
+                    $q->where('type', 'specific_date')
+                      ->where('specific_date', $currentDate->toDateString());
+                });
+            })
+            ->get();
 
-                // Skip if the time slot would end after working hours
-                if ($timeSlot->copy()->addMinutes($durationMinutes)->hour >= $endHour) {
-                    continue;
-                }
+        // If no availability defined, return empty array (no slots available)
+        if ($availabilities->isEmpty()) {
+            return [];
+        }
+
+        // Generate time slots for each availability period
+        foreach ($availabilities as $availability) {
+            $slots = $availability->getTimeSlotsForDate($currentDate);
+
+            foreach ($slots as $slot) {
+                $timeSlot = $currentDate->copy()->setTimeFromTimeString($slot);
 
                 // Skip if in the past
                 if ($timeSlot <= now()) {
                     continue;
                 }
 
+                // Check if this specific time slot is available (not booked)
                 if (static::isTimeSlotAvailable($pastorId, $timeSlot, $durationMinutes)) {
-                    $timeSlots[] = $timeSlot->format('H:i');
+                    $timeSlots[] = $slot;
                 }
             }
         }
+
+        // Remove duplicates and sort
+        $timeSlots = array_unique($timeSlots);
+        sort($timeSlots);
 
         return $timeSlots;
     }

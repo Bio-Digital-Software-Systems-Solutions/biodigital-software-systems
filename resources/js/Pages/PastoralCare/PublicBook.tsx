@@ -16,6 +16,7 @@ import {
 import { Badge } from '@/Components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
 import { Separator } from '@/Components/ui/separator';
+import { SearchableSelect } from '@/Components/ui/searchable-select';
 import {
     CalendarDays,
     Clock,
@@ -30,9 +31,12 @@ import {
     CheckCircle,
     Loader2,
     AlertCircle,
+    ChevronLeft,
+    ChevronRight,
+    Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, addDays, isBefore, startOfDay } from 'date-fns';
+import { format, addDays, isBefore, startOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface Pastor {
@@ -79,6 +83,8 @@ export default function PublicBook({ auth }: Props) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [dateViewType, setDateViewType] = useState<'week' | 'month'>('week');
+    const [currentDate, setCurrentDate] = useState(new Date());
 
     const [formData, setFormData] = useState<BookingFormData>({
         pastor_id: '',
@@ -218,18 +224,49 @@ export default function PublicBook({ auth }: Props) {
         });
     };
 
-    const getNextAvailableDates = () => {
-        const dates = [];
+    const getAvailableDates = () => {
         const today = startOfDay(new Date());
+        let startDate: Date;
+        let endDate: Date;
 
-        for (let i = 1; i <= 14; i++) { // Next 2 weeks
-            const date = addDays(today, i);
-            // Skip Sundays (day 0) and Saturdays (day 6)
-            if (date.getDay() !== 0 && date.getDay() !== 6) {
-                dates.push(date);
-            }
+        if (dateViewType === 'week') {
+            // Start from the beginning of the week containing currentDate
+            startDate = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday
+            endDate = endOfWeek(currentDate, { weekStartsOn: 1 }); // Sunday
+        } else {
+            // Month view
+            startDate = startOfMonth(currentDate);
+            endDate = endOfMonth(currentDate);
         }
-        return dates;
+
+        // Generate all dates in the range
+        const allDates = eachDayOfInterval({ start: startDate, end: endDate });
+
+        // Filter out weekends and past dates
+        return allDates.filter(date => {
+            const dayOfWeek = date.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Sunday or Saturday
+            const isPast = date < today;
+            return !isWeekend && !isPast;
+        });
+    };
+
+    const navigateDate = (direction: 'prev' | 'next') => {
+        if (dateViewType === 'week') {
+            setCurrentDate(direction === 'next' ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1));
+        } else {
+            setCurrentDate(direction === 'next' ? addMonths(currentDate, 1) : subMonths(currentDate, 1));
+        }
+    };
+
+    const getDateRangeLabel = () => {
+        if (dateViewType === 'week') {
+            const start = startOfWeek(currentDate, { weekStartsOn: 1 });
+            const end = endOfWeek(currentDate, { weekStartsOn: 1 });
+            return `${format(start, 'd MMM', { locale: fr })} - ${format(end, 'd MMM yyyy', { locale: fr })}`;
+        } else {
+            return format(currentDate, 'MMMM yyyy', { locale: fr });
+        }
     };
 
     return (
@@ -313,34 +350,17 @@ export default function PublicBook({ auth }: Props) {
                                                 <span className="ml-2">Chargement des pasteurs...</span>
                                             </div>
                                         ) : (
-                                            <div className="grid gap-4 mt-2">
-                                                {pastors.map((pastor) => (
-                                                    <div
-                                                        key={pastor.id}
-                                                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                                                            formData.pastor_id === pastor.id.toString()
-                                                                ? 'border-blue-600 bg-blue-50 dark:bg-blue-950'
-                                                                : 'border-gray-200 hover:border-gray-300'
-                                                        }`}
-                                                        onClick={() => handleInputChange('pastor_id', pastor.id.toString())}
-                                                    >
-                                                        <div className="flex items-center space-x-3">
-                                                            <div className="flex-shrink-0">
-                                                                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                                                                    <User className="h-6 w-6 text-gray-600" />
-                                                                </div>
-                                                            </div>
-                                                            <div>
-                                                                <h3 className="font-medium text-gray-900 dark:text-white">
-                                                                    {pastor.name}
-                                                                </h3>
-                                                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                                    {pastor.email}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                            <div className="mt-2">
+                                                <SearchableSelect
+                                                    options={pastors.map(pastor => ({
+                                                        value: pastor.id.toString(),
+                                                        label: pastor.name
+                                                    }))}
+                                                    value={formData.pastor_id}
+                                                    onChange={(value) => handleInputChange('pastor_id', value.toString())}
+                                                    placeholder="Choisissez un pasteur..."
+                                                    className="w-full"
+                                                />
                                             </div>
                                         )}
                                         {errors.pastor_id && (
@@ -374,11 +394,69 @@ export default function PublicBook({ auth }: Props) {
 
                                     {/* Date Selection */}
                                     <div>
-                                        <Label className="text-base font-medium">Choisissez une date *</Label>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                                            {getNextAvailableDates().map((date) => (
+                                        <div className="flex items-center justify-between mb-4">
+                                            <Label className="text-base font-medium">Choisissez une date *</Label>
+                                            <div className="flex items-center space-x-2">
+                                                {/* View Type Toggle */}
+                                                <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 p-1">
+                                                    <Button
+                                                        type="button"
+                                                        variant={dateViewType === 'week' ? 'default' : 'ghost'}
+                                                        size="sm"
+                                                        className="px-3 py-1 text-xs"
+                                                        onClick={() => setDateViewType('week')}
+                                                    >
+                                                        Semaine
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant={dateViewType === 'month' ? 'default' : 'ghost'}
+                                                        size="sm"
+                                                        className="px-3 py-1 text-xs"
+                                                        onClick={() => setDateViewType('month')}
+                                                    >
+                                                        Mois
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Navigation Header */}
+                                        <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => navigateDate('prev')}
+                                                className="flex items-center space-x-1"
+                                            >
+                                                <ChevronLeft className="h-4 w-4" />
+                                                <span>Précédent</span>
+                                            </Button>
+
+                                            <div className="flex items-center space-x-2 text-sm font-medium">
+                                                <Calendar className="h-4 w-4" />
+                                                <span>{getDateRangeLabel()}</span>
+                                            </div>
+
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => navigateDate('next')}
+                                                className="flex items-center space-x-1"
+                                            >
+                                                <span>Suivant</span>
+                                                <ChevronRight className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+
+                                        {/* Date Grid */}
+                                        <div className={`grid gap-3 ${dateViewType === 'week' ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6'}`}>
+                                            {getAvailableDates().map((date) => (
                                                 <Button
                                                     key={date.toISOString()}
+                                                    type="button"
                                                     variant={formData.appointment_date === format(date, 'yyyy-MM-dd') ? 'default' : 'outline'}
                                                     className="h-auto p-3 flex flex-col items-center"
                                                     onClick={() => handleInputChange('appointment_date', format(date, 'yyyy-MM-dd'))}
@@ -395,6 +473,15 @@ export default function PublicBook({ auth }: Props) {
                                                 </Button>
                                             ))}
                                         </div>
+
+                                        {getAvailableDates().length === 0 && (
+                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                                <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                                                <p>Aucune date disponible pour cette période.</p>
+                                                <p className="text-sm">Utilisez la navigation pour voir d'autres périodes.</p>
+                                            </div>
+                                        )}
+
                                         {errors.appointment_date && (
                                             <p className="text-red-600 text-sm mt-2 flex items-center">
                                                 <AlertCircle className="h-4 w-4 mr-1" />

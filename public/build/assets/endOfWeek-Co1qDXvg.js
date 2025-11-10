@@ -1,1 +1,0 @@
-import{a as c}from"./addDays-cEDydrTT.js";import{g as d,t as f}from"./fr-BSQ6arKS.js";function k(s,t,a){return c(s,t*7,a)}function u(s,t){const a=d(),n=t?.weekStartsOn??t?.locale?.options?.weekStartsOn??a.weekStartsOn??a.locale?.options?.weekStartsOn??0,e=f(s,t?.in),o=e.getDay(),r=(o<n?-7:0)+6-(o-n);return e.setDate(e.getDate()+r),e.setHours(23,59,59,999),e}export{k as a,u as e};

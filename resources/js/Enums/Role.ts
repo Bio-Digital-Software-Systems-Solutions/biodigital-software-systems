@@ -13,6 +13,7 @@ export enum Role {
     DEPARTMENT_LEADER = 'DepartmentLeader',
     IMPACT_FAMILY_LEADER = 'ImpactFamilyLeader',
     MEMBER = 'Member',
+    PASTOR = 'Pastor',
     STUDENT = 'Student',
     TEACHER = 'Teacher',
 }

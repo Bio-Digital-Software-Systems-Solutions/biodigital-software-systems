@@ -1,0 +1,1 @@
+import{n as o,s as i}from"./fr-BSQ6arKS.js";function l(a,n,r){const[t,e]=o(r?.in,a,n);return+i(t)==+i(e)}function u(a,n,r){const[t,e]=o(r?.in,a,n);return t.getFullYear()===e.getFullYear()&&t.getMonth()===e.getMonth()}export{u as a,l as i};

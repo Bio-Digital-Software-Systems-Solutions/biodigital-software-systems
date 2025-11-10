@@ -32,8 +32,7 @@ class PastoralCareStoreRequest extends FormRequest
     {
         return [
             'pastor_id' => [
-                'sometimes',
-                'nullable',
+                'required',
                 'exists:users,id',
                 function ($attribute, $value, $fail) {
                     if ($value) {
@@ -44,17 +43,23 @@ class PastoralCareStoreRequest extends FormRequest
                     }
                 }
             ],
-            'client_name' => 'required|string|max:255',
-            'client_email' => 'required|email|max:255',
+            'client_name' => auth()->check() ? 'nullable|string|max:255' : 'required|string|max:255',
+            'client_email' => auth()->check() ? 'nullable|email|max:255' : 'required|email|max:255',
             'client_phone' => 'nullable|string|max:20',
             'appointment_date' => [
                 'required',
                 'date',
                 'after_or_equal:today',
                 function ($attribute, $value, $fail) {
-                    // Don't allow booking too far in advance (6 months)
-                    if (Carbon::parse($value) > now()->addMonths(6)) {
-                        $fail('La date de rendez-vous ne peut pas être plus de 6 mois dans le futur.');
+                    try {
+                        // Don't allow booking too far in advance (6 months)
+                        if (Carbon::parse($value) > now()->addMonths(6)) {
+                            $fail('La date de rendez-vous ne peut pas être plus de 6 mois dans le futur.');
+                        }
+                    } catch (\Exception $e) {
+                        // Skip validation if date parsing fails
+                        // (Laravel's built-in date validation will catch invalid formats)
+                        return;
                     }
                 }
             ],
@@ -62,10 +67,16 @@ class PastoralCareStoreRequest extends FormRequest
                 'required',
                 'date_format:H:i',
                 function ($attribute, $value, $fail) {
-                    $time = Carbon::createFromFormat('H:i', $value);
-                    // Check business hours (9 AM to 5 PM)
-                    if ($time->hour < 9 || $time->hour >= 17) {
-                        $fail('L\'heure de rendez-vous doit être entre 09:00 et 17:00.');
+                    try {
+                        $time = Carbon::createFromFormat('H:i', $value);
+                        // Check business hours (9 AM to 5 PM)
+                        if ($time->hour < 9 || $time->hour >= 17) {
+                            $fail('L\'heure de rendez-vous doit être entre 09:00 et 17:00.');
+                        }
+                    } catch (\Exception $e) {
+                        // Skip validation if time parsing fails
+                        // (Laravel's built-in date_format validation will catch invalid formats)
+                        return;
                     }
                 }
             ],
@@ -76,7 +87,7 @@ class PastoralCareStoreRequest extends FormRequest
                 'max:180',
                 function ($attribute, $value, $fail) {
                     // Duration must be in 30-minute increments
-                    if ($value % 30 !== 0) {
+                    if (is_numeric($value) && ($value % 30 !== 0)) {
                         $fail('La durée doit être un multiple de 30 minutes.');
                     }
                 }
@@ -95,9 +106,9 @@ class PastoralCareStoreRequest extends FormRequest
         return [
             'pastor_id.required' => 'Veuillez sélectionner un pasteur.',
             'pastor_id.exists' => 'Le pasteur sélectionné n\'existe pas.',
-            'client_name.required' => 'Le nom du client est requis.',
+            'client_name.required' => 'Le nom du client est requis pour les réservations publiques.',
             'client_name.max' => 'Le nom du client ne doit pas dépasser 255 caractères.',
-            'client_email.required' => 'L\'adresse email est requise.',
+            'client_email.required' => 'L\'adresse email est requise pour les réservations publiques.',
             'client_email.email' => 'L\'adresse email doit être valide.',
             'client_phone.max' => 'Le numéro de téléphone ne doit pas dépasser 20 caractères.',
             'appointment_date.required' => 'La date de rendez-vous est requise.',
@@ -153,18 +164,24 @@ class PastoralCareStoreRequest extends FormRequest
         $duration = $this->input('duration_minutes');
 
         if ($pastorId && $appointmentDate && $appointmentTime) {
-            // Combine date and time
-            $appointmentDateTime = Carbon::createFromFormat(
-                'Y-m-d H:i',
-                $appointmentDate . ' ' . $appointmentTime
-            );
-
-            // Check if the time slot is available
-            if (!PastoralCare::isTimeSlotAvailable($pastorId, $appointmentDateTime, $duration)) {
-                $validator->errors()->add(
-                    'appointment_time',
-                    'Ce créneau horaire n\'est pas disponible.'
+            try {
+                // Combine date and time
+                $appointmentDateTime = Carbon::createFromFormat(
+                    'Y-m-d H:i',
+                    $appointmentDate . ' ' . $appointmentTime
                 );
+
+                // Check if the time slot is available
+                if (!PastoralCare::isTimeSlotAvailable($pastorId, $appointmentDateTime, $duration)) {
+                    $validator->errors()->add(
+                        'appointment_time',
+                        'Ce créneau horaire n\'est pas disponible.'
+                    );
+                }
+            } catch (\Exception $e) {
+                // Skip validation if date/time parsing fails
+                // (Laravel's built-in date validation will catch invalid formats)
+                return;
             }
         }
     }

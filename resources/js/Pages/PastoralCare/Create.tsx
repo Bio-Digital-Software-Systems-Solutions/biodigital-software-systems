@@ -117,7 +117,7 @@ export default function Create({ pastors, auth }: Props) {
             <Head title="Nouveau rendez-vous - Soin Pastoral" />
 
             <div className="py-6">
-                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <div className="mx-auto sm:px-6 lg:px-8">
                     <form onSubmit={handleSubmit} className="space-y-8">
                         {/* Pastor Selection */}
                         <Card>
@@ -136,7 +136,13 @@ export default function Create({ pastors, auth }: Props) {
                                             onValueChange={(value) => setData('pastor_id', parseInt(value))}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Sélectionner un pasteur..." />
+                                                <SelectValue placeholder="Sélectionner un pasteur...">
+                                                    {data.pastor_id && pastors ?
+                                                        pastors.find(p => p.id === data.pastor_id)?.first_name + ' ' +
+                                                        pastors.find(p => p.id === data.pastor_id)?.last_name
+                                                        : "Sélectionner un pasteur..."
+                                                    }
+                                                </SelectValue>
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {pastors && pastors.length > 0 ? pastors.map((pastor) => (

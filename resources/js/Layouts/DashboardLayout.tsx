@@ -26,6 +26,7 @@ import {
     EnvelopeIcon,
     ShieldCheckIcon,
     HeartIcon,
+    ClockIcon,
 } from '@heroicons/react/24/outline';
 import Dropdown from '@/Components/Dropdown';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
@@ -51,9 +52,10 @@ interface DashboardLayoutProps extends PropsWithChildren {
     title?: string;
     description?: string;
     actions?: ReactNode;
+    header?: ReactNode;
 }
 
-export default function DashboardLayout({ children, title, description, actions }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, title, description, actions, header }: DashboardLayoutProps) {
     const { auth, flash } = usePage<PageProps>().props;
     const { t } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -75,9 +77,10 @@ export default function DashboardLayout({ children, title, description, actions 
     const navigation: NavItem[] = [
         { name: t('dashboard'), href: '/dashboard', icon: HomeIcon, current: true, excludeRoles: [Role.MEMBER] },
         { name: t('events'), href: '/events', icon: CalendarDaysIcon, permission: 'view events' },
-        { name: t('appointments'), href: '/appointments', icon: CalendarDaysIcon, permission: 'view appointments' },
-        { name: 'Soin Pastoral', href: '/pastoral-care/appointments', icon: HeartIcon, permission: 'view pastoral care' },
-        { name: 'Prendre RDV Pastoral', href: '/pastoral-care/book', icon: CalendarDaysIcon },
+        //{ name: t('appointments'), href: '/appointments', icon: CalendarDaysIcon, permission: 'view appointments' },
+        { name: 'Soins Pastoraux', href: '/pastoral-care/appointments', icon: HeartIcon, permission: 'view pastoral care' },
+        //{ name: 'Prendre RDV Pastoral', href: '/pastoral-care/book', icon: CalendarDaysIcon },
+        { name: 'Mes Disponibilités', href: '/pastoral-availability', icon: ClockIcon, permission: 'manage pastor availability' },
         { name: t('articles'), href: '/articles', icon: PencilSquareIcon, permission: 'view articles' },
         { name: t('books'), href: '/books', icon: BookOpenIcon, permission: 'view books' },
         { name: t('books.rent'), href: '/my-rentals', icon: BuildingLibraryIcon, permission: 'view books' },
@@ -327,11 +330,13 @@ export default function DashboardLayout({ children, title, description, actions 
                     aria-label="Contenu principal"
                 >
                     <div className="p-4">
-                        <PageHeader
-                            title={title}
-                            description={description}
-                            actions={actions}
-                        />
+                        {header || (
+                            <PageHeader
+                                title={title}
+                                description={description}
+                                actions={actions}
+                            />
+                        )}
                         {children}
                     </div>
                 </main>

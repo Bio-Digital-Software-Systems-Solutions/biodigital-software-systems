@@ -544,6 +544,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('available-slots');
     });
 
+    // Pastor Availability Management routes
+    Route::prefix('pastoral-availability')->name('pastoral-availability.')->group(function () {
+        Route::resource('', App\Http\Controllers\PastorAvailabilityController::class)
+            ->names([
+                'index' => 'index',
+                'create' => 'create',
+                'store' => 'store',
+                'show' => 'show',
+                'edit' => 'edit',
+                'update' => 'update',
+                'destroy' => 'destroy'
+            ])
+            ->parameters(['' => 'availability']);
+
+        // Additional availability actions
+        Route::post('{availability}/toggle-status', [App\Http\Controllers\PastorAvailabilityController::class, 'toggleStatus'])
+            ->name('toggle-status');
+
+        // AJAX endpoint for time slot preview
+        Route::post('preview-slots', [App\Http\Controllers\PastorAvailabilityController::class, 'previewSlots'])
+            ->name('preview-slots');
+    });
+
     // Pastoral Care booking for authenticated users
     Route::get('pastoral-care/book', function () {
         return \Inertia\Inertia::render('PastoralCare/PublicBook');

@@ -355,4 +355,20 @@ class User extends Authenticatable implements MustVerifyEmail
             ])
             ->withTimestamps();
     }
+
+    /**
+     * Pastor availability relation
+     */
+    public function availability(): HasMany
+    {
+        return $this->hasMany(PastorAvailability::class, 'pastor_id');
+    }
+
+    /**
+     * Get active availability for pastor
+     */
+    public function activeAvailability(): HasMany
+    {
+        return $this->availability()->active();
+    }
 }

@@ -120,8 +120,8 @@ class PastoralCareController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        // Check if this is a public booking (pastor_id provided) or pastor self-booking
-        $isPublicBooking = $request->has('pastor_id');
+        // Check if this is a public booking (unauthenticated user) or internal booking (authenticated user)
+        $isPublicBooking = !$request->user();
 
         $validationRules = [
             'appointment_date' => 'required|date|after_or_equal:today',
@@ -141,8 +141,9 @@ class PastoralCareController extends Controller
                 'client_phone' => 'nullable|string|max:20',
             ]);
         } else {
-            // Pastor self-booking - client details optional
+            // Internal booking - client details optional, pastor can be selected
             $validationRules = array_merge($validationRules, [
+                'pastor_id' => 'nullable|exists:users,id',
                 'client_name' => 'nullable|string|max:255',
                 'client_email' => 'nullable|email|max:255',
                 'client_phone' => 'nullable|string|max:20',
@@ -155,7 +156,9 @@ class PastoralCareController extends Controller
         $appointmentDateTime = Carbon::parse($validated['appointment_date'] . ' ' . $validated['appointment_time']);
 
         // Determine pastor ID
-        $pastorId = $isPublicBooking ? $validated['pastor_id'] : $request->user()->id;
+        $pastorId = $isPublicBooking
+            ? $validated['pastor_id']
+            : ($validated['pastor_id'] ?? $request->user()->id);
 
         // Verify the selected user is a pastor (for public bookings)
         if ($isPublicBooking) {
@@ -180,8 +183,8 @@ class PastoralCareController extends Controller
 
         $appointment = PastoralCare::create([
             'pastor_id' => $pastorId,
-            'client_name' => $validated['client_name'] ?? 'À définir',
-            'client_email' => $validated['client_email'] ?? 'adeterminer@example.com',
+            'client_name' => $validated['client_name'] ?? null,
+            'client_email' => $validated['client_email'] ?? null,
             'client_phone' => $validated['client_phone'] ?? null,
             'appointment_date' => $validated['appointment_date'],
             'appointment_time' => $appointmentDateTime,
@@ -197,9 +200,11 @@ class PastoralCareController extends Controller
 
         // Send notification emails
         try {
-            // Email to requester (client)
-            Mail::to($appointment->client_email)
-                ->send(new PastoralCareAppointmentConfirmation($appointment));
+            // Email to requester (client) - only if email is provided
+            if ($appointment->client_email) {
+                Mail::to($appointment->client_email)
+                    ->send(new PastoralCareAppointmentConfirmation($appointment));
+            }
 
             // Email to pastor
             Mail::to($appointment->pastor->email)

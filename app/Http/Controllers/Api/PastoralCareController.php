@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
+use App\Http\Requests\PastoralCareStoreRequest;
 
 class PastoralCareController extends Controller
 {
@@ -88,28 +89,11 @@ class PastoralCareController extends Controller
     /**
      * Book a new appointment (public endpoint)
      */
-    public function store(Request $request): JsonResponse
+    public function store(PastoralCareStoreRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'pastor_id' => 'required|exists:users,id',
-            'client_name' => 'required|string|max:255',
-            'client_email' => 'required|email|max:255',
-            'client_phone' => 'nullable|string|max:20',
-            'appointment_date' => 'required|date|after_or_equal:today',
-            'appointment_time' => 'required|date_format:H:i',
-            'duration_minutes' => 'required|integer|min:30|max:180',
-            'location_type' => 'required|in:in_person,zoom,hybrid',
-            'notes' => 'nullable|string|max:1000',
-        ]);
+        $validated = $request->validated();
 
-        // Verify the user is a pastor
-        $pastor = User::findOrFail($validated['pastor_id']);
-        if (!$pastor->hasRole('pastor')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User is not a pastor'
-            ], 400);
-        }
+        // Note: pastor verification and time slot availability are handled in the FormRequest
 
         // Combine date and time
         $appointmentDateTime = Carbon::createFromFormat(
@@ -117,30 +101,16 @@ class PastoralCareController extends Controller
             $validated['appointment_date'] . ' ' . $validated['appointment_time']
         );
 
-        // Check if time slot is available
-        if (!PastoralCare::isTimeSlotAvailable(
-            $validated['pastor_id'],
-            $appointmentDateTime,
-            $validated['duration_minutes']
-        )) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ce créneau horaire n\'est pas disponible.',
-                'errors' => [
-                    'appointment_time' => ['Ce créneau horaire n\'est pas disponible.']
-                ]
-            ], 422);
-        }
-
         $appointment = PastoralCare::create([
             'pastor_id' => $validated['pastor_id'],
-            'client_name' => $validated['client_name'],
-            'client_email' => $validated['client_email'],
-            'client_phone' => $validated['client_phone'],
+            'client_name' => $validated['client_name'] ?? null,
+            'client_email' => $validated['client_email'] ?? null,
+            'client_phone' => $validated['client_phone'] ?? null,
             'appointment_date' => $validated['appointment_date'],
             'appointment_time' => $appointmentDateTime,
             'duration_minutes' => $validated['duration_minutes'],
             'location_type' => $validated['location_type'],
+            'zoom_link' => $validated['zoom_link'] ?? null,
             'notes' => $validated['notes'],
             'status' => 'pending',
         ]);
@@ -252,6 +222,7 @@ class PastoralCareController extends Controller
                 'zoom_link' => $appointment->zoom_link,
                 'status' => $appointment->status,
                 'notes' => $appointment->notes,
+                'pastor_notes' => $appointment->pastor_notes,
                 'pastor' => [
                     'name' => $appointment->pastor->first_name . ' ' . $appointment->pastor->last_name,
                     'email' => $appointment->pastor->email,
@@ -351,6 +322,7 @@ class PastoralCareController extends Controller
             'status' => 'sometimes|in:pending,confirmed,completed,cancelled,no_show',
             'zoom_link' => 'nullable|url',
             'notes' => 'nullable|string|max:1000',
+            'pastor_notes' => 'nullable|string|max:2000',
             'cancellation_reason' => 'nullable|string|max:500',
         ]);
 

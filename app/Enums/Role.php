@@ -14,6 +14,7 @@ enum Role: string
     case DEPARTMENT_LEADER = 'DepartmentLeader';
     case IMPACT_FAMILY_LEADER = 'ImpactFamilyLeader';
     case MEMBER = 'Member';
+    case PASTOR = 'Pastor';
     case STUDENT = 'Student';
     case TEACHER = 'Teacher';
 }
