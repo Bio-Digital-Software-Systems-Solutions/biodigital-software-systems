@@ -83,7 +83,10 @@ class UserManagementController extends Controller
         $user->syncRoles($request->roles);
 
         // Invalidate user management cache
-        CacheService::forgetPattern('user_management');
+        CacheService::forgetPattern('user_management.*');
+        CacheService::forgetPattern('users.*');
+        CacheService::forgetPattern('roles.*');
+        CacheService::forgetByTag('permissions');
 
         return response()->json([
             'message' => 'Roles assigned successfully',
@@ -102,6 +105,12 @@ class UserManagementController extends Controller
         ]);
 
         $user->syncPermissions($request->permissions);
+
+        // Invalidate user management cache
+        CacheService::forgetPattern('user_management.*');
+        CacheService::forgetPattern('users.*');
+        CacheService::forgetPattern('permissions.*');
+        CacheService::forgetByTag('permissions');
 
         return response()->json([
             'message' => 'Permissions assigned successfully',
@@ -153,6 +162,11 @@ class UserManagementController extends Controller
             $role->syncPermissions($request->permissions);
         }
 
+        // Invalidate roles cache
+        CacheService::forgetPattern('user_management.*');
+        CacheService::forgetPattern('roles.*');
+        CacheService::forgetByTag('permissions');
+
         return response()->json([
             'message' => 'Role updated successfully',
             'role' => $role->load('permissions'),
@@ -172,6 +186,11 @@ class UserManagementController extends Controller
         }
 
         $role->delete();
+
+        // Invalidate roles cache
+        CacheService::forgetPattern('user_management.*');
+        CacheService::forgetPattern('roles.*');
+        CacheService::forgetByTag('permissions');
 
         return response()->json([
             'message' => 'Role deleted successfully',
@@ -226,7 +245,9 @@ class UserManagementController extends Controller
         $permission->delete();
 
         // Invalidate permissions cache
-        CacheService::forgetPattern('user_management.permissions');
+        CacheService::forgetPattern('user_management.*');
+        CacheService::forgetPattern('permissions.*');
+        CacheService::forgetByTag('permissions');
 
         return response()->json([
             'message' => 'Permission deleted successfully',
