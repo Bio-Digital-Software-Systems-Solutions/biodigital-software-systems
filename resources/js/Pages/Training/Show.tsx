@@ -12,6 +12,8 @@ import { Checkbox } from '@/Components/ui/checkbox';
 import { Separator } from '@/Components/ui/separator';
 import { Progress } from '@/Components/ui/progress';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import {
   Calendar,
   Clock,
@@ -818,7 +820,9 @@ const TrainingShow: React.FC<Props> = ({ auth, training }) => {
                   >
                     <Calendar className="h-5 w-5 text-primary dark:text-blue-400" />
                     <div className="flex-1">
-                      <div className="font-medium dark:text-white">{classItem.date}</div>
+                      <div className="font-medium dark:text-white">
+                        {format(new Date(classItem.date), 'EEEE d MMMM yyyy', { locale: fr })}
+                      </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
                 {classItem.start_time} - {classItem.end_time}
                 {classItem.room && ` • ${classItem.room}`}
@@ -922,9 +926,9 @@ const TrainingShow: React.FC<Props> = ({ auth, training }) => {
 
                               {quiz.available_from && quiz.available_until && (
                                 <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                                  Disponible du {new Date(quiz.available_from).toLocaleDateString('fr-FR')}
+                                  Disponible du {format(new Date(quiz.available_from), 'd MMMM yyyy', { locale: fr })}
                                   {' au '}
-                                  {new Date(quiz.available_until).toLocaleDateString('fr-FR')}
+                                  {format(new Date(quiz.available_until), 'd MMMM yyyy', { locale: fr })}
                                 </div>
                               )}
 
@@ -943,7 +947,7 @@ const TrainingShow: React.FC<Props> = ({ auth, training }) => {
                                     </span>
                                   </div>
                                   <div className="text-xs text-gray-500 mt-1">
-                                    Complété le {new Date(quiz.user_attempt.completed_at).toLocaleDateString('fr-FR')}
+                                    Complété le {format(new Date(quiz.user_attempt.completed_at), 'd MMMM yyyy à HH:mm', { locale: fr })}
                                   </div>
                                 </div>
                               )}
