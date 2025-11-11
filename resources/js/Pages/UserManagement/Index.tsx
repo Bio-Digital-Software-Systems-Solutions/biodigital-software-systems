@@ -179,6 +179,13 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
                     return;
                 }
 
+                // Prevent modification of SuperAdmin role
+                if (selectedRole.name === 'SuperAdmin') {
+                    console.error('Attempted to modify SuperAdmin role via handleCreateOrUpdateRole');
+                    toast.error('Erreur: Le rôle SuperAdmin ne peut pas être modifié');
+                    return;
+                }
+
                 await axios.put(route('user-management.update-role', selectedRole.id), {
                     name: newRoleName,
                     permissions: selectedPermissions,
@@ -287,6 +294,13 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
             if (!role.id) {
                 console.error('Role missing ID:', role);
                 toast.error('Erreur: ID du rôle manquant');
+                return;
+            }
+
+            // Prevent modification of SuperAdmin role
+            if (role.name === 'SuperAdmin') {
+                console.error('Attempted to modify SuperAdmin role via handleToggleRolePermission');
+                toast.error('Erreur: Le rôle SuperAdmin ne peut pas être modifié');
                 return;
             }
 
@@ -468,15 +482,35 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
     };
 
     const openRoleDetailDialog = (role: RoleWithPermissions) => {
+        console.log('DEBUG openRoleDetailDialog called with role:', role);
+        console.log('Role ID:', role.id, 'Type:', typeof role.id);
         setSelectedRoleDetail(role);
         setRoleDetailPermissions(role.permissions.map(p => p.name));
         setShowRoleDetailDialog(true);
     };
 
     const handleSaveRoleDetailPermissions = async () => {
-        if (!selectedRoleDetail || !selectedRoleDetail.id) {
-            console.error('No role selected or missing role ID:', selectedRoleDetail);
-            toast.error('Erreur: Aucun rôle sélectionné ou ID manquant');
+        console.log('DEBUG handleSaveRoleDetailPermissions called');
+        console.log('selectedRoleDetail:', selectedRoleDetail);
+
+        if (!selectedRoleDetail) {
+            console.error('No role selected');
+            toast.error('Erreur: Aucun rôle sélectionné');
+            return;
+        }
+
+        // Prevent modification of SuperAdmin role
+        if (selectedRoleDetail.name === 'SuperAdmin') {
+            console.error('Attempted to modify SuperAdmin role - this is not allowed');
+            toast.error('Erreur: Le rôle SuperAdmin ne peut pas être modifié');
+            return;
+        }
+
+        console.log('selectedRoleDetail.id:', selectedRoleDetail.id, 'type:', typeof selectedRoleDetail.id);
+
+        if (!selectedRoleDetail.id || String(selectedRoleDetail.id) === '' || String(selectedRoleDetail.id) === '0') {
+            console.error('Role ID is missing, empty, or invalid:', selectedRoleDetail.id);
+            toast.error('Erreur: ID du rôle manquant ou invalide');
             return;
         }
 
@@ -489,8 +523,17 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
             setShowRoleDetailDialog(false);
             setSelectedRoleDetail(null);
             router.reload({ only: ['roles'] });
-        } catch (error) {
-            toast.error('Erreur lors de la mise à jour des permissions');
+        } catch (error: any) {
+            console.error('ERROR in handleSaveRoleDetailPermissions:', error);
+            console.error('Error details:', {
+                message: error.message,
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                url: error.config?.url,
+                method: error.config?.method
+            });
+            toast.error(`Erreur lors de la mise à jour des permissions: ${error.response?.status || error.message}`);
         }
     };
 
@@ -1585,10 +1628,17 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
                                                     type="checkbox"
                                                     checked={selectedPermissions.includes(permission.name)}
                                                     onChange={(e) => {
+                                                        console.log('Permission change:', permission.name, 'checked:', e.target.checked);
+                                                        console.log('Current selectedPermissions:', selectedPermissions);
+
                                                         if (e.target.checked) {
-                                                            setSelectedPermissions([...selectedPermissions, permission.name]);
+                                                            const newPermissions = [...selectedPermissions, permission.name];
+                                                            console.log('Adding permission, new array:', newPermissions);
+                                                            setSelectedPermissions(newPermissions);
                                                         } else {
-                                                            setSelectedPermissions(selectedPermissions.filter(p => p !== permission.name));
+                                                            const newPermissions = selectedPermissions.filter(p => p !== permission.name);
+                                                            console.log('Removing permission, new array:', newPermissions);
+                                                            setSelectedPermissions(newPermissions);
                                                         }
                                                     }}
                                                     className="rounded"

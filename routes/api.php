@@ -27,6 +27,10 @@ Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function () {
     Route::get('/pastors', [PastoralCareController::class, 'getPastors'])
         ->name('pastors');
 
+    // Get available days for a pastor within a date range
+    Route::get('/available-days', [PastoralCareController::class, 'getAvailableDays'])
+        ->name('available-days');
+
     // Get available time slots for a pastor on a specific date
     Route::get('/available-slots', [PastoralCareController::class, 'getAvailableSlots'])
         ->name('available-slots');

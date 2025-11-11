@@ -48,7 +48,7 @@ import {
     ChevronRight,
     Heart,
 } from 'lucide-react';
-import { format, addDays, isBefore, startOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, addDays, isBefore, startOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 
@@ -139,12 +139,14 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
     // Booking form state
     const [pastors, setPastors] = useState<Pastor[]>([]);
     const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+    const [availableDates, setAvailableDates] = useState<string[]>([]);
     const [isLoadingPastors, setIsLoadingPastors] = useState(false);
     const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+    const [isLoadingDates, setIsLoadingDates] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [dateViewType, setDateViewType] = useState<'week' | 'month'>('week');
+    const [dateViewType, setDateViewType] = useState<'week' | 'month'>('month');
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const [formData, setFormData] = useState<BookingFormData>({
@@ -169,10 +171,67 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
 
     // Load available slots when pastor, date, or duration changes
     useEffect(() => {
-        if (activeTab === 'booking' && formData.pastor_id && formData.appointment_date && formData.duration_minutes) {
+        if (formData.pastor_id && formData.appointment_date && formData.duration_minutes) {
             fetchAvailableSlots();
+
+            // Scroll to time slots section when a date is selected
+            setTimeout(() => {
+                const timeSlotsSection = document.querySelector('[data-time-slots-section]');
+                if (timeSlotsSection) {
+                    timeSlotsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
         }
-    }, [activeTab, formData.pastor_id, formData.appointment_date, formData.duration_minutes]);
+    }, [formData.pastor_id, formData.appointment_date, formData.duration_minutes]);
+
+    // Auto-select first available date when pastor changes
+    useEffect(() => {
+        if (formData.pastor_id && !formData.appointment_date) {
+            findAndSelectFirstAvailableDate();
+        }
+    }, [formData.pastor_id]);
+
+    const findAndSelectFirstAvailableDate = async () => {
+        if (!formData.pastor_id) return;
+
+        try {
+            const today = new Date();
+            const endDate = addDays(today, 30); // Look for availability in next 30 days
+
+            const params = new URLSearchParams({
+                pastor_id: formData.pastor_id,
+                start_date: format(today, 'yyyy-MM-dd'),
+                end_date: format(endDate, 'yyyy-MM-dd'),
+            });
+
+            const response = await fetch(`/api/pastoral-care/available-days?${params}`);
+            const data = await response.json();
+
+            if (data.success && data.data.available_days.length > 0) {
+                // Store all available dates for calendar highlighting
+                const availableDatesArray = data.data.available_days.map((day: any) => day.date);
+                setAvailableDates(availableDatesArray);
+
+                // Select the first available date
+                const firstAvailableDate = data.data.available_days[0].date;
+                setFormData(prev => ({
+                    ...prev,
+                    appointment_date: firstAvailableDate,
+                    appointment_time: '' // Reset selected time
+                }));
+
+                // Navigate to the month containing the first available date if needed
+                const firstDate = new Date(firstAvailableDate);
+                if (!isSameMonth(firstDate, currentDate)) {
+                    setCurrentDate(firstDate);
+                }
+            } else {
+                setAvailableDates([]);
+            }
+        } catch (error) {
+            console.error('Error finding first available date:', error);
+        }
+    };
 
     const fetchPastors = async () => {
         setIsLoadingPastors(true);
@@ -205,6 +264,14 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
 
             if (data.success) {
                 setAvailableSlots(data.data.slots);
+
+                // Update location type from consultation mode
+                if (data.data.consultation_mode) {
+                    setFormData(prev => ({
+                        ...prev,
+                        location_type: data.data.consultation_mode
+                    }));
+                }
             } else {
                 toast.error('Erreur lors du chargement des créneaux');
                 setAvailableSlots([]);
@@ -218,7 +285,21 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
     };
 
     const handleInputChange = (field: keyof BookingFormData, value: string | number) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData(prev => {
+            const newData = { ...prev, [field]: value };
+
+            // When pastor changes, reset date and time to trigger auto-selection
+            if (field === 'pastor_id') {
+                newData.appointment_date = '';
+                newData.appointment_time = '';
+                // Clear available dates when pastor changes
+                setAvailableDates([]);
+                setAvailableSlots([]);
+            }
+
+            return newData;
+        });
+
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: '' }));
         }
@@ -317,11 +398,27 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
         const allDates = eachDayOfInterval({ start: startDate, end: endDate });
 
         return allDates.filter(date => {
-            const dayOfWeek = date.getDay();
-            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
             const isPast = date < today;
-            return !isWeekend && !isPast;
+            return !isPast;
         });
+    };
+
+    // Get all days for month view (including previous/next month days to fill the grid)
+    const getMonthDays = () => {
+        const monthStart = startOfMonth(currentDate);
+        const monthStartWeek = startOfWeek(monthStart, { weekStartsOn: 1 });
+        const monthEnd = endOfMonth(currentDate);
+        const monthEndWeek = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+        const days = [];
+        let day = monthStartWeek;
+
+        while (day <= monthEndWeek) {
+            days.push(day);
+            day = addDays(day, 1);
+        }
+
+        return days;
     };
 
     const navigateDate = (direction: 'prev' | 'next') => {
@@ -692,21 +789,21 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                         <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 p-1">
                                                             <Button
                                                                 type="button"
-                                                                variant={dateViewType === 'week' ? 'default' : 'ghost'}
-                                                                size="sm"
-                                                                className="px-3 py-1 text-xs"
-                                                                onClick={() => setDateViewType('week')}
-                                                            >
-                                                                Semaine
-                                                            </Button>
-                                                            <Button
-                                                                type="button"
                                                                 variant={dateViewType === 'month' ? 'default' : 'ghost'}
                                                                 size="sm"
                                                                 className="px-3 py-1 text-xs"
                                                                 onClick={() => setDateViewType('month')}
                                                             >
                                                                 Mois
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant={dateViewType === 'week' ? 'default' : 'ghost'}
+                                                                size="sm"
+                                                                className="px-3 py-1 text-xs"
+                                                                onClick={() => setDateViewType('week')}
+                                                            >
+                                                                Semaine
                                                             </Button>
                                                         </div>
                                                     </div>
@@ -742,30 +839,137 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                     </Button>
                                                 </div>
 
-                                                {/* Date Grid */}
-                                                <div className={`grid gap-3 ${dateViewType === 'week' ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6'}`}>
-                                                    {getAvailableDates().map((date) => (
-                                                        <Button
-                                                            key={date.toISOString()}
-                                                            type="button"
-                                                            variant={formData.appointment_date === format(date, 'yyyy-MM-dd') ? 'default' : 'outline'}
-                                                            className="h-auto p-3 flex flex-col items-center"
-                                                            onClick={() => handleInputChange('appointment_date', format(date, 'yyyy-MM-dd'))}
-                                                        >
-                                                            <span className="text-sm font-medium">
-                                                                {format(date, 'EEE', { locale: fr })}
-                                                            </span>
-                                                            <span className="text-lg font-bold">
-                                                                {format(date, 'd', { locale: fr })}
-                                                            </span>
-                                                            <span className="text-xs">
-                                                                {format(date, 'MMM', { locale: fr })}
-                                                            </span>
-                                                        </Button>
-                                                    ))}
-                                                </div>
+                                                {/* Date Grid - Week View */}
+                                                {dateViewType === 'week' && (
+                                                    <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
+                                                        {getAvailableDates().map((date) => {
+                                                            const dateString = format(date, 'yyyy-MM-dd');
+                                                            const isSelected = formData.appointment_date === dateString;
+                                                            const hasAvailableSlots = availableDates.includes(dateString);
 
-                                                {getAvailableDates().length === 0 && (
+                                                            return (
+                                                                <Button
+                                                                    key={date.toISOString()}
+                                                                    type="button"
+                                                                    variant={'outline'}
+                                                                    className={`h-auto p-3 flex flex-col items-center transition-all duration-200 ${
+                                                                        isSelected
+                                                                            ? 'bg-purple-600 dark:bg-purple-600 border-2 border-purple-600 dark:border-purple-600 text-white hover:bg-purple-700 dark:hover:bg-purple-500'
+                                                                            : hasAvailableSlots
+                                                                                ? 'bg-purple-100 dark:bg-purple-800/50 border-2 border-purple-400 dark:border-purple-500 text-purple-800 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-700/50'
+                                                                                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                                                                    }`}
+                                                                    onClick={() => handleInputChange('appointment_date', dateString)}
+                                                                >
+                                                                    <span className={`text-sm font-medium ${
+                                                                        isSelected
+                                                                            ? 'text-white'
+                                                                            : hasAvailableSlots
+                                                                                ? 'text-purple-800 dark:text-purple-200 font-bold'
+                                                                                : 'text-gray-600 dark:text-gray-400'
+                                                                    }`}>
+                                                                        {format(date, 'EEE', { locale: fr })}
+                                                                    </span>
+                                                                    <span className={`text-lg font-bold ${
+                                                                        isSelected
+                                                                            ? 'text-white'
+                                                                            : hasAvailableSlots
+                                                                                ? 'text-purple-800 dark:text-purple-200'
+                                                                                : 'text-gray-900 dark:text-gray-100'
+                                                                    }`}>
+                                                                        {format(date, 'd', { locale: fr })}
+                                                                    </span>
+                                                                    <span className={`text-xs ${
+                                                                        isSelected
+                                                                            ? 'text-white'
+                                                                            : hasAvailableSlots
+                                                                                ? 'text-purple-700 dark:text-purple-300 font-semibold'
+                                                                                : 'text-gray-500 dark:text-gray-400'
+                                                                    }`}>
+                                                                        {format(date, 'MMM', { locale: fr })}
+                                                                    </span>
+                                                                </Button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+
+                                                {/* Calendar View - Month View */}
+                                                {dateViewType === 'month' && (
+                                                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
+                                                        {/* Day headers */}
+                                                        <div className="grid grid-cols-7">
+                                                            {['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'].map(day => (
+                                                                <div key={day} className="bg-gray-100 dark:bg-gray-700 p-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300 border-r border-b border-gray-200 dark:border-gray-600 last:border-r-0">
+                                                                    {day}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+
+                                                        {/* Calendar grid */}
+                                                        <div className="grid grid-cols-7">
+                                                        {/* Calendar days */}
+                                                        {getMonthDays().map((day, idx) => {
+                                                            const today = startOfDay(new Date());
+                                                            const isToday = isSameDay(day, today);
+                                                            const isCurrentMonth = isSameMonth(day, currentDate);
+                                                            const isPast = day < today;
+                                                            const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                                                            const isAvailable = !isPast && isCurrentMonth;
+                                                            const isClickable = isCurrentMonth && !isPast; // Allow clicking only future days of current month
+                                                            const isSelected = formData.appointment_date === format(day, 'yyyy-MM-dd');
+                                                            const hasAvailableSlots = availableDates.includes(format(day, 'yyyy-MM-dd'));
+
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    className={`bg-white dark:bg-gray-800 min-h-[100px] p-3 transition-all duration-200 border-r border-b border-gray-100 dark:border-gray-700 ${
+                                                                        !isCurrentMonth ? 'opacity-30' : ''
+                                                                    } ${
+                                                                        isClickable
+                                                                            ? `cursor-pointer ${!isSelected ? 'hover:bg-gray-50 dark:hover:bg-gray-700/50' : 'hover:bg-purple-700 dark:hover:bg-purple-500'} hover:shadow-sm`
+                                                                            : 'cursor-not-allowed'
+                                                                    } ${
+                                                                        isSelected
+                                                                            ? 'bg-purple-600 dark:bg-purple-600 border-2 border-purple-600 dark:border-purple-600 shadow-lg rounded-lg'
+                                                                            : hasAvailableSlots
+                                                                                ? 'bg-purple-100 dark:bg-purple-800/50 border-2 border-purple-400 dark:border-purple-500 shadow-md'
+                                                                                : ''
+                                                                    }`}
+                                                                    onClick={() => {
+                                                                        if (isClickable) {
+                                                                            handleInputChange('appointment_date', format(day, 'yyyy-MM-dd'));
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <div className={`text-sm font-medium ${
+                                                                        isToday && !isSelected
+                                                                            ? 'text-white w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center'
+                                                                            : isSelected
+                                                                                ? 'text-white dark:text-white font-bold text-lg'
+                                                                                : hasAvailableSlots
+                                                                                    ? 'text-purple-800 dark:text-purple-200 font-bold'
+                                                                                    : isPast || !isCurrentMonth
+                                                                                        ? 'text-gray-400 dark:text-gray-600'
+                                                                                        : 'text-gray-900 dark:text-gray-100'
+                                                                    }`}>
+                                                                        {format(day, 'd')}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* No dates available message */}
+                                                {((dateViewType === 'week' && getAvailableDates().length === 0) ||
+                                                  (dateViewType === 'month' && getMonthDays().filter(day => {
+                                                    const today = startOfDay(new Date());
+                                                    const isCurrentMonth = isSameMonth(day, currentDate);
+                                                    const isPast = day < today;
+                                                    return !isPast && isCurrentMonth;
+                                                  }).length === 0)) && (
                                                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                                                         <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-400" />
                                                         <p>Aucune date disponible pour cette période.</p>
@@ -783,7 +987,7 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
 
                                             {/* Time Slot Selection */}
                                             {formData.pastor_id && formData.appointment_date && (
-                                                <div>
+                                                <div data-time-slots-section>
                                                     <Label className="text-base font-medium">Choisissez un horaire *</Label>
                                                     {isLoadingSlots ? (
                                                         <div className="flex items-center justify-center py-8">
@@ -876,38 +1080,40 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
 
                                             <Separator />
 
-                                            {/* Meeting Type */}
+                                            {/* Meeting Type - Display Only */}
                                             <div>
                                                 <Label className="text-base font-medium">Type de rendez-vous</Label>
-                                                <RadioGroup
-                                                    value={formData.location_type}
-                                                    onValueChange={(value: 'in_person' | 'zoom' | 'hybrid') =>
-                                                        handleInputChange('location_type', value)
-                                                    }
-                                                    className="mt-3"
-                                                >
-                                                    <div className="flex items-center space-x-2">
-                                                        <RadioGroupItem value="in_person" id="in_person" />
-                                                        <Label htmlFor="in_person" className="flex items-center cursor-pointer">
-                                                            <MapPin className="h-4 w-4 mr-2" />
-                                                            En présentiel à l'église
-                                                        </Label>
+                                                <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                                                    <div className="flex items-center">
+                                                        {formData.location_type === 'in_person' && (
+                                                            <>
+                                                                <MapPin className="h-5 w-5 mr-3 text-gray-600 dark:text-gray-400" />
+                                                                <span className="text-gray-900 dark:text-gray-100 font-medium">
+                                                                    En présentiel à l'église
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                        {formData.location_type === 'zoom' && (
+                                                            <>
+                                                                <Video className="h-5 w-5 mr-3 text-gray-600 dark:text-gray-400" />
+                                                                <span className="text-gray-900 dark:text-gray-100 font-medium">
+                                                                    Visioconférence (Zoom)
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                        {formData.location_type === 'hybrid' && (
+                                                            <>
+                                                                <Users className="h-5 w-5 mr-3 text-gray-600 dark:text-gray-400" />
+                                                                <span className="text-gray-900 dark:text-gray-100 font-medium">
+                                                                    Hybride (au choix du pasteur)
+                                                                </span>
+                                                            </>
+                                                        )}
                                                     </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        <RadioGroupItem value="zoom" id="zoom" />
-                                                        <Label htmlFor="zoom" className="flex items-center cursor-pointer">
-                                                            <Video className="h-4 w-4 mr-2" />
-                                                            Visioconférence (Zoom)
-                                                        </Label>
-                                                    </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        <RadioGroupItem value="hybrid" id="hybrid" />
-                                                        <Label htmlFor="hybrid" className="flex items-center cursor-pointer">
-                                                            <Users className="h-4 w-4 mr-2" />
-                                                            Hybride (au choix du pasteur)
-                                                        </Label>
-                                                    </div>
-                                                </RadioGroup>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                                                        Type défini par les disponibilités du pasteur
+                                                    </p>
+                                                </div>
                                             </div>
 
                                             {/* Zoom Link if needed */}

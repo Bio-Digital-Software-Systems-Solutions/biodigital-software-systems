@@ -51,6 +51,13 @@ interface TimeSlot {
     available: boolean;
 }
 
+interface AvailableDay {
+    date: string;
+    day_name: string;
+    full_date: string;
+    slots_count: number;
+}
+
 interface BookingFormData {
     pastor_id: string;
     client_name: string;
@@ -76,14 +83,22 @@ interface Props {
 }
 
 export default function PublicBook({ auth }: Props) {
+    console.log('🚀 PublicBook component loaded');
+    console.log('Auth user:', auth.user);
+
     const [pastors, setPastors] = useState<Pastor[]>([]);
     const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+    const [availableDays, setAvailableDays] = useState<AvailableDay[]>([]);
     const [isLoadingPastors, setIsLoadingPastors] = useState(true);
     const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+    const [isLoadingDays, setIsLoadingDays] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [dateViewType, setDateViewType] = useState<'week' | 'month'>('week');
+    const [dateViewType, setDateViewType] = useState<'week' | 'month'>('month');
+
+    // Debug: vérifier la vue par défaut
+    console.log('🗓️ Date view type initialized as:', dateViewType);
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const [formData, setFormData] = useState<BookingFormData>({
@@ -104,6 +119,20 @@ export default function PublicBook({ auth }: Props) {
         fetchPastors();
     }, []);
 
+    // Load available days when pastor is selected or date range changes
+    useEffect(() => {
+        console.log('🔄 useEffect triggered - Pastor ID:', formData.pastor_id);
+
+        if (formData.pastor_id) {
+            console.log('🚀 Fetching available days for pastor:', formData.pastor_id);
+            fetchAvailableDays();
+        } else {
+            console.log('🧹 Clearing available days - no pastor selected');
+            setAvailableDays([]);
+            setFormData(prev => ({ ...prev, appointment_date: '', appointment_time: '' }));
+        }
+    }, [formData.pastor_id, currentDate, dateViewType]);
+
     // Load available slots when pastor, date, or duration changes
     useEffect(() => {
         if (formData.pastor_id && formData.appointment_date && formData.duration_minutes) {
@@ -112,18 +141,76 @@ export default function PublicBook({ auth }: Props) {
     }, [formData.pastor_id, formData.appointment_date, formData.duration_minutes]);
 
     const fetchPastors = async () => {
+        console.log('🔄 fetchPastors called');
         try {
             const response = await fetch('/api/pastoral-care/pastors');
+            console.log('📡 Pastors API response status:', response.status);
             const data = await response.json();
+            console.log('👥 Pastors data received:', data);
             if (data.success) {
+                console.log('✅ Setting pastors:', data.data);
                 setPastors(data.data);
             } else {
+                console.error('❌ Pastors API error:', data);
                 toast.error('Erreur lors du chargement des pasteurs');
             }
         } catch (error) {
+            console.error('💥 Pastors fetch error:', error);
             toast.error('Erreur de connexion');
         } finally {
             setIsLoadingPastors(false);
+        }
+    };
+
+    const fetchAvailableDays = async () => {
+        console.log('fetchAvailableDays called with pastor_id:', formData.pastor_id);
+        if (!formData.pastor_id) {
+            console.log('No pastor_id, returning early');
+            return;
+        }
+
+        setIsLoadingDays(true);
+        try {
+            // Calculate date range based on current view
+            let startDate: Date;
+            let endDate: Date;
+
+            if (dateViewType === 'week') {
+                startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
+                endDate = endOfWeek(currentDate, { weekStartsOn: 1 });
+            } else {
+                startDate = startOfMonth(currentDate);
+                endDate = endOfMonth(currentDate);
+            }
+
+            const params = new URLSearchParams({
+                pastor_id: formData.pastor_id,
+                start_date: format(startDate, 'yyyy-MM-dd'),
+                end_date: format(endDate, 'yyyy-MM-dd'),
+            });
+
+            const apiUrl = `/api/pastoral-care/available-days?${params}`;
+            console.log('Calling API:', apiUrl);
+
+            const response = await fetch(apiUrl);
+            console.log('API Response status:', response.status);
+            const data = await response.json();
+            console.log('API Response data:', data);
+
+            if (data.success) {
+                console.log('Setting available days:', data.data.available_days);
+                setAvailableDays(data.data.available_days);
+            } else {
+                console.error('API returned error:', data);
+                toast.error('Erreur lors du chargement des jours disponibles');
+                setAvailableDays([]);
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            toast.error('Erreur de connexion');
+            setAvailableDays([]);
+        } finally {
+            setIsLoadingDays(false);
         }
     };
 
@@ -154,7 +241,13 @@ export default function PublicBook({ auth }: Props) {
     };
 
     const handleInputChange = (field: keyof BookingFormData, value: string | number) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        console.log('📝 handleInputChange:', field, '=', value);
+
+        setFormData(prev => {
+            const newFormData = { ...prev, [field]: value };
+            console.log('✅ Form data updated:', { [field]: value });
+            return newFormData;
+        });
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: '' }));
         }
@@ -225,30 +318,22 @@ export default function PublicBook({ auth }: Props) {
     };
 
     const getAvailableDates = () => {
-        const today = startOfDay(new Date());
-        let startDate: Date;
-        let endDate: Date;
-
-        if (dateViewType === 'week') {
-            // Start from the beginning of the week containing currentDate
-            startDate = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday
-            endDate = endOfWeek(currentDate, { weekStartsOn: 1 }); // Sunday
-        } else {
-            // Month view
-            startDate = startOfMonth(currentDate);
-            endDate = endOfMonth(currentDate);
+        // If no pastor selected, show no dates
+        if (!formData.pastor_id) {
+            return [];
         }
 
-        // Generate all dates in the range
-        const allDates = eachDayOfInterval({ start: startDate, end: endDate });
+        // If loading days, show previous dates temporarily
+        if (isLoadingDays) {
+            return [];
+        }
 
-        // Filter out weekends and past dates
-        return allDates.filter(date => {
-            const dayOfWeek = date.getDay();
-            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Sunday or Saturday
-            const isPast = date < today;
-            return !isWeekend && !isPast;
-        });
+        // Convert available days to Date objects and filter within current range
+        const today = startOfDay(new Date());
+        return availableDays
+            .map(day => new Date(day.date))
+            .filter(date => date >= today)
+            .sort((a, b) => a.getTime() - b.getTime());
     };
 
     const navigateDate = (direction: 'prev' | 'next') => {
@@ -401,21 +486,21 @@ export default function PublicBook({ auth }: Props) {
                                                 <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 p-1">
                                                     <Button
                                                         type="button"
-                                                        variant={dateViewType === 'week' ? 'default' : 'ghost'}
-                                                        size="sm"
-                                                        className="px-3 py-1 text-xs"
-                                                        onClick={() => setDateViewType('week')}
-                                                    >
-                                                        Semaine
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
                                                         variant={dateViewType === 'month' ? 'default' : 'ghost'}
                                                         size="sm"
                                                         className="px-3 py-1 text-xs"
                                                         onClick={() => setDateViewType('month')}
                                                     >
                                                         Mois
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant={dateViewType === 'week' ? 'default' : 'ghost'}
+                                                        size="sm"
+                                                        className="px-3 py-1 text-xs"
+                                                        onClick={() => setDateViewType('week')}
+                                                    >
+                                                        Semaine
                                                     </Button>
                                                 </div>
                                             </div>
@@ -452,29 +537,54 @@ export default function PublicBook({ auth }: Props) {
                                         </div>
 
                                         {/* Date Grid */}
-                                        <div className={`grid gap-3 ${dateViewType === 'week' ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6'}`}>
-                                            {getAvailableDates().map((date) => (
-                                                <Button
-                                                    key={date.toISOString()}
-                                                    type="button"
-                                                    variant={formData.appointment_date === format(date, 'yyyy-MM-dd') ? 'default' : 'outline'}
-                                                    className="h-auto p-3 flex flex-col items-center"
-                                                    onClick={() => handleInputChange('appointment_date', format(date, 'yyyy-MM-dd'))}
-                                                >
-                                                    <span className="text-sm font-medium">
-                                                        {format(date, 'EEE', { locale: fr })}
-                                                    </span>
-                                                    <span className="text-lg font-bold">
-                                                        {format(date, 'd', { locale: fr })}
-                                                    </span>
-                                                    <span className="text-xs">
-                                                        {format(date, 'MMM', { locale: fr })}
-                                                    </span>
-                                                </Button>
-                                            ))}
-                                        </div>
+                                        {!formData.pastor_id && (
+                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                                <User className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                                                <p>Veuillez d'abord sélectionner un pasteur</p>
+                                                <p className="text-sm">Les dates disponibles s'afficheront automatiquement.</p>
+                                            </div>
+                                        )}
 
-                                        {getAvailableDates().length === 0 && (
+                                        {formData.pastor_id && isLoadingDays && (
+                                            <div className="flex items-center justify-center py-8">
+                                                <Loader2 className="h-6 w-6 animate-spin" />
+                                                <span className="ml-2">Chargement des dates disponibles...</span>
+                                            </div>
+                                        )}
+
+                                        {formData.pastor_id && !isLoadingDays && (
+                                            <div className={`grid gap-3 ${dateViewType === 'week' ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6'}`}>
+                                                {getAvailableDates().map((date) => {
+                                                    const dayInfo = availableDays.find(day => day.date === format(date, 'yyyy-MM-dd'));
+                                                    return (
+                                                        <Button
+                                                            key={date.toISOString()}
+                                                            type="button"
+                                                            variant={formData.appointment_date === format(date, 'yyyy-MM-dd') ? 'default' : 'outline'}
+                                                            className="h-auto p-3 flex flex-col items-center relative"
+                                                            onClick={() => handleInputChange('appointment_date', format(date, 'yyyy-MM-dd'))}
+                                                        >
+                                                            <span className="text-sm font-medium">
+                                                                {format(date, 'EEE', { locale: fr })}
+                                                            </span>
+                                                            <span className="text-lg font-bold">
+                                                                {format(date, 'd', { locale: fr })}
+                                                            </span>
+                                                            <span className="text-xs">
+                                                                {format(date, 'MMM', { locale: fr })}
+                                                            </span>
+                                                            {dayInfo && dayInfo.slots_count > 0 && (
+                                                                <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                                                                    {dayInfo.slots_count}
+                                                                </Badge>
+                                                            )}
+                                                        </Button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {formData.pastor_id && !isLoadingDays && getAvailableDates().length === 0 && (
                                             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                                                 <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-400" />
                                                 <p>Aucune date disponible pour cette période.</p>
