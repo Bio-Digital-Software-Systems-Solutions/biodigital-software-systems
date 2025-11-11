@@ -173,6 +173,12 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
     const handleCreateOrUpdateRole = async () => {
         try {
             if (editingRole && selectedRole) {
+                if (!selectedRole.id) {
+                    console.error('Selected role missing ID:', selectedRole);
+                    toast.error('Erreur: ID du rôle manquant');
+                    return;
+                }
+
                 await axios.put(route('user-management.update-role', selectedRole.id), {
                     name: newRoleName,
                     permissions: selectedPermissions,
@@ -278,6 +284,12 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
             : [...role.permissions.map(p => p.name), permissionName];
 
         try {
+            if (!role.id) {
+                console.error('Role missing ID:', role);
+                toast.error('Erreur: ID du rôle manquant');
+                return;
+            }
+
             await axios.put(route('user-management.update-role', role.id), {
                 name: role.name,
                 permissions: newPermissions,
@@ -462,7 +474,11 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
     };
 
     const handleSaveRoleDetailPermissions = async () => {
-        if (!selectedRoleDetail) return;
+        if (!selectedRoleDetail || !selectedRoleDetail.id) {
+            console.error('No role selected or missing role ID:', selectedRoleDetail);
+            toast.error('Erreur: Aucun rôle sélectionné ou ID manquant');
+            return;
+        }
 
         try {
             await axios.put(route('user-management.update-role', selectedRoleDetail.id), {
