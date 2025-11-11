@@ -206,7 +206,7 @@ class PastoralCareController extends Controller
             'user_id' => Auth::id(),
             'pastor_id' => $pastorId,
             'client_name' => $validated['client_name'] ?? null,
-            'client_email' => $validated['client_email'] ?? null,
+            'client_email' => Auth::user()->email,
             'client_phone' => $validated['client_phone'] ?? null,
             'appointment_date' => $validated['appointment_date'],
             'appointment_time' => $appointmentDateTime,

@@ -84,6 +84,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('quiz:send-deadline-reminders')
             ->dailyAt('09:00')
             ->timezone('Europe/Paris');
+
+        // Clean expired sessions every hour
+        $schedule->command('sessions:clean')
+            ->hourly()
+            ->withoutOverlapping();
     })
     ->booting(function () {
         Event::listen(
