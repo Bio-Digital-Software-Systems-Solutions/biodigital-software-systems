@@ -7,6 +7,8 @@ declare global {
     interface Window {
         axios: AxiosInstance;
         route: typeof ziggyRoute;
+        updateCsrfToken: (newToken: string) => void;
+        refreshCsrfToken: () => Promise<void>;
     }
 
     /* eslint-disable no-var */

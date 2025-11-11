@@ -599,7 +599,7 @@ class PastoralCareController extends Controller
                 'content' => $pastorMessageContent,
                 'sender_id' => 1, // System user
                 'receiver_id' => $pastor->id,
-                'type' => 'appointment',
+                'type' => 'system',
                 'recipient_type' => 'user',
             ]);
 
@@ -653,7 +653,7 @@ class PastoralCareController extends Controller
                     'content' => $clientMessageContent,
                     'sender_id' => 1, // System user
                     'receiver_id' => $clientUser->id,
-                    'type' => 'appointment',
+                    'type' => 'system',
                     'recipient_type' => 'user',
                 ]);
             }
@@ -731,7 +731,7 @@ class PastoralCareController extends Controller
                     'receiver_id' => $appointment->user_id,
                     'subject' => $statusInfo['subject'],
                     'content' => $messageContent,
-                    'type' => 'appointment_status_change',
+                    'type' => 'system',
                 ]);
             }
 

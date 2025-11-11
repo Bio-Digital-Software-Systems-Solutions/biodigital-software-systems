@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Mail\PastoralCareAppointmentConfirmation;
 use App\Mail\PastoralCareNewAppointmentNotification;
 
@@ -233,7 +234,7 @@ class PastoralCareController extends Controller
                 ->send(new PastoralCareNewAppointmentNotification($appointment));
         } catch (\Exception $e) {
             // Log the error but don't fail the appointment creation
-            \Log::error('Failed to send pastoral care appointment emails: ' . $e->getMessage());
+            Log::error('Failed to send pastoral care appointment emails: ' . $e->getMessage());
         }
 
         // Create platform messages
@@ -251,7 +252,7 @@ class PastoralCareController extends Controller
                                $appointment->appointment_date->format('d/m/Y') . " à " .
                                $appointment->appointment_time->format('H:i') .
                                ". Vous recevrez une confirmation par email. Consultez vos messages pour plus de détails.",
-                    'type' => 'appointment',
+                    'type' => 'system',
                 ]);
             }
 
@@ -265,11 +266,11 @@ class PastoralCareController extends Controller
                            $appointment->appointment_time->format('H:i') .
                            ". Client: {$appointment->client_name} ({$appointment->client_email}). " .
                            "Consultez votre tableau de bord pour gérer ce rendez-vous.",
-                'type' => 'appointment',
+                'type' => 'system',
             ]);
         } catch (\Exception $e) {
             // Log the error but don't fail the appointment creation
-            \Log::error('Failed to create pastoral care platform messages: ' . $e->getMessage());
+            Log::error('Failed to create pastoral care platform messages: ' . $e->getMessage());
         }
 
         return redirect()->route('pastoral-care.show', $appointment)
@@ -523,13 +524,12 @@ class PastoralCareController extends Controller
                     'receiver_id' => $appointment->user_id,
                     'subject' => $statusInfo['subject'],
                     'content' => $messageContent,
-                    'type' => 'appointment_status_change',
+                    'type' => 'system',
                 ]);
             }
-
         } catch (\Exception $e) {
             // Log the error but don't fail the status change
-            \Log::error('Failed to send pastoral care status change notifications: ' . $e->getMessage());
+            Log::error('Failed to send pastoral care status change notifications: ' . $e->getMessage());
         }
     }
 

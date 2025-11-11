@@ -11,6 +11,11 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+// CSRF token refresh endpoint
+Route::get('/csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+})->middleware('auth:sanctum');
+
 // TUS protocol file upload endpoints (authenticated)
 Route::middleware('auth:sanctum')->group(function () {
     Route::any('/files/{fileId?}', TusUploadController::class)->where('fileId', '.*');

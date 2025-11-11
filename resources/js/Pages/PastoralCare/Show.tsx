@@ -56,6 +56,8 @@ interface PastoralCareAppointment {
     cancelled_at?: string;
     confirmation_sent_at?: string;
     reminder_sent_at?: string;
+    can_be_confirmed: boolean;
+    can_be_cancelled: boolean;
 }
 
 interface Props {
@@ -549,7 +551,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                         {isPastor && availableStatusUpdates.includes('confirmed') && (
                                             <Button
                                                 onClick={handleConfirm}
-                                                disabled={isUpdatingStatus}
+                                                disabled={isUpdatingStatus || !appointment.can_be_confirmed}
                                                 className="w-full bg-green-600 hover:bg-green-700 text-white"
                                             >
                                                 <CheckCircleIcon className="h-4 w-4 mr-2" />

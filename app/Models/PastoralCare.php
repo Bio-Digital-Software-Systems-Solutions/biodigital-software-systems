@@ -55,6 +55,11 @@ class PastoralCare extends Model
         'deleted_at',
     ];
 
+    protected $appends = [
+        'can_be_confirmed',
+        'can_be_cancelled',
+    ];
+
     // Boot method to auto-generate UUID
     protected static function boot()
     {
@@ -163,7 +168,16 @@ class PastoralCare extends Model
     public function confirm()
     {
         if (!$this->can_be_confirmed) {
-            throw new \Exception('This appointment cannot be confirmed.');
+            // Déterminer la raison spécifique de l'impossibilité de confirmer
+            if ($this->status !== 'pending') {
+                throw new \Exception('Seuls les rendez-vous en attente peuvent être confirmés (statut actuel: ' . $this->status . ').');
+            }
+
+            if ($this->appointment_time <= now()) {
+                throw new \Exception('Ce rendez-vous est déjà passé et ne peut plus être confirmé.');
+            }
+
+            throw new \Exception('Ce rendez-vous ne peut pas être confirmé.');
         }
 
         $this->update([
@@ -177,7 +191,16 @@ class PastoralCare extends Model
     public function cancel($reason = null)
     {
         if (!$this->can_be_cancelled) {
-            throw new \Exception('This appointment cannot be cancelled.');
+            // Déterminer la raison spécifique de l'impossibilité d'annuler
+            if (!in_array($this->status, ['pending', 'confirmed'])) {
+                throw new \Exception('Ce rendez-vous ne peut plus être annulé (statut: ' . $this->status . ').');
+            }
+
+            if ($this->appointment_time <= now()->addHours(24)) {
+                throw new \Exception('Délai d\'annulation dépassé (24h).');
+            }
+
+            throw new \Exception('Ce rendez-vous ne peut pas être annulé.');
         }
 
         $this->update([

@@ -96,6 +96,8 @@ interface PastoralCareAppointment {
     notes?: string;
     created_at: string;
     updated_at: string;
+    can_be_confirmed: boolean;
+    can_be_cancelled: boolean;
 }
 
 interface Stats {
@@ -480,17 +482,42 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
 
     const handleStatusUpdate = async (appointmentUuid: string, newStatus: string) => {
         try {
-            await router.patch(`/pastoral-care/appointments/${appointmentUuid}`, {
-                status: newStatus
-            }, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    toast.success('Statut mis à jour avec succès');
-                },
-                onError: () => {
-                    toast.error('Erreur lors de la mise à jour du statut');
-                }
-            });
+            if (newStatus === 'confirmed') {
+                // Use the POST route for confirmation
+                await router.post(`/pastoral-care/appointments/${appointmentUuid}/confirm`, {}, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        toast.success('Rendez-vous confirmé avec succès');
+                    },
+                    onError: () => {
+                        toast.error('Erreur lors de la confirmation du rendez-vous');
+                    }
+                });
+            } else if (newStatus === 'cancelled') {
+                // Use the POST route for cancellation
+                await router.post(`/pastoral-care/appointments/${appointmentUuid}/cancel`, {}, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        toast.success('Rendez-vous annulé avec succès');
+                    },
+                    onError: () => {
+                        toast.error('Erreur lors de l\'annulation du rendez-vous');
+                    }
+                });
+            } else {
+                // For other status changes, use the generic route (if it exists)
+                await router.patch(`/pastoral-care/appointments/${appointmentUuid}`, {
+                    status: newStatus
+                }, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        toast.success('Statut mis à jour avec succès');
+                    },
+                    onError: () => {
+                        toast.error('Erreur lors de la mise à jour du statut');
+                    }
+                });
+            }
         } catch (error) {
             toast.error('Erreur lors de la mise à jour du statut');
         }
@@ -1539,6 +1566,7 @@ function AppointmentCard({ appointment, onStatusUpdate, showActions = false, per
                                     size="sm"
                                     onClick={() => onStatusUpdate(appointment.uuid, 'confirmed')}
                                     className="bg-green-600 hover:bg-green-700 text-white"
+                                    disabled={!appointment.can_be_confirmed}
                                 >
                                     <CheckCircleIcon className="h-4 w-4 mr-1" />
                                     Confirmer
