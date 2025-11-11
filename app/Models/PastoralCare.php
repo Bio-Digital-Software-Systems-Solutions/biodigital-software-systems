@@ -10,6 +10,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
+/**
+ * @property-read bool $can_be_confirmed
+ * @property-read bool $can_be_cancelled
+ * @property-read string $formatted_appointment_time
+ * @property-read string $formatted_appointment_date
+ * @property-read \Carbon\Carbon $appointment_end_time
+ * @property-read bool $is_upcoming
+ * @property-read bool $is_past
+ */
 class PastoralCare extends Model
 {
     use HasFactory, SoftDeletes, ClearsCache;

@@ -74,18 +74,28 @@ class PastoralCareController extends Controller
 
         $appointments = $query->paginate(15);
 
-        // Calculate stats based on user permissions
-        if ($canManageAll) {
-            $statsQuery = PastoralCare::query();
-        } else {
-            // Apply same filtering logic for stats
-            $isPastor = $user->hasRole(['pastor', 'Pastor']) || $user->can('manage pastoral appointments');
+        // Create base stats query with same filters as main query but without pagination
+        $statsQuery = PastoralCare::query();
 
+        // Apply same permission filtering as main query
+        if (!$canManageAll) {
+            $isPastor = $user->hasRole(['pastor', 'Pastor']) || $user->can('manage pastoral appointments');
             if ($isPastor) {
-                $statsQuery = PastoralCare::forPastor($user->id);
+                $statsQuery->forPastor($user->id);
             } else {
-                $statsQuery = PastoralCare::where('user_id', $user->id);
+                $statsQuery->where('user_id', $user->id);
             }
+        }
+
+        // Apply same filters as main query
+        if ($request->filled('status')) {
+            $statsQuery->where('status', $request->status);
+        }
+        if ($request->filled('date_from')) {
+            $statsQuery->where('appointment_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $statsQuery->where('appointment_date', '<=', $request->date_to);
         }
 
         return Inertia::render('PastoralCare/Index', [
@@ -99,16 +109,16 @@ class PastoralCareController extends Controller
                 'canManage' => $user->can('manage pastoral care'),
             ],
             'stats' => [
-                'total_appointments' => $statsQuery->count(),
-                'pending_appointments' => $statsQuery->pending()->count(),
-                'confirmed_appointments' => $statsQuery->confirmed()->count(),
-                'completed_appointments' => $statsQuery->completed()->count(),
-                'cancelled_appointments' => $statsQuery->cancelled()->count(),
-                'this_week_appointments' => $statsQuery->whereBetween('appointment_date', [
+                'total_appointments' => (clone $statsQuery)->count(),
+                'pending_appointments' => (clone $statsQuery)->pending()->count(),
+                'confirmed_appointments' => (clone $statsQuery)->confirmed()->count(),
+                'completed_appointments' => (clone $statsQuery)->completed()->count(),
+                'cancelled_appointments' => (clone $statsQuery)->cancelled()->count(),
+                'this_week_appointments' => (clone $statsQuery)->whereBetween('appointment_date', [
                     now()->startOfWeek(),
                     now()->endOfWeek()
                 ])->count(),
-                'next_week_appointments' => $statsQuery->whereBetween('appointment_date', [
+                'next_week_appointments' => (clone $statsQuery)->whereBetween('appointment_date', [
                     now()->addWeek()->startOfWeek(),
                     now()->addWeek()->endOfWeek()
                 ])->count(),
@@ -207,7 +217,7 @@ class PastoralCareController extends Controller
             'user_id' => Auth::id(),
             'pastor_id' => $pastorId,
             'client_name' => $validated['client_name'] ?? null,
-            'client_email' => Auth::user()->email,
+            'client_email' => $validated['client_email'] ?? (Auth::user() ? Auth::user()->email : null),
             'client_phone' => $validated['client_phone'] ?? null,
             'appointment_date' => $validated['appointment_date'],
             'appointment_time' => $appointmentDateTime,
