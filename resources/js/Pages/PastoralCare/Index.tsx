@@ -1297,6 +1297,7 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                     onStatusUpdate={handleStatusUpdate}
                                                     showActions={true}
                                                     permissions={permissions}
+                                                    auth={auth}
                                                 />
                                             ))}
                                         </div>
@@ -1331,6 +1332,7 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                     onStatusUpdate={handleStatusUpdate}
                                                     showActions={true}
                                                     permissions={permissions}
+                                                    auth={auth}
                                                 />
                                             ))}
                                         </div>
@@ -1372,6 +1374,7 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                     onStatusUpdate={handleStatusUpdate}
                                                     showActions={true}
                                                     permissions={permissions}
+                                                    auth={auth}
                                                 />
                                             ))}
                                         </div>
@@ -1394,9 +1397,26 @@ interface AppointmentCardProps {
     permissions?: {
         canEdit: boolean;
     };
+    auth?: {
+        user: {
+            id: number;
+            first_name: string;
+            last_name: string;
+            email: string;
+            roles?: Array<{ name: string }>;
+            permissions?: Array<{ name: string }>;
+        };
+    };
 }
 
-function AppointmentCard({ appointment, onStatusUpdate, showActions = false, permissions }: AppointmentCardProps) {
+function AppointmentCard({ appointment, onStatusUpdate, showActions = false, permissions, auth }: AppointmentCardProps) {
+    const isPastor = auth?.user && appointment.pastor && auth.user.id === appointment.pastor.id;
+    const isAdminOrSuperAdmin = auth?.user && (
+        auth.user.roles?.some((role: any) => ['admin', 'SuperAdmin'].includes(role.name)) ||
+        auth.user.permissions?.some((permission: any) => permission.name === 'manage pastoral care')
+    );
+    const canConfirm = showActions && (isPastor || isAdminOrSuperAdmin);
+
     const formatDate = (dateString: string) => {
         return format(new Date(dateString), 'EEEE d MMMM yyyy', { locale: fr });
     };
@@ -1514,14 +1534,16 @@ function AppointmentCard({ appointment, onStatusUpdate, showActions = false, per
                 <div className="flex space-x-2">
                     {showActions && appointment.status === 'pending' && (
                         <>
-                            <Button
-                                size="sm"
-                                onClick={() => onStatusUpdate(appointment.uuid, 'confirmed')}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                                <CheckCircleIcon className="h-4 w-4 mr-1" />
-                                Confirmer
-                            </Button>
+                            {canConfirm && (
+                                <Button
+                                    size="sm"
+                                    onClick={() => onStatusUpdate(appointment.uuid, 'confirmed')}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                    <CheckCircleIcon className="h-4 w-4 mr-1" />
+                                    Confirmer
+                                </Button>
+                            )}
                             <Button
                                 size="sm"
                                 variant="outline"
@@ -1534,7 +1556,7 @@ function AppointmentCard({ appointment, onStatusUpdate, showActions = false, per
                         </>
                     )}
 
-                    {showActions && appointment.status === 'confirmed' && (
+                    {canConfirm && appointment.status === 'confirmed' && (
                         <>
                             <Button
                                 size="sm"

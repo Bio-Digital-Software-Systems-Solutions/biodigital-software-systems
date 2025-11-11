@@ -12,10 +12,10 @@ class ProjectController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('can:view programs')->only(['index', 'show', 'board', 'list', 'gantt']);
-        $this->middleware('can:create programs')->only(['create', 'store']);
-        $this->middleware('can:edit programs')->only(['edit', 'update']);
-        $this->middleware('can:delete programs')->only(['destroy']);
+        $this->middleware('can:view projects')->only(['index', 'show', 'board', 'list', 'gantt']);
+        $this->middleware('can:create projects')->only(['create', 'store']);
+        $this->middleware('can:edit projects')->only(['edit', 'update']);
+        $this->middleware('can:delete projects')->only(['destroy']);
     }
 
     public function index()

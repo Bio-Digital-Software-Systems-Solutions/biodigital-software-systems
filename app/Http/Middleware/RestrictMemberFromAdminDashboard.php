@@ -18,8 +18,28 @@ class RestrictMemberFromAdminDashboard
     {
         $user = $request->user();
 
-        // If user only has the Member role, redirect to user dashboard
+        // If user only has the Member role and no explicit access permissions
         if ($user && $user->hasRole(Role::MEMBER->value) && $user->roles->count() === 1) {
+            $currentRoute = $request->route()->getName();
+
+            // Check if user has explicit permissions for specific routes
+            $routePermissionMap = [
+                'projects.' => 'view projects',
+                'departments.' => 'view departments',
+                'student.dashboard' => 'access student dashboard',
+                'pastoral-care.' => 'view pastoral care',
+            ];
+
+            foreach ($routePermissionMap as $routePrefix => $permission) {
+                if (str_starts_with($currentRoute, $routePrefix) || $currentRoute === $routePrefix) {
+                    // If user has the specific permission, allow access
+                    if ($user->can($permission)) {
+                        return $next($request);
+                    }
+                }
+            }
+
+            // If no explicit permission found, redirect to user dashboard
             return redirect()->route('user.dashboard');
         }
 

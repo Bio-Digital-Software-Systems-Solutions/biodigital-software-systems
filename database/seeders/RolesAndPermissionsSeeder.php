@@ -29,6 +29,8 @@ class RolesAndPermissionsSeeder extends Seeder
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs',
+            // Projects
+            'view projects', 'create projects', 'edit projects', 'delete projects', 'manage projects',
             // Stocks
             'view stocks', 'manage stocks', 'approve stock requests',
             // Groups
@@ -53,6 +55,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view contacts', 'manage contacts',
             // Hero Slides
             'view hero slides', 'manage hero slides',
+            // Dashboard Access
+            'access student dashboard', 'access teacher dashboard',
             // System
             'view system settings', 'manage system settings',
             'view reports', 'generate reports',
@@ -76,6 +80,8 @@ class RolesAndPermissionsSeeder extends Seeder
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs',
+            // Projects
+            'view projects', 'create projects', 'edit projects', 'delete projects', 'manage projects',
             // Stocks
             'view stocks', 'manage stocks', 'approve stock requests',
             // Groups
@@ -100,6 +106,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view contacts', 'manage contacts',
             // Hero Slides
             'view hero slides', 'manage hero slides',
+            // Dashboard Access
+            'access student dashboard', 'access teacher dashboard',
             // Reports
             'view reports', 'generate reports',
         ]);
@@ -132,6 +140,8 @@ class RolesAndPermissionsSeeder extends Seeder
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs',
+            // Projects
+            'view projects', 'create projects', 'edit projects', 'delete projects', 'manage projects',
             // Groups & Teams
             'view groups', 'create groups', 'edit groups', 'manage group members',
             // Stocks
@@ -269,7 +279,7 @@ class RolesAndPermissionsSeeder extends Seeder
             // Viewing permissions
             'view articles',
             'view trainings',
-            'view events', 'attend events', 'view videos', 'view books', 'view departments', 'view groups', 'view programs', 'view tasks',
+            'view events', 'attend events', 'view videos', 'view books', 'view groups',
             // Books
             'rent books',
             // Messages & Chat
@@ -297,6 +307,8 @@ class RolesAndPermissionsSeeder extends Seeder
             // Messages & Chat
             'view messages', 'create messages', 'delete messages',
             'use chat',
+            // Dashboard Access
+            'access student dashboard',
         ]);
 
         // Teacher - Access to teacher dashboard and training class management
@@ -318,6 +330,8 @@ class RolesAndPermissionsSeeder extends Seeder
             // Messages & Chat
             'view messages', 'create messages', 'edit messages', 'delete messages',
             'use chat',
+            // Dashboard Access
+            'access teacher dashboard',
             // Reports
             'view reports',
         ]);

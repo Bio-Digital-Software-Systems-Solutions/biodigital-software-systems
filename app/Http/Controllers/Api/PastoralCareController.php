@@ -13,6 +13,7 @@ use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 use App\Http\Requests\PastoralCareStoreRequest;
 use App\Mail\PastoralCareNewAppointmentNotification;
+use App\Mail\PastoralCareAppointmentConfirmation;
 use Illuminate\Support\Facades\Mail;
 
 class PastoralCareController extends Controller
@@ -359,6 +360,10 @@ class PastoralCareController extends Controller
 
         try {
             $appointment->confirm();
+
+            // Send notifications to client
+            $this->sendStatusChangeNotifications($appointment, 'confirmed');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Rendez-vous confirmé avec succès'
@@ -391,6 +396,10 @@ class PastoralCareController extends Controller
 
         try {
             $appointment->cancel($validated['cancellation_reason'] ?? null);
+
+            // Send notifications to client
+            $this->sendStatusChangeNotifications($appointment, 'cancelled');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Rendez-vous annulé avec succès'
@@ -668,5 +677,67 @@ class PastoralCareController extends Controller
             'hybrid' => 'Hybride (au choix du pasteur)',
             default => $locationType,
         };
+    }
+
+    /**
+     * Send status change notifications to the client
+     */
+    private function sendStatusChangeNotifications(PastoralCare $appointment, string $newStatus): void
+    {
+        try {
+            // Load relationships
+            $appointment->load(['pastor', 'user']);
+
+            // Prepare notification content based on status
+            $statusTexts = [
+                'confirmed' => [
+                    'subject' => 'Votre rendez-vous de soin pastoral a été confirmé',
+                    'action' => 'confirmé',
+                ],
+                'cancelled' => [
+                    'subject' => 'Votre rendez-vous de soin pastoral a été annulé',
+                    'action' => 'annulé',
+                ]
+            ];
+
+            $statusInfo = $statusTexts[$newStatus] ?? null;
+            if (!$statusInfo) {
+                return;
+            }
+
+            // Send email notification to client if email is available
+            if ($appointment->client_email) {
+                if ($newStatus === 'confirmed') {
+                    Mail::to($appointment->client_email)
+                        ->send(new \App\Mail\PastoralCareAppointmentConfirmation($appointment));
+                }
+                // For cancellation, we can send a simple notification for now
+                // TODO: Create a dedicated PastoralCareAppointmentCancellation Mailable if needed
+            }
+
+            // Send platform message to client if they have an account
+            if ($appointment->user_id) {
+                $messageContent = "Votre rendez-vous de soin pastoral avec {$appointment->pastor->first_name} {$appointment->pastor->last_name} ";
+                $messageContent .= "prévu le " . $appointment->appointment_date->format('d/m/Y');
+                $messageContent .= " à " . $appointment->appointment_time->format('H:i');
+                $messageContent .= " a été {$statusInfo['action']}.";
+
+                if ($newStatus === 'cancelled' && $appointment->cancellation_reason) {
+                    $messageContent .= "\n\nRaison: " . $appointment->cancellation_reason;
+                }
+
+                Message::create([
+                    'sender_id' => $appointment->pastor_id,
+                    'receiver_id' => $appointment->user_id,
+                    'subject' => $statusInfo['subject'],
+                    'content' => $messageContent,
+                    'type' => 'appointment_status_change',
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            // Log the error but don't fail the status change
+            \Log::error('Failed to send pastoral care status change notifications: ' . $e->getMessage());
+        }
     }
 }

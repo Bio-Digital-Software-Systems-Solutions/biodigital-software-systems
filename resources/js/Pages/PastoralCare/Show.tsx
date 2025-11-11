@@ -30,6 +30,8 @@ interface User {
     first_name: string;
     last_name: string;
     email: string;
+    roles?: Array<{ name: string }>;
+    permissions?: Array<{ name: string }>;
 }
 
 interface PastoralCareAppointment {
@@ -306,6 +308,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
     };
 
     const availableStatusUpdates = canUpdateStatus(appointment.status);
+    const isPastor = auth.user.id === appointment.pastor.id;
 
     return (
         <DashboardLayout
@@ -319,7 +322,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                         <ArrowLeftIcon className="h-4 w-4 mr-2" />
                         Retour
                     </Button>
-                    {canEdit && (
+                    {canEdit && (isPastor || (auth.user && (auth.user.roles?.some((role: any) => ['admin', 'SuperAdmin'].includes(role.name)) || auth.user.permissions?.some((permission: any) => permission.name === 'manage pastoral care')))) && (
                         <Button
                             variant="outline"
                             onClick={() => router.visit(`/pastoral-care/appointments/${appointment.uuid}/edit`)}
@@ -523,7 +526,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                         {/* Sidebar */}
                         <div className="space-y-6">
                             {/* Status Management */}
-                            {(availableStatusUpdates.length > 0 || canEdit) && (
+                            {((availableStatusUpdates.length > 0 && isPastor) || canEdit) && (
                                 <Card>
                                     <CardHeader>
                                         <CardTitle>Gestion du statut</CardTitle>
@@ -532,8 +535,8 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-3">
-                                        {/* Edit Button */}
-                                        {canEdit && (
+                                        {/* Edit Button - Only visible to pastor, admin or super admin */}
+                                        {canEdit && (isPastor || (auth.user && (auth.user.roles?.some((role: any) => ['admin', 'SuperAdmin'].includes(role.name)) || auth.user.permissions?.some((permission: any) => permission.name === 'manage pastoral care')))) && (
                                             <Button
                                                 onClick={() => router.visit(`/pastoral-care/appointments/${appointment.uuid}/edit`)}
                                                 variant="outline"
@@ -543,7 +546,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                                 Modifier le rendez-vous
                                             </Button>
                                         )}
-                                        {availableStatusUpdates.includes('confirmed') && (
+                                        {isPastor && availableStatusUpdates.includes('confirmed') && (
                                             <Button
                                                 onClick={handleConfirm}
                                                 disabled={isUpdatingStatus}
@@ -554,7 +557,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                             </Button>
                                         )}
 
-                                        {availableStatusUpdates.includes('completed') && (
+                                        {isPastor && availableStatusUpdates.includes('completed') && (
                                             <Button
                                                 onClick={handleComplete}
                                                 disabled={isUpdatingStatus}
@@ -565,7 +568,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                             </Button>
                                         )}
 
-                                        {availableStatusUpdates.includes('no_show') && (
+                                        {isPastor && availableStatusUpdates.includes('no_show') && (
                                             <Button
                                                 onClick={handleNoShow}
                                                 disabled={isUpdatingStatus}
@@ -621,67 +624,71 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                 </CardContent>
                             </Card>
 
-                            {/* Pastor Notes */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Notes du pasteur</CardTitle>
-                                    <CardDescription>
-                                        Notes privées sur cette rencontre
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    {/* Display existing notes */}
-                                    {appointment.pastor_notes && (
-                                        <div className="mb-4">
-                                            <Label>Notes existantes</Label>
-                                            <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                                <p className="text-blue-800 dark:text-blue-200 text-sm leading-relaxed whitespace-pre-wrap">
-                                                    {appointment.pastor_notes}
-                                                </p>
+                            {/* Pastor Notes - Only visible to the pastor */}
+                            {isPastor && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Notes du pasteur</CardTitle>
+                                        <CardDescription>
+                                            Notes privées sur cette rencontre
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {/* Display existing notes */}
+                                        {appointment.pastor_notes && (
+                                            <div className="mb-4">
+                                                <Label>Notes existantes</Label>
+                                                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                                    <p className="text-blue-800 dark:text-blue-200 text-sm leading-relaxed whitespace-pre-wrap">
+                                                        {appointment.pastor_notes}
+                                                    </p>
+                                                </div>
                                             </div>
+                                        )}
+
+                                        <div>
+                                            <Label htmlFor="pastor_notes">
+                                                {appointment.pastor_notes ? 'Ajouter des notes additionnelles' : 'Notes privées'}
+                                            </Label>
+                                            <Textarea
+                                                id="pastor_notes"
+                                                value={pastorNotes}
+                                                onChange={(e) => setPastorNotes(e.target.value)}
+                                                placeholder="Points abordés, conseils donnés, suivi nécessaire..."
+                                                className="mt-2 min-h-[100px]"
+                                            />
                                         </div>
-                                    )}
+                                        <Button
+                                            onClick={handleNotesUpdate}
+                                            disabled={isUpdatingNotes || !pastorNotes.trim()}
+                                            className="w-full"
+                                        >
+                                            {isUpdatingNotes ? 'Ajout...' : (appointment.pastor_notes ? 'Mettre à jour les notes' : 'Ajouter les notes')}
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            )}
 
-                                    <div>
-                                        <Label htmlFor="pastor_notes">
-                                            {appointment.pastor_notes ? 'Ajouter des notes additionnelles' : 'Notes privées'}
-                                        </Label>
-                                        <Textarea
-                                            id="pastor_notes"
-                                            value={pastorNotes}
-                                            onChange={(e) => setPastorNotes(e.target.value)}
-                                            placeholder="Points abordés, conseils donnés, suivi nécessaire..."
-                                            className="mt-2 min-h-[100px]"
-                                        />
-                                    </div>
-                                    <Button
-                                        onClick={handleNotesUpdate}
-                                        disabled={isUpdatingNotes || !pastorNotes.trim()}
-                                        className="w-full"
-                                    >
-                                        {isUpdatingNotes ? 'Ajout...' : (appointment.pastor_notes ? 'Mettre à jour les notes' : 'Ajouter les notes')}
-                                    </Button>
-                                </CardContent>
-                            </Card>
-
-                            {/* Danger Zone */}
-                            <Card className="border-red-200 dark:border-red-800">
-                                <CardHeader>
-                                    <CardTitle className="text-red-600 dark:text-red-400">Zone de danger</CardTitle>
-                                    <CardDescription>
-                                        Actions irréversibles
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <Button
-                                        onClick={() => setShowDeleteDialog(true)}
-                                        variant="outline"
-                                        className="w-full text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                    >
-                                        Supprimer définitivement
-                                    </Button>
-                                </CardContent>
-                            </Card>
+                            {/* Danger Zone - Only visible to Admin and SuperAdmin */}
+                            {(auth.user && (auth.user.roles?.some((role: any) => ['admin', 'SuperAdmin'].includes(role.name)) || auth.user.permissions?.some((permission: any) => permission.name === 'manage pastoral care'))) && (
+                                <Card className="border-red-200 dark:border-red-800">
+                                    <CardHeader>
+                                        <CardTitle className="text-red-600 dark:text-red-400">Zone de danger</CardTitle>
+                                        <CardDescription>
+                                            Actions irréversibles
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <Button
+                                            onClick={() => setShowDeleteDialog(true)}
+                                            variant="outline"
+                                            className="w-full text-red-600 border-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                        >
+                                            Supprimer définitivement
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
                     </div>
                 </div>

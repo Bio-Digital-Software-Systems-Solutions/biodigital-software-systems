@@ -119,5 +119,13 @@ Route::middleware('auth:sanctum')->group(function () {
         // Mark appointment as no-show (authenticated pastor only)
         Route::post('/appointments/{uuid}/no-show', [PastoralCareController::class, 'noShow'])
             ->name('appointments.no-show');
+
+        // Confirm appointment (authenticated pastor only)
+        Route::post('/appointments/{uuid}/confirm', [PastoralCareController::class, 'confirm'])
+            ->name('appointments.confirm');
+
+        // Cancel appointment (authenticated pastor only)
+        Route::post('/appointments/{uuid}/cancel', [PastoralCareController::class, 'cancel'])
+            ->name('appointments.cancel');
     });
 });

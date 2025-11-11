@@ -31,6 +31,11 @@ class PastoralCarePolicy
             return true;
         }
 
+         // Clients can view their own appointments  
+        if ($user->can('view pastoral care') && $pastoralCare->user_id === $user->id) {
+            return true;
+        }
+
         return false;
     }
 

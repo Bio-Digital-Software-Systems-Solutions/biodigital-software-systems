@@ -27,6 +27,7 @@ class UserDashboardController extends Controller
             ->map(function ($event) {
                 return [
                     'id' => $event->id,
+                    'uuid' => $event->uuid,
                     'title' => $event->title,
                     'description' => $event->description,
                     'start_date' => $event->start_date,
@@ -45,6 +46,7 @@ class UserDashboardController extends Controller
             ->map(function ($article) {
                 return [
                     'id' => $article->id,
+                    'slug' => $article->slug,
                     'title' => $article->title,
                     'excerpt' => $article->excerpt,
                     'published_at' => $article->published_at,
@@ -64,6 +66,7 @@ class UserDashboardController extends Controller
             ->map(function ($training) {
                 return [
                     'id' => $training->id,
+                    'uuid' => $training->uuid,
                     'title' => $training->title,
                     'description' => $training->description,
                     'category' => $training->category ?? 'Non catégorisé',
@@ -80,6 +83,7 @@ class UserDashboardController extends Controller
             ->map(function ($training) {
                 return [
                     'id' => $training->id,
+                    'uuid' => $training->uuid,
                     'title' => $training->title,
                     'status' => $training->pivot->status,
                     'progress' => $training->pivot->progress ?? 0,
@@ -96,6 +100,7 @@ class UserDashboardController extends Controller
             ->map(function ($event) {
                 return [
                     'id' => $event->id,
+                    'uuid' => $event->uuid,
                     'title' => $event->title,
                     'start_date' => $event->start_date,
                     'location' => $event->location,
