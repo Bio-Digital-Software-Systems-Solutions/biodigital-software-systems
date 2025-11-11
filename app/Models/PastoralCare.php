@@ -271,8 +271,8 @@ class PastoralCare extends Model
             ->where(function ($query) use ($currentDate) {
                 // Check for weekly recurring availability
                 $query->where(function ($q) use ($currentDate) {
-                    // Convert Carbon dayOfWeek (0=Sunday) to our format (1=Monday, 7=Sunday)
-                    $dayOfWeek = $currentDate->dayOfWeek === 0 ? 7 : $currentDate->dayOfWeek;
+                    // Use Carbon dayOfWeek format directly (0=Sunday, 1=Monday, etc.)
+                    $dayOfWeek = $currentDate->dayOfWeek;
                     $q->where('type', 'weekly')
                       ->where('day_of_week', $dayOfWeek);
                 })

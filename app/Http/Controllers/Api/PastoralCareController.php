@@ -96,34 +96,31 @@ class PastoralCareController extends Controller
         // Check each date in the range
         $current = $startDate->copy();
         while ($current <= $endDate) {
-            // Skip weekends
-            if ($current->dayOfWeek !== 0 && $current->dayOfWeek !== 6) {
-                // Check if pastor has availability for this date
-                $hasAvailability = false;
+            // Check if pastor has availability for this date
+            $hasAvailability = false;
 
-                foreach ($availabilities as $availability) {
-                    if ($availability->appliesTo($current)) {
-                        $hasAvailability = true;
-                        break;
-                    }
+            foreach ($availabilities as $availability) {
+                if ($availability->appliesTo($current)) {
+                    $hasAvailability = true;
+                    break;
                 }
+            }
 
-                // If pastor has availability, check if there are any free slots
-                if ($hasAvailability) {
-                    $slots = PastoralCare::getAvailableTimeSlots(
-                        $validated['pastor_id'],
-                        $current->toDateString(),
-                        60 // Default duration for checking availability
-                    );
+            // If pastor has availability, check if there are any free slots
+            if ($hasAvailability) {
+                $slots = PastoralCare::getAvailableTimeSlots(
+                    $validated['pastor_id'],
+                    $current->toDateString(),
+                    60 // Default duration for checking availability
+                );
 
-                    if (!empty($slots)) {
-                        $availableDays[] = [
-                            'date' => $current->toDateString(),
-                            'day_name' => $current->locale('fr')->format('D'),
-                            'full_date' => $current->locale('fr')->format('l j F Y'),
-                            'slots_count' => count($slots)
-                        ];
-                    }
+                if (!empty($slots)) {
+                    $availableDays[] = [
+                        'date' => $current->toDateString(),
+                        'day_name' => $current->locale('fr')->format('D'),
+                        'full_date' => $current->locale('fr')->format('l j F Y'),
+                        'slots_count' => count($slots)
+                    ];
                 }
             }
 
@@ -168,7 +165,7 @@ class PastoralCareController extends Controller
 
         // Get consultation mode from pastor's availability for this date
         $currentDate = \Carbon\Carbon::parse($validated['date']);
-        $dayOfWeek = $currentDate->dayOfWeek === 0 ? 7 : $currentDate->dayOfWeek;
+        $dayOfWeek = $currentDate->dayOfWeek;
 
         $availability = \App\Models\PastorAvailability::where('pastor_id', $validated['pastor_id'])
             ->active()
