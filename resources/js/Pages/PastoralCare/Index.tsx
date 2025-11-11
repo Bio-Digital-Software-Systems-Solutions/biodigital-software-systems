@@ -923,18 +923,18 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                             return (
                                                                 <div
                                                                     key={idx}
-                                                                    className={`bg-white dark:bg-gray-800 min-h-[100px] p-3 transition-all duration-200 border-r border-b border-gray-100 dark:border-gray-700 ${
+                                                                    className={`min-h-[100px] p-3 transition-all duration-200 border-r border-b border-gray-100 dark:border-gray-700 ${
                                                                         !isCurrentMonth ? 'opacity-30' : ''
                                                                     } ${
                                                                         isClickable
-                                                                            ? `cursor-pointer ${!isSelected ? 'hover:bg-gray-50 dark:hover:bg-gray-700/50' : 'hover:bg-purple-700 dark:hover:bg-purple-500'} hover:shadow-sm`
+                                                                            ? `cursor-pointer hover:shadow-sm`
                                                                             : 'cursor-not-allowed'
                                                                     } ${
                                                                         isSelected
-                                                                            ? 'bg-purple-600 dark:bg-purple-600 border-2 border-purple-600 dark:border-purple-600 shadow-lg rounded-lg'
+                                                                            ? '!bg-purple-600 dark:!bg-purple-600 !border-2 !border-purple-600 dark:!border-purple-600 !shadow-lg !rounded-lg hover:!bg-purple-700 dark:hover:!bg-purple-500'
                                                                             : hasAvailableSlots
-                                                                                ? 'bg-purple-100 dark:bg-purple-800/50 border-2 border-purple-400 dark:border-purple-500 shadow-md'
-                                                                                : ''
+                                                                                ? 'bg-purple-100 dark:bg-purple-800/50 border-2 border-purple-400 dark:border-purple-500 shadow-md hover:bg-purple-200 dark:hover:bg-purple-700/50'
+                                                                                : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                                                                     }`}
                                                                     onClick={() => {
                                                                         if (isClickable) {
@@ -946,7 +946,7 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                                         isToday && !isSelected
                                                                             ? 'text-white w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center'
                                                                             : isSelected
-                                                                                ? 'text-white dark:text-white font-bold text-lg'
+                                                                                ? '!text-white dark:!text-white !font-bold !text-lg'
                                                                                 : hasAvailableSlots
                                                                                     ? 'text-purple-800 dark:text-purple-200 font-bold'
                                                                                     : isPast || !isCurrentMonth
