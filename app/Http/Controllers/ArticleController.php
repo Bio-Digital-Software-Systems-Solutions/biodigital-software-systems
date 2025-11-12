@@ -57,7 +57,8 @@ class ArticleController extends Controller
             $query->whereNotNull('published_at');
         }
 
-        $articles = $query->latest('published_at')->paginate(12);
+        $articles = $query->latest('published_at')->paginate(12)
+            ->appends($request->query());
 
         // Cache categories (1 hour cache)
         $categories = CacheService::remember(
@@ -67,7 +68,18 @@ class ArticleController extends Controller
         );
 
         return Inertia::render('Articles/Index', [
-            'articles' => $articles,
+            'articles' => [
+                'data' => $articles->items(),
+                'links' => $articles->linkCollection()->toArray(),
+                'meta' => [
+                    'current_page' => $articles->currentPage(),
+                    'last_page' => $articles->lastPage(),
+                    'per_page' => $articles->perPage(),
+                    'total' => $articles->total(),
+                    'from' => $articles->firstItem(),
+                    'to' => $articles->lastItem(),
+                ],
+            ],
             'categories' => $categories,
             'filters' => [
                 'search' => $request->search,

@@ -30,10 +30,22 @@ class GroupController extends Controller
                 }
             })
             ->orderBy('name')
-            ->paginate(10);
+            ->paginate(10)
+            ->appends(request()->query());
 
         return Inertia::render('Groups/Index', [
-            'groups' => $groups,
+            'groups' => [
+                'data' => $groups->items(),
+                'links' => $groups->linkCollection()->toArray(),
+                'meta' => [
+                    'current_page' => $groups->currentPage(),
+                    'last_page' => $groups->lastPage(),
+                    'per_page' => $groups->perPage(),
+                    'total' => $groups->total(),
+                    'from' => $groups->firstItem(),
+                    'to' => $groups->lastItem(),
+                ],
+            ],
             'filters' => request()->only(['status']),
         ]);
     }

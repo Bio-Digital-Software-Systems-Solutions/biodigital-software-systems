@@ -1,5 +1,5 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/Components/ui/button';
 import { apiLogger } from '@/utils/logger';
@@ -22,15 +22,29 @@ import EnrollmentsView from './Components/EnrollmentsView';
 import AddClassModal from './Components/AddClassModal';
 import axios from 'axios';
 
-interface Props {
-    classes: TrainingClass[];
-    trainings: Training[];
-    teachers: Teacher[];
+interface PaginatedData<T> {
+    data: T[];
+    links: any[];
+    meta: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+        from: number;
+        to: number;
+    };
 }
 
-export default function Dashboard({ classes: initialClasses, trainings, teachers }: Props) {
+interface Props {
+    classes: PaginatedData<TrainingClass>;
+    trainings: Training[];
+    teachers: Teacher[];
+    filters: Record<string, any>;
+}
+
+export default function Dashboard({ classes: initialClasses, trainings, teachers, filters }: Props) {
     const [activeTab, setActiveTab] = useState<'classes' | 'students' | 'schedule' | 'attendance' | 'enrollments' | 'stats'>('classes');
-    const [classes, setClasses] = useState<TrainingClass[]>(initialClasses);
+    const [classes, setClasses] = useState<TrainingClass[]>(initialClasses.data);
     const [showAddClassModal, setShowAddClassModal] = useState(false);
     const [statistics, setStatistics] = useState<Statistics | null>(null);
 
@@ -113,13 +127,48 @@ export default function Dashboard({ classes: initialClasses, trainings, teachers
             {/* Main Content */}
             <main className="py-8">
                 {activeTab === 'classes' && (
-                    <ClassesView
-                        classes={classes}
-                        trainings={trainings}
-                        teachers={teachers}
-                        onClassUpdated={handleClassUpdated}
-                        onClassDeleted={handleClassDeleted}
-                    />
+                    <div className="space-y-6">
+                        <ClassesView
+                            classes={classes}
+                            trainings={trainings}
+                            teachers={teachers}
+                            onClassUpdated={handleClassUpdated}
+                            onClassDeleted={handleClassDeleted}
+                        />
+
+                        {/* Pagination */}
+                        {initialClasses.data.length > 0 && initialClasses.meta?.last_page > 1 && (
+                            <div className="flex justify-center">
+                                <nav className="flex space-x-2">
+                                    {initialClasses.links.map((link, index) => {
+                                        if (!link.url) {
+                                            return (
+                                                <span
+                                                    key={index}
+                                                    className="px-3 py-2 text-sm font-medium rounded-lg cursor-not-allowed opacity-50 text-gray-500 dark:text-gray-400"
+                                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                                />
+                                            );
+                                        }
+
+                                        return (
+                                            <Link
+                                                key={index}
+                                                href={link.url}
+                                                preserveState
+                                                className={`px-3 py-2 text-sm font-medium rounded-lg ${
+                                                    link.active
+                                                        ? 'bg-primary text-white'
+                                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700'
+                                                }`}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        );
+                                    })}
+                                </nav>
+                            </div>
+                        )}
+                    </div>
                 )}
                 {activeTab === 'students' && (
                     <StudentsView classes={classes} trainings={trainings} />

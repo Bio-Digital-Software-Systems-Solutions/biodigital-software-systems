@@ -29,26 +29,34 @@ class EventController extends Controller
         $page = $request->get('page', 1);
         $search = $request->get('search');
 
-        // Cache events list per page (5 minutes cache)
-        $cacheKey = $search ? 'events.index.search.' . md5($search) : 'events.index';
-        $events = CacheService::rememberPaginated(
-            $cacheKey,
-            $page,
-            fn() => Event::with(['creator', 'address', 'participants'])
-                ->when($search, function ($query, $search) {
-                    $query->where(function ($q) use ($search) {
-                        $q->where('title', 'like', "%{$search}%")
-                          ->orWhere('description', 'like', "%{$search}%")
-                          ->orWhere('location', 'like', "%{$search}%");
-                    });
-                })
-                ->latest()
-                ->paginate(10),
-            CacheService::SHORT_CACHE
-        );
+        $query = Event::with(['creator', 'address', 'participants']);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%");
+            });
+        }
+
+        $events = $query->latest()
+            ->paginate(10)
+            ->appends($request->query());
 
         return Inertia::render('Events/Index', [
-            'events' => $events,
+            'events' => [
+                'data' => $events->items(),
+                'links' => $events->linkCollection()->toArray(),
+                'meta' => [
+                    'current_page' => $events->currentPage(),
+                    'last_page' => $events->lastPage(),
+                    'per_page' => $events->perPage(),
+                    'total' => $events->total(),
+                    'from' => $events->firstItem(),
+                    'to' => $events->lastItem(),
+                ],
+            ],
+            'filters' => $request->only(['search']),
         ]);
     }
 

@@ -28,10 +28,20 @@ class ProgramController extends Controller
                 $query->where('priority', $priority);
             })
             ->orderBy('start_date', 'desc')
-            ->paginate(10);
+            ->paginate(10)
+            ->appends(request()->query());
 
         return Inertia::render('Programs/Index', [
-            'programs' => $programs,
+            'programs' => [
+                'data' => $programs->items(),
+                'links' => $programs->linkCollection()->toArray(),
+                'current_page' => $programs->currentPage(),
+                'last_page' => $programs->lastPage(),
+                'per_page' => $programs->perPage(),
+                'total' => $programs->total(),
+                'from' => $programs->firstItem(),
+                'to' => $programs->lastItem(),
+            ],
             'filters' => request()->only(['status', 'priority']),
         ]);
     }

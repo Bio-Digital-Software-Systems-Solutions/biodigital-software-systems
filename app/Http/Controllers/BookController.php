@@ -43,7 +43,8 @@ class BookController extends Controller
             $query->where('category_id', $request->category);
         }
 
-        $books = $query->latest()->paginate(12);
+        $books = $query->latest()->paginate(12)
+            ->appends($request->query());
 
         // Cache book categories (1 hour cache)
         $categories = CacheService::remember(
@@ -53,7 +54,18 @@ class BookController extends Controller
         );
 
         return Inertia::render('Books/Index', [
-            'books' => $books,
+            'books' => [
+                'data' => $books->items(),
+                'links' => $books->linkCollection()->toArray(),
+                'meta' => [
+                    'current_page' => $books->currentPage(),
+                    'last_page' => $books->lastPage(),
+                    'per_page' => $books->perPage(),
+                    'total' => $books->total(),
+                    'from' => $books->firstItem(),
+                    'to' => $books->lastItem(),
+                ],
+            ],
             'categories' => $categories,
             'filters' => [
                 'search' => $request->search,

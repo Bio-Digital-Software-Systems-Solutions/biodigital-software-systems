@@ -35,10 +35,22 @@ class TrainingController extends Controller
             });
         }
 
-        $trainings = $query->paginate(15);
+        $trainings = $query->paginate(15)
+            ->appends($request->query());
 
         return Inertia::render('Training/Index', [
-            'trainings' => $trainings,
+            'trainings' => [
+                'data' => $trainings->items(),
+                'links' => $trainings->linkCollection()->toArray(),
+                'meta' => [
+                    'current_page' => $trainings->currentPage(),
+                    'last_page' => $trainings->lastPage(),
+                    'per_page' => $trainings->perPage(),
+                    'total' => $trainings->total(),
+                    'from' => $trainings->firstItem(),
+                    'to' => $trainings->lastItem(),
+                ],
+            ],
             'filters' => $request->only(['level', 'category', 'search']),
         ]);
     }

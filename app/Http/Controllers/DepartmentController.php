@@ -25,10 +25,22 @@ class DepartmentController extends Controller
                 }
             })
             ->ordered()
-            ->paginate(10);
+            ->paginate(10)
+            ->appends(request()->query());
 
         return Inertia::render('Departments/Index', [
-            'departments' => $departments,
+            'departments' => [
+                'data' => $departments->items(),
+                'links' => $departments->linkCollection()->toArray(),
+                'meta' => [
+                    'current_page' => $departments->currentPage(),
+                    'last_page' => $departments->lastPage(),
+                    'per_page' => $departments->perPage(),
+                    'total' => $departments->total(),
+                    'from' => $departments->firstItem(),
+                    'to' => $departments->lastItem(),
+                ],
+            ],
             'filters' => request()->only(['status']),
         ]);
     }

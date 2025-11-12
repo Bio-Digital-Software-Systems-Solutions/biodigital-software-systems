@@ -72,7 +72,8 @@ class PastoralCareController extends Controller
             $query->where('appointment_date', '<=', $request->date_to);
         }
 
-        $appointments = $query->paginate(15);
+        $appointments = $query->paginate(15)
+            ->appends($request->query());
 
         // Create base stats query with same filters as main query but without pagination
         $statsQuery = PastoralCare::query();
@@ -99,7 +100,18 @@ class PastoralCareController extends Controller
         }
 
         return Inertia::render('PastoralCare/Index', [
-            'appointments' => $appointments,
+            'appointments' => [
+                'data' => $appointments->items(),
+                'links' => $appointments->linkCollection()->toArray(),
+                'meta' => [
+                    'current_page' => $appointments->currentPage(),
+                    'last_page' => $appointments->lastPage(),
+                    'per_page' => $appointments->perPage(),
+                    'total' => $appointments->total(),
+                    'from' => $appointments->firstItem(),
+                    'to' => $appointments->lastItem(),
+                ],
+            ],
             'filters' => $request->only(['status', 'date_from', 'date_to']),
             'canManageAll' => $canManageAll,
             'permissions' => [

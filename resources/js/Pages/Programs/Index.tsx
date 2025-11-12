@@ -436,18 +436,31 @@ export default function Index({ programs, filters }: Props) {
                                     </div>
                                     <div className="flex justify-center sm:justify-end">
                                         <div className="flex space-x-1 sm:space-x-2">
-                                            {programs.links.map((link, index) => (
-                                                <Link
-                                                    key={index}
-                                                    href={link.url || '#'}
-                                                    className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium rounded-md ${
-                                                        link.active
-                                                            ? 'bg-primary text-white'
-                                                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                                                    }`}
-                                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                                />
-                                            ))}
+                                            {programs.links.map((link, index) => {
+                                                if (!link.url) {
+                                                    return (
+                                                        <span
+                                                            key={index}
+                                                            className="px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium rounded-md cursor-not-allowed opacity-50 text-gray-500 dark:text-gray-400"
+                                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                                        />
+                                                    );
+                                                }
+
+                                                return (
+                                                    <Link
+                                                        key={index}
+                                                        href={link.url}
+                                                        preserveState
+                                                        className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium rounded-md ${
+                                                            link.active
+                                                                ? 'bg-primary text-white'
+                                                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                                        }`}
+                                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                                    />
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>

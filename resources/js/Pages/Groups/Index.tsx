@@ -439,18 +439,31 @@ const Index: React.FC<IndexProps> = ({ groups, filters }) => {
                     {groups.data.length > 0 && groups.meta?.last_page > 1 && (
                         <div className="mt-8 flex justify-center">
                             <nav className="flex space-x-2">
-                                {groups.links.map((link, index) => (
-                                    <Link
-                                        key={index}
-                                        href={link.url || '#'}
-                                        className={`px-3 py-2 text-sm font-medium rounded-lg ${
-                                            link.active
-                                                ? 'bg-primary text-white'
-                                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700'
-                                        } ${!link.url ? 'cursor-not-allowed opacity-50' : ''}`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
+                                {groups.links.map((link, index) => {
+                                    if (!link.url) {
+                                        return (
+                                            <span
+                                                key={index}
+                                                className="px-3 py-2 text-sm font-medium rounded-lg cursor-not-allowed opacity-50 text-gray-500 dark:text-gray-400"
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        );
+                                    }
+
+                                    return (
+                                        <Link
+                                            key={index}
+                                            href={link.url}
+                                            preserveState
+                                            className={`px-3 py-2 text-sm font-medium rounded-lg ${
+                                                link.active
+                                                    ? 'bg-primary text-white'
+                                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700'
+                                            }`}
+                                            dangerouslySetInnerHTML={{ __html: link.label }}
+                                        />
+                                    );
+                                })}
                             </nav>
                         </div>
                     )}

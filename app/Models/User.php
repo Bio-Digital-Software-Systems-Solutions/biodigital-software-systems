@@ -337,6 +337,22 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * User's pastor profile.
+     */
+    public function pastor(): HasOne
+    {
+        return $this->hasOne(Pastor::class);
+    }
+
+    /**
+     * User's MLR agent profile.
+     */
+    public function mlrAgent(): HasOne
+    {
+        return $this->hasOne(MlrAgent::class);
+    }
+
+    /**
      * Trainings the user is enrolled in (as a student).
      */
     public function trainings(): BelongsToMany

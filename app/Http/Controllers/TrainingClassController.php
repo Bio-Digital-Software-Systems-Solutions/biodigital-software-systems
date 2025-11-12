@@ -18,19 +18,39 @@ class TrainingClassController extends Controller
     /**
      * Display the training class dashboard
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $classes = TrainingClass::with([
+        $query = TrainingClass::with([
             'training.students' => function ($query) {
                 $query->where('status', 'approved');
             },
             'teacher',
             'attendances',
             'schedules'
-        ])
-            ->orderBy('date', 'desc')
-            ->get()
-            ->map(function ($class) {
+        ]);
+
+        // Add filters
+        if ($request->filled('training_id')) {
+            $query->where('training_id', $request->training_id);
+        }
+
+        if ($request->filled('teacher_id')) {
+            $query->where('teacher_id', $request->teacher_id);
+        }
+
+        if ($request->filled('status')) {
+            if ($request->status === 'upcoming') {
+                $query->where('date', '>=', now()->toDateString());
+            } elseif ($request->status === 'past') {
+                $query->where('date', '<', now()->toDateString());
+            }
+        }
+
+        $classes = $query->orderBy('date', 'desc')
+            ->paginate(12)
+            ->appends($request->query());
+
+        $classesData = $classes->getCollection()->map(function ($class) {
                 // Get schedules information
                 $schedules = $class->schedules->map(function ($schedule) {
                     return [
@@ -66,9 +86,21 @@ class TrainingClassController extends Controller
         $teachers = User::whereHas('teacher')->select('id', 'first_name', 'last_name')->get();
 
         return Inertia::render('TrainingClass/Dashboard', [
-            'classes' => $classes,
+            'classes' => [
+                'data' => $classesData,
+                'links' => $classes->linkCollection()->toArray(),
+                'meta' => [
+                    'current_page' => $classes->currentPage(),
+                    'last_page' => $classes->lastPage(),
+                    'per_page' => $classes->perPage(),
+                    'total' => $classes->total(),
+                    'from' => $classes->firstItem(),
+                    'to' => $classes->lastItem(),
+                ],
+            ],
             'trainings' => $trainings,
             'teachers' => $teachers,
+            'filters' => $request->only(['training_id', 'teacher_id', 'status']),
         ]);
     }
 
