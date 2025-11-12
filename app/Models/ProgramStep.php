@@ -46,6 +46,8 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProgramStep whereStartDatetime($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProgramStep whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProgramStep whereUpdatedAt($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class ProgramStep extends Model

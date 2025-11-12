@@ -9,6 +9,28 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $user_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MlrAgent withoutTrashed()
+ * @mixin \Eloquent
+ */
 class MlrAgent extends Model
 {
     use HasFactory, SoftDeletes, ClearsCache;

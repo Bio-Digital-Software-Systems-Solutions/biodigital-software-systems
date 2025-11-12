@@ -10,6 +10,42 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $quiz_id
+ * @property string $question
+ * @property string $type
+ * @property array<array-key, mixed>|null $options
+ * @property array<array-key, mixed> $correct_answers
+ * @property string|null $feedback_correct
+ * @property string|null $feedback_incorrect
+ * @property int $points
+ * @property int $order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\Quiz $quiz
+ * @method static \Database\Factories\QuizQuestionFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereCorrectAnswers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereFeedbackCorrect($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereFeedbackIncorrect($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereOptions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion wherePoints($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereQuestion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereQuizId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereUuid($value)
+ * @mixin \Eloquent
+ */
 class QuizQuestion extends Model
 {
     use HasFactory, HasUuid, LogsActivity, ClearsCache;

@@ -26,6 +26,22 @@ use Spatie\Activitylog\LogOptions;
  * @property-read string $download_url
  * @property-read string $human_file_size
  * @property-read bool $is_image
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment whereFilePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment whereFileSize($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment whereFileType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment whereFilename($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment whereMessageId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment whereMimeType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment whereStoredFilename($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment whereUuid($value)
  * @mixin \Eloquent
  */
 class MessageAttachment extends Model

@@ -8,6 +8,58 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
 
+/**
+ * @property int $id
+ * @property int $pastor_id
+ * @property string $type
+ * @property int|null $day_of_week
+ * @property \Illuminate\Support\Carbon|null $specific_date
+ * @property string $start_time
+ * @property string $end_time
+ * @property int $slot_duration
+ * @property bool $is_active
+ * @property string $consultation_mode
+ * @property string|null $meeting_link
+ * @property string|null $location
+ * @property string|null $room
+ * @property string|null $notes
+ * @property array<array-key, mixed>|null $selected_slots
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read string $consultation_mode_label
+ * @property-read string $day_name
+ * @property-read string $formatted_location
+ * @property-read string $time_range
+ * @property-read \App\Models\User $pastor
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability active()
+ * @method static \Database\Factories\PastorAvailabilityFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability forPastor($pastorId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability onDate($date)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability onDay($dayOfWeek)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability specificDate()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability weekly()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereConsultationMode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereDayOfWeek($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereEndTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereLocation($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereMeetingLink($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability wherePastorId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereRoom($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereSelectedSlots($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereSlotDuration($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereSpecificDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereStartTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastorAvailability whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class PastorAvailability extends Model
 {
     use HasFactory, ClearsCache;

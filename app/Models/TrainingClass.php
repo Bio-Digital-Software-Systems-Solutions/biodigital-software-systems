@@ -46,6 +46,19 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereTeacherId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereTrainingId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereUpdatedAt($value)
+ * @property string $uuid
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quiz> $allQuizzes
+ * @property-read int|null $all_quizzes_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClassMaterial> $materials
+ * @property-read int|null $materials_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quiz> $quizzes
+ * @property-read int|null $quizzes_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $students
+ * @property-read int|null $students_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereUuid($value)
  * @mixin \Eloquent
  */
 class TrainingClass extends Model

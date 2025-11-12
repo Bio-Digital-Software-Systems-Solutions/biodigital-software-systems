@@ -29,6 +29,8 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Bookmark whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Bookmark whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Bookmark whereValue($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class Bookmark extends Mark

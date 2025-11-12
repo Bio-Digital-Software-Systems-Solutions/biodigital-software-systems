@@ -65,6 +65,47 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task withoutTrashed()
+ * @property string $uuid
+ * @property string|null $key
+ * @property string|null $image
+ * @property string $type
+ * @property int|null $story_points
+ * @property array<array-key, mixed>|null $labels
+ * @property array<array-key, mixed>|null $custom_fields
+ * @property int $position
+ * @property int|null $project_id
+ * @property string|null $taskable_type
+ * @property int|null $taskable_id
+ * @property int|null $parent_id
+ * @property int|null $reporter_id
+ * @property int|null $sprint_id
+ * @property int|null $epic_id
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\User|null $assignee
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Attachment> $attachments
+ * @property-read int|null $attachments_count
+ * @property-read Task|null $epic
+ * @property-read Task|null $parent
+ * @property-read \App\Models\Project|null $project
+ * @property-read \App\Models\User|null $reporter
+ * @property-read \App\Models\Sprint|null $sprint
+ * @property-read Model|\Eloquent|null $taskable
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereCustomFields($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereEpicId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereImage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereKey($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereLabels($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereParentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task wherePosition($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereProjectId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereReporterId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereSprintId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereStoryPoints($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereTaskableId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereTaskableType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereUuid($value)
  * @mixin \Eloquent
  */
 class Task extends Model

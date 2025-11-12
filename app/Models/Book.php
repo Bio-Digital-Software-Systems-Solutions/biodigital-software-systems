@@ -48,6 +48,21 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereStockQuantity($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereUpdatedAt($value)
+ * @property string $uuid
+ * @property string|null $cover_image
+ * @property string|null $images
+ * @property int $total_copies
+ * @property int $available_copies
+ * @property int|null $library_id
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\Library|null $library
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereAvailableCopies($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereCoverImage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereImages($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereLibraryId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereTotalCopies($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereUuid($value)
  * @mixin \Eloquent
  */
 class Book extends Model

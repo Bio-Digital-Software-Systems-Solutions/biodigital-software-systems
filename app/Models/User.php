@@ -87,6 +87,57 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutPermission($permissions)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutRole($roles, $guard = null)
+ * @property string $uuid
+ * @property string|null $phone_number
+ * @property \Illuminate\Support\Carbon|null $last_login_at
+ * @property string|null $last_login_ip
+ * @property string|null $last_login_user_agent
+ * @property int $is_active
+ * @property int $is_blocked
+ * @property string|null $status_reason
+ * @property string|null $status_changed_at
+ * @property int|null $status_changed_by
+ * @property bool $email_notifications
+ * @property bool $sms_notifications
+ * @property bool $push_notifications
+ * @property bool $newsletter
+ * @property bool $event_reminders
+ * @property bool $training_updates
+ * @property bool $message_notifications
+ * @property string|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PastorAvailability> $activeAvailability
+ * @property-read int|null $active_availability_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PastorAvailability> $availability
+ * @property-read int|null $availability_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $events
+ * @property-read int|null $events_count
+ * @property-read \App\Models\Pivots\GroupUser|null $pivot
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Group> $groups
+ * @property-read int|null $groups_count
+ * @property-read \App\Models\MlrAgent|null $mlrAgent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $participatedEvents
+ * @property-read int|null $participated_events_count
+ * @property-read \App\Models\Pastor|null $pastor
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailNotifications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEventReminders($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsBlocked($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastLoginAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastLoginIp($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastLoginUserAgent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereMessageNotifications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereNewsletter($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePhoneNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePushNotifications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereSmsNotifications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStatusChangedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStatusChangedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStatusReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTrainingUpdates($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUuid($value)
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements MustVerifyEmail

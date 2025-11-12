@@ -59,6 +59,12 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Program whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Program whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Program whereUserId($value)
+ * @property string $uuid
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $morphTasks
+ * @property-read int|null $morph_tasks_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Program whereUuid($value)
  * @mixin \Eloquent
  */
 class Program extends Model

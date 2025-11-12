@@ -42,6 +42,22 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereSubject($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereUpdatedAt($value)
+ * @property string $uuid
+ * @property array<array-key, mixed>|null $cc_recipients
+ * @property array<array-key, mixed>|null $bcc_recipients
+ * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\MessageAttachment> $attachments
+ * @property string $recipient_type
+ * @property int|null $department_id
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read int|null $attachments_count
+ * @property-read \App\Models\Department|null $department
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereAttachments($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereBccRecipients($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereCcRecipients($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereRecipientType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereUuid($value)
  * @mixin \Eloquent
  */
 class Message extends Model

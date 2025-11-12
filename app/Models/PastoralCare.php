@@ -18,6 +18,68 @@ use Carbon\Carbon;
  * @property-read \Carbon\Carbon $appointment_end_time
  * @property-read bool $is_upcoming
  * @property-read bool $is_past
+ * @property int $id
+ * @property string $uuid
+ * @property int|null $user_id
+ * @property int $pastor_id
+ * @property \Illuminate\Support\Carbon $appointment_date
+ * @property \Illuminate\Support\Carbon $appointment_time
+ * @property int $duration_minutes
+ * @property string $status
+ * @property string $location_type
+ * @property string|null $zoom_link
+ * @property string|null $client_name
+ * @property string|null $client_email
+ * @property string|null $client_phone
+ * @property string|null $notes
+ * @property string|null $pastor_notes
+ * @property \Illuminate\Support\Carbon|null $confirmation_sent_at
+ * @property \Illuminate\Support\Carbon|null $reminder_sent_at
+ * @property \Illuminate\Support\Carbon|null $cancelled_at
+ * @property string|null $cancellation_reason
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \App\Models\User $pastor
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare betweenDates($startDate, $endDate)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare cancelled()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare completed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare confirmed()
+ * @method static \Database\Factories\PastoralCareFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare forPastor($pastorId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare onDate($date)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare upcoming()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereAppointmentDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereAppointmentTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereCancellationReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereCancelledAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereClientEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereClientName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereClientPhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereConfirmationSentAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereDurationMinutes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereLocationType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare wherePastorId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare wherePastorNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereReminderSentAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereZoomLink($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare withoutTrashed()
+ * @mixin \Eloquent
  */
 class PastoralCare extends Model
 {

@@ -29,6 +29,8 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingEvaluation whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingEvaluation whereTrainingId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingEvaluation whereUpdatedAt($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class TrainingEvaluation extends Model

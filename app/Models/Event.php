@@ -55,6 +55,14 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereUserId($value)
+ * @property string $uuid
+ * @property string|null $avatar
+ * @property array<array-key, mixed>|null $images
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereAvatar($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereImages($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereUuid($value)
  * @mixin \Eloquent
  */
 class Event extends Model

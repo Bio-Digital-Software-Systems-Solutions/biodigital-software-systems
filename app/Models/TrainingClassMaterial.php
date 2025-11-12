@@ -30,6 +30,33 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read \App\Models\TrainingClass $trainingClass
  * @property-read \App\Models\User $uploadedBy
  * @property-read string|null $file_url
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quiz> $allQuizzes
+ * @property-read int|null $all_quizzes_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quiz> $quizzes
+ * @property-read int|null $quizzes_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial active()
+ * @method static \Database\Factories\TrainingClassMaterialFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial ordered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereDuration($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereFilePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereTeacherId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereTrainingClassId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereUuid($value)
+ * @mixin \Eloquent
  */
 class TrainingClassMaterial extends Model
 {

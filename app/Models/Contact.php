@@ -40,6 +40,10 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Contact whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Contact whereSubject($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Contact whereUpdatedAt($value)
+ * @property string $uuid
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Contact whereUuid($value)
  * @mixin \Eloquent
  */
 class Contact extends Model

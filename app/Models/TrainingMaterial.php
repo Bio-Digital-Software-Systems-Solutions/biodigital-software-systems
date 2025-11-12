@@ -33,6 +33,8 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingMaterial whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingMaterial whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingMaterial whereUrl($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class TrainingMaterial extends Model

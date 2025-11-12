@@ -32,6 +32,8 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Participant whereRole($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Participant whereSkills($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Participant whereUpdatedAt($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class Participant extends Model

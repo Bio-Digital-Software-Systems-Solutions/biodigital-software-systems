@@ -52,6 +52,12 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereUpdatedAt($value)
+ * @property string $uuid
+ * @property string|null $image
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereImage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereUuid($value)
  * @mixin \Eloquent
  */
 class Library extends Model

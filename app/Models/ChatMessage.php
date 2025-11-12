@@ -31,6 +31,10 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatMessage whereRoomId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatMessage whereSenderId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatMessage whereUpdatedAt($value)
+ * @property string $uuid
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatMessage whereUuid($value)
  * @mixin \Eloquent
  */
 class ChatMessage extends Model

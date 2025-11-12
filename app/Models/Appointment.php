@@ -35,6 +35,50 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $participants
  * @property-read int|null $participants_count
  * @property-read Model|\Eloquent $appointmentable
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $confirmedParticipants
+ * @property-read int|null $confirmed_participants_count
+ * @property-read bool $can_be_cancelled
+ * @property-read bool $can_be_modified
+ * @property-read int $duration_minutes
+ * @property-read string $formatted_date
+ * @property-read string $formatted_time_range
+ * @property-read bool $is_future
+ * @property-read bool $is_past
+ * @property-read bool $is_today
+ * @method static Builder<static>|Appointment betweenDates(string $startDate, string $endDate)
+ * @method static Builder<static>|Appointment conflictsWith(\Carbon\Carbon $startDateTime, \Carbon\Carbon $endDateTime, ?int $excludeId = null)
+ * @method static \Database\Factories\AppointmentFactory factory($count = null, $state = [])
+ * @method static Builder<static>|Appointment forDate(string $date)
+ * @method static Builder<static>|Appointment forUser(\App\Models\User $user)
+ * @method static Builder<static>|Appointment newModelQuery()
+ * @method static Builder<static>|Appointment newQuery()
+ * @method static Builder<static>|Appointment past()
+ * @method static Builder<static>|Appointment private()
+ * @method static Builder<static>|Appointment public()
+ * @method static Builder<static>|Appointment query()
+ * @method static Builder<static>|Appointment today()
+ * @method static Builder<static>|Appointment upcoming()
+ * @method static Builder<static>|Appointment whereAppointmentableId($value)
+ * @method static Builder<static>|Appointment whereAppointmentableType($value)
+ * @method static Builder<static>|Appointment whereCreatedAt($value)
+ * @method static Builder<static>|Appointment whereDescription($value)
+ * @method static Builder<static>|Appointment whereEndDatetime($value)
+ * @method static Builder<static>|Appointment whereId($value)
+ * @method static Builder<static>|Appointment whereLocation($value)
+ * @method static Builder<static>|Appointment whereMetadata($value)
+ * @method static Builder<static>|Appointment whereStartDatetime($value)
+ * @method static Builder<static>|Appointment whereStatus($value)
+ * @method static Builder<static>|Appointment whereTitle($value)
+ * @method static Builder<static>|Appointment whereType($value)
+ * @method static Builder<static>|Appointment whereUpdatedAt($value)
+ * @method static Builder<static>|Appointment whereUserId($value)
+ * @method static Builder<static>|Appointment whereUuid($value)
+ * @method static Builder<static>|Appointment whereVisibility($value)
+ * @method static Builder<static>|Appointment withStatus(string $status)
+ * @method static Builder<static>|Appointment withType(string $type)
+ * @mixin \Eloquent
  */
 class Appointment extends Model
 {

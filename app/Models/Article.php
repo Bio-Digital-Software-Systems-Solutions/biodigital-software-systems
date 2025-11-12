@@ -58,6 +58,28 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereVideoFile($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereViewsCount($value)
+ * @property string $uuid
+ * @property string|null $excerpt
+ * @property string $status
+ * @property string|null $featured_image
+ * @property string|null $documents
+ * @property int $views
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property mixed $author_id
+ * @property mixed $featured
+ * @property-read bool $is_published
+ * @property-read int $reading_time
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article byAuthor($authorId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article draft()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article search($term)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereDocuments($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereExcerpt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereFeaturedImage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereImages($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereViews($value)
  * @mixin \Eloquent
  */
 class Article extends Model

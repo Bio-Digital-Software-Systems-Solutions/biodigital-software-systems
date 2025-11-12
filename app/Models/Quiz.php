@@ -44,6 +44,24 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereTrainingId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereUpdatedAt($value)
+ * @property string $uuid
+ * @property int $max_attempts
+ * @property string $score_display
+ * @property string $status
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClass> $allTrainingClasses
+ * @property-read int|null $all_training_classes_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\QuizQuestion> $questions
+ * @property-read int|null $questions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClassMaterial> $trainingClassMaterials
+ * @property-read int|null $training_class_materials_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClass> $trainingClasses
+ * @property-read int|null $training_classes_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereMaxAttempts($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereScoreDisplay($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereUuid($value)
  * @mixin \Eloquent
  */
 class Quiz extends Model
