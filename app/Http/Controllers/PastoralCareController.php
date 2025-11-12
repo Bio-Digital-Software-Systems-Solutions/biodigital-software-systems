@@ -225,6 +225,7 @@ class PastoralCareController extends Controller
             ]);
         }
 
+        /** @var PastoralCare $appointment */
         $appointment = PastoralCare::create([
             'user_id' => Auth::id(),
             'pastor_id' => $pastorId,
