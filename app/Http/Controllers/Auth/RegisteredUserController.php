@@ -68,11 +68,11 @@ class RegisteredUserController extends Controller
         );
 
         // Send welcome email with verification link
-        Mail::to($user->email)->send(new WelcomeMail($user, $verificationUrl));
+        //Mail::to($user->email)->send(new WelcomeMail($user, $verificationUrl));
 
         event(new Registered($user));
 
-        Auth::login($user);
+        //Auth::login($user);
 
         return redirect(route('verification.notice', absolute: false));
     }
