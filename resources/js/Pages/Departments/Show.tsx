@@ -270,7 +270,7 @@ export default function ShowDepartment({ department, availableUsers, canManage }
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <Link
-                                                href={`/profile/${user.id}`}
+                                                href={`/profile/${user.uuid}`}
                                                 className="font-medium text-primary dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
                                             >
                                                 {user.name || 'Sans nom'}
