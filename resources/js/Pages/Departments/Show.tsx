@@ -22,6 +22,7 @@ import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 
 interface User {
     id: number;
+    uuid: string;
     name: string;
     email: string;
 }
@@ -70,7 +71,7 @@ export default function ShowDepartment({ department, availableUsers, canManage }
         });
     };
 
-    const handleRemoveMember = async (userId: number) => {
+    const handleRemoveMember = async (userUuid: string) => {
         const confirmed = await confirm({
             title: 'Retirer le membre',
             message: 'Êtes-vous sûr de vouloir retirer ce membre du département ?',
@@ -81,7 +82,7 @@ export default function ShowDepartment({ department, availableUsers, canManage }
 
         if (!confirmed) return;
 
-        router.delete(`/departments/${department.uuid}/users/${userId}`, {
+        router.delete(`/departments/${department.uuid}/users/${userUuid}`, {
             onSuccess: () => {
                 showSuccess('Membre retiré avec succès du département');
             },
@@ -287,7 +288,7 @@ export default function ShowDepartment({ department, availableUsers, canManage }
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handleRemoveMember(user.id)}
+                                        onClick={() => handleRemoveMember(user.uuid)}
                                         disabled={department.head_of_department?.id === user.id}
                                     >
                                         <UserMinusIcon className="h-4 w-4 mr-2" />

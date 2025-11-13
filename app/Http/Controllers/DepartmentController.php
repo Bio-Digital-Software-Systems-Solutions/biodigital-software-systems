@@ -116,6 +116,7 @@ class DepartmentController extends Controller
                 'users' => $department->users->map(function ($user) {
                     return [
                         'id' => $user->id,
+                        'uuid' => $user->uuid,
                         'name' => $user->name,
                         'email' => $user->email,
                     ];
