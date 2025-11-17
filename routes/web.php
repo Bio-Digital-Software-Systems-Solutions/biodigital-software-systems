@@ -396,6 +396,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('trainings.quizzes.edit');
         Route::put('/{quiz}', [App\Http\Controllers\QuizController::class, 'update'])
             ->name('trainings.quizzes.update');
+        Route::patch('/{quiz}/toggle-status', [App\Http\Controllers\QuizController::class, 'toggleStatus'])
+            ->name('trainings.quizzes.toggle-status');
         Route::delete('/{quiz}', [App\Http\Controllers\QuizController::class, 'destroy'])
             ->name('trainings.quizzes.destroy');
         Route::get('/{quiz}/results', [App\Http\Controllers\QuizController::class, 'results'])

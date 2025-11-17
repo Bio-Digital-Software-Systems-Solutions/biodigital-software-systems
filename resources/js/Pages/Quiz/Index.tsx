@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import type { PageProps } from '@/Types';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
@@ -13,7 +14,9 @@ import {
     Users,
     CheckCircle2,
     Calendar,
-    Target
+    Target,
+    Power,
+    PowerOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
@@ -31,6 +34,7 @@ interface Quiz {
     is_active: boolean;
     attempts_count: number;
     completed_attempts_count: number;
+    status: 'draft' | 'published' | 'archived';
 }
 
 interface Training {
@@ -48,6 +52,26 @@ interface Props {
 export default function QuizIndex({ training, quizzes }: Props) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [quizToDelete, setQuizToDelete] = useState<Quiz | null>(null);
+    const { auth } = usePage<PageProps>().props;
+
+    // Fonction pour vérifier si l'utilisateur peut voir les quiz désactivés
+    const canViewInactiveQuizzes = () => {
+        const userRoles = auth.user?.roles?.map(role => role.name) || [];
+        const userPermissions = auth.user?.permissions?.map((p: any) => typeof p === 'string' ? p : p.name) || [];
+
+        // Les admins et enseignants peuvent voir tous les quiz
+        return userRoles.includes('admin') ||
+               userRoles.includes('teacher') ||
+               userRoles.includes('event-manager') ||
+               userRoles.includes('project-manager') ||
+               userPermissions.includes('manage quizzes') ||
+               userPermissions.includes('edit quizzes');
+    };
+
+    // Filtrer les quiz selon les permissions
+    const filteredQuizzes = canViewInactiveQuizzes()
+        ? quizzes  // Tous les quiz pour enseignants/admins
+        : quizzes.filter(quiz => quiz.is_active); // Seulement les quiz actifs pour les autres
 
     const handleDelete = (quiz: Quiz) => {
         setQuizToDelete(quiz);
@@ -69,7 +93,31 @@ export default function QuizIndex({ training, quizzes }: Props) {
         });
     };
 
+    const toggleQuizStatus = (quiz: Quiz) => {
+        router.patch(route('trainings.quizzes.toggle-status', [training.uuid, quiz.uuid]), {}, {
+            onSuccess: () => {
+                toast.success(quiz.is_active ? 'Quiz désactivé avec succès' : 'Quiz activé avec succès');
+            },
+            onError: () => {
+                toast.error('Erreur lors de la modification du statut du quiz');
+            }
+        });
+    };
+
     const getStatusBadge = (quiz: Quiz) => {
+        switch (quiz.status) {
+            case 'draft':
+                return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Brouillon</Badge>;
+            case 'published':
+                return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Publié</Badge>;
+            case 'archived':
+                return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Archivé</Badge>;
+            default:
+                return <Badge variant="secondary">Inconnu</Badge>;
+        }
+    };
+
+    const getAvailabilityBadge = (quiz: Quiz) => {
         if (!quiz.is_active) {
             return <Badge variant="secondary">Inactif</Badge>;
         }
@@ -133,8 +181,13 @@ export default function QuizIndex({ training, quizzes }: Props) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                                {quizzes.length}
+                                {filteredQuizzes.length}
                             </div>
+                            {canViewInactiveQuizzes() && quizzes.filter(q => !q.is_active).length > 0 && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {quizzes.filter(q => !q.is_active).length} désactivé{quizzes.filter(q => !q.is_active).length > 1 ? 's' : ''}
+                                </p>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -146,7 +199,7 @@ export default function QuizIndex({ training, quizzes }: Props) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                                {quizzes.filter(q => q.is_active).length}
+                                {filteredQuizzes.filter(q => q.is_active).length}
                             </div>
                         </CardContent>
                     </Card>
@@ -159,35 +212,49 @@ export default function QuizIndex({ training, quizzes }: Props) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                {quizzes.reduce((sum, q) => sum + q.attempts_count, 0)}
+                                {filteredQuizzes.reduce((sum, q) => sum + q.attempts_count, 0)}
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* Quiz List */}
-                {quizzes.length === 0 ? (
+                {filteredQuizzes.length === 0 ? (
                     <Card>
                         <CardContent className="text-center py-12">
                             <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                                Aucun quiz créé
+                                {quizzes.length === 0 ? 'Aucun quiz créé' : 'Aucun quiz disponible'}
                             </h3>
                             <p className="text-gray-600 dark:text-gray-400 mb-6">
-                                Commencez par créer votre premier quiz pour cette formation
+                                {quizzes.length === 0
+                                    ? 'Commencez par créer votre premier quiz pour cette formation'
+                                    : canViewInactiveQuizzes()
+                                        ? 'Tous les quiz sont actuellement désactivés'
+                                        : 'Aucun quiz actif n\'est disponible pour le moment'
+                                }
                             </p>
-                            <Link href={route('trainings.quizzes.create', training.uuid)}>
-                                <Button className="bg-blue-600 hover:bg-blue-700">
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Créer un quiz
-                                </Button>
-                            </Link>
+                            {canViewInactiveQuizzes() && (
+                                <Link href={route('trainings.quizzes.create', training.uuid)}>
+                                    <Button className="bg-blue-600 hover:bg-blue-700">
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Créer un quiz
+                                    </Button>
+                                </Link>
+                            )}
                         </CardContent>
                     </Card>
                 ) : (
                     <div className="grid gap-6">
-                        {quizzes.map((quiz) => (
-                            <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
+                        {filteredQuizzes.map((quiz) => (
+                            <Card
+                                key={quiz.id}
+                                className={`hover:shadow-lg transition-shadow ${
+                                    !quiz.is_active
+                                        ? 'opacity-70 border-dashed border-2 border-gray-300 dark:border-gray-600'
+                                        : ''
+                                }`}
+                            >
                                 <CardHeader>
                                     <div className="flex items-start justify-between">
                                         <div className="flex-1">
@@ -200,7 +267,15 @@ export default function QuizIndex({ training, quizzes }: Props) {
                                                         {quiz.title}
                                                     </Link>
                                                 </CardTitle>
-                                                {getStatusBadge(quiz)}
+                                                <div className="flex items-center gap-2">
+                                                    {getStatusBadge(quiz)}
+                                                    {getAvailabilityBadge(quiz)}
+                                                    {!quiz.is_active && canViewInactiveQuizzes() && (
+                                                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300">
+                                                            Désactivé
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                             {quiz.description && (
                                                 <CardDescription className="text-sm">
@@ -224,6 +299,20 @@ export default function QuizIndex({ training, quizzes }: Props) {
                                                     <Edit className="h-4 w-4" />
                                                 </Button>
                                             </Link>
+                                            {canViewInactiveQuizzes() && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => toggleQuizStatus(quiz)}
+                                                    className={quiz.is_active
+                                                        ? "text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                                                        : "text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                                    }
+                                                    title={quiz.is_active ? 'Désactiver le quiz' : 'Activer le quiz'}
+                                                >
+                                                    {quiz.is_active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+                                                </Button>
+                                            )}
                                             <Button
                                                 variant="outline"
                                                 size="sm"

@@ -19,7 +19,8 @@ class QuizController extends Controller
     {
         $this->authorize('manage quizzes');
 
-        $quizzes = $training->quizzes()->with('attempts')->get()->map(function ($quiz) {
+        // Récupérer TOUS les quiz pour les enseignants/admins (pas seulement les actifs)
+        $quizzes = Quiz::where('training_id', $training->id)->with('attempts')->get()->map(function ($quiz) {
             return [
                 'id' => $quiz->id,
                 'uuid' => $quiz->uuid,
@@ -888,5 +889,21 @@ class QuizController extends Controller
             'recentAttempts' => $recentAttempts,
             'quizPerformance' => $quizPerformance,
         ]);
+    }
+
+    /**
+     * Toggle quiz active status
+     */
+    public function toggleStatus(Training $training, Quiz $quiz)
+    {
+        $this->authorize('edit quizzes');
+
+        $quiz->update([
+            'is_active' => !$quiz->is_active
+        ]);
+
+        return back()->with('success', $quiz->is_active
+            ? 'Quiz activé avec succès'
+            : 'Quiz désactivé avec succès');
     }
 }

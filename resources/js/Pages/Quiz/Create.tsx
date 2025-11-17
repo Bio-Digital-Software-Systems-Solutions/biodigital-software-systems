@@ -60,6 +60,21 @@ interface Question {
     points: number;
 }
 
+interface Quiz {
+    id: number;
+    uuid: string;
+    title: string;
+    description?: string;
+    duration_minutes: number;
+    passing_score: number;
+    available_from?: string;
+    available_until?: string;
+    is_active: boolean;
+    max_attempts: number;
+    score_display: 'best' | 'last' | 'average';
+    status: 'draft' | 'published' | 'archived';
+}
+
 export default function QuizCreate({ training, trainingClasses }: Props) {
     const formRef = useRef<HTMLFormElement>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -311,7 +326,10 @@ export default function QuizCreate({ training, trainingClasses }: Props) {
                                         min="1"
                                         max="240"
                                         value={durationMinutes}
-                                        onChange={(e) => setDurationMinutes(parseInt(e.target.value))}
+                                        onChange={(e) => {
+                                            const value = parseInt(e.target.value);
+                                            setDurationMinutes(isNaN(value) ? 1 : value);
+                                        }}
                                         required
                                     />
                                 </div>
@@ -327,7 +345,10 @@ export default function QuizCreate({ training, trainingClasses }: Props) {
                                         min="0"
                                         max="100"
                                         value={passingScore}
-                                        onChange={(e) => setPassingScore(parseInt(e.target.value))}
+                                        onChange={(e) => {
+                                            const value = parseInt(e.target.value);
+                                            setPassingScore(isNaN(value) ? 0 : value);
+                                        }}
                                         required
                                     />
                                     <p className="text-xs text-gray-500">
@@ -397,7 +418,10 @@ export default function QuizCreate({ training, trainingClasses }: Props) {
                                             min="1"
                                             max="10"
                                             value={maxAttempts}
-                                            onChange={(e) => setMaxAttempts(parseInt(e.target.value))}
+                                            onChange={(e) => {
+                                                const value = parseInt(e.target.value);
+                                                setMaxAttempts(isNaN(value) ? 1 : value);
+                                            }}
                                         />
                                         <p className="text-xs text-gray-500">
                                             Les étudiants pourront passer le quiz jusqu'à {maxAttempts} fois
@@ -693,7 +717,10 @@ export default function QuizCreate({ training, trainingClasses }: Props) {
                                                         type="number"
                                                         min="1"
                                                         value={question.points}
-                                                        onChange={(e) => updateQuestion(question.id, 'points', parseInt(e.target.value))}
+                                                        onChange={(e) => {
+                                                            const value = parseInt(e.target.value);
+                                                            updateQuestion(question.id, 'points', isNaN(value) ? 1 : value);
+                                                        }}
                                                     />
                                                 </div>
                                             </div>
