@@ -1,5 +1,6 @@
-# AIG-App - Organizational Management Platform
+# ICC Munich - Organizational Management Platform
 
+[![Documentation](https://github.com/VOTRE_USERNAME/icc-munich/actions/workflows/documentation.yml/badge.svg)](https://VOTRE_USERNAME.github.io/icc-munich/docs)
 ![CI/CD Pipeline](https://github.com/VOTRE_USERNAME/icc-munich/actions/workflows/ci.yml/badge.svg)
 ![PR Checks](https://github.com/VOTRE_USERNAME/icc-munich/actions/workflows/pr-checks.yml/badge.svg)
 ![Dependency Review](https://github.com/VOTRE_USERNAME/icc-munich/actions/workflows/dependency-review.yml/badge.svg)
@@ -9,7 +10,38 @@
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org)
 
-> **Note:** Remplacez `elmarce` dans les badges ci-dessus par votre nom d'utilisateur GitHub.
+> **Note:** Remplacez `VOTRE_USERNAME` dans les badges ci-dessus par votre nom d'utilisateur GitHub.
+
+## 📚 Documentation
+
+La documentation complète est générée automatiquement à chaque push sur `main` :
+
+- **[📖 Documentation Complète](https://VOTRE_USERNAME.github.io/icc-munich/docs)** - Hub de documentation principal
+- **[🐘 API PHP](https://VOTRE_USERNAME.github.io/icc-munich/docs/api-php)** - Documentation Laravel avec PHPDocumentor
+- **[⚛️ API TypeScript](https://VOTRE_USERNAME.github.io/icc-munich/docs/api-typescript)** - Documentation React avec TypeDoc
+- **[🗄️ Schéma Base de Données](https://VOTRE_USERNAME.github.io/icc-munich/docs/database)** - Documentation SchemaSpy
+- **[📊 Diagrammes UML](https://VOTRE_USERNAME.github.io/icc-munich/docs/diagrams)** - Diagrammes d'architecture
+
+### Génération Locale
+
+```bash
+# Générer toute la documentation
+make docs-full
+
+# Servir localement (http://localhost:8080)
+make docs-serve
+
+# Nettoyer la documentation
+make docs-clean
+
+# Commandes individuelles
+make docs                    # PHP API (PHPDocumentor)
+make uml-diagram            # Diagramme UML PHP
+make ts-uml-diagram         # Diagramme UML TypeScript
+make class-diagram          # Diagramme de classes PlantUML
+make er-diagram             # Diagramme entité-relation
+make convert-diagrams-png   # Convertir SVG vers PNG
+```
 
 ## À Propos
 

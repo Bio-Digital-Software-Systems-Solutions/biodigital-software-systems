@@ -32,3 +32,7 @@ buildlog
 
 # Ziggy routes - generated per environment
 resources/js/ziggy.js
+
+# Generated documentation
+/docs/
+/schema-docs/

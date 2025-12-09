@@ -1,0 +1,28 @@
+# SchemaSpy Configuration Example
+# Copy this file to schemaspy.properties and configure for your database
+
+# Database type (mysql, postgresql, etc.)
+schemaspy.t=mysql
+
+# Database driver path
+schemaspy.dp=tools/mysql-connector-j-8.0.33.jar
+
+# Database connection details
+schemaspy.host=localhost
+schemaspy.port=3306
+schemaspy.db=your_database_name
+schemaspy.u=your_username
+schemaspy.p=your_password
+
+# Output directory
+schemaspy.o=schema-docs
+
+# Optional: Specific schemas to analyze
+# schemaspy.schemas=schema1,schema2
+
+# Optional: Include/exclude tables
+# schemaspy.i=table_pattern.*
+# schemaspy.I=exclude_pattern.*
+
+# Usage:
+# java -jar tools/schemaspy-6.2.4.jar -configFile schemaspy.properties

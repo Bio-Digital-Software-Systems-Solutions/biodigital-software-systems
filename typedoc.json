@@ -1,0 +1,14 @@
+{
+    "entryPoints": ["src"],
+    "entryPointStrategy": "expand",
+    "out": "docs/api-typescript",
+    "exclude": ["**/*.test.tsx", "**/*.spec.ts", "**/node_modules/**"],
+    "excludePrivate": true,
+    "includeVersion": true,
+    "categorizeByGroup": true,
+    "navigation": {
+        "includeCategories": true,
+        "includeGroups": true
+    },
+    "plugin": ["typedoc-plugin-markdown"]
+}

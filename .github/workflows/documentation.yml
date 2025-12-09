@@ -1,0 +1,362 @@
+name: Generate Documentation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  # Permet de lancer manuellement
+  workflow_dispatch:
+
+env:
+  PHP_VERSION: '8.2'
+  NODE_VERSION: '20'
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_DATABASE: icc_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, xml, mysql, pdo_mysql, zip, gd
+          tools: composer:v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Java (pour PlantUML/SchemaSpy)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz librsvg2-bin
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Install Node dependencies & global tools
+        run: |
+          npm ci --legacy-peer-deps
+          npm install -g tsuml2 --legacy-peer-deps
+
+      - name: Download documentation tools
+        run: |
+          mkdir -p tools
+          # PHPDocumentor
+          curl -sL -o tools/phpDocumentor.phar https://github.com/phpDocumentor/phpDocumentor/releases/download/v3.4.3/phpDocumentor.phar
+          chmod +x tools/phpDocumentor.phar
+          # PlantUML
+          curl -sL -o tools/plantuml.jar https://github.com/plantuml/plantuml/releases/download/v1.2024.3/plantuml-1.2024.3.jar
+          # SchemaSpy
+          curl -sL -o tools/schemaspy-6.2.4.jar https://github.com/schemaspy/schemaspy/releases/download/v6.2.4/schemaspy-6.2.4.jar
+          # MySQL Connector
+          curl -sL -o tools/mysql-connector-j-8.0.33.jar https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.0.33/mysql-connector-j-8.0.33.jar
+
+      - name: Create environment file
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Setup database configuration
+        run: |
+          sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
+          sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_PORT=.*/DB_PORT=3306/' .env
+          sed -i 's/DB_DATABASE=.*/DB_DATABASE=icc_test/' .env
+          sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
+          sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=secret/' .env
+
+      - name: Run database migrations
+        run: |
+          php artisan migrate --force
+          php artisan db:seed --force
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Create docs directory structure
+        run: |
+          mkdir -p docs/{api-php,api-typescript,database,uml,diagrams}
+
+      - name: Generate PHPDocumentor documentation
+        run: |
+          php tools/phpDocumentor.phar run -d app -t docs/api-php --title="ICC Munich - PHP API Documentation"
+
+      - name: Generate TypeScript documentation
+        run: |
+          if [ -f "typedoc.json" ]; then
+            npx typedoc
+          else
+            npx typedoc --out docs/api-typescript resources/js --name "ICC Munich - TypeScript Documentation"
+          fi
+
+      - name: Generate UML diagrams using our Makefile commands
+        run: |
+          # PHP UML with bartlett/umlwriter
+          make uml-diagram || echo "UML diagram generation failed"
+
+          # TypeScript UML with tsuml2
+          make ts-uml-diagram || echo "TypeScript UML diagram generation failed"
+
+          # PlantUML class diagram
+          make class-diagram || echo "Class diagram generation failed"
+
+          # Entity Relationship diagram
+          make er-diagram || echo "ER diagram generation failed"
+
+          # Use Case diagrams
+          make use-case-diagrams || echo "Use Case diagram generation failed"
+
+      - name: Generate database documentation with SchemaSpy
+        run: |
+          cp schemaspy.properties.example schemaspy.properties || true
+          if [ -f "schemaspy.properties" ]; then
+            make schema-docs || echo "Schema docs generation failed"
+          else
+            echo "schemaspy.properties not found, skipping database documentation"
+          fi
+
+      - name: Convert SVG diagrams to PNG
+        run: |
+          make convert-diagrams-png || echo "SVG to PNG conversion failed"
+
+      - name: Copy diagrams to docs
+        run: |
+          cp docs/*.svg docs/diagrams/ 2>/dev/null || true
+          cp docs/*.png docs/diagrams/ 2>/dev/null || true
+          cp docs/use-cases/svg/*.svg docs/diagrams/ 2>/dev/null || true
+          cp docs/use-cases/png/*.png docs/diagrams/ 2>/dev/null || true
+
+      - name: Generate documentation index
+        run: |
+          cat > docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>ICC Munich - Documentation</title>
+              <style>
+                  * { box-sizing: border-box; }
+                  body {
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                      max-width: 1100px;
+                      margin: 0 auto;
+                      padding: 40px 20px;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      min-height: 100vh;
+                      color: #333;
+                  }
+                  .container {
+                      background: rgba(255,255,255,0.95);
+                      border-radius: 20px;
+                      padding: 40px;
+                      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                  }
+                  h1 {
+                      color: #1a1a2e;
+                      margin-bottom: 10px;
+                      font-size: 2.5em;
+                      text-align: center;
+                  }
+                  .timestamp {
+                      color: #666;
+                      font-size: 14px;
+                      margin-bottom: 40px;
+                      text-align: center;
+                  }
+                  .grid {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                      gap: 25px;
+                  }
+                  .card {
+                      background: white;
+                      padding: 30px;
+                      border-radius: 15px;
+                      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+                      transition: all 0.3s ease;
+                      border: 2px solid transparent;
+                  }
+                  .card:hover {
+                      transform: translateY(-5px);
+                      box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+                      border-color: #667eea;
+                  }
+                  .card h2 {
+                      margin: 0 0 15px 0;
+                      font-size: 20px;
+                      color: #1a1a2e;
+                  }
+                  .card a {
+                      color: #667eea;
+                      text-decoration: none;
+                      display: block;
+                      padding: 8px 0;
+                      font-weight: 500;
+                      transition: color 0.3s ease;
+                  }
+                  .card a:hover {
+                      color: #764ba2;
+                      text-decoration: underline;
+                  }
+                  .icon {
+                      font-size: 32px;
+                      margin-bottom: 15px;
+                      display: block;
+                  }
+                  .badge {
+                      display: inline-block;
+                      background: #667eea;
+                      color: white;
+                      padding: 4px 12px;
+                      border-radius: 20px;
+                      font-size: 12px;
+                      font-weight: 600;
+                      margin-top: 10px;
+                  }
+                  .stats {
+                      background: #f8f9fa;
+                      padding: 20px;
+                      border-radius: 10px;
+                      margin: 30px 0;
+                      text-align: center;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>📚 ICC Munich Documentation</h1>
+                  <p class="timestamp">Generated: $(date '+%Y-%m-%d %H:%M:%S UTC')</p>
+
+                  <div class="stats">
+                      <strong>Comprehensive Laravel + React Documentation Suite</strong><br>
+                      Auto-generated from source code with UML diagrams, API docs, and database schema
+                  </div>
+
+                  <div class="grid">
+                      <div class="card">
+                          <span class="icon">🐘</span>
+                          <h2>PHP API Documentation</h2>
+                          <p>Laravel backend API documentation generated with PHPDocumentor</p>
+                          <a href="api-php/index.html">→ Browse PHP Documentation</a>
+                          <span class="badge">PHPDocumentor</span>
+                      </div>
+
+                      <div class="card">
+                          <span class="icon">⚛️</span>
+                          <h2>TypeScript Documentation</h2>
+                          <p>React frontend components and TypeScript types documentation</p>
+                          <a href="api-typescript/index.html">→ Browse TypeScript Docs</a>
+                          <span class="badge">TypeDoc</span>
+                      </div>
+
+                      <div class="card">
+                          <span class="icon">🗄️</span>
+                          <h2>Database Schema</h2>
+                          <p>Interactive database schema documentation with relationships</p>
+                          <a href="database/index.html">→ View Database Schema</a>
+                          <span class="badge">SchemaSpy</span>
+                      </div>
+
+                      <div class="card">
+                          <span class="icon">📊</span>
+                          <h2>UML Diagrams</h2>
+                          <p>Visual representation of application architecture and relationships</p>
+                          <a href="diagrams/uml-class-diagram.svg">→ PHP UML Diagram (Comprehensive)</a>
+                          <a href="diagrams/typescript-uml-diagram.svg">→ TypeScript UML Diagram</a>
+                          <a href="diagrams/class-diagram.svg">→ Class Overview (PlantUML)</a>
+                          <a href="diagrams/entity-relationship-diagram.svg">→ Database ER Diagram</a>
+                          <span class="badge">Multiple Tools</span>
+                      </div>
+
+                      <div class="card">
+                          <span class="icon">🖼️</span>
+                          <h2>PNG Diagrams</h2>
+                          <p>High-resolution PNG versions for presentations and documents</p>
+                          <a href="diagrams/uml-class-diagram.png">→ PHP UML (PNG)</a>
+                          <a href="diagrams/typescript-uml-diagram.png">→ TypeScript UML (PNG)</a>
+                          <a href="diagrams/class-diagram.png">→ Class Overview (PNG)</a>
+                          <a href="diagrams/entity-relationship-diagram.png">→ ER Diagram (PNG)</a>
+                          <span class="badge">High Resolution</span>
+                      </div>
+
+                      <div class="card">
+                          <span class="icon">🛠️</span>
+                          <h2>Development Tools</h2>
+                          <p>Makefile commands and development documentation</p>
+                          <a href="#makefile-commands">→ Available Commands</a>
+                          <a href="https://github.com/anthropics/claude-code">→ Generated with Claude Code</a>
+                          <span class="badge">Developer Tools</span>
+                      </div>
+                  </div>
+
+                  <div id="makefile-commands" style="margin-top: 40px; background: #f8f9fa; padding: 30px; border-radius: 15px;">
+                      <h2>🔧 Available Makefile Commands</h2>
+                      <pre style="background: #1a1a2e; color: #fff; padding: 20px; border-radius: 10px; overflow-x: auto;">
+          # Documentation Generation
+          make docs                    # Generate PHPDocumentor API documentation
+          make uml-diagram            # Generate PHP UML with bartlett/umlwriter
+          make ts-uml-diagram         # Generate TypeScript UML with tsuml2
+          make class-diagram          # Generate class diagram with PlantUML
+          make er-diagram             # Generate Entity Relationship diagram
+          make schema-docs            # Generate database schema with SchemaSpy
+          make convert-diagrams-png   # Convert all SVG diagrams to PNG format
+
+          # Quality & Testing
+          make quality                # Run all code quality checks
+          make test-all              # Run all tests (backend + frontend)</pre>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-${{ github.sha }}
+          path: docs/
+          retention-days: 30
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          destination_dir: docs

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdocumentor configVersion="3">
+    <title>ICC-Munich - Documentation API</title>
+    <paths>
+        <output>docs</output>
+        <cache>cache/phpdoc</cache>
+    </paths>
+    <versions>
+        <api>
+            <folder>app</folder>
+        </api>
+    </versions>
+    <settings>
+        <template name="default" />
+    </settings>
+</phpdocumentor>
