@@ -266,7 +266,6 @@ class PastoralCareController extends Controller
                     $allSlots[] = [
                         'time' => $time,
                         'pastor_id' => $pastor->id,
-                        'pastor_name' => $pastor->first_name . ' ' . $pastor->last_name,
                     ];
                 }
             }

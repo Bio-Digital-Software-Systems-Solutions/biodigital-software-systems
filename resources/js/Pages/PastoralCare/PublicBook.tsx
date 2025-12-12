@@ -62,7 +62,6 @@ interface AvailableDay {
 interface SlotWithPastor {
     time: string;
     pastor_id: number;
-    pastor_name: string;
 }
 
 interface BookingFormData {

@@ -69,7 +69,6 @@ interface Pastor {
 interface SlotWithPastor {
     time: string;
     pastor_id: number;
-    pastor_name: string;
 }
 
 interface BookingFormData {
@@ -1178,7 +1177,7 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                                 <Button
                                                                     key={`${slot.time}-${slot.pastor_id}-${index}`}
                                                                     variant={formData.appointment_time === slot.time && formData.pastor_id === slot.pastor_id.toString() ? 'default' : 'outline'}
-                                                                    className="h-auto p-3 flex flex-col items-start text-left"
+                                                                    className="h-12"
                                                                     onClick={() => {
                                                                         // Set both time and pastor_id when slot is clicked
                                                                         setFormData(prev => ({
@@ -1188,10 +1187,7 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                                         }));
                                                                     }}
                                                                 >
-                                                                    <span className="text-lg font-bold">{slot.time}</span>
-                                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                                        avec {slot.pastor_name}
-                                                                    </span>
+                                                                    {slot.time}
                                                                 </Button>
                                                             ))}
                                                         </div>
@@ -1356,16 +1352,15 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                 </h3>
 
                                                 <div className="space-y-3">
-                                                    <div className="flex items-center">
-                                                        <User className="h-5 w-5 text-blue-600 mr-3" />
-                                                        <span className="font-medium">Pasteur :</span>
-                                                        <span className="ml-2">
-                                                            {permissions?.canSelectPastor
-                                                                ? pastors.find(p => p.id.toString() === formData.pastor_id)?.name
-                                                                : availableSlotsWithPastor.find(s => s.pastor_id.toString() === formData.pastor_id)?.pastor_name || 'Pasteur assigné'
-                                                            }
-                                                        </span>
-                                                    </div>
+                                                    {permissions?.canSelectPastor && (
+                                                        <div className="flex items-center">
+                                                            <User className="h-5 w-5 text-blue-600 mr-3" />
+                                                            <span className="font-medium">Pasteur :</span>
+                                                            <span className="ml-2">
+                                                                {pastors.find(p => p.id.toString() === formData.pastor_id)?.name}
+                                                            </span>
+                                                        </div>
+                                                    )}
 
                                                     <div className="flex items-center">
                                                         <CalendarDays className="h-5 w-5 text-blue-600 mr-3" />
