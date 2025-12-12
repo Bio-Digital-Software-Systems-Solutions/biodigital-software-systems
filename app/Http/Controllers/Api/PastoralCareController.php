@@ -139,6 +139,154 @@ class PastoralCareController extends Controller
     }
 
     /**
+     * Get available days from ALL pastors within a date range
+     * Used when user cannot select a specific pastor
+     */
+    public function getAllAvailableDays(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'start_date' => 'required|date|after_or_equal:today',
+            'end_date' => 'required|date|after:start_date',
+        ]);
+
+        $startDate = Carbon::parse($validated['start_date']);
+        $endDate = Carbon::parse($validated['end_date']);
+
+        // Get all pastors
+        $pastors = User::role('pastor')->pluck('id')->toArray();
+
+        if (empty($pastors)) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'available_days' => []
+                ]
+            ]);
+        }
+
+        // Get all availabilities for all pastors
+        $availabilities = \App\Models\PastorAvailability::whereIn('pastor_id', $pastors)
+            ->active()
+            ->get();
+
+        if ($availabilities->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'available_days' => []
+                ]
+            ]);
+        }
+
+        $availableDays = [];
+
+        // Check each date in the range
+        $current = $startDate->copy();
+        while ($current <= $endDate) {
+            $totalSlotsForDay = 0;
+            $pastorsWithSlots = [];
+
+            // Check all pastors for this date
+            foreach ($pastors as $pastorId) {
+                // Check if pastor has availability for this date
+                $hasAvailability = false;
+                foreach ($availabilities as $availability) {
+                    if ($availability->pastor_id == $pastorId && $availability->appliesTo($current)) {
+                        $hasAvailability = true;
+                        break;
+                    }
+                }
+
+                // If pastor has availability, check if there are any free slots
+                if ($hasAvailability) {
+                    $slots = PastoralCare::getAvailableTimeSlots(
+                        $pastorId,
+                        $current->toDateString(),
+                        60 // Default duration for checking availability
+                    );
+
+                    if (!empty($slots)) {
+                        $totalSlotsForDay += count($slots);
+                        $pastorsWithSlots[] = $pastorId;
+                    }
+                }
+            }
+
+            if ($totalSlotsForDay > 0) {
+                $availableDays[] = [
+                    'date' => $current->toDateString(),
+                    'day_name' => $current->locale('fr')->format('D'),
+                    'full_date' => $current->locale('fr')->format('l j F Y'),
+                    'slots_count' => $totalSlotsForDay,
+                    'pastors_count' => count($pastorsWithSlots)
+                ];
+            }
+
+            $current->addDay();
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'available_days' => $availableDays,
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date']
+            ]
+        ]);
+    }
+
+    /**
+     * Get available time slots from ALL pastors on a specific date
+     * Used when user cannot select a specific pastor
+     */
+    public function getAllAvailableSlots(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'date' => 'required|date|after_or_equal:today',
+            'duration' => 'nullable|integer|min:30|max:180',
+        ]);
+
+        // Get all pastors
+        $pastors = User::role('pastor')
+            ->select('id', 'first_name', 'last_name', 'email', 'phone_number')
+            ->get();
+
+        $allSlots = [];
+        $duration = $validated['duration'] ?? 60;
+
+        foreach ($pastors as $pastor) {
+            $slots = PastoralCare::getAvailableTimeSlots(
+                $pastor->id,
+                $validated['date'],
+                $duration
+            );
+
+            if (!empty($slots)) {
+                foreach ($slots as $time) {
+                    $allSlots[] = [
+                        'time' => $time,
+                        'pastor_id' => $pastor->id,
+                        'pastor_name' => $pastor->first_name . ' ' . $pastor->last_name,
+                    ];
+                }
+            }
+        }
+
+        // Sort by time
+        usort($allSlots, function ($a, $b) {
+            return strcmp($a['time'], $b['time']);
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'date' => $validated['date'],
+                'slots' => $allSlots
+            ]
+        ]);
+    }
+
+    /**
      * Get available time slots for a pastor on a specific date
      */
     public function getAvailableSlots(Request $request): JsonResponse

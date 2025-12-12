@@ -66,6 +66,12 @@ interface Pastor {
     phone?: string;
 }
 
+interface SlotWithPastor {
+    time: string;
+    pastor_id: number;
+    pastor_name: string;
+}
+
 interface BookingFormData {
     pastor_id: string;
     client_name: string;
@@ -129,6 +135,7 @@ interface Props {
         canEdit: boolean;
         canDelete: boolean;
         canManage: boolean;
+        canSelectPastor: boolean;
     };
     auth: {
         user: User;
@@ -141,6 +148,7 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
     // Booking form state
     const [pastors, setPastors] = useState<Pastor[]>([]);
     const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+    const [availableSlotsWithPastor, setAvailableSlotsWithPastor] = useState<SlotWithPastor[]>([]);
     const [availableDates, setAvailableDates] = useState<string[]>([]);
     const [isLoadingPastors, setIsLoadingPastors] = useState(false);
     const [isLoadingSlots, setIsLoadingSlots] = useState(false);
@@ -164,34 +172,55 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
         notes: '',
     });
 
-    // Load pastors when booking tab is active
+    // Load pastors when booking tab is active (only if user can select pastor)
     useEffect(() => {
-        if (activeTab === 'booking' && pastors.length === 0) {
-            fetchPastors();
+        if (activeTab === 'booking') {
+            if (permissions?.canSelectPastor && pastors.length === 0) {
+                fetchPastors();
+            } else if (!permissions?.canSelectPastor) {
+                // Auto-load available days for all pastors
+                fetchAllAvailableDays();
+            }
         }
-    }, [activeTab]);
+    }, [activeTab, permissions?.canSelectPastor]);
 
     // Load available slots when pastor, date, or duration changes
     useEffect(() => {
-        if (formData.pastor_id && formData.appointment_date && formData.duration_minutes) {
-            fetchAvailableSlots();
+        if (permissions?.canSelectPastor) {
+            // User can select pastor - need both pastor_id and date
+            if (formData.pastor_id && formData.appointment_date && formData.duration_minutes) {
+                fetchAvailableSlots();
 
-            // Scroll to time slots section when a date is selected
-            setTimeout(() => {
-                const timeSlotsSection = document.querySelector('[data-time-slots-section]');
-                if (timeSlotsSection) {
-                    timeSlotsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }, 100);
+                // Scroll to time slots section when a date is selected
+                setTimeout(() => {
+                    const timeSlotsSection = document.querySelector('[data-time-slots-section]');
+                    if (timeSlotsSection) {
+                        timeSlotsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            }
+        } else {
+            // User can't select pastor - only need date
+            if (formData.appointment_date && formData.duration_minutes) {
+                fetchAllAvailableSlots();
+
+                // Scroll to time slots section when a date is selected
+                setTimeout(() => {
+                    const timeSlotsSection = document.querySelector('[data-time-slots-section]');
+                    if (timeSlotsSection) {
+                        timeSlotsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            }
         }
-    }, [formData.pastor_id, formData.appointment_date, formData.duration_minutes]);
+    }, [formData.pastor_id, formData.appointment_date, formData.duration_minutes, permissions?.canSelectPastor]);
 
-    // Auto-select first available date when pastor changes
+    // Auto-select first available date when pastor changes (only if user can select pastor)
     useEffect(() => {
-        if (formData.pastor_id && !formData.appointment_date) {
+        if (permissions?.canSelectPastor && formData.pastor_id && !formData.appointment_date) {
             findAndSelectFirstAvailableDate();
         }
-    }, [formData.pastor_id]);
+    }, [formData.pastor_id, permissions?.canSelectPastor]);
 
     const findAndSelectFirstAvailableDate = async () => {
         if (!formData.pastor_id) return;
@@ -286,6 +315,80 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
         }
     };
 
+    // Fetch all available days from all pastors (for users who can't select pastor)
+    const fetchAllAvailableDays = async () => {
+        setIsLoadingDates(true);
+        try {
+            const today = new Date();
+            const endDate = addDays(today, 30); // Look for availability in next 30 days
+
+            const params = new URLSearchParams({
+                start_date: format(today, 'yyyy-MM-dd'),
+                end_date: format(endDate, 'yyyy-MM-dd'),
+            });
+
+            const response = await fetch(`/api/pastoral-care/all-available-days?${params}`);
+            const data = await response.json();
+
+            if (data.success && data.data.available_days.length > 0) {
+                const availableDatesArray = data.data.available_days.map((day: any) => day.date);
+                setAvailableDates(availableDatesArray);
+
+                // Select the first available date
+                const firstAvailableDate = data.data.available_days[0].date;
+                setFormData(prev => ({
+                    ...prev,
+                    appointment_date: firstAvailableDate,
+                    appointment_time: ''
+                }));
+
+                // Navigate to the month containing the first available date if needed
+                const firstDate = new Date(firstAvailableDate);
+                if (!isSameMonth(firstDate, currentDate)) {
+                    setCurrentDate(firstDate);
+                }
+            } else {
+                setAvailableDates([]);
+            }
+        } catch (error) {
+            console.error('Error fetching all available days:', error);
+            toast.error('Erreur de connexion');
+            setAvailableDates([]);
+        } finally {
+            setIsLoadingDates(false);
+        }
+    };
+
+    // Fetch all available slots from all pastors for a specific date
+    const fetchAllAvailableSlots = async () => {
+        setIsLoadingSlots(true);
+        try {
+            const params = new URLSearchParams({
+                date: formData.appointment_date,
+                duration: formData.duration_minutes.toString(),
+            });
+
+            const response = await fetch(`/api/pastoral-care/all-available-slots?${params}`);
+            const data = await response.json();
+
+            if (data.success) {
+                setAvailableSlotsWithPastor(data.data.slots);
+                // Also set regular slots for compatibility
+                setAvailableSlots(data.data.slots.map((s: SlotWithPastor) => s.time));
+            } else {
+                toast.error('Erreur lors du chargement des créneaux');
+                setAvailableSlotsWithPastor([]);
+                setAvailableSlots([]);
+            }
+        } catch (error) {
+            toast.error('Erreur de connexion');
+            setAvailableSlotsWithPastor([]);
+            setAvailableSlots([]);
+        } finally {
+            setIsLoadingSlots(false);
+        }
+    };
+
     const handleInputChange = (field: keyof BookingFormData, value: string | number) => {
         setFormData(prev => {
             const newData = { ...prev, [field]: value };
@@ -311,7 +414,10 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
         const stepErrors: Record<string, string> = {};
 
         if (step === 1) {
-            if (!formData.pastor_id) stepErrors.pastor_id = 'Veuillez sélectionner un pasteur';
+            // Only require pastor_id if user can select pastor
+            if (permissions?.canSelectPastor && !formData.pastor_id) {
+                stepErrors.pastor_id = 'Veuillez sélectionner un pasteur';
+            }
             if (!formData.appointment_date) stepErrors.appointment_date = 'Veuillez sélectionner une date';
             if (!formData.appointment_time) stepErrors.appointment_time = 'Veuillez sélectionner un créneau';
         }
@@ -754,39 +860,43 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                     {/* Step 1: Pastor and Time Selection */}
                                     {currentStep === 1 && (
                                         <div className="space-y-6">
-                                            {/* Pastor Selection */}
-                                            <div>
-                                                <Label htmlFor="pastor" className="text-base font-medium">
-                                                    Sélectionnez un pasteur *
-                                                </Label>
-                                                {isLoadingPastors ? (
-                                                    <div className="flex items-center justify-center py-8">
-                                                        <Loader2 className="h-6 w-6 animate-spin" />
-                                                        <span className="ml-2">Chargement des pasteurs...</span>
+                                            {/* Pastor Selection - Only shown if user has permission */}
+                                            {permissions?.canSelectPastor && (
+                                                <>
+                                                    <div>
+                                                        <Label htmlFor="pastor" className="text-base font-medium">
+                                                            Sélectionnez un pasteur *
+                                                        </Label>
+                                                        {isLoadingPastors ? (
+                                                            <div className="flex items-center justify-center py-8">
+                                                                <Loader2 className="h-6 w-6 animate-spin" />
+                                                                <span className="ml-2">Chargement des pasteurs...</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="mt-2">
+                                                                <SearchableSelect
+                                                                    options={pastors.map(pastor => ({
+                                                                        value: pastor.id.toString(),
+                                                                        label: pastor.name
+                                                                    }))}
+                                                                    value={formData.pastor_id}
+                                                                    onChange={(value) => handleInputChange('pastor_id', value.toString())}
+                                                                    placeholder="Choisissez un pasteur..."
+                                                                    className="w-full"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        {errors.pastor_id && (
+                                                            <p className="text-red-600 text-sm mt-2 flex items-center">
+                                                                <AlertCircle className="h-4 w-4 mr-1" />
+                                                                {errors.pastor_id}
+                                                            </p>
+                                                        )}
                                                     </div>
-                                                ) : (
-                                                    <div className="mt-2">
-                                                        <SearchableSelect
-                                                            options={pastors.map(pastor => ({
-                                                                value: pastor.id.toString(),
-                                                                label: pastor.name
-                                                            }))}
-                                                            value={formData.pastor_id}
-                                                            onChange={(value) => handleInputChange('pastor_id', value.toString())}
-                                                            placeholder="Choisissez un pasteur..."
-                                                            className="w-full"
-                                                        />
-                                                    </div>
-                                                )}
-                                                {errors.pastor_id && (
-                                                    <p className="text-red-600 text-sm mt-2 flex items-center">
-                                                        <AlertCircle className="h-4 w-4 mr-1" />
-                                                        {errors.pastor_id}
-                                                    </p>
-                                                )}
-                                            </div>
 
-                                            <Separator />
+                                                    <Separator />
+                                                </>
+                                            )}
 
                                             {/* Duration Selection */}
                                             <div>
@@ -1012,8 +1122,8 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                 )}
                                             </div>
 
-                                            {/* Time Slot Selection */}
-                                            {formData.pastor_id && formData.appointment_date && (
+                                            {/* Time Slot Selection - For users who CAN select pastor */}
+                                            {permissions?.canSelectPastor && formData.pastor_id && formData.appointment_date && (
                                                 <div data-time-slots-section>
                                                     <Label className="text-base font-medium">Choisissez un horaire *</Label>
                                                     {isLoadingSlots ? (
@@ -1031,6 +1141,57 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                                     onClick={() => handleInputChange('appointment_time', time)}
                                                                 >
                                                                     {time}
+                                                                </Button>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center py-8 text-gray-500">
+                                                            <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                                                            <p>Aucun créneau disponible pour cette date.</p>
+                                                            <p className="text-sm">Veuillez choisir une autre date.</p>
+                                                        </div>
+                                                    )}
+                                                    {errors.appointment_time && (
+                                                        <p className="text-red-600 text-sm mt-2 flex items-center">
+                                                            <AlertCircle className="h-4 w-4 mr-1" />
+                                                            {errors.appointment_time}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Time Slot Selection - For users who CANNOT select pastor */}
+                                            {!permissions?.canSelectPastor && formData.appointment_date && (
+                                                <div data-time-slots-section>
+                                                    <Label className="text-base font-medium">Choisissez un horaire *</Label>
+                                                    <p className="text-sm text-gray-500 mb-2">
+                                                        Un pasteur disponible vous sera automatiquement assigné
+                                                    </p>
+                                                    {isLoadingSlots ? (
+                                                        <div className="flex items-center justify-center py-8">
+                                                            <Loader2 className="h-6 w-6 animate-spin" />
+                                                            <span className="ml-2">Chargement des créneaux...</span>
+                                                        </div>
+                                                    ) : availableSlotsWithPastor.length > 0 ? (
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+                                                            {availableSlotsWithPastor.map((slot, index) => (
+                                                                <Button
+                                                                    key={`${slot.time}-${slot.pastor_id}-${index}`}
+                                                                    variant={formData.appointment_time === slot.time && formData.pastor_id === slot.pastor_id.toString() ? 'default' : 'outline'}
+                                                                    className="h-auto p-3 flex flex-col items-start text-left"
+                                                                    onClick={() => {
+                                                                        // Set both time and pastor_id when slot is clicked
+                                                                        setFormData(prev => ({
+                                                                            ...prev,
+                                                                            appointment_time: slot.time,
+                                                                            pastor_id: slot.pastor_id.toString()
+                                                                        }));
+                                                                    }}
+                                                                >
+                                                                    <span className="text-lg font-bold">{slot.time}</span>
+                                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                                        avec {slot.pastor_name}
+                                                                    </span>
                                                                 </Button>
                                                             ))}
                                                         </div>
@@ -1199,7 +1360,10 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                         <User className="h-5 w-5 text-blue-600 mr-3" />
                                                         <span className="font-medium">Pasteur :</span>
                                                         <span className="ml-2">
-                                                            {pastors.find(p => p.id.toString() === formData.pastor_id)?.name}
+                                                            {permissions?.canSelectPastor
+                                                                ? pastors.find(p => p.id.toString() === formData.pastor_id)?.name
+                                                                : availableSlotsWithPastor.find(s => s.pastor_id.toString() === formData.pastor_id)?.pastor_name || 'Pasteur assigné'
+                                                            }
                                                         </span>
                                                     </div>
 

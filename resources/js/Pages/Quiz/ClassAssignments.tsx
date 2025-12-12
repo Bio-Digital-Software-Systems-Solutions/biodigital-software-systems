@@ -86,8 +86,7 @@ export default function ClassAssignments({ quiz, availableClasses }: Props) {
                 toast.success('Quiz assigné à la classe avec succès');
                 setData({ ...data, available_from: '', available_until: '' });
             },
-            onError: (errors: any) => {
-                console.log('Errors:', errors);
+            onError: () => {
                 toast.error('Erreur lors de l\'assignation du quiz');
             },
         });

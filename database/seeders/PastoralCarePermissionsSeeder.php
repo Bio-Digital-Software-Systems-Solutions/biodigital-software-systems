@@ -22,7 +22,8 @@ class PastoralCarePermissionsSeeder extends Seeder
             'create pastoral care',
             'edit pastoral care',
             'delete pastoral care',
-            'manage pastoral care'
+            'manage pastoral care',
+            'select pastor for pastoral care'
         ];
 
         foreach ($pastoralPermissions as $permission) {
@@ -33,10 +34,12 @@ class PastoralCarePermissionsSeeder extends Seeder
         $pastorRole = Role::firstOrCreate(['name' => 'pastor']);
 
         // Assign permissions to roles
+        // Note: 'select pastor for pastoral care' - allows users to choose a specific pastor
+        // Users without this permission will see all available slots from all pastors automatically
         $rolePermissions = [
-            'admin' => ['view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care'],
-            'pastor' => ['view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care'],
-            'project-manager' => ['view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care'],
+            'admin' => ['view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care', 'select pastor for pastoral care'],
+            'pastor' => ['view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care', 'select pastor for pastoral care'],
+            'project-manager' => ['view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care', 'select pastor for pastoral care'],
             'writer' => ['view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care'],
             'event-manager' => ['view pastoral care', 'create pastoral care', 'edit pastoral care'],
             'member' => ['view pastoral care'],

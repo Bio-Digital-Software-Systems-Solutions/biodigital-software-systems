@@ -571,7 +571,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Pastoral Care booking for authenticated users
     Route::get('pastoral-care/book', function () {
-        return \Inertia\Inertia::render('PastoralCare/PublicBook');
+        $user = auth()->user();
+        $canSelectPastor = $user->can('select pastor for pastoral care');
+
+        // Debug log
+        \Log::info('Pastoral Care Book - User: ' . $user->email . ', canSelectPastor: ' . ($canSelectPastor ? 'true' : 'false'));
+
+        return \Inertia\Inertia::render('PastoralCare/PublicBook', [
+            'canSelectPastor' => $canSelectPastor,
+        ]);
     })->name('pastoral-care.book');
 
 

@@ -34,8 +34,8 @@ churchElements.forEach((el, index) => {
   }
 });
 
-console.log('Églises trouvées:', churches.length);
-console.log(JSON.stringify(churches, null, 2));
+// Output results
+JSON.stringify({ count: churches.length, churches: churches }, null, 2);
 `;
 
 // Fonction helper pour convertir une adresse en coordonnées GPS

@@ -36,9 +36,17 @@ Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function () {
     Route::get('/available-days', [PastoralCareController::class, 'getAvailableDays'])
         ->name('available-days');
 
+    // Get available days from ALL pastors (for users who cannot select a pastor)
+    Route::get('/all-available-days', [PastoralCareController::class, 'getAllAvailableDays'])
+        ->name('all-available-days');
+
     // Get available time slots for a pastor on a specific date
     Route::get('/available-slots', [PastoralCareController::class, 'getAvailableSlots'])
         ->name('available-slots');
+
+    // Get available time slots from ALL pastors on a specific date (for users who cannot select a pastor)
+    Route::get('/all-available-slots', [PastoralCareController::class, 'getAllAvailableSlots'])
+        ->name('all-available-slots');
 
     // Book a new appointment (public endpoint)
     Route::post('/appointments', [PastoralCareController::class, 'store'])

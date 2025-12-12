@@ -119,6 +119,7 @@ class PastoralCareController extends Controller
                 'canEdit' => $user->can('edit pastoral care'),
                 'canDelete' => $user->can('delete pastoral care'),
                 'canManage' => $user->can('manage pastoral care'),
+                'canSelectPastor' => $user->can('select pastor for pastoral care'),
             ],
             'stats' => [
                 'total_appointments' => (clone $statsQuery)->count(),

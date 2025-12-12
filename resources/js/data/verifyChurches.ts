@@ -5,12 +5,17 @@
 
 import { iccChurches, getIccStats } from './iccChurches';
 
+interface VerificationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  stats: ReturnType<typeof getIccStats>;
+}
+
 // Fonction de vérification
-export function verifyChurchData() {
+export function verifyChurchData(): VerificationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
-
-  console.log('🔍 Vérification des données des églises ICC...\n');
 
   // Vérifier chaque église
   iccChurches.forEach((church, index) => {
@@ -58,53 +63,19 @@ export function verifyChurchData() {
     }
   });
 
-  // Afficher les statistiques
+  // Récupérer les statistiques
   const stats = getIccStats();
-  console.log('📊 Statistiques:');
-  console.log(`   Total églises: ${stats.totalChurches}`);
-  console.log(`   Total pays: ${stats.totalCountries}`);
-  console.log(`   Total membres: ${stats.totalMembers.toLocaleString()}`);
-  console.log(`\n📍 Par continent:`);
-  console.log(`   Europe: ${stats.continents.europe}`);
-  console.log(`   Afrique: ${stats.continents.africa}`);
-  console.log(`   Amérique du Nord: ${stats.continents.northAmerica}`);
-  console.log(`   Amérique du Sud: ${stats.continents.southAmerica}`);
-  console.log(`   Océanie: ${stats.continents.oceania}`);
 
-  if (stats.byCountry) {
-    console.log(`\n🌍 Top 10 pays:`);
-    Object.entries(stats.byCountry)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .forEach(([country, count], index) => {
-        console.log(`   ${index + 1}. ${country}: ${count} églises`);
-      });
-  }
-
-  // Afficher les résultats
-  console.log('\n');
-  if (errors.length === 0 && warnings.length === 0) {
-    console.log('✅ Toutes les données sont valides!\n');
-    return true;
-  }
-
-  if (errors.length > 0) {
-    console.log(`❌ ${errors.length} erreur(s) trouvée(s):`);
-    errors.forEach(error => console.log(`   - ${error}`));
-    console.log('');
-  }
-
-  if (warnings.length > 0) {
-    console.log(`⚠️  ${warnings.length} avertissement(s):`);
-    warnings.forEach(warning => console.log(`   - ${warning}`));
-    console.log('');
-  }
-
-  return errors.length === 0;
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+    stats
+  };
 }
 
 // Exécuter si appelé directement
 if (require.main === module) {
-  const isValid = verifyChurchData();
-  process.exit(isValid ? 0 : 1);
+  const result = verifyChurchData();
+  process.exit(result.isValid ? 0 : 1);
 }

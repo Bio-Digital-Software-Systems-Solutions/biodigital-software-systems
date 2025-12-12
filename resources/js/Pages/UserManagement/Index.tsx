@@ -217,7 +217,6 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
         }
 
         try {
-            console.log('Creating permission with name:', newPermissionName);
             await axios.post(route('user-management.create-permission'), {
                 name: newPermissionName.trim(),
             });
@@ -482,34 +481,24 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
     };
 
     const openRoleDetailDialog = (role: RoleWithPermissions) => {
-        console.log('DEBUG openRoleDetailDialog called with role:', role);
-        console.log('Role ID:', role.id, 'Type:', typeof role.id);
         setSelectedRoleDetail(role);
         setRoleDetailPermissions(role.permissions.map(p => p.name));
         setShowRoleDetailDialog(true);
     };
 
     const handleSaveRoleDetailPermissions = async () => {
-        console.log('DEBUG handleSaveRoleDetailPermissions called');
-        console.log('selectedRoleDetail:', selectedRoleDetail);
-
         if (!selectedRoleDetail) {
-            console.error('No role selected');
             toast.error('Erreur: Aucun rôle sélectionné');
             return;
         }
 
         // Prevent modification of SuperAdmin role
         if (selectedRoleDetail.name === 'SuperAdmin') {
-            console.error('Attempted to modify SuperAdmin role - this is not allowed');
             toast.error('Erreur: Le rôle SuperAdmin ne peut pas être modifié');
             return;
         }
 
-        console.log('selectedRoleDetail.id:', selectedRoleDetail.id, 'type:', typeof selectedRoleDetail.id);
-
         if (!selectedRoleDetail.id || String(selectedRoleDetail.id) === '' || String(selectedRoleDetail.id) === '0') {
-            console.error('Role ID is missing, empty, or invalid:', selectedRoleDetail.id);
             toast.error('Erreur: ID du rôle manquant ou invalide');
             return;
         }
@@ -1628,17 +1617,10 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
                                                     type="checkbox"
                                                     checked={selectedPermissions.includes(permission.name)}
                                                     onChange={(e) => {
-                                                        console.log('Permission change:', permission.name, 'checked:', e.target.checked);
-                                                        console.log('Current selectedPermissions:', selectedPermissions);
-
                                                         if (e.target.checked) {
-                                                            const newPermissions = [...selectedPermissions, permission.name];
-                                                            console.log('Adding permission, new array:', newPermissions);
-                                                            setSelectedPermissions(newPermissions);
+                                                            setSelectedPermissions([...selectedPermissions, permission.name]);
                                                         } else {
-                                                            const newPermissions = selectedPermissions.filter(p => p !== permission.name);
-                                                            console.log('Removing permission, new array:', newPermissions);
-                                                            setSelectedPermissions(newPermissions);
+                                                            setSelectedPermissions(selectedPermissions.filter(p => p !== permission.name));
                                                         }
                                                     }}
                                                     className="rounded"

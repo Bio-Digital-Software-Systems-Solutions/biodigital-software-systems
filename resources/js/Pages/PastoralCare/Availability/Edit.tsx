@@ -81,25 +81,19 @@ export default function Edit({ availability }: Props) {
 
     // Format the availability data for the form
     const formatTimeForInput = (timeString: string) => {
-        console.log('formatTimeForInput called with:', timeString);
-
         // If it's empty or undefined, return a default
         if (!timeString) {
-            console.log('Empty timeString, returning default');
             return '09:00';
         }
 
         // If timeString is already in HH:MM format, use it directly
         if (timeString.match(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)) {
-            console.log('Time already in HH:MM format:', timeString);
             return timeString;
         }
 
         // If timeString is in HH:MM:SS format, extract HH:MM
         if (timeString.match(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/)) {
-            const timeHHMM = timeString.slice(0, 5);
-            console.log('Time in HH:MM:SS format, extracted HH:MM:', timeHHMM);
-            return timeHHMM;
+            return timeString.slice(0, 5);
         }
 
         // If it's a datetime string, try to extract the time part
@@ -108,22 +102,18 @@ export default function Edit({ availability }: Props) {
 
             // Check if the date is valid
             if (isNaN(date.getTime())) {
-                console.warn('Invalid date from timeString, using default:', timeString);
                 return '09:00'; // Default fallback
             }
 
             const timeStr = date.toTimeString().slice(0, 5);
-            console.log('Formatted time from date:', timeStr);
 
             // Validate the result
             if (timeStr && timeStr.match(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)) {
                 return timeStr;
             } else {
-                console.warn('Invalid time result from date formatting, using default:', timeStr);
                 return '09:00'; // Default fallback
             }
         } catch (error) {
-            console.error('Error formatting time, using default:', error, timeString);
             return '09:00'; // Default fallback
         }
     };
@@ -185,10 +175,8 @@ export default function Edit({ availability }: Props) {
 
     // Ensure proper initialization of time inputs
     useEffect(() => {
-        console.log('Edit component initialization effect running...');
         // Force re-initialization of time values after component mount
         setTimeout(() => {
-            console.log('Re-initializing time values in Edit component...');
             setData((prev) => ({
                 ...prev,
                 start_time: formatTimeForInput(availability.start_time),
@@ -202,21 +190,8 @@ export default function Edit({ availability }: Props) {
     useEffect(() => {
         // Don't run preview generation until component is properly initialized
         if (!isInitialized) {
-            console.log('Preview effect skipped in Edit - component not yet initialized');
             return;
         }
-
-        console.log('Preview effect triggered in Edit with:', {
-            start_time: data.start_time,
-            end_time: data.end_time,
-            slot_duration: data.slot_duration,
-            isInitialized,
-            types: {
-                start_time: typeof data.start_time,
-                end_time: typeof data.end_time,
-                slot_duration: typeof data.slot_duration
-            }
-        });
 
         // Validate time format before making the request
         const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -224,15 +199,8 @@ export default function Edit({ availability }: Props) {
         if (data.start_time && data.end_time && data.slot_duration) {
             // Only proceed if times are valid format
             if (timeRegex.test(data.start_time) && timeRegex.test(data.end_time)) {
-                console.log('Valid time format detected in Edit, generating preview...');
                 generatePreview();
             } else {
-                console.log('Invalid time format detected in Edit, skipping preview generation:', {
-                    start_time: data.start_time,
-                    end_time: data.end_time,
-                    start_valid: timeRegex.test(data.start_time),
-                    end_valid: timeRegex.test(data.end_time)
-                });
                 setPreviewSlots([]);
                 setSelectedSlots([]);
             }
@@ -251,7 +219,6 @@ export default function Edit({ availability }: Props) {
     const generatePreview = async () => {
         // Validate required fields and time format
         if (!data.start_time || !data.end_time || !data.slot_duration) {
-            console.log('Missing required fields in Edit:', { start_time: data.start_time, end_time: data.end_time, slot_duration: data.slot_duration });
             setPreviewSlots([]);
             setSelectedSlots([]);
             return;
@@ -260,7 +227,6 @@ export default function Edit({ availability }: Props) {
         // Validate time format (HH:MM)
         const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
         if (!timeRegex.test(data.start_time) || !timeRegex.test(data.end_time)) {
-            console.error('Invalid time format in Edit:', { start_time: data.start_time, end_time: data.end_time });
             toast.error('Format d\'heure invalide. Utilisez le format HH:MM (ex: 09:00)');
             return;
         }
@@ -270,8 +236,6 @@ export default function Edit({ availability }: Props) {
             end_time: data.end_time,
             slot_duration: parseInt(data.slot_duration),
         };
-
-        console.log('Sending preview request from Edit with data:', requestData);
 
         setIsLoadingPreview(true);
         try {
@@ -644,13 +608,10 @@ export default function Edit({ availability }: Props) {
                                                     max="22:00"
                                                     value={data.start_time}
                                                     onChange={(e) => {
-                                                        console.log('Start time input changed in Edit:', e.target.value);
                                                         const value = e.target.value;
                                                         // Only set if it's a valid time format or empty
                                                         if (value === '' || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
                                                             setData('start_time', value);
-                                                        } else {
-                                                            console.warn('Invalid time format rejected in Edit:', value);
                                                         }
                                                     }}
                                                 />
@@ -668,13 +629,10 @@ export default function Edit({ availability }: Props) {
                                                     max="23:00"
                                                     value={data.end_time}
                                                     onChange={(e) => {
-                                                        console.log('End time input changed in Edit:', e.target.value);
                                                         const value = e.target.value;
                                                         // Only set if it's a valid time format or empty
                                                         if (value === '' || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
                                                             setData('end_time', value);
-                                                        } else {
-                                                            console.warn('Invalid time format rejected in Edit:', value);
                                                         }
                                                     }}
                                                 />

@@ -82,10 +82,8 @@ export default function Create({ pastor }: Props) {
 
     // Ensure proper initialization of time inputs
     useEffect(() => {
-        console.log('Initialization effect running...');
         // Force re-initialization of time values after component mount
         setTimeout(() => {
-            console.log('Re-initializing time values...');
             setData((prev) => ({
                 ...prev,
                 start_time: '05:00',
@@ -99,21 +97,8 @@ export default function Create({ pastor }: Props) {
     useEffect(() => {
         // Don't run preview generation until component is properly initialized
         if (!isInitialized) {
-            console.log('Preview effect skipped - component not yet initialized');
             return;
         }
-
-        console.log('Preview effect triggered with:', {
-            start_time: data.start_time,
-            end_time: data.end_time,
-            slot_duration: data.slot_duration,
-            isInitialized,
-            types: {
-                start_time: typeof data.start_time,
-                end_time: typeof data.end_time,
-                slot_duration: typeof data.slot_duration
-            }
-        });
 
         // Validate time format before making the request
         const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -121,15 +106,8 @@ export default function Create({ pastor }: Props) {
         if (data.start_time && data.end_time && data.slot_duration) {
             // Only proceed if times are valid format
             if (timeRegex.test(data.start_time) && timeRegex.test(data.end_time)) {
-                console.log('Valid time format detected, generating preview...');
                 generatePreview();
             } else {
-                console.log('Invalid time format detected, skipping preview generation:', {
-                    start_time: data.start_time,
-                    end_time: data.end_time,
-                    start_valid: timeRegex.test(data.start_time),
-                    end_valid: timeRegex.test(data.end_time)
-                });
                 setPreviewSlots([]);
                 setSelectedSlots([]);
                 setData('selected_slots', []);
@@ -140,7 +118,6 @@ export default function Create({ pastor }: Props) {
     const generatePreview = async () => {
         // Validate required fields and time format
         if (!data.start_time || !data.end_time || !data.slot_duration) {
-            console.log('Missing required fields:', { start_time: data.start_time, end_time: data.end_time, slot_duration: data.slot_duration });
             setPreviewSlots([]);
             setSelectedSlots([]);
             setData('selected_slots', []); // Clear selected slots when parameters are invalid
@@ -150,7 +127,6 @@ export default function Create({ pastor }: Props) {
         // Validate time format (HH:MM)
         const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
         if (!timeRegex.test(data.start_time) || !timeRegex.test(data.end_time)) {
-            console.error('Invalid time format:', { start_time: data.start_time, end_time: data.end_time });
             toast.error('Format d\'heure invalide. Utilisez le format HH:MM (ex: 09:00)');
             return;
         }
@@ -160,8 +136,6 @@ export default function Create({ pastor }: Props) {
             end_time: data.end_time,
             slot_duration: parseInt(data.slot_duration),
         };
-
-        console.log('Sending preview request with data:', requestData);
 
         setIsLoadingPreview(true);
         try {
@@ -376,13 +350,10 @@ export default function Create({ pastor }: Props) {
                                                     max="22:00"
                                                     value={data.start_time}
                                                     onChange={(e) => {
-                                                        console.log('Start time input changed:', e.target.value);
                                                         const value = e.target.value;
                                                         // Only set if it's a valid time format or empty
                                                         if (value === '' || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
                                                             setData('start_time', value);
-                                                        } else {
-                                                            console.warn('Invalid time format rejected:', value);
                                                         }
                                                     }}
                                                 />
@@ -400,13 +371,10 @@ export default function Create({ pastor }: Props) {
                                                     max="23:00"
                                                     value={data.end_time}
                                                     onChange={(e) => {
-                                                        console.log('End time input changed:', e.target.value);
                                                         const value = e.target.value;
                                                         // Only set if it's a valid time format or empty
                                                         if (value === '' || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
                                                             setData('end_time', value);
-                                                        } else {
-                                                            console.warn('Invalid time format rejected:', value);
                                                         }
                                                     }}
                                                 />
