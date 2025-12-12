@@ -28,7 +28,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
-            'view programs', 'create programs', 'edit programs', 'delete programs',
+            'view programs', 'create programs', 'edit programs', 'delete programs', 'create program steps',
             // Projects
             'view projects', 'create projects', 'edit projects', 'delete projects', 'manage projects',
             // Stocks
@@ -79,7 +79,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
-            'view programs', 'create programs', 'edit programs', 'delete programs',
+            'view programs', 'create programs', 'edit programs', 'delete programs', 'create program steps',
             // Projects
             'view projects', 'create projects', 'edit projects', 'delete projects', 'manage projects',
             // Stocks
@@ -139,7 +139,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $projectManager->syncPermissions([
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
-            'view programs', 'create programs', 'edit programs', 'delete programs',
+            'view programs', 'create programs', 'edit programs', 'delete programs', 'create program steps',
             // Projects
             'view projects', 'create projects', 'edit projects', 'delete projects', 'manage projects',
             // Groups & Teams
@@ -232,7 +232,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view users',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'assign tasks',
-            'view programs', 'create programs', 'edit programs',
+            'view programs', 'create programs', 'edit programs', 'create program steps',
             // Events
             'view events', 'create events', 'edit events', 'attend events',
             // Appointments

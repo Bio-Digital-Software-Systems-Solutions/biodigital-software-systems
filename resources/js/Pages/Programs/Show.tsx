@@ -43,6 +43,7 @@ export default function Show({ program, users = [], statuses = [] }: Props) {
 
     // Permission checks
     const canEditProgram = userHasPermission(auth.user, 'edit programs');
+    const canCreateSteps = userHasPermission(auth.user, 'create program steps');
 
     const handleStepClick = (step: any) => {
         setSelectedStep(step);
@@ -233,7 +234,7 @@ export default function Show({ program, users = [], statuses = [] }: Props) {
                                 <CardTitle className="text-base">
                                     Programme {viewMode === 'timeline' ? 'Timeline' : viewMode === 'kanban' ? 'Kanban' : 'Liste'} ({totalSteps} étapes)
                                 </CardTitle>
-                                {viewMode !== 'kanban' && (
+                                {viewMode !== 'kanban' && canCreateSteps && (
                                     <Button
                                         size="sm"
                                         onClick={() => setShowStepForm(true)}
@@ -292,19 +293,21 @@ export default function Show({ program, users = [], statuses = [] }: Props) {
                                     <p className="text-gray-500 dark:text-gray-400 mb-4">
                                         Aucune étape définie pour ce programme.
                                     </p>
-                                    <Button
-                                        size="sm"
-                                        onClick={() => setShowStepForm(true)}
-                                        className="bg-primary hover:bg-primary text-white"
-                                    >
-                                        <PlusIcon className="w-4 h-4 mr-1" />
-                                        Créer la première étape
-                                    </Button>
+                                    {canCreateSteps && (
+                                        <Button
+                                            size="sm"
+                                            onClick={() => setShowStepForm(true)}
+                                            className="bg-primary hover:bg-primary text-white"
+                                        >
+                                            <PlusIcon className="w-4 h-4 mr-1" />
+                                            Créer la première étape
+                                        </Button>
+                                    )}
                                 </div>
                             )}
 
                             {/* Add Step Button at Bottom */}
-                            {program.steps && program.steps.length > 0 && viewMode !== 'kanban' && (
+                            {program.steps && program.steps.length > 0 && viewMode !== 'kanban' && canCreateSteps && (
                                 <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                                     <button
                                         onClick={() => setShowStepForm(true)}

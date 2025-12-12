@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 
 class ProgramStepController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:create program steps')->only(['store']);
+        $this->middleware('permission:edit programs')->only(['update', 'attachParticipant', 'detachParticipant']);
+        $this->middleware('permission:delete programs')->only(['destroy']);
+    }
+
     public function store(Request $request, Program $program)
     {
         $validated = $request->validate([
