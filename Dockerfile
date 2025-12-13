@@ -131,7 +131,7 @@ FROM php:8.3-fpm-alpine AS development
 # Set working directory
 WORKDIR /var/www/html
 
-# Install system dependencies
+# Install system dependencies (including make for WSL/Windows compatibility)
 RUN apk add --no-cache \
     curl \
     libpng-dev \
@@ -148,6 +148,7 @@ RUN apk add --no-cache \
     bash \
     nodejs \
     npm \
+    make \
     $PHPIZE_DEPS
 
 # Install PHP extensions
