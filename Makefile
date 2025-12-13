@@ -333,8 +333,8 @@ docker-check:
 			elif [ -d "/Applications/Docker.app" ]; then \
 				echo "🚀 Starting Docker Desktop..."; \
 				open -a Docker; \
-				echo "⏳ Waiting for Docker to start..."; \
-				sleep 10; \
+				echo "⏳ Waiting for Docker to start (please wait)..."; \
+				for i in 1 2 3 4 5 6 7 8 9 10; do echo "."; docker info > /dev/null 2>&1 && break; done; \
 			else \
 				echo "❌ Please start Docker Desktop or install Colima (brew install colima)"; \
 				exit 1; \
@@ -357,7 +357,7 @@ start: docker-check
 	@docker-compose build --pull
 	@docker-compose up -d
 	@echo "Waiting for MySQL to be ready..."
-	@sleep 15
+	@docker-compose exec -T mysql sh -c "while ! mysqladmin ping -h localhost -u root -psecret --silent; do echo 'Waiting for MySQL...'; sleep 2; done"
 	@echo "Running migrations..."
 	@docker-compose exec -T app php artisan migrate --force || true
 	@echo "Running seeders..."
@@ -430,7 +430,7 @@ docker-fresh:
 	@docker-compose build
 	@docker-compose up -d
 	@echo "Waiting for MySQL to be ready..."
-	@sleep 30
+	@docker-compose exec -T mysql sh -c "while ! mysqladmin ping -h localhost -u root -psecret --silent; do echo 'Waiting for MySQL...'; sleep 2; done"
 	@docker-compose exec app php artisan key:generate --force
 	@docker-compose exec app php artisan migrate:fresh --seed
 	@docker-compose exec app php artisan storage:link
