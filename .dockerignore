@@ -1,0 +1,63 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Claude
+.claude
+
+# Development files
+.env
+.env.local
+.env.*.local
+.env.docker
+.env.example
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Dependencies (will be installed in container)
+/node_modules
+/vendor
+
+# Build outputs (will be built in container)
+/public/build
+/public/hot
+
+# Storage (managed by volumes)
+/storage/*.key
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# Testing
+/coverage
+/.phpunit.result.cache
+/phpunit.xml
+
+# Documentation
+*.md
+!README.md
+/docs
+
+# Docker
+/docker-compose*.yml
+/Dockerfile
+/.dockerignore
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Misc
+/.history
+/buildlog
+*.pyc
+__pycache__

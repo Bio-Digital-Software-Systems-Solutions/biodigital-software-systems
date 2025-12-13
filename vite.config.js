@@ -11,7 +11,12 @@ export default defineConfig({
         react(),
     ],
     server: {
-        host: '127.0.0.1', // Force IPv4 instead of IPv6 [::1]
-        strictPort: false,
+        host: '0.0.0.0', // Listen on all interfaces for Docker
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: 'localhost', // Use localhost for HMR URLs in browser
+            port: 5173,
+        },
     },
 });

@@ -1,4 +1,4 @@
-.PHONY: phpstan phpcs phpmd pint pest test clear quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean
+.PHONY: phpstan phpcs phpmd pint pest test clear quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up
 
 # PHPStan static analysis (level 10)
 phpstan:
@@ -249,6 +249,24 @@ help:
 	@echo "  make docs-serve         - Serve documentation locally on port 8080"
 	@echo "  make docs-clean         - Clean all generated documentation"
 	@echo "  make help               - Display this help message"
+	@echo ""
+	@echo "🐳 Docker Commands:"
+	@echo "  make docker-build       - Build Docker containers"
+	@echo "  make docker-up          - Start Docker containers"
+	@echo "  make docker-down        - Stop Docker containers"
+	@echo "  make docker-restart     - Restart Docker containers"
+	@echo "  make docker-logs        - View Docker logs"
+	@echo "  make docker-shell       - Shell into PHP container"
+	@echo "  make docker-mysql       - Shell into MySQL container"
+	@echo "  make docker-redis       - Shell into Redis container"
+	@echo "  make docker-fresh       - Fresh install (build, migrate, seed)"
+	@echo "  make docker-test        - Run tests in Docker"
+	@echo "  make docker-clean       - Clean all Docker resources"
+	@echo "  make docker-prod-build  - Build production Docker image"
+	@echo "  make docker-prod-up     - Start production containers"
+	@echo ""
+	@echo "🚀 Quick Start:"
+	@echo "  make start              - Start application with all services"
 
 # Generate complete documentation suite
 docs-full:
@@ -272,3 +290,187 @@ docs-clean:
 	@echo "Cleaning generated documentation..."
 	@rm -rf docs/
 	@echo "Documentation cleaned successfully!"
+
+# ==========================================
+# Docker Commands
+# ==========================================
+
+# Docker compose command detection
+DOCKER_COMPOSE := $(shell command -v docker-compose 2>/dev/null || echo "docker compose")
+
+# Detect OS
+UNAME_S := $(shell uname -s 2>/dev/null || echo "Windows")
+
+# Check and install docker-compose if needed
+docker-check:
+	@if command -v docker-compose &> /dev/null; then \
+		echo "✅ docker-compose found"; \
+	elif docker compose version &> /dev/null 2>&1; then \
+		echo "✅ docker compose plugin found"; \
+	else \
+		echo "⚠️  docker-compose not found. Installing..."; \
+		if [ "$(UNAME_S)" = "Darwin" ]; then \
+			echo "📦 Installing via Homebrew (macOS)..."; \
+			brew install docker-compose; \
+		elif [ "$(UNAME_S)" = "Linux" ]; then \
+			echo "📦 Installing via apt (Ubuntu/Debian)..."; \
+			sudo apt-get update && sudo apt-get install -y docker-compose-plugin || \
+			(sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$$(uname -s)-$$(uname -m)" -o /usr/local/bin/docker-compose && \
+			sudo chmod +x /usr/local/bin/docker-compose); \
+		else \
+			echo "❌ Please install Docker Desktop for Windows from: https://docs.docker.com/desktop/install/windows-install/"; \
+			echo "   Docker Desktop includes docker-compose."; \
+			exit 1; \
+		fi; \
+	fi
+	@# Check if Docker daemon is running
+	@if ! docker info &> /dev/null; then \
+		echo "⚠️  Docker daemon is not running."; \
+		if [ "$(UNAME_S)" = "Darwin" ]; then \
+			if command -v colima &> /dev/null; then \
+				echo "🚀 Starting Colima..."; \
+				colima start; \
+			elif [ -d "/Applications/Docker.app" ]; then \
+				echo "🚀 Starting Docker Desktop..."; \
+				open -a Docker; \
+				echo "⏳ Waiting for Docker to start..."; \
+				sleep 10; \
+			else \
+				echo "❌ Please start Docker Desktop or install Colima (brew install colima)"; \
+				exit 1; \
+			fi; \
+		elif [ "$(UNAME_S)" = "Linux" ]; then \
+			echo "🚀 Starting Docker service..."; \
+			sudo systemctl start docker; \
+		else \
+			echo "❌ Please start Docker Desktop"; \
+			exit 1; \
+		fi; \
+	else \
+		echo "✅ Docker daemon is running"; \
+	fi
+
+# Start application with all services (main command)
+start: docker-check
+	@echo "Starting ICC Munich application..."
+	@echo "Building and pulling images..."
+	@docker-compose build --pull
+	@docker-compose up -d
+	@echo "Waiting for MySQL to be ready..."
+	@sleep 15
+	@echo "Running migrations..."
+	@docker-compose exec -T app php artisan migrate --force || true
+	@echo "Running seeders..."
+	@docker-compose exec -T app php artisan db:seed --force || true
+	@docker-compose restart queue
+	@echo ""
+	@echo "✅ All services started!"
+	@echo ""
+	@echo "📱 Application:  http://localhost:8000"
+	@echo "📧 Mailhog:      http://localhost:8025"
+	@echo "🗄️  phpMyAdmin:   http://localhost:8080"
+	@echo "⚡ Vite HMR:     http://localhost:5173"
+	@echo ""
+	@echo "Use 'make docker-logs' to view logs"
+	@echo "Use 'make stop' to stop all services"
+
+# Stop all Docker containers
+stop:
+	@echo "Stopping ICC Munich application..."
+	@docker-compose down
+	@echo ""
+	@echo "✅ All services stopped!"
+
+# Build Docker containers
+docker-build:
+	@echo "Building Docker containers..."
+	@docker-compose build
+
+# Start Docker containers
+docker-up:
+	@echo "Starting Docker containers..."
+	@docker-compose up -d
+	@echo ""
+	@echo "Services are starting..."
+	@echo "Application: http://localhost:8000"
+	@echo "Mailhog:     http://localhost:8025"
+	@echo "phpMyAdmin:  http://localhost:8080"
+	@echo "Vite HMR:    http://localhost:5173"
+
+# Stop Docker containers
+docker-down:
+	@echo "Stopping Docker containers..."
+	@docker-compose down
+
+# Restart Docker containers
+docker-restart:
+	@echo "Restarting Docker containers..."
+	@docker-compose restart
+
+# View Docker logs
+docker-logs:
+	@docker-compose logs -f
+
+# Shell into PHP container
+docker-shell:
+	@docker-compose exec app sh
+
+# Shell into MySQL container
+docker-mysql:
+	@docker-compose exec mysql mysql -u root -psecret icc_munich
+
+# Shell into Redis container
+docker-redis:
+	@docker-compose exec redis redis-cli
+
+# Fresh install with Docker (builds, starts, migrates, seeds)
+docker-fresh:
+	@echo "Starting fresh Docker installation..."
+	@docker-compose down -v
+	@docker-compose build
+	@docker-compose up -d
+	@echo "Waiting for MySQL to be ready..."
+	@sleep 30
+	@docker-compose exec app php artisan key:generate --force
+	@docker-compose exec app php artisan migrate:fresh --seed
+	@docker-compose exec app php artisan storage:link
+	@echo ""
+	@echo "Fresh installation complete!"
+	@echo "Application: http://localhost:8000"
+
+# Build production Docker image
+docker-prod-build:
+	@echo "Building production Docker image..."
+	@docker-compose -f docker-compose.prod.yml build
+
+# Start production Docker containers
+docker-prod-up:
+	@echo "Starting production Docker containers..."
+	@docker-compose -f docker-compose.prod.yml up -d
+	@echo ""
+	@echo "Production services started!"
+	@echo "Application: http://localhost"
+
+# Run artisan commands in Docker
+docker-artisan:
+	@docker-compose exec app php artisan $(filter-out $@,$(MAKECMDGOALS))
+
+# Run composer commands in Docker
+docker-composer:
+	@docker-compose exec app composer $(filter-out $@,$(MAKECMDGOALS))
+
+# Run npm commands in Docker
+docker-npm:
+	@docker-compose exec node npm $(filter-out $@,$(MAKECMDGOALS))
+
+# Run tests in Docker
+docker-test:
+	@echo "Running tests in Docker..."
+	@docker-compose exec app php artisan test
+
+# Clear all Docker volumes and containers
+docker-clean:
+	@echo "Cleaning all Docker resources..."
+	@docker-compose down -v --remove-orphans
+	@docker system prune -f
+	@echo "Docker cleaned!"

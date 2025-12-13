@@ -1,0 +1,190 @@
+# Production Docker Compose Configuration
+# Usage: docker compose -f docker-compose.prod.yml up -d
+
+services:
+  # ==========================================
+  # PHP-FPM Application (Production)
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: icc-app
+    restart: always
+    working_dir: /var/www/html
+    volumes:
+      - storage-data:/var/www/html/storage
+      - php-logs:/var/log/php
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - icc-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+
+  # ==========================================
+  # Nginx Web Server (Production)
+  # ==========================================
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: icc-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/default.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./public:/var/www/html/public:ro
+      - storage-data:/var/www/html/storage:ro
+      - nginx-logs:/var/log/nginx
+      # SSL certificates (uncomment and configure)
+      # - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - icc-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 256M
+
+  # ==========================================
+  # MySQL Database (Production)
+  # ==========================================
+  mysql:
+    image: mysql:8.0
+    container_name: icc-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - icc-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  # ==========================================
+  # Redis Cache (Production)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: icc-redis
+    restart: always
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - icc-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # ==========================================
+  # Laravel Queue Worker (Production)
+  # ==========================================
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: icc-queue
+    restart: always
+    working_dir: /var/www/html
+    volumes:
+      - storage-data:/var/www/html/storage
+      - php-logs:/var/log/php
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - icc-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # ==========================================
+  # Laravel Scheduler (Production)
+  # ==========================================
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: icc-scheduler
+    restart: always
+    working_dir: /var/www/html
+    volumes:
+      - storage-data:/var/www/html/storage
+      - php-logs:/var/log/php
+    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - icc-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local
+  storage-data:
+    driver: local
+  php-logs:
+    driver: local
+  nginx-logs:
+    driver: local
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  icc-network:
+    driver: bridge
