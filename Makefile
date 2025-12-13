@@ -358,10 +358,8 @@ start: docker-check
 	@docker-compose up -d
 	@echo "Waiting for MySQL to be ready..."
 	@docker-compose exec -T mysql sh -c "while ! mysqladmin ping -h localhost -u root -psecret --silent; do echo 'Waiting for MySQL...'; sleep 2; done"
-	@echo "Running migrations..."
-	@docker-compose exec -T app php artisan migrate --force || true
-	@echo "Running seeders..."
-	@docker-compose exec -T app php artisan db:seed --force || true
+	@echo "Resetting database with fresh migrations and seeders..."
+	@docker-compose exec -T app php artisan migrate:fresh --seed --force
 	@docker-compose restart queue
 	@echo ""
 	@echo "✅ All services started!"
