@@ -207,6 +207,38 @@ services:
     networks:
       - icc-network
 
+  # ==========================================
+  # Robot Framework Test Automation
+  # ==========================================
+  robot:
+    build:
+      context: .
+      dockerfile: docker/robot/Dockerfile
+    container_name: icc-robot
+    working_dir: /robot
+    volumes:
+      - ./robot-tests:/robot/tests
+      - ./robot-results:/robot/results
+    environment:
+      - BASE_URL=http://nginx
+      - API_URL=http://nginx/api
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=icc_munich
+      - DB_USER=icc_user
+      - DB_PASSWORD=secret
+      - BROWSER=chromium
+      - HEADLESS=true
+    depends_on:
+      nginx:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - icc-network
+    profiles:
+      - testing
+
 # ==========================================
 # Volumes
 # ==========================================

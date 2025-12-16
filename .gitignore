@@ -36,3 +36,11 @@ resources/js/ziggy.js
 # Generated documentation
 /docs/
 /schema-docs/
+
+# Robot Framework
+robot-results/
+*.pyc
+__pycache__/
+.robot/
+browser/
+

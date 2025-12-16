@@ -1,0 +1,20 @@
+# Robot Framework Core
+robotframework==7.1.1
+robotframework-browser==18.9.1
+robotframework-requests==0.9.7
+robotframework-jsonlibrary==0.5
+robotframework-databaselibrary==2.0.4
+
+# Database drivers
+PyMySQL==1.1.1
+cryptography==44.0.0
+
+# Utilities
+requests==2.32.3
+python-dotenv==1.0.1
+
+# Faker for test data generation
+Faker==33.1.0
+
+# Reporting (robotmetrics package)
+robotframework-metrics==3.3.3

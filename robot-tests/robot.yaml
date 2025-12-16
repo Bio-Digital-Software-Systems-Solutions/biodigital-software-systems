@@ -1,0 +1,39 @@
+# Robot Framework Configuration
+# See: https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html
+
+# Global settings
+settings:
+  log_level: INFO
+  output_dir: results
+
+# Test suites configuration
+suites:
+  api:
+    path: api/
+    tags:
+      - api
+      - smoke
+
+  ui:
+    path: ui/
+    tags:
+      - ui
+      - browser
+
+  e2e:
+    path: e2e/
+    tags:
+      - e2e
+      - integration
+
+# Environment variables
+variables:
+  BASE_URL: ${BASE_URL:-http://nginx}
+  API_URL: ${API_URL:-http://nginx/api}
+  DB_HOST: ${DB_HOST:-mysql}
+  DB_PORT: ${DB_PORT:-3306}
+  DB_NAME: ${DB_NAME:-icc_munich}
+  DB_USER: ${DB_USER:-icc_user}
+  DB_PASSWORD: ${DB_PASSWORD:-secret}
+  BROWSER: ${BROWSER:-chromium}
+  HEADLESS: ${HEADLESS:-true}

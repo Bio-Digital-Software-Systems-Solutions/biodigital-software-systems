@@ -1,4 +1,4 @@
-.PHONY: phpstan phpcs phpmd pint pest test clear quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up
+.PHONY: phpstan phpcs phpmd pint pest test clear quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell
 
 # PHPStan static analysis (level 10)
 phpstan:
@@ -265,6 +265,21 @@ help:
 	@echo "  make docker-prod-build  - Build production Docker image"
 	@echo "  make docker-prod-up     - Start production containers"
 	@echo ""
+	@echo "🤖 Robot Framework Tests:"
+	@echo "  make robot-build        - Build Robot Framework container"
+	@echo "  make robot-test         - Run all Robot Framework tests"
+	@echo "  make robot-api          - Run API tests only"
+	@echo "  make robot-ui           - Run UI tests only"
+	@echo "  make robot-e2e          - Run E2E tests only"
+	@echo "  make robot-smoke        - Run smoke tests only"
+	@echo "  make robot-critical     - Run critical tests only"
+	@echo "  make robot-tag TAG=name - Run tests with specific tag"
+	@echo "  make robot-debug        - Run tests in debug mode"
+	@echo "  make robot-rerun        - Run tests with rerun on failure"
+	@echo "  make robot-report       - Generate metrics report"
+	@echo "  make robot-clean        - Clean test results"
+	@echo "  make robot-shell        - Shell into Robot container"
+	@echo ""
 	@echo "🚀 Quick Start:"
 	@echo "  make start              - Start application with all services"
 
@@ -472,3 +487,136 @@ docker-clean:
 	@docker-compose down -v --remove-orphans
 	@docker system prune -f
 	@echo "Docker cleaned!"
+
+# ==========================================
+# Robot Framework Test Automation
+# ==========================================
+
+# Build Robot Framework container
+robot-build:
+	@echo "Building Robot Framework container..."
+	@docker-compose --profile testing build robot
+	@echo "Robot Framework container built successfully!"
+
+# Run all Robot Framework tests
+robot-test: robot-build
+	@echo "Running all Robot Framework tests..."
+	@mkdir -p robot-results
+	@docker-compose --profile testing run --rm robot sh -c "robot --outputdir /robot/results --loglevel INFO --variable BASE_URL:http://nginx --variable API_URL:http://nginx/api /robot/tests"
+	@echo ""
+	@echo "✅ Robot Framework tests completed!"
+	@echo "📊 Results available in: robot-results/"
+	@echo "📄 Open robot-results/report.html to view the report"
+
+# Run only API tests
+robot-api: robot-build
+	@echo "Running Robot Framework API tests..."
+	@mkdir -p robot-results
+	@docker-compose --profile testing run --rm robot sh -c "robot --outputdir /robot/results --loglevel INFO --include api --variable BASE_URL:http://nginx --variable API_URL:http://nginx/api /robot/tests/api"
+	@echo ""
+	@echo "✅ API tests completed!"
+	@echo "📊 Results: robot-results/report.html"
+
+# Run only UI tests
+robot-ui: robot-build
+	@echo "Running Robot Framework UI tests..."
+	@mkdir -p robot-results
+	@docker-compose --profile testing run --rm robot sh -c "robot --outputdir /robot/results --loglevel INFO --include ui --variable BASE_URL:http://nginx --variable BROWSER:chromium --variable HEADLESS:true /robot/tests/ui"
+	@echo ""
+	@echo "✅ UI tests completed!"
+	@echo "📊 Results: robot-results/report.html"
+
+# Run only E2E tests
+robot-e2e: robot-build
+	@echo "Running Robot Framework E2E tests..."
+	@mkdir -p robot-results
+	@docker-compose --profile testing run --rm robot sh -c "robot --outputdir /robot/results --loglevel INFO --include e2e --variable BASE_URL:http://nginx --variable API_URL:http://nginx/api --variable BROWSER:chromium --variable HEADLESS:true /robot/tests/e2e"
+	@echo ""
+	@echo "✅ E2E tests completed!"
+	@echo "📊 Results: robot-results/report.html"
+
+# Run smoke tests only (quick validation)
+robot-smoke: robot-build
+	@echo "Running Robot Framework smoke tests..."
+	@mkdir -p robot-results
+	@docker-compose --profile testing run --rm robot sh -c "robot --outputdir /robot/results --loglevel INFO --include smoke --variable BASE_URL:http://nginx --variable API_URL:http://nginx/api /robot/tests"
+	@echo ""
+	@echo "✅ Smoke tests completed!"
+	@echo "📊 Results: robot-results/report.html"
+
+# Run critical tests only
+robot-critical: robot-build
+	@echo "Running Robot Framework critical tests..."
+	@mkdir -p robot-results
+	@docker-compose --profile testing run --rm robot sh -c "robot --outputdir /robot/results --loglevel INFO --include critical --variable BASE_URL:http://nginx --variable API_URL:http://nginx/api /robot/tests"
+	@echo ""
+	@echo "✅ Critical tests completed!"
+	@echo "📊 Results: robot-results/report.html"
+
+# Run health check tests only
+robot-health: robot-build
+	@echo "Running Robot Framework health check tests..."
+	@mkdir -p robot-results
+	@docker-compose --profile testing run --rm robot sh -c "robot --outputdir /robot/results --loglevel INFO --include health --variable BASE_URL:http://nginx --variable API_URL:http://nginx/api /robot/tests/api/health.robot"
+	@echo ""
+	@echo "✅ Health check tests completed!"
+	@echo "📊 Results: robot-results/report.html"
+
+# Clean Robot Framework results
+robot-clean:
+	@echo "Cleaning Robot Framework results..."
+	@rm -rf robot-results/*
+	@echo "Robot Framework results cleaned!"
+
+# Generate metrics report from Robot results
+robot-report:
+	@echo "Generating Robot Framework metrics report..."
+	@if [ -f "robot-results/output.xml" ]; then \
+		docker-compose --profile testing run --rm robot sh -c "robotmetrics --inputpath /robot/results/output.xml --output /robot/results"; \
+		echo "📊 Metrics report generated: robot-results/metrics.html"; \
+	else \
+		echo "❌ No output.xml found. Run tests first with 'make robot-test'"; \
+	fi
+
+# Run Robot tests with specific tag
+robot-tag: robot-build
+	@echo "Running Robot Framework tests with tag: $(TAG)"
+	@if [ -z "$(TAG)" ]; then \
+		echo "❌ Please specify TAG. Example: make robot-tag TAG=smoke"; \
+		exit 1; \
+	fi
+	@mkdir -p robot-results
+	@docker-compose --profile testing run --rm robot sh -c "robot --outputdir /robot/results --loglevel INFO --include $(TAG) --variable BASE_URL:http://nginx --variable API_URL:http://nginx/api /robot/tests"
+	@echo ""
+	@echo "✅ Tests with tag '$(TAG)' completed!"
+
+# Run Robot tests in debug mode (verbose output)
+robot-debug: robot-build
+	@echo "Running Robot Framework tests in debug mode..."
+	@mkdir -p robot-results
+	@docker-compose --profile testing run --rm robot sh -c "robot --outputdir /robot/results --loglevel DEBUG --debugfile /robot/results/debug.log --variable BASE_URL:http://nginx --variable API_URL:http://nginx/api /robot/tests"
+	@echo ""
+	@echo "✅ Debug tests completed!"
+	@echo "📄 Debug log: robot-results/debug.log"
+
+# Run Robot tests with rerun on failure
+robot-rerun: robot-build
+	@echo "Running Robot Framework tests with rerun on failure..."
+	@mkdir -p robot-results
+	@docker-compose --profile testing run --rm robot sh -c "\
+		robot --outputdir /robot/results --loglevel INFO \
+			--variable BASE_URL:http://nginx --variable API_URL:http://nginx/api \
+			/robot/tests || \
+		robot --outputdir /robot/results --rerunfailed /robot/results/output.xml \
+			--output rerun.xml --loglevel INFO \
+			--variable BASE_URL:http://nginx --variable API_URL:http://nginx/api \
+			/robot/tests && \
+		rebot --outputdir /robot/results --merge \
+			/robot/results/output.xml /robot/results/rerun.xml"
+	@echo ""
+	@echo "✅ Tests with rerun completed!"
+
+# Shell into Robot Framework container
+robot-shell: robot-build
+	@echo "Opening shell in Robot Framework container..."
+	@docker-compose --profile testing run --rm robot sh

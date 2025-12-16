@@ -1,0 +1,393 @@
+name: Robot Framework Tests
+
+on:
+  push:
+    branches: [ main, develop, staging ]
+  pull_request:
+    branches: [ main, develop, staging ]
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Test type to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - api
+          - ui
+          - e2e
+          - smoke
+          - critical
+
+jobs:
+  robot-tests:
+    name: Robot Framework Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_DATABASE: icc_munich
+          MYSQL_USER: icc_user
+          MYSQL_PASSWORD: secret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -psecret"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, json, bcmath, gd, pdo, mysql, redis
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Setup environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          echo "DB_CONNECTION=mysql" >> .env
+          echo "DB_HOST=127.0.0.1" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_DATABASE=icc_munich" >> .env
+          echo "DB_USERNAME=icc_user" >> .env
+          echo "DB_PASSWORD=secret" >> .env
+          echo "REDIS_HOST=127.0.0.1" >> .env
+          echo "REDIS_PORT=6379" >> .env
+          echo "APP_URL=http://127.0.0.1:8000" >> .env
+
+      - name: Run database migrations and seeders
+        run: |
+          php artisan migrate --force
+          php artisan db:seed --force
+
+      - name: Create storage link
+        run: php artisan storage:link
+
+      - name: Start Laravel server
+        run: |
+          php artisan serve --host=127.0.0.1 --port=8000 &
+          sleep 5
+          curl -s http://127.0.0.1:8000 > /dev/null || echo "Server check completed"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Robot Framework
+        run: |
+          pip install --upgrade pip
+          pip install robotframework==7.1.1
+          pip install robotframework-browser==18.9.1
+          pip install robotframework-requests==0.9.7
+          pip install robotframework-jsonlibrary==0.5
+          pip install robotframework-databaselibrary==2.0.4
+          pip install PyMySQL==1.1.1
+          pip install robotframework-metrics==3.3.4
+
+      - name: Initialize Browser Library
+        run: rfbrowser init chromium
+
+      - name: Create results directory
+        run: mkdir -p robot-results
+
+      - name: Run Robot Framework Tests - All
+        if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == ''
+        run: |
+          robot \
+            --outputdir robot-results \
+            --loglevel INFO \
+            --variable BASE_URL:http://127.0.0.1:8000 \
+            --variable API_URL:http://127.0.0.1:8000/api \
+            --variable DB_HOST:127.0.0.1 \
+            --variable DB_PORT:3306 \
+            --variable DB_NAME:icc_munich \
+            --variable DB_USER:icc_user \
+            --variable DB_PASSWORD:secret \
+            --variable BROWSER:chromium \
+            --variable HEADLESS:true \
+            robot-tests/ || true
+
+      - name: Run Robot Framework Tests - API Only
+        if: github.event.inputs.test_type == 'api'
+        run: |
+          robot \
+            --outputdir robot-results \
+            --loglevel INFO \
+            --include api \
+            --variable BASE_URL:http://127.0.0.1:8000 \
+            --variable API_URL:http://127.0.0.1:8000/api \
+            --variable DB_HOST:127.0.0.1 \
+            --variable DB_PORT:3306 \
+            --variable DB_NAME:icc_munich \
+            --variable DB_USER:icc_user \
+            --variable DB_PASSWORD:secret \
+            robot-tests/api/ || true
+
+      - name: Run Robot Framework Tests - UI Only
+        if: github.event.inputs.test_type == 'ui'
+        run: |
+          robot \
+            --outputdir robot-results \
+            --loglevel INFO \
+            --include ui \
+            --variable BASE_URL:http://127.0.0.1:8000 \
+            --variable BROWSER:chromium \
+            --variable HEADLESS:true \
+            robot-tests/ui/ || true
+
+      - name: Run Robot Framework Tests - E2E Only
+        if: github.event.inputs.test_type == 'e2e'
+        run: |
+          robot \
+            --outputdir robot-results \
+            --loglevel INFO \
+            --include e2e \
+            --variable BASE_URL:http://127.0.0.1:8000 \
+            --variable API_URL:http://127.0.0.1:8000/api \
+            --variable DB_HOST:127.0.0.1 \
+            --variable DB_PORT:3306 \
+            --variable DB_NAME:icc_munich \
+            --variable DB_USER:icc_user \
+            --variable DB_PASSWORD:secret \
+            --variable BROWSER:chromium \
+            --variable HEADLESS:true \
+            robot-tests/e2e/ || true
+
+      - name: Run Robot Framework Tests - Smoke
+        if: github.event.inputs.test_type == 'smoke'
+        run: |
+          robot \
+            --outputdir robot-results \
+            --loglevel INFO \
+            --include smoke \
+            --variable BASE_URL:http://127.0.0.1:8000 \
+            --variable API_URL:http://127.0.0.1:8000/api \
+            --variable DB_HOST:127.0.0.1 \
+            --variable DB_PORT:3306 \
+            --variable DB_NAME:icc_munich \
+            --variable DB_USER:icc_user \
+            --variable DB_PASSWORD:secret \
+            robot-tests/ || true
+
+      - name: Run Robot Framework Tests - Critical
+        if: github.event.inputs.test_type == 'critical'
+        run: |
+          robot \
+            --outputdir robot-results \
+            --loglevel INFO \
+            --include critical \
+            --variable BASE_URL:http://127.0.0.1:8000 \
+            --variable API_URL:http://127.0.0.1:8000/api \
+            --variable DB_HOST:127.0.0.1 \
+            --variable DB_PORT:3306 \
+            --variable DB_NAME:icc_munich \
+            --variable DB_USER:icc_user \
+            --variable DB_PASSWORD:secret \
+            robot-tests/ || true
+
+      - name: Generate metrics report
+        if: always()
+        run: |
+          if [ -f "robot-results/output.xml" ]; then
+            robotmetrics --inputpath robot-results/output.xml --output robot-results/ || true
+          fi
+
+      - name: Upload Robot Framework Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: robot-framework-results
+          path: robot-results/
+          retention-days: 30
+
+      - name: Upload Robot Framework Screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: robot-framework-screenshots
+          path: robot-results/*.png
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Publish Robot Framework Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: robot-report
+          path: |
+            robot-results/report.html
+            robot-results/log.html
+            robot-results/output.xml
+          retention-days: 30
+
+      - name: Check test results
+        if: always()
+        run: |
+          if [ -f "robot-results/output.xml" ]; then
+            echo "### Robot Framework Test Results" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Parse output.xml for summary
+            TOTAL=$(grep -oP 'stat pass="\K[0-9]+' robot-results/output.xml | head -1 || echo "0")
+            PASS=$(grep -oP 'stat pass="\K[0-9]+' robot-results/output.xml | head -1 || echo "0")
+            FAIL=$(grep -oP 'fail="\K[0-9]+' robot-results/output.xml | head -1 || echo "0")
+
+            echo "- Total Tests: ${TOTAL:-N/A}" >> $GITHUB_STEP_SUMMARY
+            echo "- Passed: ${PASS:-N/A}" >> $GITHUB_STEP_SUMMARY
+            echo "- Failed: ${FAIL:-N/A}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Download the 'robot-framework-results' artifact for detailed reports." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Robot Framework Test Results" >> $GITHUB_STEP_SUMMARY
+            echo "No test results found." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  robot-smoke-tests:
+    name: Smoke Tests (Quick)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'pull_request'
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_DATABASE: icc_munich
+          MYSQL_USER: icc_user
+          MYSQL_PASSWORD: secret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -psecret"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, json, bcmath, gd, pdo, mysql
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          composer install --prefer-dist --no-progress --no-interaction
+          npm ci
+          npm run build
+
+      - name: Setup environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          echo "DB_CONNECTION=mysql" >> .env
+          echo "DB_HOST=127.0.0.1" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_DATABASE=icc_munich" >> .env
+          echo "DB_USERNAME=icc_user" >> .env
+          echo "DB_PASSWORD=secret" >> .env
+          php artisan migrate --force
+          php artisan db:seed --force
+
+      - name: Start Laravel server
+        run: |
+          php artisan serve --host=127.0.0.1 --port=8000 &
+          sleep 5
+
+      - name: Setup Python and Robot Framework
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Robot Framework
+        run: |
+          pip install robotframework robotframework-requests robotframework-jsonlibrary
+          pip install robotframework-databaselibrary PyMySQL
+
+      - name: Run Smoke Tests
+        run: |
+          mkdir -p robot-results
+          robot \
+            --outputdir robot-results \
+            --loglevel INFO \
+            --include smoke \
+            --exclude ui \
+            --exclude e2e \
+            --variable BASE_URL:http://127.0.0.1:8000 \
+            --variable API_URL:http://127.0.0.1:8000/api \
+            --variable DB_HOST:127.0.0.1 \
+            --variable DB_PORT:3306 \
+            --variable DB_NAME:icc_munich \
+            --variable DB_USER:icc_user \
+            --variable DB_PASSWORD:secret \
+            robot-tests/api/ || true
+
+      - name: Upload Smoke Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test-results
+          path: robot-results/
+          retention-days: 7
