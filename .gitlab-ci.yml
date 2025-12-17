@@ -1,0 +1,291 @@
+# ICC Munich GitLab CI/CD Pipeline
+# This file defines the complete CI/CD pipeline for the Laravel + React application
+
+# ==========================================
+# Variables
+# ==========================================
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  COMPOSER_HOME: "$CI_PROJECT_DIR/.composer"
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+  PHP_VERSION: "8.3"
+  NODE_VERSION: "20"
+
+# ==========================================
+# Cache Configuration
+# ==========================================
+cache:
+  paths:
+    - vendor/
+    - node_modules/
+    - .composer/
+    - .npm/
+
+# ==========================================
+# Stages
+# ==========================================
+stages:
+  - prepare
+  - quality
+  - build
+  - test
+  - security
+  - deploy
+
+# ==========================================
+# Default Settings
+# ==========================================
+default:
+  image: php:8.3-cli
+  before_script:
+    - apt-get update -qq && apt-get install -qq -y git unzip zip libzip-dev libpng-dev libjpeg-dev libfreetype6-dev
+    - docker-php-ext-configure gd --with-freetype --with-jpeg
+    - docker-php-ext-install -j$(nproc) pdo pdo_mysql zip gd bcmath
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+  tags:
+    - docker
+
+# ==========================================
+# Stage: Prepare
+# ==========================================
+composer:
+  stage: prepare
+  script:
+    - composer install --prefer-dist --no-progress --no-interaction
+  artifacts:
+    paths:
+      - vendor/
+    expire_in: 1 hour
+  cache:
+    key: composer-$CI_COMMIT_REF_SLUG
+    paths:
+      - vendor/
+      - .composer/
+
+npm:
+  stage: prepare
+  image: node:20-alpine
+  before_script: []
+  script:
+    - npm ci --legacy-peer-deps
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 hour
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths:
+      - node_modules/
+      - .npm/
+
+# ==========================================
+# Stage: Code Quality
+# ==========================================
+phpstan:
+  stage: quality
+  needs: ["composer"]
+  script:
+    - vendor/bin/phpstan analyse --memory-limit=2G --error-format=gitlab > phpstan-report.json || true
+  artifacts:
+    reports:
+      codequality: phpstan-report.json
+    expire_in: 1 week
+  allow_failure: true
+
+phpcs:
+  stage: quality
+  needs: ["composer"]
+  script:
+    - vendor/bin/phpcs --report=json --report-file=phpcs-report.json || true
+  artifacts:
+    paths:
+      - phpcs-report.json
+    expire_in: 1 week
+  allow_failure: true
+
+pint:
+  stage: quality
+  needs: ["composer"]
+  script:
+    - vendor/bin/pint --test
+  allow_failure: true
+
+eslint:
+  stage: quality
+  image: node:20-alpine
+  needs: ["npm"]
+  before_script: []
+  script:
+    - npm run lint -- --format json --output-file eslint-report.json || true
+  artifacts:
+    paths:
+      - eslint-report.json
+    expire_in: 1 week
+  allow_failure: true
+
+typescript:
+  stage: quality
+  image: node:20-alpine
+  needs: ["npm"]
+  before_script: []
+  script:
+    - npx tsc --noEmit
+  allow_failure: true
+
+# ==========================================
+# Stage: Build
+# ==========================================
+build:frontend:
+  stage: build
+  image: node:20-alpine
+  needs: ["npm"]
+  before_script: []
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - public/build/
+    expire_in: 1 day
+
+# ==========================================
+# Stage: Tests
+# ==========================================
+phpunit:
+  stage: test
+  needs: ["composer", "build:frontend"]
+  services:
+    - name: mysql:8.0
+      alias: mysql
+      variables:
+        MYSQL_DATABASE: testing
+        MYSQL_ROOT_PASSWORD: secret
+  variables:
+    DB_CONNECTION: mysql
+    DB_HOST: mysql
+    DB_PORT: 3306
+    DB_DATABASE: testing
+    DB_USERNAME: root
+    DB_PASSWORD: secret
+  script:
+    - cp .env.example .env.testing
+    - php artisan key:generate --env=testing
+    - php artisan migrate --env=testing --force
+    - php artisan test --env=testing --coverage-text --log-junit junit-report.xml
+  artifacts:
+    reports:
+      junit: junit-report.xml
+    expire_in: 1 week
+  coverage: '/Lines:\s*(\d+\.?\d*)%/'
+
+pest:
+  stage: test
+  needs: ["composer", "build:frontend"]
+  services:
+    - name: mysql:8.0
+      alias: mysql
+      variables:
+        MYSQL_DATABASE: testing
+        MYSQL_ROOT_PASSWORD: secret
+  variables:
+    DB_CONNECTION: mysql
+    DB_HOST: mysql
+    DB_PORT: 3306
+    DB_DATABASE: testing
+    DB_USERNAME: root
+    DB_PASSWORD: secret
+  script:
+    - cp .env.example .env.testing
+    - php artisan key:generate --env=testing
+    - php artisan migrate --env=testing --force
+    - vendor/bin/pest --ci
+  allow_failure: true
+
+frontend:test:
+  stage: test
+  image: node:20-alpine
+  needs: ["npm"]
+  before_script: []
+  script:
+    - npm test -- --run --coverage
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 1 week
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+
+# ==========================================
+# Stage: Security
+# ==========================================
+composer:audit:
+  stage: security
+  needs: ["composer"]
+  script:
+    - composer audit --format=json > composer-audit.json || true
+  artifacts:
+    paths:
+      - composer-audit.json
+    expire_in: 1 week
+  allow_failure: true
+
+npm:audit:
+  stage: security
+  image: node:20-alpine
+  needs: ["npm"]
+  before_script: []
+  script:
+    - npm audit --json > npm-audit.json || true
+  artifacts:
+    paths:
+      - npm-audit.json
+    expire_in: 1 week
+  allow_failure: true
+
+# ==========================================
+# Stage: Deploy
+# ==========================================
+deploy:staging:
+  stage: deploy
+  needs: ["phpunit", "build:frontend"]
+  environment:
+    name: staging
+    url: https://staging.icc-munich.local
+  script:
+    - echo "Deploying to staging..."
+    # Add your staging deployment commands here
+  only:
+    - develop
+  when: manual
+
+deploy:production:
+  stage: deploy
+  needs: ["phpunit", "build:frontend"]
+  environment:
+    name: production
+    url: https://icc-munich.local
+  script:
+    - echo "Deploying to production..."
+    # Add your production deployment commands here
+  only:
+    - main
+  when: manual
+
+# ==========================================
+# Docker Build (Optional)
+# ==========================================
+docker:build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  before_script: []
+  script:
+    - docker build --target production -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE:latest
+  only:
+    - main
+    - develop
+  when: manual

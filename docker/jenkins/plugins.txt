@@ -1,0 +1,36 @@
+# Jenkins Core Plugins - Minimal set for CI/CD
+configuration-as-code
+job-dsl
+workflow-aggregator
+
+# Pipeline Plugins
+pipeline-stage-view
+pipeline-utility-steps
+
+# Git
+git
+git-parameter
+
+# Docker
+docker-workflow
+docker-plugin
+
+# Build Tools
+nodejs
+
+# Code Quality
+warnings-ng
+junit
+
+# Notifications
+email-ext
+
+# Utilities
+timestamper
+ansicolor
+ws-cleanup
+build-timeout
+credentials-binding
+
+# Security
+authorize-project

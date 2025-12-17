@@ -1,4 +1,4 @@
-.PHONY: phpstan phpcs phpmd pint pest test clear quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell
+.PHONY: phpstan phpcs phpmd pint pest test clear quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean
 
 # PHPStan static analysis (level 10)
 phpstan:
@@ -280,8 +280,28 @@ help:
 	@echo "  make robot-clean        - Clean test results"
 	@echo "  make robot-shell        - Shell into Robot container"
 	@echo ""
+	@echo "🔧 Jenkins CI/CD:"
+	@echo "  make jenkins-start      - Start Jenkins CI/CD server"
+	@echo "  make jenkins-stop       - Stop Jenkins server"
+	@echo "  make jenkins-restart    - Restart Jenkins server"
+	@echo "  make jenkins-logs       - View Jenkins logs"
+	@echo "  make jenkins-shell      - Shell into Jenkins container"
+	@echo "  make jenkins-build      - Build Jenkins container"
+	@echo "  make jenkins-clean      - Clean all Jenkins data"
+	@echo ""
+	@echo "🦊 GitLab CI/CD:"
+	@echo "  make gitlab-start       - Start GitLab server (takes 3-5 min)"
+	@echo "  make gitlab-stop        - Stop GitLab server"
+	@echo "  make gitlab-restart     - Restart GitLab server"
+	@echo "  make gitlab-logs        - View GitLab logs"
+	@echo "  make gitlab-shell       - Shell into GitLab container"
+	@echo "  make gitlab-runner-register - Register GitLab Runner"
+	@echo "  make gitlab-clean       - Clean all GitLab data"
+	@echo ""
 	@echo "🚀 Quick Start:"
 	@echo "  make start              - Start application with all services"
+	@echo "  make jenkins-start      - Start Jenkins CI/CD server"
+	@echo "  make gitlab-start       - Start GitLab CI/CD server"
 
 # Generate complete documentation suite
 docs-full:
@@ -620,3 +640,137 @@ robot-rerun: robot-build
 robot-shell: robot-build
 	@echo "Opening shell in Robot Framework container..."
 	@docker-compose --profile testing run --rm robot sh
+
+# ==========================================
+# Jenkins CI/CD Commands
+# ==========================================
+
+# Build Jenkins container
+jenkins-build:
+	@echo "Building Jenkins CI/CD container..."
+	@docker-compose -f docker-compose.jenkins.yml build
+	@echo "✅ Jenkins container built successfully!"
+
+# Start Jenkins CI/CD server
+jenkins-start: docker-check
+	@echo "Starting Jenkins CI/CD server..."
+	@docker-compose -f docker-compose.jenkins.yml up -d
+	@echo ""
+	@echo "⏳ Waiting for Jenkins to start (this may take 2-3 minutes)..."
+	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do \
+		if curl -s http://localhost:8081/login > /dev/null 2>&1; then \
+			echo ""; \
+			break; \
+		fi; \
+		echo -n "."; \
+		sleep 10; \
+	done
+	@echo ""
+	@echo "✅ Jenkins CI/CD server started!"
+	@echo ""
+	@echo "🔗 Jenkins UI:    http://localhost:8081"
+	@echo "👤 Username:      admin"
+	@echo "🔑 Password:      admin123"
+	@echo ""
+	@echo "📂 Project workspace is mounted at: /var/jenkins_home/workspace/icc-munich"
+	@echo ""
+	@echo "Use 'make jenkins-logs' to view logs"
+	@echo "Use 'make jenkins-stop' to stop Jenkins"
+
+# Stop Jenkins CI/CD server
+jenkins-stop:
+	@echo "Stopping Jenkins CI/CD server..."
+	@docker-compose -f docker-compose.jenkins.yml down
+	@echo "✅ Jenkins stopped!"
+
+# Restart Jenkins
+jenkins-restart:
+	@echo "Restarting Jenkins CI/CD server..."
+	@docker-compose -f docker-compose.jenkins.yml restart
+	@echo "✅ Jenkins restarted!"
+
+# View Jenkins logs
+jenkins-logs:
+	@docker-compose -f docker-compose.jenkins.yml logs -f jenkins
+
+# Shell into Jenkins container
+jenkins-shell:
+	@docker-compose -f docker-compose.jenkins.yml exec jenkins bash
+
+# Clean Jenkins data (WARNING: removes all jobs and configurations)
+jenkins-clean:
+	@echo "⚠️  WARNING: This will remove all Jenkins data, jobs, and configurations!"
+	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@docker-compose -f docker-compose.jenkins.yml down -v
+	@echo "✅ Jenkins data cleaned!"
+
+# ==========================================
+# GitLab CI/CD Commands
+# ==========================================
+
+# Start GitLab CI/CD server
+gitlab-start: docker-check
+	@echo "Starting GitLab CI/CD server..."
+	@echo "⚠️  Note: GitLab requires 4GB+ RAM and takes 3-5 minutes to start"
+	@docker-compose -f docker-compose.gitlab.yml up -d
+	@echo ""
+	@echo "⏳ GitLab is starting (this takes 3-5 minutes)..."
+	@echo "You can monitor progress with: make gitlab-logs"
+	@echo ""
+	@echo "🦊 GitLab will be available at:"
+	@echo "   🔗 URL:       http://localhost:8929"
+	@echo "   👤 Username:  root"
+	@echo "   🔑 Password:  GitLab123!"
+	@echo ""
+	@echo "📂 Project source is mounted at: /home/git/data/icc-munich"
+	@echo ""
+	@echo "Use 'make gitlab-logs' to monitor startup"
+	@echo "Use 'make gitlab-stop' to stop GitLab"
+
+# Stop GitLab CI/CD server
+gitlab-stop:
+	@echo "Stopping GitLab CI/CD server..."
+	@docker-compose -f docker-compose.gitlab.yml down
+	@echo "✅ GitLab stopped!"
+
+# Restart GitLab
+gitlab-restart:
+	@echo "Restarting GitLab CI/CD server..."
+	@docker-compose -f docker-compose.gitlab.yml restart
+	@echo "✅ GitLab restarted!"
+
+# View GitLab logs
+gitlab-logs:
+	@docker-compose -f docker-compose.gitlab.yml logs -f gitlab
+
+# Shell into GitLab container
+gitlab-shell:
+	@docker-compose -f docker-compose.gitlab.yml exec gitlab bash
+
+# Register GitLab Runner
+gitlab-runner-register:
+	@echo "Registering GitLab Runner..."
+	@echo "First, get your registration token from GitLab:"
+	@echo "  1. Go to http://localhost:8929/admin/runners"
+	@echo "  2. Click 'Register an instance runner'"
+	@echo "  3. Copy the registration token"
+	@echo ""
+	@read -p "Enter the registration token: " TOKEN && \
+	docker-compose -f docker-compose.gitlab.yml --profile runner up -d gitlab-runner && \
+	docker-compose -f docker-compose.gitlab.yml exec gitlab-runner gitlab-runner register \
+		--non-interactive \
+		--url "http://gitlab:8929" \
+		--registration-token "$$TOKEN" \
+		--executor "docker" \
+		--docker-image "docker:latest" \
+		--description "icc-munich-runner" \
+		--docker-privileged \
+		--docker-volumes "/var/run/docker.sock:/var/run/docker.sock"
+	@echo "✅ GitLab Runner registered!"
+
+# Clean GitLab data (WARNING: removes all data)
+gitlab-clean:
+	@echo "⚠️  WARNING: This will remove ALL GitLab data including repositories, users, and CI/CD configurations!"
+	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@docker-compose -f docker-compose.gitlab.yml --profile runner down -v
+	@echo "✅ GitLab data cleaned!"

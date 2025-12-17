@@ -1,0 +1,34 @@
+# Jenkins Configuration as Code (JCasC)
+# Minimal configuration to get Jenkins running
+
+jenkins:
+  systemMessage: "ICC Munich CI/CD Server - Configured by JCasC"
+
+  # Security configuration
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "admin123"
+          name: "Administrator"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  # Number of executors on master
+  numExecutors: 2
+
+# Tool configuration
+tool:
+  git:
+    installations:
+      - name: "Default"
+        home: "git"
+
+# Unclassified configuration
+unclassified:
+  location:
+    url: "http://localhost:8081/"
+    adminAddress: "admin@localhost"

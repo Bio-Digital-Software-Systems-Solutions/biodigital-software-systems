@@ -204,11 +204,47 @@ make help          # Afficher l'aide
    - Le bot analyse le code et commente la PR
    - Les labels de taille sont ajoutés automatiquement
 
+## Docker
+
+Le projet est entièrement dockerisé pour le développement et la production.
+
+### Démarrage Rapide avec Docker
+
+```bash
+# Démarrer l'application complète (app, MySQL, Redis, Nginx, etc.)
+make start
+
+# Arrêter tous les services
+make stop
+```
+
+### Services Docker
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| Application | http://localhost:8000 | Laravel + Inertia + React |
+| phpMyAdmin | http://localhost:8080 | Gestion base de données |
+| Mailhog | http://localhost:8025 | Test d'emails |
+| Vite HMR | http://localhost:5173 | Hot Module Replacement |
+
+### Commandes Docker
+
+```bash
+make docker-build      # Construire les conteneurs
+make docker-up         # Démarrer les conteneurs
+make docker-down       # Arrêter les conteneurs
+make docker-logs       # Voir les logs
+make docker-shell      # Shell dans le conteneur PHP
+make docker-mysql      # Shell MySQL
+make docker-fresh      # Installation fraîche (build + migrate + seed)
+make docker-prod-build # Build de production
+```
+
 ## CI/CD Pipeline
 
 Le projet utilise **GitHub Actions** pour l'intégration et la livraison continues. Le pipeline s'exécute automatiquement à chaque push et pull request.
 
-### Workflows
+### Workflows GitHub Actions
 
 - **`ci.yml`** - Pipeline principal (tests, qualité, sécurité)
 - **`pr-checks.yml`** - Analyse des PRs avec commentaires automatiques
@@ -229,6 +265,101 @@ Le projet utilise **GitHub Actions** pour l'intégration et la livraison continu
 ✅ Vérification des licences
 
 **Documentation complète :** Voir [CI_CD.md](./CI_CD.md)
+
+## CI/CD Local (Jenkins & GitLab)
+
+En plus de GitHub Actions, le projet dispose de serveurs CI/CD locaux pour le développement et les tests.
+
+### Jenkins
+
+Jenkins est configuré avec un pipeline complet pour l'application.
+
+```bash
+# Démarrer Jenkins
+make jenkins-start
+
+# Arrêter Jenkins
+make jenkins-stop
+
+# Voir les logs
+make jenkins-logs
+
+# Accéder au shell
+make jenkins-shell
+```
+
+| Paramètre | Valeur |
+|-----------|--------|
+| URL | http://localhost:8081 |
+| Username | `admin` |
+| Password | `admin123` |
+
+**Pipeline Jenkins (`Jenkinsfile`) :**
+- Checkout et préparation de l'environnement
+- Installation des dépendances (PHP/Node en parallèle)
+- Analyse de qualité du code (PHPStan, PHPCS, ESLint)
+- Build frontend (npm run build)
+- Tests (PHPUnit, Pest, Jest en parallèle)
+- Scan de sécurité (composer audit, npm audit)
+- Build Docker pour branches main/develop
+- Tests d'intégration et Robot Framework
+- Déploiement staging/production
+
+### GitLab
+
+GitLab EE est disponible pour la gestion de code et CI/CD intégré.
+
+```bash
+# Démarrer GitLab (prend 3-5 minutes)
+make gitlab-start
+
+# Arrêter GitLab
+make gitlab-stop
+
+# Voir les logs
+make gitlab-logs
+
+# Enregistrer un Runner
+make gitlab-runner-register
+```
+
+| Paramètre | Valeur |
+|-----------|--------|
+| URL | http://localhost:8929 |
+| Username | `root` |
+| Password | `GitLab123!` |
+| SSH Port | 2224 |
+
+**Pipeline GitLab (`.gitlab-ci.yml`) :**
+- Stages : prepare → quality → build → test → security → deploy
+- Cache des dépendances (vendor/, node_modules/)
+- Jobs parallèles pour l'analyse de qualité
+- Tests avec services MySQL
+- Audit de sécurité
+- Déploiement manuel staging/production
+
+### Robot Framework (Tests E2E)
+
+Tests automatisés avec Robot Framework pour les tests API, UI et E2E.
+
+```bash
+# Lancer tous les tests Robot
+make robot-test
+
+# Tests spécifiques
+make robot-api        # Tests API uniquement
+make robot-ui         # Tests UI uniquement
+make robot-e2e        # Tests E2E uniquement
+make robot-smoke      # Tests smoke rapides
+make robot-critical   # Tests critiques
+
+# Outils
+make robot-report     # Générer le rapport
+make robot-debug      # Mode debug
+make robot-clean      # Nettoyer les résultats
+```
+
+Les résultats sont disponibles dans `robot-results/report.html`.
 
 ## Tests
 

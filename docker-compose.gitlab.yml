@@ -1,0 +1,114 @@
+# GitLab CI/CD Docker Compose Configuration
+# Usage: docker compose -f docker-compose.gitlab.yml up -d
+# Note: GitLab requires significant resources (4GB+ RAM recommended)
+
+services:
+  # ==========================================
+  # GitLab EE Server
+  # ==========================================
+  gitlab:
+    image: gitlab/gitlab-ee:nightly
+    container_name: icc-gitlab
+    restart: unless-stopped
+    hostname: 'localhost'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        # External URL configuration
+        external_url 'http://localhost:8929'
+
+        # GitLab Rails settings
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+        gitlab_rails['time_zone'] = 'Europe/Berlin'
+
+        # Initial root password (change after first login!)
+        gitlab_rails['initial_root_password'] = 'GitLab123!'
+        gitlab_rails['display_initial_root_password'] = true
+        gitlab_rails['store_initial_root_password'] = true
+
+        # Disable components not needed for local dev
+        prometheus_monitoring['enable'] = false
+        grafana['enable'] = false
+        alertmanager['enable'] = false
+        node_exporter['enable'] = false
+        redis_exporter['enable'] = false
+        postgres_exporter['enable'] = false
+        gitlab_exporter['enable'] = false
+
+        # Registry (optional - for Docker images)
+        registry['enable'] = false
+
+        # Pages (optional - for static sites)
+        pages_external_url 'http://localhost:8930'
+        gitlab_pages['enable'] = false
+
+        # Reduce memory usage for local development
+        puma['worker_processes'] = 2
+        sidekiq['concurrency'] = 5
+
+        # PostgreSQL settings
+        postgresql['shared_buffers'] = "256MB"
+        postgresql['max_worker_processes'] = 4
+
+        # GitLab CI/CD Runner settings
+        gitlab_rails['gitlab_default_projects_features_builds'] = true
+        gitlab_rails['gitlab_default_projects_features_container_registry'] = false
+
+        # SMTP settings (optional - for email notifications)
+        # gitlab_rails['smtp_enable'] = true
+        # gitlab_rails['smtp_address'] = "mailhog"
+        # gitlab_rails['smtp_port'] = 1025
+    ports:
+      - '8929:8929'      # GitLab Web UI
+      - '2224:22'        # SSH for Git operations
+    volumes:
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt/gitlab
+      - ./:/home/git/data/icc-munich:ro  # Project source (read-only)
+    networks:
+      - gitlab-network
+    shm_size: '256m'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8929/-/health"]
+      interval: 60s
+      timeout: 30s
+      retries: 10
+      start_period: 300s  # GitLab takes a long time to start
+
+  # ==========================================
+  # GitLab Runner (for CI/CD jobs)
+  # ==========================================
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: icc-gitlab-runner
+    restart: unless-stopped
+    volumes:
+      - gitlab-runner-config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - gitlab-network
+    depends_on:
+      gitlab:
+        condition: service_healthy
+    profiles:
+      - runner
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  gitlab-config:
+    driver: local
+  gitlab-logs:
+    driver: local
+  gitlab-data:
+    driver: local
+  gitlab-runner-config:
+    driver: local
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  gitlab-network:
+    driver: bridge
