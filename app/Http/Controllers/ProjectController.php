@@ -300,13 +300,89 @@ class ProjectController extends Controller
         return redirect()->route('projects.index')->with('success', 'Projet supprimé avec succès.');
     }
 
-    public function board(Project $project)
+    public function board(Request $request, Project $project)
     {
-        $project->load(['tasks.assignee', 'tasks.reporter', 'tasks.status']);
+        $query = $project->tasks()->with(['assignee', 'reporter', 'status', 'sprint']);
+
+        // Apply filters
+        if ($request->has('assignee_id') && $request->assignee_id) {
+            $query->where('assigned_to', $request->assignee_id);
+        }
+
+        if ($request->has('priority') && $request->priority) {
+            $query->where('priority', $request->priority);
+        }
+
+        if ($request->has('type') && $request->type) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->has('sprint_id') && $request->sprint_id) {
+            $query->where('sprint_id', $request->sprint_id);
+        }
+
+        // Search
+        if ($request->has('search') && $request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%'.$request->search.'%')
+                    ->orWhere('description', 'like', '%'.$request->search.'%');
+            });
+        }
+
+        $tasks = $query->latest()->get();
+
+        // Group tasks by status name
+        $tasksByStatus = [
+            'todo' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'todo')
+                ->values()->map(fn ($task) => $this->formatTaskForKanban($task)),
+            'in_progress' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'in_progress')
+                ->values()->map(fn ($task) => $this->formatTaskForKanban($task)),
+            'under_review' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'under_review')
+                ->values()->map(fn ($task) => $this->formatTaskForKanban($task)),
+            'blocked' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'blocked')
+                ->values()->map(fn ($task) => $this->formatTaskForKanban($task)),
+            'completed' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'completed')
+                ->values()->map(fn ($task) => $this->formatTaskForKanban($task)),
+        ];
+
+        // Get filter data
+        $users = \App\Models\User::select('id', 'first_name', 'last_name')->orderBy('first_name')->get();
+        $sprints = \App\Models\Sprint::where('project_id', $project->id)
+            ->select('id', 'name', 'start_date', 'end_date')
+            ->orderBy('start_date')
+            ->get();
 
         return Inertia::render('Projects/Board', [
-            'project' => $project,
+            'project' => [
+                'id' => $project->id,
+                'uuid' => $project->uuid,
+                'name' => $project->name,
+                'color' => $project->color,
+            ],
+            'tasksByStatus' => $tasksByStatus,
+            'users' => $users,
+            'sprints' => $sprints,
+            'filters' => $request->only(['assignee_id', 'priority', 'type', 'sprint_id', 'search']),
         ]);
+    }
+
+    private function formatTaskForKanban(\App\Models\Task $task): array
+    {
+        return [
+            'id' => $task->id,
+            'uuid' => $task->uuid,
+            'title' => $task->title,
+            'description' => $task->description,
+            'status' => $task->status ? $task->status->name : null,
+            'priority' => $task->priority ?? 'medium',
+            'type' => $task->type ?? 'task',
+            'assignee' => $task->assignee ? [
+                'id' => $task->assignee->id,
+                'first_name' => $task->assignee->first_name,
+                'last_name' => $task->assignee->last_name,
+            ] : null,
+            'due_date' => $task->due_date ? $task->due_date->toDateString() : null,
+        ];
     }
 
     public function gantt(Project $project)

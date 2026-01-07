@@ -103,7 +103,7 @@ class ProjectController extends Controller
     public function tasks(Project $project): JsonResponse
     {
         $tasks = $project->tasks()
-            ->with(['assignee', 'reporter', 'sprint'])
+            ->with(['assignee', 'reporter', 'sprint', 'status'])
             ->latest()
             ->get();
 

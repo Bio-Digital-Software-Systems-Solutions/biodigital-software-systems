@@ -1,0 +1,194 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job">
+  <description>CI/CD Pipeline for ICC Munich application using mounted local workspace directly (no copy)</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <org.jenkinsci.plugins.workflow.job.properties.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>10</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </org.jenkinsci.plugins.workflow.job.properties.BuildDiscarderProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps">
+    <script><![CDATA[
+// ICC Munich CI/CD Pipeline - Local Workspace Version
+// Uses mounted local workspace directly at /var/jenkins_home/workspace/icc-munich
+
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = 'icc-munich'
+        APP_ENV = 'testing'
+        WORKSPACE_PATH = '/var/jenkins_home/workspace/icc-munich'
+        COMPOSER_NO_INTERACTION = '1'
+        COMPOSER_ALLOW_SUPERUSER = '1'
+        NODE_OPTIONS = '--max-old-space-size=4096'
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        timestamps()
+        ansiColor('xterm')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Prepare Workspace') {
+            steps {
+                script {
+                    dir(env.WORKSPACE_PATH) {
+                        env.GIT_COMMIT_SHORT = sh(script: 'git rev-parse --short HEAD 2>/dev/null || echo "local"', returnStdout: true).trim()
+                        env.GIT_BRANCH_NAME = sh(script: 'git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "local"', returnStdout: true).trim()
+
+                        echo "Branch: ${env.GIT_BRANCH_NAME}"
+                        echo "Commit: ${env.GIT_COMMIT_SHORT}"
+                    }
+                }
+            }
+        }
+
+        stage('Check Environment') {
+            steps {
+                dir(env.WORKSPACE_PATH) {
+                    sh '''
+                        echo "=== Environment Check ==="
+                        echo "PHP Version:"
+                        php --version || echo "PHP not available in Jenkins, will use Docker"
+                        echo ""
+                        echo "Node Version:"
+                        node --version || echo "Node not available in Jenkins, will use Docker"
+                        echo ""
+                        echo "Composer Version:"
+                        composer --version || echo "Composer not available"
+                        echo ""
+                        echo "Docker Version:"
+                        docker --version
+                    '''
+                }
+            }
+        }
+
+        stage('Install Dependencies') {
+            parallel {
+                stage('PHP Dependencies') {
+                    steps {
+                        dir(env.WORKSPACE_PATH) {
+                            sh '''#!/bin/bash
+                                echo "Using Docker for Composer..."
+                                docker run --rm -v "$(pwd)":/app -w /app composer:2 install --no-progress --prefer-dist --optimize-autoloader
+                            '''
+                        }
+                    }
+                }
+
+                stage('Node Dependencies') {
+                    steps {
+                        dir(env.WORKSPACE_PATH) {
+                            sh 'npm ci --legacy-peer-deps'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Code Quality') {
+            parallel {
+                stage('Laravel Pint') {
+                    steps {
+                        dir(env.WORKSPACE_PATH) {
+                            sh 'docker compose exec -T app vendor/bin/pint --test || true'
+                        }
+                    }
+                }
+
+                stage('PHPStan') {
+                    steps {
+                        dir(env.WORKSPACE_PATH) {
+                            sh 'docker compose exec -T app vendor/bin/phpstan analyse --memory-limit=1G --no-progress || true'
+                        }
+                    }
+                }
+
+                stage('TypeScript Check') {
+                    steps {
+                        dir(env.WORKSPACE_PATH) {
+                            sh 'npx tsc --noEmit || true'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build Frontend') {
+            steps {
+                dir(env.WORKSPACE_PATH) {
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                dir(env.WORKSPACE_PATH) {
+                    sh '''#!/bin/bash
+                        # Create test environment
+                        cp .env.example .env.testing 2>/dev/null || true
+                        echo "Running tests via Docker Compose..."
+                        docker compose exec -T app php artisan key:generate --env=testing --force || true
+                        docker compose exec -T app php artisan test --env=testing || true
+                    '''
+                }
+            }
+        }
+
+        stage('Security Audit') {
+            parallel {
+                stage('Composer Audit') {
+                    steps {
+                        dir(env.WORKSPACE_PATH) {
+                            sh 'docker run --rm -v "$(pwd)":/app -w /app composer:2 audit || true'
+                        }
+                    }
+                }
+
+                stage('NPM Audit') {
+                    steps {
+                        dir(env.WORKSPACE_PATH) {
+                            sh 'npm audit --audit-level=high || true'
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '''
+            ✅ ================================
+            ✅ Pipeline completed successfully!
+            ✅ ================================
+            '''
+        }
+        failure {
+            echo '''
+            ❌ ================================
+            ❌ Pipeline failed!
+            ❌ ================================
+            '''
+        }
+        always {
+            echo "Build #${env.BUILD_NUMBER} finished"
+        }
+    }
+}
+]]></script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

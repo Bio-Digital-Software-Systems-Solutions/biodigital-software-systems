@@ -20,6 +20,7 @@ services:
       - jenkins-data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock  # Docker-in-Docker
       - ./:/var/jenkins_home/workspace/icc-munich  # Project source
+      - ./docker/jenkins/jobs:/var/jenkins_home/jobs-config  # Job configurations
     environment:
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx2g
       - JENKINS_OPTS=--prefix=/

@@ -11,6 +11,9 @@ pipeline-utility-steps
 git
 git-parameter
 
+# Filesystem SCM (for local workspace)
+filesystem_scm
+
 # Docker
 docker-workflow
 docker-plugin

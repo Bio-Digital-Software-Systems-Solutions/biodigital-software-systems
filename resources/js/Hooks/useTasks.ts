@@ -11,16 +11,27 @@ export const useTasks = (projectId?: string | number, filters?: TaskFilters) => 
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
-      const params = {
-        ...filters,
-        project_id: projectId,
-      };
-      const response = await axios.get('/api/tasks', { params });
-      setTasks(response.data);
+
+      // Use the dedicated project tasks endpoint when projectId is provided
+      const url = projectId
+        ? `/api/projects/${projectId}/tasks`
+        : '/api/tasks';
+
+      apiLogger.info('Fetching tasks from:', url);
+      const response = await axios.get(url, { params: filters });
+      apiLogger.info('Tasks response:', response.data);
+
+      // Handle both paginated response (with data property) and direct array
+      const tasksData = Array.isArray(response.data)
+        ? response.data
+        : (response.data?.data || []);
+
+      apiLogger.info('Processed tasks count:', tasksData.length);
+      setTasks(tasksData);
       setError(null);
-    } catch (err) {
+    } catch (err: any) {
       setError('Erreur lors du chargement des tâches');
-      apiLogger.error('Error fetching tasks', err);
+      apiLogger.error('Error fetching tasks', err?.response?.data || err);
     } finally {
       setLoading(false);
     }

@@ -6,10 +6,16 @@ import { apiLogger } from '@/utils/logger';
 
 interface KanbanBoardProps {
   projectId: string | number;
+  initialTasks?: ProjectTask[];
 }
 
-export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
-  const { tasks, updateTaskStatus } = useTasks(projectId);
+export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId, initialTasks }) => {
+  const { tasks: fetchedTasks, loading, updateTaskStatus } = useTasks(
+    initialTasks ? undefined : projectId // Only fetch if no initial tasks provided
+  );
+
+  // Use initial tasks from Inertia if available, otherwise use fetched tasks
+  const tasks = initialTasks || fetchedTasks;
 
   const columns: KanbanColumn[] = useMemo(() => [
     { status: TaskStatus.TODO, label: 'À faire', color: 'gray' },
@@ -18,8 +24,39 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
     { status: TaskStatus.COMPLETED, label: 'Terminé', color: 'green' },
   ], []);
 
+  // Map various status names to our column statuses
+  const normalizeStatus = (taskStatus: string | undefined): TaskStatus => {
+    if (!taskStatus) return TaskStatus.TODO;
+    const normalized = taskStatus.toLowerCase();
+
+    // Map to TODO
+    if (['todo', 'pending', 'new', 'open', 'backlog'].includes(normalized)) {
+      return TaskStatus.TODO;
+    }
+    // Map to IN_PROGRESS
+    if (['in_progress', 'in-progress', 'inprogress', 'started', 'active', 'working'].includes(normalized)) {
+      return TaskStatus.IN_PROGRESS;
+    }
+    // Map to UNDER_REVIEW
+    if (['under_review', 'in_review', 'review', 'reviewing', 'testing', 'qa'].includes(normalized)) {
+      return TaskStatus.UNDER_REVIEW;
+    }
+    // Map to COMPLETED
+    if (['completed', 'done', 'closed', 'resolved', 'finished'].includes(normalized)) {
+      return TaskStatus.COMPLETED;
+    }
+
+    return TaskStatus.TODO; // Default
+  };
+
   const getTasksByStatus = (status: TaskStatus) => {
-    return tasks.filter(task => task.status?.name === status);
+    return tasks.filter(task => {
+      // Handle status as object with name property or as direct string
+      const taskStatusName = typeof task.status === 'object'
+        ? task.status?.name
+        : task.status;
+      return normalizeStatus(taskStatusName) === status;
+    });
   };
 
   const handleDragEnd = async (result: DropResult) => {
@@ -37,6 +74,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId }) => {
       apiLogger.error('Error updating task status via drag-and-drop', error);
     }
   };
+
+  // Only show loading if we don't have initial tasks and are still loading
+  if (loading && !initialTasks) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-gray-500">Chargement des tâches...</span>
+      </div>
+    );
+  }
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>

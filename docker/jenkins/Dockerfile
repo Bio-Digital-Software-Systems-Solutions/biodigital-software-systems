@@ -32,6 +32,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
+# Configure Git to trust the mounted workspace directory
+RUN git config --global --add safe.directory /var/jenkins_home/workspace/icc-munich \
+    && git config --global --add safe.directory '*'
+
 # Switch back to jenkins user
 USER jenkins
 

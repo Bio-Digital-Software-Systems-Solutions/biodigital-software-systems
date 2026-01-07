@@ -23,7 +23,15 @@ class KanbanController extends Controller
 
         // Apply filters
         if ($request->has('project_id') && $request->project_id) {
-            $query->where('project_id', $request->project_id);
+            // Filter by project_id column OR by taskable polymorphic relation
+            $projectId = $request->project_id;
+            $query->where(function ($q) use ($projectId) {
+                $q->where('project_id', $projectId)
+                  ->orWhere(function ($q2) use ($projectId) {
+                      $q2->where('taskable_type', 'App\Models\Project')
+                         ->where('taskable_id', $projectId);
+                  });
+            });
         }
 
         if ($request->has('assignee_id') && $request->assignee_id) {
