@@ -65,6 +65,11 @@ class KanbanController extends Controller
 
         // Group tasks by status name (for frontend compatibility)
         $tasksByStatus = [
+            'pending' => $tasks->filter(function ($task) {
+                return $task->status && in_array($task->status->name, ['pending', 'new']);
+            })->values()->map(function ($task) {
+                return $this->formatTaskForFrontend($task);
+            }),
             'todo' => $tasks->filter(function ($task) {
                 return $task->status && $task->status->name === 'todo';
             })->values()->map(function ($task) {

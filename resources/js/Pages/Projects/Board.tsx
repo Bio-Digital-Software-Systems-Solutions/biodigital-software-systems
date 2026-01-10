@@ -41,6 +41,7 @@ interface Project {
 interface Props {
     project: Project;
     tasksByStatus: {
+        pending: Task[];
         todo: Task[];
         in_progress: Task[];
         under_review: Task[];
@@ -60,6 +61,12 @@ interface Props {
 }
 
 const statusConfig = {
+    pending: {
+        label: 'Nouveau',
+        color: 'bg-purple-50 dark:bg-purple-900/20',
+        headerColor: 'bg-purple-100 dark:bg-purple-900/40',
+        textColor: 'text-purple-700 dark:text-purple-300',
+    },
     todo: {
         label: 'À faire',
         color: 'bg-gray-100 dark:bg-gray-800',
@@ -307,7 +314,7 @@ export default function ProjectBoard({ project, tasksByStatus, users, sprints, f
                 )}
 
                 {/* Kanban Board */}
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     {Object.entries(statusConfig).map(([status, config]) => (
                         <div
                             key={status}

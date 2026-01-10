@@ -485,6 +485,8 @@ class ProjectController extends Controller
 
         // Group tasks by status name (convert to array for JavaScript)
         $tasksByStatus = [
+            'pending' => $tasks->filter(fn ($task) => $task->status && in_array($task->status->name, ['pending', 'new']))
+                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
             'todo' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'todo')
                 ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
             'in_progress' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'in_progress')
