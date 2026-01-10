@@ -1,8 +1,9 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Task, Program, Project, Status, User, PageProps } from '@/Types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useToast } from '@/Components/ui/toast';
 
 interface Props extends PageProps {
     task: Task & {
@@ -20,6 +21,19 @@ interface Props extends PageProps {
 }
 
 export default function Edit({ task, programs, projects, statuses, users }: Props) {
+    const { flash } = usePage<PageProps & { flash?: { success?: string; error?: string } }>().props;
+    const { showSuccess, showError } = useToast();
+
+    // Show flash messages
+    useEffect(() => {
+        if (flash?.success) {
+            showSuccess(flash.success);
+        }
+        if (flash?.error) {
+            showError(flash.error);
+        }
+    }, [flash]);
+
     // Determine initial taskable type
     const getInitialTaskableType = () => {
         if (task.taskable_type === 'App\\Models\\Project') return 'project';
@@ -43,6 +57,7 @@ export default function Edit({ task, programs, projects, statuses, users }: Prop
         description: task.description || '',
         due_date: task.due_date ? task.due_date.split('T')[0] : '',
         priority: task.priority || 'medium',
+        progress: task.progress || 0,
         estimated_hours: task.estimated_hours || '',
         actual_hours: task.actual_hours || '',
         notes: task.notes || '',
@@ -84,7 +99,11 @@ export default function Edit({ task, programs, projects, statuses, users }: Prop
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(route('tasks.update', task.uuid));
+        put(route('tasks.update', task.uuid), {
+            onError: () => {
+                showError('Erreur lors de la mise à jour de la tâche. Veuillez vérifier les champs.');
+            },
+        });
     };
 
     return (
@@ -262,7 +281,40 @@ export default function Edit({ task, programs, projects, statuses, users }: Prop
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* Progress Field */}
+                                <div>
+                                    <label htmlFor="progress" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Progression ({data.progress}%)
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <input
+                                            type="range"
+                                            id="progress"
+                                            min="0"
+                                            max="100"
+                                            value={data.progress}
+                                            onChange={(e) => setData('progress', parseInt(e.target.value))}
+                                            className="flex-1 accent-primary"
+                                        />
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            value={data.progress}
+                                            onChange={(e) => setData('progress', Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                                            className="w-20 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                        />
+                                    </div>
+                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
+                                        <div
+                                            className="bg-primary h-2 rounded-full transition-all duration-300"
+                                            style={{ width: `${data.progress}%` }}
+                                        ></div>
+                                    </div>
+                                    {errors.progress && <p className="mt-1 text-sm text-red-600">{errors.progress}</p>}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                     <div>
                                         <label htmlFor="due_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                             Due Date

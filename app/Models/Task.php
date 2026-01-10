@@ -6,6 +6,8 @@ use App\Traits\ClearsCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
@@ -152,6 +154,7 @@ class Task extends Model
         'description',
         'due_date',
         'priority',
+        'progress',
         'estimated_hours',
         'actual_hours',
         'notes',
@@ -279,11 +282,45 @@ class Task extends Model
     }
 
     /**
-     * Get all attachments for this task.
+     * Get all attachments for this task (generic polymorphic).
      */
     public function attachments(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
         return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    /**
+     * Get all task-specific attachments for this task.
+     */
+    public function taskAttachments(): HasMany
+    {
+        return $this->hasMany(TaskAttachment::class);
+    }
+
+    /**
+     * Get all comments for this task.
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(TaskComment::class);
+    }
+
+    /**
+     * Get all participants for this task.
+     */
+    public function participants(): HasMany
+    {
+        return $this->hasMany(TaskParticipant::class);
+    }
+
+    /**
+     * Get all users participating in this task through the pivot table.
+     */
+    public function participantUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'task_participants')
+            ->withPivot('role')
+            ->withTimestamps();
     }
 
     /**

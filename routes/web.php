@@ -110,6 +110,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('tasks.toggle-complete');
     Route::post('tasks/bulk-toggle-complete', [App\Http\Controllers\TaskController::class, 'bulkToggleComplete'])
         ->name('tasks.bulk-toggle-complete');
+    Route::patch('tasks/{task}/progress', [App\Http\Controllers\TaskController::class, 'updateProgress'])
+        ->name('tasks.update-progress');
+
+    // Task Participants
+    Route::post('tasks/{task}/participants', [App\Http\Controllers\TaskController::class, 'addParticipant'])
+        ->name('tasks.participants.add');
+    Route::patch('tasks/{task}/participants/{participant}', [App\Http\Controllers\TaskController::class, 'updateParticipant'])
+        ->name('tasks.participants.update');
+    Route::delete('tasks/{task}/participants/{participant}', [App\Http\Controllers\TaskController::class, 'removeParticipant'])
+        ->name('tasks.participants.remove');
+
+    // Task Comments
+    Route::post('tasks/{task}/comments', [App\Http\Controllers\TaskController::class, 'addComment'])
+        ->name('tasks.comments.add');
+    Route::patch('tasks/{task}/comments/{comment}', [App\Http\Controllers\TaskController::class, 'updateComment'])
+        ->name('tasks.comments.update');
+    Route::delete('tasks/{task}/comments/{comment}', [App\Http\Controllers\TaskController::class, 'deleteComment'])
+        ->name('tasks.comments.delete');
+
+    // Task Attachments
+    Route::post('tasks/{task}/attachments', [App\Http\Controllers\TaskController::class, 'addAttachment'])
+        ->name('tasks.attachments.add');
+    Route::delete('tasks/{task}/attachments/{attachment}', [App\Http\Controllers\TaskController::class, 'deleteAttachment'])
+        ->name('tasks.attachments.delete');
+    Route::get('tasks/{task}/attachments/{attachment}/download', [App\Http\Controllers\TaskController::class, 'downloadAttachment'])
+        ->name('tasks.attachments.download');
 
     // Program routes
     Route::resource('programs', App\Http\Controllers\ProgramController::class);

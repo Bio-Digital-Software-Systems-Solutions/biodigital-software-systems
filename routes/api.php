@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\PastoralCareController;
+use App\Http\Controllers\Api\SprintController;
 use App\Http\Controllers\TusUploadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -98,6 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'destroy' => 'api.tasks.destroy',
     ]);
     Route::patch('tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('api.tasks.updateStatus');
+    Route::patch('tasks/{task}/progress', [TaskController::class, 'updateProgress'])->name('api.tasks.updateProgress');
 
     // Task comments
     Route::post('tasks/{task}/comments', [TaskController::class, 'storeComment'])->name('api.tasks.storeComment');
@@ -110,6 +112,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Task attachments
     Route::post('tasks/{task}/attachments', [TaskController::class, 'uploadAttachment'])->name('api.tasks.uploadAttachment');
     Route::delete('tasks/{task}/attachments/{attachment}', [TaskController::class, 'deleteAttachment'])->name('api.tasks.deleteAttachment');
+
+    // Sprints API - Burn-down/Burn-up charts
+    Route::get('sprints/{sprint}/burndown', [SprintController::class, 'burndownChart'])->name('api.sprints.burndown');
 
     // Authenticated Pastoral Care API endpoints (for pastors)
     Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function () {

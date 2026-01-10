@@ -27,7 +27,10 @@ import {
     XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, ClockIcon, RocketLaunchIcon } from '@heroicons/react/24/solid';
+import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import BurndownChart from '@/Components/Charts/BurndownChart';
+import DateTimePicker from '@/Components/DateTimePicker';
 
 interface Attachment {
     id: number;
@@ -684,11 +687,12 @@ export default function SprintsIndex({ sprintsByStatus, projects, filters }: Pro
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label htmlFor="start_date">Date de début *</Label>
-                                    <Input
-                                        id="start_date"
-                                        type="date"
-                                        value={formData.start_date}
-                                        onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                                    <DateTimePicker
+                                        selected={formData.start_date ? new Date(formData.start_date) : null}
+                                        onChange={(date) => setFormData({ ...formData, start_date: date ? date.toISOString().split('T')[0] : '' })}
+                                        showTimeSelect={false}
+                                        dateFormat="dd/MM/yyyy"
+                                        placeholderText="Sélectionner une date"
                                     />
                                     {errors.start_date && (
                                         <p className="text-sm text-red-600 mt-1">{errors.start_date}</p>
@@ -697,11 +701,13 @@ export default function SprintsIndex({ sprintsByStatus, projects, filters }: Pro
 
                                 <div>
                                     <Label htmlFor="end_date">Date de fin *</Label>
-                                    <Input
-                                        id="end_date"
-                                        type="date"
-                                        value={formData.end_date}
-                                        onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                                    <DateTimePicker
+                                        selected={formData.end_date ? new Date(formData.end_date) : null}
+                                        onChange={(date) => setFormData({ ...formData, end_date: date ? date.toISOString().split('T')[0] : '' })}
+                                        showTimeSelect={false}
+                                        dateFormat="dd/MM/yyyy"
+                                        placeholderText="Sélectionner une date"
+                                        minDate={formData.start_date ? new Date(formData.start_date) : undefined}
                                     />
                                     {errors.end_date && (
                                         <p className="text-sm text-red-600 mt-1">{errors.end_date}</p>
@@ -763,11 +769,12 @@ export default function SprintsIndex({ sprintsByStatus, projects, filters }: Pro
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label htmlFor="edit_start_date">Date de début *</Label>
-                                    <Input
-                                        id="edit_start_date"
-                                        type="date"
-                                        value={formData.start_date}
-                                        onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                                    <DateTimePicker
+                                        selected={formData.start_date ? new Date(formData.start_date) : null}
+                                        onChange={(date) => setFormData({ ...formData, start_date: date ? date.toISOString().split('T')[0] : '' })}
+                                        showTimeSelect={false}
+                                        dateFormat="dd/MM/yyyy"
+                                        placeholderText="Sélectionner une date"
                                     />
                                     {errors.start_date && (
                                         <p className="text-sm text-red-600 mt-1">{errors.start_date}</p>
@@ -776,11 +783,13 @@ export default function SprintsIndex({ sprintsByStatus, projects, filters }: Pro
 
                                 <div>
                                     <Label htmlFor="edit_end_date">Date de fin *</Label>
-                                    <Input
-                                        id="edit_end_date"
-                                        type="date"
-                                        value={formData.end_date}
-                                        onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                                    <DateTimePicker
+                                        selected={formData.end_date ? new Date(formData.end_date) : null}
+                                        onChange={(date) => setFormData({ ...formData, end_date: date ? date.toISOString().split('T')[0] : '' })}
+                                        showTimeSelect={false}
+                                        dateFormat="dd/MM/yyyy"
+                                        placeholderText="Sélectionner une date"
+                                        minDate={formData.start_date ? new Date(formData.start_date) : undefined}
                                     />
                                     {errors.end_date && (
                                         <p className="text-sm text-red-600 mt-1">{errors.end_date}</p>
@@ -940,8 +949,20 @@ export default function SprintsIndex({ sprintsByStatus, projects, filters }: Pro
                                     </Card>
                                 )}
 
-                                {/* Tasks and Documents Accordion */}
+                                {/* Charts, Tasks and Documents Accordion */}
                                 <Accordion>
+                                    <AccordionItem value="burndown">
+                                        <AccordionTrigger>
+                                            <span className="text-base font-semibold flex items-center gap-2">
+                                                <ChartBarIcon className="h-5 w-5" />
+                                                Burn-down / Burn-up Chart
+                                            </span>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="p-4">
+                                            <BurndownChart sprintUuid={selectedSprint.uuid} chartType="both" />
+                                        </AccordionContent>
+                                    </AccordionItem>
+
                                     <AccordionItem value="tasks">
                                         <AccordionTrigger>
                                             <span className="text-base font-semibold">

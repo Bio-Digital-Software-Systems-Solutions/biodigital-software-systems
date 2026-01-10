@@ -5,8 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Program;
 use App\Models\Status;
 use App\Models\Task;
+use App\Models\TaskAttachment;
+use App\Models\TaskComment;
+use App\Models\TaskParticipant;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class TaskController extends Controller
@@ -115,6 +119,7 @@ class TaskController extends Controller
             'description' => 'nullable|string',
             'due_date' => 'nullable|date|after:today',
             'priority' => 'required|in:low,medium,high',
+            'progress' => 'nullable|integer|min:0|max:100',
             'estimated_hours' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'status_id' => 'required|exists:statuses,id',
@@ -162,10 +167,68 @@ class TaskController extends Controller
 
     public function show(Task $task)
     {
-        $task->load(['status', 'program', 'project', 'assignedUser']);
+        $task->load([
+            'status',
+            'program',
+            'project',
+            'assignedUser',
+            'participants.user',
+            'taskAttachments.user',
+        ]);
+
+        // Load comments separately to properly eager-load nested relations
+        $comments = $task->comments()
+            ->whereNull('parent_id')
+            ->with(['user', 'replies' => function ($query) {
+                $query->with('user')->orderBy('created_at', 'asc');
+            }])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $task->setRelation('comments', $comments);
+
+        // Load activity logs for status changes
+        $activities = $task->activities()
+            ->with('causer')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->filter(function ($activity) {
+                // Include created events or status_id changes
+                if ($activity->description === 'created') {
+                    return true;
+                }
+                $attributes = $activity->properties['attributes'] ?? [];
+
+                return isset($attributes['status_id']);
+            })
+            ->map(function ($activity) {
+                $oldStatusId = $activity->properties['old']['status_id'] ?? null;
+                $newStatusId = $activity->properties['attributes']['status_id'] ?? null;
+
+                $oldStatus = $oldStatusId ? Status::find($oldStatusId) : null;
+                $newStatus = $newStatusId ? Status::find($newStatusId) : null;
+
+                return [
+                    'id' => $activity->id,
+                    'description' => $activity->description,
+                    'old_status' => $oldStatus ? ['id' => $oldStatus->id, 'name' => $oldStatus->name, 'color' => $oldStatus->color] : null,
+                    'new_status' => $newStatus ? ['id' => $newStatus->id, 'name' => $newStatus->name, 'color' => $newStatus->color] : null,
+                    'causer' => $activity->causer ? [
+                        'id' => $activity->causer->id,
+                        'first_name' => $activity->causer->first_name,
+                        'last_name' => $activity->causer->last_name,
+                    ] : null,
+                    'created_at' => $activity->created_at->toISOString(),
+                ];
+            })
+            ->values();
+
+        $users = User::all();
 
         return Inertia::render('Tasks/Show', [
             'task' => $task,
+            'users' => $users,
+            'activities' => $activities,
         ]);
     }
 
@@ -193,6 +256,7 @@ class TaskController extends Controller
             'description' => 'nullable|string',
             'due_date' => 'nullable|date',
             'priority' => 'required|in:low,medium,high',
+            'progress' => 'nullable|integer|min:0|max:100',
             'estimated_hours' => 'nullable|numeric|min:0',
             'actual_hours' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
@@ -234,8 +298,8 @@ class TaskController extends Controller
 
         $task->update($validated);
 
-        return redirect()->route('tasks.index')
-            ->with('success', 'Task updated successfully.');
+        return redirect()->route('tasks.show', $task->uuid)
+            ->with('success', 'Tâche mise à jour avec succès.');
     }
 
     public function destroy(Task $task)
@@ -289,5 +353,206 @@ class TaskController extends Controller
         }
 
         return back()->with('success', 'Tasks updated successfully.');
+    }
+
+    /**
+     * Update just the progress of a task.
+     */
+    public function updateProgress(Request $request, Task $task)
+    {
+        $validated = $request->validate([
+            'progress' => 'required|integer|min:0|max:100',
+        ]);
+
+        $task->update(['progress' => $validated['progress']]);
+
+        return back()->with('success', 'Task progress updated successfully.');
+    }
+
+    // ==========================================
+    // Task Participants
+    // ==========================================
+
+    /**
+     * Add a participant to a task.
+     */
+    public function addParticipant(Request $request, Task $task)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'role' => 'required|string|max:50',
+        ]);
+
+        // Check if user is already a participant
+        $existing = TaskParticipant::where('task_id', $task->id)
+            ->where('user_id', $validated['user_id'])
+            ->first();
+
+        if ($existing) {
+            return back()->withErrors(['user_id' => 'User is already a participant on this task.']);
+        }
+
+        TaskParticipant::create([
+            'task_id' => $task->id,
+            'user_id' => $validated['user_id'],
+            'role' => $validated['role'],
+        ]);
+
+        return back()->with('success', 'Participant added successfully.');
+    }
+
+    /**
+     * Update a participant's role.
+     */
+    public function updateParticipant(Request $request, Task $task, TaskParticipant $participant)
+    {
+        $validated = $request->validate([
+            'role' => 'required|string|max:50',
+        ]);
+
+        $participant->update(['role' => $validated['role']]);
+
+        return back()->with('success', 'Participant role updated successfully.');
+    }
+
+    /**
+     * Remove a participant from a task.
+     */
+    public function removeParticipant(Task $task, TaskParticipant $participant)
+    {
+        $participant->delete();
+
+        return back()->with('success', 'Participant removed successfully.');
+    }
+
+    // ==========================================
+    // Task Comments
+    // ==========================================
+
+    /**
+     * Add a comment to a task.
+     */
+    public function addComment(Request $request, Task $task)
+    {
+        $validated = $request->validate([
+            'content' => 'required|string|max:10000',
+            'parent_id' => 'nullable|exists:task_comments,id',
+        ]);
+
+        TaskComment::create([
+            'task_id' => $task->id,
+            'user_id' => auth()->id(),
+            'content' => $validated['content'],
+            'parent_id' => $validated['parent_id'] ?? null,
+        ]);
+
+        $message = $validated['parent_id'] ? 'Reply added successfully.' : 'Comment added successfully.';
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Update a comment.
+     */
+    public function updateComment(Request $request, Task $task, TaskComment $comment)
+    {
+        // Only the comment author can edit their comment
+        if ($comment->user_id !== auth()->id()) {
+            abort(403, 'You can only edit your own comments.');
+        }
+
+        $validated = $request->validate([
+            'content' => 'required|string|max:10000',
+        ]);
+
+        $comment->update(['content' => $validated['content']]);
+
+        return back()->with('success', 'Comment updated successfully.');
+    }
+
+    /**
+     * Delete a comment.
+     */
+    public function deleteComment(Task $task, TaskComment $comment)
+    {
+        // Check if task is completed or closed - no deletion allowed
+        $taskStatus = $task->status?->name;
+        if (in_array($taskStatus, ['completed', 'closed', 'terminé', 'fermé'])) {
+            abort(403, 'Cannot delete comments on completed or closed tasks.');
+        }
+
+        // Only the comment author or super admin can delete the comment
+        $user = auth()->user();
+        $isSuperAdmin = $user->hasRole('super-admin');
+        $isAuthor = $comment->user_id === $user->id;
+
+        if (!$isAuthor && !$isSuperAdmin) {
+            abort(403, 'Only the comment author or super admin can delete this comment.');
+        }
+
+        $comment->delete();
+
+        return back()->with('success', 'Comment deleted successfully.');
+    }
+
+    // ==========================================
+    // Task Attachments
+    // ==========================================
+
+    /**
+     * Upload an attachment to a task.
+     */
+    public function addAttachment(Request $request, Task $task)
+    {
+        $validated = $request->validate([
+            'file' => 'required|file|max:51200', // Max 50MB
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store('task-attachments/' . $task->id, 'public');
+
+        TaskAttachment::create([
+            'task_id' => $task->id,
+            'user_id' => auth()->id(),
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'file_type' => $file->getClientOriginalExtension(),
+            'mime_type' => $file->getMimeType(),
+            'file_size' => $file->getSize(),
+        ]);
+
+        return back()->with('success', 'Attachment uploaded successfully.');
+    }
+
+    /**
+     * Delete an attachment.
+     */
+    public function deleteAttachment(Task $task, TaskAttachment $attachment)
+    {
+        // Only the uploader or admin can delete the attachment
+        if ($attachment->user_id !== auth()->id() && ! auth()->user()->can('delete attachments')) {
+            abort(403, 'You can only delete your own attachments.');
+        }
+
+        // Delete the file from storage
+        Storage::disk('public')->delete($attachment->file_path);
+
+        $attachment->delete();
+
+        return back()->with('success', 'Attachment deleted successfully.');
+    }
+
+    /**
+     * Download an attachment.
+     */
+    public function downloadAttachment(Task $task, TaskAttachment $attachment)
+    {
+        $path = Storage::disk('public')->path($attachment->file_path);
+
+        if (! file_exists($path)) {
+            abort(404, 'File not found.');
+        }
+
+        return response()->download($path, $attachment->file_name);
     }
 }

@@ -26,12 +26,27 @@ import {
 } from '@heroicons/react/24/outline';
 import { Button } from '@/Components/ui/button';
 
+interface Activity {
+    id: number;
+    type: 'project' | 'participant' | 'attachment' | 'task';
+    event: string;
+    description: string;
+    properties: Record<string, unknown>;
+    causer: {
+        id: number;
+        first_name: string;
+        last_name: string;
+    } | null;
+    created_at: string;
+}
+
 interface Props {
     project: Project;
     users: User[];
+    activities: Activity[];
 }
 
-export default function ShowProject({ project, users }: Props) {
+export default function ShowProject({ project, users, activities }: Props) {
     const [uploading, setUploading] = useState(false);
     const [commentContent, setCommentContent] = useState('');
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
@@ -40,6 +55,7 @@ export default function ShowProject({ project, users }: Props) {
     const [selectedUserId, setSelectedUserId] = useState('');
     const [selectedRole, setSelectedRole] = useState<'member' | 'contributor' | 'observer'>('member');
     const [tasksExpanded, setTasksExpanded] = useState(true);
+    const [historyExpanded, setHistoryExpanded] = useState(false);
     const { showSuccess, showError } = useToast();
     const confirm = useConfirm();
 
@@ -854,6 +870,136 @@ export default function ShowProject({ project, users }: Props) {
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Activity Feed */}
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+                            <button
+                                type="button"
+                                onClick={() => setHistoryExpanded(!historyExpanded)}
+                                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-lg"
+                            >
+                                <h2 className="text-lg font-semibold dark:text-white">
+                                    Historique
+                                    {activities && activities.length > 0 && (
+                                        <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                                            ({activities.length})
+                                        </span>
+                                    )}
+                                </h2>
+                                {historyExpanded ? (
+                                    <MinusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                ) : (
+                                    <PlusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                )}
+                            </button>
+                            {historyExpanded && (
+                                <div className="px-6 pb-6">
+                                    {activities && activities.length > 0 ? (
+                                        <div className="relative">
+                                            {/* Timeline line */}
+                                            <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
+
+                                            <div className="space-y-4">
+                                                {activities.map((activity, index) => {
+                                            const isCreated = activity.event === 'created';
+                                            const isDeleted = activity.event === 'deleted';
+                                            const isStatusChange = activity.type === 'project' && activity.description.includes('Statut');
+
+                                            const getIconColor = () => {
+                                                if (activity.type === 'project') {
+                                                    if (isCreated) return 'bg-purple-100 border-purple-500 dark:bg-purple-900/30';
+                                                    if (isStatusChange) return 'bg-blue-100 border-blue-500 dark:bg-blue-900/30';
+                                                    return 'bg-gray-100 border-gray-300 dark:bg-gray-700 dark:border-gray-600';
+                                                }
+                                                if (activity.type === 'participant') {
+                                                    return isCreated
+                                                        ? 'bg-green-100 border-green-500 dark:bg-green-900/30'
+                                                        : 'bg-red-100 border-red-500 dark:bg-red-900/30';
+                                                }
+                                                if (activity.type === 'attachment') {
+                                                    return isCreated
+                                                        ? 'bg-blue-100 border-blue-500 dark:bg-blue-900/30'
+                                                        : 'bg-red-100 border-red-500 dark:bg-red-900/30';
+                                                }
+                                                if (activity.type === 'task') {
+                                                    return isCreated
+                                                        ? 'bg-green-100 border-green-500 dark:bg-green-900/30'
+                                                        : 'bg-red-100 border-red-500 dark:bg-red-900/30';
+                                                }
+                                                return 'bg-gray-100 border-gray-300 dark:bg-gray-700 dark:border-gray-600';
+                                            };
+
+                                            const getIcon = () => {
+                                                if (activity.type === 'participant') {
+                                                    return isCreated ? (
+                                                        <UserPlusIcon className="w-3 h-3 text-green-600" />
+                                                    ) : (
+                                                        <TrashIcon className="w-3 h-3 text-red-600" />
+                                                    );
+                                                }
+                                                if (activity.type === 'attachment') {
+                                                    return isCreated ? (
+                                                        <PaperClipIcon className="w-3 h-3 text-blue-600" />
+                                                    ) : (
+                                                        <TrashIcon className="w-3 h-3 text-red-600" />
+                                                    );
+                                                }
+                                                if (activity.type === 'task') {
+                                                    return isCreated ? (
+                                                        <PlusIcon className="w-3 h-3 text-green-600" />
+                                                    ) : (
+                                                        <TrashIcon className="w-3 h-3 text-red-600" />
+                                                    );
+                                                }
+                                                if (isCreated) {
+                                                    return <CheckCircleIcon className="w-3 h-3 text-purple-600" />;
+                                                }
+                                                return (
+                                                    <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+                                                        {activities.length - index}
+                                                    </span>
+                                                );
+                                            };
+
+                                            return (
+                                                <div key={activity.id} className="relative flex items-start gap-3">
+                                                    {/* Timeline dot */}
+                                                    <div className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 ${getIconColor()}`}>
+                                                        {getIcon()}
+                                                    </div>
+
+                                                    {/* Content */}
+                                                    <div className="flex-1 min-w-0 pb-1">
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                            {activity.description}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                            {activity.causer
+                                                                ? `${activity.causer.first_name} ${activity.causer.last_name}`
+                                                                : 'Système'}
+                                                            {' • '}
+                                                            {new Date(activity.created_at).toLocaleString('fr-FR', {
+                                                                day: '2-digit',
+                                                                month: '2-digit',
+                                                                year: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                            })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                                            Aucun historique disponible
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

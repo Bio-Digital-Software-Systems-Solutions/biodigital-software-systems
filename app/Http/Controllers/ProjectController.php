@@ -235,6 +235,9 @@ class ProjectController extends Controller
         $totalTasks = $project->tasks()->count();
         $progress = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
 
+        // Load activity logs for the project and related models
+        $activities = $this->getProjectActivities($project);
+
         return Inertia::render('Projects/Show', [
             'project' => array_merge($project->toArray(), [
                 'progress' => $progress,
@@ -242,7 +245,156 @@ class ProjectController extends Controller
                 'comments' => $comments,
             ]),
             'users' => $users,
+            'activities' => $activities,
         ]);
+    }
+
+    /**
+     * Get all activities for a project including related models.
+     */
+    private function getProjectActivities(Project $project): \Illuminate\Support\Collection
+    {
+        // Get project's own activities
+        $projectActivities = $project->activities()
+            ->with('causer')
+            ->get()
+            ->map(fn ($a) => $this->formatActivity($a, 'project'));
+
+        // Get participant activities
+        $participantIds = $project->participants()->pluck('id');
+        $participantActivities = \Spatie\Activitylog\Models\Activity::query()
+            ->where('subject_type', \App\Models\ProjectParticipant::class)
+            ->whereIn('subject_id', $participantIds)
+            ->with('causer')
+            ->get()
+            ->map(fn ($a) => $this->formatActivity($a, 'participant'));
+
+        // Get attachment activities
+        $attachmentIds = $project->attachments()->pluck('id');
+        $attachmentActivities = \Spatie\Activitylog\Models\Activity::query()
+            ->where('subject_type', \App\Models\ProjectAttachment::class)
+            ->whereIn('subject_id', $attachmentIds)
+            ->with('causer')
+            ->get()
+            ->map(fn ($a) => $this->formatActivity($a, 'attachment'));
+
+        // Get task activities (only created/deleted for project tasks)
+        $taskIds = $project->tasks()->pluck('id');
+        $taskActivities = \Spatie\Activitylog\Models\Activity::query()
+            ->where('subject_type', \App\Models\Task::class)
+            ->whereIn('subject_id', $taskIds)
+            ->whereIn('description', ['created', 'deleted'])
+            ->with('causer')
+            ->get()
+            ->map(fn ($a) => $this->formatActivity($a, 'task'));
+
+        // Merge and sort by date
+        return $projectActivities
+            ->merge($participantActivities)
+            ->merge($attachmentActivities)
+            ->merge($taskActivities)
+            ->sortByDesc('created_at')
+            ->values()
+            ->take(50); // Limit to last 50 activities
+    }
+
+    /**
+     * Format an activity for the frontend.
+     */
+    private function formatActivity($activity, string $type): array
+    {
+        $properties = $activity->properties->toArray();
+        $description = $this->getActivityDescription($activity, $type, $properties);
+
+        return [
+            'id' => $activity->id,
+            'type' => $type,
+            'event' => $activity->description,
+            'description' => $description,
+            'properties' => $properties,
+            'causer' => $activity->causer ? [
+                'id' => $activity->causer->id,
+                'first_name' => $activity->causer->first_name,
+                'last_name' => $activity->causer->last_name,
+            ] : null,
+            'created_at' => $activity->created_at->toISOString(),
+        ];
+    }
+
+    /**
+     * Get human-readable description for an activity.
+     */
+    private function getActivityDescription($activity, string $type, array $properties): string
+    {
+        $event = $activity->description;
+
+        return match ($type) {
+            'project' => match ($event) {
+                'created' => 'Projet créé',
+                'updated' => $this->getProjectUpdateDescription($properties),
+                'deleted' => 'Projet supprimé',
+                default => 'Projet modifié',
+            },
+            'participant' => match ($event) {
+                'created' => 'Participant ajouté',
+                'deleted' => 'Participant retiré',
+                default => 'Participant modifié',
+            },
+            'attachment' => match ($event) {
+                'created' => 'Document ajouté: ' . ($properties['attributes']['file_name'] ?? 'fichier'),
+                'deleted' => 'Document supprimé',
+                default => 'Document modifié',
+            },
+            'task' => match ($event) {
+                'created' => 'Tâche ajoutée: ' . ($properties['attributes']['title'] ?? 'tâche'),
+                'deleted' => 'Tâche supprimée',
+                default => 'Tâche modifiée',
+            },
+            default => 'Modification',
+        };
+    }
+
+    /**
+     * Get description for project update based on changed fields.
+     */
+    private function getProjectUpdateDescription(array $properties): string
+    {
+        $attributes = $properties['attributes'] ?? [];
+        $old = $properties['old'] ?? [];
+
+        if (isset($attributes['status']) && isset($old['status'])) {
+            return "Statut changé de {$old['status']} à {$attributes['status']}";
+        }
+
+        if (isset($attributes['priority'])) {
+            return 'Priorité modifiée';
+        }
+
+        if (isset($attributes['name'])) {
+            return 'Nom du projet modifié';
+        }
+
+        if (isset($attributes['description'])) {
+            return 'Description modifiée';
+        }
+
+        if (isset($attributes['start_date']) || isset($attributes['end_date'])) {
+            return 'Dates du projet modifiées';
+        }
+
+        if (isset($attributes['budget'])) {
+            return 'Budget modifié';
+        }
+
+        if (isset($attributes['project_manager_id'])) {
+            return 'Chef de projet modifié';
+        }
+
+        if (isset($attributes['reviewer_id'])) {
+            return 'Réviseur modifié';
+        }
+
+        return 'Projet mis à jour';
     }
 
     public function edit(Project $project)
@@ -331,18 +483,18 @@ class ProjectController extends Controller
 
         $tasks = $query->latest()->get();
 
-        // Group tasks by status name
+        // Group tasks by status name (convert to array for JavaScript)
         $tasksByStatus = [
             'todo' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'todo')
-                ->values()->map(fn ($task) => $this->formatTaskForKanban($task)),
+                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
             'in_progress' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'in_progress')
-                ->values()->map(fn ($task) => $this->formatTaskForKanban($task)),
+                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
             'under_review' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'under_review')
-                ->values()->map(fn ($task) => $this->formatTaskForKanban($task)),
+                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
             'blocked' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'blocked')
-                ->values()->map(fn ($task) => $this->formatTaskForKanban($task)),
+                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
             'completed' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'completed')
-                ->values()->map(fn ($task) => $this->formatTaskForKanban($task)),
+                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
         ];
 
         // Get filter data

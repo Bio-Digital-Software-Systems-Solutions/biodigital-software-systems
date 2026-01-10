@@ -6,6 +6,7 @@ use App\Traits\ClearsCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
@@ -50,6 +51,7 @@ class TaskComment extends Model
         'task_id',
         'user_id',
         'content',
+        'parent_id',
     ];
 
     public function task(): BelongsTo
@@ -60,5 +62,15 @@ class TaskComment extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(TaskComment::class, 'parent_id');
+    }
+
+    public function replies(): HasMany
+    {
+        return $this->hasMany(TaskComment::class, 'parent_id')->orderBy('created_at', 'asc');
     }
 }

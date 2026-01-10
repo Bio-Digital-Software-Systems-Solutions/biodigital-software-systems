@@ -4,6 +4,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent } from '@/Components/ui/card';
 import { Project } from '@/Types/Project';
+import TaskDetailsModal from '@/Components/Projects/TaskDetailsModal';
 import {
     ArrowLeftIcon,
     ChevronLeftIcon,
@@ -11,6 +12,18 @@ import {
     ChartBarIcon,
     CalendarIcon,
 } from '@heroicons/react/24/outline';
+
+interface GanttTask {
+    id: string;
+    uuid: string;
+    name: string;
+    start: string;
+    end: string;
+    progress: number;
+    assignee?: string;
+    priority: string;
+    status: string;
+}
 
 interface Props {
     project: Project;
@@ -23,6 +36,28 @@ export default function ProjectGantt({ project }: Props) {
     const [viewMode, setViewMode] = useState<ViewMode>('month');
     const [displayMode, setDisplayMode] = useState<DisplayMode>('gantt');
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [selectedTask, setSelectedTask] = useState<GanttTask | null>(null);
+
+    // Convert task to GanttTask format for the modal
+    const convertToGanttTask = (task: any, dates: { start: string; end: string }): GanttTask => {
+        const statusName = typeof task.status === 'object' ? task.status?.name : task.status;
+        const progress = statusName === 'completed' || statusName === 'done' ? 100
+            : statusName === 'under_review' || statusName === 'in_review' ? 75
+            : statusName === 'in_progress' ? 50
+            : 0;
+
+        return {
+            id: task.id?.toString() || '',
+            uuid: task.uuid || '',
+            name: task.title || '',
+            start: dates.start,
+            end: dates.end,
+            progress,
+            assignee: task.assignee ? `${task.assignee.first_name} ${task.assignee.last_name}` : undefined,
+            priority: task.priority || 'medium',
+            status: statusName || 'todo',
+        };
+    };
 
     // Generate timeline based on view mode
     const timeline = useMemo(() => {
@@ -158,7 +193,45 @@ export default function ProjectGantt({ project }: Props) {
     };
 
     const calculateTaskProgress = (task: any) => {
-        return task.status === 'done' ? 100 : task.status === 'in_review' ? 75 : task.status === 'in_progress' ? 50 : 0;
+        const statusName = typeof task.status === 'object' ? task.status?.name : task.status;
+        return statusName === 'completed' || statusName === 'done' ? 100
+            : statusName === 'under_review' || statusName === 'in_review' ? 75
+            : statusName === 'in_progress' ? 50
+            : 0;
+    };
+
+    // Get task start and end dates, falling back to created_at and due_date
+    const getTaskDates = (task: any): { start: string | null; end: string | null } => {
+        const startDate = task.started_at || task.start_date || task.created_at;
+        const endDate = task.due_date || task.end_date;
+
+        // If we have both dates, return them
+        if (startDate && endDate) {
+            return { start: startDate, end: endDate };
+        }
+
+        // If we only have due_date, use created_at or 7 days before as start
+        if (endDate) {
+            const end = new Date(endDate);
+            const start = task.created_at ? new Date(task.created_at) : new Date(end);
+            if (!task.created_at) {
+                start.setDate(start.getDate() - 7); // Default 7 days duration
+            }
+            return { start: start.toISOString(), end: endDate };
+        }
+
+        // If we only have start date, use today or 7 days after as end
+        if (startDate) {
+            const start = new Date(startDate);
+            const end = new Date();
+            if (end < start) {
+                end.setTime(start.getTime());
+                end.setDate(end.getDate() + 7);
+            }
+            return { start: startDate, end: end.toISOString() };
+        }
+
+        return { start: null, end: null };
     };
 
     return (
@@ -288,10 +361,20 @@ export default function ProjectGantt({ project }: Props) {
                                     {project.tasks && project.tasks.length > 0 ? (
                                         project.tasks.map((task) => {
                                             const taskProgress = calculateTaskProgress(task);
+                                            const dates = getTaskDates(task);
+                                            const hasDates = dates.start && dates.end;
+                                            const inView = hasDates && isTaskInView(dates.start!, dates.end!);
+
+                                            const handleTaskClick = () => {
+                                                if (hasDates) {
+                                                    setSelectedTask(convertToGanttTask(task, { start: dates.start!, end: dates.end! }));
+                                                }
+                                            };
+
                                             return (
-                                                <Link
+                                                <div
                                                     key={task.id}
-                                                    href={route('projects.board', project.uuid)}
+                                                    onClick={handleTaskClick}
                                                     className="flex hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
                                                 >
                                                     <div className="w-64 p-4 border-r border-gray-200 dark:border-gray-700">
@@ -303,7 +386,7 @@ export default function ProjectGantt({ project }: Props) {
                                                         </div>
                                                     </div>
                                                     <div className="flex-1 relative py-4 px-2">
-                                                        {task.started_at && task.due_date && isTaskInView(task.started_at, task.due_date) ? (
+                                                        {inView ? (
                                                             <div
                                                                 className={`absolute h-6 rounded shadow-sm transition-all hover:shadow-lg hover:scale-105 ${
                                                                     task.priority === 'highest' || task.priority === 'high'
@@ -312,12 +395,16 @@ export default function ProjectGantt({ project }: Props) {
                                                                         ? 'bg-yellow-500'
                                                                         : 'bg-primary'
                                                                 }`}
-                                                                style={calculateBarPosition(task.started_at, task.due_date)}
+                                                                style={calculateBarPosition(dates.start!, dates.end!)}
                                                             >
                                                                 <div
                                                                     className={`h-full rounded ${getProgressColor(taskProgress)}`}
                                                                     style={{ width: `${taskProgress}%`, opacity: 0.6 }}
                                                                 />
+                                                            </div>
+                                                        ) : hasDates ? (
+                                                            <div className="text-xs text-gray-400 dark:text-gray-500 italic">
+                                                                Hors période affichée
                                                             </div>
                                                         ) : (
                                                             <div className="text-xs text-gray-400 dark:text-gray-500 italic">
@@ -325,7 +412,7 @@ export default function ProjectGantt({ project }: Props) {
                                                             </div>
                                                         )}
                                                     </div>
-                                                </Link>
+                                                </div>
                                             );
                                         })
                                     ) : (
@@ -373,14 +460,20 @@ export default function ProjectGantt({ project }: Props) {
                                         {project.tasks && project.tasks.length > 0 ? (
                                             project.tasks.map((task) => {
                                                 const taskProgress = calculateTaskProgress(task);
-                                                if (!task.started_at || !task.due_date || !isTaskInView(task.started_at, task.due_date)) {
+                                                const dates = getTaskDates(task);
+
+                                                if (!dates.start || !dates.end || !isTaskInView(dates.start, dates.end)) {
                                                     return null;
                                                 }
 
+                                                const handleTaskClick = () => {
+                                                    setSelectedTask(convertToGanttTask(task, { start: dates.start!, end: dates.end! }));
+                                                };
+
                                                 return (
                                                     <div key={task.id} className="relative h-8">
-                                                        <Link
-                                                            href={route('projects.board', project.uuid)}
+                                                        <div
+                                                            onClick={handleTaskClick}
                                                             className={`absolute h-8 rounded shadow-sm flex items-center px-2 transition-all hover:shadow-lg hover:scale-105 cursor-pointer ${
                                                                 task.priority === 'highest' || task.priority === 'high'
                                                                     ? 'bg-red-500 hover:bg-red-600'
@@ -388,7 +481,7 @@ export default function ProjectGantt({ project }: Props) {
                                                                     ? 'bg-yellow-500 hover:bg-yellow-600'
                                                                     : 'bg-primary hover:bg-primary'
                                                             }`}
-                                                            style={calculateBarPosition(task.started_at, task.due_date)}
+                                                            style={calculateBarPosition(dates.start, dates.end)}
                                                             title={`${task.title} - ${task.assignee ? `${task.assignee.first_name} ${task.assignee.last_name}` : 'Non assigné'}`}
                                                         >
                                                             <div className="text-white text-xs truncate">
@@ -398,7 +491,7 @@ export default function ProjectGantt({ project }: Props) {
                                                                 className="absolute bottom-0 left-0 h-1 bg-green-400"
                                                                 style={{ width: `${taskProgress}%` }}
                                                             />
-                                                        </Link>
+                                                        </div>
                                                     </div>
                                                 );
                                             })
@@ -418,11 +511,22 @@ export default function ProjectGantt({ project }: Props) {
                 <Card>
                     <CardContent className="p-4">
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            💡 Cliquez sur une tâche pour accéder au tableau Kanban du projet
+                            Cliquez sur une tâche pour afficher ses détails
                         </p>
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Task Details Modal */}
+            {selectedTask && (
+                <TaskDetailsModal
+                    isOpen={true}
+                    onClose={() => setSelectedTask(null)}
+                    task={selectedTask}
+                    projectName={project.name}
+                    projectColor={project.color}
+                />
+            )}
         </DashboardLayout>
     );
 }

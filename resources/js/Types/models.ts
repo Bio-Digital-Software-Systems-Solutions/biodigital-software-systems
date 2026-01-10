@@ -187,6 +187,43 @@ export interface Program {
     updated_at: string;
 }
 
+export interface TaskParticipant {
+    id: number;
+    task_id: number;
+    user_id: number;
+    role: string;
+    user: User;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TaskComment {
+    id: number;
+    task_id: number;
+    user_id: number;
+    content: string;
+    parent_id: number | null;
+    user: User;
+    replies?: TaskComment[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TaskAttachment {
+    id: number;
+    task_id: number;
+    user_id: number;
+    file_name: string;
+    file_path: string;
+    file_type: string;
+    mime_type: string;
+    file_size: number;
+    file_url: string;
+    user: User;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface Task {
     id: number;
     uuid: string;
@@ -194,6 +231,7 @@ export interface Task {
     description: string;
     due_date: string | null;
     priority: 'low' | 'medium' | 'high';
+    progress: number;
     estimated_hours: number | null;
     actual_hours: number | null;
     notes: string | null;
@@ -204,6 +242,9 @@ export interface Task {
     status: Status;
     program?: Program;
     assigned_user?: User;
+    participants?: TaskParticipant[];
+    comments?: TaskComment[];
+    task_attachments?: TaskAttachment[];
     created_at: string;
     updated_at: string;
 }

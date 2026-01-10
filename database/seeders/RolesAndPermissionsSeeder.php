@@ -336,6 +336,24 @@ class RolesAndPermissionsSeeder extends Seeder
             'view reports',
         ]);
 
+        // Pastor - Pastoral care management
+        $pastor = Role::firstOrCreate(['name' => 'pastor']);
+        $pastor->syncPermissions([
+            // Viewing permissions
+            'view articles', 'view events', 'attend events', 'view videos', 'view books', 'view users', 'view departments',
+            // Appointments
+            'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
+            // Pastoral Care
+            'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
+            // Messages & Chat
+            'view messages', 'create messages', 'edit messages', 'delete messages',
+            'use chat',
+            // Groups
+            'view groups', 'manage group members',
+            // Reports
+            'view reports',
+        ]);
+
         // Backward compatibility aliases for PascalCase role names
         $superAdmin = Role::firstOrCreate(['name' => 'SuperAdmin']);
         $superAdmin->syncPermissions(Permission::all());
