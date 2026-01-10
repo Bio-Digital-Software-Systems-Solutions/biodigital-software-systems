@@ -7,8 +7,11 @@ use App\Models\Project;
 use App\Models\ProjectAttachment;
 use App\Models\ProjectComment;
 use App\Models\ProjectParticipant;
+use App\Models\User;
+use App\Notifications\ProjectParticipantAdded;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -128,10 +131,25 @@ class ProjectController extends Controller
             'role' => 'required|in:member,contributor,observer',
         ]);
 
+        // Check if already a participant
+        $existingParticipant = $project->participants()
+            ->where('user_id', $validated['user_id'])
+            ->first();
+
         $participant = $project->participants()->updateOrCreate(
             ['user_id' => $validated['user_id']],
             ['role' => $validated['role']]
         );
+
+        // Send notification only if this is a new participant
+        if (! $existingParticipant) {
+            $user = User::find($validated['user_id']);
+            $addedBy = Auth::user();
+
+            if ($user && $addedBy && $user->id !== $addedBy->id) {
+                $user->notify(new ProjectParticipantAdded($project, $validated['role'], $addedBy));
+            }
+        }
 
         return response()->json($participant->load('user'), 201);
     }

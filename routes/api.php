@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\ProjectAppointmentController;
+use App\Http\Controllers\Api\TaskAppointmentController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\PastoralCareController;
 use App\Http\Controllers\Api\SprintController;
@@ -115,6 +117,24 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Sprints API - Burn-down/Burn-up charts
     Route::get('sprints/{sprint}/burndown', [SprintController::class, 'burndownChart'])->name('api.sprints.burndown');
+
+    // Project Appointments API
+    Route::prefix('projects/{project:uuid}/appointments')->name('api.projects.appointments.')->group(function () {
+        Route::get('/', [ProjectAppointmentController::class, 'index'])->name('index');
+        Route::get('/month', [ProjectAppointmentController::class, 'month'])->name('month');
+        Route::post('/', [ProjectAppointmentController::class, 'store'])->name('store');
+        Route::patch('/{appointment}', [ProjectAppointmentController::class, 'update'])->name('update');
+        Route::delete('/{appointment}', [ProjectAppointmentController::class, 'destroy'])->name('destroy');
+    });
+
+    // Task Appointments API
+    Route::prefix('tasks/{task:uuid}/appointments')->name('api.tasks.appointments.')->group(function () {
+        Route::get('/', [TaskAppointmentController::class, 'index'])->name('index');
+        Route::get('/month', [TaskAppointmentController::class, 'month'])->name('month');
+        Route::post('/', [TaskAppointmentController::class, 'store'])->name('store');
+        Route::patch('/{appointment}', [TaskAppointmentController::class, 'update'])->name('update');
+        Route::delete('/{appointment}', [TaskAppointmentController::class, 'destroy'])->name('destroy');
+    });
 
     // Authenticated Pastoral Care API endpoints (for pastors)
     Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function () {

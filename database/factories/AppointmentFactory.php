@@ -39,6 +39,7 @@ class AppointmentFactory extends Factory
             'location' => $this->faker->optional(0.6)->address(),
             'status' => $this->faker->randomElement(['pending', 'confirmed', 'cancelled', 'completed']),
             'type' => $this->faker->randomElement(['individual', 'group', 'consultation', 'meeting']),
+            'visibility' => $this->faker->randomElement(['public', 'private']),
             'user_id' => User::factory(),
             'appointmentable_type' => null,
             'appointmentable_id' => null,

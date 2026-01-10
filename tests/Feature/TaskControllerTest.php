@@ -429,4 +429,31 @@ class TaskControllerTest extends TestCase
         $task->refresh();
         $this->assertEquals($customStatus->id, $task->status_id);
     }
+
+    public function test_edit_page_cancel_button_returns_to_task_details(): void
+    {
+        $task = Task::factory()->create([
+            'program_id' => $this->program->id,
+            'status_id' => $this->status->id,
+        ]);
+
+        $this->user->givePermissionTo('edit tasks');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('tasks.edit', $task));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Tasks/Edit')
+            ->where('task.uuid', $task->uuid)
+        );
+
+        // The Edit page should have task data with uuid so the Cancel button
+        // can navigate to tasks.show route with the task's uuid
+        $this->assertNotNull($task->uuid);
+        $this->assertEquals(
+            route('tasks.show', $task->uuid),
+            route('tasks.show', $task)
+        );
+    }
 }

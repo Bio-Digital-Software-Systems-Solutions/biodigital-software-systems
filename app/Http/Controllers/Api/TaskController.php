@@ -7,7 +7,10 @@ use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\TaskComment;
 use App\Models\TaskParticipant;
+use App\Models\User;
+use App\Notifications\TaskParticipantAdded;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class TaskController extends Controller
@@ -192,6 +195,14 @@ class TaskController extends Controller
             'user_id' => $validated['user_id'],
             'role' => $validated['role'],
         ]);
+
+        // Send notification to the new participant
+        $user = User::find($validated['user_id']);
+        $addedBy = Auth::user();
+
+        if ($user && $addedBy && $user->id !== $addedBy->id) {
+            $user->notify(new TaskParticipantAdded($task, $validated['role'], $addedBy));
+        }
 
         return response()->json($participant->load('user'), 201);
     }

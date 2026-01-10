@@ -378,7 +378,7 @@ export default function Edit({ task, programs, projects, statuses, users }: Prop
 
                                 <div className="flex justify-end space-x-3">
                                     <Link
-                                        href={route('tasks.index')}
+                                        href={route('tasks.show', task.uuid)}
                                         className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                                     >
                                         Cancel

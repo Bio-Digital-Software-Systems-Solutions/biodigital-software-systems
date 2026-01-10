@@ -77,7 +77,7 @@ export default function DashboardLayout({ children, title, description, actions,
     const navigation: NavItem[] = [
         { name: t('dashboard'), href: '/dashboard', icon: HomeIcon, current: true },
         { name: t('events'), href: '/events', icon: CalendarDaysIcon, permission: 'view events' },
-        //{ name: t('appointments'), href: '/appointments', icon: CalendarDaysIcon, permission: 'view appointments' },
+        { name: t('appointments'), href: '/appointments', icon: CalendarDaysIcon, permission: 'view appointments' },
         { name: 'Soins Pastoraux', href: '/pastoral-care/appointments', icon: HeartIcon, permission: 'view pastoral care' },
         //{ name: 'Prendre RDV Pastoral', href: '/pastoral-care/book', icon: CalendarDaysIcon },
         { name: 'Mes Disponibilités', href: '/pastoral-availability', icon: ClockIcon, permission: 'manage pastor availability' },

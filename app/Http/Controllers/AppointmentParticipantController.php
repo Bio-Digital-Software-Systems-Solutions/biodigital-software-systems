@@ -45,13 +45,8 @@ class AppointmentParticipantController extends Controller
             'responded_at' => now(),
         ]);
 
-        // Notify organizer and other participants
-        // Note: organizer and participants are already loaded via route model binding
-
-        // Notify organizer
-        $appointment->organizer->notify(
-            new AppointmentConfirmation($appointment, $participant, 'confirmed')
-        );
+        // Notify organizer and all other participants
+        $this->notifyAllParticipants($appointment, $participant, 'confirmed');
 
         return Inertia::render('Appointments/ConfirmationSuccess', [
             'appointment' => $appointment->only(['title', 'start_datetime', 'location', 'description']),
@@ -105,15 +100,45 @@ class AppointmentParticipantController extends Controller
             'response_message' => $message,
         ]);
 
-        // Notify organizer
-        // Note: organizer is already loaded via route model binding
-        $appointment->organizer->notify(
-            new AppointmentConfirmation($appointment, $participant, 'declined')
-        );
+        // Notify organizer and all other participants
+        $this->notifyAllParticipants($appointment, $participant, 'declined');
 
         return Inertia::render('Appointments/DeclineSuccess', [
             'appointment' => $appointment->only(['title', 'start_datetime']),
             'participant' => $participant->only(['first_name', 'last_name']),
         ]);
+    }
+
+    /**
+     * Notify the organizer and all other participants about a confirmation/decline.
+     */
+    private function notifyAllParticipants(Appointment $appointment, User $respondingParticipant, string $status): void
+    {
+        // Reload participants to get fresh data
+        $appointment->load(['organizer', 'participants']);
+
+        // Notify the organizer (if they are not the responding participant)
+        if ($appointment->organizer && $appointment->organizer->id !== $respondingParticipant->id) {
+            $appointment->organizer->notify(
+                new AppointmentConfirmation($appointment, $respondingParticipant, $status)
+            );
+        }
+
+        // Notify all other participants (excluding the responding participant)
+        foreach ($appointment->participants as $participant) {
+            // Skip the responding participant
+            if ($participant->id === $respondingParticipant->id) {
+                continue;
+            }
+
+            // Skip the organizer (already notified above)
+            if ($appointment->organizer && $participant->id === $appointment->organizer->id) {
+                continue;
+            }
+
+            $participant->notify(
+                new AppointmentConfirmation($appointment, $respondingParticipant, $status)
+            );
+        }
     }
 }

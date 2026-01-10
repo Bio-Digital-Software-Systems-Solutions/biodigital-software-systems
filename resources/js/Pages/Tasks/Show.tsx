@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Task, Program, Status, User, TaskParticipant, TaskComment, TaskAttachment, PageProps } from '@/Types';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import { useToast } from '@/Components/ui/toast';
 import { useConfirm } from '@/Components/ui/confirm-dialog';
+import TaskCalendarWidget from '@/Components/Calendar/TaskCalendarWidget';
+import CreateTaskAppointmentModal from '@/Components/Calendar/CreateTaskAppointmentModal';
+import TaskAppointmentDetailModal from '@/Components/Calendar/TaskAppointmentDetailModal';
+import axios from 'axios';
 import {
     ArrowLeftIcon,
     PencilIcon,
@@ -19,6 +23,7 @@ import {
     ArrowUturnLeftIcon,
     PlusIcon,
     MinusIcon,
+    CalendarIcon,
 } from '@heroicons/react/24/outline';
 
 interface Project {
@@ -73,8 +78,17 @@ export default function Show({ task, users, activities }: Props) {
     const [editingProgress, setEditingProgress] = useState(false);
     const [progressValue, setProgressValue] = useState(task.progress || 0);
     const [historyExpanded, setHistoryExpanded] = useState(false);
+    const [calendarExpanded, setCalendarExpanded] = useState(true);
     const { showSuccess, showError } = useToast();
     const confirm = useConfirm();
+
+    // Calendar state
+    const [appointments, setAppointments] = useState<any[]>([]);
+    const [loadingAppointments, setLoadingAppointments] = useState(false);
+    const [showCreateAppointmentModal, setShowCreateAppointmentModal] = useState(false);
+    const [selectedAppointmentDate, setSelectedAppointmentDate] = useState<Date>(new Date());
+    const [showAppointmentDetailModal, setShowAppointmentDetailModal] = useState(false);
+    const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
     // Show flash messages
     useEffect(() => {
@@ -85,6 +99,46 @@ export default function Show({ task, users, activities }: Props) {
             showError(flash.error);
         }
     }, [flash]);
+
+    // Load appointments for the task
+    const fetchAppointments = useCallback(async () => {
+        setLoadingAppointments(true);
+        try {
+            const response = await axios.get(`/api/tasks/${task.uuid}/appointments`);
+            setAppointments(response.data.data || []);
+        } catch (error) {
+            console.error('Error fetching appointments:', error);
+        } finally {
+            setLoadingAppointments(false);
+        }
+    }, [task.uuid]);
+
+    useEffect(() => {
+        fetchAppointments();
+    }, [fetchAppointments]);
+
+    const handleCreateAppointmentClick = (date: Date) => {
+        setSelectedAppointmentDate(date);
+        setShowCreateAppointmentModal(true);
+    };
+
+    const handleAppointmentClick = (appointment: any) => {
+        setSelectedAppointment(appointment);
+        setShowAppointmentDetailModal(true);
+    };
+
+    const handleAppointmentCreated = () => {
+        fetchAppointments();
+    };
+
+    const handleAppointmentUpdated = () => {
+        fetchAppointments();
+    };
+
+    const handleAppointmentDeleted = () => {
+        fetchAppointments();
+        setShowAppointmentDetailModal(false);
+    };
 
     // Check if task is completed or closed (cannot delete comments)
     const isTaskClosed = ['completed', 'closed', 'terminé', 'fermé'].includes(task.status?.name?.toLowerCase() || '');
@@ -135,6 +189,7 @@ export default function Show({ task, users, activities }: Props) {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
                 },
                 body: JSON.stringify({ progress: progressValue }),
@@ -907,6 +962,47 @@ export default function Show({ task, users, activities }: Props) {
                             </div>
                         </div>
 
+                        {/* Calendar Widget */}
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+                            <button
+                                type="button"
+                                onClick={() => setCalendarExpanded(!calendarExpanded)}
+                                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-t-lg"
+                            >
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                    <CalendarIcon className="h-5 w-5" />
+                                    Calendrier
+                                    {appointments.length > 0 && (
+                                        <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                                            ({appointments.length})
+                                        </span>
+                                    )}
+                                </h3>
+                                {calendarExpanded ? (
+                                    <MinusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                ) : (
+                                    <PlusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                )}
+                            </button>
+                            {calendarExpanded && (
+                                <div className="px-6 pb-6">
+                                    {loadingAppointments ? (
+                                        <div className="flex items-center justify-center py-8">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                        </div>
+                                    ) : (
+                                        <TaskCalendarWidget
+                                            taskId={task.id}
+                                            taskUuid={task.uuid}
+                                            appointments={appointments}
+                                            onCreateClick={handleCreateAppointmentClick}
+                                            onAppointmentClick={handleAppointmentClick}
+                                        />
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
                         {/* Activity Feed */}
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
                             <button
@@ -1036,6 +1132,30 @@ export default function Show({ task, users, activities }: Props) {
                 onConfirm={confirmDelete}
                 title="Supprimer la tâche"
                 description={`Êtes-vous sûr de vouloir supprimer la tâche "${task.title}" ? Cette action est irréversible.`}
+            />
+
+            {/* Create Appointment Modal */}
+            <CreateTaskAppointmentModal
+                isOpen={showCreateAppointmentModal}
+                onClose={() => setShowCreateAppointmentModal(false)}
+                onSuccess={handleAppointmentCreated}
+                taskId={task.id}
+                taskUuid={task.uuid}
+                users={users}
+                initialDate={selectedAppointmentDate}
+            />
+
+            {/* Appointment Detail Modal */}
+            <TaskAppointmentDetailModal
+                isOpen={showAppointmentDetailModal}
+                onClose={() => setShowAppointmentDetailModal(false)}
+                onUpdate={handleAppointmentUpdated}
+                onDelete={handleAppointmentDeleted}
+                appointment={selectedAppointment}
+                taskId={task.id}
+                taskUuid={task.uuid}
+                users={users}
+                canEdit={true}
             />
         </DashboardLayout>
     );

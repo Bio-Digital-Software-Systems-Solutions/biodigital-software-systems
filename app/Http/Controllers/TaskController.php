@@ -366,6 +366,14 @@ class TaskController extends Controller
 
         $task->update(['progress' => $validated['progress']]);
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Task progress updated successfully.',
+                'progress' => $task->progress,
+            ]);
+        }
+
         return back()->with('success', 'Task progress updated successfully.');
     }
 

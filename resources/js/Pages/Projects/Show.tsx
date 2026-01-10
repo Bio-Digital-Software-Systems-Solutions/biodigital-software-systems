@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Project, ProjectParticipant, ProjectComment, ProjectAttachment, TaskStatus } from '@/Types/Project';
@@ -22,9 +22,14 @@ import {
     MinusIcon,
     CheckCircleIcon,
     ClockIcon,
-    ArrowLeftIcon
+    ArrowLeftIcon,
+    CalendarIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/Components/ui/button';
+import ProjectCalendarWidget from '@/Components/Calendar/ProjectCalendarWidget';
+import CreateAppointmentModal from '@/Components/Calendar/CreateAppointmentModal';
+import AppointmentDetailModal from '@/Components/Calendar/AppointmentDetailModal';
+import axios from 'axios';
 
 interface Activity {
     id: number;
@@ -38,6 +43,39 @@ interface Activity {
         last_name: string;
     } | null;
     created_at: string;
+}
+
+interface AppointmentParticipant {
+    id: number;
+    first_name: string;
+    last_name: string;
+    status: string;
+}
+
+interface Appointment {
+    id: number;
+    uuid: string;
+    title: string;
+    description?: string;
+    start_datetime: string;
+    end_datetime: string;
+    location?: string;
+    status: string;
+    type: string;
+    visibility: string;
+    max_participants?: number;
+    organizer: {
+        id: number;
+        first_name: string;
+        last_name: string;
+    };
+    participants: AppointmentParticipant[];
+    participants_count: number;
+    appointmentable_type: string;
+    appointmentable?: {
+        id: number;
+        title?: string;
+    };
 }
 
 interface Props {
@@ -56,8 +94,58 @@ export default function ShowProject({ project, users, activities }: Props) {
     const [selectedRole, setSelectedRole] = useState<'member' | 'contributor' | 'observer'>('member');
     const [tasksExpanded, setTasksExpanded] = useState(true);
     const [historyExpanded, setHistoryExpanded] = useState(false);
+    const [calendarExpanded, setCalendarExpanded] = useState(true);
+    const [showCreateAppointment, setShowCreateAppointment] = useState(false);
+    const [showAppointmentDetail, setShowAppointmentDetail] = useState(false);
+    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [loadingAppointments, setLoadingAppointments] = useState(false);
     const { showSuccess, showError } = useToast();
     const confirm = useConfirm();
+
+    // Fetch appointments for the project
+    const fetchAppointments = async () => {
+        setLoadingAppointments(true);
+        try {
+            const response = await axios.get(`/api/projects/${project.uuid}/appointments`);
+            if (response.data.success) {
+                setAppointments(response.data.data);
+            }
+        } catch (error) {
+            apiLogger.error('Failed to fetch appointments:', error);
+        } finally {
+            setLoadingAppointments(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAppointments();
+    }, [project.uuid]);
+
+    const handleCreateClick = (date: Date) => {
+        setSelectedDate(date);
+        setShowCreateAppointment(true);
+    };
+
+    const handleAppointmentCreated = () => {
+        fetchAppointments();
+    };
+
+    const handleAppointmentClick = (appointment: Appointment) => {
+        setSelectedAppointment(appointment);
+        setShowAppointmentDetail(true);
+    };
+
+    const handleAppointmentUpdated = () => {
+        fetchAppointments();
+    };
+
+    const handleAppointmentDeleted = () => {
+        fetchAppointments();
+        setShowAppointmentDetail(false);
+        setSelectedAppointment(null);
+    };
 
     const handleStatusChange = async (status: string) => {
         try {
@@ -859,6 +947,14 @@ export default function ShowProject({ project, users, activities }: Props) {
                                         </span>
                                     </div>
                                 </div>
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Rendez-vous</span>
+                                        <span className="text-sm font-medium dark:text-white">
+                                            {appointments.length}
+                                        </span>
+                                    </div>
+                                </div>
                                 {project.budget && (
                                     <div>
                                         <div className="flex justify-between items-center mb-1">
@@ -870,6 +966,47 @@ export default function ShowProject({ project, users, activities }: Props) {
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Calendar Widget */}
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+                            <button
+                                type="button"
+                                onClick={() => setCalendarExpanded(!calendarExpanded)}
+                                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-t-lg"
+                            >
+                                <h2 className="text-lg font-semibold dark:text-white flex items-center gap-2">
+                                    <CalendarIcon className="h-5 w-5" />
+                                    Calendrier
+                                    {appointments.length > 0 && (
+                                        <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                                            ({appointments.length})
+                                        </span>
+                                    )}
+                                </h2>
+                                {calendarExpanded ? (
+                                    <MinusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                ) : (
+                                    <PlusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                )}
+                            </button>
+                            {calendarExpanded && (
+                                <div className="px-6 pb-6">
+                                    {loadingAppointments ? (
+                                        <div className="flex items-center justify-center py-8">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                        </div>
+                                    ) : (
+                                        <ProjectCalendarWidget
+                                            projectId={project.id}
+                                            projectUuid={project.uuid}
+                                            appointments={appointments}
+                                            onCreateClick={handleCreateClick}
+                                            onAppointmentClick={handleAppointmentClick}
+                                        />
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Activity Feed */}
@@ -1004,6 +1141,35 @@ export default function ShowProject({ project, users, activities }: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* Create Appointment Modal */}
+            <CreateAppointmentModal
+                isOpen={showCreateAppointment}
+                onClose={() => setShowCreateAppointment(false)}
+                onSuccess={handleAppointmentCreated}
+                projectId={project.id}
+                projectUuid={project.uuid}
+                tasks={project.tasks?.map(t => ({ id: t.id, uuid: t.uuid, title: t.title })) || []}
+                users={users}
+                initialDate={selectedDate}
+            />
+
+            {/* Appointment Detail Modal */}
+            <AppointmentDetailModal
+                isOpen={showAppointmentDetail}
+                onClose={() => {
+                    setShowAppointmentDetail(false);
+                    setSelectedAppointment(null);
+                }}
+                onUpdate={handleAppointmentUpdated}
+                onDelete={handleAppointmentDeleted}
+                appointment={selectedAppointment}
+                projectId={project.id}
+                projectUuid={project.uuid}
+                tasks={project.tasks?.map(t => ({ id: t.id, uuid: t.uuid, title: t.title })) || []}
+                users={users}
+                canEdit={true}
+            />
         </DashboardLayout>
     );
 }
