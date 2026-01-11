@@ -20,6 +20,12 @@ class StatusSeeder extends Seeder
                 'is_active' => true,
             ],
             [
+                'name' => 'todo',
+                'description' => 'Task is ready to be worked on',
+                'color' => 'slate',
+                'is_active' => true,
+            ],
+            [
                 'name' => 'in_progress',
                 'description' => 'Task is currently being worked on',
                 'color' => 'blue',
