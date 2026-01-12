@@ -504,8 +504,8 @@ class AppointmentController extends Controller
                         return [
                             'id' => $appointment->uuid,
                             'title' => $appointment->title,
-                            'start' => $appointment->start_datetime->toISOString(),
-                            'end' => $appointment->end_datetime->toISOString(),
+                            'start' => $appointment->start_datetime->format('Y-m-d\TH:i:s'),
+                            'end' => $appointment->end_datetime->format('Y-m-d\TH:i:s'),
                             'backgroundColor' => $this->getStatusColor($appointment->status),
                             'borderColor' => $this->getStatusColor($appointment->status),
                             'url' => route('appointments.show', $appointment->uuid),

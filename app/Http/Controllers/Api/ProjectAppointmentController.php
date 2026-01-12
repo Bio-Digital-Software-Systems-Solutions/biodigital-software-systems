@@ -426,8 +426,8 @@ class ProjectAppointmentController extends Controller
             'uuid' => $appointment->uuid,
             'title' => $appointment->title,
             'description' => $appointment->description,
-            'start_datetime' => $appointment->start_datetime->toIso8601String(),
-            'end_datetime' => $appointment->end_datetime->toIso8601String(),
+            'start_datetime' => $appointment->start_datetime->format('Y-m-d\TH:i:s'),
+            'end_datetime' => $appointment->end_datetime->format('Y-m-d\TH:i:s'),
             'location' => $appointment->location,
             'status' => $appointment->status,
             'type' => $appointment->type,
@@ -452,8 +452,8 @@ class ProjectAppointmentController extends Controller
                 'id' => $appointment->appointmentable->id,
                 'title' => $appointment->appointmentable->title ?? $appointment->appointmentable->name ?? null,
             ] : null,
-            'created_at' => $appointment->created_at->toIso8601String(),
-            'updated_at' => $appointment->updated_at->toIso8601String(),
+            'created_at' => $appointment->created_at->format('Y-m-d\TH:i:s'),
+            'updated_at' => $appointment->updated_at->format('Y-m-d\TH:i:s'),
         ];
     }
 }

@@ -17,6 +17,8 @@ import { Switch } from '@/Components/ui/switch';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { parseISO, format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface User {
     id: number;
@@ -107,19 +109,12 @@ export default function TaskAppointmentDetailModal({
 
     // Format date to local YYYY-MM-DD string
     const formatLocalDate = (dateStr: string): string => {
-        const date = new Date(dateStr);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        return format(parseISO(dateStr), 'yyyy-MM-dd');
     };
 
     // Format time from datetime string
     const formatTime = (dateStr: string): string => {
-        const date = new Date(dateStr);
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
+        return format(parseISO(dateStr), 'HH:mm');
     };
 
     // Initialize form when appointment changes or editing mode changes
@@ -262,19 +257,11 @@ export default function TaskAppointmentDetailModal({
     };
 
     const formatDisplayDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('fr-FR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
+        return format(parseISO(dateStr), 'EEEE d MMMM yyyy', { locale: fr });
     };
 
     const formatDisplayTime = (dateStr: string) => {
-        return new Date(dateStr).toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        return format(parseISO(dateStr), 'HH:mm');
     };
 
     const getStatusColor = (appointmentStatus: string) => {

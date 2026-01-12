@@ -414,8 +414,8 @@ class Appointment extends Model
             // Always add the slot to show complete schedule
             if ($isAvailable && !$isPast) {
                 $slots[] = [
-                    'start_datetime' => $slotStart->toISOString(),
-                    'end_datetime' => $slotEnd->toISOString(),
+                    'start_datetime' => $slotStart->format('Y-m-d\TH:i:s'),
+                    'end_datetime' => $slotEnd->format('Y-m-d\TH:i:s'),
                     'formatted_time' => $slotStart->format('H:i') . ' - ' . $slotEnd->format('H:i'),
                     'available' => true
                 ];
@@ -433,8 +433,8 @@ class Appointment extends Model
                 }
 
                 $slots[] = [
-                    'start_datetime' => $slotStart->toISOString(),
-                    'end_datetime' => $slotEnd->toISOString(),
+                    'start_datetime' => $slotStart->format('Y-m-d\TH:i:s'),
+                    'end_datetime' => $slotEnd->format('Y-m-d\TH:i:s'),
                     'formatted_time' => $slotStart->format('H:i') . ' - ' . $slotEnd->format('H:i'),
                     'available' => false,
                     'reason' => $reason
@@ -607,8 +607,8 @@ class Appointment extends Model
             // Always add the slot to show complete schedule
             if ($isAvailable && !$isPast) {
                 $slots[] = [
-                    'start_datetime' => $slotStart->toISOString(),
-                    'end_datetime' => $slotEnd->toISOString(),
+                    'start_datetime' => $slotStart->format('Y-m-d\TH:i:s'),
+                    'end_datetime' => $slotEnd->format('Y-m-d\TH:i:s'),
                     'formatted_time' => $slotStart->format('H:i') . ' - ' . $slotEnd->format('H:i'),
                     'available' => true
                 ];
@@ -626,8 +626,8 @@ class Appointment extends Model
                 }
 
                 $slots[] = [
-                    'start_datetime' => $slotStart->toISOString(),
-                    'end_datetime' => $slotEnd->toISOString(),
+                    'start_datetime' => $slotStart->format('Y-m-d\TH:i:s'),
+                    'end_datetime' => $slotEnd->format('Y-m-d\TH:i:s'),
                     'formatted_time' => $slotStart->format('H:i') . ' - ' . $slotEnd->format('H:i'),
                     'available' => false,
                     'reason' => $reason
@@ -653,8 +653,8 @@ class Appointment extends Model
 
         return $appointments->map(function ($appointment) {
             return [
-                'start_datetime' => $appointment->start_datetime->toISOString(),
-                'end_datetime' => $appointment->end_datetime->toISOString(),
+                'start_datetime' => $appointment->start_datetime->format('Y-m-d\TH:i:s'),
+                'end_datetime' => $appointment->end_datetime->format('Y-m-d\TH:i:s'),
                 'title' => $appointment->title,
                 'type' => $appointment->type,
                 'formatted_time' => $appointment->formatted_time_range,

@@ -5,7 +5,7 @@ import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Badge } from '@/Components/ui/badge';
 import { Calendar, Clock, AlertCircle, CheckCircle } from 'lucide-react';
-import { format, addMinutes, parse, isAfter, startOfDay, isSameDay } from 'date-fns';
+import { format, addMinutes, parse, parseISO, isAfter, startOfDay, isSameDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -171,18 +171,18 @@ export default function TimeSlotPicker({
     const isSlotSelected = (slot: TimeSlot) => {
         if (!selectedStartDateTime || !selectedEndDateTime) return false;
 
-        const slotStart = new Date(slot.start_datetime);
-        const slotEnd = new Date(slot.end_datetime);
-        const selectedStart = new Date(selectedStartDateTime);
-        const selectedEnd = new Date(selectedEndDateTime);
+        const slotStart = parseISO(slot.start_datetime);
+        const slotEnd = parseISO(slot.end_datetime);
+        const selectedStart = parseISO(selectedStartDateTime);
+        const selectedEnd = parseISO(selectedEndDateTime);
 
         return slotStart.getTime() === selectedStart.getTime() &&
                slotEnd.getTime() === selectedEnd.getTime();
     };
 
     const isSlotConflictingWithParticipants = (slot: TimeSlot) => {
-        const slotStart = new Date(slot.start_datetime);
-        const slotEnd = new Date(slot.end_datetime);
+        const slotStart = parseISO(slot.start_datetime);
+        const slotEnd = parseISO(slot.end_datetime);
 
         return participantAppointments.some(participantData => {
             if (!participantData.success || !participantData.data || !participantData.data.available_slots) return false;
@@ -190,8 +190,8 @@ export default function TimeSlotPicker({
             return participantData.data.available_slots.some((participantSlot: TimeSlot) => {
                 if (participantSlot.available) return false; // No conflict if the slot is available
 
-                const participantStart = new Date(participantSlot.start_datetime);
-                const participantEnd = new Date(participantSlot.end_datetime);
+                const participantStart = parseISO(participantSlot.start_datetime);
+                const participantEnd = parseISO(participantSlot.end_datetime);
 
                 // Check for time overlap
                 return slotStart < participantEnd && slotEnd > participantStart;
@@ -250,7 +250,7 @@ export default function TimeSlotPicker({
                     <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
                         <p className="text-sm text-blue-700 dark:text-blue-400">
                             Date sélectionnée: <span className="font-medium">
-                                {format(new Date(selectedDate), 'EEEE d MMMM yyyy', { locale: fr })}
+                                {format(parse(selectedDate, 'yyyy-MM-dd', new Date()), 'EEEE d MMMM yyyy', { locale: fr })}
                             </span>
                         </p>
                     </div>
@@ -329,11 +329,11 @@ export default function TimeSlotPicker({
                         <p className="text-sm text-green-700 dark:text-green-400">
                             <CheckCircle className="h-4 w-4 inline mr-2" />
                             Créneau sélectionné: <span className="font-medium">
-                                {format(new Date(selectedStartDateTime), 'HH:mm')} - {format(new Date(selectedEndDateTime), 'HH:mm')}
-                            </span> le {format(new Date(selectedStartDateTime), 'd MMMM yyyy', { locale: fr })}
+                                {format(parseISO(selectedStartDateTime), 'HH:mm')} - {format(parseISO(selectedEndDateTime), 'HH:mm')}
+                            </span> le {format(parseISO(selectedStartDateTime), 'd MMMM yyyy', { locale: fr })}
                         </p>
                         <p className="text-xs text-green-600 dark:text-green-500 mt-1">
-                            Durée: {Math.round((new Date(selectedEndDateTime).getTime() - new Date(selectedStartDateTime).getTime()) / (1000 * 60))} minutes
+                            Durée: {Math.round((parseISO(selectedEndDateTime).getTime() - parseISO(selectedStartDateTime).getTime()) / (1000 * 60))} minutes
                         </p>
                     </div>
                 )}

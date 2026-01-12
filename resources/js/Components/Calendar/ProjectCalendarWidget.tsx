@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/Components/ui/button';
+import { parseISO, format, isSameDay } from 'date-fns';
 
 interface AppointmentParticipant {
     id: number;
@@ -80,10 +81,9 @@ export default function ProjectCalendarWidget({
 
     // Get appointments for a specific date
     const getAppointmentsForDate = (date: Date) => {
-        const dateStr = date.toISOString().split('T')[0];
         return appointments.filter(apt => {
-            const aptDate = new Date(apt.start_datetime).toISOString().split('T')[0];
-            return aptDate === dateStr;
+            const aptDate = parseISO(apt.start_datetime);
+            return isSameDay(aptDate, date);
         });
     };
 
@@ -164,10 +164,7 @@ export default function ProjectCalendarWidget({
     }
 
     const formatTime = (datetime: string) => {
-        return new Date(datetime).toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        return format(parseISO(datetime), 'HH:mm');
     };
 
     const getStatusColor = (status: string) => {

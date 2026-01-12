@@ -1,1 +1,0 @@
-import{n as m}from"./normalizeInterval-_5jsnIB7.js";import{c as l}from"./format-CRm4WcFG.js";function p(o,a){const{start:t,end:r}=m(a?.in,o);let s=+t>+r;const c=s?+t:+r,e=s?r:t;e.setHours(0,0,0,0);let i=1;const n=[];for(;+e<=c;)n.push(l(t,e)),e.setDate(e.getDate()+i),e.setHours(0,0,0,0);return s?n.reverse():n}export{p as e};
