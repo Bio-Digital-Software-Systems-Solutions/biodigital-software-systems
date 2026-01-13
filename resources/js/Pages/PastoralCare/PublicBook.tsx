@@ -516,7 +516,7 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                                                                 label: pastor.name
                                                             }))}
                                                             value={formData.pastor_id}
-                                                            onChange={(value) => handleInputChange('pastor_id', value.toString())}
+                                                            onChange={(value) => handleInputChange('pastor_id', value?.toString() || '')}
                                                             placeholder="Choisissez un pasteur..."
                                                             className="w-full"
                                                         />

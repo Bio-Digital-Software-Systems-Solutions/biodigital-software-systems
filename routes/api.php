@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\DepartmentDocumentController;
+use App\Http\Controllers\Api\DepartmentMeetingController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectAppointmentController;
 use App\Http\Controllers\Api\TaskAppointmentController;
@@ -134,6 +136,30 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [TaskAppointmentController::class, 'store'])->name('store');
         Route::patch('/{appointment}', [TaskAppointmentController::class, 'update'])->name('update');
         Route::delete('/{appointment}', [TaskAppointmentController::class, 'destroy'])->name('destroy');
+    });
+
+    // Department Meetings API
+    Route::prefix('departments/{department:uuid}/meetings')->name('api.departments.meetings.')->group(function () {
+        Route::get('/', [DepartmentMeetingController::class, 'index'])->name('index');
+        Route::get('/month', [DepartmentMeetingController::class, 'byMonth'])->name('month');
+        Route::post('/', [DepartmentMeetingController::class, 'store'])->name('store');
+        Route::get('/{meeting:uuid}', [DepartmentMeetingController::class, 'show'])->name('show');
+        Route::patch('/{meeting:uuid}', [DepartmentMeetingController::class, 'update'])->name('update');
+        Route::delete('/{meeting:uuid}', [DepartmentMeetingController::class, 'destroy'])->name('destroy');
+    });
+
+    // Department Documents API
+    Route::prefix('departments/{department:uuid}/documents')->name('api.departments.documents.')->group(function () {
+        Route::get('/', [DepartmentDocumentController::class, 'index'])->name('index');
+        Route::get('/search', [DepartmentDocumentController::class, 'search'])->name('search');
+        Route::get('/year/{year}', [DepartmentDocumentController::class, 'byYear'])->name('year');
+        Route::get('/year/{year}/month/{month}', [DepartmentDocumentController::class, 'byMonth'])->name('month');
+        Route::post('/', [DepartmentDocumentController::class, 'store'])->name('store');
+        Route::get('/{document:uuid}', [DepartmentDocumentController::class, 'show'])->name('show');
+        Route::patch('/{document:uuid}', [DepartmentDocumentController::class, 'update'])->name('update');
+        Route::delete('/{document:uuid}', [DepartmentDocumentController::class, 'destroy'])->name('destroy');
+        Route::get('/{document:uuid}/download', [DepartmentDocumentController::class, 'download'])->name('download');
+        Route::get('/{document:uuid}/preview', [DepartmentDocumentController::class, 'preview'])->name('preview');
     });
 
     // Authenticated Pastoral Care API endpoints (for pastors)

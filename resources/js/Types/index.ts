@@ -14,3 +14,27 @@ export type PageProps<T extends Record<string, unknown> = Record<string, unknown
 };
 
 export * from './models';
+
+export interface PaginatedData<T> {
+    data: T[];
+    links: {
+        first: string | null;
+        last: string | null;
+        prev: string | null;
+        next: string | null;
+    };
+    meta: {
+        current_page: number;
+        from: number | null;
+        last_page: number;
+        per_page: number;
+        to: number | null;
+        total: number;
+        path: string;
+        links: Array<{
+            url: string | null;
+            label: string;
+            active: boolean;
+        }>;
+    };
+}

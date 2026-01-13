@@ -829,7 +829,7 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
                                     <SearchableSelect
                                         options={userOptions}
                                         value={formData.assignee_id}
-                                        onChange={(value) => setFormData({ ...formData, assignee_id: value.toString() })}
+                                        onChange={(value) => setFormData({ ...formData, assignee_id: value?.toString() || '' })}
                                         placeholder="Non assigné"
                                     />
                                 </div>
@@ -951,7 +951,7 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
                                     <SearchableSelect
                                         options={userOptions}
                                         value={formData.assignee_id}
-                                        onChange={(value) => setFormData({ ...formData, assignee_id: value.toString() })}
+                                        onChange={(value) => setFormData({ ...formData, assignee_id: value?.toString() || '' })}
                                         placeholder="Non assigné"
                                     />
                                 </div>

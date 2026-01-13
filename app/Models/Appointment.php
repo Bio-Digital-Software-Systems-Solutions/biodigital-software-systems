@@ -671,4 +671,22 @@ class Appointment extends Model
     {
         return 'uuid';
     }
+
+    /**
+     * Get department meetings that use this appointment.
+     */
+    public function departmentMeetings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DepartmentMeeting::class);
+    }
+
+    /**
+     * Get departments that have this appointment as a meeting.
+     */
+    public function meetingDepartments(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Department::class, 'department_meetings')
+            ->withPivot(['uuid', 'created_by', 'notify_all_members', 'is_mandatory', 'notes', 'notified_at'])
+            ->withTimestamps();
+    }
 }

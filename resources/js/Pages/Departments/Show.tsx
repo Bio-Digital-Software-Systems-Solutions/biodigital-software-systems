@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Com
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select';
 import { Badge } from '@/Components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { useConfirm } from '@/Components/ui/confirm-dialog';
 import { useToast } from '@/Components/ui/toast';
 import {
@@ -17,8 +18,72 @@ import {
     BanknotesIcon,
     UserGroupIcon,
     UserIcon,
+    ArrowPathIcon,
+    DocumentTextIcon,
+    ClipboardDocumentCheckIcon,
+    CalendarDaysIcon,
+    PlusIcon,
+    EyeIcon,
+    PlayIcon,
+    FolderIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import type { DepartmentWorkflow } from '@/Types/workflow';
+import type { DepartmentForm } from '@/Types/form';
+import type { DepartmentNeed } from '@/Types/need';
+import type { Appointment } from '@/Types/appointment';
+import DepartmentCalendar from '@/Components/Department/DepartmentCalendar';
+import DepartmentDocuments from '@/Components/Department/DepartmentDocuments';
+
+interface DepartmentMeeting {
+    uuid: string;
+    is_mandatory: boolean;
+    notify_all_members: boolean;
+    notes: string | null;
+    notified_at: string | null;
+    created_at: string;
+    creator: {
+        id: number;
+        uuid: string;
+        name: string;
+    } | null;
+    appointment: Appointment | null;
+}
+
+interface DocumentData {
+    uuid: string;
+    title: string;
+    original_name: string;
+    file_name: string;
+    file_url: string;
+    preview_url: string;
+    file_size: number;
+    formatted_file_size: string;
+    mime_type: string;
+    extension: string;
+    file_type: string;
+    can_preview: boolean;
+    preview_type: string;
+    description: string | null;
+    category: string | null;
+    created_at: string;
+    uploader: {
+        id: number;
+        name: string;
+    } | null;
+}
+
+interface MonthData {
+    month: number;
+    month_name: string;
+    documents: DocumentData[];
+}
+
+interface YearData {
+    year: number;
+    months: MonthData[];
+    document_count: number;
+}
 
 interface User {
     id: number;
@@ -44,12 +109,20 @@ interface Props {
     department: Department;
     availableUsers: User[];
     canManage: boolean;
+    workflows?: DepartmentWorkflow[];
+    forms?: DepartmentForm[];
+    needs?: DepartmentNeed[];
+    appointments?: Appointment[];
+    meetings?: DepartmentMeeting[];
+    documentsTree?: YearData[];
+    documentsCount?: number;
 }
 
-export default function ShowDepartment({ department, availableUsers, canManage }: Props) {
+export default function ShowDepartment({ department, availableUsers, canManage, workflows = [], forms = [], needs = [], appointments = [], meetings = [], documentsTree = [], documentsCount = 0 }: Props) {
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState('');
+    const [activeTab, setActiveTab] = useState('overview');
     const { confirm } = useConfirm();
     const { showSuccess, showError } = useToast();
 
@@ -235,7 +308,43 @@ export default function ShowDepartment({ department, availableUsers, canManage }
                     </Card>
                 )}
 
-                {/* Members List */}
+                {/* Tabs */}
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                    <TabsList className="grid w-full grid-cols-6">
+                        <TabsTrigger value="overview" className="flex items-center gap-2">
+                            <UserGroupIcon className="h-4 w-4" />
+                            <span className="hidden sm:inline">Membres</span>
+                            <Badge variant="secondary" className="ml-1">{department.users_count}</Badge>
+                        </TabsTrigger>
+                        <TabsTrigger value="workflows" className="flex items-center gap-2">
+                            <ArrowPathIcon className="h-4 w-4" />
+                            <span className="hidden sm:inline">Workflows</span>
+                            <Badge variant="secondary" className="ml-1">{workflows.length}</Badge>
+                        </TabsTrigger>
+                        <TabsTrigger value="forms" className="flex items-center gap-2">
+                            <DocumentTextIcon className="h-4 w-4" />
+                            <span className="hidden sm:inline">Formulaires</span>
+                            <Badge variant="secondary" className="ml-1">{forms.length}</Badge>
+                        </TabsTrigger>
+                        <TabsTrigger value="needs" className="flex items-center gap-2">
+                            <ClipboardDocumentCheckIcon className="h-4 w-4" />
+                            <span className="hidden sm:inline">Besoins</span>
+                            <Badge variant="secondary" className="ml-1">{needs.length}</Badge>
+                        </TabsTrigger>
+                        <TabsTrigger value="calendar" className="flex items-center gap-2">
+                            <CalendarDaysIcon className="h-4 w-4" />
+                            <span className="hidden sm:inline">Agenda</span>
+                            <Badge variant="secondary" className="ml-1">{meetings.length + appointments.length}</Badge>
+                        </TabsTrigger>
+                        <TabsTrigger value="documents" className="flex items-center gap-2">
+                            <FolderIcon className="h-4 w-4" />
+                            <span className="hidden sm:inline">Documents</span>
+                            <Badge variant="secondary" className="ml-1">{documentsCount}</Badge>
+                        </TabsTrigger>
+                    </TabsList>
+
+                    {/* Members Tab */}
+                    <TabsContent value="overview">
                 <Card>
                     <CardHeader>
                 <div className="flex items-center justify-between">
@@ -306,6 +415,317 @@ export default function ShowDepartment({ department, availableUsers, canManage }
                 )}
                     </CardContent>
                 </Card>
+                    </TabsContent>
+
+                    {/* Workflows Tab */}
+                    <TabsContent value="workflows">
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle>Workflows du Département</CardTitle>
+                                        <CardDescription>
+                                            {workflows.length} workflow(s) configuré(s)
+                                        </CardDescription>
+                                    </div>
+                                    {canManage && (
+                                        <Button asChild>
+                                            <Link href={`/workflows/create?department_id=${department.id}`}>
+                                                <PlusIcon className="h-4 w-4 mr-2" />
+                                                Nouveau Workflow
+                                            </Link>
+                                        </Button>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                {workflows.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {workflows.map((workflow) => (
+                                            <div
+                                                key={workflow.uuid}
+                                                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                                        <ArrowPathIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium text-gray-900 dark:text-white">
+                                                                {workflow.name}
+                                                            </span>
+                                                            <Badge
+                                                                variant={workflow.status === 'active' ? 'default' : 'secondary'}
+                                                                className={workflow.status === 'active' ? 'bg-green-500' : ''}
+                                                            >
+                                                                {workflow.status === 'active' ? 'Actif' : workflow.status === 'draft' ? 'Brouillon' : 'Obsolète'}
+                                                            </Badge>
+                                                        </div>
+                                                        {workflow.description && (
+                                                            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
+                                                                {workflow.description}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button variant="outline" size="sm" asChild>
+                                                        <Link href={`/workflows/${workflow.uuid}`}>
+                                                            <EyeIcon className="h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
+                                                    {workflow.status === 'active' && (
+                                                        <Button variant="outline" size="sm" asChild>
+                                                            <Link href={`/workflows/${workflow.uuid}/start`}>
+                                                                <PlayIcon className="h-4 w-4" />
+                                                            </Link>
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                                        <ArrowPathIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                        <p>Aucun workflow configuré</p>
+                                        {canManage && (
+                                            <Button className="mt-4" asChild>
+                                                <Link href={`/workflows/create?department_id=${department.id}`}>
+                                                    <PlusIcon className="h-4 w-4 mr-2" />
+                                                    Créer un workflow
+                                                </Link>
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Forms Tab */}
+                    <TabsContent value="forms">
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle>Formulaires du Département</CardTitle>
+                                        <CardDescription>
+                                            {forms.length} formulaire(s) créé(s)
+                                        </CardDescription>
+                                    </div>
+                                    {canManage && (
+                                        <Button asChild>
+                                            <Link href={`/forms/create?department_id=${department.id}`}>
+                                                <PlusIcon className="h-4 w-4 mr-2" />
+                                                Nouveau Formulaire
+                                            </Link>
+                                        </Button>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                {forms.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {forms.map((form) => (
+                                            <div
+                                                key={form.uuid}
+                                                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                                        <DocumentTextIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium text-gray-900 dark:text-white">
+                                                                {form.name}
+                                                            </span>
+                                                            <Badge
+                                                                variant={form.status === 'published' ? 'default' : 'secondary'}
+                                                                className={form.status === 'published' ? 'bg-green-500' : ''}
+                                                            >
+                                                                {form.status === 'published' ? 'Publié' : form.status === 'draft' ? 'Brouillon' : 'Archivé'}
+                                                            </Badge>
+                                                        </div>
+                                                        {form.description && (
+                                                            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
+                                                                {form.description}
+                                                            </p>
+                                                        )}
+                                                        <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                                                            <span>{form.fields_count || 0} champs</span>
+                                                            <span>{form.submissions_count || 0} soumissions</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button variant="outline" size="sm" asChild>
+                                                        <Link href={`/forms/${form.uuid}`}>
+                                                            <EyeIcon className="h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
+                                                    {form.status === 'published' && (
+                                                        <Button variant="outline" size="sm" asChild>
+                                                            <Link href={`/forms/${form.uuid}/render`}>
+                                                                <PlayIcon className="h-4 w-4" />
+                                                            </Link>
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                                        <DocumentTextIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                        <p>Aucun formulaire créé</p>
+                                        {canManage && (
+                                            <Button className="mt-4" asChild>
+                                                <Link href={`/forms/create?department_id=${department.id}`}>
+                                                    <PlusIcon className="h-4 w-4 mr-2" />
+                                                    Créer un formulaire
+                                                </Link>
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Needs Tab */}
+                    <TabsContent value="needs">
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle>Besoins du Département</CardTitle>
+                                        <CardDescription>
+                                            {needs.length} besoin(s) enregistré(s)
+                                        </CardDescription>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" asChild>
+                                            <Link href={`/needs/kanban?department_id=${department.id}`}>
+                                                Voir Kanban
+                                            </Link>
+                                        </Button>
+                                        <Button asChild>
+                                            <Link href={`/needs/create?department_id=${department.id}`}>
+                                                <PlusIcon className="h-4 w-4 mr-2" />
+                                                Nouveau Besoin
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                {needs.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {needs.map((need) => {
+                                            const priorityColors: Record<string, string> = {
+                                                critical: 'bg-red-500',
+                                                high: 'bg-orange-500',
+                                                medium: 'bg-yellow-500',
+                                                low: 'bg-blue-500',
+                                            };
+                                            const statusLabels: Record<string, string> = {
+                                                draft: 'Brouillon',
+                                                submitted: 'Soumis',
+                                                pending_approval: 'En attente',
+                                                approved: 'Approuvé',
+                                                rejected: 'Rejeté',
+                                                in_progress: 'En cours',
+                                                ordered: 'Commandé',
+                                                delivered: 'Livré',
+                                                completed: 'Terminé',
+                                                cancelled: 'Annulé',
+                                            };
+                                            return (
+                                                <div
+                                                    key={need.uuid}
+                                                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                                                            <ClipboardDocumentCheckIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-medium text-gray-900 dark:text-white">
+                                                                    {need.title}
+                                                                </span>
+                                                                <Badge variant="secondary">
+                                                                    {statusLabels[need.status] || need.status}
+                                                                </Badge>
+                                                                <Badge className={priorityColors[need.priority] || 'bg-gray-500'}>
+                                                                    {need.priority}
+                                                                </Badge>
+                                                            </div>
+                                                            <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                                                                <span>{need.reference}</span>
+                                                                {need.estimated_cost !== undefined && need.estimated_cost !== null && (
+                                                                    <span>
+                                                                        {new Intl.NumberFormat('fr-FR', {
+                                                                            style: 'currency',
+                                                                            currency: need.currency || 'EUR',
+                                                                        }).format(Number(need.estimated_cost))}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <Button variant="outline" size="sm" asChild>
+                                                        <Link href={`/needs/${need.uuid}`}>
+                                                            <EyeIcon className="h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                                        <ClipboardDocumentCheckIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                        <p>Aucun besoin enregistré</p>
+                                        <Button className="mt-4" asChild>
+                                            <Link href={`/needs/create?department_id=${department.id}`}>
+                                                <PlusIcon className="h-4 w-4 mr-2" />
+                                                Créer un besoin
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Calendar Tab */}
+                    <TabsContent value="calendar">
+                        <Card>
+                            <CardContent className="pt-6">
+                                <DepartmentCalendar
+                                    appointments={appointments}
+                                    meetings={meetings}
+                                    departmentId={department.id}
+                                    departmentUuid={department.uuid}
+                                    canManage={canManage}
+                                />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Documents Tab */}
+                    <TabsContent value="documents">
+                        <DepartmentDocuments
+                            departmentUuid={department.uuid}
+                            initialTree={documentsTree}
+                            canManage={canManage}
+                        />
+                    </TabsContent>
+                </Tabs>
             </div>
 
             {/* Add Member Modal */}

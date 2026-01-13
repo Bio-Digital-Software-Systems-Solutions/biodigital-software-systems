@@ -439,4 +439,85 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->availability()->active();
     }
+
+    /**
+     * Workflows created by the user.
+     */
+    public function createdWorkflows(): HasMany
+    {
+        return $this->hasMany(DepartmentWorkflow::class, 'created_by');
+    }
+
+    /**
+     * Workflow instances started by the user.
+     */
+    public function startedWorkflowInstances(): HasMany
+    {
+        return $this->hasMany(WorkflowInstance::class, 'started_by');
+    }
+
+    /**
+     * Step instances assigned to the user.
+     */
+    public function assignedStepInstances(): HasMany
+    {
+        return $this->hasMany(WorkflowStepInstance::class, 'assigned_to');
+    }
+
+    /**
+     * Pending approvals for the user.
+     */
+    public function pendingApprovals(): HasMany
+    {
+        return $this->hasMany(StepApproval::class, 'approver_id')
+            ->whereNull('decision');
+    }
+
+    /**
+     * All approvals by the user.
+     */
+    public function approvals(): HasMany
+    {
+        return $this->hasMany(StepApproval::class, 'approver_id');
+    }
+
+    /**
+     * Forms created by the user.
+     */
+    public function createdForms(): HasMany
+    {
+        return $this->hasMany(DepartmentForm::class, 'created_by');
+    }
+
+    /**
+     * Form submissions by the user.
+     */
+    public function formSubmissions(): HasMany
+    {
+        return $this->hasMany(DepartmentFormSubmission::class);
+    }
+
+    /**
+     * Needs requested by the user.
+     */
+    public function requestedNeeds(): HasMany
+    {
+        return $this->hasMany(DepartmentNeed::class, 'requester_id');
+    }
+
+    /**
+     * Needs assigned to the user.
+     */
+    public function assignedNeeds(): HasMany
+    {
+        return $this->hasMany(DepartmentNeed::class, 'assigned_to');
+    }
+
+    /**
+     * Need comments by the user.
+     */
+    public function needComments(): HasMany
+    {
+        return $this->hasMany(NeedComment::class);
+    }
 }

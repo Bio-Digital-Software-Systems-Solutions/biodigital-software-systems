@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -171,5 +173,116 @@ class Department extends Model
     public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    /**
+     * Get workflows for this department.
+     */
+    public function workflows(): HasMany
+    {
+        return $this->hasMany(DepartmentWorkflow::class);
+    }
+
+    /**
+     * Get active workflows for this department.
+     */
+    public function activeWorkflows(): HasMany
+    {
+        return $this->hasMany(DepartmentWorkflow::class)->where('status', 'active');
+    }
+
+    /**
+     * Get forms for this department.
+     */
+    public function forms(): HasMany
+    {
+        return $this->hasMany(DepartmentForm::class);
+    }
+
+    /**
+     * Get published forms for this department.
+     */
+    public function publishedForms(): HasMany
+    {
+        return $this->hasMany(DepartmentForm::class)->where('status', 'published');
+    }
+
+    /**
+     * Get needs for this department.
+     */
+    public function needs(): HasMany
+    {
+        return $this->hasMany(DepartmentNeed::class);
+    }
+
+    /**
+     * Get pending needs for this department.
+     */
+    public function pendingNeeds(): HasMany
+    {
+        return $this->hasMany(DepartmentNeed::class)->whereIn('status', ['submitted', 'under_review']);
+    }
+
+    /**
+     * Get workflow instances for this department.
+     */
+    public function workflowInstances(): HasMany
+    {
+        return $this->hasMany(WorkflowInstance::class);
+    }
+
+    /**
+     * Get appointments for this department (polymorphic relation).
+     */
+    public function appointments(): MorphMany
+    {
+        return $this->morphMany(Appointment::class, 'appointmentable');
+    }
+
+    /**
+     * Get upcoming appointments for this department.
+     */
+    public function upcomingAppointments(): MorphMany
+    {
+        return $this->morphMany(Appointment::class, 'appointmentable')
+            ->where('start_datetime', '>', now())
+            ->orderBy('start_datetime');
+    }
+
+    /**
+     * Get meetings for this department (through pivot table).
+     */
+    public function meetings(): HasMany
+    {
+        return $this->hasMany(DepartmentMeeting::class);
+    }
+
+    /**
+     * Get meeting appointments for this department (through pivot).
+     */
+    public function meetingAppointments(): BelongsToMany
+    {
+        return $this->belongsToMany(Appointment::class, 'department_meetings')
+            ->withPivot(['uuid', 'created_by', 'notify_all_members', 'is_mandatory', 'notes', 'notified_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get upcoming meetings for this department.
+     */
+    public function upcomingMeetings(): HasMany
+    {
+        return $this->hasMany(DepartmentMeeting::class)
+            ->whereHas('appointment', function ($query) {
+                $query->where('start_datetime', '>', now());
+            });
+    }
+
+    /**
+     * Get documents for this department.
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(DepartmentDocument::class);
     }
 }

@@ -608,6 +608,135 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('pastoral-care.book');
 
+    // ============================================
+    // Workflow Builder Routes
+    // ============================================
+    Route::prefix('workflows')->name('workflows.')->group(function () {
+        Route::get('/', [App\Http\Controllers\WorkflowController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\WorkflowController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\WorkflowController::class, 'store'])->name('store');
+        Route::get('/{workflow}', [App\Http\Controllers\WorkflowController::class, 'show'])->name('show');
+        Route::get('/{workflow}/edit', [App\Http\Controllers\WorkflowController::class, 'edit'])->name('edit');
+        Route::put('/{workflow}', [App\Http\Controllers\WorkflowController::class, 'update'])->name('update');
+        Route::delete('/{workflow}', [App\Http\Controllers\WorkflowController::class, 'destroy'])->name('destroy');
+        Route::post('/{workflow}/activate', [App\Http\Controllers\WorkflowController::class, 'activate'])->name('activate');
+        Route::post('/{workflow}/deprecate', [App\Http\Controllers\WorkflowController::class, 'deprecate'])->name('deprecate');
+        Route::post('/{workflow}/duplicate', [App\Http\Controllers\WorkflowController::class, 'duplicate'])->name('duplicate');
+        Route::post('/{workflow}/steps', [App\Http\Controllers\WorkflowController::class, 'saveSteps'])->name('save-steps');
+        Route::post('/{workflow}/start', [App\Http\Controllers\WorkflowController::class, 'startInstance'])->name('start');
+        Route::get('/{workflow}/instances', [App\Http\Controllers\WorkflowController::class, 'instances'])->name('instances');
+    });
+
+    // Workflow Instance Routes
+    Route::prefix('workflow-instances')->name('workflow-instances.')->group(function () {
+        Route::get('/', [App\Http\Controllers\WorkflowInstanceController::class, 'index'])->name('index');
+        Route::get('/my-approvals', [App\Http\Controllers\WorkflowInstanceController::class, 'myApprovals'])->name('my-approvals');
+        Route::get('/my-tasks', [App\Http\Controllers\WorkflowInstanceController::class, 'myTasks'])->name('my-tasks');
+        Route::get('/{workflowInstance}', [App\Http\Controllers\WorkflowInstanceController::class, 'show'])->name('show');
+        Route::post('/{workflowInstance}/cancel', [App\Http\Controllers\WorkflowInstanceController::class, 'cancel'])->name('cancel');
+        Route::post('/{workflowInstance}/pause', [App\Http\Controllers\WorkflowInstanceController::class, 'pause'])->name('pause');
+        Route::post('/{workflowInstance}/resume', [App\Http\Controllers\WorkflowInstanceController::class, 'resume'])->name('resume');
+        Route::get('/{workflowInstance}/activity-log', [App\Http\Controllers\WorkflowInstanceController::class, 'activityLog'])->name('activity-log');
+    });
+
+    // Step Instance Routes
+    Route::post('/step-instances/{stepInstance}/complete', [App\Http\Controllers\WorkflowInstanceController::class, 'completeStep'])
+        ->name('step-instances.complete');
+    Route::post('/step-instances/{stepInstance}/submit-form', [App\Http\Controllers\WorkflowInstanceController::class, 'submitForm'])
+        ->name('step-instances.submit-form');
+
+    // Approval Routes
+    Route::post('/approvals/{approval}/submit', [App\Http\Controllers\WorkflowInstanceController::class, 'submitApproval'])
+        ->name('approvals.submit');
+    Route::post('/approvals/{approval}/delegate', [App\Http\Controllers\WorkflowInstanceController::class, 'delegateApproval'])
+        ->name('approvals.delegate');
+
+    // ============================================
+    // Form Builder Routes
+    // ============================================
+    Route::prefix('forms')->name('forms.')->group(function () {
+        Route::get('/', [App\Http\Controllers\FormController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\FormController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\FormController::class, 'store'])->name('store');
+        Route::post('/import', [App\Http\Controllers\FormController::class, 'import'])->name('import');
+        Route::get('/{form}', [App\Http\Controllers\FormController::class, 'show'])->name('show');
+        Route::get('/{form}/edit', [App\Http\Controllers\FormController::class, 'edit'])->name('edit');
+        Route::put('/{form}', [App\Http\Controllers\FormController::class, 'update'])->name('update');
+        Route::delete('/{form}', [App\Http\Controllers\FormController::class, 'destroy'])->name('destroy');
+        Route::post('/{form}/publish', [App\Http\Controllers\FormController::class, 'publish'])->name('publish');
+        Route::post('/{form}/unpublish', [App\Http\Controllers\FormController::class, 'unpublish'])->name('unpublish');
+        Route::post('/{form}/archive', [App\Http\Controllers\FormController::class, 'archive'])->name('archive');
+        Route::post('/{form}/duplicate', [App\Http\Controllers\FormController::class, 'duplicate'])->name('duplicate');
+        Route::post('/{form}/fields', [App\Http\Controllers\FormController::class, 'saveFields'])->name('save-fields');
+        Route::get('/{form}/preview', [App\Http\Controllers\FormController::class, 'preview'])->name('preview');
+        Route::get('/{form}/render', [App\Http\Controllers\FormController::class, 'renderForm'])->name('render');
+        Route::post('/{form}/start-submission', [App\Http\Controllers\FormController::class, 'startSubmission'])->name('start-submission');
+        Route::get('/{form}/export', [App\Http\Controllers\FormController::class, 'export'])->name('export');
+        Route::get('/{form}/submissions', [App\Http\Controllers\FormController::class, 'submissions'])->name('submissions');
+    });
+
+    // Form Submission Routes
+    Route::prefix('form-submissions')->name('form-submissions.')->group(function () {
+        Route::get('/', [App\Http\Controllers\FormSubmissionController::class, 'index'])->name('index');
+        Route::get('/{formSubmission}', [App\Http\Controllers\FormSubmissionController::class, 'show'])->name('show');
+        Route::get('/{formSubmission}/edit', [App\Http\Controllers\FormSubmissionController::class, 'edit'])->name('edit');
+        Route::put('/{formSubmission}', [App\Http\Controllers\FormSubmissionController::class, 'update'])->name('update');
+        Route::post('/{formSubmission}/submit', [App\Http\Controllers\FormSubmissionController::class, 'submit'])->name('submit');
+        Route::post('/{formSubmission}/next-step', [App\Http\Controllers\FormSubmissionController::class, 'nextStep'])->name('next-step');
+        Route::post('/{formSubmission}/previous-step', [App\Http\Controllers\FormSubmissionController::class, 'previousStep'])->name('previous-step');
+        Route::post('/{formSubmission}/validate-step', [App\Http\Controllers\FormSubmissionController::class, 'validateStep'])->name('validate-step');
+        Route::delete('/{formSubmission}', [App\Http\Controllers\FormSubmissionController::class, 'destroy'])->name('destroy');
+    });
+
+    // ============================================
+    // Department Need Management Routes
+    // ============================================
+    Route::prefix('needs')->name('needs.')->group(function () {
+        Route::get('/', [App\Http\Controllers\NeedController::class, 'index'])->name('index');
+        Route::get('/kanban', [App\Http\Controllers\NeedController::class, 'kanban'])->name('kanban');
+        Route::get('/my-needs', [App\Http\Controllers\NeedController::class, 'myNeeds'])->name('my-needs');
+        Route::get('/stats', [App\Http\Controllers\NeedController::class, 'stats'])->name('stats');
+        Route::get('/create', [App\Http\Controllers\NeedController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\NeedController::class, 'store'])->name('store');
+        Route::get('/{need}', [App\Http\Controllers\NeedController::class, 'show'])->name('show');
+        Route::get('/{need}/edit', [App\Http\Controllers\NeedController::class, 'edit'])->name('edit');
+        Route::put('/{need}', [App\Http\Controllers\NeedController::class, 'update'])->name('update');
+        Route::delete('/{need}', [App\Http\Controllers\NeedController::class, 'destroy'])->name('destroy');
+
+        // Status transitions
+        Route::post('/{need}/submit', [App\Http\Controllers\NeedController::class, 'submit'])->name('submit');
+        Route::post('/{need}/withdraw', [App\Http\Controllers\NeedController::class, 'withdraw'])->name('withdraw');
+        Route::post('/{need}/start-review', [App\Http\Controllers\NeedController::class, 'startReview'])->name('start-review');
+        Route::post('/{need}/approve', [App\Http\Controllers\NeedController::class, 'approve'])->name('approve');
+        Route::post('/{need}/reject', [App\Http\Controllers\NeedController::class, 'reject'])->name('reject');
+        Route::post('/{need}/order', [App\Http\Controllers\NeedController::class, 'markOrdered'])->name('order');
+        Route::post('/{need}/deliver', [App\Http\Controllers\NeedController::class, 'markDelivered'])->name('deliver');
+        Route::post('/{need}/complete', [App\Http\Controllers\NeedController::class, 'complete'])->name('complete');
+        Route::post('/{need}/cancel', [App\Http\Controllers\NeedController::class, 'cancel'])->name('cancel');
+        Route::post('/{need}/assign', [App\Http\Controllers\NeedController::class, 'assign'])->name('assign');
+        Route::post('/{need}/duplicate', [App\Http\Controllers\NeedController::class, 'duplicate'])->name('duplicate');
+        Route::patch('/{need}/update-status', [App\Http\Controllers\NeedController::class, 'updateStatus'])->name('update-status');
+
+        // Attachments
+        Route::post('/{need}/attachments', [App\Http\Controllers\NeedController::class, 'uploadAttachment'])->name('attachments.upload');
+
+        // Comments
+        Route::get('/{need}/comments', [App\Http\Controllers\NeedController::class, 'comments'])->name('comments.list');
+        Route::post('/{need}/comments', [App\Http\Controllers\NeedController::class, 'addComment'])->name('comments.add');
+
+        // History
+        Route::get('/{need}/history', [App\Http\Controllers\NeedController::class, 'history'])->name('history');
+    });
+
+    // Need Attachment Routes
+    Route::delete('/need-attachments/{attachment}', [App\Http\Controllers\NeedController::class, 'deleteAttachment'])
+        ->name('need-attachments.destroy');
+
+    // Need Comment Routes
+    Route::put('/need-comments/{comment}', [App\Http\Controllers\NeedController::class, 'updateComment'])
+        ->name('need-comments.update');
+    Route::delete('/need-comments/{comment}', [App\Http\Controllers\NeedController::class, 'deleteComment'])
+        ->name('need-comments.destroy');
 
 });
 

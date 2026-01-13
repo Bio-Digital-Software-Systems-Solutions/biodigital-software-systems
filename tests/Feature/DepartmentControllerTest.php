@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Appointment;
 use App\Models\Department;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -326,5 +327,337 @@ class DepartmentControllerTest extends TestCase
             ]);
 
         $response->assertSessionHasErrors(['head_of_department']);
+    }
+
+    // ==================== Department Calendar/Appointments Tests ====================
+
+    public function test_show_displays_department_appointments(): void
+    {
+        $department = Department::factory()->create();
+        $organizer = User::factory()->create();
+
+        // Create appointments for this department
+        $appointments = Appointment::factory()->count(3)->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('appointments', 3)
+            ->has('appointments.0', fn ($assert) => $assert
+                ->has('uuid')
+                ->has('title')
+                ->has('type')
+                ->has('status')
+                ->has('start_datetime')
+                ->has('end_datetime')
+                ->has('formatted_time_range')
+                ->has('participants_count')
+                ->etc()
+            )
+        );
+    }
+
+    public function test_show_appointments_are_ordered_by_start_datetime(): void
+    {
+        $department = Department::factory()->create();
+        $organizer = User::factory()->create();
+
+        // Create appointments with specific dates
+        $laterAppointment = Appointment::factory()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+            'start_datetime' => now()->addDays(10),
+            'end_datetime' => now()->addDays(10)->addHour(),
+            'title' => 'Later Appointment',
+        ]);
+
+        $earlierAppointment = Appointment::factory()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+            'start_datetime' => now()->addDays(1),
+            'end_datetime' => now()->addDays(1)->addHour(),
+            'title' => 'Earlier Appointment',
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('appointments', 2)
+            ->where('appointments.0.title', 'Earlier Appointment')
+            ->where('appointments.1.title', 'Later Appointment')
+        );
+    }
+
+    public function test_show_appointments_include_organizer_info(): void
+    {
+        $department = Department::factory()->create();
+        $organizer = User::factory()->create([
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+        ]);
+
+        Appointment::factory()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('appointments', 1)
+            ->has('appointments.0.organizer', fn ($assert) => $assert
+                ->where('id', $organizer->id)
+                ->where('uuid', (string) $organizer->uuid)
+                ->where('name', 'Jean Dupont')
+            )
+        );
+    }
+
+    public function test_show_appointments_include_participants_count(): void
+    {
+        $department = Department::factory()->create();
+        $organizer = User::factory()->create();
+        $participants = User::factory()->count(5)->create();
+
+        $appointment = Appointment::factory()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        // Attach participants to the appointment
+        $appointment->participants()->attach($participants->pluck('id'));
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('appointments', 1)
+            ->where('appointments.0.participants_count', 5)
+        );
+    }
+
+    public function test_show_returns_empty_appointments_array_for_department_without_appointments(): void
+    {
+        $department = Department::factory()->create();
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('appointments', 0)
+        );
+    }
+
+    public function test_show_only_returns_appointments_for_this_department(): void
+    {
+        $department1 = Department::factory()->create();
+        $department2 = Department::factory()->create();
+        $organizer = User::factory()->create();
+
+        // Create appointments for department1
+        Appointment::factory()->count(2)->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department1->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        // Create appointments for department2
+        Appointment::factory()->count(3)->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department2->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department1));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('appointments', 2) // Only department1's appointments
+        );
+    }
+
+    public function test_show_appointments_include_all_statuses(): void
+    {
+        $department = Department::factory()->create();
+        $organizer = User::factory()->create();
+
+        // Create appointments with different statuses
+        Appointment::factory()->pending()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        Appointment::factory()->confirmed()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        Appointment::factory()->cancelled()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        Appointment::factory()->completed()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('appointments', 4)
+        );
+    }
+
+    public function test_show_appointments_include_all_types(): void
+    {
+        $department = Department::factory()->create();
+        $organizer = User::factory()->create();
+
+        // Create appointments with different types
+        Appointment::factory()->individual()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        Appointment::factory()->group()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        Appointment::factory()->consultation()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        Appointment::factory()->meeting()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('appointments', 4)
+        );
+    }
+
+    public function test_show_appointments_datetime_format_is_iso_string(): void
+    {
+        $department = Department::factory()->create();
+        $organizer = User::factory()->create();
+
+        $appointment = Appointment::factory()->create([
+            'appointmentable_type' => Department::class,
+            'appointmentable_id' => $department->id,
+            'user_id' => $organizer->id,
+            'start_datetime' => '2024-06-15 10:00:00',
+            'end_datetime' => '2024-06-15 11:00:00',
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('appointments', 1)
+            // ISO 8601 format check
+            ->where('appointments.0.start_datetime', fn ($value) =>
+                preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value) === 1
+            )
+            ->where('appointments.0.end_datetime', fn ($value) =>
+                preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value) === 1
+            )
+        );
+    }
+
+    public function test_show_can_manage_is_passed_for_appointments(): void
+    {
+        $department = Department::factory()->create();
+
+        // User with manage permission
+        $this->user->givePermissionTo(['view departments', 'manage departments']);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->where('canManage', true)
+        );
+    }
+
+    public function test_show_cannot_manage_for_regular_user(): void
+    {
+        $department = Department::factory()->create();
+
+        // User with only view permission
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->where('canManage', false)
+        );
     }
 }

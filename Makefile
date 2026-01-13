@@ -1,4 +1,4 @@
-.PHONY: phpstan phpcs phpmd pint pest test clear quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean
+.PHONY: phpstan phpcs phpmd pint pest test clear db quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean
 
 # PHPStan static analysis (level 10)
 phpstan:
@@ -72,6 +72,12 @@ clear:
 	@php artisan config:clear
 	@php artisan route:clear
 	@php artisan view:clear
+
+# Reset database with fresh migrations and seeders
+db:
+	@echo "Resetting database with fresh migrations and seeders..."
+	@php artisan migrate:fresh --seed
+	@echo "Database reset complete!"
 
 # Generate API documentation
 docs:
@@ -237,6 +243,7 @@ help:
 	@echo ""
 	@echo "🔧 Utilities:"
 	@echo "  make clear              - Clear all Laravel caches"
+	@echo "  make db                 - Reset database with fresh migrations and seeders"
 	@echo "  make docs               - Generate API documentation with PHPDocumentor"
 	@echo "  make schema-docs        - Generate database schema documentation with SchemaSpy"
 	@echo "  make er-diagram         - Generate Entity Relationship Diagram (SVG)"

@@ -60,6 +60,12 @@ class RolesAndPermissionsSeeder extends Seeder
             // System
             'view system settings', 'manage system settings',
             'view reports', 'generate reports',
+            // Workflows
+            'view workflows', 'create workflows', 'edit workflows', 'delete workflows', 'manage workflows', 'execute workflows',
+            // Forms
+            'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms',
+            // Needs (Department Needs)
+            'view needs', 'create needs', 'edit needs', 'delete needs', 'approve needs', 'manage needs',
         ];
 
         foreach ($permissions as $permission) {
@@ -110,6 +116,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'access student dashboard', 'access teacher dashboard',
             // Reports
             'view reports', 'generate reports',
+            // Workflows
+            'view workflows', 'create workflows', 'edit workflows', 'delete workflows', 'manage workflows', 'execute workflows',
+            // Forms
+            'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms',
+            // Needs
+            'view needs', 'create needs', 'edit needs', 'delete needs', 'approve needs', 'manage needs',
         ]);
 
         // Writer - Content management focused
@@ -163,6 +175,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'view reports', 'generate reports',
             // Others
             'view books', 'view videos',
+            // Workflows
+            'view workflows', 'create workflows', 'edit workflows', 'manage workflows', 'execute workflows',
+            // Forms
+            'view forms', 'create forms', 'edit forms', 'manage forms', 'submit forms',
+            // Needs
+            'view needs', 'create needs', 'edit needs', 'approve needs', 'manage needs',
         ]);
 
         // Event Manager - Events and related activities
@@ -246,6 +264,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'view books', 'rent books', 'view videos', 'view groups', 'view stocks',
             // Reports
             'view reports',
+            // Workflows
+            'view workflows', 'create workflows', 'edit workflows', 'manage workflows', 'execute workflows',
+            // Forms
+            'view forms', 'create forms', 'edit forms', 'manage forms', 'submit forms',
+            // Needs
+            'view needs', 'create needs', 'edit needs', 'approve needs', 'manage needs',
         ]);
 
         // Impact Family Leader - Manage impact families and related activities
@@ -289,6 +313,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view appointments', 'create appointments',
             // Pastoral Care
             'view pastoral care', 'create pastoral care',
+            // Needs (basic submission)
+            'view needs', 'create needs', 'submit forms',
         ]);
 
         // Student - Access to student dashboard and training materials

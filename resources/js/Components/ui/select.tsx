@@ -15,6 +15,7 @@ interface SelectTriggerProps {
 
 interface SelectContentProps {
   children: React.ReactNode
+  className?: string
 }
 
 interface SelectItemProps {
@@ -78,7 +79,7 @@ const SelectValue = ({ placeholder, children }: SelectValueProps & { children?: 
   )
 }
 
-const SelectContent = ({ children }: SelectContentProps) => {
+const SelectContent = ({ children, className = "" }: SelectContentProps) => {
   const context = React.useContext(SelectContext)
   if (!context) throw new Error("SelectContent must be used within Select")
   if (!context.isOpen) return null
@@ -89,7 +90,7 @@ const SelectContent = ({ children }: SelectContentProps) => {
         className="fixed inset-0 z-40"
         onClick={() => context.setIsOpen(false)}
       />
-      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
+      <div className={`absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto ${className}`}>
         {children}
       </div>
     </>

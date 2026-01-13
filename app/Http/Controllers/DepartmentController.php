@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Models\DepartmentDocument;
+use App\Models\DepartmentForm;
+use App\Models\DepartmentNeed;
+use App\Models\DepartmentWorkflow;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,7 +21,7 @@ class DepartmentController extends Controller
 
     public function index()
     {
-        $departments = Department::with(['users', 'headOfDepartment'])
+        $departments = Department::with(['headOfDepartment'])
             ->withCount('users')
             ->when(request('status'), function ($query, $status) {
                 if ($status === 'active') {
@@ -28,9 +32,31 @@ class DepartmentController extends Controller
             ->paginate(10)
             ->appends(request()->query());
 
+        // Map departments to include head_of_department_user for frontend compatibility
+        $data = collect($departments->items())->map(function ($department) {
+            return [
+                'id' => $department->id,
+                'uuid' => $department->uuid,
+                'name' => $department->name,
+                'code' => $department->code,
+                'description' => $department->description,
+                'budget' => $department->budget,
+                'is_active' => $department->is_active,
+                'head_of_department' => $department->head_of_department,
+                'head_of_department_user' => $department->relationLoaded('headOfDepartment') && $department->headOfDepartment ? [
+                    'id' => $department->headOfDepartment->id,
+                    'first_name' => $department->headOfDepartment->first_name,
+                    'last_name' => $department->headOfDepartment->last_name,
+                ] : null,
+                'users_count' => $department->users_count,
+                'created_at' => $department->created_at,
+                'updated_at' => $department->updated_at,
+            ];
+        })->all();
+
         return Inertia::render('Departments/Index', [
             'departments' => [
-                'data' => $departments->items(),
+                'data' => $data,
                 'links' => $departments->linkCollection()->toArray(),
                 'meta' => [
                     'current_page' => $departments->currentPage(),
@@ -125,6 +151,88 @@ class DepartmentController extends Controller
             ],
             'availableUsers' => $allUsers,
             'canManage' => auth()->user()->can('manage departments'),
+            'workflows' => DepartmentWorkflow::where('department_id', $department->id)
+                ->withCount(['steps', 'instances'])
+                ->orderBy('created_at', 'desc')
+                ->get(),
+            'forms' => DepartmentForm::where('department_id', $department->id)
+                ->withCount(['fields', 'submissions'])
+                ->orderBy('created_at', 'desc')
+                ->get(),
+            'needs' => DepartmentNeed::where('department_id', $department->id)
+                ->with(['requester'])
+                ->orderBy('created_at', 'desc')
+                ->limit(20)
+                ->get(),
+            'appointments' => $department->appointments()
+                ->with(['organizer:id,uuid,first_name,last_name,email', 'participants:id,uuid,first_name,last_name,email'])
+                ->withCount('participants')
+                ->orderBy('start_datetime')
+                ->get()
+                ->map(function ($appointment) {
+                    return [
+                        'uuid' => $appointment->uuid,
+                        'title' => $appointment->title,
+                        'description' => $appointment->description,
+                        'type' => $appointment->type,
+                        'status' => $appointment->status,
+                        'start_datetime' => $appointment->start_datetime->toISOString(),
+                        'end_datetime' => $appointment->end_datetime->toISOString(),
+                        'location' => $appointment->location,
+                        'formatted_time_range' => $appointment->formatted_time_range,
+                        'participants_count' => $appointment->participants_count,
+                        'organizer' => $appointment->organizer ? [
+                            'id' => $appointment->organizer->id,
+                            'uuid' => $appointment->organizer->uuid,
+                            'name' => $appointment->organizer->name,
+                        ] : null,
+                    ];
+                }),
+            'meetings' => $department->meetings()
+                ->with([
+                    'appointment' => function ($query) {
+                        $query->with(['organizer:id,uuid,first_name,last_name,email', 'participants:id,uuid,first_name,last_name,email'])
+                              ->withCount('participants');
+                    },
+                    'creator:id,uuid,first_name,last_name,email'
+                ])
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($meeting) {
+                    $appointment = $meeting->appointment;
+                    return [
+                        'uuid' => $meeting->uuid,
+                        'is_mandatory' => $meeting->is_mandatory,
+                        'notify_all_members' => $meeting->notify_all_members,
+                        'notes' => $meeting->notes,
+                        'notified_at' => $meeting->notified_at?->toISOString(),
+                        'created_at' => $meeting->created_at->toISOString(),
+                        'creator' => $meeting->creator ? [
+                            'id' => $meeting->creator->id,
+                            'uuid' => $meeting->creator->uuid,
+                            'name' => $meeting->creator->name,
+                        ] : null,
+                        'appointment' => $appointment ? [
+                            'uuid' => $appointment->uuid,
+                            'title' => $appointment->title,
+                            'description' => $appointment->description,
+                            'type' => $appointment->type,
+                            'status' => $appointment->status,
+                            'start_datetime' => $appointment->start_datetime->format('Y-m-d\TH:i:s'),
+                            'end_datetime' => $appointment->end_datetime->format('Y-m-d\TH:i:s'),
+                            'location' => $appointment->location,
+                            'formatted_time_range' => $appointment->formatted_time_range,
+                            'participants_count' => $appointment->participants_count,
+                            'organizer' => $appointment->organizer ? [
+                                'id' => $appointment->organizer->id,
+                                'uuid' => $appointment->organizer->uuid,
+                                'name' => $appointment->organizer->name,
+                            ] : null,
+                        ] : null,
+                    ];
+                }),
+            'documentsTree' => DepartmentDocument::getTreeForDepartment($department->id),
+            'documentsCount' => $department->documents()->count(),
         ]);
     }
 

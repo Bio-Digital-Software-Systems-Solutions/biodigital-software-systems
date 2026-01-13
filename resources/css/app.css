@@ -1,4 +1,5 @@
 @import './datepicker.css';
+@import './react-day-picker.css';
 @import './uppy-core.css';
 @import './uppy-dashboard.css';
 
@@ -33,6 +34,21 @@
     --chart-4: 270 50% 40%;
     --chart-5: 295 70% 50%;
     --radius: 0.5rem;
+
+    /* SearchableSelect variables - Light mode */
+    --select-bg: #ffffff;
+    --select-text: #111827;
+    --select-placeholder: #9ca3af;
+    --select-border: #d1d5db;
+    --select-border-hover: #9ca3af;
+    --select-border-focus: #8b5cf6;
+    --select-ring: rgba(139, 92, 246, 0.2);
+    --select-indicator: #6b7280;
+    --select-indicator-hover: #374151;
+    --select-option-hover-bg: #f3f4f6;
+    --select-option-selected-bg: #8b5cf6;
+    --select-option-selected-text: #ffffff;
+    --select-option-active-bg: #e5e7eb;
   }
 
   .dark {
@@ -60,6 +76,21 @@
     --chart-3: 280 65% 60%;
     --chart-4: 270 50% 40%;
     --chart-5: 295 70% 50%;
+
+    /* SearchableSelect variables - Dark mode */
+    --select-bg: #111827;
+    --select-text: #f3f4f6;
+    --select-placeholder: #6b7280;
+    --select-border: #374151;
+    --select-border-hover: #4b5563;
+    --select-border-focus: #8b5cf6;
+    --select-ring: rgba(139, 92, 246, 0.3);
+    --select-indicator: #9ca3af;
+    --select-indicator-hover: #d1d5db;
+    --select-option-hover-bg: #1f2937;
+    --select-option-selected-bg: #8b5cf6;
+    --select-option-selected-text: #ffffff;
+    --select-option-active-bg: #374151;
   }
 }
 

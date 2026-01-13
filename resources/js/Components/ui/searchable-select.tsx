@@ -1,137 +1,142 @@
-import * as React from "react"
-import { useState, useRef, useEffect } from "react"
-import { ChevronDownIcon, CheckIcon } from "@heroicons/react/24/outline"
-import { cn } from "@/lib/utils"
+import React from 'react';
+import Select, { StylesConfig, SingleValue, GroupBase } from 'react-select';
 
-interface Option {
-  value: string | number
-  label: string
+export interface SelectOption {
+    value: string | number;
+    label: string;
 }
 
 interface SearchableSelectProps {
-  options: Option[]
-  value: string | number
-  onChange: (value: string | number) => void
-  placeholder?: string
-  className?: string
-  disabled?: boolean
+    options: SelectOption[];
+    value: string | number | null;
+    onChange: (value: string | number | null) => void;
+    placeholder?: string;
+    isDisabled?: boolean;
+    isClearable?: boolean;
+    isLoading?: boolean;
+    noOptionsMessage?: string;
+    className?: string;
+    id?: string;
 }
 
 export function SearchableSelect({
-  options,
-  value,
-  onChange,
-  placeholder = "Sélectionner...",
-  className,
-  disabled = false,
+    options,
+    value,
+    onChange,
+    placeholder = 'Sélectionner...',
+    isDisabled = false,
+    isClearable = true,
+    isLoading = false,
+    noOptionsMessage = 'Aucune option',
+    className = '',
+    id,
 }: SearchableSelectProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const containerRef = useRef<HTMLDivElement>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
+    const selectedOption = options.find((opt) => opt.value === value) || null;
 
-  const selectedOption = options.find((opt) => opt.value === value)
+    const handleChange = (newValue: SingleValue<SelectOption>) => {
+        onChange(newValue ? newValue.value : null);
+    };
 
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+    // Custom styles for dark mode support
+    const customStyles: StylesConfig<SelectOption, false, GroupBase<SelectOption>> = {
+        control: (base, state) => ({
+            ...base,
+            minHeight: '38px',
+            backgroundColor: 'var(--select-bg)',
+            borderColor: state.isFocused ? 'var(--select-border-focus)' : 'var(--select-border)',
+            borderRadius: '0.375rem',
+            boxShadow: state.isFocused ? '0 0 0 2px var(--select-ring)' : 'none',
+            '&:hover': {
+                borderColor: 'var(--select-border-hover)',
+            },
+        }),
+        menu: (base) => ({
+            ...base,
+            backgroundColor: 'var(--select-bg)',
+            borderColor: 'var(--select-border)',
+            borderRadius: '0.375rem',
+            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+            zIndex: 50,
+        }),
+        menuList: (base) => ({
+            ...base,
+            padding: '4px',
+        }),
+        option: (base, state) => ({
+            ...base,
+            backgroundColor: state.isSelected
+                ? 'var(--select-option-selected-bg)'
+                : state.isFocused
+                ? 'var(--select-option-hover-bg)'
+                : 'transparent',
+            color: state.isSelected
+                ? 'var(--select-option-selected-text)'
+                : 'var(--select-text)',
+            borderRadius: '0.25rem',
+            cursor: 'pointer',
+            '&:active': {
+                backgroundColor: 'var(--select-option-active-bg)',
+            },
+        }),
+        singleValue: (base) => ({
+            ...base,
+            color: 'var(--select-text)',
+        }),
+        input: (base) => ({
+            ...base,
+            color: 'var(--select-text)',
+        }),
+        placeholder: (base) => ({
+            ...base,
+            color: 'var(--select-placeholder)',
+        }),
+        indicatorSeparator: (base) => ({
+            ...base,
+            backgroundColor: 'var(--select-border)',
+        }),
+        dropdownIndicator: (base) => ({
+            ...base,
+            color: 'var(--select-indicator)',
+            '&:hover': {
+                color: 'var(--select-indicator-hover)',
+            },
+        }),
+        clearIndicator: (base) => ({
+            ...base,
+            color: 'var(--select-indicator)',
+            '&:hover': {
+                color: 'var(--select-indicator-hover)',
+            },
+        }),
+        noOptionsMessage: (base) => ({
+            ...base,
+            color: 'var(--select-placeholder)',
+        }),
+        loadingMessage: (base) => ({
+            ...base,
+            color: 'var(--select-placeholder)',
+        }),
+    };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-        setSearchQuery("")
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  useEffect(() => {
-    if (isOpen && searchInputRef.current) {
-      searchInputRef.current.focus()
-    }
-  }, [isOpen])
-
-  const handleSelect = (optionValue: string | number) => {
-    onChange(optionValue)
-    setIsOpen(false)
-    setSearchQuery("")
-  }
-
-  return (
-    <div ref={containerRef} className={cn("relative", className)}>
-      <button
-        type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className={cn(
-          "w-full flex items-center justify-between rounded-md border border-gray-300 dark:border-gray-600",
-          "bg-white dark:bg-gray-700 px-3 py-2 text-sm",
-          "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-          "disabled:opacity-50 disabled:cursor-not-allowed",
-          "text-left"
-        )}
-      >
-        <span className={cn("block truncate", !selectedOption && "text-gray-400 dark:text-gray-500")}>
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-        <ChevronDownIcon
-          className={cn(
-            "h-4 w-4 text-gray-400 transition-transform",
-            isOpen && "transform rotate-180"
-          )}
-        />
-      </button>
-
-      {isOpen && (
-        <div className="absolute z-10 mt-1 w-full rounded-md bg-white dark:bg-gray-700 shadow-lg border border-gray-200 dark:border-gray-600">
-          <div className="p-2">
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher..."
-              className={cn(
-                "w-full rounded-md border border-gray-300 dark:border-gray-600",
-                "bg-white dark:bg-gray-800 px-3 py-2 text-sm",
-                "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                "text-gray-900 dark:text-gray-100"
-              )}
+    return (
+        <div className={`searchable-select ${className}`}>
+            <Select<SelectOption, false>
+                inputId={id}
+                options={options}
+                value={selectedOption}
+                onChange={handleChange}
+                placeholder={placeholder}
+                isDisabled={isDisabled}
+                isClearable={isClearable}
+                isLoading={isLoading}
+                isSearchable
+                noOptionsMessage={() => noOptionsMessage}
+                loadingMessage={() => 'Chargement...'}
+                styles={customStyles}
+                classNamePrefix="react-select"
             />
-          </div>
-          <div className="max-h-60 overflow-auto py-1">
-            {filteredOptions.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                Aucun résultat trouvé
-              </div>
-            ) : (
-              filteredOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => handleSelect(option.value)}
-                  className={cn(
-                    "w-full flex items-center justify-between px-3 py-2 text-sm",
-                    "hover:bg-gray-100 dark:hover:bg-gray-600",
-                    "text-left",
-                    option.value === value && "bg-blue-50 dark:bg-blue-900/30"
-                  )}
-                >
-                  <span className="block truncate text-gray-900 dark:text-gray-100">
-                    {option.label}
-                  </span>
-                  {option.value === value && (
-                    <CheckIcon className="h-4 w-4 text-primary dark:text-blue-400" />
-                  )}
-                </button>
-              ))
-            )}
-          </div>
         </div>
-      )}
-    </div>
-  )
+    );
 }
+
+export default SearchableSelect;

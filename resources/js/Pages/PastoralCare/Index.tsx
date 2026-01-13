@@ -879,7 +879,7 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                                         label: pastor.name
                                                                     }))}
                                                                     value={formData.pastor_id}
-                                                                    onChange={(value) => handleInputChange('pastor_id', value.toString())}
+                                                                    onChange={(value) => handleInputChange('pastor_id', value?.toString() || '')}
                                                                     placeholder="Choisissez un pasteur..."
                                                                     className="w-full"
                                                                 />

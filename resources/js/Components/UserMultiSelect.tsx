@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { User } from '@/Types';
 import { MagnifyingGlassIcon, XMarkIcon, UserCircleIcon, CheckIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
@@ -10,9 +10,11 @@ interface UserMultiSelectProps {
     label?: string;
     placeholder?: string;
     maxHeight?: string;
+    initialUsers?: SimpleUser[];
+    excludeUserIds?: number[];
 }
 
-interface SimpleUser {
+export interface SimpleUser {
     id: number;
     first_name: string;
     last_name: string;
@@ -27,6 +29,8 @@ export default function UserMultiSelect({
     label = 'Participants',
     placeholder = 'Rechercher des participants...',
     maxHeight = 'max-h-60',
+    initialUsers = [],
+    excludeUserIds = [],
 }: UserMultiSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -65,11 +69,29 @@ export default function UserMultiSelect({
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
+    // Memoize initialUsers to prevent infinite loops
+    // Use JSON.stringify to create a stable comparison key
+    const initialUsersKey = useMemo(() =>
+        initialUsers.map(u => u.id).sort().join(','),
+        [initialUsers]
+    );
+
     // Update selected users when selectedUserIds changes
     useEffect(() => {
-        const selected = users.filter(user => selectedUserIds.includes(user.id));
+        // Combine users from API and initialUsers to find selected ones
+        const allKnownUsers = [...users];
+
+        // Add initialUsers that are not already in the users list
+        initialUsers.forEach(initialUser => {
+            if (!allKnownUsers.find(u => u.id === initialUser.id)) {
+                allKnownUsers.push(initialUser);
+            }
+        });
+
+        const selected = allKnownUsers.filter(user => selectedUserIds.includes(user.id));
         setSelectedUsers(selected);
-    }, [selectedUserIds, users]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedUserIds, users, initialUsersKey]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -107,7 +129,10 @@ export default function UserMultiSelect({
         return `${user.first_name} ${user.last_name}`.trim() || user.email;
     };
 
-    const filteredUsers = users.filter(user => !selectedUserIds.includes(user.id));
+    // Filter out already selected users and excluded users (e.g., the authenticated user)
+    const filteredUsers = users.filter(user =>
+        !selectedUserIds.includes(user.id) && !excludeUserIds.includes(user.id)
+    );
 
     return (
         <div className="w-full">
