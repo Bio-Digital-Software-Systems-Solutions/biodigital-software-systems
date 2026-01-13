@@ -11,6 +11,10 @@ class UpdateRolesAndPermissions extends Command
 {
     /**
      * The name and signature of the console command.
+     * # Prévisualiser les changements 
+     * php artisan permissions:sync --dry-run
+     * Appliquer les changements
+     * php artisan permissions:sync --force
      *
      * @var string
      */
