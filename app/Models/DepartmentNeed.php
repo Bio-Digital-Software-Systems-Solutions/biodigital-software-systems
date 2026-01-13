@@ -226,7 +226,7 @@ class DepartmentNeed extends Model
         return $this;
     }
 
-    public function reject(int $rejecterId, string $reason = null): self
+    public function reject(int $rejecterId, ?string $reason = null): self
     {
         if ($this->canTransitionTo(NeedStatus::REJECTED)) {
             $this->update([

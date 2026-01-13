@@ -291,7 +291,7 @@ export default function Dashboard() {
                             </div>
                             <div className="mt-4">
                                 <Link
-                                    href={route('chat.index')}
+                                    href={route('activity.index')}
                                     className="block w-full text-center text-sm text-primary dark:text-blue-400 hover:text-primary dark:hover:text-blue-300 font-medium"
                                 >
                                     Voir toute l'activité

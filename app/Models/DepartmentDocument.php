@@ -268,10 +268,16 @@ class DepartmentDocument extends Model
     }
 
     /**
-     * Get documents organized as a tree structure.
+     * Get documents organized as a tree structure with category subfolders.
+     * Automatically ensures the 'rapports' category exists for the current month.
      */
     public static function getTreeForDepartment(int $departmentId): array
     {
+        // Ensure rapports category exists for current month
+        $currentYear = now()->year;
+        $currentMonth = now()->month;
+        DepartmentDocumentCategory::ensureRapportsCategory($departmentId, $currentYear, $currentMonth);
+
         $documents = self::where('department_id', $departmentId)
             ->with(['department', 'uploader:id,first_name,last_name'])
             ->orderBy('year', 'desc')
@@ -279,11 +285,61 @@ class DepartmentDocument extends Model
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Get all categories from database
+        $allCategories = DepartmentDocumentCategory::where('department_id', $departmentId)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->groupBy(fn($cat) => "{$cat->year}-{$cat->month}");
+
         $tree = [];
 
+        // First, create structure from categories (ensures empty categories show)
+        foreach ($allCategories as $periodKey => $categories) {
+            [$year, $month] = explode('-', $periodKey);
+            $year = (int) $year;
+            $month = (int) $month;
+
+            if (!isset($tree[$year])) {
+                $tree[$year] = [
+                    'year' => $year,
+                    'months' => [],
+                    'document_count' => 0,
+                ];
+            }
+
+            if (!isset($tree[$year]['months'][$month])) {
+                $monthNames = [
+                    1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril',
+                    5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août',
+                    9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre',
+                ];
+
+                $tree[$year]['months'][$month] = [
+                    'month' => $month,
+                    'month_name' => $monthNames[$month] ?? '',
+                    'categories' => [],
+                    'document_count' => 0,
+                ];
+            }
+
+            foreach ($categories as $category) {
+                $tree[$year]['months'][$month]['categories'][$category->slug] = [
+                    'uuid' => $category->uuid,
+                    'name' => $category->name,
+                    'key' => $category->slug,
+                    'is_system' => $category->is_system,
+                    'documents' => [],
+                ];
+            }
+        }
+
+        // Then, add documents to their categories
         foreach ($documents as $document) {
             $year = $document->year;
             $month = $document->month;
+            // Documents without category go to a special 'uncategorized' virtual folder
+            $category = $document->category ?? '_uncategorized';
 
             if (!isset($tree[$year])) {
                 $tree[$year] = [
@@ -297,11 +353,30 @@ class DepartmentDocument extends Model
                 $tree[$year]['months'][$month] = [
                     'month' => $month,
                     'month_name' => $document->month_name,
+                    'categories' => [],
+                    'document_count' => 0,
+                ];
+            }
+
+            // Ensure category exists (from document that may not have a DB category)
+            if (!isset($tree[$year]['months'][$month]['categories'][$category])) {
+                // Try to find the category in the database
+                $dbCategory = DepartmentDocumentCategory::where('department_id', $departmentId)
+                    ->where('year', $year)
+                    ->where('month', $month)
+                    ->where('slug', $category)
+                    ->first();
+
+                $tree[$year]['months'][$month]['categories'][$category] = [
+                    'uuid' => $dbCategory?->uuid,
+                    'name' => $dbCategory?->name ?? self::getCategoryLabel($category),
+                    'key' => $category,
+                    'is_system' => $dbCategory?->is_system ?? false,
                     'documents' => [],
                 ];
             }
 
-            $tree[$year]['months'][$month]['documents'][] = [
+            $tree[$year]['months'][$month]['categories'][$category]['documents'][] = [
                 'uuid' => $document->uuid,
                 'title' => $document->title ?? $document->original_name,
                 'original_name' => $document->original_name,
@@ -324,11 +399,24 @@ class DepartmentDocument extends Model
                 ] : null,
             ];
 
+            $tree[$year]['months'][$month]['document_count']++;
             $tree[$year]['document_count']++;
         }
 
-        // Convert months from associative array to indexed array and sort
+        // Convert categories and months from associative arrays to indexed arrays and sort
         foreach ($tree as &$yearData) {
+            foreach ($yearData['months'] as &$monthData) {
+                // Sort categories: rapports first (is_system=true), then others alphabetically
+                $categories = $monthData['categories'];
+                uksort($categories, function($a, $b) use ($categories) {
+                    $aIsSystem = $categories[$a]['is_system'] ?? false;
+                    $bIsSystem = $categories[$b]['is_system'] ?? false;
+                    if ($aIsSystem && !$bIsSystem) return -1;
+                    if (!$aIsSystem && $bIsSystem) return 1;
+                    return strcmp($a, $b);
+                });
+                $monthData['categories'] = array_values($categories);
+            }
             $yearData['months'] = array_values($yearData['months']);
             usort($yearData['months'], fn($a, $b) => $b['month'] - $a['month']);
         }
@@ -338,5 +426,23 @@ class DepartmentDocument extends Model
         usort($result, fn($a, $b) => $b['year'] - $a['year']);
 
         return $result;
+    }
+
+    /**
+     * Get the label for a category.
+     */
+    public static function getCategoryLabel(string $category): string
+    {
+        $labels = [
+            '_uncategorized' => 'Non classés',
+            'rapports' => 'Rapports',
+            'documents' => 'Documents',
+            'comptes_rendus' => 'Comptes-rendus',
+            'factures' => 'Factures',
+            'contrats' => 'Contrats',
+            'autres' => 'Autres',
+        ];
+
+        return $labels[$category] ?? ucfirst($category);
     }
 }

@@ -285,4 +285,12 @@ class Department extends Model
     {
         return $this->hasMany(DepartmentDocument::class);
     }
+
+    /**
+     * Get document categories for this department.
+     */
+    public function categories(): HasMany
+    {
+        return $this->hasMany(DepartmentDocumentCategory::class);
+    }
 }

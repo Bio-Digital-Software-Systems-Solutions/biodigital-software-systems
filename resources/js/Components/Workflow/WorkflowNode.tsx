@@ -4,14 +4,13 @@ import type { NodeProps } from '@xyflow/react';
 import {
     PlayIcon,
     StopIcon,
-    ClipboardDocumentCheckIcon,
+    BoltIcon,
     CheckCircleIcon,
     DocumentTextIcon,
     AdjustmentsHorizontalIcon,
     ArrowsPointingOutIcon,
     BellIcon,
     ClockIcon,
-    CodeBracketIcon,
     ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import type { StepType, WorkflowNodeData } from '@/Types/workflow';
@@ -23,26 +22,25 @@ const getStepIcon = (type: StepType) => {
             return <PlayIcon className={iconClass} />;
         case 'end':
             return <StopIcon className={iconClass} />;
-        case 'task':
-            return <ClipboardDocumentCheckIcon className={iconClass} />;
+        case 'action':
+            return <BoltIcon className={iconClass} />;
         case 'approval':
             return <CheckCircleIcon className={iconClass} />;
         case 'form':
             return <DocumentTextIcon className={iconClass} />;
         case 'condition':
             return <AdjustmentsHorizontalIcon className={iconClass} />;
-        case 'parallel':
+        case 'parallel_split':
+        case 'parallel_join':
             return <ArrowsPointingOutIcon className={iconClass} />;
         case 'notification':
             return <BellIcon className={iconClass} />;
-        case 'delay':
+        case 'wait':
             return <ClockIcon className={iconClass} />;
-        case 'script':
-            return <CodeBracketIcon className={iconClass} />;
-        case 'sub_workflow':
+        case 'subprocess':
             return <ArrowPathIcon className={iconClass} />;
         default:
-            return <ClipboardDocumentCheckIcon className={iconClass} />;
+            return <BoltIcon className={iconClass} />;
     }
 };
 
@@ -52,24 +50,23 @@ const getStepColor = (type: StepType): string => {
             return 'bg-green-100 border-green-500 dark:bg-green-900/30 dark:border-green-400';
         case 'end':
             return 'bg-red-100 border-red-500 dark:bg-red-900/30 dark:border-red-400';
-        case 'task':
-            return 'bg-blue-100 border-blue-500 dark:bg-blue-900/30 dark:border-blue-400';
+        case 'action':
+            return 'bg-purple-100 border-purple-500 dark:bg-purple-900/30 dark:border-purple-400';
         case 'approval':
             return 'bg-amber-100 border-amber-500 dark:bg-amber-900/30 dark:border-amber-400';
         case 'form':
             return 'bg-indigo-100 border-indigo-500 dark:bg-indigo-900/30 dark:border-indigo-400';
         case 'condition':
-            return 'bg-purple-100 border-purple-500 dark:bg-purple-900/30 dark:border-purple-400';
-        case 'parallel':
-            return 'bg-cyan-100 border-cyan-500 dark:bg-cyan-900/30 dark:border-cyan-400';
-        case 'notification':
-            return 'bg-pink-100 border-pink-500 dark:bg-pink-900/30 dark:border-pink-400';
-        case 'delay':
-            return 'bg-gray-100 border-gray-500 dark:bg-gray-700 dark:border-gray-400';
-        case 'script':
-            return 'bg-slate-100 border-slate-500 dark:bg-slate-900/30 dark:border-slate-400';
-        case 'sub_workflow':
+            return 'bg-yellow-100 border-yellow-500 dark:bg-yellow-900/30 dark:border-yellow-400';
+        case 'parallel_split':
+        case 'parallel_join':
             return 'bg-teal-100 border-teal-500 dark:bg-teal-900/30 dark:border-teal-400';
+        case 'notification':
+            return 'bg-cyan-100 border-cyan-500 dark:bg-cyan-900/30 dark:border-cyan-400';
+        case 'wait':
+            return 'bg-orange-100 border-orange-500 dark:bg-orange-900/30 dark:border-orange-400';
+        case 'subprocess':
+            return 'bg-pink-100 border-pink-500 dark:bg-pink-900/30 dark:border-pink-400';
         default:
             return 'bg-gray-100 border-gray-500 dark:bg-gray-700 dark:border-gray-400';
     }
@@ -81,24 +78,23 @@ const getIconColor = (type: StepType): string => {
             return 'text-green-600 dark:text-green-400';
         case 'end':
             return 'text-red-600 dark:text-red-400';
-        case 'task':
-            return 'text-blue-600 dark:text-blue-400';
+        case 'action':
+            return 'text-purple-600 dark:text-purple-400';
         case 'approval':
             return 'text-amber-600 dark:text-amber-400';
         case 'form':
             return 'text-indigo-600 dark:text-indigo-400';
         case 'condition':
-            return 'text-purple-600 dark:text-purple-400';
-        case 'parallel':
-            return 'text-cyan-600 dark:text-cyan-400';
-        case 'notification':
-            return 'text-pink-600 dark:text-pink-400';
-        case 'delay':
-            return 'text-gray-600 dark:text-gray-400';
-        case 'script':
-            return 'text-slate-600 dark:text-slate-400';
-        case 'sub_workflow':
+            return 'text-yellow-600 dark:text-yellow-400';
+        case 'parallel_split':
+        case 'parallel_join':
             return 'text-teal-600 dark:text-teal-400';
+        case 'notification':
+            return 'text-cyan-600 dark:text-cyan-400';
+        case 'wait':
+            return 'text-orange-600 dark:text-orange-400';
+        case 'subprocess':
+            return 'text-pink-600 dark:text-pink-400';
         default:
             return 'text-gray-600 dark:text-gray-400';
     }

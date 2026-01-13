@@ -28,7 +28,7 @@ class DepartmentWorkflowFactory extends Factory
             'created_by' => null,
             'name' => $this->faker->words(3, true) . ' Workflow',
             'description' => $this->faker->paragraph(),
-            'status' => WorkflowStatus::Draft,
+            'status' => WorkflowStatus::DRAFT,
             'version' => 1,
             'settings' => [],
         ];
@@ -40,7 +40,7 @@ class DepartmentWorkflowFactory extends Factory
     public function active(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => WorkflowStatus::Active,
+            'status' => WorkflowStatus::ACTIVE,
         ]);
     }
 
@@ -50,7 +50,7 @@ class DepartmentWorkflowFactory extends Factory
     public function deprecated(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => WorkflowStatus::Deprecated,
+            'status' => WorkflowStatus::DEPRECATED,
         ]);
     }
 }

@@ -284,21 +284,21 @@ class DepartmentDocumentTest extends TestCase
             ->uploadedBy($user)
             ->forPeriod(2026, 1)
             ->count(2)
-            ->create();
+            ->create(['category' => 'test-category']);
 
         DepartmentDocument::factory()
             ->forDepartment($department)
             ->uploadedBy($user)
             ->forPeriod(2026, 2)
             ->count(1)
-            ->create();
+            ->create(['category' => 'test-category']);
 
         DepartmentDocument::factory()
             ->forDepartment($department)
             ->uploadedBy($user)
             ->forPeriod(2025, 12)
             ->count(1)
-            ->create();
+            ->create(['category' => 'test-category']);
 
         $tree = DepartmentDocument::getTreeForDepartment($department->id);
 
@@ -315,12 +315,12 @@ class DepartmentDocumentTest extends TestCase
         // February should be first in months (desc order)
         $this->assertEquals(2, $tree[0]['months'][0]['month']);
         $this->assertEquals('Février', $tree[0]['months'][0]['month_name']);
-        $this->assertCount(1, $tree[0]['months'][0]['documents']);
+        $this->assertEquals(1, $tree[0]['months'][0]['document_count']);
 
         // January should be second
         $this->assertEquals(1, $tree[0]['months'][1]['month']);
         $this->assertEquals('Janvier', $tree[0]['months'][1]['month_name']);
-        $this->assertCount(2, $tree[0]['months'][1]['documents']);
+        $this->assertEquals(2, $tree[0]['months'][1]['document_count']);
 
         // 2025 should be second year
         $this->assertEquals(2025, $tree[1]['year']);
@@ -365,11 +365,12 @@ class DepartmentDocumentTest extends TestCase
             ->forDepartment($department)
             ->uploadedBy($user)
             ->forPeriod(2026, 1)
-            ->create();
+            ->create(['category' => 'test-category']);
 
         $tree = DepartmentDocument::getTreeForDepartment($department->id);
 
-        $document = $tree[0]['months'][0]['documents'][0];
+        // Documents are now in categories within months
+        $document = $this->findFirstDocumentInTree($tree);
 
         $this->assertArrayHasKey('uploader', $document);
         $this->assertEquals($user->id, $document['uploader']['id']);
@@ -388,10 +389,12 @@ class DepartmentDocumentTest extends TestCase
             ->create([
                 'title' => null,
                 'original_name' => 'important-report.pdf',
+                'category' => 'test-category',
             ]);
 
         $tree = DepartmentDocument::getTreeForDepartment($department->id);
-        $document = $tree[0]['months'][0]['documents'][0];
+        // Documents are now in categories within months
+        $document = $this->findFirstDocumentInTree($tree);
 
         $this->assertEquals('important-report.pdf', $document['title']);
     }
@@ -407,12 +410,31 @@ class DepartmentDocumentTest extends TestCase
             ->create([
                 'title' => 'Custom Title',
                 'original_name' => 'file.pdf',
+                'category' => 'test-category',
             ]);
 
         $tree = DepartmentDocument::getTreeForDepartment($department->id);
-        $document = $tree[0]['months'][0]['documents'][0];
+        // Documents are now in categories within months
+        $document = $this->findFirstDocumentInTree($tree);
 
         $this->assertEquals('Custom Title', $document['title']);
+    }
+
+    /**
+     * Helper method to find the first document in the tree structure.
+     */
+    private function findFirstDocumentInTree(array $tree): ?array
+    {
+        foreach ($tree as $year) {
+            foreach ($year['months'] as $month) {
+                foreach ($month['categories'] as $category) {
+                    if (!empty($category['documents'])) {
+                        return $category['documents'][0];
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     // ==================== VIDEO/AUDIO FILE TYPE TESTS ====================
@@ -600,10 +622,14 @@ class DepartmentDocumentTest extends TestCase
             ->forDepartment($department)
             ->uploadedBy($user)
             ->forPeriod(2026, 1)
-            ->create(['extension' => 'mp4']);
+            ->create([
+                'extension' => 'mp4',
+                'category' => 'test-category',
+            ]);
 
         $tree = DepartmentDocument::getTreeForDepartment($department->id);
-        $document = $tree[0]['months'][0]['documents'][0];
+        // Documents are now in categories within months
+        $document = $this->findFirstDocumentInTree($tree);
 
         $this->assertArrayHasKey('can_preview', $document);
         $this->assertArrayHasKey('preview_type', $document);

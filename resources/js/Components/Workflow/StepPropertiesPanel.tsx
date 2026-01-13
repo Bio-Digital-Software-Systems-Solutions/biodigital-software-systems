@@ -6,15 +6,15 @@ import type { WorkflowStep, StepType, ApprovalType } from '@/Types/workflow';
 const stepTypeLabels: Record<StepType, string> = {
     start: 'Début',
     end: 'Fin',
-    task: 'Tâche',
     approval: 'Approbation',
-    form: 'Formulaire',
     condition: 'Condition',
-    parallel: 'Parallèle',
+    action: 'Action',
+    wait: 'Attente',
     notification: 'Notification',
-    delay: 'Délai',
-    script: 'Script',
-    sub_workflow: 'Sous-workflow',
+    form: 'Formulaire',
+    subprocess: 'Sous-processus',
+    parallel_split: 'Division parallèle',
+    parallel_join: 'Jonction parallèle',
 };
 
 const approvalTypes: { value: ApprovalType; label: string }[] = [
@@ -71,7 +71,7 @@ export default function StepPropertiesPanel() {
 
     const renderTypeSpecificConfig = () => {
         switch (selectedStep.type) {
-            case 'task':
+            case 'action':
                 return (
                     <div className="space-y-3">
                         <div>
@@ -197,29 +197,29 @@ export default function StepPropertiesPanel() {
                     </div>
                 );
 
-            case 'delay':
+            case 'wait':
                 return (
                     <div className="space-y-3">
                         <div>
-                            <label className={labelClasses}>Type de délai</label>
+                            <label className={labelClasses}>Type d'attente</label>
                             <select
-                                value={selectedStep.config?.delay_type || 'duration'}
-                                onChange={(e) => handleConfigChange('delay_type', e.target.value)}
+                                value={selectedStep.config?.wait_type || 'duration'}
+                                onChange={(e) => handleConfigChange('wait_type', e.target.value)}
                                 className={inputClasses}
                             >
                                 <option value="duration">Durée fixe</option>
                                 <option value="until_date">Jusqu'à une date</option>
-                                <option value="until_time">Jusqu'à une heure</option>
+                                <option value="until_event">Jusqu'à un événement</option>
                             </select>
                         </div>
-                        {selectedStep.config?.delay_type === 'duration' && (
+                        {selectedStep.config?.wait_type === 'duration' && (
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className={labelClasses}>Valeur</label>
                                     <input
                                         type="number"
-                                        value={selectedStep.config?.delay_value || ''}
-                                        onChange={(e) => handleConfigChange('delay_value', Number(e.target.value))}
+                                        value={selectedStep.config?.wait_value || ''}
+                                        onChange={(e) => handleConfigChange('wait_value', Number(e.target.value))}
                                         className={inputClasses}
                                         min="0"
                                     />
@@ -227,8 +227,8 @@ export default function StepPropertiesPanel() {
                                 <div>
                                     <label className={labelClasses}>Unité</label>
                                     <select
-                                        value={selectedStep.config?.delay_unit || 'hours'}
-                                        onChange={(e) => handleConfigChange('delay_unit', e.target.value)}
+                                        value={selectedStep.config?.wait_unit || 'hours'}
+                                        onChange={(e) => handleConfigChange('wait_unit', e.target.value)}
                                         className={inputClasses}
                                     >
                                         <option value="minutes">Minutes</option>
@@ -261,25 +261,6 @@ export default function StepPropertiesPanel() {
                     </div>
                 );
 
-            case 'script':
-                return (
-                    <div className="space-y-3">
-                        <div>
-                            <label className={labelClasses}>Script PHP</label>
-                            <textarea
-                                value={selectedStep.config?.script || ''}
-                                onChange={(e) => handleConfigChange('script', e.target.value)}
-                                rows={8}
-                                className={`${inputClasses} font-mono text-xs`}
-                                placeholder="// $data contient les données du workflow\nreturn ['result' => true];"
-                            />
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Le script est exécuté dans un environnement sandboxé avec accès aux données du workflow via <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">$data</code>.
-                        </p>
-                    </div>
-                );
-
             case 'form':
                 return (
                     <div className="space-y-3">
@@ -308,11 +289,11 @@ export default function StepPropertiesPanel() {
                     </div>
                 );
 
-            case 'sub_workflow':
+            case 'subprocess':
                 return (
                     <div className="space-y-3">
                         <div>
-                            <label className={labelClasses}>Sous-workflow</label>
+                            <label className={labelClasses}>Sous-processus</label>
                             <select
                                 value={selectedStep.config?.workflow_id || ''}
                                 onChange={(e) => handleConfigChange('workflow_id', e.target.value)}
@@ -330,7 +311,7 @@ export default function StepPropertiesPanel() {
                                 className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                             />
                             <span className="text-sm text-gray-700 dark:text-gray-300">
-                                Attendre la fin du sous-workflow
+                                Attendre la fin du sous-processus
                             </span>
                         </label>
                     </div>
@@ -414,7 +395,7 @@ export default function StepPropertiesPanel() {
                 )}
 
                 {/* Assignment */}
-                {['task', 'approval', 'form'].includes(selectedStep.type) && (
+                {['action', 'approval', 'form'].includes(selectedStep.type) && (
                     <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <h4 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
                             Assignation

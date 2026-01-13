@@ -66,20 +66,33 @@ export default function WorkflowCanvas({ readOnly = false }: WorkflowCanvasProps
         const result: Edge[] = [];
 
         (transitions || []).forEach((transition) => {
-            const fromStep = steps.find((s) => s.id === transition.from_step_id);
-            const toStep = steps.find((s) => s.id === transition.to_step_id);
+            // Use UUID references if available (for new steps), fallback to ID lookup (for saved steps)
+            let sourceUuid: string | undefined;
+            let targetUuid: string | undefined;
+
+            if (transition.from_step_uuid && transition.to_step_uuid) {
+                // New transitions store UUIDs directly
+                sourceUuid = transition.from_step_uuid;
+                targetUuid = transition.to_step_uuid;
+            } else {
+                // Legacy transitions from database use ID references
+                const fromStep = steps.find((s) => s.id === transition.from_step_id);
+                const toStep = steps.find((s) => s.id === transition.to_step_id);
+                sourceUuid = fromStep?.uuid;
+                targetUuid = toStep?.uuid;
+            }
 
             // Skip edges where we can't find the source or target step
-            if (!fromStep?.uuid || !toStep?.uuid) {
+            if (!sourceUuid || !targetUuid) {
                 return;
             }
 
             result.push({
                 id: transition.uuid,
                 type: 'workflowEdge',
-                source: fromStep.uuid,
+                source: sourceUuid,
                 sourceHandle: 'source',
-                target: toStep.uuid,
+                target: targetUuid,
                 targetHandle: 'target',
                 data: {
                     label: transition.name,

@@ -5,7 +5,7 @@ namespace Database\Factories;
 use App\Models\WorkflowTransition;
 use App\Models\DepartmentWorkflow;
 use App\Models\WorkflowStep;
-use App\Enums\Workflow\ConditionType;
+use App\Enums\Workflow\TransitionConditionType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -29,9 +29,9 @@ class WorkflowTransitionFactory extends Factory
             'from_step_id' => WorkflowStep::factory(),
             'to_step_id' => WorkflowStep::factory(),
             'name' => $this->faker->words(2, true),
-            'condition_type' => ConditionType::Always,
+            'condition_type' => TransitionConditionType::ALWAYS,
             'condition_config' => [],
-            'order' => $this->faker->numberBetween(1, 10),
+            'priority' => $this->faker->numberBetween(1, 10),
             'is_default' => false,
         ];
     }
@@ -52,7 +52,7 @@ class WorkflowTransitionFactory extends Factory
     public function fieldCondition(string $field, string $operator, mixed $value): static
     {
         return $this->state(fn (array $attributes) => [
-            'condition_type' => ConditionType::FieldValue,
+            'condition_type' => TransitionConditionType::FORM_FIELD,
             'condition_config' => [
                 'field' => $field,
                 'operator' => $operator,
@@ -67,7 +67,7 @@ class WorkflowTransitionFactory extends Factory
     public function approvalResult(bool $approved): static
     {
         return $this->state(fn (array $attributes) => [
-            'condition_type' => ConditionType::ApprovalResult,
+            'condition_type' => TransitionConditionType::APPROVAL_RESULT,
             'condition_config' => [
                 'approved' => $approved,
             ],

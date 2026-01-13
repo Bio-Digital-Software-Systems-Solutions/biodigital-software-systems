@@ -192,7 +192,7 @@ class WorkflowInstance extends Model
         return $this;
     }
 
-    public function cancel(string $reason = null): self
+    public function cancel(?string $reason = null): self
     {
         if ($this->status->canTransitionTo(WorkflowInstanceStatus::CANCELLED)) {
             $this->update([
@@ -205,7 +205,7 @@ class WorkflowInstance extends Model
         return $this;
     }
 
-    public function fail(string $reason = null): self
+    public function fail(?string $reason = null): self
     {
         if ($this->status->canTransitionTo(WorkflowInstanceStatus::FAILED)) {
             $this->update([

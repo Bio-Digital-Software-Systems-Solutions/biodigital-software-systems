@@ -27,7 +27,7 @@ class WorkflowStepFactory extends Factory
             'workflow_id' => DepartmentWorkflow::factory(),
             'name' => $this->faker->words(2, true),
             'description' => $this->faker->sentence(),
-            'type' => StepType::Task,
+            'type' => StepType::ACTION,
             'order' => $this->faker->numberBetween(1, 10),
             'position_x' => $this->faker->numberBetween(100, 800),
             'position_y' => $this->faker->numberBetween(100, 600),
@@ -43,7 +43,7 @@ class WorkflowStepFactory extends Factory
     public function start(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => StepType::Start,
+            'type' => StepType::START,
             'name' => 'Start',
             'is_start' => true,
             'order' => 0,
@@ -56,7 +56,7 @@ class WorkflowStepFactory extends Factory
     public function end(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => StepType::End,
+            'type' => StepType::END,
             'name' => 'End',
             'is_end' => true,
             'order' => 100,
@@ -69,7 +69,7 @@ class WorkflowStepFactory extends Factory
     public function task(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => StepType::Task,
+            'type' => StepType::ACTION,
         ]);
     }
 
@@ -79,7 +79,7 @@ class WorkflowStepFactory extends Factory
     public function approval(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => StepType::Approval,
+            'type' => StepType::APPROVAL,
         ]);
     }
 
@@ -89,7 +89,7 @@ class WorkflowStepFactory extends Factory
     public function form(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => StepType::Form,
+            'type' => StepType::FORM,
         ]);
     }
 
@@ -99,7 +99,7 @@ class WorkflowStepFactory extends Factory
     public function condition(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => StepType::Condition,
+            'type' => StepType::CONDITION,
         ]);
     }
 
@@ -109,7 +109,7 @@ class WorkflowStepFactory extends Factory
     public function notification(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => StepType::Notification,
+            'type' => StepType::NOTIFICATION,
         ]);
     }
 }

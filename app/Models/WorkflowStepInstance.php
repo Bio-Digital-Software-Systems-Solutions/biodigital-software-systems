@@ -200,7 +200,7 @@ class WorkflowStepInstance extends Model
         return $this;
     }
 
-    public function fail(string $message = null, array $details = []): self
+    public function fail(?string $message = null, array $details = []): self
     {
         $this->update([
             'status' => StepInstanceStatus::FAILED,

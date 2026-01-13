@@ -8,15 +8,15 @@ export type WorkflowScope = 'department' | 'enterprise';
 export type StepType =
     | 'start'
     | 'end'
-    | 'task'
     | 'approval'
-    | 'form'
     | 'condition'
-    | 'parallel'
+    | 'action'
+    | 'wait'
     | 'notification'
-    | 'delay'
-    | 'script'
-    | 'sub_workflow';
+    | 'form'
+    | 'subprocess'
+    | 'parallel_split'
+    | 'parallel_join';
 
 export type StepInstanceStatus =
     | 'pending'
@@ -118,6 +118,8 @@ export interface WorkflowTransition {
     workflow_id: number;
     from_step_id: number;
     to_step_id: number;
+    from_step_uuid?: string;  // Used for frontend connections before saving
+    to_step_uuid?: string;    // Used for frontend connections before saving
     name?: string;
     condition_type: TransitionConditionType;
     condition_config?: Record<string, any>;

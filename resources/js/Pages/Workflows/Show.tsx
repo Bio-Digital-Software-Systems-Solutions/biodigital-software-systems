@@ -265,8 +265,20 @@ function WorkflowCanvasPreview({ workflow }: { workflow: DepartmentWorkflow }) {
 
     React.useEffect(() => {
         setWorkflow(workflow);
-        setSteps(workflow.steps || []);
-        setTransitions(workflow.transitions || []);
+        const steps = workflow.steps || [];
+        setSteps(steps);
+
+        // Enrich transitions with UUIDs from steps for proper edge rendering
+        const transitions = (workflow.transitions || []).map((transition) => {
+            const fromStep = steps.find((s) => s.id === transition.from_step_id);
+            const toStep = steps.find((s) => s.id === transition.to_step_id);
+            return {
+                ...transition,
+                from_step_uuid: fromStep?.uuid,
+                to_step_uuid: toStep?.uuid,
+            };
+        });
+        setTransitions(transitions);
 
         return () => reset();
     }, [workflow, setWorkflow, setSteps, setTransitions, reset]);

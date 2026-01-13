@@ -31,8 +31,20 @@ export default function WorkflowBuilder({ workflow }: Props) {
     // Initialize store with workflow data (steps and transitions are loaded via relationship)
     useEffect(() => {
         setWorkflow(workflow);
-        setSteps(workflow.steps || []);
-        setTransitions(workflow.transitions || []);
+        const steps = workflow.steps || [];
+        setSteps(steps);
+
+        // Enrich transitions with UUIDs from steps for proper edge rendering
+        const transitions = (workflow.transitions || []).map((transition) => {
+            const fromStep = steps.find((s) => s.id === transition.from_step_id);
+            const toStep = steps.find((s) => s.id === transition.to_step_id);
+            return {
+                ...transition,
+                from_step_uuid: fromStep?.uuid,
+                to_step_uuid: toStep?.uuid,
+            };
+        });
+        setTransitions(transitions);
 
         return () => reset();
     }, [workflow]);
@@ -40,20 +52,52 @@ export default function WorkflowBuilder({ workflow }: Props) {
     const handleSave = () => {
         const store = useWorkflowStore.getState();
 
-        router.put(
-            route('workflows.update', workflow.uuid),
+        // Prepare steps with order index - only include serializable fields
+        const stepsToSave = store.steps.map((step, index) => ({
+            uuid: step.uuid,
+            name: step.name,
+            description: step.description || null,
+            type: step.type,
+            order: index,
+            position_x: step.position_x,
+            position_y: step.position_y,
+            is_start: step.is_start || false,
+            is_end: step.is_end || false,
+            config: step.config || null,
+            form_id: step.form_id || null,
+            approval_type: step.approval_type || null,
+            approvers: step.approvers || null,
+            timeout_hours: step.timeout_hours || null,
+            timeout_action: step.timeout_action || null,
+        }));
+
+        // Prepare transitions with from_step_uuid and to_step_uuid
+        const transitionsToSave = store.transitions.map((transition) => ({
+            uuid: transition.uuid,
+            from_step_uuid: transition.from_step_uuid,
+            to_step_uuid: transition.to_step_uuid,
+            name: transition.name || null,
+            condition_type: transition.condition_type || 'always',
+            condition_config: transition.condition_config || null,
+            is_default: transition.is_default || false,
+            priority: transition.priority || 0,
+        }));
+
+        router.post(
+            route('workflows.save-steps', workflow.uuid),
             {
-                name: store.workflow?.name,
-                description: store.workflow?.description,
-                steps: JSON.stringify(store.steps),
-                transitions: JSON.stringify(store.transitions),
+                steps: stepsToSave as any,
+                transitions: transitionsToSave as any,
             },
             {
+                preserveState: true,
+                preserveScroll: true,
                 onSuccess: () => {
                     toast.success('Workflow enregistré');
                     store.setIsDirty(false);
                 },
-                onError: () => {
+                onError: (errors) => {
+                    console.error('Save errors:', errors);
                     toast.error('Erreur lors de l\'enregistrement');
                 },
             }

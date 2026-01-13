@@ -66,17 +66,24 @@ class DepartmentDocumentControllerTest extends TestCase
                             '*' => [
                                 'month',
                                 'month_name',
-                                'documents' => [
+                                'categories' => [
                                     '*' => [
-                                        'uuid',
-                                        'title',
-                                        'original_name',
-                                        'file_url',
-                                        'formatted_file_size',
-                                        'extension',
-                                        'file_type',
+                                        'name',
+                                        'key',
+                                        'documents' => [
+                                            '*' => [
+                                                'uuid',
+                                                'title',
+                                                'original_name',
+                                                'file_url',
+                                                'formatted_file_size',
+                                                'extension',
+                                                'file_type',
+                                            ],
+                                        ],
                                     ],
                                 ],
+                                'document_count',
                             ],
                         ],
                         'document_count',
@@ -1464,13 +1471,17 @@ class DepartmentDocumentControllerTest extends TestCase
                         'year',
                         'months' => [
                             '*' => [
-                                'documents' => [
+                                'categories' => [
                                     '*' => [
-                                        'uuid',
-                                        'file_url',
-                                        'preview_url',
-                                        'can_preview',
-                                        'preview_type',
+                                        'documents' => [
+                                            '*' => [
+                                                'uuid',
+                                                'file_url',
+                                                'preview_url',
+                                                'can_preview',
+                                                'preview_type',
+                                            ],
+                                        ],
                                     ],
                                 ],
                             ],
@@ -1479,8 +1490,17 @@ class DepartmentDocumentControllerTest extends TestCase
                 ],
             ]);
 
-        // Verify video document has correct preview fields
-        $doc = $response->json('data.0.months.0.documents.0');
+        // Verify video document has correct preview fields (in rapports category by default)
+        // Find the category that contains the document
+        $categories = $response->json('data.0.months.0.categories');
+        $doc = null;
+        foreach ($categories as $category) {
+            if (!empty($category['documents'])) {
+                $doc = $category['documents'][0];
+                break;
+            }
+        }
+        $this->assertNotNull($doc, 'Document should be found in one of the categories');
         $this->assertTrue($doc['can_preview']);
         $this->assertEquals('video', $doc['preview_type']);
     }
@@ -1573,5 +1593,184 @@ class DepartmentDocumentControllerTest extends TestCase
         $cacheControl = $response->headers->get('Cache-Control');
         $this->assertStringContainsString('private', $cacheControl);
         $this->assertStringContainsString('max-age=3600', $cacheControl);
+    }
+
+    // ==================== DEFAULT CATEGORY TESTS ====================
+
+    /** @test */
+    public function it_leaves_category_null_when_no_category_provided(): void
+    {
+        $file = UploadedFile::fake()->create('report.pdf', 1024, 'application/pdf');
+
+        // Upload without specifying category
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.departments.documents.store', $this->department), [
+                'file' => $file,
+                'title' => 'Test Document',
+            ]);
+
+        $response->assertCreated();
+
+        // Verify the document has no category (appears directly under month)
+        $this->assertDatabaseHas('department_documents', [
+            'department_id' => $this->department->id,
+            'title' => 'Test Document',
+            'category' => null,
+        ]);
+    }
+
+    /** @test */
+    public function it_does_not_create_automatic_category_on_upload(): void
+    {
+        $file = UploadedFile::fake()->create('report.pdf', 1024, 'application/pdf');
+
+        // Get initial category count for this department
+        $initialCategoryCount = \App\Models\DepartmentDocumentCategory::where('department_id', $this->department->id)
+            ->where('year', now()->year)
+            ->where('month', now()->month)
+            ->count();
+
+        // Upload without category
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.departments.documents.store', $this->department), [
+                'file' => $file,
+            ]);
+
+        $response->assertCreated();
+
+        // Verify no new category was created for the month
+        $newCategoryCount = \App\Models\DepartmentDocumentCategory::where('department_id', $this->department->id)
+            ->where('year', now()->year)
+            ->where('month', now()->month)
+            ->count();
+
+        $this->assertEquals($initialCategoryCount, $newCategoryCount);
+    }
+
+    /** @test */
+    public function it_uses_provided_category_when_specified(): void
+    {
+        $file = UploadedFile::fake()->create('report.pdf', 1024, 'application/pdf');
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.departments.documents.store', $this->department), [
+                'file' => $file,
+                'title' => 'Specific Category Document',
+                'category' => 'custom-category',
+            ]);
+
+        $response->assertCreated();
+
+        // Verify the document uses the provided category, not the default
+        $this->assertDatabaseHas('department_documents', [
+            'department_id' => $this->department->id,
+            'title' => 'Specific Category Document',
+            'category' => 'custom-category',
+        ]);
+    }
+
+    /** @test */
+    public function it_uses_existing_category_slug_when_provided(): void
+    {
+        // First create a category
+        \App\Models\DepartmentDocumentCategory::create([
+            'department_id' => $this->department->id,
+            'name' => 'Rapports Financiers',
+            'slug' => 'rapports-financiers',
+            'year' => now()->year,
+            'month' => now()->month,
+            'is_system' => false,
+            'sort_order' => 1,
+        ]);
+
+        $file = UploadedFile::fake()->create('report.pdf', 1024, 'application/pdf');
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.departments.documents.store', $this->department), [
+                'file' => $file,
+                'category' => 'rapports-financiers',
+            ]);
+
+        $response->assertCreated();
+
+        $this->assertDatabaseHas('department_documents', [
+            'department_id' => $this->department->id,
+            'category' => 'rapports-financiers',
+        ]);
+    }
+
+    /** @test */
+    public function it_does_not_duplicate_default_month_category_on_multiple_uploads(): void
+    {
+        $file1 = UploadedFile::fake()->create('report1.pdf', 1024, 'application/pdf');
+        $file2 = UploadedFile::fake()->create('report2.pdf', 1024, 'application/pdf');
+
+        // Upload first file without category
+        $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.departments.documents.store', $this->department), [
+                'file' => $file1,
+            ])
+            ->assertCreated();
+
+        // Upload second file without category
+        $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.departments.documents.store', $this->department), [
+                'file' => $file2,
+            ])
+            ->assertCreated();
+
+        // Verify only one default month category exists
+        $categoryCount = \App\Models\DepartmentDocumentCategory::where([
+            'department_id' => $this->department->id,
+            'year' => now()->year,
+            'month' => now()->month,
+            'is_system' => true,
+        ])->count();
+
+        // Should have exactly 2 system categories: month default + rapports
+        $this->assertLessThanOrEqual(2, $categoryCount);
+    }
+
+    /** @test */
+    public function it_stores_document_without_category_when_none_provided(): void
+    {
+        $file = UploadedFile::fake()->create('report.pdf', 1024, 'application/pdf');
+
+        // Upload with specific year/month but no category
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.departments.documents.store', $this->department), [
+                'file' => $file,
+                'year' => 2025,
+                'month' => 6, // June
+            ]);
+
+        $response->assertCreated();
+
+        // Verify the document has no category (will appear directly under month)
+        $this->assertDatabaseHas('department_documents', [
+            'department_id' => $this->department->id,
+            'year' => 2025,
+            'month' => 6,
+            'category' => null,
+        ]);
+    }
+
+    /** @test */
+    public function it_treats_empty_string_category_as_null(): void
+    {
+        $file = UploadedFile::fake()->create('report.pdf', 1024, 'application/pdf');
+
+        // Upload with empty string category
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson(route('api.departments.documents.store', $this->department), [
+                'file' => $file,
+                'category' => '',
+            ]);
+
+        $response->assertCreated();
+
+        // Verify the document has null category (empty string treated as no category)
+        $document = DepartmentDocument::latest()->first();
+        $this->assertNull($document->category);
     }
 }

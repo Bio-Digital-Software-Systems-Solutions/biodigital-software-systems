@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\DepartmentDocument;
+use App\Models\DepartmentDocumentCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -146,6 +147,9 @@ class DepartmentDocumentController extends Controller
             $year = $validated['year'] ?? now()->year;
             $month = $validated['month'] ?? now()->month;
 
+            // Determine category - if not provided, leave null (document will appear directly under month)
+            $category = !empty($validated['category']) ? $validated['category'] : null;
+
             // Store file in organized folder structure: department_documents/{department_id}/{year}/{month}/
             $path = "department_documents/{$department->id}/{$year}/{$month}";
             $filePath = $file->storeAs($path, $fileName, 'public');
@@ -164,7 +168,7 @@ class DepartmentDocumentController extends Controller
                 'month' => $month,
                 'title' => $validated['title'] ?? null,
                 'description' => $validated['description'] ?? null,
-                'category' => $validated['category'] ?? null,
+                'category' => $category,
             ]);
 
             $document->load('uploader:id,first_name,last_name');

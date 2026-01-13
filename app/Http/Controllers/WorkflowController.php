@@ -139,6 +139,10 @@ class WorkflowController extends Controller
      */
     public function update(Request $request, DepartmentWorkflow $workflow)
     {
+        if ($workflow->isActive()) {
+            return back()->with('error', 'Cannot modify an active workflow. Deprecate it first.');
+        }
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
@@ -191,6 +195,10 @@ class WorkflowController extends Controller
      */
     public function destroy(DepartmentWorkflow $workflow)
     {
+        if ($workflow->isActive()) {
+            return back()->with('error', 'Cannot delete an active workflow. Deprecate it first.');
+        }
+
         if ($workflow->instances()->exists()) {
             return back()->with('error', 'Cannot delete workflow with existing instances.');
         }
@@ -209,20 +217,28 @@ class WorkflowController extends Controller
             'steps' => 'required|array',
             'steps.*.uuid' => 'required|string',
             'steps.*.name' => 'required|string|max:255',
-            'steps.*.type' => 'required|string',
+            'steps.*.description' => 'nullable|string',
+            'steps.*.type' => ['required', 'string', new \Illuminate\Validation\Rules\Enum(StepType::class)],
             'steps.*.order' => 'required|integer',
             'steps.*.position_x' => 'required|numeric',
             'steps.*.position_y' => 'required|numeric',
             'steps.*.is_start' => 'boolean',
             'steps.*.is_end' => 'boolean',
             'steps.*.config' => 'nullable|array',
-            'transitions' => 'required|array',
+            'steps.*.form_id' => 'nullable|integer|exists:department_forms,id',
+            'steps.*.approval_type' => 'nullable|string',
+            'steps.*.approvers' => 'nullable|array',
+            'steps.*.timeout_hours' => 'nullable|integer',
+            'steps.*.timeout_action' => 'nullable|string',
+            'transitions' => 'present|array',
             'transitions.*.uuid' => 'required|string',
             'transitions.*.from_step_uuid' => 'required|string',
             'transitions.*.to_step_uuid' => 'required|string',
             'transitions.*.name' => 'nullable|string',
             'transitions.*.condition_type' => 'nullable|string',
             'transitions.*.condition_config' => 'nullable|array',
+            'transitions.*.is_default' => 'boolean',
+            'transitions.*.priority' => 'nullable|integer',
         ]);
 
         // Map UUIDs to IDs

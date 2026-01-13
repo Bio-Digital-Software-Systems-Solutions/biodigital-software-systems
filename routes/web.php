@@ -218,6 +218,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('chat/rooms/{room}/leave', [App\Http\Controllers\ChatController::class, 'leaveRoom'])
         ->name('chat.rooms.leave');
 
+    // Activity log routes
+    Route::get('activity', [App\Http\Controllers\ActivityController::class, 'index'])
+        ->name('activity.index');
+
     // Project management routes
     Route::get('projects/all', [App\Http\Controllers\ProjectController::class, 'list'])
         ->name('projects.list');
@@ -737,6 +741,51 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('need-comments.update');
     Route::delete('/need-comments/{comment}', [App\Http\Controllers\NeedController::class, 'deleteComment'])
         ->name('need-comments.destroy');
+
+    // Department Reports
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [App\Http\Controllers\DepartmentReportController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\DepartmentReportController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\DepartmentReportController::class, 'store'])->name('store');
+        Route::get('/{report}', [App\Http\Controllers\DepartmentReportController::class, 'show'])->name('show');
+        Route::get('/{report}/edit', [App\Http\Controllers\DepartmentReportController::class, 'edit'])->name('edit');
+        Route::put('/{report}', [App\Http\Controllers\DepartmentReportController::class, 'update'])->name('update');
+        Route::delete('/{report}', [App\Http\Controllers\DepartmentReportController::class, 'destroy'])->name('destroy');
+
+        // Section management
+        Route::put('/{report}/sections/{section}', [App\Http\Controllers\DepartmentReportController::class, 'updateSection'])->name('sections.update');
+
+        // Report actions
+        Route::post('/{report}/populate', [App\Http\Controllers\DepartmentReportController::class, 'populate'])->name('populate');
+        Route::post('/{report}/submit', [App\Http\Controllers\DepartmentReportController::class, 'submit'])->name('submit');
+        Route::post('/{report}/approve', [App\Http\Controllers\DepartmentReportController::class, 'approve'])->name('approve');
+        Route::post('/{report}/publish', [App\Http\Controllers\DepartmentReportController::class, 'publish'])->name('publish');
+        Route::post('/{report}/archive', [App\Http\Controllers\DepartmentReportController::class, 'archive'])->name('archive');
+        Route::post('/{report}/duplicate', [App\Http\Controllers\DepartmentReportController::class, 'duplicate'])->name('duplicate');
+
+        // PDF Export
+        Route::get('/{report}/export', [App\Http\Controllers\DepartmentReportController::class, 'export'])->name('export');
+        Route::post('/{report}/generate-pdf', [App\Http\Controllers\DepartmentReportController::class, 'generatePdf'])->name('generate-pdf');
+        Route::get('/{report}/download-pdf', [App\Http\Controllers\DepartmentReportController::class, 'downloadPdf'])->name('download-pdf');
+        Route::get('/{report}/stream-pdf', [App\Http\Controllers\DepartmentReportController::class, 'streamPdf'])->name('stream-pdf');
+        Route::post('/{report}/regenerate-pdf', [App\Http\Controllers\DepartmentReportController::class, 'regeneratePdf'])->name('regenerate-pdf');
+        Route::get('/{report}/preview', [App\Http\Controllers\DepartmentReportController::class, 'preview'])->name('preview');
+
+        // Comments
+        Route::post('/{report}/comments', [App\Http\Controllers\DepartmentReportController::class, 'addComment'])->name('comments.add');
+        Route::post('/comments/{comment}/resolve', [App\Http\Controllers\DepartmentReportController::class, 'resolveComment'])->name('comments.resolve');
+
+        // Attachments
+        Route::post('/{report}/attachments', [App\Http\Controllers\DepartmentReportController::class, 'addAttachment'])->name('attachments.add');
+        Route::delete('/{report}/attachments/{attachment}', [App\Http\Controllers\DepartmentReportController::class, 'removeAttachment'])->name('attachments.remove');
+
+        // Versions
+        Route::get('/{report}/versions/{version1}/compare/{version2}', [App\Http\Controllers\DepartmentReportController::class, 'compareVersions'])->name('versions.compare');
+    });
+
+    // Department generated reports API
+    Route::get('/departments/{department}/generated-reports', [App\Http\Controllers\DepartmentReportController::class, 'listGeneratedReports'])
+        ->name('departments.generated-reports');
 
 });
 

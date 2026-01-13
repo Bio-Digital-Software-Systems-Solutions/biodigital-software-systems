@@ -118,7 +118,7 @@ class NeedComment extends Model
         return $this;
     }
 
-    public function reply(int $userId, string $content, bool $isInternal = null): self
+    public function reply(int $userId, string $content, ?bool $isInternal = null): self
     {
         return self::create([
             'need_id' => $this->need_id,

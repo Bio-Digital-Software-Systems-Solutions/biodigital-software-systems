@@ -15,6 +15,7 @@ interface PopoverContentProps {
   children: React.ReactNode
   className?: string
   align?: 'start' | 'center' | 'end'
+  side?: 'top' | 'bottom'
 }
 
 const PopoverContext = React.createContext<{
@@ -65,7 +66,7 @@ const PopoverTrigger = ({ asChild = false, children }: PopoverTriggerProps) => {
   )
 }
 
-const PopoverContent = ({ children, className = "", align = "start" }: PopoverContentProps) => {
+const PopoverContent = ({ children, className = "", align = "start", side = "bottom" }: PopoverContentProps) => {
   const context = React.useContext(PopoverContext)
   if (!context) throw new Error("PopoverContent must be used within Popover")
   if (!context.isOpen) return null
@@ -76,13 +77,15 @@ const PopoverContent = ({ children, className = "", align = "start" }: PopoverCo
     end: 'right-0'
   }[align]
 
+  const sideClass = side === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
+
   return (
     <>
       <div
         className="fixed inset-0 z-40"
         onClick={() => context.setIsOpen(false)}
       />
-      <div className={`absolute z-50 mt-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg ${alignClass} ${className}`}>
+      <div className={`absolute z-50 ${sideClass} bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg ${alignClass} ${className}`}>
         {children}
       </div>
     </>

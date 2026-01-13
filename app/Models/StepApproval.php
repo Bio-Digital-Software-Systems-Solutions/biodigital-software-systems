@@ -108,7 +108,7 @@ class StepApproval extends Model
         return $this->due_at && $this->due_at->isPast() && $this->isPending();
     }
 
-    public function approve(string $comments = null): self
+    public function approve(?string $comments = null): self
     {
         $this->update([
             'decision' => ApprovalDecision::APPROVED,
@@ -119,7 +119,7 @@ class StepApproval extends Model
         return $this;
     }
 
-    public function reject(string $comments = null): self
+    public function reject(?string $comments = null): self
     {
         $this->update([
             'decision' => ApprovalDecision::REJECTED,
@@ -130,7 +130,7 @@ class StepApproval extends Model
         return $this;
     }
 
-    public function requestChanges(array $changes, string $comments = null): self
+    public function requestChanges(array $changes, ?string $comments = null): self
     {
         $this->update([
             'decision' => ApprovalDecision::REQUESTED_CHANGES,
@@ -142,7 +142,7 @@ class StepApproval extends Model
         return $this;
     }
 
-    public function delegate(int $userId, string $reason = null): self
+    public function delegate(int $userId, ?string $reason = null): self
     {
         $this->update([
             'decision' => ApprovalDecision::DELEGATED,
@@ -154,7 +154,7 @@ class StepApproval extends Model
         return $this;
     }
 
-    public function abstain(string $comments = null): self
+    public function abstain(?string $comments = null): self
     {
         $this->update([
             'decision' => ApprovalDecision::ABSTAINED,

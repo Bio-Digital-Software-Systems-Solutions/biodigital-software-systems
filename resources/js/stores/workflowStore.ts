@@ -53,15 +53,15 @@ const getStepLabel = (type: StepType): string => {
     const labels: Record<StepType, string> = {
         start: 'Début',
         end: 'Fin',
-        task: 'Tâche',
         approval: 'Approbation',
-        form: 'Formulaire',
         condition: 'Condition',
-        parallel: 'Parallèle',
+        action: 'Action',
+        wait: 'Attente',
         notification: 'Notification',
-        delay: 'Délai',
-        script: 'Script',
-        sub_workflow: 'Sous-workflow',
+        form: 'Formulaire',
+        subprocess: 'Sous-processus',
+        parallel_split: 'Division parallèle',
+        parallel_join: 'Jonction parallèle',
     };
     return labels[type] || type;
 };
@@ -126,13 +126,9 @@ export const useWorkflowStore = create<WorkflowBuilderState & WorkflowBuilderAct
                 if (!state.steps) state.steps = [];
                 if (!state.transitions) state.transitions = [];
                 state.steps = state.steps.filter((s) => s.uuid !== stepId);
-                // Also remove connected transitions
+                // Also remove connected transitions using UUID references
                 state.transitions = state.transitions.filter(
-                    (t) => {
-                        const fromStep = state.steps.find(s => s.id === t.from_step_id);
-                        const toStep = state.steps.find(s => s.id === t.to_step_id);
-                        return fromStep?.uuid !== stepId && toStep?.uuid !== stepId;
-                    }
+                    (t) => t.from_step_uuid !== stepId && t.to_step_uuid !== stepId
                 );
                 state.isDirty = true;
                 if (state.selectedStepId === stepId) {
@@ -149,13 +145,9 @@ export const useWorkflowStore = create<WorkflowBuilderState & WorkflowBuilderAct
 
             if (!fromStep || !toStep) return null;
 
-            // Check if transition already exists
+            // Check if transition already exists using UUID references
             const exists = currentTransitions.some(
-                (t) => {
-                    const existingFromStep = currentSteps.find(s => s.id === t.from_step_id);
-                    const existingToStep = currentSteps.find(s => s.id === t.to_step_id);
-                    return existingFromStep?.uuid === fromStepUuid && existingToStep?.uuid === toStepUuid;
-                }
+                (t) => t.from_step_uuid === fromStepUuid && t.to_step_uuid === toStepUuid
             );
 
             if (exists) return null;
@@ -166,6 +158,8 @@ export const useWorkflowStore = create<WorkflowBuilderState & WorkflowBuilderAct
                 workflow_id: get().workflow?.id || 0,
                 from_step_id: fromStep.id,
                 to_step_id: toStep.id,
+                from_step_uuid: fromStepUuid,  // Store UUID for reliable lookups
+                to_step_uuid: toStepUuid,      // Store UUID for reliable lookups
                 condition_type: 'always',
                 priority: 0,
                 is_default: false,

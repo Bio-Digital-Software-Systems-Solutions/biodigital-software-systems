@@ -26,6 +26,7 @@ import {
     EyeIcon,
     PlayIcon,
     FolderIcon,
+    ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import type { DepartmentWorkflow } from '@/Types/workflow';
@@ -73,10 +74,17 @@ interface DocumentData {
     } | null;
 }
 
+interface CategoryData {
+    name: string;
+    key: string;
+    documents: DocumentData[];
+}
+
 interface MonthData {
     month: number;
     month_name: string;
-    documents: DocumentData[];
+    categories: CategoryData[];
+    document_count: number;
 }
 
 interface YearData {
@@ -231,6 +239,12 @@ export default function ShowDepartment({ department, availableUsers, canManage, 
                         <Link href={`/departments/${department.uuid}/edit`}>
                             <PencilIcon className="h-4 w-4 mr-2" />
                             Modifier
+                        </Link>
+                    </Button>
+                    <Button asChild>
+                        <Link href={`/reports/create?department_id=${department.id}`}>
+                            <ChartBarIcon className="h-4 w-4 mr-2" />
+                            Créer un rapport
                         </Link>
                     </Button>
                     <Button

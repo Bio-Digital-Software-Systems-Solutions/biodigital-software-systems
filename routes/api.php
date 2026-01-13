@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\DepartmentDocumentCategoryController;
 use App\Http\Controllers\Api\DepartmentDocumentController;
 use App\Http\Controllers\Api\DepartmentMeetingController;
 use App\Http\Controllers\Api\ProjectController;
@@ -160,6 +161,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{document:uuid}', [DepartmentDocumentController::class, 'destroy'])->name('destroy');
         Route::get('/{document:uuid}/download', [DepartmentDocumentController::class, 'download'])->name('download');
         Route::get('/{document:uuid}/preview', [DepartmentDocumentController::class, 'preview'])->name('preview');
+    });
+
+    // Department Document Categories API (subfolders)
+    Route::prefix('departments/{department:uuid}/document-categories')->name('api.departments.document-categories.')->group(function () {
+        Route::get('/', [DepartmentDocumentCategoryController::class, 'index'])->name('index');
+        Route::post('/', [DepartmentDocumentCategoryController::class, 'store'])->name('store');
+        Route::patch('/{category:uuid}', [DepartmentDocumentCategoryController::class, 'update'])->name('update');
+        Route::delete('/{category:uuid}', [DepartmentDocumentCategoryController::class, 'destroy'])->name('destroy');
     });
 
     // Authenticated Pastoral Care API endpoints (for pastors)
