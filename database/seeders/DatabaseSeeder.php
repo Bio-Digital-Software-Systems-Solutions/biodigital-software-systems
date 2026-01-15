@@ -77,6 +77,8 @@ class DatabaseSeeder extends Seeder
 
         // Seed all data in the correct order
         $this->call([
+            EmployeeSeeder::class,
+            StarSeeder::class,
             CategorySeeder::class,
             TagSeeder::class,
             StatusSeeder::class,

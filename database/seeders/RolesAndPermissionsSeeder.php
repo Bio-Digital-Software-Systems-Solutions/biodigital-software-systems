@@ -22,6 +22,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view articles', 'create articles', 'edit articles', 'delete articles', 'publish articles',
             // Events
             'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
+            'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
             // Appointments
             'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
             // Pastoral Care
@@ -66,6 +67,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms',
             // Needs (Department Needs)
             'view needs', 'create needs', 'edit needs', 'delete needs', 'approve needs', 'manage needs',
+            // Employees (HR)
+            'view employees', 'create employees', 'edit employees', 'delete employees', 'manage employees',
+            // Stars (Volunteers)
+            'view stars', 'create stars', 'edit stars', 'delete stars', 'manage stars',
         ];
 
         foreach ($permissions as $permission) {
@@ -122,6 +127,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms',
             // Needs
             'view needs', 'create needs', 'edit needs', 'delete needs', 'approve needs', 'manage needs',
+            // Employees
+            'view employees', 'create employees', 'edit employees', 'delete employees', 'manage employees',
+            // Stars (Volunteers)
+            'view stars', 'create stars', 'edit stars', 'delete stars', 'manage stars',
         ]);
 
         // Writer - Content management focused
@@ -188,6 +197,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $eventManager->syncPermissions([
             // Events
             'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
+            'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
             // Appointments
             'view appointments', 'create appointments', 'edit appointments', 'manage appointment participants',
             // Groups
@@ -317,6 +327,56 @@ class RolesAndPermissionsSeeder extends Seeder
             'view needs', 'create needs', 'submit forms',
         ]);
 
+        // Employee - Staff member with extended access
+        $employee = Role::firstOrCreate(['name' => 'employee']);
+        $employee->syncPermissions([
+            // Viewing permissions
+            'view articles',
+            'view trainings',
+            'view events', 'attend events', 'view videos', 'view books', 'view groups',
+            'view departments', 'view users',
+            // Books
+            'rent books',
+            // Messages & Chat
+            'view messages', 'create messages', 'edit messages', 'delete messages',
+            'use chat',
+            // Appointments
+            'view appointments', 'create appointments', 'edit appointments',
+            // Pastoral Care
+            'view pastoral care', 'create pastoral care',
+            // Tasks
+            'view tasks', 'create tasks', 'edit tasks',
+            // Projects
+            'view projects',
+            // Needs
+            'view needs', 'create needs', 'edit needs', 'submit forms',
+            // Reports
+            'view reports',
+        ]);
+
+        // Star - Volunteer with specific access
+        $star = Role::firstOrCreate(['name' => 'star']);
+        $star->syncPermissions([
+            // Viewing permissions
+            'view articles',
+            'view trainings',
+            'view events', 'attend events', 'view videos', 'view books', 'view groups',
+            'view departments',
+            // Books
+            'rent books',
+            // Messages & Chat
+            'view messages', 'create messages', 'edit messages', 'delete messages',
+            'use chat',
+            // Appointments
+            'view appointments', 'create appointments',
+            // Pastoral Care
+            'view pastoral care', 'create pastoral care',
+            // Tasks (can view and work on assigned tasks)
+            'view tasks',
+            // Needs (can submit needs)
+            'view needs', 'create needs', 'submit forms',
+        ]);
+
         // Student - Access to student dashboard and training materials
         $student = Role::firstOrCreate(['name' => 'student']);
         $student->syncPermissions([
@@ -404,5 +464,11 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $editorAlias = Role::firstOrCreate(['name' => 'Editor']);
         $editorAlias->syncPermissions($writer->permissions);
+
+        $employeeAlias = Role::firstOrCreate(['name' => 'Employee']);
+        $employeeAlias->syncPermissions($employee->permissions);
+
+        $starAlias = Role::firstOrCreate(['name' => 'Star']);
+        $starAlias->syncPermissions($star->permissions);
     }
 }

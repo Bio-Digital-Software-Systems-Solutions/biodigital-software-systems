@@ -2,14 +2,31 @@
 
 namespace App\Models;
 
+use App\Enums\Event\EventStatus;
+use App\Enums\Event\EventType;
+use App\Enums\Event\EventVisibility;
+use App\Models\Event\EventBadge;
+use App\Models\Event\EventCategory;
+use App\Models\Event\EventCheckin;
+use App\Models\Event\EventDocument;
+use App\Models\Event\EventFeedback;
+use App\Models\Event\EventNotification;
+use App\Models\Event\EventPromoCode;
+use App\Models\Event\EventRegistration;
+use App\Models\Event\EventSession;
+use App\Models\Event\EventSponsor;
+use App\Models\Event\EventTicket;
+use App\Models\Event\EventWaitlist;
 use App\Traits\ClearsCache;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -67,7 +84,7 @@ use Spatie\Activitylog\LogOptions;
  */
 class Event extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache;
+    use HasFactory, HasUuid, LogsActivity, ClearsCache, SoftDeletes;
 
     /**
      * Configure activity log options.
@@ -79,6 +96,7 @@ class Event extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -99,6 +117,20 @@ class Event extends Model
         'address_id',
         'images',
         'avatar',
+        // New fields
+        'type',
+        'visibility',
+        'early_bird_deadline',
+        'waitlist_capacity',
+        'waitlist_enabled',
+        'requires_approval',
+        'timezone',
+        'streaming_url',
+        'streaming_platform',
+        'settings',
+        'metadata',
+        'category_id',
+        'department_id',
     ];
 
     /**
@@ -112,11 +144,24 @@ class Event extends Model
             'start_date' => 'datetime',
             'end_date' => 'datetime',
             'registration_deadline' => 'datetime',
+            'early_bird_deadline' => 'datetime',
             'is_public' => 'boolean',
+            'waitlist_enabled' => 'boolean',
+            'requires_approval' => 'boolean',
             'max_participants' => 'integer',
+            'waitlist_capacity' => 'integer',
             'images' => 'array',
+            'settings' => 'array',
+            'metadata' => 'array',
+            'status' => EventStatus::class,
+            'type' => EventType::class,
+            'visibility' => EventVisibility::class,
         ];
     }
+
+    // ==================
+    // Existing Relationships
+    // ==================
 
     /**
      * Get the user who created the event.
@@ -143,14 +188,110 @@ class Event extends Model
     }
 
     /**
-     * The users that are participating in the event.
+     * The users that are participating in the event (legacy relationship).
      */
     public function participants(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'event_user')
-            ->withPivot('registered_at', 'attended')
+            ->withPivot('registered_at', 'attended', 'registration_id', 'role', 'notes')
             ->withTimestamps();
     }
+
+    // ==================
+    // New Relationships
+    // ==================
+
+    /**
+     * Get the category of the event.
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(EventCategory::class, 'category_id');
+    }
+
+    /**
+     * Get the department associated with the event.
+     */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * Get the sessions for the event.
+     */
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(EventSession::class);
+    }
+
+    /**
+     * Get the tickets for the event.
+     */
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(EventTicket::class);
+    }
+
+    /**
+     * Get the registrations for the event.
+     */
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(EventRegistration::class);
+    }
+
+    /**
+     * Get the promo codes for the event.
+     */
+    public function promoCodes(): HasMany
+    {
+        return $this->hasMany(EventPromoCode::class);
+    }
+
+    /**
+     * Get the sponsors for the event.
+     */
+    public function sponsors(): HasMany
+    {
+        return $this->hasMany(EventSponsor::class);
+    }
+
+    /**
+     * Get the documents for the event.
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(EventDocument::class);
+    }
+
+    /**
+     * Get the notifications for the event.
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(EventNotification::class);
+    }
+
+    /**
+     * Get the waitlist entries for the event.
+     */
+    public function waitlist(): HasMany
+    {
+        return $this->hasMany(EventWaitlist::class);
+    }
+
+    /**
+     * Get all feedback for the event.
+     */
+    public function feedback(): HasMany
+    {
+        return $this->hasMany(EventFeedback::class);
+    }
+
+    // ==================
+    // Existing Accessors
+    // ==================
 
     /**
      * Get the number of participants.
@@ -165,15 +306,93 @@ class Event extends Model
      */
     public function getAvailableSpotsAttribute(): int
     {
-        return $this->max_participants - $this->participants_count;
+        if ($this->max_participants === null) {
+            return PHP_INT_MAX;
+        }
+
+        return max(0, $this->max_participants - $this->participants_count);
     }
+
+    /**
+     * Get the event duration in hours.
+     */
+    public function getDurationInHoursAttribute(): float
+    {
+        return $this->start_date->diffInHours($this->end_date);
+    }
+
+    // ==================
+    // New Accessors
+    // ==================
+
+    /**
+     * Get the total number of registrations (confirmed).
+     */
+    public function getRegistrationsCountAttribute(): int
+    {
+        return $this->registrations()->confirmed()->count();
+    }
+
+    /**
+     * Get the total number of checked-in attendees.
+     */
+    public function getCheckedInCountAttribute(): int
+    {
+        return $this->registrations()->checkedIn()->count();
+    }
+
+    /**
+     * Get the waitlist count.
+     */
+    public function getWaitlistCountAttribute(): int
+    {
+        return $this->waitlist()->waiting()->count();
+    }
+
+    /**
+     * Get the total revenue from registrations.
+     */
+    public function getTotalRevenueAttribute(): float
+    {
+        return $this->registrations()
+            ->whereIn('status', ['confirmed', 'checked_in'])
+            ->sum('total_amount');
+    }
+
+    /**
+     * Check if the event is virtual.
+     */
+    public function getIsVirtualAttribute(): bool
+    {
+        return $this->type === EventType::WEBINAR;
+    }
+
+    /**
+     * Check if the event is hybrid.
+     */
+    public function getIsHybridAttribute(): bool
+    {
+        return $this->type === EventType::HYBRID;
+    }
+
+    /**
+     * Check if the event has early bird pricing.
+     */
+    public function getHasEarlyBirdAttribute(): bool
+    {
+        return $this->early_bird_deadline !== null && now()->isBefore($this->early_bird_deadline);
+    }
+
+    // ==================
+    // Existing Methods
+    // ==================
 
     /**
      * Check if the event is full.
      */
     public function isFull(): bool
     {
-        if (! $this->max_participants) {
+        if (!$this->max_participants) {
             return false;
         }
 
@@ -185,7 +404,7 @@ class Event extends Model
      */
     public function canAddParticipant(): bool
     {
-        return ! $this->isFull();
+        return !$this->isFull();
     }
 
     /**
@@ -263,13 +482,100 @@ class Event extends Model
         return true;
     }
 
+    // ==================
+    // New Methods
+    // ==================
+
     /**
-     * Get the event duration in hours.
+     * Check if the event is ongoing.
      */
-    public function getDurationInHoursAttribute(): float
+    public function isOngoing(): bool
     {
-        return $this->start_date->diffInHours($this->end_date);
+        return $this->hasStarted() && !$this->hasEnded();
     }
+
+    /**
+     * Check if waitlist is available.
+     */
+    public function hasWaitlistAvailable(): bool
+    {
+        if (!$this->waitlist_enabled) {
+            return false;
+        }
+
+        if ($this->waitlist_capacity === null) {
+            return true;
+        }
+
+        return $this->waitlist_count < $this->waitlist_capacity;
+    }
+
+    /**
+     * Check if the event accepts registrations.
+     */
+    public function canAcceptRegistrations(): bool
+    {
+        if (!$this->isRegistrationOpen()) {
+            return false;
+        }
+
+        if ($this->hasStarted()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the attendance rate.
+     */
+    public function getAttendanceRate(): float
+    {
+        $confirmed = $this->registrations_count;
+
+        if ($confirmed === 0) {
+            return 0;
+        }
+
+        return round(($this->checked_in_count / $confirmed) * 100, 1);
+    }
+
+    /**
+     * Get the average feedback rating.
+     */
+    public function getAverageFeedbackRating(): ?float
+    {
+        $avg = $this->feedback()->whereNotNull('overall_rating')->avg('overall_rating');
+        return $avg ? round($avg, 1) : null;
+    }
+
+    /**
+     * Duplicate the event.
+     */
+    public function duplicate(?array $overrides = []): self
+    {
+        $newEvent = $this->replicate([
+            'uuid',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+        ]);
+
+        foreach ($overrides as $key => $value) {
+            $newEvent->{$key} = $value;
+        }
+
+        $newEvent->save();
+
+        // Optionally duplicate related data
+        // This can be extended based on requirements
+
+        return $newEvent;
+    }
+
+    // ==================
+    // Existing Scopes
+    // ==================
 
     /**
      * Scope a query to only include upcoming events.
@@ -306,6 +612,67 @@ class Event extends Model
         });
     }
 
+    // ==================
+    // New Scopes
+    // ==================
+
+    /**
+     * Scope a query to only include ongoing events.
+     */
+    public function scopeOngoing($query)
+    {
+        return $query->where('start_date', '<=', now())
+            ->where('end_date', '>', now());
+    }
+
+    /**
+     * Scope a query to filter by type.
+     */
+    public function scopeOfType($query, EventType $type)
+    {
+        return $query->where('type', $type);
+    }
+
+    /**
+     * Scope a query to filter by visibility.
+     */
+    public function scopeWithVisibility($query, EventVisibility $visibility)
+    {
+        return $query->where('visibility', $visibility);
+    }
+
+    /**
+     * Scope a query to filter by category.
+     */
+    public function scopeInCategory($query, int $categoryId)
+    {
+        return $query->where('category_id', $categoryId);
+    }
+
+    /**
+     * Scope a query to filter by department.
+     */
+    public function scopeInDepartment($query, int $departmentId)
+    {
+        return $query->where('department_id', $departmentId);
+    }
+
+    /**
+     * Scope a query to search events.
+     */
+    public function scopeSearch($query, string $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('title', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%")
+                ->orWhere('location', 'like', "%{$search}%");
+        });
+    }
+
+    // ==================
+    // Static Methods
+    // ==================
+
     /**
      * Generate a random color for the event.
      */
@@ -339,8 +706,18 @@ class Event extends Model
         parent::boot();
 
         static::creating(function ($event) {
-            if (! $event->color) {
+            if (!$event->color) {
                 $event->color = self::generateRandomColor();
+            }
+
+            // Set default type if not set
+            if (!$event->type) {
+                $event->type = EventType::OTHER;
+            }
+
+            // Set default visibility if not set
+            if (!$event->visibility) {
+                $event->visibility = $event->is_public ? EventVisibility::PUBLIC : EventVisibility::PRIVATE;
             }
         });
     }

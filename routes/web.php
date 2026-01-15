@@ -165,6 +165,40 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Stock routes
     Route::resource('stocks', App\Http\Controllers\StockController::class);
 
+    // Employee routes
+    Route::resource('employees', App\Http\Controllers\EmployeeController::class);
+    Route::post('employees/{employee}/terminate', [App\Http\Controllers\EmployeeController::class, 'terminate'])
+        ->name('employees.terminate');
+    Route::post('employees/{employee}/activate', [App\Http\Controllers\EmployeeController::class, 'activate'])
+        ->name('employees.activate');
+    Route::post('employees/{employee}/on-leave', [App\Http\Controllers\EmployeeController::class, 'setOnLeave'])
+        ->name('employees.on-leave');
+    Route::post('employees/{employee}/reset-leave', [App\Http\Controllers\EmployeeController::class, 'resetLeave'])
+        ->name('employees.reset-leave');
+    Route::get('employees-export', [App\Http\Controllers\EmployeeController::class, 'export'])
+        ->name('employees.export');
+
+    // Star (Volunteers) routes
+    Route::resource('stars', App\Http\Controllers\StarController::class);
+    Route::post('stars/{star}/activate', [App\Http\Controllers\StarController::class, 'activate'])
+        ->name('stars.activate');
+    Route::post('stars/{star}/deactivate', [App\Http\Controllers\StarController::class, 'deactivate'])
+        ->name('stars.deactivate');
+    Route::post('stars/{star}/on-break', [App\Http\Controllers\StarController::class, 'setOnBreak'])
+        ->name('stars.on-break');
+    Route::post('stars/{star}/graduate', [App\Http\Controllers\StarController::class, 'graduate'])
+        ->name('stars.graduate');
+    Route::post('stars/{star}/suspend', [App\Http\Controllers\StarController::class, 'suspend'])
+        ->name('stars.suspend');
+    Route::post('stars/{star}/add-points', [App\Http\Controllers\StarController::class, 'addPoints'])
+        ->name('stars.add-points');
+    Route::post('stars/{star}/toggle-featured', [App\Http\Controllers\StarController::class, 'toggleFeatured'])
+        ->name('stars.toggle-featured');
+    Route::post('stars/{star}/renew', [App\Http\Controllers\StarController::class, 'renew'])
+        ->name('stars.renew');
+    Route::get('stars-export', [App\Http\Controllers\StarController::class, 'export'])
+        ->name('stars.export');
+
     // Group routes
     Route::resource('groups', App\Http\Controllers\GroupController::class);
     Route::post('groups/{group}/join', [App\Http\Controllers\GroupController::class, 'join'])
@@ -182,6 +216,145 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('departments.assign-user');
     Route::delete('departments/{department}/users/{user}', [App\Http\Controllers\DepartmentController::class, 'removeUser'])
         ->name('departments.remove-user');
+
+    // ============================================
+    // Department Scheduling Routes
+    // ============================================
+    Route::prefix('departments/{department}/schedule')->name('departments.schedule.')->group(function () {
+        // Weekly Schedule routes
+        Route::get('/', [App\Http\Controllers\Scheduling\ScheduleController::class, 'index'])
+            ->name('index');
+        Route::post('/', [App\Http\Controllers\Scheduling\ScheduleController::class, 'store'])
+            ->name('store');
+        Route::get('/{schedule}', [App\Http\Controllers\Scheduling\ScheduleController::class, 'show'])
+            ->name('show');
+        Route::delete('/{schedule}', [App\Http\Controllers\Scheduling\ScheduleController::class, 'destroy'])
+            ->name('destroy');
+        Route::post('/{schedule}/publish', [App\Http\Controllers\Scheduling\ScheduleController::class, 'publish'])
+            ->name('publish');
+        Route::post('/{schedule}/lock', [App\Http\Controllers\Scheduling\ScheduleController::class, 'lock'])
+            ->name('lock');
+        Route::post('/{schedule}/copy', [App\Http\Controllers\Scheduling\ScheduleController::class, 'copy'])
+            ->name('copy');
+        Route::post('/{schedule}/auto-assign', [App\Http\Controllers\Scheduling\ScheduleController::class, 'autoAssign'])
+            ->name('auto-assign');
+        Route::get('/{schedule}/stats', [App\Http\Controllers\Scheduling\ScheduleController::class, 'stats'])
+            ->name('stats');
+
+        // Shift routes
+        Route::get('/{schedule}/shifts', [App\Http\Controllers\Scheduling\ShiftController::class, 'index'])
+            ->name('shifts.index');
+        Route::get('/{schedule}/shifts/create', [App\Http\Controllers\Scheduling\ShiftController::class, 'create'])
+            ->name('shifts.create');
+        Route::post('/{schedule}/shifts', [App\Http\Controllers\Scheduling\ShiftController::class, 'store'])
+            ->name('shifts.store');
+        Route::post('/{schedule}/shifts/bulk', [App\Http\Controllers\Scheduling\ShiftController::class, 'bulkStore'])
+            ->name('shifts.bulk-store');
+        Route::delete('/{schedule}/shifts/bulk', [App\Http\Controllers\Scheduling\ShiftController::class, 'bulkDestroy'])
+            ->name('shifts.bulk-destroy');
+        Route::get('/{schedule}/shifts/{shift}', [App\Http\Controllers\Scheduling\ShiftController::class, 'show'])
+            ->name('shifts.show');
+        Route::get('/{schedule}/shifts/{shift}/edit', [App\Http\Controllers\Scheduling\ShiftController::class, 'edit'])
+            ->name('shifts.edit');
+        Route::put('/{schedule}/shifts/{shift}', [App\Http\Controllers\Scheduling\ShiftController::class, 'update'])
+            ->name('shifts.update');
+        Route::delete('/{schedule}/shifts/{shift}', [App\Http\Controllers\Scheduling\ShiftController::class, 'destroy'])
+            ->name('shifts.destroy');
+        Route::post('/{schedule}/shifts/{shift}/assign', [App\Http\Controllers\Scheduling\ShiftController::class, 'assign'])
+            ->name('shifts.assign');
+        Route::delete('/{schedule}/shifts/{shift}/unassign', [App\Http\Controllers\Scheduling\ShiftController::class, 'unassign'])
+            ->name('shifts.unassign');
+        Route::post('/{schedule}/shifts/{shift}/check-in', [App\Http\Controllers\Scheduling\ShiftController::class, 'checkIn'])
+            ->name('shifts.check-in');
+        Route::post('/{schedule}/shifts/{shift}/check-out', [App\Http\Controllers\Scheduling\ShiftController::class, 'checkOut'])
+            ->name('shifts.check-out');
+        Route::post('/{schedule}/shifts/{shift}/cancel', [App\Http\Controllers\Scheduling\ShiftController::class, 'cancel'])
+            ->name('shifts.cancel');
+        Route::get('/{schedule}/shifts/{shift}/available-employees', [App\Http\Controllers\Scheduling\ShiftController::class, 'availableEmployees'])
+            ->name('shifts.available-employees');
+    });
+
+    // Availability routes (under department)
+    Route::prefix('departments/{department}/availability')->name('departments.availability.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'index'])
+            ->name('index');
+        Route::get('/my', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'myAvailability'])
+            ->name('my');
+        Route::post('/my', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'storeMyAvailability'])
+            ->name('my.store');
+        Route::post('/', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'store'])
+            ->name('store');
+        Route::post('/weekly', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'storeWeekly'])
+            ->name('store-weekly');
+        Route::post('/bulk', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'bulkStore'])
+            ->name('bulk-store');
+        Route::delete('/{date}', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'destroy'])
+            ->name('destroy');
+        Route::delete('/weekly/{dayOfWeek}', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'destroyWeekly'])
+            ->name('destroy-weekly');
+        Route::get('/date/{date}', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'getForDate'])
+            ->name('for-date');
+        Route::get('/available-employees', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'getAvailableEmployees'])
+            ->name('available-employees');
+    });
+
+    // Absence routes (under department)
+    Route::prefix('departments/{department}/absences')->name('departments.absences.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Scheduling\AbsenceController::class, 'index'])
+            ->name('index');
+        Route::get('/my', [App\Http\Controllers\Scheduling\AbsenceController::class, 'myAbsences'])
+            ->name('my');
+        Route::get('/create', [App\Http\Controllers\Scheduling\AbsenceController::class, 'create'])
+            ->name('create');
+        Route::get('/pending-count', [App\Http\Controllers\Scheduling\AbsenceController::class, 'pendingCount'])
+            ->name('pending-count');
+        Route::get('/calendar', [App\Http\Controllers\Scheduling\AbsenceController::class, 'calendar'])
+            ->name('calendar');
+        Route::post('/', [App\Http\Controllers\Scheduling\AbsenceController::class, 'store'])
+            ->name('store');
+        Route::get('/{absence}', [App\Http\Controllers\Scheduling\AbsenceController::class, 'show'])
+            ->name('show');
+        Route::get('/{absence}/edit', [App\Http\Controllers\Scheduling\AbsenceController::class, 'edit'])
+            ->name('edit');
+        Route::put('/{absence}', [App\Http\Controllers\Scheduling\AbsenceController::class, 'update'])
+            ->name('update');
+        Route::post('/{absence}/approve', [App\Http\Controllers\Scheduling\AbsenceController::class, 'approve'])
+            ->name('approve');
+        Route::post('/{absence}/reject', [App\Http\Controllers\Scheduling\AbsenceController::class, 'reject'])
+            ->name('reject');
+        Route::post('/{absence}/cancel', [App\Http\Controllers\Scheduling\AbsenceController::class, 'cancel'])
+            ->name('cancel');
+        Route::delete('/{absence}', [App\Http\Controllers\Scheduling\AbsenceController::class, 'destroy'])
+            ->name('destroy');
+    });
+
+    // Shift Swap routes (under department)
+    Route::prefix('departments/{department}/swap-requests')->name('departments.swap-requests.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'index'])
+            ->name('index');
+        Route::get('/my', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'mySwapRequests'])
+            ->name('my');
+        Route::get('/create', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'create'])
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'store'])
+            ->name('store');
+        Route::get('/{swapRequest}', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'show'])
+            ->name('show');
+        Route::post('/{swapRequest}/accept-colleague', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'acceptByColleague'])
+            ->name('accept-colleague');
+        Route::post('/{swapRequest}/reject-colleague', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'rejectByColleague'])
+            ->name('reject-colleague');
+        Route::post('/{swapRequest}/approve-manager', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'approveByManager'])
+            ->name('approve-manager');
+        Route::post('/{swapRequest}/reject-manager', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'rejectByManager'])
+            ->name('reject-manager');
+        Route::post('/{swapRequest}/cancel', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'cancel'])
+            ->name('cancel');
+        Route::delete('/{swapRequest}', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'destroy'])
+            ->name('destroy');
+        Route::get('/pending-count', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'pendingCount'])
+            ->name('pending-count');
+    });
 
     // Library routes (for library management)
     Route::resource('libraries', App\Http\Controllers\LibraryController::class);

@@ -120,6 +120,14 @@ class Department extends Model
     }
 
     /**
+     * Alias for users() - for scheduling system compatibility.
+     */
+    public function members(): BelongsToMany
+    {
+        return $this->users();
+    }
+
+    /**
      * Get the head of department user.
      */
     public function headOfDepartment(): BelongsTo
@@ -292,5 +300,24 @@ class Department extends Model
     public function categories(): HasMany
     {
         return $this->hasMany(DepartmentDocumentCategory::class);
+    }
+
+    /**
+     * Get positions for this department.
+     */
+    public function positions(): HasMany
+    {
+        return $this->hasMany(DepartmentPosition::class);
+    }
+
+    /**
+     * Get active positions for this department.
+     */
+    public function activePositions(): HasMany
+    {
+        return $this->hasMany(DepartmentPosition::class)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name');
     }
 }

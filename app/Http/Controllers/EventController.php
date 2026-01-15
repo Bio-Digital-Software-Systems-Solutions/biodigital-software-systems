@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Event\ParticipantRole;
+use App\Enums\Event\RegistrationStatus;
 use App\Models\Address;
 use App\Models\Event;
+use App\Models\Event\EventRegistration;
+use App\Models\User;
 use App\Services\CacheService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -270,13 +275,21 @@ class EventController extends Controller
         }
 
         if ($event->participants->contains($user)) {
-            $event->participants()->detach($user);
+            // Leave the event
+            DB::transaction(function () use ($event, $user) {
+                $event->participants()->detach($user);
+                $this->cancelRegistration($event, $user);
+            });
             $message = 'Vous avez quitté l\'événement.';
         } else {
             if ($event->max_participants && $event->participants->count() >= $event->max_participants) {
                 return back()->with('error', 'L\'événement est complet.');
             }
-            $event->participants()->attach($user);
+            // Join the event
+            DB::transaction(function () use ($event, $user) {
+                $event->participants()->attach($user);
+                $this->createRegistration($event, $user);
+            });
             $message = 'Vous participez maintenant à l\'événement.';
         }
 
@@ -310,7 +323,11 @@ class EventController extends Controller
             return back()->with('error', 'L\'événement est complet.');
         }
 
-        $event->participants()->attach($user);
+        // Join the event with registration
+        DB::transaction(function () use ($event, $user) {
+            $event->participants()->attach($user);
+            $this->createRegistration($event, $user);
+        });
 
         // Invalidate events cache
         CacheService::forgetPattern('events');
@@ -337,11 +354,66 @@ class EventController extends Controller
             return back()->with('error', 'Vous ne participez pas à cet événement.');
         }
 
-        $event->participants()->detach($user);
+        // Leave the event with registration cancellation
+        DB::transaction(function () use ($event, $user) {
+            $event->participants()->detach($user);
+            $this->cancelRegistration($event, $user);
+        });
 
         // Invalidate events cache
         CacheService::forgetPattern('events');
 
         return back()->with('message', 'Vous avez quitté l\'événement.');
+    }
+
+    /**
+     * Create an EventRegistration for a user joining an event.
+     * This synchronizes the legacy participant system with the new registration system.
+     */
+    protected function createRegistration(Event $event, User $user): EventRegistration
+    {
+        // Check if registration already exists
+        $existingRegistration = EventRegistration::where('event_id', $event->id)
+            ->where('user_id', $user->id)
+            ->whereNotIn('status', [RegistrationStatus::CANCELLED])
+            ->first();
+
+        if ($existingRegistration) {
+            return $existingRegistration;
+        }
+
+        return EventRegistration::create([
+            'event_id' => $event->id,
+            'user_id' => $user->id,
+            'first_name' => $user->first_name ?? $user->name,
+            'last_name' => $user->last_name ?? '',
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'status' => RegistrationStatus::CONFIRMED,
+            'participant_role' => ParticipantRole::ATTENDEE,
+            'quantity' => 1,
+            'unit_price' => 0,
+            'discount_amount' => 0,
+            'total_amount' => 0,
+            'currency' => 'EUR',
+            'registered_at' => now(),
+            'confirmed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Cancel an EventRegistration when a user leaves an event.
+     * This synchronizes the legacy participant system with the new registration system.
+     */
+    protected function cancelRegistration(Event $event, User $user): void
+    {
+        $registration = EventRegistration::where('event_id', $event->id)
+            ->where('user_id', $user->id)
+            ->whereNotIn('status', [RegistrationStatus::CANCELLED])
+            ->first();
+
+        if ($registration) {
+            $registration->cancel('Désinscription via le système de participation', $user->id);
+        }
     }
 }

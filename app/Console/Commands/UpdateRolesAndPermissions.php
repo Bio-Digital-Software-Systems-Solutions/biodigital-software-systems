@@ -99,6 +99,7 @@ class UpdateRolesAndPermissions extends Command
             'view articles', 'create articles', 'edit articles', 'delete articles', 'publish articles',
             // Events
             'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
+            'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
             // Appointments
             'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
             // Pastoral Care
@@ -208,6 +209,7 @@ class UpdateRolesAndPermissions extends Command
             'admin' => [
                 'view articles', 'create articles', 'edit articles', 'delete articles', 'publish articles',
                 'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
+                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
                 'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
                 'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
                 'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
@@ -234,6 +236,18 @@ class UpdateRolesAndPermissions extends Command
                 'view events', 'attend events',
                 'view articles', 'use chat',
                 'view users', 'view departments',
+            ],
+            'event-manager' => [
+                'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
+                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
+                'view users', 'view departments', 'use chat',
+            ],
+            'project-manager' => [
+                'view events', 'create events', 'edit events', 'attend events', 'manage event participants',
+                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
+                'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
+                'view programs', 'create programs', 'edit programs', 'delete programs',
+                'view users', 'view departments', 'use chat',
             ],
         ];
 

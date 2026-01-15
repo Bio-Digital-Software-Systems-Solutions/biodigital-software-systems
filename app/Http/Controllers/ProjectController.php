@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Employee\EmployeeStatus;
+use App\Enums\Star\StarStatus;
+use App\Models\Employee;
 use App\Models\Project;
+use App\Models\Star;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -161,7 +166,49 @@ class ProjectController extends Controller
 
     public function create()
     {
-        return Inertia::render('Projects/Create');
+        // Get all users
+        $users = User::all()->map(fn($user) => [
+            'id' => $user->id,
+            'uuid' => $user->uuid ?? null,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'email' => $user->email,
+            'type' => 'user',
+        ]);
+
+        // Get active employees
+        $employees = Employee::with('user')
+            ->where('status', EmployeeStatus::ACTIVE)
+            ->get()
+            ->map(fn($employee) => [
+                'id' => $employee->user_id,
+                'uuid' => $employee->uuid,
+                'first_name' => $employee->user->first_name ?? '',
+                'last_name' => $employee->user->last_name ?? '',
+                'email' => $employee->user->email ?? '',
+                'position' => $employee->position,
+                'type' => 'employee',
+            ]);
+
+        // Get active stars
+        $stars = Star::with('user')
+            ->where('status', StarStatus::ACTIVE)
+            ->get()
+            ->map(fn($star) => [
+                'id' => $star->user_id,
+                'uuid' => $star->uuid,
+                'first_name' => $star->user->first_name ?? '',
+                'last_name' => $star->user->last_name ?? '',
+                'email' => $star->user->email ?? '',
+                'title' => $star->title,
+                'type' => 'star',
+            ]);
+
+        return Inertia::render('Projects/Create', [
+            'users' => $users,
+            'employees' => $employees,
+            'stars' => $stars,
+        ]);
     }
 
     public function store(Request $request)
@@ -173,9 +220,12 @@ class ProjectController extends Controller
             'priority' => 'required|in:lowest,low,medium,high,highest',
             'color' => 'nullable|string|max:7',
             'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after:start_date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
             'budget' => 'nullable|numeric|min:0',
             'image' => 'nullable',
+            'project_manager_id' => 'nullable|exists:users,id',
+            'participants' => 'nullable|array',
+            'participants.*' => 'exists:users,id',
         ]);
 
         // Handle image upload
@@ -189,14 +239,28 @@ class ProjectController extends Controller
         }
 
         $validated['slug'] = Str::slug($validated['name']);
-        $validated['project_manager_id'] = $request->user()->id;
+
+        // Set project manager (default to current user if not specified)
+        if (empty($validated['project_manager_id'])) {
+            $validated['project_manager_id'] = $request->user()->id;
+        }
+
+        // Extract participants before creating project
+        $participants = $validated['participants'] ?? [];
+        unset($validated['participants']);
 
         $project = Project::create($validated);
 
-        $project->members()->attach($request->user()->id, [
-            'is_lead' => true,
-            'started_at' => now(),
-        ]);
+        // Create participants in project_participants table
+        foreach ($participants as $participantId) {
+            if ($participantId != $validated['project_manager_id']) {
+                \App\Models\ProjectParticipant::create([
+                    'project_id' => $project->id,
+                    'user_id' => $participantId,
+                    'role' => 'member',
+                ]);
+            }
+        }
 
         return redirect()->route('projects.show', $project->uuid)->with('success', 'Projet créé avec succès.');
     }

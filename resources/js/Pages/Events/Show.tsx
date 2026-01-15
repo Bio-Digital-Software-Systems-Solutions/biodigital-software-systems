@@ -12,13 +12,18 @@ import {
     PencilIcon,
     TrashIcon,
     CheckCircleIcon,
-    XCircleIcon
+    XCircleIcon,
+    TicketIcon,
+    ClipboardDocumentListIcon,
+    QrCodeIcon,
+    ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import { format, parseISO, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { isAdmin } from '@/Enums/Role';
 import { userHasPermission } from '@/Enums/Permission';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import { TicketManager, RegistrationList, CheckInScanner, EventAnalyticsDashboard } from '@/Components/Event';
 
 interface Address {
     id: number;
@@ -68,8 +73,11 @@ interface ShowProps extends PageProps {
     event: Event;
 }
 
+type TabType = 'details' | 'tickets' | 'registrations' | 'checkin' | 'analytics';
+
 const Show: React.FC<ShowProps> = ({ auth, event }) => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<TabType>('details');
     const eventColor = event.color || '#3b82f6';
     const startDate = parseISO(event.start_date);
     const endDate = parseISO(event.end_date);
@@ -93,6 +101,35 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
                           (!isEventPast || isSuperAdmin);
 
     const canParticipate = !isEventPast || isSuperAdmin;
+
+    // Specific permission checks for each tab
+    const canManageTickets = isSuperAdmin ||
+        userHasPermission(auth.user, 'manage tickets') ||
+        userHasPermission(auth.user, 'edit events') ||
+        auth.user?.id === event.creator?.id;
+
+    const canViewRegistrations = isSuperAdmin ||
+        userHasPermission(auth.user, 'view registrations') ||
+        userHasPermission(auth.user, 'manage registrations') ||
+        auth.user?.id === event.creator?.id;
+
+    const canCheckIn = isSuperAdmin ||
+        userHasPermission(auth.user, 'checkin events') ||
+        userHasPermission(auth.user, 'manage registrations') ||
+        auth.user?.id === event.creator?.id;
+
+    const canViewAnalytics = isSuperAdmin ||
+        userHasPermission(auth.user, 'view analytics') ||
+        userHasPermission(auth.user, 'view events') ||
+        auth.user?.id === event.creator?.id;
+
+    const tabs = [
+        { id: 'details' as TabType, label: 'Détails', icon: CalendarIcon, show: true },
+        { id: 'tickets' as TabType, label: 'Billets', icon: TicketIcon, show: canManageTickets },
+        { id: 'registrations' as TabType, label: 'Inscriptions', icon: ClipboardDocumentListIcon, show: canViewRegistrations },
+        { id: 'checkin' as TabType, label: 'Check-in', icon: QrCodeIcon, show: canCheckIn },
+        { id: 'analytics' as TabType, label: 'Analytics', icon: ChartBarIcon, show: canViewAnalytics },
+    ].filter(tab => tab.show);
 
     const getStatusBadge = (status: string) => {
         const statusConfig = {
@@ -178,72 +215,101 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
                     </Link>
                 </div>
 
+                {/* Hero Section with Color */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-6">
+                    <div
+                        className="h-2"
+                        style={{ backgroundColor: eventColor }}
+                    />
+                    <div className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                                    {event.title}
+                                </h1>
+                                <div className="flex items-center gap-3">
+                                    {getStatusBadge(event.status)}
+                                    {event.is_public ? (
+                                        <span className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                                            <GlobeAltIcon className="w-4 h-4" />
+                                            Public
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                                            <XCircleIcon className="w-4 h-4" />
+                                            Privé
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            {(canEditEvent || canDeleteEvent) && (
+                                <div className="flex items-center gap-2">
+                                    {canEditEvent && (
+                                        <Link
+                                            href={route('events.edit', event.uuid)}
+                                            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                            title="Modifier"
+                                        >
+                                            <PencilIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                                        </Link>
+                                    )}
+                                    {canDeleteEvent && (
+                                        <button
+                                            onClick={handleDelete}
+                                            className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                            title="Supprimer"
+                                        >
+                                            <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Tabs Navigation */}
+                {tabs.length > 1 && (
+                    <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
+                        <nav className="flex space-x-4 overflow-x-auto" aria-label="Tabs">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${
+                                        activeTab === tab.id
+                                            ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                                    }`}
+                                >
+                                    <tab.icon className="h-4 w-4" />
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </nav>
+                    </div>
+                )}
+
+                {/* Tab Content */}
+                {activeTab === 'details' && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
-                        {/* Hero Section with Color */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                            <div
-                                className="h-2"
-                                style={{ backgroundColor: eventColor }}
-                            />
-                            <div className="p-8">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex-1">
-                                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                                            {event.title}
-                                        </h1>
-                                        <div className="flex items-center gap-3">
-                                            {getStatusBadge(event.status)}
-                                            {event.is_public ? (
-                                                <span className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                                                    <GlobeAltIcon className="w-4 h-4" />
-                                                    Public
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                                                    <XCircleIcon className="w-4 h-4" />
-                                                    Privé
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    {(canEditEvent || canDeleteEvent) && (
-                                        <div className="flex items-center gap-2">
-                                            {canEditEvent && (
-                                                <Link
-                                                    href={route('events.edit', event.uuid)}
-                                                    className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                                    title="Modifier"
-                                                >
-                                                    <PencilIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                                                </Link>
-                                            )}
-                                            {canDeleteEvent && (
-                                                <button
-                                                    onClick={handleDelete}
-                                                    className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                                                    title="Supprimer"
-                                                >
-                                                    <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
+                        {/* Description */}
+                        {event.description && (
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                                    Description
+                                </h2>
+                                <div className="prose dark:prose-invert max-w-none">
+                                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                                        {event.description}
+                                    </p>
                                 </div>
-
-                                {/* Description */}
-                                {event.description && (
-                                    <div className="mt-6 prose dark:prose-invert max-w-none">
-                                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                                            {event.description}
-                                        </p>
-                                    </div>
-                                )}
                             </div>
-                        </div>
+                        )}
 
                         {/* Event Details Card */}
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
@@ -411,6 +477,27 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
                         )}
                     </div>
                 </div>
+                )}
+
+                {/* Tickets Tab */}
+                {activeTab === 'tickets' && (
+                    <TicketManager eventId={event.uuid} />
+                )}
+
+                {/* Registrations Tab */}
+                {activeTab === 'registrations' && (
+                    <RegistrationList eventId={event.uuid} />
+                )}
+
+                {/* Check-in Tab */}
+                {activeTab === 'checkin' && (
+                    <CheckInScanner eventId={event.uuid} />
+                )}
+
+                {/* Analytics Tab */}
+                {activeTab === 'analytics' && (
+                    <EventAnalyticsDashboard eventId={event.uuid} />
+                )}
             </div>
 
             <DeleteConfirmationDialog

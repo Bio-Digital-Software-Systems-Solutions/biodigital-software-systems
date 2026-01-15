@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Employee\EmployeeStatus;
+use App\Enums\Star\StarStatus;
 use App\Models\Department;
 use App\Models\DepartmentDocument;
 use App\Models\DepartmentForm;
 use App\Models\DepartmentNeed;
 use App\Models\DepartmentWorkflow;
+use App\Models\Employee;
+use App\Models\Star;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -112,18 +116,51 @@ class DepartmentController extends Controller
     {
         $department->load(['users', 'headOfDepartment']);
 
+        // Get IDs of users already in the department
+        $existingUserIds = $department->users->pluck('id')->toArray();
+
         // Get all users for adding members
-        $allUsers = User::select('id', 'first_name', 'last_name', 'email')
-            ->whereNotIn('id', $department->users->pluck('id'))
+        $allUsers = User::select('id', 'uuid', 'first_name', 'last_name', 'email')
+            ->whereNotIn('id', $existingUserIds)
             ->orderBy('first_name')
             ->get()
             ->map(function ($user) {
                 return [
                     'id' => $user->id,
-                    'name' => $user->name, // Uses the accessor
+                    'uuid' => $user->uuid,
+                    'name' => $user->name,
                     'email' => $user->email,
+                    'type' => 'user',
                 ];
             });
+
+        // Get active employees not already in the department
+        $employees = Employee::with('user')
+            ->where('status', EmployeeStatus::ACTIVE)
+            ->whereNotIn('user_id', $existingUserIds)
+            ->get()
+            ->map(fn($employee) => [
+                'id' => $employee->user_id,
+                'uuid' => $employee->uuid,
+                'name' => $employee->user->name ?? '',
+                'email' => $employee->user->email ?? '',
+                'position' => $employee->position,
+                'type' => 'employee',
+            ]);
+
+        // Get active stars not already in the department
+        $stars = Star::with('user')
+            ->where('status', StarStatus::ACTIVE)
+            ->whereNotIn('user_id', $existingUserIds)
+            ->get()
+            ->map(fn($star) => [
+                'id' => $star->user_id,
+                'uuid' => $star->uuid,
+                'name' => $star->user->name ?? '',
+                'email' => $star->user->email ?? '',
+                'title' => $star->title,
+                'type' => 'star',
+            ]);
 
         return Inertia::render('Departments/Show', [
             'department' => [
@@ -150,6 +187,8 @@ class DepartmentController extends Controller
                 'users_count' => $department->users->count(),
             ],
             'availableUsers' => $allUsers,
+            'availableEmployees' => $employees,
+            'availableStars' => $stars,
             'canManage' => auth()->user()->can('manage departments'),
             'workflows' => DepartmentWorkflow::where('department_id', $department->id)
                 ->withCount(['steps', 'instances'])

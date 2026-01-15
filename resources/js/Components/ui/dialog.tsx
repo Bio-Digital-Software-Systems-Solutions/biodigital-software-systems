@@ -40,9 +40,10 @@ const Dialog = ({ open, onOpenChange, children }: DialogProps) => {
 }
 
 const DialogContent = ({ children, className = "", onClose }: DialogContentProps) => {
+  const hasOverflowVisible = className.includes('overflow-visible')
   return (
     <div
-      className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto ${className}`}
+      className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] ${hasOverflowVisible ? '' : 'overflow-y-auto'} ${className}`}
       onClick={(e) => e.stopPropagation()}
     >
       {onClose && (

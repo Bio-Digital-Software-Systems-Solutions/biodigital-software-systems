@@ -3,6 +3,11 @@
 use App\Http\Controllers\Api\DepartmentDocumentCategoryController;
 use App\Http\Controllers\Api\DepartmentDocumentController;
 use App\Http\Controllers\Api\DepartmentMeetingController;
+use App\Http\Controllers\Api\Event\EventAnalyticsController;
+use App\Http\Controllers\Api\Event\EventBadgeController;
+use App\Http\Controllers\Api\Event\EventCheckInController;
+use App\Http\Controllers\Api\Event\EventRegistrationController;
+use App\Http\Controllers\Api\Event\EventTicketController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ProjectAppointmentController;
 use App\Http\Controllers\Api\TaskAppointmentController;
@@ -201,4 +206,104 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/appointments/{uuid}/cancel', [PastoralCareController::class, 'cancel'])
             ->name('appointments.cancel');
     });
+
+    // ========================================
+    // Event Management API
+    // ========================================
+
+    // Event Tickets
+    Route::prefix('events/{event}')->name('api.events.')->group(function () {
+        // Tickets
+        Route::prefix('tickets')->name('tickets.')->group(function () {
+            Route::get('/', [EventTicketController::class, 'index'])->name('index');
+            Route::get('/available', [EventTicketController::class, 'available'])->name('available');
+            Route::post('/', [EventTicketController::class, 'store'])->name('store');
+            Route::get('/{ticket}', [EventTicketController::class, 'show'])->name('show');
+            Route::patch('/{ticket}', [EventTicketController::class, 'update'])->name('update');
+            Route::delete('/{ticket}', [EventTicketController::class, 'destroy'])->name('destroy');
+            Route::post('/{ticket}/availability', [EventTicketController::class, 'checkAvailability'])->name('availability');
+            Route::post('/{ticket}/price', [EventTicketController::class, 'calculatePrice'])->name('price');
+        });
+        Route::post('/promo-code/validate', [EventTicketController::class, 'validatePromoCode'])->name('promo-code.validate');
+        Route::post('/tickets/duplicate', [EventTicketController::class, 'duplicate'])->name('tickets.duplicate');
+        Route::post('/tickets/reorder', [EventTicketController::class, 'reorder'])->name('tickets.reorder');
+
+        // Registrations
+        Route::prefix('registrations')->name('registrations.')->group(function () {
+            Route::get('/', [EventRegistrationController::class, 'index'])->name('index');
+            Route::post('/', [EventRegistrationController::class, 'register'])->name('store');
+            Route::get('/stats', [EventRegistrationController::class, 'stats'])->name('stats');
+            Route::get('/export', [EventRegistrationController::class, 'export'])->name('export');
+            Route::post('/bulk-confirm', [EventRegistrationController::class, 'bulkConfirm'])->name('bulk-confirm');
+            Route::post('/bulk-cancel', [EventRegistrationController::class, 'bulkCancel'])->name('bulk-cancel');
+            Route::get('/{registration}', [EventRegistrationController::class, 'show'])->name('show');
+            Route::post('/{registration}/confirm', [EventRegistrationController::class, 'confirm'])->name('confirm');
+            Route::post('/{registration}/cancel', [EventRegistrationController::class, 'cancel'])->name('cancel');
+            Route::post('/{registration}/waitlist', [EventRegistrationController::class, 'moveToWaitlist'])->name('waitlist');
+            Route::post('/{registration}/promote', [EventRegistrationController::class, 'promoteFromWaitlist'])->name('promote');
+            Route::post('/{registration}/transfer', [EventRegistrationController::class, 'transfer'])->name('transfer');
+            Route::post('/{registration}/payment', [EventRegistrationController::class, 'recordPayment'])->name('payment');
+        });
+
+        // Check-in
+        Route::prefix('checkin')->name('checkin.')->group(function () {
+            Route::get('/', [EventCheckInController::class, 'index'])->name('index');
+            Route::get('/stats', [EventCheckInController::class, 'stats'])->name('stats');
+            Route::get('/recent', [EventCheckInController::class, 'recent'])->name('recent');
+            Route::get('/live', [EventCheckInController::class, 'liveFeed'])->name('live');
+            Route::get('/search', [EventCheckInController::class, 'search'])->name('search');
+            Route::post('/qr', [EventCheckInController::class, 'checkInByQR'])->name('qr');
+            Route::post('/number', [EventCheckInController::class, 'checkInByNumber'])->name('number');
+            Route::post('/{registration}', [EventCheckInController::class, 'checkInManual'])->name('manual');
+            Route::post('/{registration}/checkout', [EventCheckInController::class, 'checkOut'])->name('checkout');
+            Route::delete('/{checkin}', [EventCheckInController::class, 'undoCheckIn'])->name('undo');
+            Route::get('/{registration}/history', [EventCheckInController::class, 'history'])->name('history');
+            Route::get('/session/{session}', [EventCheckInController::class, 'sessionAttendance'])->name('session');
+            Route::post('/no-shows', [EventCheckInController::class, 'markNoShows'])->name('no-shows');
+        });
+
+        // Badges
+        Route::prefix('badges')->name('badges.')->group(function () {
+            Route::get('/', [EventBadgeController::class, 'index'])->name('index');
+            Route::get('/stats', [EventBadgeController::class, 'stats'])->name('stats');
+            Route::get('/templates', [EventBadgeController::class, 'templates'])->name('templates');
+            Route::get('/pending-print', [EventBadgeController::class, 'pendingPrint'])->name('pending-print');
+            Route::get('/pending-collection', [EventBadgeController::class, 'pendingCollection'])->name('pending-collection');
+            Route::get('/search', [EventBadgeController::class, 'search'])->name('search');
+            Route::post('/find-qr', [EventBadgeController::class, 'findByQR'])->name('find-qr');
+            Route::post('/generate-bulk', [EventBadgeController::class, 'generateBulk'])->name('generate-bulk');
+            Route::post('/mark-printed-bulk', [EventBadgeController::class, 'markBulkPrinted'])->name('mark-printed-bulk');
+            Route::post('/print-data-bulk', [EventBadgeController::class, 'bulkPrintData'])->name('print-data-bulk');
+            Route::post('/{registration}/generate', [EventBadgeController::class, 'generate'])->name('generate');
+            Route::get('/{badge}', [EventBadgeController::class, 'show'])->name('show');
+            Route::patch('/{badge}', [EventBadgeController::class, 'update'])->name('update');
+            Route::post('/{badge}/printed', [EventBadgeController::class, 'markPrinted'])->name('printed');
+            Route::post('/{badge}/collected', [EventBadgeController::class, 'markCollected'])->name('collected');
+            Route::post('/{badge}/lost', [EventBadgeController::class, 'reportLost'])->name('lost');
+            Route::get('/{badge}/print-data', [EventBadgeController::class, 'printData'])->name('print-data');
+        });
+
+        // Analytics
+        Route::prefix('analytics')->name('analytics.')->group(function () {
+            Route::get('/dashboard', [EventAnalyticsController::class, 'dashboard'])->name('dashboard');
+            Route::get('/overview', [EventAnalyticsController::class, 'overview'])->name('overview');
+            Route::get('/registrations', [EventAnalyticsController::class, 'registrations'])->name('registrations');
+            Route::get('/revenue', [EventAnalyticsController::class, 'revenue'])->name('revenue');
+            Route::get('/feedback', [EventAnalyticsController::class, 'feedback'])->name('feedback');
+            Route::get('/trends', [EventAnalyticsController::class, 'trends'])->name('trends');
+            Route::get('/sessions', [EventAnalyticsController::class, 'sessions'])->name('sessions');
+            Route::get('/sponsors', [EventAnalyticsController::class, 'sponsors'])->name('sponsors');
+            Route::get('/export', [EventAnalyticsController::class, 'export'])->name('export');
+            Route::get('/realtime', [EventAnalyticsController::class, 'realtime'])->name('realtime');
+            Route::post('/clear-cache', [EventAnalyticsController::class, 'clearCache'])->name('clear-cache');
+        });
+    });
+
+    // User's registrations
+    Route::get('/my-registrations', [EventRegistrationController::class, 'myRegistrations'])
+        ->name('api.my-registrations');
+
+    // Compare events
+    Route::post('/events/compare', [EventAnalyticsController::class, 'compare'])
+        ->name('api.events.compare');
 });

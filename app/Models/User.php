@@ -389,6 +389,22 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * User's employee profile.
+     */
+    public function employee(): HasOne
+    {
+        return $this->hasOne(Employee::class);
+    }
+
+    /**
+     * User's star (volunteer) profile.
+     */
+    public function star(): HasOne
+    {
+        return $this->hasOne(Star::class);
+    }
+
+    /**
      * User's pastor profile.
      */
     public function pastor(): HasOne
@@ -519,5 +535,75 @@ class User extends Authenticatable implements MustVerifyEmail
     public function needComments(): HasMany
     {
         return $this->hasMany(NeedComment::class);
+    }
+
+    // ==========================================
+    // Scheduling System Relations
+    // ==========================================
+
+    /**
+     * Shifts assigned to the user.
+     */
+    public function shifts(): HasMany
+    {
+        return $this->hasMany(\App\Models\Scheduling\Shift::class);
+    }
+
+    /**
+     * Employee availability records.
+     */
+    public function employeeAvailabilities(): HasMany
+    {
+        return $this->hasMany(\App\Models\Scheduling\EmployeeAvailability::class);
+    }
+
+    /**
+     * Absences (leave, sick, etc.).
+     */
+    public function absences(): HasMany
+    {
+        return $this->hasMany(\App\Models\Scheduling\Absence::class);
+    }
+
+    /**
+     * Leave balances.
+     */
+    public function leaveBalances(): HasMany
+    {
+        return $this->hasMany(\App\Models\Scheduling\LeaveBalance::class);
+    }
+
+    /**
+     * Work preferences.
+     */
+    public function workPreferences(): HasOne
+    {
+        return $this->hasOne(\App\Models\Scheduling\EmployeeWorkPreferences::class);
+    }
+
+    /**
+     * Time entries.
+     */
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(\App\Models\Scheduling\TimeEntry::class);
+    }
+
+    /**
+     * Shift swap requests initiated by the user.
+     */
+    public function shiftSwapRequests(): HasMany
+    {
+        return $this->hasMany(\App\Models\Scheduling\ShiftSwapRequest::class, 'requester_id');
+    }
+
+    /**
+     * Skills of the user.
+     */
+    public function skills(): BelongsToMany
+    {
+        return $this->belongsToMany(\App\Models\Scheduling\Skill::class, 'employee_skills')
+            ->withPivot(['proficiency_level', 'acquired_date', 'certified_until'])
+            ->withTimestamps();
     }
 }

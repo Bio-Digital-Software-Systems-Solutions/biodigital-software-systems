@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Employee\EmployeeStatus;
+use App\Enums\Star\StarStatus;
+use App\Models\Employee;
 use App\Models\Program;
+use App\Models\Star;
 use App\Models\Status;
 use App\Models\Task;
 use App\Models\TaskAttachment;
@@ -99,13 +103,52 @@ class TaskController extends Controller
         $projects = \App\Models\Project::where('status', '!=', 'cancelled')->get();
         $programs = Program::active()->get();
         $statuses = Status::all();
-        $users = User::all();
+
+        // Get all users
+        $users = User::all()->map(fn($user) => [
+            'id' => $user->id,
+            'uuid' => $user->uuid ?? null,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'email' => $user->email,
+            'type' => 'user',
+        ]);
+
+        // Get active employees
+        $employees = Employee::with('user')
+            ->where('status', EmployeeStatus::ACTIVE)
+            ->get()
+            ->map(fn($employee) => [
+                'id' => $employee->user_id,
+                'uuid' => $employee->uuid,
+                'first_name' => $employee->user->first_name ?? '',
+                'last_name' => $employee->user->last_name ?? '',
+                'email' => $employee->user->email ?? '',
+                'position' => $employee->position,
+                'type' => 'employee',
+            ]);
+
+        // Get active stars
+        $stars = Star::with('user')
+            ->where('status', StarStatus::ACTIVE)
+            ->get()
+            ->map(fn($star) => [
+                'id' => $star->user_id,
+                'uuid' => $star->uuid,
+                'first_name' => $star->user->first_name ?? '',
+                'last_name' => $star->user->last_name ?? '',
+                'email' => $star->user->email ?? '',
+                'title' => $star->title,
+                'type' => 'star',
+            ]);
 
         return Inertia::render('Tasks/Create', [
             'projects' => $projects,
             'programs' => $programs,
             'statuses' => $statuses,
             'users' => $users,
+            'employees' => $employees,
+            'stars' => $stars,
             'projectId' => $request->query('project'),
             'taskableType' => $request->query('taskable_type'),
             'taskableId' => $request->query('taskable_id'),

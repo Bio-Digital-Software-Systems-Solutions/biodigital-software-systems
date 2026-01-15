@@ -4,7 +4,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select';
+import { SearchableSelect } from '@/Components/ui/searchable-select';
 import { Badge } from '@/Components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { useConfirm } from '@/Components/ui/confirm-dialog';
@@ -27,6 +27,7 @@ import {
     PlayIcon,
     FolderIcon,
     ChartBarIcon,
+    ClockIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import type { DepartmentWorkflow } from '@/Types/workflow';
@@ -100,6 +101,16 @@ interface User {
     email: string;
 }
 
+interface Assignable {
+    id: number;
+    uuid: string;
+    name: string;
+    email: string;
+    type: 'user' | 'employee' | 'star';
+    position?: string;
+    title?: string;
+}
+
 interface Department {
     id: number;
     uuid: string;
@@ -115,7 +126,9 @@ interface Department {
 
 interface Props {
     department: Department;
-    availableUsers: User[];
+    availableUsers: Assignable[];
+    availableEmployees: Assignable[];
+    availableStars: Assignable[];
     canManage: boolean;
     workflows?: DepartmentWorkflow[];
     forms?: DepartmentForm[];
@@ -126,13 +139,49 @@ interface Props {
     documentsCount?: number;
 }
 
-export default function ShowDepartment({ department, availableUsers, canManage, workflows = [], forms = [], needs = [], appointments = [], meetings = [], documentsTree = [], documentsCount = 0 }: Props) {
+export default function ShowDepartment({ department, availableUsers, availableEmployees = [], availableStars = [], canManage, workflows = [], forms = [], needs = [], appointments = [], meetings = [], documentsTree = [], documentsCount = 0 }: Props) {
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
-    const [selectedUserId, setSelectedUserId] = useState('');
+    const [selectedUserId, setSelectedUserId] = useState<string | number | null>(null);
+    const [memberFilter, setMemberFilter] = useState<'all' | 'user' | 'employee' | 'star'>('all');
     const [activeTab, setActiveTab] = useState('overview');
     const { confirm } = useConfirm();
     const { showSuccess, showError } = useToast();
+
+    // Combine and filter assignees based on selected filter
+    const filteredAssignees = React.useMemo(() => {
+        const combined: Assignable[] = [];
+
+        if (memberFilter === 'all' || memberFilter === 'user') {
+            combined.push(...availableUsers);
+        }
+        if (memberFilter === 'all' || memberFilter === 'employee') {
+            combined.push(...availableEmployees);
+        }
+        if (memberFilter === 'all' || memberFilter === 'star') {
+            combined.push(...availableStars);
+        }
+
+        // Remove duplicates by user id
+        const seen = new Set<number>();
+        return combined.filter(a => {
+            if (seen.has(a.id)) return false;
+            seen.add(a.id);
+            return true;
+        });
+    }, [availableUsers, availableEmployees, availableStars, memberFilter]);
+
+    // Convert to options for SearchableSelect
+    const selectOptions = React.useMemo(() => {
+        return filteredAssignees.map(a => {
+            const typeLabel = a.type === 'user' ? 'Utilisateur' : a.type === 'employee' ? 'Employé' : 'Star';
+            const extra = a.position || a.title || '';
+            return {
+                value: a.id,
+                label: `${a.name} - ${typeLabel}${extra ? ` (${extra})` : ''}`,
+            };
+        });
+    }, [filteredAssignees]);
 
     const handleAddMember = (e: React.FormEvent) => {
         e.preventDefault();
@@ -143,7 +192,7 @@ export default function ShowDepartment({ department, availableUsers, canManage, 
         }, {
             onSuccess: () => {
                 setIsAddMemberModalOpen(false);
-                setSelectedUserId('');
+                setSelectedUserId(null);
                 showSuccess('Membre ajouté avec succès au département');
             },
             onError: () => {
@@ -324,7 +373,7 @@ export default function ShowDepartment({ department, availableUsers, canManage, 
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList className="grid w-full grid-cols-6">
+                    <TabsList className="grid w-full grid-cols-7">
                         <TabsTrigger value="overview" className="flex items-center gap-2">
                             <UserGroupIcon className="h-4 w-4" />
                             <span className="hidden sm:inline">Membres</span>
@@ -354,6 +403,10 @@ export default function ShowDepartment({ department, availableUsers, canManage, 
                             <FolderIcon className="h-4 w-4" />
                             <span className="hidden sm:inline">Documents</span>
                             <Badge variant="secondary" className="ml-1">{documentsCount}</Badge>
+                        </TabsTrigger>
+                        <TabsTrigger value="schedule" className="flex items-center gap-2">
+                            <ClockIcon className="h-4 w-4" />
+                            <span className="hidden sm:inline">Planning</span>
                         </TabsTrigger>
                     </TabsList>
 
@@ -739,51 +792,187 @@ export default function ShowDepartment({ department, availableUsers, canManage, 
                             canManage={canManage}
                         />
                     </TabsContent>
+
+                    {/* Schedule Tab */}
+                    <TabsContent value="schedule">
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle>Planning du Département</CardTitle>
+                                        <CardDescription>
+                                            Gérez les horaires et les shifts des membres
+                                        </CardDescription>
+                                    </div>
+                                    <Button asChild>
+                                        <Link href={`/departments/${department.uuid}/schedule`}>
+                                            <CalendarDaysIcon className="h-4 w-4 mr-2" />
+                                            Accéder au Planning
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                                        <CardContent className="pt-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+                                                    <ClockIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Planning</p>
+                                                    <p className="text-lg font-bold text-blue-900 dark:text-blue-100">Voir les shifts</p>
+                                                </div>
+                                            </div>
+                                            <Button variant="outline" size="sm" className="w-full mt-4" asChild>
+                                                <Link href={`/departments/${department.uuid}/schedule`}>
+                                                    Ouvrir le calendrier
+                                                </Link>
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+                                        <CardContent className="pt-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
+                                                    <CheckCircleIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-green-600 dark:text-green-400 font-medium">Disponibilités</p>
+                                                    <p className="text-lg font-bold text-green-900 dark:text-green-100">Gérer mes dispos</p>
+                                                </div>
+                                            </div>
+                                            <Button variant="outline" size="sm" className="w-full mt-4" asChild>
+                                                <Link href={`/departments/${department.uuid}/availability/my`}>
+                                                    Mes disponibilités
+                                                </Link>
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
+                                        <CardContent className="pt-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-orange-100 dark:bg-orange-900/50 rounded-lg">
+                                                    <CalendarDaysIcon className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">Absences</p>
+                                                    <p className="text-lg font-bold text-orange-900 dark:text-orange-100">Demander un congé</p>
+                                                </div>
+                                            </div>
+                                            <Button variant="outline" size="sm" className="w-full mt-4" asChild>
+                                                <Link href={`/departments/${department.uuid}/absences/my`}>
+                                                    Mes absences
+                                                </Link>
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                {canManage && (
+                                    <div className="mt-6 pt-6 border-t">
+                                        <h4 className="font-medium text-gray-900 dark:text-white mb-4">Administration</h4>
+                                        <div className="flex flex-wrap gap-3">
+                                            <Button variant="outline" asChild>
+                                                <Link href={`/departments/${department.uuid}/availability`}>
+                                                    Vue d'ensemble des disponibilités
+                                                </Link>
+                                            </Button>
+                                            <Button variant="outline" asChild>
+                                                <Link href={`/departments/${department.uuid}/absences`}>
+                                                    Gérer les demandes d'absence
+                                                </Link>
+                                            </Button>
+                                            <Button variant="outline" asChild>
+                                                <Link href={`/departments/${department.uuid}/swap-requests`}>
+                                                    Échanges de shifts
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
                 </Tabs>
             </div>
 
             {/* Add Member Modal */}
             {canManage && (
-                <Dialog open={isAddMemberModalOpen} onOpenChange={setIsAddMemberModalOpen}>
+                <Dialog open={isAddMemberModalOpen} onOpenChange={(open) => {
+                    setIsAddMemberModalOpen(open);
+                    if (!open) {
+                        setSelectedUserId(null);
+                        setMemberFilter('all');
+                    }
+                }}>
                 <DialogContent>
                     <DialogHeader>
-                <DialogTitle>Ajouter un Membre</DialogTitle>
+                        <DialogTitle>Ajouter un Membre</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleAddMember}>
-                <div className="space-y-4 py-4 px-6">
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Utilisateur</label>
-                        <Select
-                            value={selectedUserId}
-                            onValueChange={setSelectedUserId}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Sélectionner un utilisateur">
-                                    {selectedUserId ? availableUsers.find(u => u.id.toString() === selectedUserId)?.name : ''}
-                                </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                                {availableUsers.map((user) => (
-                                    <SelectItem key={user.id} value={user.id.toString()}>
-                                        {user.name} ({user.email})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsAddMemberModalOpen(false)}
-                    >
-                        Annuler
-                    </Button>
-                    <Button type="submit" disabled={!selectedUserId}>
-                        Ajouter
-                    </Button>
-                </DialogFooter>
+                        <div className="space-y-4 py-4 px-6">
+                            <div className="space-y-3">
+                                <label className="block text-sm font-medium">Filtrer par type</label>
+
+                                {/* Filter tabs */}
+                                <div className="flex flex-wrap gap-2">
+                                    <Button
+                                        type="button"
+                                        variant={memberFilter === 'all' ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => setMemberFilter('all')}
+                                    >
+                                        Tous ({availableUsers.length + availableEmployees.length + availableStars.length})
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={memberFilter === 'employee' ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => setMemberFilter('employee')}
+                                        className={memberFilter === 'employee' ? '' : 'border-green-300 text-green-700 hover:bg-green-50'}
+                                    >
+                                        Employés ({availableEmployees.length})
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={memberFilter === 'star' ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => setMemberFilter('star')}
+                                        className={memberFilter === 'star' ? '' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50'}
+                                    >
+                                        Stars ({availableStars.length})
+                                    </Button>
+                                </div>
+
+                                <label className="block text-sm font-medium">Utilisateur</label>
+                                <SearchableSelect
+                                    options={selectOptions}
+                                    value={selectedUserId}
+                                    onChange={setSelectedUserId}
+                                    placeholder="Rechercher un utilisateur..."
+                                    noOptionsMessage="Aucun utilisateur trouvé"
+                                    isClearable
+                                    maxMenuHeight={180}
+                                    menuPortalTarget={document.body}
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsAddMemberModalOpen(false)}
+                            >
+                                Annuler
+                            </Button>
+                            <Button type="submit" disabled={!selectedUserId}>
+                                Ajouter
+                            </Button>
+                        </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
