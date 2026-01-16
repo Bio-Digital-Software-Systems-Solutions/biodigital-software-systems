@@ -21,6 +21,7 @@ class FormField extends Model
         'parent_field_id',
         'name',
         'label',
+        'description',
         'type',
         'order',
         'step',
@@ -30,11 +31,11 @@ class FormField extends Model
         'options',
         'validation',
         'conditional_logic',
-        'settings',
+        'config',
         'is_required',
         'is_readonly',
         'is_hidden',
-        'width',
+        'column_span',
     ];
 
     protected $casts = [
@@ -42,7 +43,7 @@ class FormField extends Model
         'options' => 'array',
         'validation' => 'array',
         'conditional_logic' => 'array',
-        'settings' => 'array',
+        'config' => 'array',
         'is_required' => 'boolean',
         'is_readonly' => 'boolean',
         'is_hidden' => 'boolean',

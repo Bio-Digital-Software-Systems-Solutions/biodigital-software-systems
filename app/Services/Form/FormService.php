@@ -9,6 +9,7 @@ use App\Models\DepartmentFormSubmission;
 use App\Models\FormField;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Mews\Purifier\Facades\Purifier;
 
 class FormService
 {
@@ -203,8 +204,46 @@ class FormService
             throw new \Exception('Cannot update a submitted form.');
         }
 
-        $submission->updateData($data);
+        // Sanitize rich text fields before saving
+        $sanitizedData = $this->sanitizeSubmissionData($submission->form, $data);
+
+        $submission->updateData($sanitizedData);
         return $submission->fresh();
+    }
+
+    /**
+     * Sanitize submission data, especially rich text fields to prevent XSS.
+     */
+    protected function sanitizeSubmissionData(DepartmentForm $form, array $data): array
+    {
+        $richTextFieldNames = $this->getRichTextFieldNames($form);
+
+        foreach ($data as $fieldName => $value) {
+            if (in_array($fieldName, $richTextFieldNames) && is_string($value) && !empty($value)) {
+                $data[$fieldName] = $this->sanitizeRichText($value);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Get names of all rich_text fields in a form.
+     */
+    protected function getRichTextFieldNames(DepartmentForm $form): array
+    {
+        return $form->fields()
+            ->where('type', 'rich_text')
+            ->pluck('name')
+            ->toArray();
+    }
+
+    /**
+     * Sanitize rich text content using HTMLPurifier.
+     */
+    protected function sanitizeRichText(string $html): string
+    {
+        return Purifier::clean($html, 'form_rich_text');
     }
 
     /**
@@ -260,8 +299,10 @@ class FormService
      */
     public function getFormWithFields(DepartmentForm $form): array
     {
-        $form->load(['fields' => function ($query) {
-            $query->orderBy('order');
+        // Eager load root fields with nested children to avoid N+1
+        $form->load(['rootFields' => function ($query) {
+            $query->with('children.children.children') // Support 3 levels of nesting
+                ->orderBy('order');
         }]);
 
         return [
@@ -279,13 +320,28 @@ class FormService
         $formData = $this->getFormWithFields($form);
         $submissionData = $submission->data ?? [];
 
+        // Eager load processor and user for the submission
+        $submission->load(['processor', 'user']);
+
         // Add values to fields
         $fields = $this->addValuesToFields($formData['fields'], $submissionData);
+
+        // Build submission array with relations
+        $submissionArray = $submission->toArray();
+        $submissionArray['processor'] = $submission->processor ? [
+            'id' => $submission->processor->id,
+            'full_name' => $submission->processor->full_name,
+        ] : null;
+        $submissionArray['user'] = $submission->user ? [
+            'id' => $submission->user->id,
+            'full_name' => $submission->user->full_name,
+            'email' => $submission->user->email,
+        ] : null;
 
         return [
             'form' => $formData['form'],
             'fields' => $fields,
-            'submission' => $submission->toArray(),
+            'submission' => $submissionArray,
         ];
     }
 

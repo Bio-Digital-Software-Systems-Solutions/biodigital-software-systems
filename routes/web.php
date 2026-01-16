@@ -310,6 +310,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('pending-count');
         Route::get('/calendar', [App\Http\Controllers\Scheduling\AbsenceController::class, 'calendar'])
             ->name('calendar');
+        Route::get('/search-interim', [App\Http\Controllers\Scheduling\AbsenceController::class, 'searchInterimCandidates'])
+            ->name('search-interim');
         Route::post('/', [App\Http\Controllers\Scheduling\AbsenceController::class, 'store'])
             ->name('store');
         Route::get('/{absence}', [App\Http\Controllers\Scheduling\AbsenceController::class, 'show'])
@@ -850,7 +852,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{form}/start-submission', [App\Http\Controllers\FormController::class, 'startSubmission'])->name('start-submission');
         Route::get('/{form}/export', [App\Http\Controllers\FormController::class, 'export'])->name('export');
         Route::get('/{form}/submissions', [App\Http\Controllers\FormController::class, 'submissions'])->name('submissions');
+        Route::post('/{form}/share-link', [App\Http\Controllers\FormController::class, 'generateShareLink'])->name('generate-share-link');
     });
+
+    // Public shared form route (no auth required)
+    Route::get('/f/{token}', [App\Http\Controllers\FormController::class, 'renderSharedForm'])->name('forms.shared')->withoutMiddleware(['auth', 'verified']);
 
     // Form Submission Routes
     Route::prefix('form-submissions')->name('form-submissions.')->group(function () {
@@ -862,6 +868,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{formSubmission}/next-step', [App\Http\Controllers\FormSubmissionController::class, 'nextStep'])->name('next-step');
         Route::post('/{formSubmission}/previous-step', [App\Http\Controllers\FormSubmissionController::class, 'previousStep'])->name('previous-step');
         Route::post('/{formSubmission}/validate-step', [App\Http\Controllers\FormSubmissionController::class, 'validateStep'])->name('validate-step');
+        Route::post('/{formSubmission}/update-status', [App\Http\Controllers\FormSubmissionController::class, 'updateStatus'])->name('update-status');
         Route::delete('/{formSubmission}', [App\Http\Controllers\FormSubmissionController::class, 'destroy'])->name('destroy');
     });
 

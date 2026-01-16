@@ -116,20 +116,9 @@ class AbsenceController extends Controller
             ->get()
             ->keyBy('leave_type');
 
-        // Get department members for interim selection (exclude current user)
-        $departmentMembers = $department->users()
-            ->where('users.id', '!=', auth()->id())
-            ->select('users.id', 'users.first_name', 'users.last_name')
-            ->get()
-            ->map(fn($u) => [
-                'id' => $u->id,
-                'full_name' => $u->first_name . ' ' . $u->last_name,
-            ]);
-
         return Inertia::render('Departments/Schedule/Absences/Create', [
             'department' => $department,
             'balances' => $balances,
-            'departmentMembers' => $departmentMembers,
             'absenceTypes' => collect(AbsenceType::cases())->map(fn($t) => [
                 'value' => $t->value,
                 'label' => $t->label(),
@@ -240,23 +229,27 @@ class AbsenceController extends Controller
             ->get()
             ->keyBy('leave_type');
 
-        // Get department members for interim selection (exclude current user)
-        $departmentMembers = $department->users()
-            ->where('users.id', '!=', auth()->id())
-            ->select('users.id', 'users.first_name', 'users.last_name')
-            ->get()
-            ->map(fn($u) => [
-                'id' => $u->id,
-                'full_name' => $u->first_name . ' ' . $u->last_name,
-            ]);
+        // Load interim user with needed fields
+        $absence->load(['interimUser' => function ($query) {
+            $query->select('id', 'first_name', 'last_name', 'email');
+        }]);
 
-        $absence->load('interimUser');
+        // Transform interim_user to include full_name
+        $absenceData = $absence->toArray();
+        if ($absence->interimUser) {
+            $absenceData['interim_user'] = [
+                'id' => $absence->interimUser->id,
+                'first_name' => $absence->interimUser->first_name,
+                'last_name' => $absence->interimUser->last_name,
+                'email' => $absence->interimUser->email,
+                'full_name' => $absence->interimUser->first_name . ' ' . $absence->interimUser->last_name,
+            ];
+        }
 
         return Inertia::render('Departments/Schedule/Absences/Edit', [
             'department' => $department,
-            'absence' => $absence,
+            'absence' => $absenceData,
             'balances' => $balances,
-            'departmentMembers' => $departmentMembers,
             'absenceTypes' => collect(AbsenceType::cases())->map(fn($t) => [
                 'value' => $t->value,
                 'label' => $t->label(),
@@ -430,6 +423,104 @@ class AbsenceController extends Controller
         $absence->delete();
 
         return back()->with('success', 'Absence supprimée.');
+    }
+
+    /**
+     * Search for interim candidates (users, employees)
+     */
+    public function searchInterimCandidates(Request $request, Department $department)
+    {
+        $validated = $request->validate([
+            'search' => 'nullable|string|max:100',
+        ]);
+
+        $search = $validated['search'] ?? '';
+        $currentUserId = auth()->id();
+
+        $results = collect();
+
+        // Search users in the department (exclude current user)
+        $departmentUsers = $department->users()
+            ->where('users.id', '!=', $currentUserId)
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('users.first_name', 'like', "%{$search}%")
+                        ->orWhere('users.last_name', 'like', "%{$search}%")
+                        ->orWhere('users.email', 'like', "%{$search}%");
+                });
+            })
+            ->select('users.id', 'users.first_name', 'users.last_name', 'users.email')
+            ->limit(15)
+            ->get()
+            ->map(fn($user) => [
+                'value' => $user->id,
+                'label' => $user->first_name . ' ' . $user->last_name,
+                'email' => $user->email,
+                'type' => 'user',
+                'type_label' => 'Membre',
+            ]);
+
+        $results = $results->merge($departmentUsers);
+
+        // Search employees in the department (exclude current user)
+        $employees = \App\Models\Employee::with('user')
+            ->where('department_id', $department->id)
+            ->where('user_id', '!=', $currentUserId)
+            ->active()
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('position', 'like', "%{$search}%")
+                        ->orWhere('job_title', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                            $userQuery->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%")
+                                ->orWhere('email', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->limit(15)
+            ->get()
+            ->filter(fn($emp) => $emp->user) // Ensure user exists
+            ->map(fn($emp) => [
+                'value' => $emp->user->id,
+                'label' => $emp->user->first_name . ' ' . $emp->user->last_name,
+                'email' => $emp->user->email,
+                'position' => $emp->position ?? $emp->job_title,
+                'type' => 'employee',
+                'type_label' => 'Employe',
+            ]);
+
+        $results = $results->merge($employees);
+
+        // Search all active users if search query provided (for staff outside department)
+        if ($search) {
+            $otherUsers = \App\Models\User::where('id', '!=', $currentUserId)
+                ->where('is_active', true)
+                ->whereNotIn('id', $departmentUsers->pluck('value'))
+                ->whereNotIn('id', $employees->pluck('value'))
+                ->where(function ($q) use ($search) {
+                    $q->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                })
+                ->select('id', 'first_name', 'last_name', 'email')
+                ->limit(10)
+                ->get()
+                ->map(fn($user) => [
+                    'value' => $user->id,
+                    'label' => $user->first_name . ' ' . $user->last_name,
+                    'email' => $user->email,
+                    'type' => 'staff',
+                    'type_label' => 'Staff',
+                ]);
+
+            $results = $results->merge($otherUsers);
+        }
+
+        // Remove duplicates by user id
+        $results = $results->unique('value')->values();
+
+        return response()->json($results);
     }
 
     /**

@@ -28,7 +28,7 @@ class DepartmentFormFactory extends Factory
             'created_by' => null,
             'name' => $this->faker->words(3, true) . ' Form',
             'description' => $this->faker->paragraph(),
-            'status' => FormStatus::Draft,
+            'status' => FormStatus::DRAFT,
             'is_multi_step' => false,
             'settings' => [],
             'validation_rules' => [],
@@ -45,7 +45,7 @@ class DepartmentFormFactory extends Factory
     public function published(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => FormStatus::Published,
+            'status' => FormStatus::PUBLISHED,
             'published_at' => now(),
         ]);
     }
@@ -56,7 +56,7 @@ class DepartmentFormFactory extends Factory
     public function archived(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => FormStatus::Archived,
+            'status' => FormStatus::ARCHIVED,
         ]);
     }
 

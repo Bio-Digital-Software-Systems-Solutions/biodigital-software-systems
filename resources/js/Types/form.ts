@@ -97,21 +97,24 @@ export interface FormField {
     parent_field_id?: number;
     name: string;
     label: string;
+    description?: string;
     type: FormFieldType;
     order: number;
     step?: number;
     placeholder?: string;
-    helper_text?: string;
-    description?: string;
+    help_text?: string;
     default_value?: any;
     options?: FieldOption[];
     validation?: Record<string, any>;
     conditional_logic?: ConditionalLogic;
-    settings?: Record<string, any>;
+    config?: Record<string, any>;
     is_required: boolean;
     is_readonly: boolean;
     is_hidden: boolean;
+    column_span?: number;
+    // Frontend aliases for backwards compatibility
     width?: 'full' | 'half' | 'third' | 'quarter';
+    settings?: Record<string, any>;
     children?: FormField[];
     value?: any;
 }

@@ -33,6 +33,7 @@ interface FormBuilderActions {
     setIsLoading: (isLoading: boolean) => void;
     setError: (error: string | null) => void;
     setPreviewMode: (previewMode: boolean) => void;
+    updateFormSettings: (settings: Record<string, any>) => void;
     reset: () => void;
 }
 
@@ -119,10 +120,11 @@ export const useFormBuilderStore = create<FormBuilderState & FormBuilderActions>
                 label: getFieldLabel(type),
                 type,
                 order: index ?? get().fields.filter((f) => !f.parent_field_id).length,
+                step: 1,
                 is_required: false,
                 is_readonly: false,
                 is_hidden: false,
-                width: 'full',
+                column_span: 12,
             };
 
             set((state) => {
@@ -314,6 +316,14 @@ export const useFormBuilderStore = create<FormBuilderState & FormBuilderActions>
         setPreviewMode: (previewMode) =>
             set((state) => {
                 state.previewMode = previewMode;
+            }),
+
+        updateFormSettings: (settings) =>
+            set((state) => {
+                if (state.form) {
+                    state.form.settings = { ...state.form.settings, ...settings };
+                    state.isDirty = true;
+                }
             }),
 
         reset: () => set(initialState),

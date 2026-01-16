@@ -79,9 +79,13 @@ class SyncRolesAndPermissions extends Command
             // Workflows
             'view workflows', 'create workflows', 'edit workflows', 'delete workflows', 'manage workflows', 'execute workflows',
             // Forms
-            'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms',
+            'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms', 'process form submissions',
             // Needs (Department Needs)
             'view needs', 'create needs', 'edit needs', 'delete needs', 'approve needs', 'manage needs',
+            // Employees (HR)
+            'view employees', 'create employees', 'edit employees', 'delete employees', 'manage employees',
+            // Stars (Volunteers)
+            'view stars', 'create stars', 'edit stars', 'delete stars', 'manage stars',
         ];
     }
 
@@ -138,7 +142,7 @@ class SyncRolesAndPermissions extends Command
                 // Workflows
                 'view workflows', 'create workflows', 'edit workflows', 'delete workflows', 'manage workflows', 'execute workflows',
                 // Forms
-                'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms',
+                'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms', 'process form submissions',
                 // Needs
                 'view needs', 'create needs', 'edit needs', 'delete needs', 'approve needs', 'manage needs',
             ],
@@ -173,7 +177,7 @@ class SyncRolesAndPermissions extends Command
                 'view reports', 'generate reports',
                 'view books', 'view videos',
                 'view workflows', 'create workflows', 'edit workflows', 'manage workflows', 'execute workflows',
-                'view forms', 'create forms', 'edit forms', 'manage forms', 'submit forms',
+                'view forms', 'create forms', 'edit forms', 'manage forms', 'submit forms', 'process form submissions',
                 'view needs', 'create needs', 'edit needs', 'approve needs', 'manage needs',
             ],
 
@@ -224,7 +228,7 @@ class SyncRolesAndPermissions extends Command
                 'view books', 'rent books', 'view videos', 'view groups', 'view stocks',
                 'view reports',
                 'view workflows', 'create workflows', 'edit workflows', 'manage workflows', 'execute workflows',
-                'view forms', 'create forms', 'edit forms', 'manage forms', 'submit forms',
+                'view forms', 'create forms', 'edit forms', 'manage forms', 'submit forms', 'process form submissions',
                 'view needs', 'create needs', 'edit needs', 'approve needs', 'manage needs',
             ],
 

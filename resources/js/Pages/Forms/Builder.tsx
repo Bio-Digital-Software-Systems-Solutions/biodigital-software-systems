@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import {
     ArrowLeftIcon,
@@ -12,15 +12,18 @@ import { useFormBuilderStore } from '@/stores/formBuilderStore';
 import FormCanvas from '@/Components/FormBuilder/FormCanvas';
 import FieldPalette from '@/Components/FormBuilder/FieldPalette';
 import FieldPropertiesPanel from '@/Components/FormBuilder/FieldPropertiesPanel';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import type { DepartmentForm, FormField, FormFieldType } from '@/Types/form';
 
 interface Props {
     form: DepartmentForm;
+    fields: FormField[];
 }
 
-export default function FormBuilder({ form }: Props) {
+export default function FormBuilder({ form, fields: initialFields }: Props) {
     const {
         setForm,
+        setFields,
         addField,
         selectedFieldId,
         isDirty,
@@ -29,60 +32,80 @@ export default function FormBuilder({ form }: Props) {
         reset,
     } = useFormBuilderStore();
 
-    const [previewDevice, setPreviewDevice] = React.useState<'desktop' | 'mobile'>('desktop');
+    const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+    const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
 
-    // Initialize store
+    // Initialize store with form and fields
     useEffect(() => {
         setForm(form);
+        setFields(initialFields || []);
         return () => reset();
-    }, [form]);
+    }, [form, initialFields]);
 
     const handleSave = async () => {
         const store = useFormBuilderStore.getState();
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-        // First save the form metadata
-        router.put(
-            route('forms.update', form.uuid),
-            {
-                name: store.form?.name,
-                description: store.form?.description,
-            },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    // Then save the fields using fetch to handle complex data
-                    fetch(route('forms.save-fields', form.uuid), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                        },
-                        body: JSON.stringify({ fields: store.fields }),
-                    })
-                        .then((response) => {
-                            if (response.ok) {
-                                toast.success('Formulaire enregistré');
-                                store.setIsDirty(false);
-                            } else {
-                                toast.error('Erreur lors de l\'enregistrement des champs');
-                            }
-                        })
-                        .catch(() => {
-                            toast.error('Erreur lors de l\'enregistrement des champs');
-                        });
+        try {
+            // First save the form metadata (including settings) using POST with _method override
+            const updateResponse = await fetch(route('forms.update', form.uuid), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-HTTP-Method-Override': 'PUT',
                 },
-                onError: () => {
-                    toast.error('Erreur lors de l\'enregistrement');
-                },
+                body: JSON.stringify({
+                    _method: 'PUT',
+                    name: store.form?.name,
+                    description: store.form?.description,
+                    settings: store.form?.settings,
+                    success_message: store.form?.success_message,
+                }),
+            });
+
+            if (!updateResponse.ok) {
+                const errorData = await updateResponse.json().catch(() => ({}));
+                console.error('Form update failed:', errorData);
+                toast.error('Erreur lors de l\'enregistrement du formulaire');
+                return;
             }
-        );
+
+            // Then save the fields
+            const fieldsPayload = { fields: store.fields };
+            const fieldsResponse = await fetch(route('forms.save-fields', form.uuid), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify(fieldsPayload),
+            });
+
+            const fieldsResult = await fieldsResponse.json().catch(() => ({}));
+
+            if (fieldsResponse.ok) {
+                toast.success(`Formulaire enregistré (${fieldsResult.fields_count || 0} champs)`);
+                store.setIsDirty(false);
+                // Reload the page to get fresh data with proper UUIDs
+                router.reload({ only: ['fields'] });
+            } else {
+                console.error('Fields save failed:', fieldsResult);
+                toast.error(fieldsResult.message || 'Erreur lors de l\'enregistrement des champs');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            toast.error('Erreur lors de l\'enregistrement');
+        }
     };
 
     const handlePublish = () => {
         router.post(route('forms.publish', form.uuid), {}, {
             onSuccess: () => {
                 toast.success('Formulaire publié');
+                router.visit(route('forms.index'));
             },
             onError: () => {
                 toast.error('Erreur lors de la publication');
@@ -92,12 +115,15 @@ export default function FormBuilder({ form }: Props) {
 
     const handleBack = () => {
         if (isDirty) {
-            if (confirm('Vous avez des modifications non enregistrées. Voulez-vous vraiment quitter ?')) {
-                router.get(route('forms.index'));
-            }
+            setShowLeaveConfirmation(true);
         } else {
             router.get(route('forms.index'));
         }
+    };
+
+    const handleConfirmLeave = () => {
+        setShowLeaveConfirmation(false);
+        router.get(route('forms.index'));
     };
 
     const handleAddField = (type: FormFieldType) => {
@@ -107,6 +133,18 @@ export default function FormBuilder({ form }: Props) {
     return (
         <>
             <Head title={`Formulaire: ${form.name}`} />
+
+            {/* Confirmation dialog for leaving with unsaved changes */}
+            <DeleteConfirmationDialog
+                open={showLeaveConfirmation}
+                onOpenChange={setShowLeaveConfirmation}
+                onConfirm={handleConfirmLeave}
+                title="Modifications non enregistrees"
+                description="Vous avez des modifications non enregistrees. Voulez-vous vraiment quitter sans enregistrer ?"
+                confirmText="Quitter"
+                cancelText="Rester"
+                variant="default"
+            />
 
             <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900">
                 {/* Header */}

@@ -137,9 +137,21 @@ class Department extends Model
 
     /**
      * Get the total number of users in this department.
+     * Uses eager-loaded count if available to avoid N+1 queries.
      */
     public function getUsersCountAttribute(): int
     {
+        // Check if users_count was eager-loaded with withCount('users')
+        if (array_key_exists('users_count', $this->attributes)) {
+            return (int) $this->attributes['users_count'];
+        }
+
+        // Check if users relationship was already loaded
+        if ($this->relationLoaded('users')) {
+            return $this->users->count();
+        }
+
+        // Fallback to query (should be avoided in lists)
         return $this->users()->count();
     }
 

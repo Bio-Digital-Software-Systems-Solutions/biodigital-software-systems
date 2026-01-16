@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Button } from '@/Components/ui/button';
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Calendar } from '@/Components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
+import { AsyncSearchableSelect, AsyncSelectOption } from '@/Components/ui/searchable-select';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -20,6 +21,7 @@ import {
     DocumentArrowUpIcon,
     InformationCircleIcon,
     ExclamationTriangleIcon,
+    MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 
 interface Department {
@@ -44,23 +46,16 @@ interface LeaveBalance {
     carried_over: number;
 }
 
-interface DepartmentMember {
-    id: number;
-    full_name: string;
-}
-
 interface Props {
     department: Department;
     balances: Record<string, LeaveBalance>;
     absenceTypes: AbsenceType[];
-    departmentMembers: DepartmentMember[];
 }
 
 export default function CreateAbsence({
     department,
     balances,
     absenceTypes,
-    departmentMembers,
 }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         type: '',
@@ -76,8 +71,30 @@ export default function CreateAbsence({
 
     const [startDateOpen, setStartDateOpen] = useState(false);
     const [endDateOpen, setEndDateOpen] = useState(false);
+    const [selectedInterim, setSelectedInterim] = useState<AsyncSelectOption | null>(null);
 
     const selectedType = absenceTypes.find(t => t.value === data.type);
+
+    // Function to load interim candidates from the API
+    const loadInterimCandidates = useCallback(async (inputValue: string): Promise<AsyncSelectOption[]> => {
+        try {
+            const response = await fetch(
+                `/departments/${department.uuid}/absences/search-interim?search=${encodeURIComponent(inputValue)}`
+            );
+            if (!response.ok) throw new Error('Failed to fetch');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error loading interim candidates:', error);
+            return [];
+        }
+    }, [department.uuid]);
+
+    // Handle interim selection change
+    const handleInterimChange = (option: AsyncSelectOption | null) => {
+        setSelectedInterim(option);
+        setData('interim_user_id', option ? option.value : '');
+    };
 
     const getRemainingDays = (leaveType: string) => {
         const balance = balances[leaveType];
@@ -344,7 +361,10 @@ export default function CreateAbsence({
                     {/* Interim User */}
                     <Card className="mb-6">
                         <CardHeader>
-                            <CardTitle>Interimaire</CardTitle>
+                            <CardTitle className="flex items-center gap-2">
+                                <MagnifyingGlassIcon className="h-5 w-5" />
+                                Interimaire
+                            </CardTitle>
                             <CardDescription>
                                 Designez un collegue pour assurer l'interim pendant votre absence
                             </CardDescription>
@@ -352,27 +372,26 @@ export default function CreateAbsence({
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label>Collegue interimaire (optionnel)</Label>
-                                <Select
-                                    value={data.interim_user_id ? String(data.interim_user_id) : ''}
-                                    onValueChange={(value) => setData('interim_user_id', value ? Number(value) : '')}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selectionner un collegue" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {departmentMembers?.map((member) => (
-                                            <SelectItem key={member.id} value={String(member.id)}>
-                                                {member.full_name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <AsyncSearchableSelect
+                                    id="interim_user_id"
+                                    value={selectedInterim}
+                                    onChange={handleInterimChange}
+                                    loadOptions={loadInterimCandidates}
+                                    placeholder="Rechercher un collegue, employe ou staff..."
+                                    noOptionsMessage="Aucun resultat trouve"
+                                    loadingMessage="Recherche en cours..."
+                                    isClearable
+                                    defaultOptions
+                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Recherchez par nom, email ou poste
+                                </p>
                                 {errors.interim_user_id && (
                                     <p className="text-sm text-red-600">{errors.interim_user_id}</p>
                                 )}
                             </div>
 
-                            {data.interim_user_id && (
+                            {selectedInterim && (
                                 <div className="space-y-2">
                                     <Label htmlFor="interim_notes">Instructions pour l'interimaire</Label>
                                     <Textarea

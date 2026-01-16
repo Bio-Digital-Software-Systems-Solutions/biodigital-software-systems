@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import {
@@ -11,11 +11,25 @@ import {
     Squares2X2Icon,
     ListBulletIcon,
     TableCellsIcon,
+    LinkIcon,
+    ClipboardDocumentIcon,
+    ArrowDownTrayIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
+import { Button } from '@/Components/ui/button';
 import type { DepartmentForm, FormStatus } from '@/Types/form';
 import type { PaginatedData } from '@/Types';
+
+interface ShareLinkData {
+    url: string;
+    token: string;
+    expires_at: string;
+    max_uses: number | null;
+    qr_code: string;
+}
 
 type ViewMode = 'grid' | 'list' | 'table';
 
@@ -37,8 +51,11 @@ const statusConfig: Record<FormStatus, { label: string; color: string }> = {
 
 export default function FormsIndex({ forms: paginatedForms }: Props) {
     const forms = paginatedForms?.data || [];
-    const [deleteForm, setDeleteForm] = React.useState<DepartmentForm | null>(null);
-    const [viewMode, setViewMode] = React.useState<ViewMode>('grid');
+    const [deleteForm, setDeleteForm] = useState<DepartmentForm | null>(null);
+    const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [shareData, setShareData] = useState<ShareLinkData | null>(null);
+    const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 
     const handleDelete = () => {
         if (!deleteForm) return;
@@ -73,6 +90,75 @@ export default function FormsIndex({ forms: paginatedForms }: Props) {
             onError: () => {
                 toast.error('Erreur lors de la publication');
             },
+        });
+    };
+
+    const handleGenerateShareLink = async (form: DepartmentForm) => {
+        setIsGeneratingLink(true);
+        try {
+            const response = await fetch(route('forms.generate-share-link', form.uuid), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    expires_in_hours: 24, // Default 24 hours
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Erreur lors de la generation du lien');
+            }
+
+            const data: ShareLinkData = await response.json();
+            setShareData(data);
+            setShareModalOpen(true);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Erreur lors de la generation du lien');
+        } finally {
+            setIsGeneratingLink(false);
+        }
+    };
+
+    const handleCopyLink = async () => {
+        if (!shareData) return;
+        try {
+            await navigator.clipboard.writeText(shareData.url);
+            toast.success('Lien copie dans le presse-papiers');
+        } catch {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = shareData.url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            toast.success('Lien copie dans le presse-papiers');
+        }
+    };
+
+    const handleDownloadQrCode = () => {
+        if (!shareData) return;
+
+        // Create a download link for the QR code
+        const link = document.createElement('a');
+        link.href = shareData.qr_code;
+        link.download = `qr-code-formulaire.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('QR Code telecharge');
+    };
+
+    const formatExpirationDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
         });
     };
 
@@ -228,6 +314,16 @@ export default function FormsIndex({ forms: paginatedForms }: Props) {
                                                     >
                                                         <DocumentDuplicateIcon className="h-5 w-5" />
                                                     </button>
+                                                    {form.status === 'published' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleGenerateShareLink(form)}
+                                                            className="p-2 rounded-md text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                                                            title="Copier le lien"
+                                                        >
+                                                            <LinkIcon className="h-5 w-5" />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         onClick={() => setDeleteForm(form)}
@@ -313,6 +409,16 @@ export default function FormsIndex({ forms: paginatedForms }: Props) {
                                                     >
                                                         <DocumentDuplicateIcon className="h-5 w-5" />
                                                     </button>
+                                                    {form.status === 'published' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleGenerateShareLink(form)}
+                                                            className="p-2 rounded-md text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                                                            title="Copier le lien"
+                                                        >
+                                                            <LinkIcon className="h-5 w-5" />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         onClick={() => setDeleteForm(form)}
@@ -414,6 +520,16 @@ export default function FormsIndex({ forms: paginatedForms }: Props) {
                                                                 >
                                                                     <DocumentDuplicateIcon className="h-4 w-4" />
                                                                 </button>
+                                                                {form.status === 'published' && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleGenerateShareLink(form)}
+                                                                        className="p-1.5 rounded-md text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                                                                        title="Copier le lien"
+                                                                    >
+                                                                        <LinkIcon className="h-4 w-4" />
+                                                                    </button>
+                                                                )}
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => setDeleteForm(form)}
@@ -444,6 +560,90 @@ export default function FormsIndex({ forms: paginatedForms }: Props) {
                 title="Supprimer le formulaire"
                 description={`Êtes-vous sûr de vouloir supprimer le formulaire "${deleteForm?.name}" ? Cette action est irréversible et supprimera également toutes les soumissions associées.`}
             />
+
+            {/* Share Link Modal */}
+            <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <LinkIcon className="h-5 w-5" />
+                            Lien de partage
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    {shareData && (
+                        <div className="px-3 pb-3 space-y-4">
+                            {/* QR Code */}
+                            <div className="flex justify-center">
+                                <div className="bg-white p-3 rounded-lg shadow-sm">
+                                    <img
+                                        src={shareData.qr_code}
+                                        alt="QR Code du formulaire"
+                                        className="w-48 h-48"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Link */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Lien de partage
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={shareData.url}
+                                        aria-label="Lien de partage du formulaire"
+                                        className="flex-1 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-gray-600 dark:text-gray-400"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleCopyLink}
+                                        title="Copier le lien"
+                                    >
+                                        <ClipboardDocumentIcon className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Expiration info */}
+                            <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                                <p>
+                                    <span className="font-medium">Expire le:</span>{' '}
+                                    {formatExpirationDate(shareData.expires_at)}
+                                </p>
+                                {shareData.max_uses && (
+                                    <p>
+                                        <span className="font-medium">Utilisations max:</span>{' '}
+                                        {shareData.max_uses}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={handleDownloadQrCode}
+                                >
+                                    <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                                    Telecharger QR Code
+                                </Button>
+                                <Button
+                                    className="flex-1"
+                                    onClick={handleCopyLink}
+                                >
+                                    <ClipboardDocumentIcon className="h-4 w-4 mr-2" />
+                                    Copier le lien
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </DashboardLayout>
     );
 }

@@ -54,6 +54,11 @@ class DepartmentForm extends Model
                 $model->uuid = (string) Str::uuid();
             }
         });
+
+        // Cascade delete share links when form is deleted (soft or force)
+        static::deleting(function (self $model) {
+            $model->shareLinks()->delete();
+        });
     }
 
     public function getActivitylogOptions(): LogOptions
@@ -104,6 +109,11 @@ class DepartmentForm extends Model
     public function workflowSteps(): HasMany
     {
         return $this->hasMany(WorkflowStep::class, 'form_id');
+    }
+
+    public function shareLinks(): HasMany
+    {
+        return $this->hasMany(FormShareLink::class, 'form_id');
     }
 
     public function getRouteKeyName(): string

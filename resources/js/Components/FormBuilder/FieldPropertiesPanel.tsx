@@ -1,7 +1,8 @@
 import React from 'react';
 import { useFormBuilderStore } from '@/stores/formBuilderStore';
-import { XMarkIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PlusIcon, TrashIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import type { FormField, FieldOption } from '@/Types/form';
+import { Switch } from '@/Components/ui/switch';
 
 const fieldTypeLabels: Record<string, string> = {
     text: 'Texte',
@@ -48,7 +49,7 @@ const hasOptions = (type: string): boolean => {
 };
 
 export default function FieldPropertiesPanel() {
-    const { fields, selectedFieldId, updateField, selectField } = useFormBuilderStore();
+    const { form, fields, selectedFieldId, updateField, selectField, updateFormSettings } = useFormBuilderStore();
 
     const findField = (fields: FormField[], id: string): FormField | null => {
         for (const field of fields) {
@@ -63,12 +64,119 @@ export default function FieldPropertiesPanel() {
 
     const selectedField = selectedFieldId ? findField(fields, selectedFieldId) : null;
 
+    const inputClasses = `
+        w-full px-3 py-2 rounded-md border text-sm
+        bg-white dark:bg-gray-900
+        border-gray-300 dark:border-gray-600
+        text-gray-900 dark:text-white
+        focus:ring-2 focus:ring-primary focus:border-primary
+    `;
+
+    const labelClasses = `
+        block text-xs font-medium mb-1
+        text-gray-600 dark:text-gray-400
+    `;
+
+    // Form Settings Panel (shown when no field is selected)
     if (!selectedField) {
+        const settings = form?.settings || {};
+
         return (
-            <div className="h-full flex items-center justify-center p-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                    Sélectionnez un champ pour modifier ses propriétés
-                </p>
+            <div className="h-full overflow-y-auto">
+                {/* Header */}
+                <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                        <Cog6ToothIcon className="h-5 w-5 text-gray-500" />
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                Paramètres du formulaire
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Boutons et actions
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Settings Content */}
+                <div className="p-4 space-y-4">
+                    {/* Submit Button Text */}
+                    <div>
+                        <label className={labelClasses}>Texte du bouton soumettre</label>
+                        <input
+                            type="text"
+                            value={settings.submit_button_text || 'Soumettre'}
+                            onChange={(e) => updateFormSettings({ submit_button_text: e.target.value })}
+                            placeholder="Soumettre"
+                            className={inputClasses}
+                        />
+                    </div>
+
+                    {/* Show Cancel Button */}
+                    <div className="flex items-center justify-between">
+                        <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                            Afficher le bouton annuler
+                        </label>
+                        <Switch
+                            checked={settings.show_cancel_button !== false}
+                            onCheckedChange={(checked) => updateFormSettings({ show_cancel_button: checked })}
+                        />
+                    </div>
+
+                    {/* Cancel Button Text */}
+                    {settings.show_cancel_button !== false && (
+                        <div>
+                            <label className={labelClasses}>Texte du bouton annuler</label>
+                            <input
+                                type="text"
+                                value={settings.cancel_button_text || 'Annuler'}
+                                onChange={(e) => updateFormSettings({ cancel_button_text: e.target.value })}
+                                placeholder="Annuler"
+                                className={inputClasses}
+                            />
+                        </div>
+                    )}
+
+                    {/* Divider */}
+                    <hr className="border-gray-200 dark:border-gray-700" />
+
+                    {/* Success Message */}
+                    <div>
+                        <label className={labelClasses}>Message de confirmation</label>
+                        <textarea
+                            value={form?.success_message || ''}
+                            onChange={(e) => updateFormSettings({ success_message: e.target.value })}
+                            placeholder="Merci pour votre soumission !"
+                            rows={3}
+                            className={inputClasses}
+                        />
+                        <p className="mt-1 text-xs text-gray-400">
+                            Message affiché après la soumission du formulaire
+                        </p>
+                    </div>
+
+                    {/* Redirect URL */}
+                    <div>
+                        <label className={labelClasses}>URL de redirection (optionnel)</label>
+                        <input
+                            type="url"
+                            value={settings.redirect_url || ''}
+                            onChange={(e) => updateFormSettings({ redirect_url: e.target.value })}
+                            placeholder="https://..."
+                            className={inputClasses}
+                        />
+                        <p className="mt-1 text-xs text-gray-400">
+                            Laissez vide pour rester sur la page
+                        </p>
+                    </div>
+
+                    {/* Helper text */}
+                    <div className="mt-6 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            💡 Sélectionnez un champ dans le formulaire pour modifier ses propriétés
+                        </p>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -107,19 +215,6 @@ export default function FieldPropertiesPanel() {
         options.splice(index, 1);
         updateField(selectedField.uuid, { options });
     };
-
-    const inputClasses = `
-        w-full px-3 py-2 rounded-md border text-sm
-        bg-white dark:bg-gray-900
-        border-gray-300 dark:border-gray-600
-        text-gray-900 dark:text-white
-        focus:ring-2 focus:ring-primary focus:border-primary
-    `;
-
-    const labelClasses = `
-        block text-xs font-medium mb-1
-        text-gray-600 dark:text-gray-400
-    `;
 
     return (
         <div className="h-full overflow-y-auto">
@@ -183,8 +278,8 @@ export default function FieldPropertiesPanel() {
                     <div>
                         <label className={labelClasses}>Texte d'aide</label>
                         <textarea
-                            value={selectedField.helper_text || ''}
-                            onChange={(e) => handleChange('helper_text', e.target.value)}
+                            value={selectedField.help_text || ''}
+                            onChange={(e) => handleChange('help_text', e.target.value)}
                             rows={2}
                             className={inputClasses}
                         />

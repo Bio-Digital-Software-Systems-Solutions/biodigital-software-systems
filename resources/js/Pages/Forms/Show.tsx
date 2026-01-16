@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import { Badge } from '@/Components/ui/badge';
+import { Button } from '@/Components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import {
     ArrowLeftIcon,
     PencilIcon,
@@ -10,9 +14,24 @@ import {
     CheckCircleIcon,
     ArchiveBoxIcon,
     ClipboardDocumentListIcon,
+    UserIcon,
+    EyeIcon,
+    PlayIcon,
+    LinkIcon,
+    TrashIcon,
+    ClipboardDocumentIcon,
+    ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
-import type { DepartmentForm, FormStatus, FormField } from '@/Types/form';
+import type { DepartmentForm, FormStatus, FormField, SubmissionStatus } from '@/Types/form';
+
+interface ShareLinkData {
+    url: string;
+    token: string;
+    expires_at: string;
+    max_uses: number | null;
+    qr_code: string;
+}
 
 interface FormStats {
     total_submissions: number;
@@ -21,12 +40,32 @@ interface FormStats {
     avg_completion_time?: string;
 }
 
+interface RecentSubmission {
+    uuid: string;
+    status: SubmissionStatus;
+    created_at: string;
+    submitted_at: string | null;
+    user?: {
+        id: number;
+        full_name: string;
+    };
+}
+
 interface Props {
     form: DepartmentForm;
     fields?: FormField[];
     submissionCount?: number;
     stats?: FormStats;
+    recentSubmissions?: RecentSubmission[];
 }
+
+const submissionStatusConfig: Record<SubmissionStatus, { label: string; color: string }> = {
+    draft: { label: 'Brouillon', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
+    submitted: { label: 'Soumis', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+    processing: { label: 'En cours', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
+    completed: { label: 'Termine', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+    rejected: { label: 'Rejete', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+};
 
 const statusConfig: Record<FormStatus, { label: string; color: string; icon: React.ElementType }> = {
     draft: {
@@ -46,8 +85,23 @@ const statusConfig: Record<FormStatus, { label: string; color: string; icon: Rea
     },
 };
 
-export default function FormShow({ form, fields: propFields, submissionCount, stats }: Props) {
+export default function FormShow({ form, fields: propFields, submissionCount, stats, recentSubmissions = [] }: Props) {
     const status = statusConfig[form.status];
+    const [isOpeningForm, setIsOpeningForm] = useState(false);
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [shareData, setShareData] = useState<ShareLinkData | null>(null);
+    const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
     const StatusIcon = status.icon;
     const fields = propFields || form.fields || [];
 
@@ -80,6 +134,112 @@ export default function FormShow({ form, fields: propFields, submissionCount, st
             },
             onError: () => {
                 toast.error('Erreur lors de l\'archivage');
+            },
+        });
+    };
+
+    const handleOpenForm = async () => {
+        setIsOpeningForm(true);
+        try {
+            const response = await fetch(route('forms.generate-share-link', form.uuid), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    expires_in_hours: 1, // Short expiration for immediate use
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Erreur lors de la génération du lien');
+            }
+
+            const data = await response.json();
+            // Open the form in a new tab
+            window.open(data.url, '_blank');
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Erreur lors de l\'ouverture du formulaire');
+        } finally {
+            setIsOpeningForm(false);
+        }
+    };
+
+    const handleGenerateShareLink = async () => {
+        setIsGeneratingLink(true);
+        try {
+            const response = await fetch(route('forms.generate-share-link', form.uuid), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    expires_in_hours: 24,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Erreur lors de la génération du lien');
+            }
+
+            const data: ShareLinkData = await response.json();
+            setShareData(data);
+            setShareModalOpen(true);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Erreur lors de la génération du lien');
+        } finally {
+            setIsGeneratingLink(false);
+        }
+    };
+
+    const handleCopyLink = async () => {
+        if (!shareData) return;
+        try {
+            await navigator.clipboard.writeText(shareData.url);
+            toast.success('Lien copié dans le presse-papiers');
+        } catch {
+            const textArea = document.createElement('textarea');
+            textArea.value = shareData.url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            toast.success('Lien copié dans le presse-papiers');
+        }
+    };
+
+    const handleDownloadQrCode = () => {
+        if (!shareData) return;
+        const link = document.createElement('a');
+        link.href = shareData.qr_code;
+        link.download = `qr-code-${form.name}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('QR Code téléchargé');
+    };
+
+    const formatExpirationDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
+
+    const handleDelete = () => {
+        router.delete(route('forms.destroy', form.uuid), {
+            onSuccess: () => {
+                toast.success('Formulaire supprimé avec succès');
+            },
+            onError: () => {
+                toast.error('Erreur lors de la suppression');
             },
         });
     };
@@ -129,63 +289,71 @@ export default function FormShow({ form, fields: propFields, submissionCount, st
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                             {form.status === 'draft' && (
                                 <button
                                     type="button"
                                     onClick={handlePublish}
-                                    className="
-                                        inline-flex items-center gap-2 px-3 py-2 rounded-md
-                                        bg-green-600 text-white font-medium text-sm
-                                        hover:bg-green-700
-                                    "
+                                    title="Publier"
+                                    className="p-2 rounded-md bg-green-600 text-white hover:bg-green-700"
                                 >
-                                    <DocumentArrowDownIcon className="h-4 w-4" />
-                                    Publier
+                                    <DocumentArrowDownIcon className="h-5 w-5" />
                                 </button>
                             )}
                             {form.status === 'published' && (
-                                <button
-                                    type="button"
-                                    onClick={handleArchive}
-                                    className="
-                                        inline-flex items-center gap-2 px-3 py-2 rounded-md
-                                        border border-gray-300 dark:border-gray-600
-                                        text-gray-700 dark:text-gray-300
-                                        hover:bg-gray-50 dark:hover:bg-gray-700
-                                        text-sm
-                                    "
-                                >
-                                    <ArchiveBoxIcon className="h-4 w-4" />
-                                    Archiver
-                                </button>
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={handleOpenForm}
+                                        disabled={isOpeningForm}
+                                        title="Ouvrir"
+                                        className="p-2 rounded-md bg-primary text-white hover:bg-primary/90 disabled:opacity-50"
+                                    >
+                                        <PlayIcon className="h-5 w-5" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleArchive}
+                                        title="Archiver"
+                                        className="p-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    >
+                                        <ArchiveBoxIcon className="h-5 w-5" />
+                                    </button>
+                                </>
                             )}
                             <Link
                                 href={route('forms.edit', form.uuid)}
-                                className="
-                                    inline-flex items-center gap-2 px-3 py-2 rounded-md
-                                    border border-gray-300 dark:border-gray-600
-                                    text-gray-700 dark:text-gray-300
-                                    hover:bg-gray-50 dark:hover:bg-gray-700
-                                    text-sm
-                                "
+                                title="Modifier"
+                                className="p-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                             >
-                                <PencilIcon className="h-4 w-4" />
-                                Modifier
+                                <PencilIcon className="h-5 w-5" />
                             </Link>
                             <button
                                 type="button"
                                 onClick={handleDuplicate}
-                                className="
-                                    inline-flex items-center gap-2 px-3 py-2 rounded-md
-                                    border border-gray-300 dark:border-gray-600
-                                    text-gray-700 dark:text-gray-300
-                                    hover:bg-gray-50 dark:hover:bg-gray-700
-                                    text-sm
-                                "
+                                title="Dupliquer"
+                                className="p-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                             >
-                                <DocumentDuplicateIcon className="h-4 w-4" />
-                                Dupliquer
+                                <DocumentDuplicateIcon className="h-5 w-5" />
+                            </button>
+                            {form.status === 'published' && (
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateShareLink}
+                                    disabled={isGeneratingLink}
+                                    title="Partager"
+                                    className="p-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                                >
+                                    <LinkIcon className="h-5 w-5" />
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setDeleteDialogOpen(true)}
+                                title="Supprimer"
+                                className="p-2 rounded-md border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            >
+                                <TrashIcon className="h-5 w-5" />
                             </button>
                         </div>
                     </div>
@@ -320,7 +488,10 @@ export default function FormShow({ form, fields: propFields, submissionCount, st
                             <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
                                 <h2 className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
                                     <ClipboardDocumentListIcon className="h-5 w-5" />
-                                    Soumissions récentes
+                                    Soumissions recentes
+                                    {stats && stats.total_submissions > 0 && (
+                                        <Badge variant="secondary">{stats.total_submissions}</Badge>
+                                    )}
                                 </h2>
                                 <Link
                                     href={route('forms.submissions', form.uuid)}
@@ -329,15 +500,145 @@ export default function FormShow({ form, fields: propFields, submissionCount, st
                                     Voir tout
                                 </Link>
                             </div>
-                            <div className="p-4">
-                                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                                    Aucune soumission récente
-                                </p>
+                            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                {recentSubmissions.length === 0 ? (
+                                    <div className="p-4">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                                            Aucune soumission recente
+                                        </p>
+                                    </div>
+                                ) : (
+                                    recentSubmissions.map((submission) => {
+                                        const subStatus = submissionStatusConfig[submission.status] || submissionStatusConfig.draft;
+                                        return (
+                                            <div key={submission.uuid} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <UserIcon className="h-5 w-5 text-gray-400" />
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                {submission.user?.full_name || 'Utilisateur inconnu'}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                {formatDate(submission.submitted_at || submission.created_at)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge className={subStatus.color}>
+                                                            {subStatus.label}
+                                                        </Badge>
+                                                        <Link
+                                                            href={route('form-submissions.show', submission.uuid)}
+                                                            className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                            title="Voir"
+                                                        >
+                                                            <EyeIcon className="h-4 w-4" />
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
                             </div>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Share Link Modal */}
+            <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <LinkIcon className="h-5 w-5" />
+                            Lien de partage
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    {shareData && (
+                        <div className="px-3 pb-3 space-y-4">
+                            {/* QR Code */}
+                            <div className="flex justify-center">
+                                <div className="bg-white p-3 rounded-lg shadow-sm">
+                                    <img
+                                        src={shareData.qr_code}
+                                        alt="QR Code du formulaire"
+                                        className="w-48 h-48"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Link */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Lien de partage
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={shareData.url}
+                                        aria-label="Lien de partage du formulaire"
+                                        className="flex-1 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-gray-600 dark:text-gray-400"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleCopyLink}
+                                        title="Copier le lien"
+                                    >
+                                        <ClipboardDocumentIcon className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Expiration info */}
+                            <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                                <p>
+                                    <span className="font-medium">Expire le:</span>{' '}
+                                    {formatExpirationDate(shareData.expires_at)}
+                                </p>
+                                {shareData.max_uses && (
+                                    <p>
+                                        <span className="font-medium">Utilisations max:</span>{' '}
+                                        {shareData.max_uses}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={handleDownloadQrCode}
+                                >
+                                    <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                                    Télécharger QR Code
+                                </Button>
+                                <Button
+                                    className="flex-1"
+                                    onClick={handleCopyLink}
+                                >
+                                    <ClipboardDocumentIcon className="h-4 w-4 mr-2" />
+                                    Copier le lien
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <DeleteConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                onConfirm={handleDelete}
+                title="Supprimer le formulaire"
+                description={`Êtes-vous sûr de vouloir supprimer le formulaire "${form.name}" ? Cette action est irréversible et supprimera également toutes les soumissions associées.`}
+            />
         </DashboardLayout>
     );
 }

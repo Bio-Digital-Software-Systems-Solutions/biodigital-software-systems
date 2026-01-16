@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Form\SubmissionStatus;
 use App\Models\DepartmentFormSubmission;
 use App\Services\Form\FormService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class FormSubmissionController extends Controller
@@ -35,11 +37,17 @@ class FormSubmissionController extends Controller
     public function show(DepartmentFormSubmission $formSubmission)
     {
         $submissionData = $this->formService->getSubmissionWithFields($formSubmission);
+        $formSubmission->load(['processor', 'user']);
+
+        $user = Auth::user();
+        $canProcess = $user->hasAnyRole(['admin', 'super-admin']) || $user->can('process form submissions');
 
         return Inertia::render('FormSubmissions/Show', [
             'form' => $submissionData['form'],
             'fields' => $submissionData['fields'],
             'submission' => $submissionData['submission'],
+            'canProcess' => $canProcess,
+            'statuses' => SubmissionStatus::toSelectOptions(),
         ]);
     }
 
@@ -155,14 +163,30 @@ class FormSubmissionController extends Controller
      */
     public function destroy(DepartmentFormSubmission $formSubmission)
     {
-        if (!$formSubmission->isDraft()) {
-            return back()->with('error', 'Cannot delete submitted form.');
+        $user = Auth::user();
+
+        // Allow deletion if:
+        // 1. It's the user's own draft submission
+        // 2. User is admin or has manage forms permission
+        $canDelete = $formSubmission->isDraft() && $formSubmission->user_id === $user->id;
+        $canDelete = $canDelete || $user->hasAnyRole(['admin', 'super-admin']);
+        $canDelete = $canDelete || $user->can('manage forms');
+
+        if (!$canDelete) {
+            return back()->with('error', 'Vous n\'avez pas la permission de supprimer cette soumission.');
         }
 
+        $formId = $formSubmission->form->uuid;
         $formSubmission->delete();
 
+        // Redirect back to form submissions if coming from there
+        if (request()->headers->get('referer') && str_contains(request()->headers->get('referer'), 'submissions')) {
+            return redirect()->route('forms.submissions', $formId)
+                ->with('success', 'Soumission supprimee avec succes.');
+        }
+
         return redirect()->route('form-submissions.index')
-            ->with('success', 'Draft deleted successfully.');
+            ->with('success', 'Soumission supprimee avec succes.');
     }
 
     /**
@@ -205,5 +229,34 @@ class FormSubmissionController extends Controller
         }
 
         return response()->json(['valid' => true]);
+    }
+
+    /**
+     * Update the status of a submission.
+     */
+    public function updateStatus(Request $request, DepartmentFormSubmission $formSubmission)
+    {
+        $user = Auth::user();
+
+        // Check permission
+        $canProcess = $user->hasAnyRole(['admin', 'super-admin']) || $user->can('process form submissions');
+        if (!$canProcess) {
+            return back()->with('error', 'Vous n\'avez pas la permission de traiter cette soumission.');
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', Rule::enum(SubmissionStatus::class)],
+            'notes' => 'nullable|string|max:5000',
+        ]);
+
+        $formSubmission->updateStatus(
+            SubmissionStatus::from($validated['status']),
+            $user->id,
+            $validated['notes'] ?? null
+        );
+
+        $statusLabel = SubmissionStatus::from($validated['status'])->label();
+
+        return back()->with('success', "Statut mis à jour: {$statusLabel}");
     }
 }

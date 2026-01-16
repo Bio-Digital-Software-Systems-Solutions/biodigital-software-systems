@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
 import { Input } from '@/Components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select';
+import { DatePicker } from '@/Components/ui/date-picker';
 import {
     ArrowLeftIcon,
     CalendarDaysIcon,
@@ -251,17 +252,21 @@ export default function AbsencesIndex({
                                 </SelectContent>
                             </Select>
 
-                            <Input
-                                type="date"
-                                value={localFilters.from || ''}
-                                onChange={(e) => setLocalFilters(prev => ({ ...prev, from: e.target.value || undefined }))}
+                            <DatePicker
+                                value={localFilters.from}
+                                onChange={(date) => setLocalFilters(prev => ({
+                                    ...prev,
+                                    from: date ? date.toISOString().split('T')[0] : undefined
+                                }))}
                                 placeholder="Du"
                             />
 
-                            <Input
-                                type="date"
-                                value={localFilters.to || ''}
-                                onChange={(e) => setLocalFilters(prev => ({ ...prev, to: e.target.value || undefined }))}
+                            <DatePicker
+                                value={localFilters.to}
+                                onChange={(date) => setLocalFilters(prev => ({
+                                    ...prev,
+                                    to: date ? date.toISOString().split('T')[0] : undefined
+                                }))}
                                 placeholder="Au"
                             />
                         </div>

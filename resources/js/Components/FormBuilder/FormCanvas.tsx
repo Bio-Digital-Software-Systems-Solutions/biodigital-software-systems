@@ -20,6 +20,7 @@ import { useFormBuilderStore } from '@/stores/formBuilderStore';
 import type { FormFieldType, FormField } from '@/Types/form';
 import FieldRenderer from './FieldRenderer';
 import DraggableField from './DraggableField';
+import { Button } from '@/Components/ui/button';
 
 interface FormCanvasProps {
     readOnly?: boolean;
@@ -27,6 +28,7 @@ interface FormCanvasProps {
 
 export default function FormCanvas({ readOnly = false }: FormCanvasProps) {
     const {
+        form,
         fields,
         selectedFieldId,
         addField,
@@ -35,6 +37,12 @@ export default function FormCanvas({ readOnly = false }: FormCanvasProps) {
         setDragOverField,
         previewMode,
     } = useFormBuilderStore();
+
+    // Get button settings from form
+    const settings = form?.settings || {};
+    const submitButtonText = settings.submit_button_text || 'Soumettre';
+    const cancelButtonText = settings.cancel_button_text || 'Annuler';
+    const showCancelButton = settings.show_cancel_button !== false;
 
     const [activeId, setActiveId] = React.useState<string | null>(null);
     const activeField = activeId
@@ -127,6 +135,24 @@ export default function FormCanvas({ readOnly = false }: FormCanvasProps) {
                             preview
                         />
                     ))}
+
+                    {/* Action Buttons */}
+                    {fields.length > 0 && (
+                        <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            {showCancelButton && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled
+                                >
+                                    {cancelButtonText}
+                                </Button>
+                            )}
+                            <Button type="submit" disabled>
+                                {submitButtonText}
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
         );

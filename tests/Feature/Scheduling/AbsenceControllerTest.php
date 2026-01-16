@@ -869,4 +869,242 @@ class AbsenceControllerTest extends TestCase
             ->has('absences', 3)
         );
     }
+
+    // ==========================================
+    // SEARCH INTERIM CANDIDATES TESTS
+    // ==========================================
+
+    /** @test */
+    public function user_can_search_interim_candidates(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->getJson(route('departments.absences.search-interim', [
+                'department' => $this->department,
+            ]));
+
+        $response->assertStatus(200);
+        $response->assertJsonIsArray();
+    }
+
+    /** @test */
+    public function search_interim_returns_department_members(): void
+    {
+        // Admin is also a member of the department
+        $response = $this->actingAs($this->user)
+            ->getJson(route('departments.absences.search-interim', [
+                'department' => $this->department,
+            ]));
+
+        $response->assertStatus(200);
+        $response->assertJsonFragment([
+            'value' => $this->admin->id,
+            'type' => 'user',
+        ]);
+    }
+
+    /** @test */
+    public function search_interim_excludes_current_user(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->getJson(route('departments.absences.search-interim', [
+                'department' => $this->department,
+            ]));
+
+        $response->assertStatus(200);
+
+        // The current user should not be in the results
+        $data = $response->json();
+        $userIds = array_column($data, 'value');
+        $this->assertNotContains($this->user->id, $userIds);
+    }
+
+    /** @test */
+    public function search_interim_filters_by_search_query(): void
+    {
+        // Create additional users with specific names
+        $searchableUser = User::factory()->create([
+            'first_name' => 'SearchableFirstName',
+            'last_name' => 'SearchableLastName',
+        ]);
+        $searchableUser->assignRole('member');
+        $this->department->users()->attach($searchableUser);
+
+        $response = $this->actingAs($this->user)
+            ->getJson(route('departments.absences.search-interim', [
+                'department' => $this->department,
+                'search' => 'SearchableFirst',
+            ]));
+
+        $response->assertStatus(200);
+        $response->assertJsonFragment([
+            'value' => $searchableUser->id,
+        ]);
+    }
+
+    /** @test */
+    public function search_interim_searches_by_email(): void
+    {
+        $emailUser = User::factory()->create([
+            'email' => 'unique-test-email@example.com',
+        ]);
+        $emailUser->assignRole('member');
+        $this->department->users()->attach($emailUser);
+
+        $response = $this->actingAs($this->user)
+            ->getJson(route('departments.absences.search-interim', [
+                'department' => $this->department,
+                'search' => 'unique-test-email',
+            ]));
+
+        $response->assertStatus(200);
+        $response->assertJsonFragment([
+            'value' => $emailUser->id,
+        ]);
+    }
+
+    /** @test */
+    public function search_interim_returns_employees(): void
+    {
+        // Create an employee in the department
+        $employee = \App\Models\Employee::factory()->create([
+            'user_id' => $this->admin->id,
+            'department_id' => $this->department->id,
+            'status' => \App\Enums\Employee\EmployeeStatus::ACTIVE,
+            'position' => 'Test Position',
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson(route('departments.absences.search-interim', [
+                'department' => $this->department,
+            ]));
+
+        $response->assertStatus(200);
+        // Should include the employee
+        $data = $response->json();
+        $this->assertNotEmpty($data);
+    }
+
+    /** @test */
+    public function search_interim_returns_staff_outside_department_when_searching(): void
+    {
+        // Create a user NOT in the department
+        $outsideUser = User::factory()->create([
+            'first_name' => 'OutsideStaff',
+            'last_name' => 'Member',
+            'is_active' => true,
+        ]);
+        $outsideUser->assignRole('member');
+
+        $response = $this->actingAs($this->user)
+            ->getJson(route('departments.absences.search-interim', [
+                'department' => $this->department,
+                'search' => 'OutsideStaff',
+            ]));
+
+        $response->assertStatus(200);
+        $response->assertJsonFragment([
+            'value' => $outsideUser->id,
+            'type' => 'staff',
+        ]);
+    }
+
+    /** @test */
+    public function search_interim_validates_search_length(): void
+    {
+        $longSearch = str_repeat('a', 200);
+
+        $response = $this->actingAs($this->user)
+            ->getJson(route('departments.absences.search-interim', [
+                'department' => $this->department,
+                'search' => $longSearch,
+            ]));
+
+        $response->assertStatus(422);
+    }
+
+    /** @test */
+    public function search_interim_removes_duplicates(): void
+    {
+        // Create a user who is both a department member and an employee
+        $dualUser = User::factory()->create([
+            'first_name' => 'DualRole',
+            'last_name' => 'User',
+        ]);
+        $dualUser->assignRole('member');
+        $this->department->users()->attach($dualUser);
+
+        \App\Models\Employee::factory()->create([
+            'user_id' => $dualUser->id,
+            'department_id' => $this->department->id,
+            'status' => \App\Enums\Employee\EmployeeStatus::ACTIVE,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson(route('departments.absences.search-interim', [
+                'department' => $this->department,
+                'search' => 'DualRole',
+            ]));
+
+        $response->assertStatus(200);
+        $data = $response->json();
+
+        // Count occurrences of the user's id
+        $userIdCount = count(array_filter($data, fn($item) => $item['value'] === $dualUser->id));
+        $this->assertEquals(1, $userIdCount);
+    }
+
+    /** @test */
+    public function unauthenticated_user_cannot_search_interim(): void
+    {
+        $response = $this->getJson(route('departments.absences.search-interim', [
+            'department' => $this->department,
+        ]));
+
+        $response->assertStatus(401);
+    }
+
+    /** @test */
+    public function search_interim_response_has_required_fields(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->getJson(route('departments.absences.search-interim', [
+                'department' => $this->department,
+            ]));
+
+        $response->assertStatus(200);
+
+        if (count($response->json()) > 0) {
+            $response->assertJsonStructure([
+                '*' => [
+                    'value',
+                    'label',
+                    'type',
+                    'type_label',
+                ],
+            ]);
+        }
+    }
+
+    /** @test */
+    public function user_can_store_absence_with_interim_user(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->post(route('departments.absences.store', $this->department), [
+                'type' => AbsenceType::VACATION->value,
+                'start_date' => now()->addWeek()->format('Y-m-d'),
+                'end_date' => now()->addWeek()->addDays(2)->format('Y-m-d'),
+                'reason' => 'Family vacation',
+                'interim_user_id' => $this->admin->id,
+                'interim_notes' => 'Please handle my tasks',
+            ]);
+
+        $response->assertRedirect(route('departments.absences.my', $this->department));
+
+        $this->assertDatabaseHas('employee_absences', [
+            'user_id' => $this->user->id,
+            'department_id' => $this->department->id,
+            'interim_user_id' => $this->admin->id,
+            'interim_notes' => 'Please handle my tasks',
+        ]);
+    }
 }

@@ -74,7 +74,7 @@ export default function WorkflowShow({ workflow, stats }: Props) {
     };
 
     const handleStartInstance = () => {
-        router.post(route('workflows.start-instance', workflow.uuid), {}, {
+        router.post(route('workflows.start', workflow.uuid), {}, {
             onSuccess: () => {
                 toast.success('Instance du workflow démarrée');
             },

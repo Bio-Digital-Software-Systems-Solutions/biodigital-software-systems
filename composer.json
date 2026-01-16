@@ -9,6 +9,7 @@
         "php": "^8.2",
         "ankitpokhrel/tus-php": "^2.4",
         "barryvdh/laravel-dompdf": "^3.1",
+        "chillerlan/php-qrcode": "^5.0",
         "darkaonline/l5-swagger": "^9.0",
         "inertiajs/inertia-laravel": "^2.0",
         "intervention/image": "^3.11",

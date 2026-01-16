@@ -1,199 +1,181 @@
-import React from 'react';
-import DOMPurify from 'isomorphic-dompurify';
+import DOMPurify, { Config } from 'dompurify';
+import { useMemo } from 'react';
 
 /**
- * SafeHTML Component
- *
- * A secure wrapper for rendering HTML content that automatically sanitizes
- * input to prevent XSS attacks. This component should be used instead of
- * dangerouslySetInnerHTML throughout the application.
- *
- * @example
- * ```tsx
- * // Basic usage
- * <SafeHTML html={userContent} />
- *
- * // With custom tag
- * <SafeHTML html={description} tag="p" />
- *
- * // With className
- * <SafeHTML html={content} className="prose dark:prose-invert" />
- *
- * // With custom configuration
- * <SafeHTML
- *   html={richText}
- *   config={{ ALLOWED_TAGS: ['b', 'i', 'em', 'strong'] }}
- * />
- * ```
+ * Predefined DOMPurify configuration presets for different use cases
  */
+export const DOMPurifyPresets = {
+    /** Strict: Only basic text formatting, no links or images */
+    STRICT: {
+        ALLOWED_TAGS: ['p', 'br', 'span', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del', 'ins'],
+        ALLOWED_ATTR: ['class'],
+        ALLOW_DATA_ATTR: false,
+    },
+    /** Basic: Text formatting with links, no images */
+    BASIC: {
+        ALLOWED_TAGS: [
+            'p', 'br', 'span', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del', 'ins',
+            'a', 'ul', 'ol', 'li', 'blockquote',
+        ],
+        ALLOWED_ATTR: ['class', 'href', 'target', 'rel', 'title'],
+        ALLOW_DATA_ATTR: false,
+    },
+    /** Rich Text: Full rich text support including images and tables */
+    RICH_TEXT: {
+        ALLOWED_TAGS: [
+            // Text formatting
+            'p', 'br', 'span', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del', 'ins',
+            // Headings
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            // Lists
+            'ul', 'ol', 'li',
+            // Block elements
+            'div', 'blockquote', 'pre', 'code',
+            // Links
+            'a',
+            // Images
+            'img',
+            // Tables
+            'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
+            // Other
+            'hr', 'sub', 'sup', 'mark',
+        ],
+        ALLOWED_ATTR: [
+            'class', 'id', 'style',
+            'href', 'target', 'rel', 'title',
+            'src', 'alt', 'width', 'height',
+            'colspan', 'rowspan',
+            'dir',
+        ],
+        ALLOW_DATA_ATTR: false,
+    },
+} as const;
 
-interface SafeHTMLProps {
-    /**
-     * The HTML string to sanitize and render
-     */
-    html: string;
-
-    /**
-     * The HTML tag to use as the container element
-     * @default 'div'
-     */
-    tag?: keyof JSX.IntrinsicElements;
-
-    /**
-     * CSS className to apply to the container
-     */
-    className?: string;
-
-    /**
-     * Custom DOMPurify configuration
-     * @see https://github.com/cure53/DOMPurify#can-i-configure-dompurify
-     */
-    config?: DOMPurify.Config;
-
-    /**
-     * Additional props to pass to the container element
-     */
-    [key: string]: unknown;
-}
-
-/**
- * Default DOMPurify configuration
- *
- * Allows most common HTML elements and attributes while removing
- * potentially dangerous elements like scripts, iframes, and event handlers.
- */
-const DEFAULT_CONFIG: DOMPurify.Config = {
-    ALLOWED_TAGS: [
-        'a', 'abbr', 'address', 'article', 'aside', 'b', 'blockquote', 'br',
-        'caption', 'code', 'col', 'colgroup', 'dd', 'del', 'details', 'div',
-        'dl', 'dt', 'em', 'figcaption', 'figure', 'footer', 'h1', 'h2', 'h3',
-        'h4', 'h5', 'h6', 'header', 'hr', 'i', 'img', 'ins', 'kbd', 'li', 'main',
-        'mark', 'nav', 'ol', 'p', 'pre', 'q', 'section', 'small', 'span', 'strong',
-        'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead',
-        'time', 'tr', 'u', 'ul', 'var',
-    ],
-    ALLOWED_ATTR: [
-        'href', 'src', 'alt', 'title', 'class', 'id', 'style', 'target', 'rel',
-        'width', 'height', 'align', 'border', 'colspan', 'rowspan', 'datetime',
-        'cite', 'data-*', 'aria-*', 'role',
-    ],
-    FORBID_TAGS: ['script', 'style'],
-    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
-    ALLOW_DATA_ATTR: true,
-    ALLOW_ARIA_ATTR: true,
-    // Force all links to open in new tab and add security attributes
-    ADD_ATTR: ['target', 'rel'],
-    SAFE_FOR_TEMPLATES: true,
+// Default configuration (RICH_TEXT preset)
+const DEFAULT_CONFIG: Config = {
+    ...DOMPurifyPresets.RICH_TEXT,
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+    ALLOW_UNKNOWN_PROTOCOLS: false,
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false,
+    RETURN_TRUSTED_TYPE: false,
 };
 
 /**
- * Sanitize HTML string using DOMPurify
- *
+ * Sanitize HTML string to prevent XSS attacks
  * @param html - The HTML string to sanitize
- * @param config - Optional DOMPurify configuration
+ * @param config - Optional DOMPurify configuration (defaults to RICH_TEXT preset)
  * @returns Sanitized HTML string
  */
-export const sanitizeHTML = (
-    html: string,
-    config?: DOMPurify.Config
-): string => {
+export function sanitizeHTML(html: string, config?: Config): string {
     if (!html || typeof html !== 'string') {
         return '';
     }
 
-    const mergedConfig = {
-        ...DEFAULT_CONFIG,
-        ...config,
-    } as DOMPurify.Config;
+    const finalConfig = config ? { ...DEFAULT_CONFIG, ...config } : DEFAULT_CONFIG;
 
-    return DOMPurify.sanitize(html, mergedConfig as any) as unknown as string;
-};
+    // Add hooks to modify behavior during sanitization
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+        // Force all links to open in new tab with secure attributes
+        if (node.tagName === 'A') {
+            node.setAttribute('target', '_blank');
+            node.setAttribute('rel', 'noopener noreferrer');
+        }
+
+        // Remove any javascript: or data: URLs that might have slipped through
+        if (node.hasAttribute('href')) {
+            const href = node.getAttribute('href') || '';
+            if (href.toLowerCase().startsWith('javascript:') ||
+                href.toLowerCase().startsWith('data:') ||
+                href.toLowerCase().startsWith('vbscript:')) {
+                node.removeAttribute('href');
+            }
+        }
+
+        // Sanitize image sources
+        if (node.hasAttribute('src')) {
+            const src = node.getAttribute('src') || '';
+            if (src.toLowerCase().startsWith('javascript:') ||
+                src.toLowerCase().startsWith('data:text') ||
+                src.toLowerCase().startsWith('vbscript:')) {
+                node.removeAttribute('src');
+            }
+        }
+
+        // Remove any event handlers that might have been added via style
+        if (node.hasAttribute('style')) {
+            const style = node.getAttribute('style') || '';
+            // Remove any expression(), url(), or behavior patterns
+            const sanitizedStyle = style
+                .replace(/expression\s*\([^)]*\)/gi, '')
+                .replace(/url\s*\(\s*["']?\s*javascript:[^)]*\)/gi, '')
+                .replace(/behavior\s*:/gi, '')
+                .replace(/-moz-binding/gi, '');
+            node.setAttribute('style', sanitizedStyle);
+        }
+    });
+
+    const sanitized = DOMPurify.sanitize(html, finalConfig);
+
+    // Remove hooks after use to prevent memory leaks
+    DOMPurify.removeHook('afterSanitizeAttributes');
+
+    return sanitized;
+}
+
+// Alias for backward compatibility
+export const sanitizeHtml = sanitizeHTML;
+
+interface SafeHTMLProps {
+    /** The HTML content to render safely */
+    html: string;
+    /** Additional CSS classes to apply to the container */
+    className?: string;
+    /** The HTML tag to use for the container (alias for 'as') */
+    tag?: keyof JSX.IntrinsicElements;
+    /** The HTML tag to use for the container */
+    as?: keyof JSX.IntrinsicElements;
+    /** Test ID for testing purposes */
+    'data-testid'?: string;
+}
 
 /**
  * SafeHTML Component
  *
- * Renders sanitized HTML content in a specified container element.
- * Automatically prevents XSS attacks by removing dangerous content.
- */
-const SafeHTML: React.FC<SafeHTMLProps> = ({
-    html,
-    tag: Tag = 'div',
-    className = '',
-    config,
-    ...props
-}) => {
-    // Sanitize the HTML
-    const sanitizedHTML = sanitizeHTML(html, config);
-
-    // Additional security: Add rel="noopener noreferrer" to all links
-    const secureHTML = sanitizedHTML.replace(
-        /<a /g,
-        '<a target="_blank" rel="noopener noreferrer" '
-    );
-
-    return React.createElement(Tag, {
-        className,
-        dangerouslySetInnerHTML: { __html: secureHTML },
-        ...props,
-    });
-};
-
-export default SafeHTML;
-
-/**
- * Helper hook for sanitizing HTML in components
+ * Renders HTML content safely by sanitizing it to prevent XSS attacks.
+ * Uses DOMPurify to remove potentially malicious content while preserving
+ * safe formatting tags.
  *
  * @example
  * ```tsx
- * const MyComponent = ({ userContent }) => {
- *   const safeContent = useSanitizedHTML(userContent);
- *   return <div dangerouslySetInnerHTML={{ __html: safeContent }} />;
- * };
+ * <SafeHTML
+ *   html="<p>Hello <strong>World</strong></p>"
+ *   className="prose"
+ * />
  * ```
  */
-export const useSanitizedHTML = (
-    html: string,
-    config?: DOMPurify.Config
-): string => {
-    return React.useMemo(() => sanitizeHTML(html, config), [html, config]);
-};
+export default function SafeHTML({
+    html,
+    className = '',
+    tag,
+    as,
+    'data-testid': testId,
+}: SafeHTMLProps) {
+    // Support both 'tag' and 'as' props, with 'tag' taking precedence for backward compatibility
+    const Component = tag || as || 'div';
+    const sanitizedHtml = useMemo(() => sanitizeHTML(html), [html]);
 
-/**
- * Preset configurations for common use cases
- */
-export const DOMPurifyPresets = {
-    /**
-     * Strict configuration - Only allows basic text formatting
-     */
-    STRICT: {
-        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
-        ALLOWED_ATTR: [],
-        FORBID_TAGS: ['script', 'style'],
-    } as DOMPurify.Config,
+    // Return empty div instead of null to match test expectations
+    return (
+        <Component
+            className={className ? `safe-html-content ${className}`.trim() : 'safe-html-content'}
+            dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+            data-testid={testId}
+        />
+    );
+}
 
-    /**
-     * Basic configuration - Allows common formatting and links
-     */
-    BASIC: {
-        ALLOWED_TAGS: ['a', 'b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li'],
-        ALLOWED_ATTR: ['href', 'target', 'rel'],
-        FORBID_TAGS: ['script', 'style'],
-    } as DOMPurify.Config,
-
-    /**
-     * Rich text configuration - Allows rich text editor content
-     */
-    RICH_TEXT: {
-        ALLOWED_TAGS: [
-            'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'br', 'a', 'b', 'i', 'em',
-            'strong', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'img',
-        ],
-        ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel'],
-        FORBID_TAGS: ['script', 'style'],
-    } as DOMPurify.Config,
-
-    /**
-     * Full configuration - Allows most HTML (use with caution)
-     */
-    FULL: DEFAULT_CONFIG,
-};
+// Export types for testing
+export type { SafeHTMLProps };
+// Alias for backward compatibility
+export type SafeHtmlProps = SafeHTMLProps;

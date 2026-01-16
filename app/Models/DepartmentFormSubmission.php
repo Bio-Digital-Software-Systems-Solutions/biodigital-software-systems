@@ -28,6 +28,8 @@ class DepartmentFormSubmission extends Model
         'user_agent',
         'submitted_at',
         'processed_at',
+        'processed_by',
+        'notes',
     ];
 
     protected $casts = [
@@ -75,6 +77,11 @@ class DepartmentFormSubmission extends Model
     public function stepInstance(): BelongsTo
     {
         return $this->belongsTo(WorkflowStepInstance::class, 'step_instance_id');
+    }
+
+    public function processor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'processed_by');
     }
 
     public function getRouteKeyName(): string
@@ -140,6 +147,28 @@ class DepartmentFormSubmission extends Model
             'status' => SubmissionStatus::REJECTED,
             'processed_at' => now(),
         ]);
+
+        return $this;
+    }
+
+    public function updateStatus(SubmissionStatus $status, ?int $processedBy = null, ?string $notes = null): self
+    {
+        $data = ['status' => $status];
+
+        if ($notes !== null) {
+            $data['notes'] = $notes;
+        }
+
+        if ($processedBy !== null) {
+            $data['processed_by'] = $processedBy;
+        }
+
+        // Set processed_at when completing or rejecting
+        if (in_array($status, [SubmissionStatus::COMPLETED, SubmissionStatus::REJECTED])) {
+            $data['processed_at'] = now();
+        }
+
+        $this->update($data);
 
         return $this;
     }

@@ -64,7 +64,7 @@ class RolesAndPermissionsSeeder extends Seeder
             // Workflows
             'view workflows', 'create workflows', 'edit workflows', 'delete workflows', 'manage workflows', 'execute workflows',
             // Forms
-            'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms',
+            'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms', 'process form submissions',
             // Needs (Department Needs)
             'view needs', 'create needs', 'edit needs', 'delete needs', 'approve needs', 'manage needs',
             // Employees (HR)
@@ -124,7 +124,7 @@ class RolesAndPermissionsSeeder extends Seeder
             // Workflows
             'view workflows', 'create workflows', 'edit workflows', 'delete workflows', 'manage workflows', 'execute workflows',
             // Forms
-            'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms',
+            'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms', 'process form submissions',
             // Needs
             'view needs', 'create needs', 'edit needs', 'delete needs', 'approve needs', 'manage needs',
             // Employees
@@ -187,7 +187,7 @@ class RolesAndPermissionsSeeder extends Seeder
             // Workflows
             'view workflows', 'create workflows', 'edit workflows', 'manage workflows', 'execute workflows',
             // Forms
-            'view forms', 'create forms', 'edit forms', 'manage forms', 'submit forms',
+            'view forms', 'create forms', 'edit forms', 'manage forms', 'submit forms', 'process form submissions',
             // Needs
             'view needs', 'create needs', 'edit needs', 'approve needs', 'manage needs',
         ]);
@@ -277,7 +277,7 @@ class RolesAndPermissionsSeeder extends Seeder
             // Workflows
             'view workflows', 'create workflows', 'edit workflows', 'manage workflows', 'execute workflows',
             // Forms
-            'view forms', 'create forms', 'edit forms', 'manage forms', 'submit forms',
+            'view forms', 'create forms', 'edit forms', 'manage forms', 'submit forms', 'process form submissions',
             // Needs
             'view needs', 'create needs', 'edit needs', 'approve needs', 'manage needs',
         ]);

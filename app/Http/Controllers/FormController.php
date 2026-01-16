@@ -4,13 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Enums\Form\FormFieldType;
 use App\Enums\Form\FormStatus;
+use App\Enums\Form\SubmissionStatus;
 use App\Models\Department;
 use App\Models\DepartmentForm;
 use App\Models\DepartmentFormSubmission;
 use App\Models\FormField;
+use App\Models\FormShareLink;
 use App\Services\Form\FormService;
+use App\Services\QrCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class FormController extends Controller
@@ -95,12 +99,27 @@ class FormController extends Controller
     public function show(DepartmentForm $form)
     {
         $formData = $this->formService->getFormWithFields($form);
-        $form->load(['department', 'creator']);
+        $form->load(['department', 'creator', 'submissions.user']);
+
+        // Get all submissions (already eager loaded)
+        $allSubmissions = $form->submissions;
+
+        // Get recent submissions from the loaded collection
+        $recentSubmissions = $allSubmissions->sortByDesc('created_at')->take(5)->values();
+
+        // Get stats from the loaded collection
+        $stats = [
+            'total_submissions' => $allSubmissions->count(),
+            'completed_submissions' => $allSubmissions->where('status', 'completed')->count(),
+            'pending_submissions' => $allSubmissions->whereIn('status', ['draft', 'submitted', 'processing'])->count(),
+        ];
 
         return Inertia::render('Forms/Show', [
             'form' => $form,
             'fields' => $formData['fields'],
-            'submissionCount' => $form->getSubmissionCount(),
+            'submissionCount' => $allSubmissions->count(),
+            'recentSubmissions' => $recentSubmissions,
+            'stats' => $stats,
         ]);
     }
 
@@ -199,25 +218,57 @@ class FormController extends Controller
      */
     public function saveFields(Request $request, DepartmentForm $form)
     {
-        $validated = $request->validate([
-            'fields' => 'required|array',
+        // Get raw fields data first (before validation strips extra fields)
+        $rawFields = $request->input('fields', []);
+
+        // Validate top-level fields structure
+        $request->validate([
+            'fields' => 'present|array',
+            'fields.*.name' => 'required|string|max:255',
+            'fields.*.label' => 'required|string|max:255',
+            'fields.*.type' => 'required|string',
         ]);
 
-        // Delete existing fields
-        $form->fields()->delete();
+        try {
+            DB::transaction(function () use ($form, $rawFields) {
+                // Delete existing fields (cascade will handle nested fields)
+                $form->fields()->delete();
 
-        // Create new fields
-        $this->createFieldsRecursively($form->id, $validated['fields'], null);
+                // Create new fields using raw data to preserve children
+                if (!empty($rawFields)) {
+                    $this->createFieldsRecursively($form->id, $rawFields, null);
+                }
+            });
 
-        // Return JSON response for fetch requests
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Form fields saved successfully.',
+            // Refresh the count after transaction
+            $fieldsCount = $form->fields()->count();
+
+            // Return JSON response for fetch requests
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Form fields saved successfully.',
+                    'fields_count' => $fieldsCount,
+                ]);
+            }
+
+            return back()->with('success', 'Form fields saved successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Error saving form fields', [
+                'form_id' => $form->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
-        }
 
-        return back()->with('success', 'Form fields saved successfully.');
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error saving form fields: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return back()->with('error', 'Error saving form fields.');
+        }
     }
 
     /**
@@ -225,16 +276,51 @@ class FormController extends Controller
      */
     protected function createFieldsRecursively(int $formId, array $fields, ?int $parentId): void
     {
+        // Allowed fields from the FormField model (exclude uuid - let model generate it)
+        $allowedFields = [
+            'name', 'label', 'description', 'type', 'order', 'step',
+            'placeholder', 'help_text', 'default_value', 'options',
+            'validation', 'conditional_logic', 'config', 'is_required',
+            'is_readonly', 'is_hidden', 'column_span',
+        ];
+
         foreach ($fields as $index => $fieldData) {
-            $children = $fieldData['children'] ?? [];
-            unset($fieldData['children'], $fieldData['id']);
+            // Extract children before filtering
+            $children = [];
+            if (isset($fieldData['children']) && is_array($fieldData['children'])) {
+                $children = $fieldData['children'];
+            }
 
-            $field = FormField::create(array_merge($fieldData, [
-                'form_id' => $formId,
-                'parent_field_id' => $parentId,
-                'order' => $index,
-            ]));
+            // Remove non-allowed fields (including 'children', 'id', 'uuid')
+            $filteredData = array_intersect_key($fieldData, array_flip($allowedFields));
 
+            // Ensure required fields
+            $filteredData['form_id'] = $formId;
+            $filteredData['parent_field_id'] = $parentId;
+            $filteredData['order'] = $index;
+
+            // Set default step if not provided
+            if (!isset($filteredData['step'])) {
+                $filteredData['step'] = 1;
+            }
+
+            // Handle JSON fields - ensure they are arrays
+            foreach (['options', 'validation', 'conditional_logic', 'config'] as $jsonField) {
+                if (isset($filteredData[$jsonField]) && is_string($filteredData[$jsonField])) {
+                    $filteredData[$jsonField] = json_decode($filteredData[$jsonField], true);
+                }
+            }
+
+            // Handle type - ensure it's a string value if it's an object
+            if (isset($filteredData['type'])) {
+                $filteredData['type'] = is_array($filteredData['type'])
+                    ? ($filteredData['type']['value'] ?? $filteredData['type'])
+                    : $filteredData['type'];
+            }
+
+            $field = FormField::create($filteredData);
+
+            // Recursively create children
             if (!empty($children)) {
                 $this->createFieldsRecursively($formId, $children, $field->id);
             }
@@ -272,14 +358,48 @@ class FormController extends Controller
     }
 
     /**
-     * Start a new form submission.
+     * Start and submit a form submission directly.
      */
-    public function startSubmission(DepartmentForm $form)
+    public function startSubmission(Request $request, DepartmentForm $form)
     {
         try {
+            // Create the submission
             $submission = $this->formService->startSubmission($form, Auth::id());
+
+            // If data is provided, save it and submit
+            if ($request->has('data') || $request->except(['_token'])) {
+                $data = $request->has('data') ? $request->input('data') : $request->except(['_token']);
+                $submission->data = $data;
+                $submission->status = SubmissionStatus::SUBMITTED;
+                $submission->submitted_at = now();
+                $submission->save();
+
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => $form->success_message ?? 'Formulaire soumis avec succès!',
+                        'redirect_url' => $form->redirect_url,
+                    ]);
+                }
+
+                return redirect()->back()->with('success', $form->success_message ?? 'Formulaire soumis avec succès!');
+            }
+
+            // If no data, redirect to edit page
             return redirect()->route('form-submissions.edit', $submission);
         } catch (\Exception $e) {
+            \Log::error('Form submission error', [
+                'form_id' => $form->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur lors de la soumission: ' . $e->getMessage(),
+                ], 500);
+            }
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -327,14 +447,97 @@ class FormController extends Controller
      */
     public function submissions(Request $request, DepartmentForm $form)
     {
+        $user = Auth::user();
         $submissions = $form->submissions()
             ->with('user')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
+        // Check if user can manage submissions (view all and delete)
+        $canManageSubmissions = $user->hasAnyRole(['admin', 'super-admin']) || $user->can('manage forms');
+
         return Inertia::render('Forms/Submissions', [
             'form' => $form,
             'submissions' => $submissions,
+            'canManageSubmissions' => $canManageSubmissions,
+            'currentUserId' => $user->id,
+        ]);
+    }
+
+    /**
+     * Generate a secure share link for a form.
+     */
+    public function generateShareLink(Request $request, DepartmentForm $form)
+    {
+        // Ensure form is published
+        if ($form->status !== FormStatus::PUBLISHED) {
+            return response()->json([
+                'error' => 'Seuls les formulaires publiés peuvent être partagés.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'expires_in_hours' => 'nullable|integer|min:1|max:8760', // Max 1 year
+            'max_uses' => 'nullable|integer|min:1|max:10000',
+        ]);
+
+        $expiresInHours = $validated['expires_in_hours'] ?? 24; // Default 24 hours
+        $maxUses = $validated['max_uses'] ?? null;
+
+        $shareLink = FormShareLink::createForForm(
+            $form,
+            Auth::id(),
+            $expiresInHours,
+            $maxUses
+        );
+
+        $url = $shareLink->getUrl();
+
+        // Generate QR code
+        $qrCodeService = new QrCodeService();
+        $qrCodeBase64 = $qrCodeService->generateBase64($url);
+
+        return response()->json([
+            'url' => $url,
+            'token' => $shareLink->token,
+            'expires_at' => $shareLink->expires_at->toIso8601String(),
+            'max_uses' => $shareLink->max_uses,
+            'qr_code' => $qrCodeBase64,
+        ]);
+    }
+
+    /**
+     * Render a form via secure share link.
+     */
+    public function renderSharedForm(string $token)
+    {
+        $shareLink = FormShareLink::findValidByToken($token);
+
+        if (!$shareLink) {
+            return Inertia::render('Forms/SharedExpired', [
+                'message' => 'Ce lien de partage est invalide ou a expiré.',
+            ]);
+        }
+
+        $form = $shareLink->form;
+
+        // Ensure form is still published
+        if ($form->status !== FormStatus::PUBLISHED) {
+            return Inertia::render('Forms/SharedExpired', [
+                'message' => 'Ce formulaire n\'est plus disponible.',
+            ]);
+        }
+
+        // Increment use count
+        $shareLink->incrementUseCount();
+
+        // Get form with fields structure
+        $formData = $this->formService->getFormWithFields($form);
+
+        return Inertia::render('Forms/Render', [
+            'form' => $form,
+            'fields' => $formData['fields'],
+            'sharedToken' => $token, // Pass token for submission
         ]);
     }
 }

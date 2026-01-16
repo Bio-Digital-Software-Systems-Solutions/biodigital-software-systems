@@ -104,4 +104,92 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Form Rich Text Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for sanitizing rich text content from form submissions.
+    | This is more restrictive than the default to prevent XSS attacks
+    | while still allowing rich text formatting.
+    |
+    */
+    'form_rich_text' => [
+        'HTML.Doctype' => 'HTML 4.01 Transitional',
+        'HTML.Allowed' => implode(',', [
+            // Text formatting
+            'p[style|class]',
+            'br',
+            'span[style|class]',
+            'strong',
+            'b',
+            'em',
+            'i',
+            'u',
+            's',
+            'strike',
+            'del',
+            'ins',
+            // Headings
+            'h1[style|class]',
+            'h2[style|class]',
+            'h3[style|class]',
+            'h4[style|class]',
+            'h5[style|class]',
+            'h6[style|class]',
+            // Lists
+            'ul[style|class]',
+            'ol[style|class]',
+            'li[style|class]',
+            // Block elements
+            'div[style|class]',
+            'blockquote[style|class]',
+            'pre[style|class]',
+            'code[style|class]',
+            // Links
+            'a[href|title|target|rel]',
+            // Images
+            'img[src|alt|width|height|class]',
+            // Tables
+            'table[style|class|border]',
+            'thead',
+            'tbody',
+            'tfoot',
+            'tr[style|class]',
+            'th[style|class|colspan|rowspan]',
+            'td[style|class|colspan|rowspan]',
+            // Other
+            'hr',
+            'sub',
+            'sup',
+            'mark[style|class]',
+        ]),
+        'CSS.AllowedProperties' => implode(',', [
+            'font',
+            'font-size',
+            'font-weight',
+            'font-style',
+            'font-family',
+            'text-decoration',
+            'text-align',
+            'color',
+            'background-color',
+            'padding',
+            'padding-left',
+            'padding-right',
+            'margin',
+            'margin-left',
+            'margin-right',
+            'border',
+            'list-style-type',
+        ]),
+        'AutoFormat.AutoParagraph' => false,
+        'AutoFormat.RemoveEmpty' => true,
+        // Security settings
+        'Attr.AllowedFrameTargets' => ['_blank'],
+        'HTML.Nofollow' => true,
+        'HTML.TargetBlank' => true,
+        'URI.DisableExternalResources' => false,
+        'URI.DisableExternal' => false,
+    ],
 ];

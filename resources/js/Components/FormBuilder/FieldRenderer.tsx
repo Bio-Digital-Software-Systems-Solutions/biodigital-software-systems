@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import type { FormField } from '@/Types/form';
+
+// Lazy load RichTextEditor to avoid loading TipTap unless needed
+const RichTextEditor = lazy(() => import('@/Components/RichTextEditor'));
 
 interface FieldRendererProps {
     field: FormField;
@@ -44,10 +47,10 @@ export default function FieldRenderer({
     };
 
     const renderHelperText = () => {
-        if (!field.helper_text) return null;
+        if (!field.help_text) return null;
         return (
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {field.helper_text}
+                {field.help_text}
             </p>
         );
     };
@@ -95,6 +98,24 @@ export default function FieldRenderer({
                     />
                     {renderHelperText()}
                     {renderError()}
+                </div>
+            );
+
+        case 'rich_text':
+            return (
+                <div>
+                    {renderLabel()}
+                    <Suspense fallback={
+                        <div className={`${baseInputClasses} min-h-[200px] animate-pulse bg-gray-100 dark:bg-gray-800`} />
+                    }>
+                        <RichTextEditor
+                            content={value || ''}
+                            onChange={(content) => onChange?.(content)}
+                            placeholder={field.placeholder}
+                            error={error}
+                        />
+                    </Suspense>
+                    {renderHelperText()}
                 </div>
             );
 
