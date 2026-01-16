@@ -16,7 +16,8 @@ import {
   Lock,
   Globe,
   Palette,
-  CheckCircle2
+  CheckCircle2,
+  Home
 } from 'lucide-react';
 
 interface UserSettings {
@@ -96,7 +97,7 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-1 md:grid-cols-4 h-auto">
+          <TabsList className="grid w-full grid-cols-1 md:grid-cols-5 h-auto">
             <TabsTrigger value="notifications" className="flex items-center gap-2 py-3">
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Notifications</span>
@@ -112,6 +113,12 @@ export default function SettingsIndex({ auth, settings: initialSettings }: Props
             <TabsTrigger value="preferences" className="flex items-center gap-2 py-3">
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">Préférences</span>
+            </TabsTrigger>
+            <TabsTrigger value="homepage" className="flex items-center gap-2 py-3" asChild>
+              <Link href={route('settings.homepage')}>
+                <Home className="h-4 w-4" />
+                <span className="hidden sm:inline">Page d'accueil</span>
+              </Link>
             </TabsTrigger>
           </TabsList>
 

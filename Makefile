@@ -73,6 +73,20 @@ clear:
 	@php artisan route:clear
 	@php artisan view:clear
 
+# Fix composer/artisan bootstrap issues (use when artisan fails during composer operations)
+composer-fix:
+	@echo "Fixing Composer/Artisan bootstrap issues..."
+	@rm -rf bootstrap/cache/*.php 2>/dev/null || true
+	@echo '*' > bootstrap/cache/.gitignore
+	@echo '!.gitignore' >> bootstrap/cache/.gitignore
+	@rm -rf vendor/
+	@composer install --no-scripts
+	@composer update laravel/framework --no-scripts -W
+	@php artisan package:discover --ansi
+	@echo ""
+	@echo "✅ Composer/Artisan bootstrap fixed!"
+	@echo "You can now run composer commands normally."
+
 # Reset database with fresh migrations and seeders
 db:
 	@echo "Resetting database with fresh migrations and seeders..."
@@ -244,6 +258,7 @@ help:
 	@echo "🔧 Utilities:"
 	@echo "  make clear              - Clear all Laravel caches"
 	@echo "  make db                 - Reset database with fresh migrations and seeders"
+	@echo "  make composer-fix       - Fix Composer/Artisan bootstrap issues"
 	@echo "  make docs               - Generate API documentation with PHPDocumentor"
 	@echo "  make schema-docs        - Generate database schema documentation with SchemaSpy"
 	@echo "  make er-diagram         - Generate Entity Relationship Diagram (SVG)"

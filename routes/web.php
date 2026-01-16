@@ -378,6 +378,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings', [App\Http\Controllers\SettingsController::class, 'update'])
         ->name('settings.update');
 
+    // Homepage Settings routes (Hero Slides management)
+    Route::get('settings/homepage', [App\Http\Controllers\SettingsController::class, 'homepage'])
+        ->name('settings.homepage')
+        ->middleware('can:manage hero slides');
+    Route::post('settings/homepage/slides', [App\Http\Controllers\SettingsController::class, 'storeSlide'])
+        ->name('settings.homepage.slides.store')
+        ->middleware('can:manage hero slides');
+    Route::post('settings/homepage/slides/{heroSlide}', [App\Http\Controllers\SettingsController::class, 'updateSlide'])
+        ->name('settings.homepage.slides.update')
+        ->middleware('can:manage hero slides');
+    Route::delete('settings/homepage/slides/{heroSlide}', [App\Http\Controllers\SettingsController::class, 'deleteSlide'])
+        ->name('settings.homepage.slides.destroy')
+        ->middleware('can:manage hero slides');
+    Route::post('settings/homepage/slides/reorder', [App\Http\Controllers\SettingsController::class, 'reorderSlides'])
+        ->name('settings.homepage.slides.reorder')
+        ->middleware('can:manage hero slides');
+
     // Chat routes
     Route::get('chat', [App\Http\Controllers\ChatController::class, 'index'])
         ->name('chat.index');
@@ -1109,4 +1126,4 @@ Route::middleware(['auth'])->group(function () {
         ->name('sentry.test-breadcrumbs');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
