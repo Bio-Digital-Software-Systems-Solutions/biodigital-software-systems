@@ -28,6 +28,19 @@ class Church extends Model
 {
     use HasFactory;
 
+    // Category constants
+    public const CATEGORY_EGLISE = 'eglise';
+    public const CATEGORY_CAMPUS_CONNECTE = 'campus_connecte';
+    public const CATEGORY_FAMILLE_CONNECTE = 'famille_connecte';
+    public const CATEGORY_FAMILLE_IMPACT = 'famille_impact';
+
+    public const CATEGORIES = [
+        self::CATEGORY_EGLISE => 'Église',
+        self::CATEGORY_CAMPUS_CONNECTE => 'Campus connecté',
+        self::CATEGORY_FAMILLE_CONNECTE => 'Famille connectée',
+        self::CATEGORY_FAMILLE_IMPACT => 'Famille d\'impact',
+    ];
+
     protected $fillable = [
         'name',
         'city',
@@ -39,6 +52,8 @@ class Church extends Model
         'website',
         'email',
         'phone',
+        'leader_name',
+        'category',
         'continent',
         'is_active',
     ];
@@ -49,6 +64,14 @@ class Church extends Model
         'members' => 'integer',
         'is_active' => 'boolean',
     ];
+
+    /**
+     * Get the French label for the category
+     */
+    public function getCategoryLabelAttribute(): string
+    {
+        return self::CATEGORIES[$this->category] ?? 'Église';
+    }
 
     /**
      * Scope to get only active churches
@@ -100,7 +123,7 @@ class Church extends Model
         parent::boot();
 
         static::saving(function ($church) {
-            if (!$church->continent) {
+            if (!$church->continent && $church->latitude !== null && $church->longitude !== null) {
                 $church->continent = static::detectContinent($church->latitude, $church->longitude);
             }
         });

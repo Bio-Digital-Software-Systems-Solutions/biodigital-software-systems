@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Department;
 use App\Models\Stock;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,9 +18,15 @@ class StockController extends Controller
 
     public function index()
     {
-        $stocks = Stock::with(['category'])
+        $stocks = Stock::with(['category', 'department'])
+            ->when(request('search'), function ($query, $search) {
+                $query->where('name', 'like', '%' . $search . '%');
+            })
             ->when(request('category'), function ($query, $category) {
                 $query->where('category_id', $category);
+            })
+            ->when(request('department'), function ($query, $department) {
+                $query->where('department_id', $department);
             })
             ->when(request('status'), function ($query, $status) {
                 if ($status === 'low_stock') {
@@ -39,20 +46,25 @@ class StockController extends Controller
             ->paginate(10);
 
         $categories = Category::all();
+        $departments = Department::active()->ordered()->get();
 
         return Inertia::render('Stocks/Index', [
             'stocks' => $stocks,
             'categories' => $categories,
-            'filters' => request()->only(['category', 'status', 'supplier']),
+            'departments' => $departments,
+            'filters' => request()->only(['search', 'category', 'department', 'status', 'supplier']),
         ]);
     }
 
     public function create()
     {
         $categories = Category::all();
+        $departments = Department::active()->ordered()->get();
 
         return Inertia::render('Stocks/Create', [
             'categories' => $categories,
+            'departments' => $departments,
+            'statuses' => Stock::STATUSES,
         ]);
     }
 
@@ -60,7 +72,7 @@ class StockController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'sku' => 'required|string|max:255|unique:stocks',
+            'sku' => 'nullable|string|max:255|unique:stocks',
             'description' => 'nullable|string',
             'quantity' => 'required|integer|min:0',
             'minimum_quantity' => 'required|integer|min:0',
@@ -70,9 +82,16 @@ class StockController extends Controller
             'expiry_date' => 'nullable|date|after:today',
             'location' => 'nullable|string|max:255',
             'is_active' => 'boolean',
+            'status' => 'nullable|string|in:' . implode(',', array_keys(Stock::STATUSES)),
             'category_id' => 'required|exists:categories,id',
+            'department_id' => 'nullable|exists:departments,id',
             'image' => 'nullable',
         ]);
+
+        // Auto-generate SKU if not provided
+        if (empty($validated['sku'])) {
+            $validated['sku'] = Stock::generateSku($validated['category_id'] ?? null);
+        }
 
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -92,7 +111,7 @@ class StockController extends Controller
 
     public function show(Stock $stock)
     {
-        $stock->load(['category']);
+        $stock->load(['category', 'department']);
 
         return Inertia::render('Stocks/Show', [
             'stock' => $stock,
@@ -101,12 +120,15 @@ class StockController extends Controller
 
     public function edit(Stock $stock)
     {
-        $stock->load(['category']);
+        $stock->load(['category', 'department']);
         $categories = Category::all();
+        $departments = Department::active()->ordered()->get();
 
         return Inertia::render('Stocks/Edit', [
             'stock' => $stock,
             'categories' => $categories,
+            'departments' => $departments,
+            'statuses' => Stock::STATUSES,
         ]);
     }
 
@@ -114,7 +136,7 @@ class StockController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'sku' => 'required|string|max:255|unique:stocks,sku,'.$stock->id,
+            'sku' => 'required|string|max:255|unique:stocks,sku,' . $stock->id,
             'description' => 'nullable|string',
             'quantity' => 'required|integer|min:0',
             'minimum_quantity' => 'required|integer|min:0',
@@ -124,7 +146,9 @@ class StockController extends Controller
             'expiry_date' => 'nullable|date',
             'location' => 'nullable|string|max:255',
             'is_active' => 'boolean',
+            'status' => 'nullable|string|in:' . implode(',', array_keys(Stock::STATUSES)),
             'category_id' => 'required|exists:categories,id',
+            'department_id' => 'nullable|exists:departments,id',
             'image' => 'nullable',
         ]);
 

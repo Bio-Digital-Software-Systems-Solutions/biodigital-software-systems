@@ -652,7 +652,7 @@ class HomePageSettingsControllerTest extends TestCase
 
         $response = $this->actingAs($this->admin)->post(route('settings.homepage.churches.store'), $data);
 
-        $response->assertSessionHasErrors(['name', 'city', 'country', 'latitude', 'longitude']);
+        $response->assertSessionHasErrors(['name', 'city', 'country']);
     }
 
     /** @test */
@@ -671,5 +671,238 @@ class HomePageSettingsControllerTest extends TestCase
 
         $church = \App\Models\Church::where('name', 'ICC Paris')->first();
         $this->assertEquals('europe', $church->continent);
+    }
+
+    /** @test */
+    public function admin_can_create_church_with_leader_and_category()
+    {
+        $data = [
+            'name' => 'ICC Lyon',
+            'city' => 'Lyon',
+            'country' => 'France',
+            'latitude' => 45.7640,
+            'longitude' => 4.8357,
+            'members' => 300,
+            'leader_name' => 'Pasteur Jean Martin',
+            'category' => 'campus_connecte',
+            'is_active' => true,
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('settings.homepage.churches.store'), $data);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('churches', [
+            'name' => 'ICC Lyon',
+            'leader_name' => 'Pasteur Jean Martin',
+            'category' => 'campus_connecte',
+        ]);
+    }
+
+    /** @test */
+    public function admin_can_update_church_leader_and_category()
+    {
+        $church = \App\Models\Church::create([
+            'name' => 'ICC Marseille',
+            'city' => 'Marseille',
+            'country' => 'France',
+            'latitude' => 43.2965,
+            'longitude' => 5.3698,
+            'leader_name' => 'Old Leader',
+            'category' => 'eglise',
+        ]);
+
+        $data = [
+            'name' => 'ICC Marseille',
+            'city' => 'Marseille',
+            'country' => 'France',
+            'latitude' => 43.2965,
+            'longitude' => 5.3698,
+            'leader_name' => 'New Leader',
+            'category' => 'famille_impact',
+            'is_active' => true,
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('settings.homepage.churches.update', $church), $data);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('churches', [
+            'id' => $church->id,
+            'leader_name' => 'New Leader',
+            'category' => 'famille_impact',
+        ]);
+    }
+
+    /** @test */
+    public function category_validation_rejects_invalid_values()
+    {
+        $data = [
+            'name' => 'ICC Test',
+            'city' => 'Test City',
+            'country' => 'Test Country',
+            'category' => 'invalid_category',
+            'is_active' => true,
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('settings.homepage.churches.store'), $data);
+
+        $response->assertSessionHasErrors(['category']);
+    }
+
+    /** @test */
+    public function leader_name_and_category_are_optional()
+    {
+        $data = [
+            'name' => 'ICC Minimal',
+            'city' => 'Minimal City',
+            'country' => 'Minimal Country',
+            'is_active' => true,
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('settings.homepage.churches.store'), $data);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('churches', [
+            'name' => 'ICC Minimal',
+            'category' => 'eglise', // default value
+        ]);
+    }
+
+    /** @test */
+    public function global_stats_update_when_church_created()
+    {
+        // Clear any existing churches
+        \App\Models\Church::query()->delete();
+
+        $data = [
+            'name' => 'First Church',
+            'city' => 'Paris',
+            'country' => 'France',
+            'latitude' => 48.8566,
+            'longitude' => 2.3522,
+            'members' => 500,
+            'is_active' => true,
+        ];
+
+        $this->actingAs($this->admin)->post(route('settings.homepage.churches.store'), $data);
+
+        $stats = \App\Models\SiteSetting::getGlobalStats();
+        $this->assertEquals(1, $stats['total_churches']);
+        $this->assertEquals(1, $stats['total_countries']);
+        $this->assertEquals(500, $stats['total_members']);
+        $this->assertEquals(1, $stats['europe']);
+    }
+
+    /** @test */
+    public function global_stats_update_when_church_deleted()
+    {
+        // Clear any existing churches
+        \App\Models\Church::query()->delete();
+
+        // Create a church first
+        $church = \App\Models\Church::create([
+            'name' => 'Church to Delete',
+            'city' => 'Berlin',
+            'country' => 'Germany',
+            'latitude' => 52.52,
+            'longitude' => 13.405,
+            'members' => 300,
+            'continent' => 'europe',
+            'is_active' => true,
+        ]);
+
+        // Recalculate to set initial stats
+        \App\Models\SiteSetting::recalculateGlobalStats();
+        $statsBefore = \App\Models\SiteSetting::getGlobalStats();
+        $this->assertEquals(1, $statsBefore['total_churches']);
+
+        // Delete the church
+        $this->actingAs($this->admin)->delete(route('settings.homepage.churches.destroy', $church));
+
+        $statsAfter = \App\Models\SiteSetting::getGlobalStats();
+        $this->assertEquals(0, $statsAfter['total_churches']);
+        $this->assertEquals(0, $statsAfter['total_countries']);
+        $this->assertEquals(0, $statsAfter['total_members']);
+    }
+
+    /** @test */
+    public function total_countries_increases_for_new_country()
+    {
+        // Clear any existing churches
+        \App\Models\Church::query()->delete();
+
+        // Create first church in France
+        $this->actingAs($this->admin)->post(route('settings.homepage.churches.store'), [
+            'name' => 'ICC France',
+            'city' => 'Paris',
+            'country' => 'France',
+            'latitude' => 48.8566,
+            'longitude' => 2.3522,
+            'is_active' => true,
+        ]);
+
+        $stats1 = \App\Models\SiteSetting::getGlobalStats();
+        $this->assertEquals(1, $stats1['total_countries']);
+
+        // Create second church in Germany (new country)
+        $this->actingAs($this->admin)->post(route('settings.homepage.churches.store'), [
+            'name' => 'ICC Germany',
+            'city' => 'Berlin',
+            'country' => 'Germany',
+            'latitude' => 52.52,
+            'longitude' => 13.405,
+            'is_active' => true,
+        ]);
+
+        $stats2 = \App\Models\SiteSetting::getGlobalStats();
+        $this->assertEquals(2, $stats2['total_countries']);
+
+        // Create third church in France (same country)
+        $this->actingAs($this->admin)->post(route('settings.homepage.churches.store'), [
+            'name' => 'ICC Lyon',
+            'city' => 'Lyon',
+            'country' => 'France',
+            'latitude' => 45.764,
+            'longitude' => 4.8357,
+            'is_active' => true,
+        ]);
+
+        $stats3 = \App\Models\SiteSetting::getGlobalStats();
+        $this->assertEquals(2, $stats3['total_countries']); // Still 2 countries
+        $this->assertEquals(3, $stats3['total_churches']);
+    }
+
+    /** @test */
+    public function total_members_updates_with_church_changes()
+    {
+        // Clear any existing churches
+        \App\Models\Church::query()->delete();
+
+        // Create church with 100 members
+        $church = \App\Models\Church::create([
+            'name' => 'Test Church',
+            'city' => 'Munich',
+            'country' => 'Germany',
+            'latitude' => 48.1351,
+            'longitude' => 11.5820,
+            'members' => 100,
+            'continent' => 'europe',
+            'is_active' => true,
+        ]);
+
+        \App\Models\SiteSetting::recalculateGlobalStats();
+        $this->assertEquals(100, \App\Models\SiteSetting::getGlobalStats()['total_members']);
+
+        // Update church to 250 members
+        $this->actingAs($this->admin)->post(route('settings.homepage.churches.update', $church), [
+            'name' => 'Test Church',
+            'city' => 'Munich',
+            'country' => 'Germany',
+            'latitude' => 48.1351,
+            'longitude' => 11.5820,
+            'members' => 250,
+            'is_active' => true,
+        ]);
+
+        $this->assertEquals(250, \App\Models\SiteSetting::getGlobalStats()['total_members']);
     }
 }

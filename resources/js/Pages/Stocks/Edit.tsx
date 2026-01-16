@@ -2,9 +2,17 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { PageProps } from '@/Types';
+import { DatePicker } from '@/Components/ui/date-picker';
+import { format } from 'date-fns';
 
 interface Category {
     id: number;
+    name: string;
+}
+
+interface Department {
+    id: number;
+    uuid: string;
     name: string;
 }
 
@@ -22,15 +30,19 @@ interface Stock {
     expiry_date?: string;
     location?: string;
     is_active: boolean;
+    status?: string;
     category?: Category;
+    department?: Department;
 }
 
 interface Props extends PageProps {
     stock: Stock;
     categories: Category[];
+    departments: Department[];
+    statuses: Record<string, string>;
 }
 
-export default function Edit({ stock, categories }: Props) {
+export default function Edit({ stock, categories, departments, statuses }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         name: stock.name || '',
         sku: stock.sku || '',
@@ -43,7 +55,9 @@ export default function Edit({ stock, categories }: Props) {
         expiry_date: stock.expiry_date ? stock.expiry_date.substring(0, 10) : '',
         location: stock.location || '',
         is_active: stock.is_active ?? true,
+        status: stock.status || 'active',
         category_id: stock.category?.id || '',
+        department_id: stock.department?.id || '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -177,7 +191,7 @@ export default function Edit({ stock, categories }: Props) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
                                     <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         Catégorie *
@@ -197,6 +211,26 @@ export default function Edit({ stock, categories }: Props) {
                                         ))}
                                     </select>
                                     {errors.category_id && <p className="mt-1 text-sm text-red-600">{errors.category_id}</p>}
+                                </div>
+
+                                <div>
+                                    <label htmlFor="department_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Département
+                                    </label>
+                                    <select
+                                        id="department_id"
+                                        value={data.department_id}
+                                        onChange={(e) => setData('department_id', e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                    >
+                                        <option value="">Aucun département</option>
+                                        {departments.map(department => (
+                                            <option key={department.id} value={department.id}>
+                                                {department.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.department_id && <p className="mt-1 text-sm text-red-600">{errors.department_id}</p>}
                                 </div>
 
                                 <div>
@@ -253,34 +287,31 @@ export default function Edit({ stock, categories }: Props) {
                                     <label htmlFor="expiry_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         Date d'expiration
                                     </label>
-                                    <input
-                                        type="date"
-                                        id="expiry_date"
+                                    <DatePicker
                                         value={data.expiry_date}
-                                        onChange={(e) => setData('expiry_date', e.target.value)}
-                                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                        onChange={(date) => setData('expiry_date', date ? format(date, 'yyyy-MM-dd') : '')}
+                                        placeholder="Sélectionner une date d'expiration"
                                     />
                                     {errors.expiry_date && <p className="mt-1 text-sm text-red-600">{errors.expiry_date}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         Statut
                                     </label>
-                                    <div className="mt-2">
-                                        <label className="inline-flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                checked={data.is_active}
-                                                onChange={(e) => setData('is_active', e.target.checked)}
-                                                className="rounded border-gray-300 dark:border-gray-600 text-primary shadow-sm focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800"
-                                            />
-                                            <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                                                Actif
-                                            </span>
-                                        </label>
-                                    </div>
-                                    {errors.is_active && <p className="mt-1 text-sm text-red-600">{errors.is_active}</p>}
+                                    <select
+                                        id="status"
+                                        value={data.status}
+                                        onChange={(e) => setData('status', e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                    >
+                                        {Object.entries(statuses).map(([value, label]) => (
+                                            <option key={value} value={value}>
+                                                {label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.status && <p className="mt-1 text-sm text-red-600">{errors.status}</p>}
                                 </div>
                             </div>
 

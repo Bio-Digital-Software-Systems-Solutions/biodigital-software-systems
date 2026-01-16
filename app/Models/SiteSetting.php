@@ -94,4 +94,37 @@ class SiteSetting extends Model
     {
         static::set('global_presence_stats', $stats);
     }
+
+    /**
+     * Recalculate global stats based on actual church data
+     */
+    public static function recalculateGlobalStats(): void
+    {
+        $churches = Church::where('is_active', true)->get();
+
+        // Count total churches
+        $totalChurches = $churches->count();
+
+        // Count distinct countries
+        $totalCountries = $churches->pluck('country')->unique()->count();
+
+        // Sum all members
+        $totalMembers = $churches->sum('members');
+
+        // Count by continent
+        $continentCounts = $churches->groupBy('continent')->map->count();
+
+        $stats = [
+            'total_churches' => $totalChurches,
+            'total_countries' => $totalCountries,
+            'total_members' => $totalMembers,
+            'europe' => $continentCounts->get('europe', 0),
+            'africa' => $continentCounts->get('africa', 0),
+            'americas' => $continentCounts->get('americas', 0),
+            'asia' => $continentCounts->get('asia', 0),
+            'oceania' => $continentCounts->get('oceania', 0),
+        ];
+
+        static::setGlobalStats($stats);
+    }
 }

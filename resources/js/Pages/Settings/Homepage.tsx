@@ -108,6 +108,8 @@ interface Church {
     website: string | null;
     email: string | null;
     phone: string | null;
+    leader_name: string | null;
+    category: string | null;
     continent: string | null;
     is_active: boolean;
 }
@@ -257,6 +259,7 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
     const [showChurchModal, setShowChurchModal] = useState(false);
     const [editingChurch, setEditingChurch] = useState<Church | null>(null);
     const [deletingChurch, setDeletingChurch] = useState<Church | null>(null);
+    const [viewingChurch, setViewingChurch] = useState<Church | null>(null);
     const [churchProcessing, setChurchProcessing] = useState(false);
     const [churchForm, setChurchForm] = useState({
         name: '',
@@ -269,6 +272,8 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
         website: '',
         email: '',
         phone: '',
+        leader_name: '',
+        category: 'eglise',
         is_active: true,
     });
 
@@ -284,6 +289,8 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
             website: '',
             email: '',
             phone: '',
+            leader_name: '',
+            category: 'eglise',
             is_active: true,
         });
     };
@@ -295,13 +302,15 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
                 name: church.name,
                 city: church.city,
                 country: church.country,
-                latitude: String(church.latitude),
-                longitude: String(church.longitude),
+                latitude: String(church.latitude ?? ''),
+                longitude: String(church.longitude ?? ''),
                 members: String(church.members || ''),
                 address: church.address || '',
                 website: church.website || '',
                 email: church.email || '',
                 phone: church.phone || '',
+                leader_name: church.leader_name || '',
+                category: church.category || 'eglise',
                 is_active: church.is_active,
             });
         } else {
@@ -325,13 +334,15 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
             name: churchForm.name,
             city: churchForm.city,
             country: churchForm.country,
-            latitude: parseFloat(churchForm.latitude),
-            longitude: parseFloat(churchForm.longitude),
+            latitude: churchForm.latitude ? parseFloat(churchForm.latitude) : null,
+            longitude: churchForm.longitude ? parseFloat(churchForm.longitude) : null,
             members: churchForm.members ? parseInt(churchForm.members, 10) : 0,
             address: churchForm.address || null,
             website: churchForm.website || null,
             email: churchForm.email || null,
             phone: churchForm.phone || null,
+            leader_name: churchForm.leader_name || null,
+            category: churchForm.category || 'eglise',
             is_active: churchForm.is_active,
         };
 
@@ -794,7 +805,8 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
                                 {churches.map((church) => (
                                     <div
                                         key={church.id}
-                                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                        onClick={() => setViewingChurch(church)}
                                     >
                                         <div className="flex items-center gap-3">
                                             <MapPin className={`h-4 w-4 ${church.is_active ? 'text-green-600' : 'text-gray-400'}`} />
@@ -809,14 +821,20 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => openChurchModal(church)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openChurchModal(church);
+                                                }}
                                             >
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => setDeletingChurch(church)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDeletingChurch(church);
+                                                }}
                                             >
                                                 <Trash2 className="h-4 w-4 text-red-500" />
                                             </Button>
@@ -831,7 +849,7 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
 
             {/* Church Add/Edit Modal */}
             <Dialog open={showChurchModal} onOpenChange={closeChurchModal}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto px-3 py-3">
                     <DialogHeader>
                         <DialogTitle>
                             {editingChurch ? 'Modifier l\'église' : 'Ajouter une église'}
@@ -887,7 +905,7 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="church_latitude">Latitude *</Label>
+                                <Label htmlFor="church_latitude">Latitude </Label>
                                 <Input
                                     id="church_latitude"
                                     type="number"
@@ -895,11 +913,10 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
                                     value={churchForm.latitude}
                                     onChange={(e) => setChurchForm({ ...churchForm, latitude: e.target.value })}
                                     placeholder="48.8566"
-                                    required
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="church_longitude">Longitude *</Label>
+                                <Label htmlFor="church_longitude">Longitude </Label>
                                 <Input
                                     id="church_longitude"
                                     type="number"
@@ -907,7 +924,6 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
                                     value={churchForm.longitude}
                                     onChange={(e) => setChurchForm({ ...churchForm, longitude: e.target.value })}
                                     placeholder="2.3522"
-                                    required
                                 />
                             </div>
                         </div>
@@ -951,15 +967,41 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
                                 placeholder="https://icc-paris.fr"
                             />
                         </div>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="church_leader_name">Nom du leader</Label>
+                                <Input
+                                    id="church_leader_name"
+                                    value={churchForm.leader_name}
+                                    onChange={(e) => setChurchForm({ ...churchForm, leader_name: e.target.value })}
+                                    placeholder="Pasteur Jean Dupont"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="church_category">Catégorie</Label>
+                                <Select
+                                    value={churchForm.category}
+                                    onValueChange={(value) => setChurchForm({ ...churchForm, category: value })}
+                                >
+                                    <SelectTrigger id="church_category">
+                                        <SelectValue placeholder="Sélectionner une catégorie" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="eglise">Église</SelectItem>
+                                        <SelectItem value="campus_connecte">Campus connecté</SelectItem>
+                                        <SelectItem value="famille_connecte">Famille connectée</SelectItem>
+                                        <SelectItem value="famille_impact">Famille d'impact</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="church_is_active">Afficher sur la carte</Label>
+                            <Switch
                                 id="church_is_active"
                                 checked={churchForm.is_active}
-                                onChange={(e) => setChurchForm({ ...churchForm, is_active: e.target.checked })}
-                                className="h-4 w-4"
+                                onCheckedChange={(checked) => setChurchForm({ ...churchForm, is_active: checked })}
                             />
-                            <Label htmlFor="church_is_active">Afficher sur la carte</Label>
                         </div>
                         <div className="flex justify-end gap-2 pt-4">
                             <Button type="button" variant="outline" onClick={closeChurchModal}>
@@ -990,6 +1032,148 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Church View Details Modal */}
+            <Dialog open={!!viewingChurch} onOpenChange={() => setViewingChurch(null)}>
+                <DialogContent className="max-w-lg px-3 py-2">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <MapPin className={`h-5 w-5 ${viewingChurch?.is_active ? 'text-green-600' : 'text-gray-400'}`} />
+                            {viewingChurch?.name}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Détails de l'église
+                        </DialogDescription>
+                    </DialogHeader>
+                    {viewingChurch && (
+                        <div className="space-y-4">
+                            {/* Location */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-xs text-gray-500 uppercase tracking-wide">Ville</Label>
+                                    <p className="font-medium">{viewingChurch.city}</p>
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-gray-500 uppercase tracking-wide">Pays</Label>
+                                    <p className="font-medium">{viewingChurch.country}</p>
+                                </div>
+                            </div>
+
+                            {/* Members & Status */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label className="text-xs text-gray-500 uppercase tracking-wide">Membres</Label>
+                                    <p className="font-medium">{viewingChurch.members || 0}</p>
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-gray-500 uppercase tracking-wide">Statut</Label>
+                                    <Badge variant={viewingChurch.is_active ? 'default' : 'secondary'} className={viewingChurch.is_active ? 'bg-green-500' : ''}>
+                                        {viewingChurch.is_active ? 'Actif' : 'Inactif'}
+                                    </Badge>
+                                </div>
+                            </div>
+
+                            {/* Leader & Category */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {viewingChurch.leader_name && (
+                                    <div>
+                                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Leader</Label>
+                                        <p className="font-medium">{viewingChurch.leader_name}</p>
+                                    </div>
+                                )}
+                                <div>
+                                    <Label className="text-xs text-gray-500 uppercase tracking-wide">Catégorie</Label>
+                                    <Badge variant="outline">
+                                        {{
+                                            'eglise': 'Église',
+                                            'campus_connecte': 'Campus connecté',
+                                            'famille_connecte': 'Famille connectée',
+                                            'famille_impact': 'Famille d\'impact',
+                                        }[viewingChurch.category || 'eglise'] || 'Église'}
+                                    </Badge>
+                                </div>
+                            </div>
+
+                            {/* Address */}
+                            {viewingChurch.address && (
+                                <div>
+                                    <Label className="text-xs text-gray-500 uppercase tracking-wide">Adresse</Label>
+                                    <p className="font-medium">{viewingChurch.address}</p>
+                                </div>
+                            )}
+
+                            {/* Coordinates */}
+                            {(viewingChurch.latitude || viewingChurch.longitude) && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Latitude</Label>
+                                        <p className="font-medium font-mono text-sm">{viewingChurch.latitude || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Longitude</Label>
+                                        <p className="font-medium font-mono text-sm">{viewingChurch.longitude || '-'}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Continent */}
+                            {viewingChurch.continent && (
+                                <div>
+                                    <Label className="text-xs text-gray-500 uppercase tracking-wide">Continent</Label>
+                                    <p className="font-medium capitalize">{viewingChurch.continent}</p>
+                                </div>
+                            )}
+
+                            {/* Contact Information */}
+                            {(viewingChurch.email || viewingChurch.phone || viewingChurch.website) && (
+                                <div className="border-t pt-4">
+                                    <Label className="text-xs text-gray-500 uppercase tracking-wide mb-2 block">Contact</Label>
+                                    <div className="space-y-2">
+                                        {viewingChurch.email && (
+                                            <p className="text-sm">
+                                                <span className="text-gray-500">Email:</span>{' '}
+                                                <a href={`mailto:${viewingChurch.email}`} className="text-blue-600 hover:underline">
+                                                    {viewingChurch.email}
+                                                </a>
+                                            </p>
+                                        )}
+                                        {viewingChurch.phone && (
+                                            <p className="text-sm">
+                                                <span className="text-gray-500">Téléphone:</span>{' '}
+                                                <a href={`tel:${viewingChurch.phone}`} className="text-blue-600 hover:underline">
+                                                    {viewingChurch.phone}
+                                                </a>
+                                            </p>
+                                        )}
+                                        {viewingChurch.website && (
+                                            <p className="text-sm">
+                                                <span className="text-gray-500">Site web:</span>{' '}
+                                                <a href={viewingChurch.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                                    {viewingChurch.website}
+                                                </a>
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <DialogFooter className="flex gap-2">
+                        <Button variant="outline" onClick={() => setViewingChurch(null)}>
+                            Fermer
+                        </Button>
+                        <Button onClick={() => {
+                            if (viewingChurch) {
+                                openChurchModal(viewingChurch);
+                                setViewingChurch(null);
+                            }
+                        }}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Modifier
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Add/Edit Modal */}
             <Dialog open={showAddModal || !!editingSlide} onOpenChange={closeModal}>

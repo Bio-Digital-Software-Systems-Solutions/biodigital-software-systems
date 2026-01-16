@@ -226,23 +226,30 @@ class SettingsController extends Controller
             'name' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'country' => 'required|string|max:255',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'members' => 'nullable|integer|min:0',
             'address' => 'nullable|string|max:500',
             'website' => 'nullable|url|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
+            'leader_name' => 'nullable|string|max:255',
+            'category' => 'nullable|string|in:eglise,campus_connecte,famille_connecte,famille_impact',
             'is_active' => 'boolean',
         ]);
 
-        // Auto-detect continent
-        $validated['continent'] = Church::detectContinent(
-            $validated['latitude'],
-            $validated['longitude']
-        );
+        // Auto-detect continent only if coordinates are provided
+        if (isset($validated['latitude']) && isset($validated['longitude'])) {
+            $validated['continent'] = Church::detectContinent(
+                $validated['latitude'],
+                $validated['longitude']
+            );
+        }
 
         Church::create($validated);
+
+        // Recalculate global stats
+        SiteSetting::recalculateGlobalStats();
 
         return back()->with('success', 'Église ajoutée avec succès.');
     }
@@ -256,23 +263,30 @@ class SettingsController extends Controller
             'name' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'country' => 'required|string|max:255',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'members' => 'nullable|integer|min:0',
             'address' => 'nullable|string|max:500',
             'website' => 'nullable|url|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
+            'leader_name' => 'nullable|string|max:255',
+            'category' => 'nullable|string|in:eglise,campus_connecte,famille_connecte,famille_impact',
             'is_active' => 'boolean',
         ]);
 
-        // Auto-detect continent
-        $validated['continent'] = Church::detectContinent(
-            $validated['latitude'],
-            $validated['longitude']
-        );
+        // Auto-detect continent only if coordinates are provided
+        if (isset($validated['latitude']) && isset($validated['longitude'])) {
+            $validated['continent'] = Church::detectContinent(
+                $validated['latitude'],
+                $validated['longitude']
+            );
+        }
 
         $church->update($validated);
+
+        // Recalculate global stats
+        SiteSetting::recalculateGlobalStats();
 
         return back()->with('success', 'Église mise à jour avec succès.');
     }
@@ -283,6 +297,9 @@ class SettingsController extends Controller
     public function destroyChurch(Church $church): RedirectResponse
     {
         $church->delete();
+
+        // Recalculate global stats
+        SiteSetting::recalculateGlobalStats();
 
         return back()->with('success', 'Église supprimée avec succès.');
     }

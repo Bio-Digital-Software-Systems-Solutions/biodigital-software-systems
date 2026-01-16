@@ -9,6 +9,30 @@ interface Category {
     name: string;
 }
 
+interface Department {
+    id: number;
+    uuid: string;
+    name: string;
+}
+
+const STATUS_LABELS: Record<string, string> = {
+    active: 'Actif',
+    inactive: 'Inactif',
+    in_use: 'En utilisation',
+    in_maintenance: 'En maintenance',
+    reserved: 'Réservé',
+    disposed: 'Hors service',
+};
+
+const STATUS_COLORS: Record<string, string> = {
+    active: 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20',
+    inactive: 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20',
+    in_use: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20',
+    in_maintenance: 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/20',
+    reserved: 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-900/20',
+    disposed: 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20',
+};
+
 interface Stock {
     id: number;
     uuid: string;
@@ -23,7 +47,9 @@ interface Stock {
     expiry_date?: string;
     location?: string;
     is_active: boolean;
+    status?: string;
     category?: Category;
+    department?: Department;
     created_at: string;
     updated_at: string;
 }
@@ -49,6 +75,13 @@ export default function Show({ stock, auth }: Props) {
     };
 
     const getStockStatus = () => {
+        // First check item status
+        if (stock.status && stock.status !== 'active') {
+            return {
+                label: STATUS_LABELS[stock.status] || stock.status,
+                color: STATUS_COLORS[stock.status] || 'text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-900/20'
+            };
+        }
         if (stock.expiry_date && new Date(stock.expiry_date) < new Date()) {
             return { label: 'Expiré', color: 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20' };
         }
@@ -92,12 +125,12 @@ export default function Show({ stock, auth }: Props) {
                                 SKU: {stock.sku}
                             </p>
                         </div>
-                        
+
                         <div className="flex items-center space-x-3">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
                                 {status.label}
                             </span>
-                            
+
                             {canEdit && (
                                 <div className="flex space-x-2">
                                     <Link
@@ -133,14 +166,14 @@ export default function Show({ stock, auth }: Props) {
                                     <span className="text-sm font-medium">Cet article est en rupture de stock</span>
                                 </div>
                             )}
-                            
+
                             {stock.quantity > 0 && stock.quantity <= stock.minimum_quantity && (
                                 <div className="flex items-center p-4 mb-4 text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800">
                                     <ExclamationTriangleIcon className="h-5 w-5 mr-3" />
                                     <span className="text-sm font-medium">Stock faible - Réapprovisionnement recommandé</span>
                                 </div>
                             )}
-                            
+
                             {stock.expiry_date && new Date(stock.expiry_date) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) && (
                                 <div className="flex items-center p-4 mb-4 text-orange-800 border border-orange-300 rounded-lg bg-orange-50 dark:bg-gray-800 dark:text-orange-300 dark:border-orange-800">
                                     <ExclamationTriangleIcon className="h-5 w-5 mr-3" />
@@ -175,6 +208,22 @@ export default function Show({ stock, auth }: Props) {
                                     <div>
                                         <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</dt>
                                         <dd className="text-sm text-gray-900 dark:text-white">{stock.description}</dd>
+                                    </div>
+                                )}
+                                {stock.department && (
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Département</dt>
+                                        <dd className="text-sm text-gray-900 dark:text-white">{stock.department.name}</dd>
+                                    </div>
+                                )}
+                                {stock.status && (
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Statut</dt>
+                                        <dd>
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[stock.status] || 'text-gray-600 bg-gray-50'}`}>
+                                                {STATUS_LABELS[stock.status] || stock.status}
+                                            </span>
+                                        </dd>
                                     </div>
                                 )}
                             </dl>
@@ -250,7 +299,7 @@ export default function Show({ stock, auth }: Props) {
                         </dl>
                     </div>
                 </div>
-                    </div>
+            </div>
         </DashboardLayout>
     );
 }

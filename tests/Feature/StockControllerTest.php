@@ -31,9 +31,10 @@ class StockControllerTest extends TestCase
             ->get(route('stocks.index'));
 
         $response->assertOk();
-        $response->assertInertia(fn ($assert) => $assert->component('Stocks/Index')
-            ->has('stocks.data', 3)
-            ->has('categories')
+        $response->assertInertia(
+            fn($assert) => $assert->component('Stocks/Index')
+                ->has('stocks.data', 3)
+                ->has('categories')
         );
     }
 
@@ -50,8 +51,9 @@ class StockControllerTest extends TestCase
             ->get(route('stocks.index', ['category' => $this->category->id]));
 
         $response->assertOk();
-        $response->assertInertia(fn ($assert) => $assert->component('Stocks/Index')
-            ->has('stocks.data', 2)
+        $response->assertInertia(
+            fn($assert) => $assert->component('Stocks/Index')
+                ->has('stocks.data', 2)
         );
     }
 
@@ -75,8 +77,9 @@ class StockControllerTest extends TestCase
             ->get(route('stocks.index', ['status' => 'low_stock']));
 
         $response->assertOk();
-        $response->assertInertia(fn ($assert) => $assert->component('Stocks/Index')
-            ->has('stocks.data', 1)
+        $response->assertInertia(
+            fn($assert) => $assert->component('Stocks/Index')
+                ->has('stocks.data', 1)
         );
     }
 
@@ -88,8 +91,9 @@ class StockControllerTest extends TestCase
             ->get(route('stocks.create'));
 
         $response->assertOk();
-        $response->assertInertia(fn ($assert) => $assert->component('Stocks/Create')
-            ->has('categories')
+        $response->assertInertia(
+            fn($assert) => $assert->component('Stocks/Create')
+                ->has('categories')
         );
     }
 
@@ -135,7 +139,11 @@ class StockControllerTest extends TestCase
             ->post(route('stocks.store'), []);
 
         $response->assertSessionHasErrors([
-            'name', 'sku', 'quantity', 'minimum_quantity', 'unit_price', 'category_id',
+            'name',
+            'quantity',
+            'minimum_quantity',
+            'unit_price',
+            'category_id',
         ]);
     }
 
@@ -223,9 +231,10 @@ class StockControllerTest extends TestCase
             ->get(route('stocks.show', $stock));
 
         $response->assertOk();
-        $response->assertInertia(fn ($assert) => $assert->component('Stocks/Show')
-            ->where('stock.id', $stock->id)
-            ->where('stock.name', $stock->name)
+        $response->assertInertia(
+            fn($assert) => $assert->component('Stocks/Show')
+                ->where('stock.id', $stock->id)
+                ->where('stock.name', $stock->name)
         );
     }
 
@@ -239,9 +248,10 @@ class StockControllerTest extends TestCase
             ->get(route('stocks.edit', $stock));
 
         $response->assertOk();
-        $response->assertInertia(fn ($assert) => $assert->component('Stocks/Edit')
-            ->where('stock.id', $stock->id)
-            ->has('categories')
+        $response->assertInertia(
+            fn($assert) => $assert->component('Stocks/Edit')
+                ->where('stock.id', $stock->id)
+                ->has('categories')
         );
     }
 
@@ -354,8 +364,118 @@ class StockControllerTest extends TestCase
             ->get(route('stocks.index', ['supplier' => 'Acme']));
 
         $response->assertOk();
-        $response->assertInertia(fn ($assert) => $assert->component('Stocks/Index')
-            ->has('stocks.data', 2)
+        $response->assertInertia(
+            fn($assert) => $assert->component('Stocks/Index')
+                ->has('stocks.data', 2)
         );
+    }
+
+    public function test_sku_is_auto_generated_when_not_provided(): void
+    {
+        $this->user->givePermissionTo('manage stocks');
+
+        $stockData = [
+            'name' => 'Test Auto SKU',
+            'quantity' => 10,
+            'minimum_quantity' => 5,
+            'unit_price' => '15.00',
+            'is_active' => true,
+            'category_id' => $this->category->id,
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->post(route('stocks.store'), $stockData);
+
+        $response->assertRedirect(route('stocks.index'));
+
+        $stock = \App\Models\Stock::where('name', 'Test Auto SKU')->first();
+        $this->assertNotNull($stock);
+        $this->assertNotEmpty($stock->sku);
+        $this->assertStringStartsWith('STK-', $stock->sku);
+    }
+
+    public function test_stock_can_be_created_with_department(): void
+    {
+        $department = \App\Models\Department::factory()->create(['is_active' => true]);
+
+        $this->user->givePermissionTo('manage stocks');
+
+        $stockData = [
+            'name' => 'Stock with Department',
+            'sku' => 'SWD-001',
+            'quantity' => 20,
+            'minimum_quantity' => 5,
+            'unit_price' => '25.00',
+            'is_active' => true,
+            'category_id' => $this->category->id,
+            'department_id' => $department->id,
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->post(route('stocks.store'), $stockData);
+
+        $response->assertRedirect(route('stocks.index'));
+        $this->assertDatabaseHas('stocks', [
+            'name' => 'Stock with Department',
+            'department_id' => $department->id,
+        ]);
+    }
+
+    public function test_stock_can_be_updated_with_department(): void
+    {
+        $department = \App\Models\Department::factory()->create(['is_active' => true]);
+        $stock = Stock::factory()->create(['category_id' => $this->category->id]);
+
+        $this->user->givePermissionTo('manage stocks');
+
+        $updateData = [
+            'name' => $stock->name,
+            'sku' => $stock->sku,
+            'quantity' => $stock->quantity,
+            'minimum_quantity' => $stock->minimum_quantity,
+            'unit_price' => $stock->unit_price,
+            'is_active' => true,
+            'category_id' => $this->category->id,
+            'department_id' => $department->id,
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->put(route('stocks.update', $stock), $updateData);
+
+        $response->assertRedirect(route('stocks.index'));
+        $stock->refresh();
+        $this->assertEquals($department->id, $stock->department_id);
+    }
+
+    public function test_auto_generated_sku_is_unique(): void
+    {
+        $this->user->givePermissionTo('manage stocks');
+
+        // Create first stock without SKU
+        $this->actingAs($this->user)->post(route('stocks.store'), [
+            'name' => 'First Stock',
+            'quantity' => 10,
+            'minimum_quantity' => 5,
+            'unit_price' => '10.00',
+            'is_active' => true,
+            'category_id' => $this->category->id,
+        ]);
+
+        // Create second stock without SKU
+        $this->actingAs($this->user)->post(route('stocks.store'), [
+            'name' => 'Second Stock',
+            'quantity' => 20,
+            'minimum_quantity' => 10,
+            'unit_price' => '20.00',
+            'is_active' => true,
+            'category_id' => $this->category->id,
+        ]);
+
+        $stocks = \App\Models\Stock::whereIn('name', ['First Stock', 'Second Stock'])->get();
+        $this->assertEquals(2, $stocks->count());
+
+        // SKUs should be different
+        $skus = $stocks->pluck('sku')->unique();
+        $this->assertEquals(2, $skus->count());
     }
 }

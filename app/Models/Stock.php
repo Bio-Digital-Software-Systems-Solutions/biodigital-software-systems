@@ -95,6 +95,25 @@ class Stock extends Model
      *
      * @var array<int, string>
      */
+    /**
+     * Status constants.
+     */
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_INACTIVE = 'inactive';
+    public const STATUS_IN_USE = 'in_use';
+    public const STATUS_IN_MAINTENANCE = 'in_maintenance';
+    public const STATUS_RESERVED = 'reserved';
+    public const STATUS_DISPOSED = 'disposed';
+
+    public const STATUSES = [
+        self::STATUS_ACTIVE => 'Actif',
+        self::STATUS_INACTIVE => 'Inactif',
+        self::STATUS_IN_USE => 'En utilisation',
+        self::STATUS_IN_MAINTENANCE => 'En maintenance',
+        self::STATUS_RESERVED => 'Réservé',
+        self::STATUS_DISPOSED => 'Hors service',
+    ];
+
     protected $fillable = [
         'uuid',
         'name',
@@ -108,7 +127,9 @@ class Stock extends Model
         'expiry_date',
         'location',
         'is_active',
+        'status',
         'category_id',
+        'department_id',
         'image',
     ];
 
@@ -134,6 +155,44 @@ class Stock extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Get the department that owns the stock item.
+     */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * Generate a unique SKU.
+     */
+    public static function generateSku(?int $categoryId = null): string
+    {
+        $prefix = 'STK';
+
+        // Get category prefix if available
+        if ($categoryId) {
+            $category = Category::find($categoryId);
+            if ($category) {
+                // Use first 3 letters of category name as prefix
+                $prefix = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $category->name), 0, 3));
+            }
+        }
+
+        $date = now()->format('Ymd');
+        $random = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+
+        $sku = "STK-{$prefix}-{$date}-{$random}";
+
+        // Ensure uniqueness
+        while (static::where('sku', $sku)->exists()) {
+            $random = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            $sku = "STK-{$prefix}-{$date}-{$random}";
+        }
+
+        return $sku;
     }
 
     /**
@@ -173,12 +232,12 @@ class Stock extends Model
      */
     public function isNearExpiry(): bool
     {
-        if (! $this->expiry_date) {
+        if (!$this->expiry_date) {
             return false;
         }
 
         return now()->diffInDays($this->expiry_date) <= 30 &&
-               now()->isBefore($this->expiry_date);
+            now()->isBefore($this->expiry_date);
     }
 
     /**
@@ -186,7 +245,7 @@ class Stock extends Model
      */
     public function getDaysUntilExpiryAttribute(): ?int
     {
-        if (! $this->expiry_date) {
+        if (!$this->expiry_date) {
             return null;
         }
 
