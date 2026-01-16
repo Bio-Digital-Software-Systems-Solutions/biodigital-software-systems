@@ -2,16 +2,30 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import * as d3 from 'd3';
 import { feature } from 'topojson-client';
-import { iccChurches, getIccStats, type Church } from '@/data/iccChurches';
+import { iccChurches, type Church } from '@/data/iccChurches';
 
-const WorldMap: React.FC = () => {
+interface GlobalStats {
+  total_churches: number;
+  total_countries: number;
+  total_members: number;
+  europe: number;
+  africa: number;
+  americas: number;
+  asia: number;
+  oceania: number;
+}
+
+interface WorldMapProps {
+  globalStats: GlobalStats;
+}
+
+const WorldMap: React.FC<WorldMapProps> = ({ globalStats }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedChurch, setSelectedChurch] = useState<Church | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const stats = getIccStats();
 
   useEffect(() => {
     setIsMounted(true);
@@ -75,10 +89,10 @@ const WorldMap: React.FC = () => {
           .attr('stroke', '#ffffff')
           .attr('stroke-width', 0.5)
           .style('transition', 'fill 0.3s')
-          .on('mouseover', function() {
+          .on('mouseover', function () {
             d3.select(this).attr('fill', '#d1d5db');
           })
-          .on('mouseout', function() {
+          .on('mouseout', function () {
             d3.select(this).attr('fill', '#e5e7eb');
           });
 
@@ -140,7 +154,7 @@ const WorldMap: React.FC = () => {
           .attr('r', d => Math.max(sizeScale(d.members || 100), 15)) // Minimum 15px for easy hovering
           .attr('fill', 'transparent')
           .attr('stroke', 'none')
-          .on('mouseover', function(event, d) {
+          .on('mouseover', function (event, d) {
             // Animate the actual bubble (sibling element)
             d3.select(this.parentNode as Element).select('.church')
               .transition()
@@ -164,7 +178,7 @@ const WorldMap: React.FC = () => {
             }
             setSelectedChurch(d);
           })
-          .on('mousemove', function(event) {
+          .on('mousemove', function (event) {
             // Suivre le curseur
             if (tooltipRef.current) {
               d3.select(tooltipRef.current)
@@ -172,7 +186,7 @@ const WorldMap: React.FC = () => {
                 .style('top', (event.clientY - 30) + 'px');
             }
           })
-          .on('mouseout', function(event, d) {
+          .on('mouseout', function (event, d) {
             // Animate the actual bubble back
             d3.select(this.parentNode as Element).select('.church')
               .transition()
@@ -215,7 +229,7 @@ const WorldMap: React.FC = () => {
             .transition()
             .duration(2000)
             .attr('fill-opacity', 0.9)
-            .on('end', function() {
+            .on('end', function () {
               // Appeler pulse seulement sur le premier élément pour éviter la surcharge
               if (this === bubbles.node()) {
                 pulse();
@@ -295,30 +309,38 @@ const WorldMap: React.FC = () => {
               <h4 className="text-xs font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-wide">Statistiques</h4>
               <div className="space-y-3">
                 <div>
-                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.totalChurches}</div>
+                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{globalStats.total_churches}</div>
                   <div className="text-xs text-gray-600 dark:text-gray-300">Églises</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.totalCountries}</div>
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{globalStats.total_countries}</div>
                   <div className="text-xs text-gray-600 dark:text-gray-300">Pays</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.totalMembers.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{globalStats.total_members.toLocaleString()}</div>
                   <div className="text-xs text-gray-600 dark:text-gray-300">Membres</div>
                 </div>
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                   <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                     <div className="flex justify-between">
                       <span>Europe:</span>
-                      <span className="font-semibold">{stats.continents.europe}</span>
+                      <span className="font-semibold">{globalStats.europe}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Afrique:</span>
-                      <span className="font-semibold">{stats.continents.africa}</span>
+                      <span className="font-semibold">{globalStats.africa}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Amériques:</span>
-                      <span className="font-semibold">{stats.continents.northAmerica + stats.continents.southAmerica}</span>
+                      <span className="font-semibold">{globalStats.americas}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Asie:</span>
+                      <span className="font-semibold">{globalStats.asia}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Océanie:</span>
+                      <span className="font-semibold">{globalStats.oceania}</span>
                     </div>
                   </div>
                 </div>
@@ -350,15 +372,15 @@ const WorldMap: React.FC = () => {
             <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Statistiques</h4>
             <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.totalChurches}</div>
+                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{globalStats.total_churches}</div>
                 <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">Églises</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 dark:text-green-400">{stats.totalCountries}</div>
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400">{globalStats.total_countries}</div>
                 <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">Pays</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.totalMembers.toLocaleString()}</div>
+                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{globalStats.total_members.toLocaleString()}</div>
                 <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">Membres</div>
               </div>
             </div>
@@ -366,15 +388,23 @@ const WorldMap: React.FC = () => {
               <div className="text-sm text-gray-500 dark:text-gray-400 space-y-2">
                 <div className="flex justify-between">
                   <span>Europe:</span>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">{stats.continents.europe}</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">{globalStats.europe}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Afrique:</span>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">{stats.continents.africa}</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">{globalStats.africa}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Amériques:</span>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">{stats.continents.northAmerica + stats.continents.southAmerica}</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">{globalStats.americas}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Asie:</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">{globalStats.asia}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Océanie:</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">{globalStats.oceania}</span>
                 </div>
               </div>
             </div>

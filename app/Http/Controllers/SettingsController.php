@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\HeroSlide;
+use App\Models\SiteSetting;
+use App\Models\Church;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -64,10 +66,35 @@ class SettingsController extends Controller
     public function homepage(Request $request): Response
     {
         $slides = HeroSlide::orderBy('order')->get();
+        $globalStats = SiteSetting::getGlobalStats();
+        $churches = Church::orderBy('name')->get();
 
         return Inertia::render('Settings/Homepage', [
             'slides' => $slides,
+            'globalStats' => $globalStats,
+            'churches' => $churches,
         ]);
+    }
+
+    /**
+     * Update global presence statistics
+     */
+    public function updateGlobalStats(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'total_churches' => 'required|integer|min:0',
+            'total_countries' => 'required|integer|min:0',
+            'total_members' => 'required|integer|min:0',
+            'europe' => 'required|integer|min:0',
+            'africa' => 'required|integer|min:0',
+            'americas' => 'required|integer|min:0',
+            'asia' => 'required|integer|min:0',
+            'oceania' => 'required|integer|min:0',
+        ]);
+
+        SiteSetting::setGlobalStats($validated);
+
+        return back()->with('success', 'Statistiques mises à jour avec succès.');
     }
 
     /**
@@ -145,6 +172,10 @@ class SettingsController extends Controller
 
         unset($validated['media_file']);
 
+        // Set default values if null (database requires non-null)
+        $validated['title'] = $validated['title'] ?? $heroSlide->title ?? '';
+        $validated['description'] = $validated['description'] ?? $heroSlide->description ?? '';
+
         $heroSlide->update($validated);
 
         return redirect()->route('settings.homepage')
@@ -183,7 +214,76 @@ class SettingsController extends Controller
             HeroSlide::where('id', $slideData['id'])->update(['order' => $slideData['order']]);
         }
 
-        return redirect()->route('settings.homepage')
-            ->with('success', 'Ordre des slides mis à jour.');
+        return back()->with('success', 'Ordre des slides mis à jour.');
+    }
+
+    /**
+     * Store a new church
+     */
+    public function storeChurch(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'country' => 'required|string|max:255',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'members' => 'nullable|integer|min:0',
+            'address' => 'nullable|string|max:500',
+            'website' => 'nullable|url|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'is_active' => 'boolean',
+        ]);
+
+        // Auto-detect continent
+        $validated['continent'] = Church::detectContinent(
+            $validated['latitude'],
+            $validated['longitude']
+        );
+
+        Church::create($validated);
+
+        return back()->with('success', 'Église ajoutée avec succès.');
+    }
+
+    /**
+     * Update an existing church
+     */
+    public function updateChurch(Request $request, Church $church): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'country' => 'required|string|max:255',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'members' => 'nullable|integer|min:0',
+            'address' => 'nullable|string|max:500',
+            'website' => 'nullable|url|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'is_active' => 'boolean',
+        ]);
+
+        // Auto-detect continent
+        $validated['continent'] = Church::detectContinent(
+            $validated['latitude'],
+            $validated['longitude']
+        );
+
+        $church->update($validated);
+
+        return back()->with('success', 'Église mise à jour avec succès.');
+    }
+
+    /**
+     * Delete a church
+     */
+    public function destroyChurch(Church $church): RedirectResponse
+    {
+        $church->delete();
+
+        return back()->with('success', 'Église supprimée avec succès.');
     }
 }

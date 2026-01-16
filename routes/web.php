@@ -7,6 +7,7 @@ use Inertia\Inertia;
 
 Route::get('/', function () {
     $heroSlides = \App\Models\HeroSlide::active()->get();
+    $globalStats = \App\Models\SiteSetting::getGlobalStats();
 
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -14,6 +15,7 @@ Route::get('/', function () {
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
         'heroSlides' => $heroSlides,
+        'globalStats' => $globalStats,
     ]);
 });
 
@@ -385,14 +387,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('settings/homepage/slides', [App\Http\Controllers\SettingsController::class, 'storeSlide'])
         ->name('settings.homepage.slides.store')
         ->middleware('can:manage hero slides');
+    // Reorder route must come BEFORE parameterized routes to avoid conflict
+    Route::post('settings/homepage/slides/reorder', [App\Http\Controllers\SettingsController::class, 'reorderSlides'])
+        ->name('settings.homepage.slides.reorder')
+        ->middleware('can:manage hero slides');
     Route::post('settings/homepage/slides/{heroSlide}', [App\Http\Controllers\SettingsController::class, 'updateSlide'])
         ->name('settings.homepage.slides.update')
         ->middleware('can:manage hero slides');
     Route::delete('settings/homepage/slides/{heroSlide}', [App\Http\Controllers\SettingsController::class, 'deleteSlide'])
         ->name('settings.homepage.slides.destroy')
         ->middleware('can:manage hero slides');
-    Route::post('settings/homepage/slides/reorder', [App\Http\Controllers\SettingsController::class, 'reorderSlides'])
-        ->name('settings.homepage.slides.reorder')
+    Route::post('settings/homepage/global-stats', [App\Http\Controllers\SettingsController::class, 'updateGlobalStats'])
+        ->name('settings.homepage.global-stats.update')
+        ->middleware('can:manage hero slides');
+
+    // Church management routes
+    Route::post('settings/homepage/churches', [App\Http\Controllers\SettingsController::class, 'storeChurch'])
+        ->name('settings.homepage.churches.store')
+        ->middleware('can:manage hero slides');
+    Route::post('settings/homepage/churches/{church}', [App\Http\Controllers\SettingsController::class, 'updateChurch'])
+        ->name('settings.homepage.churches.update')
+        ->middleware('can:manage hero slides');
+    Route::delete('settings/homepage/churches/{church}', [App\Http\Controllers\SettingsController::class, 'destroyChurch'])
+        ->name('settings.homepage.churches.destroy')
         ->middleware('can:manage hero slides');
 
     // Chat routes

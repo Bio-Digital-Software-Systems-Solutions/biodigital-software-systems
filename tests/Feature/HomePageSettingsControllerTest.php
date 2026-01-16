@@ -421,4 +421,255 @@ class HomePageSettingsControllerTest extends TestCase
                 ->where('heroSlides.0.id', $activeSlide->id)
         );
     }
+
+    // ==========================================
+    // Global Stats Tests
+    // ==========================================
+
+    /** @test */
+    public function homepage_settings_returns_global_stats()
+    {
+        $response = $this->actingAs($this->admin)->get(route('settings.homepage'));
+
+        $response->assertStatus(200);
+        $response->assertInertia(
+            fn($page) => $page
+                ->component('Settings/Homepage')
+                ->has('globalStats')
+                ->has('globalStats.total_churches')
+                ->has('globalStats.total_countries')
+                ->has('globalStats.total_members')
+                ->has('globalStats.europe')
+                ->has('globalStats.africa')
+                ->has('globalStats.americas')
+                ->has('globalStats.asia')
+                ->has('globalStats.oceania')
+        );
+    }
+
+    /** @test */
+    public function admin_can_update_global_stats()
+    {
+        $data = [
+            'total_churches' => 150,
+            'total_countries' => 30,
+            'total_members' => 60000,
+            'europe' => 70,
+            'africa' => 50,
+            'americas' => 20,
+            'asia' => 8,
+            'oceania' => 2,
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('settings.homepage.global-stats.update'), $data);
+
+        $response->assertRedirect();
+
+        // Verify the stats were saved
+        $response = $this->actingAs($this->admin)->get(route('settings.homepage'));
+        $response->assertInertia(
+            fn($page) => $page
+                ->where('globalStats.total_churches', 150)
+                ->where('globalStats.total_countries', 30)
+                ->where('globalStats.total_members', 60000)
+                ->where('globalStats.europe', 70)
+                ->where('globalStats.africa', 50)
+                ->where('globalStats.americas', 20)
+                ->where('globalStats.asia', 8)
+                ->where('globalStats.oceania', 2)
+        );
+    }
+
+    /** @test */
+    public function regular_user_cannot_update_global_stats()
+    {
+        $data = [
+            'total_churches' => 999,
+            'total_countries' => 999,
+            'total_members' => 999999,
+            'europe' => 999,
+            'africa' => 999,
+            'americas' => 999,
+            'asia' => 999,
+            'oceania' => 999,
+        ];
+
+        $response = $this->actingAs($this->user)->post(route('settings.homepage.global-stats.update'), $data);
+
+        $this->assertTrue(
+            $response->isForbidden() || $response->isRedirect(),
+            'Expected 403 Forbidden or redirect'
+        );
+    }
+
+    /** @test */
+    public function global_stats_validation_rejects_negative_numbers()
+    {
+        $data = [
+            'total_churches' => -5,
+            'total_countries' => 30,
+            'total_members' => 60000,
+            'europe' => 70,
+            'africa' => 50,
+            'americas' => 20,
+            'asia' => 5,
+            'oceania' => 2,
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('settings.homepage.global-stats.update'), $data);
+
+        $response->assertSessionHasErrors(['total_churches']);
+    }
+
+    /** @test */
+    public function global_stats_validation_requires_all_fields()
+    {
+        $data = [
+            'total_churches' => 100,
+            // Missing other fields
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('settings.homepage.global-stats.update'), $data);
+
+        $response->assertSessionHasErrors(['total_countries', 'total_members', 'europe', 'africa', 'americas', 'asia', 'oceania']);
+    }
+
+    // ==========================================
+    // Church Management Tests
+    // ==========================================
+
+    /** @test */
+    public function homepage_settings_returns_churches()
+    {
+        $response = $this->actingAs($this->admin)->get(route('settings.homepage'));
+
+        $response->assertStatus(200);
+        $response->assertInertia(
+            fn($page) => $page
+                ->component('Settings/Homepage')
+                ->has('churches')
+        );
+    }
+
+    /** @test */
+    public function admin_can_create_church()
+    {
+        $data = [
+            'name' => 'ICC Test',
+            'city' => 'Test City',
+            'country' => 'Test Country',
+            'latitude' => 48.8566,
+            'longitude' => 2.3522,
+            'members' => 500,
+            'address' => '123 Test Street',
+            'is_active' => true,
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('settings.homepage.churches.store'), $data);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('churches', [
+            'name' => 'ICC Test',
+            'city' => 'Test City',
+            'country' => 'Test Country',
+        ]);
+    }
+
+    /** @test */
+    public function admin_can_update_church()
+    {
+        $church = \App\Models\Church::create([
+            'name' => 'Original Church',
+            'city' => 'Original City',
+            'country' => 'Original Country',
+            'latitude' => 48.8566,
+            'longitude' => 2.3522,
+        ]);
+
+        $data = [
+            'name' => 'Updated Church',
+            'city' => 'Updated City',
+            'country' => 'Updated Country',
+            'latitude' => 45.0,
+            'longitude' => 5.0,
+            'members' => 1000,
+            'is_active' => false,
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('settings.homepage.churches.update', $church), $data);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('churches', [
+            'id' => $church->id,
+            'name' => 'Updated Church',
+            'city' => 'Updated City',
+        ]);
+    }
+
+    /** @test */
+    public function admin_can_delete_church()
+    {
+        $church = \App\Models\Church::create([
+            'name' => 'Church to Delete',
+            'city' => 'City',
+            'country' => 'Country',
+            'latitude' => 48.8566,
+            'longitude' => 2.3522,
+        ]);
+
+        $response = $this->actingAs($this->admin)->delete(route('settings.homepage.churches.destroy', $church));
+
+        $response->assertRedirect();
+        $this->assertDatabaseMissing('churches', ['id' => $church->id]);
+    }
+
+    /** @test */
+    public function regular_user_cannot_create_church()
+    {
+        $data = [
+            'name' => 'Unauthorized Church',
+            'city' => 'City',
+            'country' => 'Country',
+            'latitude' => 48.8566,
+            'longitude' => 2.3522,
+        ];
+
+        $response = $this->actingAs($this->user)->post(route('settings.homepage.churches.store'), $data);
+
+        $this->assertTrue(
+            $response->isForbidden() || $response->isRedirect(),
+            'Expected 403 Forbidden or redirect'
+        );
+        $this->assertDatabaseMissing('churches', ['name' => 'Unauthorized Church']);
+    }
+
+    /** @test */
+    public function church_validation_requires_name_city_country_coordinates()
+    {
+        $data = [
+            // Missing all required fields
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('settings.homepage.churches.store'), $data);
+
+        $response->assertSessionHasErrors(['name', 'city', 'country', 'latitude', 'longitude']);
+    }
+
+    /** @test */
+    public function church_auto_detects_continent()
+    {
+        $data = [
+            'name' => 'ICC Paris',
+            'city' => 'Paris',
+            'country' => 'France',
+            'latitude' => 48.8566,  // Europe
+            'longitude' => 2.3522,
+            'is_active' => true,
+        ];
+
+        $this->actingAs($this->admin)->post(route('settings.homepage.churches.store'), $data);
+
+        $church = \App\Models\Church::where('name', 'ICC Paris')->first();
+        $this->assertEquals('europe', $church->continent);
+    }
 }

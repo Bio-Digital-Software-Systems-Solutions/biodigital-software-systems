@@ -2,7 +2,22 @@ import React from 'react';
 import { Badge } from '../ui/badge';
 import WorldMap from './WorldMap';
 
-const AboutSection: React.FC = () => {
+interface GlobalStats {
+  total_churches: number;
+  total_countries: number;
+  total_members: number;
+  europe: number;
+  africa: number;
+  americas: number;
+  asia: number;
+  oceania: number;
+}
+
+interface AboutSectionProps {
+  globalStats: GlobalStats;
+}
+
+const AboutSection: React.FC<AboutSectionProps> = ({ globalStats }) => {
   return (
     <div id="about" className="bg-gray-50 dark:bg-gray-900 py-16 px-6 md:px-12">
       <div className="text-center space-y-4 mb-16">
@@ -134,7 +149,7 @@ const AboutSection: React.FC = () => {
             L'ICC est présente sur plusieurs continents avec des églises dynamiques qui transforment des vies et impactent leurs communautés.
           </p>
           <div className="relative rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-2xl p-4">
-            <WorldMap />
+            <WorldMap globalStats={globalStats} />
           </div>
         </div>
 

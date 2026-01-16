@@ -12,10 +12,22 @@ import { Toaster } from 'sonner';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
+interface GlobalStats {
+    total_churches: number;
+    total_countries: number;
+    total_members: number;
+    europe: number;
+    africa: number;
+    americas: number;
+    asia: number;
+    oceania: number;
+}
+
 interface WelcomeProps extends PageProps {
     laravelVersion: string;
     phpVersion: string;
     heroSlides: HeroSlide[];
+    globalStats: GlobalStats;
 }
 
 export default function Welcome({
@@ -23,6 +35,7 @@ export default function Welcome({
     laravelVersion,
     phpVersion,
     heroSlides,
+    globalStats,
 }: WelcomeProps) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -264,7 +277,7 @@ export default function Welcome({
                 <HeroCarousel slides={slides} />
 
                 {/* About Section */}
-                <AboutSection />
+                <AboutSection globalStats={globalStats} />
 
                 {/* Our Values Section */}
                 <OurValues />

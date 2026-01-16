@@ -63,6 +63,9 @@ import {
     Eye,
     EyeOff,
     ArrowLeft,
+    Globe,
+    Save,
+    MapPin,
 } from 'lucide-react';
 import { Link } from '@inertiajs/react';
 
@@ -89,15 +92,45 @@ interface Props {
         };
     };
     slides: HeroSlide[];
+    globalStats: GlobalStats;
+    churches: Church[];
+}
+
+interface Church {
+    id: number;
+    name: string;
+    city: string;
+    country: string;
+    latitude: number;
+    longitude: number;
+    members: number;
+    address: string | null;
+    website: string | null;
+    email: string | null;
+    phone: string | null;
+    continent: string | null;
+    is_active: boolean;
+}
+
+interface GlobalStats {
+    total_churches: number;
+    total_countries: number;
+    total_members: number;
+    europe: number;
+    africa: number;
+    americas: number;
+    asia: number;
+    oceania: number;
 }
 
 interface SortableSlideProps {
     slide: HeroSlide;
     onEdit: (slide: HeroSlide) => void;
     onDelete: (slide: HeroSlide) => void;
+    onView: (slide: HeroSlide) => void;
 }
 
-function SortableSlide({ slide, onEdit, onDelete }: SortableSlideProps) {
+function SortableSlide({ slide, onEdit, onDelete, onView }: SortableSlideProps) {
     const {
         attributes,
         listeners,
@@ -132,49 +165,55 @@ function SortableSlide({ slide, onEdit, onDelete }: SortableSlideProps) {
                 <GripVertical className="h-5 w-5" />
             </button>
 
-            {/* Media Preview */}
-            <div className="w-24 h-16 rounded overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
-                {slide.media_type === 'video' ? (
-                    <video
-                        src={slide.media_url}
-                        className="w-full h-full object-cover"
-                        muted
-                    />
-                ) : (
-                    <img
-                        src={slide.media_url}
-                        alt={slide.title || 'Slide'}
-                        className="w-full h-full object-cover"
-                    />
-                )}
-            </div>
-
-            {/* Slide Info */}
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium truncate">
-                        {slide.title || 'Sans titre'}
-                    </span>
-                    <Badge variant={slide.media_type === 'video' ? 'secondary' : 'outline'} className="text-xs">
-                        {slide.media_type === 'video' ? (
-                            <><Video className="h-3 w-3 mr-1" /> Vidéo</>
-                        ) : (
-                            <><ImageIcon className="h-3 w-3 mr-1" /> Image</>
-                        )}
-                    </Badge>
-                    {slide.is_active ? (
-                        <Badge variant="default" className="text-xs bg-green-500">
-                            <Eye className="h-3 w-3 mr-1" /> Actif
-                        </Badge>
+            {/* Clickable area - Media Preview + Slide Info */}
+            <div
+                className="flex items-center gap-4 flex-1 min-w-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg p-2 -m-2 transition-colors"
+                onClick={() => onView(slide)}
+            >
+                {/* Media Preview */}
+                <div className="w-24 h-16 rounded overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                    {slide.media_type === 'video' ? (
+                        <video
+                            src={slide.media_url}
+                            className="w-full h-full object-cover"
+                            muted
+                        />
                     ) : (
-                        <Badge variant="secondary" className="text-xs">
-                            <EyeOff className="h-3 w-3 mr-1" /> Inactif
-                        </Badge>
+                        <img
+                            src={slide.media_url}
+                            alt={slide.title || 'Slide'}
+                            className="w-full h-full object-cover"
+                        />
                     )}
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                    {slide.description || 'Pas de description'}
-                </p>
+
+                {/* Slide Info */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium truncate">
+                            {slide.title || 'Sans titre'}
+                        </span>
+                        <Badge variant={slide.media_type === 'video' ? 'secondary' : 'outline'} className="text-xs">
+                            {slide.media_type === 'video' ? (
+                                <><Video className="h-3 w-3 mr-1" /> Vidéo</>
+                            ) : (
+                                <><ImageIcon className="h-3 w-3 mr-1" /> Image</>
+                            )}
+                        </Badge>
+                        {slide.is_active ? (
+                            <Badge variant="default" className="text-xs bg-green-500">
+                                <Eye className="h-3 w-3 mr-1" /> Actif
+                            </Badge>
+                        ) : (
+                            <Badge variant="secondary" className="text-xs">
+                                <EyeOff className="h-3 w-3 mr-1" /> Inactif
+                            </Badge>
+                        )}
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {slide.description || 'Pas de description'}
+                    </p>
+                </div>
             </div>
 
             {/* Order Number */}
@@ -206,11 +245,169 @@ function SortableSlide({ slide, onEdit, onDelete }: SortableSlideProps) {
     );
 }
 
-export default function Homepage({ auth, slides: initialSlides }: Props) {
+export default function Homepage({ auth, slides: initialSlides, globalStats: initialGlobalStats, churches: initialChurches }: Props) {
     const [slides, setSlides] = useState<HeroSlide[]>(initialSlides);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingSlide, setEditingSlide] = useState<HeroSlide | null>(null);
     const [deletingSlide, setDeletingSlide] = useState<HeroSlide | null>(null);
+    const [viewingSlide, setViewingSlide] = useState<HeroSlide | null>(null);
+
+    // Church management state
+    const [churches, setChurches] = useState<Church[]>(initialChurches ?? []);
+    const [showChurchModal, setShowChurchModal] = useState(false);
+    const [editingChurch, setEditingChurch] = useState<Church | null>(null);
+    const [deletingChurch, setDeletingChurch] = useState<Church | null>(null);
+    const [churchProcessing, setChurchProcessing] = useState(false);
+    const [churchForm, setChurchForm] = useState({
+        name: '',
+        city: '',
+        country: '',
+        latitude: '',
+        longitude: '',
+        members: '',
+        address: '',
+        website: '',
+        email: '',
+        phone: '',
+        is_active: true,
+    });
+
+    const resetChurchForm = () => {
+        setChurchForm({
+            name: '',
+            city: '',
+            country: '',
+            latitude: '',
+            longitude: '',
+            members: '',
+            address: '',
+            website: '',
+            email: '',
+            phone: '',
+            is_active: true,
+        });
+    };
+
+    const openChurchModal = (church?: Church) => {
+        if (church) {
+            setEditingChurch(church);
+            setChurchForm({
+                name: church.name,
+                city: church.city,
+                country: church.country,
+                latitude: String(church.latitude),
+                longitude: String(church.longitude),
+                members: String(church.members || ''),
+                address: church.address || '',
+                website: church.website || '',
+                email: church.email || '',
+                phone: church.phone || '',
+                is_active: church.is_active,
+            });
+        } else {
+            setEditingChurch(null);
+            resetChurchForm();
+        }
+        setShowChurchModal(true);
+    };
+
+    const closeChurchModal = () => {
+        setShowChurchModal(false);
+        setEditingChurch(null);
+        resetChurchForm();
+    };
+
+    const handleChurchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setChurchProcessing(true);
+
+        const formData = {
+            name: churchForm.name,
+            city: churchForm.city,
+            country: churchForm.country,
+            latitude: parseFloat(churchForm.latitude),
+            longitude: parseFloat(churchForm.longitude),
+            members: churchForm.members ? parseInt(churchForm.members, 10) : 0,
+            address: churchForm.address || null,
+            website: churchForm.website || null,
+            email: churchForm.email || null,
+            phone: churchForm.phone || null,
+            is_active: churchForm.is_active,
+        };
+
+        const routeName = editingChurch
+            ? route('settings.homepage.churches.update', editingChurch.id)
+            : route('settings.homepage.churches.store');
+
+        router.post(routeName, formData as unknown as Record<string, string>, {
+            preserveState: false,
+            onSuccess: () => {
+                toast.success(editingChurch ? 'Église mise à jour' : 'Église ajoutée');
+                closeChurchModal();
+                setChurchProcessing(false);
+            },
+            onError: (errors) => {
+                toast.error('Erreur lors de la sauvegarde');
+                console.error(errors);
+                setChurchProcessing(false);
+            },
+        });
+    };
+
+    const handleChurchDelete = () => {
+        if (!deletingChurch) return;
+        router.delete(route('settings.homepage.churches.destroy', deletingChurch.id), {
+            preserveState: false,
+            onSuccess: () => {
+                toast.success('Église supprimée');
+                setDeletingChurch(null);
+            },
+            onError: () => {
+                toast.error('Erreur lors de la suppression');
+            },
+        });
+    };
+
+    // Global Stats form - ensure all fields have defaults for backward compatibility
+    const [globalStats, setGlobalStats] = useState<GlobalStats>({
+        total_churches: initialGlobalStats.total_churches ?? 0,
+        total_countries: initialGlobalStats.total_countries ?? 0,
+        total_members: initialGlobalStats.total_members ?? 0,
+        europe: initialGlobalStats.europe ?? 0,
+        africa: initialGlobalStats.africa ?? 0,
+        americas: initialGlobalStats.americas ?? 0,
+        asia: initialGlobalStats.asia ?? 0,
+        oceania: initialGlobalStats.oceania ?? 0,
+    });
+    const [statsProcessing, setStatsProcessing] = useState(false);
+
+    const handleStatsChange = (field: keyof GlobalStats, value: string) => {
+        const numValue = parseInt(value, 10) || 0;
+        setGlobalStats(prev => {
+            const updated = { ...prev, [field]: numValue };
+            // Auto-calculate total churches from regions
+            const regionFields: (keyof GlobalStats)[] = ['europe', 'africa', 'americas', 'asia', 'oceania'];
+            if (regionFields.includes(field)) {
+                updated.total_churches = updated.europe + updated.africa + updated.americas + updated.asia + updated.oceania;
+            }
+            return updated;
+        });
+    };
+
+    const handleStatsSave = () => {
+        setStatsProcessing(true);
+        router.post(route('settings.homepage.global-stats.update'), globalStats as unknown as Record<string, string>, {
+            preserveState: false,
+            onSuccess: () => {
+                toast.success('Statistiques mises à jour avec succès');
+                setStatsProcessing(false);
+            },
+            onError: () => {
+                toast.error('Erreur lors de la mise à jour des statistiques');
+                setStatsProcessing(false);
+            },
+        });
+    };
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -283,6 +480,7 @@ export default function Homepage({ auth, slides: initialSlides }: Props) {
 
         router.post(route('settings.homepage.slides.store'), formData, {
             forceFormData: true,
+            preserveState: false,
             onSuccess: () => {
                 toast.success('Slide ajouté avec succès');
                 setShowAddModal(false);
@@ -312,8 +510,9 @@ export default function Homepage({ auth, slides: initialSlides }: Props) {
         formData.append('overlay_opacity', String(data.overlay_opacity));
         formData.append('is_active', data.is_active ? '1' : '0');
 
-        router.post(route('settings.homepage.slides.update', editingSlide.id), formData, {
+        router.post(route('settings.homepage.slides.update', editingSlide.uuid), formData, {
             forceFormData: true,
+            preserveState: false,
             onSuccess: () => {
                 toast.success('Slide mis à jour avec succès');
                 setEditingSlide(null);
@@ -328,7 +527,8 @@ export default function Homepage({ auth, slides: initialSlides }: Props) {
     const handleDelete = () => {
         if (!deletingSlide) return;
 
-        router.delete(route('settings.homepage.slides.destroy', deletingSlide.id), {
+        router.delete(route('settings.homepage.slides.destroy', deletingSlide.uuid), {
+            preserveState: false,
             onSuccess: () => {
                 toast.success('Slide supprimé avec succès');
                 setDeletingSlide(null);
@@ -429,6 +629,7 @@ export default function Homepage({ auth, slides: initialSlides }: Props) {
                                                 slide={slide}
                                                 onEdit={openEditModal}
                                                 onDelete={setDeletingSlide}
+                                                onView={setViewingSlide}
                                             />
                                         ))}
                                     </div>
@@ -438,6 +639,357 @@ export default function Homepage({ auth, slides: initialSlides }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Global Stats Section */}
+            <div className="mt-8">
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Globe className="h-6 w-6 text-purple-600" />
+                                <div>
+                                    <CardTitle>Statistiques Mondiales</CardTitle>
+                                    <CardDescription>
+                                        Modifiez les statistiques affichées dans "Notre Présence Mondiale"
+                                    </CardDescription>
+                                </div>
+                            </div>
+                            <Button onClick={handleStatsSave} disabled={statsProcessing}>
+                                <Save className="h-4 w-4 mr-2" />
+                                {statsProcessing ? 'Enregistrement...' : 'Enregistrer'}
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Main Stats */}
+                            <div className="space-y-4">
+                                <h4 className="font-medium text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                                    Statistiques principales
+                                </h4>
+                                <div className="space-y-3">
+                                    <div>
+                                        <Label htmlFor="total_churches">Nombre d'Églises</Label>
+                                        <Input
+                                            id="total_churches"
+                                            type="number"
+                                            min="0"
+                                            value={globalStats.total_churches}
+                                            onChange={(e) => handleStatsChange('total_churches', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="total_countries">Nombre de Pays</Label>
+                                        <Input
+                                            id="total_countries"
+                                            type="number"
+                                            min="0"
+                                            value={globalStats.total_countries}
+                                            onChange={(e) => handleStatsChange('total_countries', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="total_members">Nombre de Membres</Label>
+                                        <Input
+                                            id="total_members"
+                                            type="number"
+                                            min="0"
+                                            value={globalStats.total_members}
+                                            onChange={(e) => handleStatsChange('total_members', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Regional Stats */}
+                            <div className="space-y-4 md:col-span-2">
+                                <h4 className="font-medium text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                                    Par région
+                                </h4>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                                    <div>
+                                        <Label htmlFor="europe">Europe</Label>
+                                        <Input
+                                            id="europe"
+                                            type="number"
+                                            min="0"
+                                            value={globalStats.europe}
+                                            onChange={(e) => handleStatsChange('europe', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="africa">Afrique</Label>
+                                        <Input
+                                            id="africa"
+                                            type="number"
+                                            min="0"
+                                            value={globalStats.africa}
+                                            onChange={(e) => handleStatsChange('africa', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="americas">Amériques</Label>
+                                        <Input
+                                            id="americas"
+                                            type="number"
+                                            min="0"
+                                            value={globalStats.americas}
+                                            onChange={(e) => handleStatsChange('americas', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="asia">Asie</Label>
+                                        <Input
+                                            id="asia"
+                                            type="number"
+                                            min="0"
+                                            value={globalStats.asia}
+                                            onChange={(e) => handleStatsChange('asia', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="oceania">Océanie</Label>
+                                        <Input
+                                            id="oceania"
+                                            type="number"
+                                            min="0"
+                                            value={globalStats.oceania}
+                                            onChange={(e) => handleStatsChange('oceania', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Church Management Section */}
+            <div className="mt-8">
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <MapPin className="h-6 w-6 text-green-600" />
+                                <div>
+                                    <CardTitle>Gestion des Églises</CardTitle>
+                                    <CardDescription>
+                                        Gérez les églises affichées sur la carte mondiale
+                                    </CardDescription>
+                                </div>
+                            </div>
+                            <Button onClick={() => openChurchModal()}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Ajouter une église
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {churches.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                Aucune église enregistrée. Cliquez sur "Ajouter une église" pour commencer.
+                            </div>
+                        ) : (
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                                {churches.map((church) => (
+                                    <div
+                                        key={church.id}
+                                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <MapPin className={`h-4 w-4 ${church.is_active ? 'text-green-600' : 'text-gray-400'}`} />
+                                            <div>
+                                                <div className="font-medium">{church.name}</div>
+                                                <div className="text-sm text-gray-500">
+                                                    {church.city}, {church.country} • {church.members} membres
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => openChurchModal(church)}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setDeletingChurch(church)}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-red-500" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Church Add/Edit Modal */}
+            <Dialog open={showChurchModal} onOpenChange={closeChurchModal}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {editingChurch ? 'Modifier l\'église' : 'Ajouter une église'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {editingChurch
+                                ? 'Modifiez les informations de l\'église.'
+                                : 'Ajoutez une nouvelle église à la carte mondiale.'
+                            }
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleChurchSubmit} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="church_name">Nom *</Label>
+                                <Input
+                                    id="church_name"
+                                    value={churchForm.name}
+                                    onChange={(e) => setChurchForm({ ...churchForm, name: e.target.value })}
+                                    placeholder="ICC Paris"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="church_city">Ville *</Label>
+                                <Input
+                                    id="church_city"
+                                    value={churchForm.city}
+                                    onChange={(e) => setChurchForm({ ...churchForm, city: e.target.value })}
+                                    placeholder="Paris"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="church_country">Pays *</Label>
+                                <Input
+                                    id="church_country"
+                                    value={churchForm.country}
+                                    onChange={(e) => setChurchForm({ ...churchForm, country: e.target.value })}
+                                    placeholder="France"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="church_members">Nombre de membres</Label>
+                                <Input
+                                    id="church_members"
+                                    type="number"
+                                    min="0"
+                                    value={churchForm.members}
+                                    onChange={(e) => setChurchForm({ ...churchForm, members: e.target.value })}
+                                    placeholder="500"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="church_latitude">Latitude *</Label>
+                                <Input
+                                    id="church_latitude"
+                                    type="number"
+                                    step="any"
+                                    value={churchForm.latitude}
+                                    onChange={(e) => setChurchForm({ ...churchForm, latitude: e.target.value })}
+                                    placeholder="48.8566"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="church_longitude">Longitude *</Label>
+                                <Input
+                                    id="church_longitude"
+                                    type="number"
+                                    step="any"
+                                    value={churchForm.longitude}
+                                    onChange={(e) => setChurchForm({ ...churchForm, longitude: e.target.value })}
+                                    placeholder="2.3522"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <Label htmlFor="church_address">Adresse</Label>
+                            <Input
+                                id="church_address"
+                                value={churchForm.address}
+                                onChange={(e) => setChurchForm({ ...churchForm, address: e.target.value })}
+                                placeholder="123 Rue de l'Église, 75001 Paris"
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="church_email">Email</Label>
+                                <Input
+                                    id="church_email"
+                                    type="email"
+                                    value={churchForm.email}
+                                    onChange={(e) => setChurchForm({ ...churchForm, email: e.target.value })}
+                                    placeholder="contact@icc-paris.fr"
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="church_phone">Téléphone</Label>
+                                <Input
+                                    id="church_phone"
+                                    value={churchForm.phone}
+                                    onChange={(e) => setChurchForm({ ...churchForm, phone: e.target.value })}
+                                    placeholder="+33 1 23 45 67 89"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <Label htmlFor="church_website">Site web</Label>
+                            <Input
+                                id="church_website"
+                                type="url"
+                                value={churchForm.website}
+                                onChange={(e) => setChurchForm({ ...churchForm, website: e.target.value })}
+                                placeholder="https://icc-paris.fr"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="church_is_active"
+                                checked={churchForm.is_active}
+                                onChange={(e) => setChurchForm({ ...churchForm, is_active: e.target.checked })}
+                                className="h-4 w-4"
+                            />
+                            <Label htmlFor="church_is_active">Afficher sur la carte</Label>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-4">
+                            <Button type="button" variant="outline" onClick={closeChurchModal}>
+                                Annuler
+                            </Button>
+                            <Button type="submit" disabled={churchProcessing}>
+                                {churchProcessing ? 'Enregistrement...' : (editingChurch ? 'Mettre à jour' : 'Ajouter')}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Church Delete Confirmation */}
+            <AlertDialog open={!!deletingChurch} onOpenChange={() => setDeletingChurch(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer cette église ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Voulez-vous vraiment supprimer "{deletingChurch?.name}" ? Cette action est irréversible.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleChurchDelete} className="bg-red-600 hover:bg-red-700">
+                            Supprimer
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             {/* Add/Edit Modal */}
             <Dialog open={showAddModal || !!editingSlide} onOpenChange={closeModal}>
@@ -634,6 +1186,104 @@ export default function Homepage({ auth, slides: initialSlides }: Props) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Details View Dialog */}
+            <Dialog open={!!viewingSlide} onOpenChange={() => setViewingSlide(null)}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Détails du slide</DialogTitle>
+                        <DialogDescription>
+                            Aperçu du slide et de ses informations.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {viewingSlide && (
+                        <div className="space-y-6 py-4 px-3">
+                            {/* Media Preview */}
+                            <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                                {viewingSlide.media_type === 'video' ? (
+                                    <video
+                                        src={viewingSlide.media_url}
+                                        className="w-full h-full object-cover"
+                                        controls
+                                    />
+                                ) : (
+                                    <img
+                                        src={viewingSlide.media_url}
+                                        alt={viewingSlide.title || 'Slide'}
+                                        className="w-full h-full object-cover"
+                                    />
+                                )}
+                            </div>
+
+                            {/* Slide Info */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Badge variant={viewingSlide.media_type === 'video' ? 'secondary' : 'outline'}>
+                                        {viewingSlide.media_type === 'video' ? (
+                                            <><Video className="h-3 w-3 mr-1" /> Vidéo</>
+                                        ) : (
+                                            <><ImageIcon className="h-3 w-3 mr-1" /> Image</>
+                                        )}
+                                    </Badge>
+                                    {viewingSlide.is_active ? (
+                                        <Badge variant="default" className="bg-green-500">
+                                            <Eye className="h-3 w-3 mr-1" /> Actif
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="secondary">
+                                            <EyeOff className="h-3 w-3 mr-1" /> Inactif
+                                        </Badge>
+                                    )}
+                                    <Badge variant="outline" className="ml-auto">
+                                        Position #{viewingSlide.order}
+                                    </Badge>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-lg font-semibold">
+                                        {viewingSlide.title || 'Sans titre'}
+                                    </h3>
+                                    <p className="text-gray-500 dark:text-gray-400 mt-1">
+                                        {viewingSlide.description || 'Pas de description'}
+                                    </p>
+                                </div>
+
+                                {(viewingSlide.cta_text || viewingSlide.cta_link) && (
+                                    <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-4">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Bouton d'action</p>
+                                        <p className="font-medium">{viewingSlide.cta_text || '-'}</p>
+                                        {viewingSlide.cta_link && (
+                                            <p className="text-sm text-primary">{viewingSlide.cta_link}</p>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-4">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        Opacité de l'overlay: {Math.round((viewingSlide.overlay_opacity || 0.5) * 100)}%
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setViewingSlide(null)}>
+                            Fermer
+                        </Button>
+                        <Button onClick={() => {
+                            if (viewingSlide) {
+                                openEditModal(viewingSlide);
+                                setViewingSlide(null);
+                            }
+                        }}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Modifier
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </DashboardLayout>
     );
 }
