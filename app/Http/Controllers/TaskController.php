@@ -196,7 +196,7 @@ class TaskController extends Controller
         $task = Task::create($validated);
 
         // Redirect to project if task was created from a project page
-        if ($validated['taskable_type'] === 'App\\Models\\Project' && $request->has('from_project')) {
+        if (isset($validated['taskable_type']) && $validated['taskable_type'] === 'App\\Models\\Project' && $request->has('from_project')) {
             $project = \App\Models\Project::find($validated['taskable_id']);
             if ($project) {
                 return redirect()->route('projects.show', $project->uuid)
