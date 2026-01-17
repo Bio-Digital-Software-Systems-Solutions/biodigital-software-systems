@@ -18,12 +18,15 @@ import {
     ArrowLeftIcon,
     CheckCircleIcon,
     XCircleIcon,
-    DocumentTextIcon
+    DocumentTextIcon,
+    ArrowPathIcon,
+    LinkIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import FollowUpModal from '@/Components/PastoralCare/FollowUpModal';
 
 interface User {
     id: number;
@@ -39,6 +42,25 @@ interface PastoralCareAppointment {
     uuid: string;
     user?: User;
     pastor: User;
+    parent_id?: number;
+    parent?: {
+        id: number;
+        uuid: string;
+        appointment_date: string;
+        appointment_time: string;
+        status: string;
+        client_name: string;
+        pastor: User;
+    };
+    follow_ups?: Array<{
+        id: number;
+        uuid: string;
+        appointment_date: string;
+        appointment_time: string;
+        status: string;
+        client_name: string;
+        pastor: User;
+    }>;
     appointment_date: string;
     appointment_time: string;
     duration_minutes: number;
@@ -72,6 +94,7 @@ interface Props {
 
 export default function Show({ appointment, canEdit, canConfirm, canCancel, auth }: Props) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showFollowUpModal, setShowFollowUpModal] = useState(false);
     const [pastorNotes, setPastorNotes] = useState(appointment.pastor_notes || '');
     const [isUpdatingNotes, setIsUpdatingNotes] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -102,6 +125,39 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                 return <Badge variant="destructive" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Absent</Badge>;
             default:
                 return <Badge variant="secondary">{status}</Badge>;
+        }
+    };
+
+    const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+        switch (status) {
+            case 'pending':
+                return 'secondary';
+            case 'confirmed':
+                return 'default';
+            case 'completed':
+                return 'outline';
+            case 'cancelled':
+            case 'no_show':
+                return 'destructive';
+            default:
+                return 'secondary';
+        }
+    };
+
+    const getStatusLabel = (status: string): string => {
+        switch (status) {
+            case 'pending':
+                return 'En attente';
+            case 'confirmed':
+                return 'Confirmé';
+            case 'completed':
+                return 'Terminé';
+            case 'cancelled':
+                return 'Annulé';
+            case 'no_show':
+                return 'Absent';
+            default:
+                return status;
         }
     };
 
@@ -481,6 +537,87 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                 </CardContent>
                             </Card>
 
+                            {/* Related Appointments - Parent and Follow-ups */}
+                            {(appointment.parent || (appointment.follow_ups && appointment.follow_ups.length > 0)) && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center">
+                                            <LinkIcon className="h-5 w-5 mr-2" />
+                                            Rendez-vous liés
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Navigation entre les rendez-vous de suivi
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {/* Parent appointment - if this is a follow-up */}
+                                        {appointment.parent && (
+                                            <div>
+                                                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                                    Rendez-vous précédent
+                                                </h4>
+                                                <button
+                                                    onClick={() => router.visit(`/pastoral-care/appointments/${appointment.parent!.uuid}`)}
+                                                    className="w-full text-left p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center space-x-3">
+                                                            <ArrowLeftIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                                            <div>
+                                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                                    {formatDate(appointment.parent.appointment_date)}
+                                                                </p>
+                                                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                                    {formatTime(appointment.parent.appointment_time)} avec {appointment.parent.pastor.first_name} {appointment.parent.pastor.last_name}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <Badge variant={getStatusVariant(appointment.parent.status)}>
+                                                            {getStatusLabel(appointment.parent.status)}
+                                                        </Badge>
+                                                    </div>
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* Follow-up appointments - if this has follow-ups */}
+                                        {appointment.follow_ups && appointment.follow_ups.length > 0 && (
+                                            <div>
+                                                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                                    Rendez-vous de suivi ({appointment.follow_ups.length})
+                                                </h4>
+                                                <div className="space-y-2">
+                                                    {appointment.follow_ups.map((followUp) => (
+                                                        <button
+                                                            key={followUp.uuid}
+                                                            onClick={() => router.visit(`/pastoral-care/appointments/${followUp.uuid}`)}
+                                                            className="w-full text-left p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                                                        >
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center space-x-3">
+                                                                    <ArrowPathIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                                                    <div>
+                                                                        <p className="font-medium text-gray-900 dark:text-white">
+                                                                            {formatDate(followUp.appointment_date)}
+                                                                        </p>
+                                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                                            {formatTime(followUp.appointment_time)} avec {followUp.pastor.first_name} {followUp.pastor.last_name}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                                <Badge variant={getStatusVariant(followUp.status)}>
+                                                                    {getStatusLabel(followUp.status)}
+                                                                </Badge>
+                                                            </div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            )}
+
                             {/* Client Notes */}
                             {appointment.notes && (
                                 <Card>
@@ -593,6 +730,18 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                                 Annuler
                                             </Button>
                                         )}
+
+                                        {/* Follow-up Button - visible for completed or confirmed appointments */}
+                                        {isPastor && ['completed', 'confirmed'].includes(appointment.status) && (
+                                            <Button
+                                                onClick={() => setShowFollowUpModal(true)}
+                                                variant="outline"
+                                                className="w-full text-purple-600 border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                                            >
+                                                <ArrowPathIcon className="h-4 w-4 mr-2" />
+                                                Planifier un suivi
+                                            </Button>
+                                        )}
                                     </CardContent>
                                 </Card>
                             )}
@@ -640,8 +789,8 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                         {appointment.pastor_notes && (
                                             <div className="mb-4">
                                                 <Label>Notes existantes</Label>
-                                                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                                    <p className="text-blue-800 dark:text-blue-200 text-sm leading-relaxed whitespace-pre-wrap">
+                                                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 overflow-hidden">
+                                                    <p className="text-blue-800 dark:text-blue-200 text-sm leading-relaxed whitespace-pre-wrap break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                                                         {appointment.pastor_notes}
                                                     </p>
                                                 </div>
@@ -703,6 +852,22 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                 onConfirm={handleDelete}
                 title="Supprimer le rendez-vous"
                 description={`Êtes-vous sûr de vouloir supprimer définitivement le rendez-vous avec ${appointment.client_name} ? Cette action ne peut pas être annulée.`}
+            />
+
+            {/* Follow-Up Modal */}
+            <FollowUpModal
+                isOpen={showFollowUpModal}
+                onClose={() => setShowFollowUpModal(false)}
+                parentAppointment={{
+                    uuid: appointment.uuid,
+                    pastor_id: appointment.pastor.id,
+                    client_name: appointment.client_name,
+                    client_email: appointment.client_email,
+                    client_phone: appointment.client_phone,
+                    duration_minutes: appointment.duration_minutes,
+                    location_type: appointment.location_type,
+                    zoom_link: appointment.zoom_link,
+                }}
             />
         </DashboardLayout>
     );

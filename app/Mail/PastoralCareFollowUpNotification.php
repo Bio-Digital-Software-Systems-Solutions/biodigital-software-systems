@@ -1,0 +1,69 @@
+<?php
+
+namespace App\Mail;
+
+use App\Models\PastoralCare;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+
+class PastoralCareFollowUpNotification extends Mailable implements ShouldQueue
+{
+    use Queueable, SerializesModels;
+
+    /**
+     * Create a new message instance.
+     */
+    public function __construct(
+        public PastoralCare $appointment,
+        public PastoralCare $parentAppointment
+    ) {
+        $this->appointment->load(['pastor']);
+        $this->parentAppointment->load(['pastor']);
+    }
+
+    /**
+     * Get the message envelope.
+     */
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: 'Nouveau rendez-vous de suivi planifié - ICC Munich',
+            from: config('mail.from.address', 'noreply@icc-munich.de'),
+            replyTo: [$this->appointment->pastor->email],
+        );
+    }
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            markdown: 'emails.pastoral-care.follow-up-notification',
+            with: [
+                'appointment' => $this->appointment,
+                'parentAppointment' => $this->parentAppointment,
+                'pastor' => $this->appointment->pastor,
+                'confirmUrl' => route('pastoral-care.public.confirm', ['uuid' => $this->appointment->uuid]),
+                'cancelUrl' => route('pastoral-care.public.cancel', ['uuid' => $this->appointment->uuid]),
+                'churchName' => 'ICC Munich',
+                'churchWebsite' => 'https://icc-munich.de',
+                'churchEmail' => 'info@icc-munich.de',
+            ],
+        );
+    }
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [];
+    }
+}

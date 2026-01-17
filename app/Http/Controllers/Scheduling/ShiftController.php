@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Scheduling;
 
+use App\Enums\Employee\EmployeeStatus;
 use App\Enums\Scheduling\ShiftStatus;
 use App\Enums\Scheduling\ShiftType;
-use App\Enums\Employee\EmployeeStatus;
 use App\Enums\Star\StarStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
@@ -44,12 +44,12 @@ class ShiftController extends Controller
             'department' => $department,
             'schedule' => $schedule,
             'shifts' => $shifts,
-            'shiftTypes' => collect(ShiftType::cases())->map(fn($t) => [
+            'shiftTypes' => collect(ShiftType::cases())->map(fn ($t) => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
             ]),
-            'shiftStatuses' => collect(ShiftStatus::cases())->map(fn($s) => [
+            'shiftStatuses' => collect(ShiftStatus::cases())->map(fn ($s) => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
@@ -64,21 +64,26 @@ class ShiftController extends Controller
     {
         $this->authorize('update', $department);
 
-        // Get department members (users)
-        $users = $department->members()->get()->map(fn($user) => [
-            'id' => $user->id,
-            'uuid' => $user->uuid ?? null,
-            'first_name' => $user->first_name,
-            'last_name' => $user->last_name,
-            'email' => $user->email,
-            'type' => 'user',
-        ]);
+        // Get all active users from users table
+        $users = User::whereNotNull('email_verified_at')
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get()
+            ->map(fn ($user) => [
+                'id' => $user->id,
+                'uuid' => $user->uuid ?? null,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'type' => 'user',
+            ]);
 
         // Get active employees
         $employees = Employee::with('user')
             ->where('status', EmployeeStatus::ACTIVE)
+            ->whereHas('user')
             ->get()
-            ->map(fn($employee) => [
+            ->map(fn ($employee) => [
                 'id' => $employee->user_id,
                 'uuid' => $employee->uuid,
                 'first_name' => $employee->user->first_name ?? '',
@@ -92,17 +97,17 @@ class ShiftController extends Controller
         $stars = Star::with('user')
             ->where('status', StarStatus::ACTIVE)
             ->get()
-            ->map(fn($star) => [
-                'id' => $star->user_id,
+            ->map(fn ($star) => [
+                'id' => $star->user_id ?? $star->id,
                 'uuid' => $star->uuid,
-                'first_name' => $star->user->first_name ?? '',
+                'first_name' => $star->user->first_name ?? $star->title ?? '',
                 'last_name' => $star->user->last_name ?? '',
                 'email' => $star->user->email ?? '',
                 'title' => $star->title,
                 'type' => 'star',
             ]);
 
-        $positions = $department->activePositions()->get()->map(fn($p) => [
+        $positions = $department->activePositions()->get()->map(fn ($p) => [
             'id' => $p->id,
             'uuid' => $p->uuid,
             'name' => $p->name,
@@ -118,7 +123,7 @@ class ShiftController extends Controller
             'employees' => $employees,
             'stars' => $stars,
             'positions' => $positions,
-            'shiftTypes' => collect(ShiftType::cases())->map(fn($t) => [
+            'shiftTypes' => collect(ShiftType::cases())->map(fn ($t) => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
@@ -170,7 +175,7 @@ class ShiftController extends Controller
         $shift = $this->schedulingService->createShift($validated);
 
         // Sync users to pivot table
-        if (!empty($userIds)) {
+        if (! empty($userIds)) {
             $shift->users()->sync($userIds);
 
             // Check for conflicts for first user (primary assignee)
@@ -222,21 +227,26 @@ class ShiftController extends Controller
 
         $shift->load(['user', 'users', 'position', 'tasks']);
 
-        // Get department members (users)
-        $users = $department->members()->get()->map(fn($user) => [
-            'id' => $user->id,
-            'uuid' => $user->uuid ?? null,
-            'first_name' => $user->first_name,
-            'last_name' => $user->last_name,
-            'email' => $user->email,
-            'type' => 'user',
-        ]);
+        // Get all active users from users table
+        $users = User::whereNotNull('email_verified_at')
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get()
+            ->map(fn ($user) => [
+                'id' => $user->id,
+                'uuid' => $user->uuid ?? null,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'type' => 'user',
+            ]);
 
         // Get active employees
         $employees = Employee::with('user')
             ->where('status', EmployeeStatus::ACTIVE)
+            ->whereHas('user')
             ->get()
-            ->map(fn($employee) => [
+            ->map(fn ($employee) => [
                 'id' => $employee->user_id,
                 'uuid' => $employee->uuid,
                 'first_name' => $employee->user->first_name ?? '',
@@ -250,17 +260,17 @@ class ShiftController extends Controller
         $stars = Star::with('user')
             ->where('status', StarStatus::ACTIVE)
             ->get()
-            ->map(fn($star) => [
-                'id' => $star->user_id,
+            ->map(fn ($star) => [
+                'id' => $star->user_id ?? $star->id,
                 'uuid' => $star->uuid,
-                'first_name' => $star->user->first_name ?? '',
+                'first_name' => $star->user->first_name ?? $star->title ?? '',
                 'last_name' => $star->user->last_name ?? '',
                 'email' => $star->user->email ?? '',
                 'title' => $star->title,
                 'type' => 'star',
             ]);
 
-        $positions = $department->activePositions()->get()->map(fn($p) => [
+        $positions = $department->activePositions()->get()->map(fn ($p) => [
             'id' => $p->id,
             'uuid' => $p->uuid,
             'name' => $p->name,
@@ -277,12 +287,12 @@ class ShiftController extends Controller
             'employees' => $employees,
             'stars' => $stars,
             'positions' => $positions,
-            'shiftTypes' => collect(ShiftType::cases())->map(fn($t) => [
+            'shiftTypes' => collect(ShiftType::cases())->map(fn ($t) => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
             ]),
-            'shiftStatuses' => collect(ShiftStatus::cases())->map(fn($s) => [
+            'shiftStatuses' => collect(ShiftStatus::cases())->map(fn ($s) => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
@@ -358,12 +368,12 @@ class ShiftController extends Controller
 
         $result = $this->schedulingService->assignShift($shift, $employee, $request->user());
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return back()->with('error', $result['message']);
         }
 
         $message = 'Employé assigné avec succès.';
-        if (!empty($result['warnings'])) {
+        if (! empty($result['warnings'])) {
             session()->flash('warning', 'Assignation effectuée avec des avertissements.');
         }
 
@@ -395,7 +405,7 @@ class ShiftController extends Controller
             return back()->with('error', 'Vous ne pouvez pas pointer pour ce shift.');
         }
 
-        if (!$shift->can_check_in) {
+        if (! $shift->can_check_in) {
             return back()->with('error', 'Impossible de pointer maintenant.');
         }
 
@@ -413,7 +423,7 @@ class ShiftController extends Controller
             return back()->with('error', 'Vous ne pouvez pas pointer pour ce shift.');
         }
 
-        if (!$shift->can_check_out) {
+        if (! $shift->can_check_out) {
             return back()->with('error', 'Impossible de pointer maintenant.');
         }
 
@@ -448,7 +458,7 @@ class ShiftController extends Controller
             return back()->with('error', 'Ce shift ne peut pas être annulé car il est déjà terminé ou annulé.');
         }
 
-        if (!$shift->status->canTransitionTo(ShiftStatus::CANCELLED)) {
+        if (! $shift->status->canTransitionTo(ShiftStatus::CANCELLED)) {
             return back()->with('error', 'Ce shift ne peut pas être annulé depuis son statut actuel.');
         }
 
@@ -461,7 +471,7 @@ class ShiftController extends Controller
         $shift->update([
             'status' => ShiftStatus::CANCELLED,
             'notes' => $cancellationReason
-                ? ($shift->notes ? $shift->notes . "\n\n" : '') . "Raison d'annulation: " . $cancellationReason
+                ? ($shift->notes ? $shift->notes."\n\n" : '')."Raison d'annulation: ".$cancellationReason
                 : $shift->notes,
         ]);
 

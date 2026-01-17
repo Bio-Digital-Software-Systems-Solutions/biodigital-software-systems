@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\PastorAvailability;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class PastorAvailabilitySeeder extends Seeder
@@ -19,35 +19,75 @@ class PastorAvailabilitySeeder extends Seeder
             $query->where('name', 'pastor');
         })->get();
 
-        foreach ($pastors as $pastor) {
-            // Create weekly availability for the pastor
-            // Monday to Friday, 11:00-17:00 with 60-minute slots
-            for ($day = 1; $day <= 5; $day++) { // 1=Monday, 5=Friday
+        if ($pastors->isEmpty()) {
+            $this->command->warn('⚠️ No pastors found. Please run PastorRoleSeeder first.');
+
+            return;
+        }
+
+        $consultationModes = ['in_person', 'online', 'hybrid'];
+        $rooms = ['Bureau pastoral', 'Salle de réunion A', 'Salle de prière', 'Bureau 102'];
+
+        $availabilityCount = 0;
+
+        foreach ($pastors as $index => $pastor) {
+            // Vary availability by pastor
+            $startHour = $index % 2 === 0 ? 9 : 10;
+            $endHour = $index % 2 === 0 ? 17 : 18;
+
+            // Create weekly availability for weekdays
+            $weekdayDays = $index % 2 === 0 ? [1, 2, 3, 4, 5] : [1, 3, 5]; // Mon-Fri or Mon/Wed/Fri
+
+            foreach ($weekdayDays as $day) {
                 PastorAvailability::create([
                     'pastor_id' => $pastor->id,
                     'type' => 'weekly',
                     'day_of_week' => $day,
-                    'start_time' => '11:00',
-                    'end_time' => '17:00',
-                    'slot_duration' => 60,
+                    'start_time' => sprintf('%02d:00', $startHour),
+                    'end_time' => sprintf('%02d:00', $endHour),
+                    'consultation_mode' => $consultationModes[array_rand($consultationModes)],
+                    'room' => $rooms[array_rand($rooms)],
                     'is_active' => true,
-                    'notes' => 'Créneaux de consultation standard'
+                    'notes' => 'Créneaux de consultation standard',
                 ]);
+                $availabilityCount++;
             }
 
-            // Create specific Saturday morning availability
-            PastorAvailability::create([
-                'pastor_id' => $pastor->id,
-                'type' => 'weekly',
-                'day_of_week' => 6, // Saturday
-                'start_time' => '09:00',
-                'end_time' => '12:00',
-                'slot_duration' => 30,
-                'is_active' => true,
-                'notes' => 'Créneaux courts le samedi matin'
-            ]);
+            // Create Saturday morning availability for some pastors
+            if ($index % 2 === 0) {
+                PastorAvailability::create([
+                    'pastor_id' => $pastor->id,
+                    'type' => 'weekly',
+                    'day_of_week' => 6, // Saturday
+                    'start_time' => '09:00',
+                    'end_time' => '12:00',
+                    'consultation_mode' => 'in_person',
+                    'room' => 'Bureau pastoral',
+                    'is_active' => true,
+                    'notes' => 'Créneaux du samedi matin',
+                ]);
+                $availabilityCount++;
+            }
+
+            // Create specific date availability for upcoming special events
+            for ($i = 1; $i <= 3; $i++) {
+                $specificDate = Carbon::now()->addWeeks($i)->next(Carbon::SUNDAY);
+
+                PastorAvailability::create([
+                    'pastor_id' => $pastor->id,
+                    'type' => 'specific_date',
+                    'specific_date' => $specificDate->toDateString(),
+                    'start_time' => '14:00',
+                    'end_time' => '18:00',
+                    'consultation_mode' => 'hybrid',
+                    'room' => 'Salle de prière',
+                    'is_active' => true,
+                    'notes' => 'Disponibilité exceptionnelle après le culte',
+                ]);
+                $availabilityCount++;
+            }
         }
 
-        $this->command->info('Pastor availability created for ' . $pastors->count() . ' pastors');
+        $this->command->info("✅ Created {$availabilityCount} availability entries for {$pastors->count()} pastors.");
     }
 }

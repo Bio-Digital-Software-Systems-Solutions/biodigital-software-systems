@@ -338,7 +338,7 @@ export default function ProjectBoard({ project, tasksByStatus, users, sprints, f
                                         key={task.id}
                                         draggable
                                         onDragStart={() => handleDragStart(task)}
-                                        className={`bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-move ${
+                                        className={`bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow cursor-move overflow-hidden ${
                                             priorityColors[task.priority as keyof typeof priorityColors] || ''
                                         }`}
                                     >
@@ -356,12 +356,12 @@ export default function ProjectBoard({ project, tasksByStatus, users, sprints, f
                                                 </p>
                                             )}
 
-                                            <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                            <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                                <div className="flex items-center gap-1 flex-wrap min-w-0">
+                                                    <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 truncate">
                                                         {getTypeLabel(task.type)}
                                                     </span>
-                                                    <span className={`text-xs px-2 py-1 rounded ${
+                                                    <span className={`text-xs px-1.5 py-0.5 rounded truncate ${
                                                         task.priority === 'highest' || task.priority === 'high'
                                                             ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                                             : task.priority === 'medium'
@@ -373,8 +373,8 @@ export default function ProjectBoard({ project, tasksByStatus, users, sprints, f
                                                 </div>
 
                                                 {task.assignee && (
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs">
+                                                    <div className="flex-shrink-0">
+                                                        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-xs font-medium">
                                                             {task.assignee.first_name[0]}{task.assignee.last_name[0]}
                                                         </div>
                                                     </div>

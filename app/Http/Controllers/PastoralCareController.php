@@ -37,7 +37,7 @@ class PastoralCareController extends Controller
 
         // Check if user can manage all appointments (admin/SuperAdmin)
         $canManageAll = $user->can('manage pastoral care') ||
-                       $user->hasRole(['admin', 'SuperAdmin']);
+            $user->hasRole(['admin', 'SuperAdmin']);
 
         $query = PastoralCare::with(['user', 'pastor']);
 
@@ -56,7 +56,7 @@ class PastoralCareController extends Controller
         }
 
         $query->orderBy('appointment_date', 'desc')
-              ->orderBy('appointment_time', 'desc');
+            ->orderBy('appointment_time', 'desc');
 
         // Filter by status
         if ($request->filled('status')) {
@@ -146,8 +146,8 @@ class PastoralCareController extends Controller
     {
         // Get all users with pastoral care permissions
         $pastors = User::whereHas('permissions', function ($query) {
-                $query->where('name', 'view pastoral care');
-            })
+            $query->where('name', 'view pastoral care');
+        })
             ->orWhereHas('roles', function ($query) {
                 $query->whereIn('name', ['admin', 'pastor', 'writer']);
             })
@@ -216,11 +216,13 @@ class PastoralCareController extends Controller
         }
 
         // Check if time slot is available
-        if (!PastoralCare::isTimeSlotAvailable(
-            $pastorId,
-            $appointmentDateTime,
-            $validated['duration_minutes']
-        )) {
+        if (
+            !PastoralCare::isTimeSlotAvailable(
+                $pastorId,
+                $appointmentDateTime,
+                $validated['duration_minutes']
+            )
+        ) {
             throw ValidationException::withMessages([
                 'appointment_time' => 'Ce créneau horaire n\'est pas disponible.',
             ]);
@@ -273,9 +275,9 @@ class PastoralCareController extends Controller
                     'receiver_id' => $request->user()->id,
                     'subject' => 'Confirmation de votre rendez-vous pastoral',
                     'content' => "Votre rendez-vous de soin pastoral avec {$appointment->pastor->first_name} {$appointment->pastor->last_name} a été planifié pour le " .
-                               $appointment->appointment_date->format('d/m/Y') . " à " .
-                               $appointment->appointment_time->format('H:i') .
-                               ". Vous recevrez une confirmation par email. Consultez vos messages pour plus de détails.",
+                        $appointment->appointment_date->format('d/m/Y') . " à " .
+                        $appointment->appointment_time->format('H:i') .
+                        ". Vous recevrez une confirmation par email. Consultez vos messages pour plus de détails.",
                     'type' => 'system',
                 ]);
             }
@@ -286,10 +288,10 @@ class PastoralCareController extends Controller
                 'receiver_id' => $appointment->pastor_id,
                 'subject' => 'Nouveau rendez-vous de soin pastoral',
                 'content' => "Un nouveau rendez-vous de soin pastoral a été planifié avec vous pour le " .
-                           $appointment->appointment_date->format('d/m/Y') . " à " .
-                           $appointment->appointment_time->format('H:i') .
-                           ". Client: {$appointment->client_name} ({$appointment->client_email}). " .
-                           "Consultez votre tableau de bord pour gérer ce rendez-vous.",
+                    $appointment->appointment_date->format('d/m/Y') . " à " .
+                    $appointment->appointment_time->format('H:i') .
+                    ". Client: {$appointment->client_name} ({$appointment->client_email}). " .
+                    "Consultez votre tableau de bord pour gérer ce rendez-vous.",
                 'type' => 'system',
             ]);
         } catch (\Exception $e) {
@@ -308,7 +310,13 @@ class PastoralCareController extends Controller
     {
         $this->authorize('view', $pastoralCare);
 
-        $pastoralCare->load(['user', 'pastor']);
+        // Load relationships including parent and follow-ups for navigation
+        $pastoralCare->load([
+            'user',
+            'pastor',
+            'parent.pastor', // Load parent appointment with its pastor
+            'followUps.pastor', // Load follow-up appointments with their pastors
+        ]);
 
         return Inertia::render('PastoralCare/Show', [
             'appointment' => $pastoralCare,
@@ -329,8 +337,8 @@ class PastoralCareController extends Controller
 
         // Get all users with pastoral care permissions
         $pastors = User::whereHas('permissions', function ($query) {
-                $query->where('name', 'view pastoral care');
-            })
+            $query->where('name', 'view pastoral care');
+        })
             ->orWhereHas('roles', function ($query) {
                 $query->whereIn('name', ['admin', 'pastor', 'writer']);
             })
@@ -365,12 +373,14 @@ class PastoralCareController extends Controller
         $appointmentDateTime = Carbon::parse($validated['appointment_date'] . ' ' . $validated['appointment_time']);
 
         // Check if time slot is available (excluding current appointment)
-        if (!PastoralCare::isTimeSlotAvailable(
-            $validated['pastor_id'],
-            $appointmentDateTime,
-            $validated['duration_minutes'],
-            $pastoralCare->id
-        )) {
+        if (
+            !PastoralCare::isTimeSlotAvailable(
+                $validated['pastor_id'],
+                $appointmentDateTime,
+                $validated['duration_minutes'],
+                $pastoralCare->id
+            )
+        ) {
             throw ValidationException::withMessages([
                 'appointment_time' => 'This time slot is not available.',
             ]);

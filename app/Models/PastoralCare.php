@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use App\Traits\ClearsCache;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 /**
  * @property-read bool $can_be_confirmed
@@ -42,6 +42,7 @@ use Carbon\Carbon;
  * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property-read \App\Models\User $pastor
  * @property-read \App\Models\User|null $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare betweenDates($startDate, $endDate)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare cancelled()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare completed()
@@ -79,16 +80,18 @@ use Carbon\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereZoomLink($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class PastoralCare extends Model
 {
-    use HasFactory, SoftDeletes, ClearsCache;
+    use ClearsCache, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'uuid',
         'user_id',
         'pastor_id',
+        'parent_id',
         'appointment_date',
         'appointment_time',
         'duration_minutes',
@@ -154,6 +157,22 @@ class PastoralCare extends Model
         return $this->belongsTo(User::class, 'pastor_id');
     }
 
+    /**
+     * Get the parent appointment (if this is a follow-up)
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(PastoralCare::class, 'parent_id');
+    }
+
+    /**
+     * Get the follow-up appointments for this appointment
+     */
+    public function followUps()
+    {
+        return $this->hasMany(PastoralCare::class, 'parent_id');
+    }
+
     // Scopes
     public function scopePending($query)
     {
@@ -178,7 +197,7 @@ class PastoralCare extends Model
     public function scopeUpcoming($query)
     {
         return $query->where('appointment_date', '>=', now()->toDateString())
-                    ->whereIn('status', ['pending', 'confirmed']);
+            ->whereIn('status', ['pending', 'confirmed']);
     }
 
     public function scopeForPastor($query, $pastorId)
@@ -215,19 +234,19 @@ class PastoralCare extends Model
     public function getIsUpcomingAttribute()
     {
         return $this->appointment_date >= now()->toDateString() &&
-               in_array($this->status, ['pending', 'confirmed']);
+            in_array($this->status, ['pending', 'confirmed']);
     }
 
     public function getIsPastAttribute()
     {
         return $this->appointment_date < now()->toDateString() ||
-               ($this->appointment_date == now()->toDateString() && $this->appointment_time < now());
+            ($this->appointment_date == now()->toDateString() && $this->appointment_time < now());
     }
 
     public function getCanBeCancelledAttribute()
     {
         return in_array($this->status, ['pending', 'confirmed']) &&
-               $this->appointment_time > now()->addHours(24);
+            $this->appointment_time > now()->addHours(24);
     }
 
     public function getCanBeConfirmedAttribute()
@@ -238,10 +257,10 @@ class PastoralCare extends Model
     // Business Logic Methods
     public function confirm()
     {
-        if (!$this->can_be_confirmed) {
+        if (! $this->can_be_confirmed) {
             // Déterminer la raison spécifique de l'impossibilité de confirmer
             if ($this->status !== 'pending') {
-                throw new \Exception('Seuls les rendez-vous en attente peuvent être confirmés (statut actuel: ' . $this->status . ').');
+                throw new \Exception('Seuls les rendez-vous en attente peuvent être confirmés (statut actuel: '.$this->status.').');
             }
 
             if ($this->appointment_time <= now()) {
@@ -261,10 +280,10 @@ class PastoralCare extends Model
 
     public function cancel($reason = null)
     {
-        if (!$this->can_be_cancelled) {
+        if (! $this->can_be_cancelled) {
             // Déterminer la raison spécifique de l'impossibilité d'annuler
-            if (!in_array($this->status, ['pending', 'confirmed'])) {
-                throw new \Exception('Ce rendez-vous ne peut plus être annulé (statut: ' . $this->status . ').');
+            if (! in_array($this->status, ['pending', 'confirmed'])) {
+                throw new \Exception('Ce rendez-vous ne peut plus être annulé (statut: '.$this->status.').');
             }
 
             if ($this->appointment_time <= now()->addHours(24)) {
@@ -296,7 +315,7 @@ class PastoralCare extends Model
 
     public function markAsNoShow()
     {
-        if ($this->status !== 'confirmed' || !$this->is_past) {
+        if ($this->status !== 'confirmed' || ! $this->is_past) {
             throw new \Exception('Only past confirmed appointments can be marked as no-show.');
         }
 
@@ -368,13 +387,13 @@ class PastoralCare extends Model
                     // Use Carbon dayOfWeek format directly (0=Sunday, 1=Monday, etc.)
                     $dayOfWeek = $currentDate->dayOfWeek;
                     $q->where('type', 'weekly')
-                      ->where('day_of_week', $dayOfWeek);
+                        ->where('day_of_week', $dayOfWeek);
                 })
-                // Or specific date availability
-                ->orWhere(function ($q) use ($currentDate) {
-                    $q->where('type', 'specific_date')
-                      ->where('specific_date', $currentDate->toDateString());
-                });
+                    // Or specific date availability
+                    ->orWhere(function ($q) use ($currentDate) {
+                        $q->where('type', 'specific_date')
+                            ->where('specific_date', $currentDate->toDateString());
+                    });
             })
             ->get();
 

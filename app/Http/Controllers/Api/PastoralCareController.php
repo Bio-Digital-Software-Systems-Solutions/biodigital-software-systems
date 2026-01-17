@@ -3,17 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\PastoralCare;
-use App\Models\User;
-use App\Models\Message;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Carbon\Carbon;
-use Illuminate\Validation\ValidationException;
-use Spatie\Permission\Models\Role;
 use App\Http\Requests\PastoralCareStoreRequest;
 use App\Mail\PastoralCareNewAppointmentNotification;
-use App\Mail\PastoralCareAppointmentConfirmation;
+use App\Models\Message;
+use App\Models\PastoralCare;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
 class PastoralCareController extends Controller
@@ -26,7 +23,7 @@ class PastoralCareController extends Controller
             'getAvailableSlots',
             'store',
             'confirm',
-            'cancel'
+            'cancel',
         ]);
     }
 
@@ -44,7 +41,7 @@ class PastoralCareController extends Controller
             ->map(function ($pastor) {
                 return [
                     'id' => $pastor->id,
-                    'name' => $pastor->first_name . ' ' . $pastor->last_name,
+                    'name' => $pastor->first_name.' '.$pastor->last_name,
                     'email' => $pastor->email,
                     'phone' => $pastor->phone_number,
                 ];
@@ -52,7 +49,7 @@ class PastoralCareController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $pastors
+            'data' => $pastors,
         ]);
     }
 
@@ -69,10 +66,10 @@ class PastoralCareController extends Controller
 
         // Verify the user is a pastor
         $pastor = User::findOrFail($validated['pastor_id']);
-        if (!$pastor->hasRole('pastor')) {
+        if (! $pastor->hasRole('pastor')) {
             return response()->json([
                 'success' => false,
-                'message' => 'User is not a pastor'
+                'message' => 'User is not a pastor',
             ], 400);
         }
 
@@ -89,8 +86,8 @@ class PastoralCareController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'available_days' => []
-                ]
+                    'available_days' => [],
+                ],
             ]);
         }
 
@@ -115,12 +112,12 @@ class PastoralCareController extends Controller
                     60 // Default duration for checking availability
                 );
 
-                if (!empty($slots)) {
+                if (! empty($slots)) {
                     $availableDays[] = [
                         'date' => $current->toDateString(),
                         'day_name' => $current->locale('fr')->format('D'),
                         'full_date' => $current->locale('fr')->format('l j F Y'),
-                        'slots_count' => count($slots)
+                        'slots_count' => count($slots),
                     ];
                 }
             }
@@ -133,8 +130,8 @@ class PastoralCareController extends Controller
             'data' => [
                 'available_days' => $availableDays,
                 'start_date' => $validated['start_date'],
-                'end_date' => $validated['end_date']
-            ]
+                'end_date' => $validated['end_date'],
+            ],
         ]);
     }
 
@@ -159,8 +156,8 @@ class PastoralCareController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'available_days' => []
-                ]
+                    'available_days' => [],
+                ],
             ]);
         }
 
@@ -173,8 +170,8 @@ class PastoralCareController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'available_days' => []
-                ]
+                    'available_days' => [],
+                ],
             ]);
         }
 
@@ -205,7 +202,7 @@ class PastoralCareController extends Controller
                         60 // Default duration for checking availability
                     );
 
-                    if (!empty($slots)) {
+                    if (! empty($slots)) {
                         $totalSlotsForDay += count($slots);
                         $pastorsWithSlots[] = $pastorId;
                     }
@@ -218,7 +215,7 @@ class PastoralCareController extends Controller
                     'day_name' => $current->locale('fr')->format('D'),
                     'full_date' => $current->locale('fr')->format('l j F Y'),
                     'slots_count' => $totalSlotsForDay,
-                    'pastors_count' => count($pastorsWithSlots)
+                    'pastors_count' => count($pastorsWithSlots),
                 ];
             }
 
@@ -230,8 +227,8 @@ class PastoralCareController extends Controller
             'data' => [
                 'available_days' => $availableDays,
                 'start_date' => $validated['start_date'],
-                'end_date' => $validated['end_date']
-            ]
+                'end_date' => $validated['end_date'],
+            ],
         ]);
     }
 
@@ -261,7 +258,7 @@ class PastoralCareController extends Controller
                 $duration
             );
 
-            if (!empty($slots)) {
+            if (! empty($slots)) {
                 foreach ($slots as $time) {
                     $allSlots[] = [
                         'time' => $time,
@@ -280,8 +277,8 @@ class PastoralCareController extends Controller
             'success' => true,
             'data' => [
                 'date' => $validated['date'],
-                'slots' => $allSlots
-            ]
+                'slots' => $allSlots,
+            ],
         ]);
     }
 
@@ -298,10 +295,10 @@ class PastoralCareController extends Controller
 
         // Verify the user is a pastor
         $pastor = User::findOrFail($validated['pastor_id']);
-        if (!$pastor->hasRole('pastor')) {
+        if (! $pastor->hasRole('pastor')) {
             return response()->json([
                 'success' => false,
-                'message' => 'User is not a pastor'
+                'message' => 'User is not a pastor',
             ], 400);
         }
 
@@ -320,12 +317,12 @@ class PastoralCareController extends Controller
             ->where(function ($query) use ($currentDate, $dayOfWeek) {
                 $query->where(function ($q) use ($dayOfWeek) {
                     $q->where('type', 'weekly')
-                      ->where('day_of_week', $dayOfWeek);
+                        ->where('day_of_week', $dayOfWeek);
                 })
-                ->orWhere(function ($q) use ($currentDate) {
-                    $q->where('type', 'specific')
-                      ->where('specific_date', $currentDate->toDateString());
-                });
+                    ->orWhere(function ($q) use ($currentDate) {
+                        $q->where('type', 'specific')
+                            ->where('specific_date', $currentDate->toDateString());
+                    });
             })
             ->first();
 
@@ -336,8 +333,8 @@ class PastoralCareController extends Controller
             'data' => [
                 'date' => $validated['date'],
                 'slots' => $slots,
-                'consultation_mode' => $consultationMode
-            ]
+                'consultation_mode' => $consultationMode,
+            ],
         ]);
     }
 
@@ -353,7 +350,7 @@ class PastoralCareController extends Controller
         // Combine date and time
         $appointmentDateTime = Carbon::createFromFormat(
             'Y-m-d H:i',
-            $validated['appointment_date'] . ' ' . $validated['appointment_time']
+            $validated['appointment_date'].' '.$validated['appointment_time']
         );
 
         $appointment = PastoralCare::create([
@@ -392,11 +389,11 @@ class PastoralCareController extends Controller
                     'location_type' => $appointment->location_type,
                     'status' => $appointment->status,
                     'pastor' => [
-                        'name' => $appointment->pastor->first_name . ' ' . $appointment->pastor->last_name,
+                        'name' => $appointment->pastor->first_name.' '.$appointment->pastor->last_name,
                         'email' => $appointment->pastor->email,
-                    ]
-                ]
-            ]
+                    ],
+                ],
+            ],
         ], 201);
     }
 
@@ -407,10 +404,10 @@ class PastoralCareController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('pastor')) {
+        if (! $user->hasRole('pastor')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized - Pastor access required'
+                'message' => 'Unauthorized - Pastor access required',
             ], 403);
         }
 
@@ -445,7 +442,7 @@ class PastoralCareController extends Controller
             'success' => true,
             'data' => $appointments,
             'stats' => $stats,
-            'filters' => $request->only(['status', 'date_from', 'date_to'])
+            'filters' => $request->only(['status', 'date_from', 'date_to']),
         ]);
     }
 
@@ -458,10 +455,10 @@ class PastoralCareController extends Controller
             ->with(['pastor'])
             ->first();
 
-        if (!$appointment) {
+        if (! $appointment) {
             return response()->json([
                 'success' => false,
-                'message' => 'Rendez-vous introuvable'
+                'message' => 'Rendez-vous introuvable',
             ], 404);
         }
 
@@ -482,12 +479,12 @@ class PastoralCareController extends Controller
                 'notes' => $appointment->notes,
                 'pastor_notes' => $appointment->pastor_notes,
                 'pastor' => [
-                    'name' => $appointment->pastor->first_name . ' ' . $appointment->pastor->last_name,
+                    'name' => $appointment->pastor->first_name.' '.$appointment->pastor->last_name,
                     'email' => $appointment->pastor->email,
                 ],
                 'can_be_confirmed' => $appointment->can_be_confirmed,
                 'can_be_cancelled' => $appointment->can_be_cancelled,
-            ]
+            ],
         ]);
     }
 
@@ -498,10 +495,10 @@ class PastoralCareController extends Controller
     {
         $appointment = PastoralCare::where('uuid', $uuid)->first();
 
-        if (!$appointment) {
+        if (! $appointment) {
             return response()->json([
                 'success' => false,
-                'message' => 'Rendez-vous introuvable'
+                'message' => 'Rendez-vous introuvable',
             ], 404);
         }
 
@@ -513,12 +510,12 @@ class PastoralCareController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rendez-vous confirmé avec succès'
+                'message' => 'Rendez-vous confirmé avec succès',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -530,10 +527,10 @@ class PastoralCareController extends Controller
     {
         $appointment = PastoralCare::where('uuid', $uuid)->first();
 
-        if (!$appointment) {
+        if (! $appointment) {
             return response()->json([
                 'success' => false,
-                'message' => 'Rendez-vous introuvable'
+                'message' => 'Rendez-vous introuvable',
             ], 404);
         }
 
@@ -549,12 +546,12 @@ class PastoralCareController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rendez-vous annulé avec succès'
+                'message' => 'Rendez-vous annulé avec succès',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -566,10 +563,10 @@ class PastoralCareController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('pastor')) {
+        if (! $user->hasRole('pastor')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized - Pastor access required'
+                'message' => 'Unauthorized - Pastor access required',
             ], 403);
         }
 
@@ -577,10 +574,10 @@ class PastoralCareController extends Controller
             ->forPastor($user->id)
             ->first();
 
-        if (!$appointment) {
+        if (! $appointment) {
             return response()->json([
                 'success' => false,
-                'message' => 'Rendez-vous introuvable'
+                'message' => 'Rendez-vous introuvable',
             ], 404);
         }
 
@@ -597,7 +594,7 @@ class PastoralCareController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Rendez-vous mis à jour avec succès',
-            'data' => $appointment
+            'data' => $appointment,
         ]);
     }
 
@@ -608,10 +605,10 @@ class PastoralCareController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('pastor')) {
+        if (! $user->hasRole('pastor')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized - Pastor access required'
+                'message' => 'Unauthorized - Pastor access required',
             ], 403);
         }
 
@@ -619,10 +616,10 @@ class PastoralCareController extends Controller
             ->forPastor($user->id)
             ->first();
 
-        if (!$appointment) {
+        if (! $appointment) {
             return response()->json([
                 'success' => false,
-                'message' => 'Rendez-vous introuvable'
+                'message' => 'Rendez-vous introuvable',
             ], 404);
         }
 
@@ -630,7 +627,7 @@ class PastoralCareController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Rendez-vous supprimé avec succès'
+            'message' => 'Rendez-vous supprimé avec succès',
         ]);
     }
 
@@ -641,10 +638,10 @@ class PastoralCareController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('pastor')) {
+        if (! $user->hasRole('pastor')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized - Pastor access required'
+                'message' => 'Unauthorized - Pastor access required',
             ], 403);
         }
 
@@ -652,23 +649,24 @@ class PastoralCareController extends Controller
             ->forPastor($user->id)
             ->first();
 
-        if (!$appointment) {
+        if (! $appointment) {
             return response()->json([
                 'success' => false,
-                'message' => 'Rendez-vous introuvable'
+                'message' => 'Rendez-vous introuvable',
             ], 404);
         }
 
         try {
             $appointment->complete();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Rendez-vous marqué comme terminé'
+                'message' => 'Rendez-vous marqué comme terminé',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -680,10 +678,10 @@ class PastoralCareController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('pastor')) {
+        if (! $user->hasRole('pastor')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized - Pastor access required'
+                'message' => 'Unauthorized - Pastor access required',
             ], 403);
         }
 
@@ -691,23 +689,24 @@ class PastoralCareController extends Controller
             ->forPastor($user->id)
             ->first();
 
-        if (!$appointment) {
+        if (! $appointment) {
             return response()->json([
                 'success' => false,
-                'message' => 'Rendez-vous introuvable'
+                'message' => 'Rendez-vous introuvable',
             ], 404);
         }
 
         try {
             $appointment->markAsNoShow();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Rendez-vous marqué comme absence'
+                'message' => 'Rendez-vous marqué comme absence',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }
@@ -724,25 +723,25 @@ class PastoralCareController extends Controller
             Mail::to($pastor->email)->send(new PastoralCareNewAppointmentNotification($appointment));
 
             // 2. Send internal message to pastor
-            $pastorMessageContent = "Vous avez un nouveau rendez-vous de soin pastoral :\n\n" .
-                "📅 Date : " . $appointment->appointment_date->format('d/m/Y') . "\n" .
-                "⏰ Heure : " . $appointment->appointment_time->format('H:i') . "\n" .
-                "⌛ Durée : " . $appointment->duration_minutes . " minutes\n" .
-                "👤 Client : " . ($appointment->client_name ?? 'Non renseigné') . "\n" .
-                "📧 Email : " . ($appointment->client_email ?? 'Non renseigné') . "\n" .
-                "📱 Téléphone : " . ($appointment->client_phone ?? 'Non renseigné') . "\n" .
-                "📍 Type : " . $this->getLocationTypeLabel($appointment->location_type) . "\n";
+            $pastorMessageContent = "Vous avez un nouveau rendez-vous de soin pastoral :\n\n".
+                '📅 Date : '.$appointment->appointment_date->format('d/m/Y')."\n".
+                '⏰ Heure : '.$appointment->appointment_time->format('H:i')."\n".
+                '⌛ Durée : '.$appointment->duration_minutes." minutes\n".
+                '👤 Client : '.($appointment->client_name ?? 'Non renseigné')."\n".
+                '📧 Email : '.($appointment->client_email ?? 'Non renseigné')."\n".
+                '📱 Téléphone : '.($appointment->client_phone ?? 'Non renseigné')."\n".
+                '📍 Type : '.$this->getLocationTypeLabel($appointment->location_type)."\n";
 
             if ($appointment->zoom_link) {
-                $pastorMessageContent .= "🔗 Lien Zoom : " . $appointment->zoom_link . "\n";
+                $pastorMessageContent .= '🔗 Lien Zoom : '.$appointment->zoom_link."\n";
             }
 
             if ($appointment->notes) {
-                $pastorMessageContent .= "\n📝 Notes : " . $appointment->notes;
+                $pastorMessageContent .= "\n📝 Notes : ".$appointment->notes;
             }
 
             Message::create([
-                'subject' => 'Nouveau rendez-vous de soin pastoral - ' . $appointment->appointment_date->format('d/m/Y'),
+                'subject' => 'Nouveau rendez-vous de soin pastoral - '.$appointment->appointment_date->format('d/m/Y'),
                 'content' => $pastorMessageContent,
                 'sender_id' => 1, // System user
                 'receiver_id' => $pastor->id,
@@ -754,49 +753,49 @@ class PastoralCareController extends Controller
             if ($appointment->client_email) {
                 // For now, we'll send a simple notification - can be enhanced with a dedicated Mailable later
                 $clientSubject = 'Confirmation de rendez-vous - ICC Munich';
-                $clientContent = "Bonjour " . ($appointment->client_name ?? '') . ",\n\n" .
-                    "Votre demande de rendez-vous de soin pastoral a été enregistrée avec succès.\n\n" .
-                    "Détails de votre rendez-vous :\n" .
-                    "📅 Date : " . $appointment->appointment_date->format('d/m/Y') . "\n" .
-                    "⏰ Heure : " . $appointment->appointment_time->format('H:i') . "\n" .
-                    "⌛ Durée : " . $appointment->duration_minutes . " minutes\n" .
-                    "👨‍💼 Pasteur : " . $pastor->first_name . " " . $pastor->last_name . "\n" .
-                    "📍 Type : " . $this->getLocationTypeLabel($appointment->location_type) . "\n";
+                $clientContent = 'Bonjour '.($appointment->client_name ?? '').",\n\n".
+                    "Votre demande de rendez-vous de soin pastoral a été enregistrée avec succès.\n\n".
+                    "Détails de votre rendez-vous :\n".
+                    '📅 Date : '.$appointment->appointment_date->format('d/m/Y')."\n".
+                    '⏰ Heure : '.$appointment->appointment_time->format('H:i')."\n".
+                    '⌛ Durée : '.$appointment->duration_minutes." minutes\n".
+                    '👨‍💼 Pasteur : '.$pastor->first_name.' '.$pastor->last_name."\n".
+                    '📍 Type : '.$this->getLocationTypeLabel($appointment->location_type)."\n";
 
                 if ($appointment->zoom_link) {
-                    $clientContent .= "🔗 Lien Zoom : " . $appointment->zoom_link . "\n";
+                    $clientContent .= '🔗 Lien Zoom : '.$appointment->zoom_link."\n";
                 }
 
-                $clientContent .= "\nVotre rendez-vous est en attente de confirmation. Vous recevrez un email de confirmation une fois que le pasteur aura validé le créneau.\n\n" .
+                $clientContent .= "\nVotre rendez-vous est en attente de confirmation. Vous recevrez un email de confirmation une fois que le pasteur aura validé le créneau.\n\n".
                     "Cordialement,\nL'équipe ICC Munich";
 
                 // Simple email for client
                 Mail::raw($clientContent, function ($message) use ($appointment, $clientSubject) {
                     $message->to($appointment->client_email)
-                            ->subject($clientSubject)
-                            ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
+                        ->subject($clientSubject)
+                        ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
                 });
             }
 
             // 4. Send internal message to client (if they are a registered user)
             $clientUser = User::where('email', $appointment->client_email)->first();
             if ($clientUser) {
-                $clientMessageContent = "Votre demande de rendez-vous de soin pastoral a été enregistrée :\n\n" .
-                    "📅 Date : " . $appointment->appointment_date->format('d/m/Y') . "\n" .
-                    "⏰ Heure : " . $appointment->appointment_time->format('H:i') . "\n" .
-                    "⌛ Durée : " . $appointment->duration_minutes . " minutes\n" .
-                    "👨‍💼 Pasteur : " . $pastor->first_name . " " . $pastor->last_name . "\n" .
-                    "📍 Type : " . $this->getLocationTypeLabel($appointment->location_type) . "\n";
+                $clientMessageContent = "Votre demande de rendez-vous de soin pastoral a été enregistrée :\n\n".
+                    '📅 Date : '.$appointment->appointment_date->format('d/m/Y')."\n".
+                    '⏰ Heure : '.$appointment->appointment_time->format('H:i')."\n".
+                    '⌛ Durée : '.$appointment->duration_minutes." minutes\n".
+                    '👨‍💼 Pasteur : '.$pastor->first_name.' '.$pastor->last_name."\n".
+                    '📍 Type : '.$this->getLocationTypeLabel($appointment->location_type)."\n";
 
                 if ($appointment->zoom_link) {
-                    $clientMessageContent .= "🔗 Lien Zoom : " . $appointment->zoom_link . "\n";
+                    $clientMessageContent .= '🔗 Lien Zoom : '.$appointment->zoom_link."\n";
                 }
 
-                $clientMessageContent .= "\n⏳ Statut : En attente de confirmation\n" .
-                    "Vous recevrez une notification une fois le rendez-vous confirmé par le pasteur.";
+                $clientMessageContent .= "\n⏳ Statut : En attente de confirmation\n".
+                    'Vous recevrez une notification une fois le rendez-vous confirmé par le pasteur.';
 
                 Message::create([
-                    'subject' => 'Demande de rendez-vous enregistrée - ' . $appointment->appointment_date->format('d/m/Y'),
+                    'subject' => 'Demande de rendez-vous enregistrée - '.$appointment->appointment_date->format('d/m/Y'),
                     'content' => $clientMessageContent,
                     'sender_id' => 1, // System user
                     'receiver_id' => $clientUser->id,
@@ -806,9 +805,9 @@ class PastoralCareController extends Controller
             }
         } catch (\Exception $e) {
             // Log error but don't break the appointment creation
-            \Log::error('Failed to send appointment notifications: ' . $e->getMessage(), [
+            \Log::error('Failed to send appointment notifications: '.$e->getMessage(), [
                 'appointment_id' => $appointment->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -818,7 +817,7 @@ class PastoralCareController extends Controller
      */
     private function getLocationTypeLabel(string $locationType): string
     {
-        return match($locationType) {
+        return match ($locationType) {
             'in_person' => 'En présentiel à l\'église',
             'zoom' => 'Visioconférence (Zoom)',
             'hybrid' => 'Hybride (au choix du pasteur)',
@@ -844,11 +843,11 @@ class PastoralCareController extends Controller
                 'cancelled' => [
                     'subject' => 'Votre rendez-vous de soin pastoral a été annulé',
                     'action' => 'annulé',
-                ]
+                ],
             ];
 
             $statusInfo = $statusTexts[$newStatus] ?? null;
-            if (!$statusInfo) {
+            if (! $statusInfo) {
                 return;
             }
 
@@ -865,12 +864,12 @@ class PastoralCareController extends Controller
             // Send platform message to client if they have an account
             if ($appointment->user_id) {
                 $messageContent = "Votre rendez-vous de soin pastoral avec {$appointment->pastor->first_name} {$appointment->pastor->last_name} ";
-                $messageContent .= "prévu le " . $appointment->appointment_date->format('d/m/Y');
-                $messageContent .= " à " . $appointment->appointment_time->format('H:i');
+                $messageContent .= 'prévu le '.$appointment->appointment_date->format('d/m/Y');
+                $messageContent .= ' à '.$appointment->appointment_time->format('H:i');
                 $messageContent .= " a été {$statusInfo['action']}.";
 
                 if ($newStatus === 'cancelled' && $appointment->cancellation_reason) {
-                    $messageContent .= "\n\nRaison: " . $appointment->cancellation_reason;
+                    $messageContent .= "\n\nRaison: ".$appointment->cancellation_reason;
                 }
 
                 Message::create([
@@ -884,7 +883,167 @@ class PastoralCareController extends Controller
 
         } catch (\Exception $e) {
             // Log the error but don't fail the status change
-            \Log::error('Failed to send pastoral care status change notifications: ' . $e->getMessage());
+            \Log::error('Failed to send pastoral care status change notifications: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Create a follow-up appointment from an existing appointment (authenticated pastor only)
+     */
+    public function createFollowUp(Request $request, $uuid): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->hasRole('pastor')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - Pastor access required',
+            ], 403);
+        }
+
+        // Find the parent appointment
+        $parentAppointment = PastoralCare::where('uuid', $uuid)
+            ->forPastor($user->id)
+            ->first();
+
+        if (! $parentAppointment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rendez-vous parent introuvable',
+            ], 404);
+        }
+
+        // Validate the follow-up request
+        $validated = $request->validate([
+            'appointment_date' => 'required|date|after_or_equal:today',
+            'appointment_time' => 'required|date_format:H:i',
+            'duration_minutes' => 'nullable|integer|min:30|max:180',
+            'location_type' => 'nullable|in:in_person,zoom,hybrid',
+            'zoom_link' => 'nullable|url',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        // Combine date and time
+        $appointmentDateTime = Carbon::createFromFormat(
+            'Y-m-d H:i',
+            $validated['appointment_date'].' '.$validated['appointment_time']
+        );
+
+        // Validate time slot availability
+        $durationMinutes = $validated['duration_minutes'] ?? $parentAppointment->duration_minutes;
+        if (! PastoralCare::isTimeSlotAvailable($user->id, $appointmentDateTime, $durationMinutes)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce créneau horaire n\'est pas disponible',
+            ], 422);
+        }
+
+        // Create the follow-up appointment with client info from parent
+        $followUpAppointment = PastoralCare::create([
+            'pastor_id' => $user->id,
+            'parent_id' => $parentAppointment->id,
+            'user_id' => $parentAppointment->user_id,
+            'client_name' => $parentAppointment->client_name,
+            'client_email' => $parentAppointment->client_email,
+            'client_phone' => $parentAppointment->client_phone,
+            'appointment_date' => $validated['appointment_date'],
+            'appointment_time' => $appointmentDateTime,
+            'duration_minutes' => $durationMinutes,
+            'location_type' => $validated['location_type'] ?? $parentAppointment->location_type,
+            'zoom_link' => $validated['zoom_link'] ?? $parentAppointment->zoom_link,
+            'notes' => $validated['notes'] ?? null,
+            'status' => 'pending',
+        ]);
+
+        // Load relationships for response
+        $followUpAppointment->load('pastor');
+
+        // Send notifications
+        $this->sendFollowUpNotifications($followUpAppointment, $parentAppointment);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rendez-vous de suivi créé avec succès. Une notification a été envoyée au client.',
+            'data' => [
+                'uuid' => $followUpAppointment->uuid,
+                'appointment' => [
+                    'id' => $followUpAppointment->id,
+                    'uuid' => $followUpAppointment->uuid,
+                    'client_name' => $followUpAppointment->client_name,
+                    'client_email' => $followUpAppointment->client_email,
+                    'appointment_date' => $followUpAppointment->appointment_date->format('Y-m-d'),
+                    'appointment_time' => $followUpAppointment->appointment_time->format('H:i'),
+                    'duration_minutes' => $followUpAppointment->duration_minutes,
+                    'location_type' => $followUpAppointment->location_type,
+                    'status' => $followUpAppointment->status,
+                    'parent_id' => $parentAppointment->id,
+                    'pastor' => [
+                        'name' => $followUpAppointment->pastor->first_name.' '.$followUpAppointment->pastor->last_name,
+                        'email' => $followUpAppointment->pastor->email,
+                    ],
+                ],
+            ],
+        ], 201);
+    }
+
+    /**
+     * Send notifications for follow-up appointment
+     */
+    private function sendFollowUpNotifications(PastoralCare $appointment, PastoralCare $parentAppointment): void
+    {
+        try {
+            $pastor = $appointment->pastor;
+
+            // 1. Send email notification to client
+            if ($appointment->client_email) {
+                Mail::to($appointment->client_email)
+                    ->send(new \App\Mail\PastoralCareFollowUpNotification($appointment, $parentAppointment));
+            }
+
+            // 2. Send internal message to pastor
+            $pastorMessageContent = "Vous avez créé un rendez-vous de suivi :\n\n".
+                '📅 Date : '.$appointment->appointment_date->format('d/m/Y')."\n".
+                '⏰ Heure : '.$appointment->appointment_time->format('H:i')."\n".
+                '⌛ Durée : '.$appointment->duration_minutes." minutes\n".
+                '👤 Client : '.($appointment->client_name ?? 'Non renseigné')."\n".
+                '📧 Email : '.($appointment->client_email ?? 'Non renseigné')."\n".
+                '📍 Type : '.$this->getLocationTypeLabel($appointment->location_type)."\n".
+                "\n🔗 Suite au rendez-vous du ".$parentAppointment->appointment_date->format('d/m/Y');
+
+            Message::create([
+                'subject' => 'Rendez-vous de suivi créé - '.$appointment->appointment_date->format('d/m/Y'),
+                'content' => $pastorMessageContent,
+                'sender_id' => 1, // System user
+                'receiver_id' => $pastor->id,
+                'type' => 'system',
+                'recipient_type' => 'user',
+            ]);
+
+            // 3. Send internal message to client if they have an account
+            $clientUser = User::where('email', $appointment->client_email)->first();
+            if ($clientUser) {
+                $clientMessageContent = "Un rendez-vous de suivi a été planifié pour vous :\n\n".
+                    '📅 Date : '.$appointment->appointment_date->format('d/m/Y')."\n".
+                    '⏰ Heure : '.$appointment->appointment_time->format('H:i')."\n".
+                    '⌛ Durée : '.$appointment->duration_minutes." minutes\n".
+                    '👨‍💼 Pasteur : '.$pastor->first_name.' '.$pastor->last_name."\n".
+                    '📍 Type : '.$this->getLocationTypeLabel($appointment->location_type)."\n".
+                    "\n⏳ Statut : En attente de votre confirmation\n".
+                    'Veuillez confirmer votre présence via le lien reçu par email.';
+
+                Message::create([
+                    'subject' => 'Rendez-vous de suivi planifié - '.$appointment->appointment_date->format('d/m/Y'),
+                    'content' => $clientMessageContent,
+                    'sender_id' => 1, // System user
+                    'receiver_id' => $clientUser->id,
+                    'type' => 'system',
+                    'recipient_type' => 'user',
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            // Log the error but don't fail the appointment creation
+            \Log::error('Failed to send pastoral care follow-up notifications: '.$e->getMessage());
         }
     }
 }

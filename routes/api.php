@@ -8,12 +8,12 @@ use App\Http\Controllers\Api\Event\EventBadgeController;
 use App\Http\Controllers\Api\Event\EventCheckInController;
 use App\Http\Controllers\Api\Event\EventRegistrationController;
 use App\Http\Controllers\Api\Event\EventTicketController;
-use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\PastoralCareController;
 use App\Http\Controllers\Api\ProjectAppointmentController;
+use App\Http\Controllers\Api\ProjectController;
+use App\Http\Controllers\Api\SprintController;
 use App\Http\Controllers\Api\TaskAppointmentController;
 use App\Http\Controllers\Api\TaskController;
-use App\Http\Controllers\Api\PastoralCareController;
-use App\Http\Controllers\Api\SprintController;
 use App\Http\Controllers\TusUploadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -205,6 +205,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // Cancel appointment (authenticated pastor only)
         Route::post('/appointments/{uuid}/cancel', [PastoralCareController::class, 'cancel'])
             ->name('appointments.cancel');
+
+        // Create follow-up appointment (authenticated pastor only)
+        Route::post('/appointments/{uuid}/follow-up', [PastoralCareController::class, 'createFollowUp'])
+            ->name('appointments.follow-up');
     });
 
     // ========================================
