@@ -45,6 +45,9 @@ import { PublicAgendaView } from '@/Components/ui/public-agenda-view';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Calendar as CalendarPicker } from '@/Components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
+import { cn } from '@/lib/utils';
 
 import type { AppointmentPageProps, Appointment, AppointmentStatus, AppointmentType } from '@/Types/appointment';
 
@@ -64,6 +67,7 @@ export default function AppointmentIndex() {
     const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [showUserAgenda, setShowUserAgenda] = useState(false);
+    const [datePickerOpen, setDatePickerOpen] = useState(false);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -293,12 +297,35 @@ export default function AppointmentIndex() {
                             </SelectContent>
                         </Select>
 
-                        <Input
-                            type="date"
-                            value={filters.date || ''}
-                            onChange={(e) => handleFilterChange('date', e.target.value)}
-                            className="w-[140px]"
-                        />
+                        <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className={cn(
+                                        "w-[160px] justify-start text-left font-normal",
+                                        !filters.date && "text-muted-foreground"
+                                    )}
+                                >
+                                    <CalendarDays className="mr-2 h-4 w-4" />
+                                    {filters.date
+                                        ? format(new Date(filters.date), 'd MMM yyyy', { locale: fr })
+                                        : 'Sélectionner'
+                                    }
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="end">
+                                <CalendarPicker
+                                    mode="single"
+                                    selected={filters.date ? new Date(filters.date) : undefined}
+                                    onSelect={(date) => {
+                                        handleFilterChange('date', date ? format(date, 'yyyy-MM-dd') : '');
+                                        setDatePickerOpen(false);
+                                    }}
+                                    locale={fr}
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
             </CardContent>

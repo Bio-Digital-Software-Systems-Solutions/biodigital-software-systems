@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PastoralCare;
-use App\Models\User;
-use App\Models\Message;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
-use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
-use Carbon\Carbon;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
 use App\Mail\PastoralCareAppointmentConfirmation;
 use App\Mail\PastoralCareNewAppointmentNotification;
+use App\Models\Message;
+use App\Models\PastoralCare;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class PastoralCareController extends Controller
 {
@@ -42,7 +42,7 @@ class PastoralCareController extends Controller
         $query = PastoralCare::with(['user', 'pastor']);
 
         // If not admin, filter appointments based on user role
-        if (!$canManageAll) {
+        if (! $canManageAll) {
             // Check if user has pastor role or pastor permissions
             $isPastor = $user->hasRole(['pastor', 'Pastor']) || $user->can('manage pastoral appointments');
 
@@ -79,7 +79,7 @@ class PastoralCareController extends Controller
         $statsQuery = PastoralCare::query();
 
         // Apply same permission filtering as main query
-        if (!$canManageAll) {
+        if (! $canManageAll) {
             $isPastor = $user->hasRole(['pastor', 'Pastor']) || $user->can('manage pastoral appointments');
             if ($isPastor) {
                 $statsQuery->forPastor($user->id);
@@ -129,13 +129,13 @@ class PastoralCareController extends Controller
                 'cancelled_appointments' => (clone $statsQuery)->cancelled()->count(),
                 'this_week_appointments' => (clone $statsQuery)->whereBetween('appointment_date', [
                     now()->startOfWeek(),
-                    now()->endOfWeek()
+                    now()->endOfWeek(),
                 ])->count(),
                 'next_week_appointments' => (clone $statsQuery)->whereBetween('appointment_date', [
                     now()->addWeek()->startOfWeek(),
-                    now()->addWeek()->endOfWeek()
+                    now()->addWeek()->endOfWeek(),
                 ])->count(),
-            ]
+            ],
         ]);
     }
 
@@ -166,7 +166,7 @@ class PastoralCareController extends Controller
     public function store(Request $request): RedirectResponse
     {
         // Check if this is a public booking (unauthenticated user) or internal booking (authenticated user)
-        $isPublicBooking = !$request->user();
+        $isPublicBooking = ! $request->user();
 
         $validationRules = [
             'appointment_date' => 'required|date|after_or_equal:today',
@@ -198,7 +198,7 @@ class PastoralCareController extends Controller
         $validated = $request->validate($validationRules);
 
         // Combine date and time
-        $appointmentDateTime = Carbon::parse($validated['appointment_date'] . ' ' . $validated['appointment_time']);
+        $appointmentDateTime = Carbon::parse($validated['appointment_date'].' '.$validated['appointment_time']);
 
         // Determine pastor ID
         $pastorId = $isPublicBooking
@@ -208,7 +208,7 @@ class PastoralCareController extends Controller
         // Verify the selected user is a pastor (for public bookings)
         if ($isPublicBooking) {
             $pastor = User::findOrFail($pastorId);
-            if (!$pastor->hasRole('pastor')) {
+            if (! $pastor->hasRole('pastor')) {
                 throw ValidationException::withMessages([
                     'pastor_id' => 'L\'utilisateur sélectionné n\'est pas un pasteur.',
                 ]);
@@ -217,7 +217,7 @@ class PastoralCareController extends Controller
 
         // Check if time slot is available
         if (
-            !PastoralCare::isTimeSlotAvailable(
+            ! PastoralCare::isTimeSlotAvailable(
                 $pastorId,
                 $appointmentDateTime,
                 $validated['duration_minutes']
@@ -260,7 +260,7 @@ class PastoralCareController extends Controller
                 ->send(new PastoralCareNewAppointmentNotification($appointment));
         } catch (\Exception $e) {
             // Log the error but don't fail the appointment creation
-            Log::error('Failed to send pastoral care appointment emails: ' . $e->getMessage());
+            Log::error('Failed to send pastoral care appointment emails: '.$e->getMessage());
         }
 
         // Create platform messages
@@ -274,10 +274,10 @@ class PastoralCareController extends Controller
                     'sender_id' => $senderId,
                     'receiver_id' => $request->user()->id,
                     'subject' => 'Confirmation de votre rendez-vous pastoral',
-                    'content' => "Votre rendez-vous de soin pastoral avec {$appointment->pastor->first_name} {$appointment->pastor->last_name} a été planifié pour le " .
-                        $appointment->appointment_date->format('d/m/Y') . " à " .
-                        $appointment->appointment_time->format('H:i') .
-                        ". Vous recevrez une confirmation par email. Consultez vos messages pour plus de détails.",
+                    'content' => "Votre rendez-vous de soin pastoral avec {$appointment->pastor->first_name} {$appointment->pastor->last_name} a été planifié pour le ".
+                        $appointment->appointment_date->format('d/m/Y').' à '.
+                        $appointment->appointment_time->format('H:i').
+                        '. Vous recevrez une confirmation par email. Consultez vos messages pour plus de détails.',
                     'type' => 'system',
                 ]);
             }
@@ -287,16 +287,16 @@ class PastoralCareController extends Controller
                 'sender_id' => $senderId,
                 'receiver_id' => $appointment->pastor_id,
                 'subject' => 'Nouveau rendez-vous de soin pastoral',
-                'content' => "Un nouveau rendez-vous de soin pastoral a été planifié avec vous pour le " .
-                    $appointment->appointment_date->format('d/m/Y') . " à " .
-                    $appointment->appointment_time->format('H:i') .
-                    ". Client: {$appointment->client_name} ({$appointment->client_email}). " .
-                    "Consultez votre tableau de bord pour gérer ce rendez-vous.",
+                'content' => 'Un nouveau rendez-vous de soin pastoral a été planifié avec vous pour le '.
+                    $appointment->appointment_date->format('d/m/Y').' à '.
+                    $appointment->appointment_time->format('H:i').
+                    ". Client: {$appointment->client_name} ({$appointment->client_email}). ".
+                    'Consultez votre tableau de bord pour gérer ce rendez-vous.',
                 'type' => 'system',
             ]);
         } catch (\Exception $e) {
             // Log the error but don't fail the appointment creation
-            Log::error('Failed to create pastoral care platform messages: ' . $e->getMessage());
+            Log::error('Failed to create pastoral care platform messages: '.$e->getMessage());
         }
 
         return redirect()->route('pastoral-care.show', $appointment)
@@ -314,15 +314,30 @@ class PastoralCareController extends Controller
         $pastoralCare->load([
             'user',
             'pastor',
-            'parent.pastor', // Load parent appointment with its pastor
-            'followUps.pastor', // Load follow-up appointments with their pastors
+            'parent.pastor',
+            'parent.user',
+            'followUps.pastor',
+            'followUps.user',
         ]);
+
+        $user = Auth::user();
+
+        // Determine if user can view client notes
+        // User can view client notes if they are:
+        // - The assigned pastor (always has access to their client's notes)
+        // - The client themselves (user_id matches)
+        // - An admin/SuperAdmin with the permission
+        $canViewClientNotes =
+            $user->id === $pastoralCare->pastor_id ||
+            $user->id === $pastoralCare->user_id ||
+            ($user->hasRole(['admin', 'SuperAdmin']) && $user->can('view pastoral care client notes'));
 
         return Inertia::render('PastoralCare/Show', [
             'appointment' => $pastoralCare,
             'canEdit' => $pastoralCare->status === 'pending',
             'canConfirm' => $pastoralCare->can_be_confirmed,
             'canCancel' => $pastoralCare->can_be_cancelled,
+            'canViewClientNotes' => $canViewClientNotes,
         ]);
     }
 
@@ -370,11 +385,11 @@ class PastoralCareController extends Controller
         ]);
 
         // Combine date and time
-        $appointmentDateTime = Carbon::parse($validated['appointment_date'] . ' ' . $validated['appointment_time']);
+        $appointmentDateTime = Carbon::parse($validated['appointment_date'].' '.$validated['appointment_time']);
 
         // Check if time slot is available (excluding current appointment)
         if (
-            !PastoralCare::isTimeSlotAvailable(
+            ! PastoralCare::isTimeSlotAvailable(
                 $validated['pastor_id'],
                 $appointmentDateTime,
                 $validated['duration_minutes'],
@@ -464,6 +479,7 @@ class PastoralCareController extends Controller
 
         try {
             $pastoralCare->complete();
+
             return back()->with('success', 'Rendez-vous marqué comme terminé.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -479,6 +495,7 @@ class PastoralCareController extends Controller
 
         try {
             $pastoralCare->markAsNoShow();
+
             return back()->with('success', 'Rendez-vous marqué comme absence.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -518,17 +535,17 @@ class PastoralCareController extends Controller
                 'confirmed' => [
                     'subject' => 'Votre rendez-vous de soin pastoral a été confirmé',
                     'action' => 'confirmé',
-                    'email_template' => PastoralCareAppointmentConfirmation::class
+                    'email_template' => PastoralCareAppointmentConfirmation::class,
                 ],
                 'cancelled' => [
                     'subject' => 'Votre rendez-vous de soin pastoral a été annulé',
                     'action' => 'annulé',
-                    'email_template' => null // We'll create a cancellation template if needed
-                ]
+                    'email_template' => null, // We'll create a cancellation template if needed
+                ],
             ];
 
             $statusInfo = $statusTexts[$newStatus] ?? null;
-            if (!$statusInfo) {
+            if (! $statusInfo) {
                 return;
             }
 
@@ -545,12 +562,12 @@ class PastoralCareController extends Controller
             // Send platform message to client if they have an account
             if ($appointment->user_id) {
                 $messageContent = "Votre rendez-vous de soin pastoral avec {$appointment->pastor->first_name} {$appointment->pastor->last_name} ";
-                $messageContent .= "prévu le " . $appointment->appointment_date->format('d/m/Y');
-                $messageContent .= " à " . $appointment->appointment_time->format('H:i');
+                $messageContent .= 'prévu le '.$appointment->appointment_date->format('d/m/Y');
+                $messageContent .= ' à '.$appointment->appointment_time->format('H:i');
                 $messageContent .= " a été {$statusInfo['action']}.";
 
                 if ($newStatus === 'cancelled' && $appointment->cancellation_reason) {
-                    $messageContent .= "\n\nRaison: " . $appointment->cancellation_reason;
+                    $messageContent .= "\n\nRaison: ".$appointment->cancellation_reason;
                 }
 
                 Message::create([
@@ -563,8 +580,7 @@ class PastoralCareController extends Controller
             }
         } catch (\Exception $e) {
             // Log the error but don't fail the status change
-            Log::error('Failed to send pastoral care status change notifications: ' . $e->getMessage());
+            Log::error('Failed to send pastoral care status change notifications: '.$e->getMessage());
         }
     }
-
 }

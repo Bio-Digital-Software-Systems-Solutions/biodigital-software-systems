@@ -53,7 +53,9 @@ export const DOMPurifyPresets = {
 
 // Default configuration (RICH_TEXT preset)
 const DEFAULT_CONFIG: Config = {
-    ...DOMPurifyPresets.RICH_TEXT,
+    ALLOWED_TAGS: [...DOMPurifyPresets.RICH_TEXT.ALLOWED_TAGS],
+    ALLOWED_ATTR: [...DOMPurifyPresets.RICH_TEXT.ALLOWED_ATTR],
+    ALLOW_DATA_ATTR: DOMPurifyPresets.RICH_TEXT.ALLOW_DATA_ATTR,
     ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
     ALLOW_UNKNOWN_PROTOCOLS: false,
     RETURN_DOM: false,

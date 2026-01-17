@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\PastorAvailability;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class PastorAvailabilityController extends Controller
 {
@@ -18,8 +18,8 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        // Check if user has pastor role
-        if (!$user->hasRole('pastor')) {
+        // Check if user has pastor role or is admin
+        if (! $user->hasRole(['pastor', 'SuperAdmin', 'admin'])) {
             abort(403, 'Seuls les pasteurs peuvent gérer leurs créneaux de disponibilité.');
         }
 
@@ -43,7 +43,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole('pastor')) {
+        if (! $user->hasRole(['pastor', 'SuperAdmin', 'admin'])) {
             abort(403, 'Seuls les pasteurs peuvent gérer leurs créneaux de disponibilité.');
         }
 
@@ -59,7 +59,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole('pastor')) {
+        if (! $user->hasRole(['pastor', 'SuperAdmin', 'admin'])) {
             abort(403, 'Seuls les pasteurs peuvent gérer leurs créneaux de disponibilité.');
         }
 
@@ -70,13 +70,13 @@ class PastorAvailabilityController extends Controller
                 'integer',
                 'min:1',
                 'max:7',
-                Rule::requiredIf($request->type === 'weekly')
+                Rule::requiredIf($request->type === 'weekly'),
             ],
             'specific_date' => [
                 'nullable',
                 'date',
                 'after_or_equal:today',
-                Rule::requiredIf($request->type === 'specific_date')
+                Rule::requiredIf($request->type === 'specific_date'),
             ],
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
@@ -87,7 +87,7 @@ class PastorAvailabilityController extends Controller
                 'nullable',
                 'url',
                 'max:500',
-                Rule::requiredIf(in_array($request->consultation_mode, ['online', 'hybrid']))
+                Rule::requiredIf(in_array($request->consultation_mode, ['online', 'hybrid'])),
             ],
             'location' => 'nullable|string|max:255',
             'room' => 'nullable|string|max:255',
@@ -102,17 +102,18 @@ class PastorAvailabilityController extends Controller
             ->where(function ($query) use ($validated) {
                 if ($validated['type'] === 'weekly') {
                     $query->where('type', 'weekly')
-                          ->where('day_of_week', $validated['day_of_week']);
+                        ->where('day_of_week', $validated['day_of_week']);
                 } else {
                     $query->where('type', 'specific_date')
-                          ->where('specific_date', $validated['specific_date']);
+                        ->where('specific_date', $validated['specific_date']);
                 }
             });
 
         if ($conflictQuery->exists()) {
             $conflictType = $validated['type'] === 'weekly' ? 'ce jour de la semaine' : 'cette date';
+
             return back()->withErrors([
-                'conflict' => "Vous avez déjà des créneaux de disponibilité définis pour {$conflictType}."
+                'conflict' => "Vous avez déjà des créneaux de disponibilité définis pour {$conflictType}.",
             ]);
         }
 
@@ -132,7 +133,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole('pastor') || $availability->pastor_id !== $user->id) {
+        if (! $user->hasRole(['pastor', 'SuperAdmin', 'admin']) || ($availability->pastor_id !== $user->id && ! $user->hasRole(['SuperAdmin', 'admin']))) {
             abort(403);
         }
 
@@ -161,7 +162,7 @@ class PastorAvailabilityController extends Controller
                 'availability_type' => $availability->type,
                 'day_of_week' => $availability->day_of_week,
                 'specific_date' => $availability->specific_date,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             $sampleSlots = []; // Empty fallback
         }
@@ -179,7 +180,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole('pastor') || $availability->pastor_id !== $user->id) {
+        if (! $user->hasRole(['pastor', 'SuperAdmin', 'admin']) || ($availability->pastor_id !== $user->id && ! $user->hasRole(['SuperAdmin', 'admin']))) {
             abort(403);
         }
 
@@ -195,7 +196,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole('pastor') || $availability->pastor_id !== $user->id) {
+        if (! $user->hasRole(['pastor', 'SuperAdmin', 'admin']) || ($availability->pastor_id !== $user->id && ! $user->hasRole(['SuperAdmin', 'admin']))) {
             abort(403);
         }
 
@@ -210,13 +211,13 @@ class PastorAvailabilityController extends Controller
                 'integer',
                 'min:1',
                 'max:7',
-                Rule::requiredIf($requestType === 'weekly' && $request->has('type'))
+                Rule::requiredIf($requestType === 'weekly' && $request->has('type')),
             ],
             'specific_date' => [
                 'nullable',
                 'date',
                 'after_or_equal:today',
-                Rule::requiredIf($requestType === 'specific_date' && $request->has('type'))
+                Rule::requiredIf($requestType === 'specific_date' && $request->has('type')),
             ],
             'start_time' => 'sometimes|date_format:H:i',
             'end_time' => 'sometimes|date_format:H:i|after:start_time',
@@ -230,7 +231,7 @@ class PastorAvailabilityController extends Controller
                 Rule::requiredIf(
                     $request->has('consultation_mode') &&
                     in_array($request->consultation_mode, ['online', 'hybrid'])
-                )
+                ),
             ],
             'location' => 'sometimes|nullable|string|max:255',
             'room' => 'sometimes|nullable|string|max:255',
@@ -251,17 +252,18 @@ class PastorAvailabilityController extends Controller
                 ->where(function ($query) use ($checkType, $checkDayOfWeek, $checkSpecificDate) {
                     if ($checkType === 'weekly') {
                         $query->where('type', 'weekly')
-                              ->where('day_of_week', $checkDayOfWeek);
+                            ->where('day_of_week', $checkDayOfWeek);
                     } else {
                         $query->where('type', 'specific_date')
-                              ->where('specific_date', $checkSpecificDate);
+                            ->where('specific_date', $checkSpecificDate);
                     }
                 });
 
             if ($conflictQuery->exists()) {
                 $conflictType = $checkType === 'weekly' ? 'ce jour de la semaine' : 'cette date';
+
                 return back()->withErrors([
-                    'conflict' => "Vous avez déjà des créneaux de disponibilité définis pour {$conflictType}."
+                    'conflict' => "Vous avez déjà des créneaux de disponibilité définis pour {$conflictType}.",
                 ]);
             }
         }
@@ -270,7 +272,7 @@ class PastorAvailabilityController extends Controller
         \Log::info('Updating pastoral availability', [
             'availability_id' => $availability->id,
             'validated_fields' => array_keys($validated),
-            'changes' => $validated
+            'changes' => $validated,
         ]);
 
         // Only update fields that are present in validated data
@@ -287,7 +289,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole('pastor') || $availability->pastor_id !== $user->id) {
+        if (! $user->hasRole(['pastor', 'SuperAdmin', 'admin']) || ($availability->pastor_id !== $user->id && ! $user->hasRole(['SuperAdmin', 'admin']))) {
             abort(403);
         }
 
@@ -304,12 +306,12 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole('pastor') || $availability->pastor_id !== $user->id) {
+        if (! $user->hasRole(['pastor', 'SuperAdmin', 'admin']) || ($availability->pastor_id !== $user->id && ! $user->hasRole(['SuperAdmin', 'admin']))) {
             abort(403);
         }
 
         $availability->update([
-            'is_active' => !$availability->is_active
+            'is_active' => ! $availability->is_active,
         ]);
 
         $status = $availability->is_active ? 'activés' : 'désactivés';
@@ -326,9 +328,9 @@ class PastorAvailabilityController extends Controller
             $user = Auth::user();
 
             // Check if user has pastor role
-            if (!$user->hasRole('pastor')) {
+            if (! $user->hasRole(['pastor', 'SuperAdmin', 'admin'])) {
                 return response()->json([
-                    'error' => 'Seuls les pasteurs peuvent prévisualiser leurs créneaux de disponibilité.'
+                    'error' => 'Seuls les pasteurs peuvent prévisualiser leurs créneaux de disponibilité.',
                 ], 403);
             }
 
@@ -365,14 +367,14 @@ class PastorAvailabilityController extends Controller
                 'count' => count($slots),
             ]);
         } catch (\Exception $e) {
-            \Log::error('Preview slots error: ' . $e->getMessage(), [
+            \Log::error('Preview slots error: '.$e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
-                'error' => 'Error generating preview slots: ' . $e->getMessage()
+                'error' => 'Error generating preview slots: '.$e->getMessage(),
             ], 500);
         }
     }

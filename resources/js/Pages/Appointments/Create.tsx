@@ -29,12 +29,14 @@ import {
     Eye,
     EyeOff,
     Search,
+    Video,
+    Link as LinkIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, addDays, addHours, startOfHour } from 'date-fns';
 import TimeSlotPicker from '@/Components/appointments/TimeSlotPicker';
 
-import type { AppointmentCreateEditProps, AppointmentFormData, User as UserType } from '@/Types/appointment';
+import type { AppointmentCreateEditProps, AppointmentFormData, User as UserType, MeetingMode, MeetingPlatform } from '@/Types/appointment';
 
 export default function AppointmentCreate() {
     const { users, types, prefilledData, preselectedParticipants = [], auth } = usePage<AppointmentCreateEditProps>().props;
@@ -58,6 +60,9 @@ export default function AppointmentCreate() {
         start_datetime: format(suggestedStart, "yyyy-MM-dd'T'HH:mm"),
         end_datetime: format(suggestedEnd, "yyyy-MM-dd'T'HH:mm"),
         location: '',
+        meeting_mode: 'in_person',
+        meeting_link: '',
+        meeting_platform: undefined,
         type: 'individual',
         visibility: 'private',
         participant_ids: initialParticipantIds,
@@ -276,6 +281,117 @@ export default function AppointmentCreate() {
                                         <p className="text-sm text-red-600">{errors.location}</p>
                                     )}
                                 </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* Meeting Mode Section */}
+                            <div className="space-y-4">
+                                <div className="flex items-center space-x-2">
+                                    <Video className="h-5 w-5 text-gray-500" />
+                                    <Label className="text-base font-medium">Mode de réunion</Label>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="meeting_mode">Mode *</Label>
+                                        <Select
+                                            value={data.meeting_mode}
+                                            onValueChange={(value) => {
+                                                setData('meeting_mode', value as MeetingMode);
+                                                // Clear meeting link and platform if switching to in_person
+                                                if (value === 'in_person') {
+                                                    setData('meeting_link', '');
+                                                    setData('meeting_platform', undefined);
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className={errors.meeting_mode ? 'border-red-500' : ''}>
+                                                <SelectValue placeholder="Sélectionnez le mode" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="in_person">
+                                                    <div className="flex items-center space-x-2">
+                                                        <MapPin className="h-4 w-4" />
+                                                        <span>En présentiel</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="online">
+                                                    <div className="flex items-center space-x-2">
+                                                        <Video className="h-4 w-4" />
+                                                        <span>En ligne</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="hybrid">
+                                                    <div className="flex items-center space-x-2">
+                                                        <Users className="h-4 w-4" />
+                                                        <span>Hybride</span>
+                                                    </div>
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.meeting_mode && (
+                                            <p className="text-sm text-red-600">{errors.meeting_mode}</p>
+                                        )}
+                                    </div>
+
+                                    {(data.meeting_mode === 'online' || data.meeting_mode === 'hybrid') && (
+                                        <>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="meeting_platform">Plateforme *</Label>
+                                                <Select
+                                                    value={data.meeting_platform || ''}
+                                                    onValueChange={(value) => setData('meeting_platform', value as MeetingPlatform)}
+                                                >
+                                                    <SelectTrigger className={errors.meeting_platform ? 'border-red-500' : ''}>
+                                                        <SelectValue placeholder="Sélectionnez la plateforme" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="zoom">
+                                                            <span>Zoom</span>
+                                                        </SelectItem>
+                                                        <SelectItem value="google_meet">
+                                                            <span>Google Meet</span>
+                                                        </SelectItem>
+                                                        <SelectItem value="ms_teams">
+                                                            <span>Microsoft Teams</span>
+                                                        </SelectItem>
+                                                        <SelectItem value="other">
+                                                            <span>Autre</span>
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                {errors.meeting_platform && (
+                                                    <p className="text-sm text-red-600">{errors.meeting_platform}</p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="meeting_link">Lien de la réunion *</Label>
+                                                <div className="relative">
+                                                    <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                                    <Input
+                                                        id="meeting_link"
+                                                        type="url"
+                                                        value={data.meeting_link || ''}
+                                                        onChange={(e) => setData('meeting_link', e.target.value)}
+                                                        placeholder="https://zoom.us/j/..."
+                                                        className={`pl-10 ${errors.meeting_link ? 'border-red-500' : ''}`}
+                                                    />
+                                                </div>
+                                                {errors.meeting_link && (
+                                                    <p className="text-sm text-red-600">{errors.meeting_link}</p>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {(data.meeting_mode === 'online' || data.meeting_mode === 'hybrid') && (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        Le lien de la réunion sera inclus dans les invitations envoyées aux participants.
+                                    </p>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

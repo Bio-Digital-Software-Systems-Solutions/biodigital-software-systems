@@ -40,7 +40,7 @@ class StoreAppointmentRequest extends FormRequest
                     if ($startDateTime->isBefore(now()->addHour())) {
                         $fail('Le rendez-vous doit être pris au minimum 1 heure à l\'avance.');
                     }
-                }
+                },
             ],
             'end_datetime' => [
                 'required',
@@ -68,9 +68,12 @@ class StoreAppointmentRequest extends FormRequest
                             $fail('Ce créneau horaire n\'est pas disponible.');
                         }
                     }
-                }
+                },
             ],
             'location' => ['nullable', 'string', 'max:255'],
+            'meeting_mode' => ['required', 'in:in_person,online,hybrid'],
+            'meeting_link' => ['nullable', 'required_if:meeting_mode,online,hybrid', 'url', 'max:500'],
+            'meeting_platform' => ['nullable', 'required_if:meeting_mode,online,hybrid', 'in:zoom,google_meet,ms_teams,other'],
             'type' => ['required', 'in:individual,group,consultation,meeting'],
             'visibility' => ['required', 'in:private,public'],
             'participant_ids' => ['nullable', 'array'],
@@ -97,6 +100,13 @@ class StoreAppointmentRequest extends FormRequest
             'end_datetime.date' => 'L\'heure de fin doit être une date valide.',
             'end_datetime.after' => 'L\'heure de fin doit être après l\'heure de début.',
             'location.max' => 'L\'emplacement ne peut pas dépasser 255 caractères.',
+            'meeting_mode.required' => 'Le mode de réunion est obligatoire.',
+            'meeting_mode.in' => 'Le mode de réunion sélectionné est invalide.',
+            'meeting_link.required_if' => 'Le lien de la réunion est obligatoire pour les réunions en ligne ou hybrides.',
+            'meeting_link.url' => 'Le lien de la réunion doit être une URL valide.',
+            'meeting_link.max' => 'Le lien de la réunion ne peut pas dépasser 500 caractères.',
+            'meeting_platform.required_if' => 'La plateforme est obligatoire pour les réunions en ligne ou hybrides.',
+            'meeting_platform.in' => 'La plateforme sélectionnée est invalide.',
             'type.required' => 'Le type de rendez-vous est obligatoire.',
             'type.in' => 'Le type de rendez-vous sélectionné est invalide.',
             'visibility.required' => 'La visibilité du rendez-vous est obligatoire.',

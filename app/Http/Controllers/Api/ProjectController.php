@@ -8,6 +8,7 @@ use App\Models\ProjectAttachment;
 use App\Models\ProjectComment;
 use App\Models\ProjectParticipant;
 use App\Models\User;
+use App\Notifications\ProjectCommentAdded;
 use App\Notifications\ProjectParticipantAdded;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -178,7 +179,48 @@ class ProjectController extends Controller
             'parent_id' => $validated['parent_id'] ?? null,
         ]);
 
+        // Send notifications to all project participants
+        $this->notifyProjectParticipants($project, $comment, $request->user());
+
         return response()->json($comment->load(['user', 'replies']), 201);
+    }
+
+    /**
+     * Notify all project participants about a new comment.
+     */
+    private function notifyProjectParticipants(Project $project, ProjectComment $comment, User $commentedBy): void
+    {
+        $project->load(['participants.user', 'members', 'manager']);
+
+        // Collect all users to notify
+        $usersToNotify = collect();
+
+        // Add participants
+        foreach ($project->participants as $participant) {
+            if ($participant->user) {
+                $usersToNotify->push($participant->user);
+            }
+        }
+
+        // Add members
+        foreach ($project->members as $member) {
+            $usersToNotify->push($member);
+        }
+
+        // Add manager if exists
+        if ($project->manager) {
+            $usersToNotify->push($project->manager);
+        }
+
+        // Remove duplicates and the user who commented
+        $usersToNotify = $usersToNotify
+            ->unique('id')
+            ->filter(fn ($user) => $user->id !== $commentedBy->id);
+
+        // Send notifications
+        foreach ($usersToNotify as $user) {
+            $user->notify(new ProjectCommentAdded($project, $comment, $commentedBy));
+        }
     }
 
     public function deleteComment(Request $request, Project $project, ProjectComment $comment): JsonResponse

@@ -1,10 +1,17 @@
 import React, { useState, useEffect, FormEvent } from 'react';
-import { XMarkIcon, MapPinIcon, UserPlusIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, MapPinIcon, UserPlusIcon, CalendarIcon, VideoCameraIcon, LinkIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Textarea } from '@/Components/ui/textarea';
 import { Switch } from '@/Components/ui/switch';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/Components/ui/select';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -33,6 +40,8 @@ interface Props {
 }
 
 type AppointmentType = 'individual' | 'group' | 'consultation' | 'meeting';
+type MeetingMode = 'in_person' | 'online' | 'hybrid';
+type MeetingPlatform = 'zoom' | 'google_meet' | 'ms_teams' | 'other';
 
 export default function CreateAppointmentModal({
     isOpen,
@@ -55,6 +64,9 @@ export default function CreateAppointmentModal({
     const [endDate, setEndDate] = useState('');
     const [endTime, setEndTime] = useState('10:00');
     const [location, setLocation] = useState('');
+    const [meetingMode, setMeetingMode] = useState<MeetingMode>('in_person');
+    const [meetingPlatform, setMeetingPlatform] = useState<MeetingPlatform | ''>('');
+    const [meetingLink, setMeetingLink] = useState('');
     const [isPublic, setIsPublic] = useState(true);
     const [maxParticipants, setMaxParticipants] = useState<number | ''>('');
     const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
@@ -88,6 +100,9 @@ export default function CreateAppointmentModal({
             setStartTime('09:00');
             setEndTime('10:00');
             setLocation('');
+            setMeetingMode('in_person');
+            setMeetingPlatform('');
+            setMeetingLink('');
             setIsPublic(true);
             setMaxParticipants('');
             setSelectedParticipants([]);
@@ -153,6 +168,9 @@ export default function CreateAppointmentModal({
                 start_datetime: startDatetime,
                 end_datetime: endDatetime,
                 location,
+                meeting_mode: meetingMode,
+                meeting_platform: meetingPlatform || null,
+                meeting_link: meetingLink || null,
                 type: activeTab,
                 visibility: isPublic ? 'public' : 'private',
                 max_participants: maxParticipants || null,
@@ -374,6 +392,63 @@ export default function CreateAppointmentModal({
                             onChange={(e) => setLocation(e.target.value)}
                             className="flex-1 border-0 bg-gray-50 dark:bg-gray-700"
                         />
+                    </div>
+
+                    {/* Meeting Mode */}
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                            <VideoCameraIcon className="h-5 w-5 text-gray-400" />
+                            <Select
+                                value={meetingMode}
+                                onValueChange={(value) => {
+                                    setMeetingMode(value as MeetingMode);
+                                    if (value === 'in_person') {
+                                        setMeetingPlatform('');
+                                        setMeetingLink('');
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="flex-1 border-0 bg-gray-50 dark:bg-gray-700">
+                                    <SelectValue placeholder="Mode de réunion" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="in_person">En présentiel</SelectItem>
+                                    <SelectItem value="online">En ligne</SelectItem>
+                                    <SelectItem value="hybrid">Hybride</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Platform & Link (only show for online/hybrid) */}
+                        {(meetingMode === 'online' || meetingMode === 'hybrid') && (
+                            <div className="ml-8 space-y-3">
+                                <Select
+                                    value={meetingPlatform}
+                                    onValueChange={(value) => setMeetingPlatform(value as MeetingPlatform)}
+                                >
+                                    <SelectTrigger className="w-full border-0 bg-gray-50 dark:bg-gray-700">
+                                        <SelectValue placeholder="Sélectionner la plateforme" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="zoom">Zoom</SelectItem>
+                                        <SelectItem value="google_meet">Google Meet</SelectItem>
+                                        <SelectItem value="ms_teams">Microsoft Teams</SelectItem>
+                                        <SelectItem value="other">Autre</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <div className="relative">
+                                    <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        type="url"
+                                        placeholder="https://zoom.us/j/... ou lien de la réunion"
+                                        value={meetingLink}
+                                        onChange={(e) => setMeetingLink(e.target.value)}
+                                        className="pl-10 border-0 bg-gray-50 dark:bg-gray-700"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Description */}

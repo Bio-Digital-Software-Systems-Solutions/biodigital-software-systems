@@ -41,6 +41,7 @@ class SyncRolesAndPermissions extends Command
             // Pastoral Care
             'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
             'select pastor for pastoral care', 'manage pastor availability', 'manage pastoral appointments',
+            'view pastoral care client notes',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs', 'create program steps',
@@ -105,7 +106,7 @@ class SyncRolesAndPermissions extends Command
                 'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
                 // Pastoral Care
                 'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
-                'select pastor for pastoral care',
+                'select pastor for pastoral care', 'view pastoral care client notes',
                 // Tasks & Programs
                 'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
                 'view programs', 'create programs', 'edit programs', 'delete programs', 'create program steps',
@@ -254,7 +255,7 @@ class SyncRolesAndPermissions extends Command
                 'view messages', 'create messages', 'edit messages', 'delete messages',
                 'use chat',
                 'view appointments', 'create appointments',
-                'view pastoral care', 'create pastoral care',
+                'view pastoral care', 'create pastoral care', 'view pastoral care client notes',
                 'view needs', 'create needs', 'submit forms',
             ],
 
@@ -289,6 +290,7 @@ class SyncRolesAndPermissions extends Command
                 'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
                 'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
                 'select pastor for pastoral care', 'manage pastor availability', 'manage pastoral appointments',
+                'view pastoral care client notes',
                 'view messages', 'create messages', 'edit messages', 'delete messages',
                 'use chat',
                 'view groups', 'manage group members',

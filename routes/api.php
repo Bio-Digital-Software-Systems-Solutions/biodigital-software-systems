@@ -209,6 +209,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // Create follow-up appointment (authenticated pastor only)
         Route::post('/appointments/{uuid}/follow-up', [PastoralCareController::class, 'createFollowUp'])
             ->name('appointments.follow-up');
+
+        // Generate report for appointment (authenticated pastor only)
+        Route::get('/appointments/{uuid}/report', [PastoralCareController::class, 'generateReport'])
+            ->name('appointments.report');
     });
 
     // ========================================

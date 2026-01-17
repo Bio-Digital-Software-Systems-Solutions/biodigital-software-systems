@@ -233,7 +233,38 @@
                     <span class="detail-label">Type :</span>
                     <span class="detail-value">{{ ucfirst($appointment->type) }}</span>
                 </div>
+
+                @if($appointment->meeting_mode && $appointment->meeting_mode !== 'in_person')
+                <div class="detail-row">
+                    <span class="detail-icon">🎥</span>
+                    <span class="detail-label">Mode :</span>
+                    <span class="detail-value">
+                        @if($appointment->meeting_mode === 'online')
+                            En ligne
+                        @else
+                            Hybride
+                        @endif
+                    </span>
+                </div>
+                @endif
             </div>
+
+            @if($appointment->meeting_link && in_array($appointment->meeting_mode, ['online', 'hybrid']))
+            <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); border-radius: 8px; border: 1px solid #667eea40;">
+                <p style="margin: 0 0 10px 0; font-weight: 600; color: #4c1d95;">
+                    🎥 Rejoindre la réunion en ligne
+                    @if($appointment->meeting_platform)
+                        ({{ $appointment->meeting_platform === 'google_meet' ? 'Google Meet' : ($appointment->meeting_platform === 'ms_teams' ? 'Microsoft Teams' : ucfirst($appointment->meeting_platform)) }})
+                    @endif
+                </p>
+                <a href="{{ $appointment->meeting_link }}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
+                    🔗 Cliquer ici pour rejoindre
+                </a>
+                <p style="margin: 10px 0 0 0; font-size: 12px; color: #6b7280; word-break: break-all;">
+                    {{ $appointment->meeting_link }}
+                </p>
+            </div>
+            @endif
         </div>
 
         <div class="organizer-info">

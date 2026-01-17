@@ -20,12 +20,15 @@ import {
     XCircleIcon,
     DocumentTextIcon,
     ArrowPathIcon,
-    LinkIcon
+    LinkIcon,
+    ArrowDownTrayIcon,
+    DocumentArrowDownIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/Components/ui/dialog';
 import FollowUpModal from '@/Components/PastoralCare/FollowUpModal';
 
 interface User {
@@ -35,6 +38,11 @@ interface User {
     email: string;
     roles?: Array<{ name: string }>;
     permissions?: Array<{ name: string }>;
+}
+
+interface PastorNote {
+    content: string;
+    created_at: string;
 }
 
 interface PastoralCareAppointment {
@@ -71,7 +79,7 @@ interface PastoralCareAppointment {
     client_email: string;
     client_phone?: string;
     notes?: string;
-    pastor_notes?: string;
+    pastor_notes?: PastorNote[];
     cancellation_reason?: string;
     created_at: string;
     updated_at: string;
@@ -87,17 +95,20 @@ interface Props {
     canEdit: boolean;
     canConfirm: boolean;
     canCancel: boolean;
+    canViewClientNotes: boolean;
     auth: {
         user: User;
     };
 }
 
-export default function Show({ appointment, canEdit, canConfirm, canCancel, auth }: Props) {
+export default function Show({ appointment, canEdit, canConfirm, canCancel, canViewClientNotes, auth }: Props) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showFollowUpModal, setShowFollowUpModal] = useState(false);
-    const [pastorNotes, setPastorNotes] = useState(appointment.pastor_notes || '');
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [newPastorNote, setNewPastorNote] = useState('');
     const [isUpdatingNotes, setIsUpdatingNotes] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
     const formatDate = (dateString: string) => {
         return format(new Date(dateString), 'EEEE d MMMM yyyy', { locale: fr });
@@ -298,7 +309,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
     };
 
     const handleNotesUpdate = async () => {
-        if (!pastorNotes.trim()) {
+        if (!newPastorNote.trim()) {
             toast.error('Veuillez entrer des notes');
             return;
         }
@@ -313,7 +324,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
                 body: JSON.stringify({
-                    pastor_notes: pastorNotes
+                    pastor_notes: newPastorNote
                 })
             });
 
@@ -321,6 +332,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
 
             if (data.success) {
                 toast.success(data.message || 'Notes ajoutées avec succès');
+                setNewPastorNote('');
                 router.reload({ only: ['appointment'] });
             } else {
                 toast.error(data.message || 'Erreur lors de l\'ajout des notes');
@@ -345,6 +357,68 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
             });
         } catch (error) {
             toast.error('Erreur lors de la suppression');
+        }
+    };
+
+    const handleGenerateReport = async (format: 'pdf' | 'excel' | 'word') => {
+        setIsGeneratingReport(true);
+
+        try {
+            const response = await fetch(`/api/pastoral-care/appointments/${appointment.uuid}/report?format=${format}`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': format === 'pdf' ? 'application/pdf' :
+                              format === 'excel' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
+                              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                },
+            });
+
+            if (!response.ok) {
+                // Try to parse error as JSON, but handle case where it's not JSON
+                let errorMessage = 'Erreur lors de la génération du rapport';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch {
+                    // Response is not JSON, use status text
+                    errorMessage = response.statusText || errorMessage;
+                }
+                throw new Error(errorMessage);
+            }
+
+            // Get filename from Content-Disposition header or generate one
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = `rapport_pastoral_${appointment.client_name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`;
+
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                if (filenameMatch && filenameMatch[1]) {
+                    filename = filenameMatch[1].replace(/['"]/g, '');
+                }
+            } else {
+                const extensions: Record<string, string> = { pdf: '.pdf', excel: '.xlsx', word: '.docx' };
+                filename += extensions[format] || '.pdf';
+            }
+
+            // Create a blob from the response and download it
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            toast.success('Rapport généré avec succès');
+            setShowReportModal(false);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Erreur lors de la génération du rapport');
+        } finally {
+            setIsGeneratingReport(false);
         }
     };
 
@@ -618,8 +692,8 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                 </Card>
                             )}
 
-                            {/* Client Notes */}
-                            {appointment.notes && (
+                            {/* Client Notes - Only visible to pastor and client */}
+                            {canViewClientNotes && appointment.notes && (
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="flex items-center">
@@ -775,6 +849,18 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                 </CardContent>
                             </Card>
 
+                            {/* Report Generation Button - Only visible to the pastor */}
+                            {isPastor && (
+                                <Button
+                                    onClick={() => setShowReportModal(true)}
+                                    variant="outline"
+                                    className="w-full"
+                                >
+                                    <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+                                    Générer un rapport
+                                </Button>
+                            )}
+
                             {/* Pastor Notes - Only visible to the pastor */}
                             {isPastor && (
                                 <Card>
@@ -785,36 +871,49 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        {/* Display existing notes */}
-                                        {appointment.pastor_notes && (
-                                            <div className="mb-4">
+                                        {/* Display existing notes with timestamps */}
+                                        {appointment.pastor_notes && appointment.pastor_notes.length > 0 && (
+                                            <div className="space-y-3">
                                                 <Label>Notes existantes</Label>
-                                                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 overflow-hidden">
-                                                    <p className="text-blue-800 dark:text-blue-200 text-sm leading-relaxed whitespace-pre-wrap break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                                                        {appointment.pastor_notes}
-                                                    </p>
+                                                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                                                    {[...appointment.pastor_notes].reverse().map((note, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
+                                                        >
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <span className="text-xs text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1">
+                                                                    <ClockIcon className="h-3 w-3" />
+                                                                    {format(new Date(note.created_at), 'd MMM yyyy à HH:mm', { locale: fr })}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-blue-800 dark:text-blue-200 text-sm leading-relaxed whitespace-pre-wrap break-words" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                                                                {note.content}
+                                                            </p>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
                                         )}
 
                                         <div>
                                             <Label htmlFor="pastor_notes">
-                                                {appointment.pastor_notes ? 'Ajouter des notes additionnelles' : 'Notes privées'}
+                                                {appointment.pastor_notes && appointment.pastor_notes.length > 0 ? 'Ajouter une nouvelle note' : 'Notes privées'}
                                             </Label>
                                             <Textarea
                                                 id="pastor_notes"
-                                                value={pastorNotes}
-                                                onChange={(e) => setPastorNotes(e.target.value)}
+                                                value={newPastorNote}
+                                                onChange={(e) => setNewPastorNote(e.target.value)}
                                                 placeholder="Points abordés, conseils donnés, suivi nécessaire..."
                                                 className="mt-2 min-h-[100px]"
                                             />
                                         </div>
                                         <Button
                                             onClick={handleNotesUpdate}
-                                            disabled={isUpdatingNotes || !pastorNotes.trim()}
+                                            disabled={isUpdatingNotes || !newPastorNote.trim()}
                                             className="w-full"
                                         >
-                                            {isUpdatingNotes ? 'Ajout...' : (appointment.pastor_notes ? 'Mettre à jour les notes' : 'Ajouter les notes')}
+                                            {isUpdatingNotes ? 'Ajout...' : 'Ajouter les notes'}
                                         </Button>
                                     </CardContent>
                                 </Card>
@@ -869,6 +968,82 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, auth
                     zoom_link: appointment.zoom_link,
                 }}
             />
+
+            {/* Report Generation Modal */}
+            <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <DocumentArrowDownIcon className="h-5 w-5" />
+                            Générer un rapport
+                        </DialogTitle>
+                        <DialogDescription>
+                            Choisissez le format d'export pour le rapport pastoral.
+                            Ce rapport inclut les informations du client, les notes,
+                            et l'historique complet des rendez-vous.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="p-6 space-y-4">
+                        {isGeneratingReport ? (
+                            <div className="flex flex-col items-center justify-center py-8 gap-3">
+                                <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span className="text-sm text-gray-500">Génération en cours...</span>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-3">
+                                <Button
+                                    onClick={() => handleGenerateReport('pdf')}
+                                    variant="outline"
+                                    className="w-full justify-start h-auto py-4 px-4"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                                            <ArrowDownTrayIcon className="h-5 w-5 text-red-600" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-medium">PDF</div>
+                                            <div className="text-xs text-gray-500">Document portable, idéal pour l'impression</div>
+                                        </div>
+                                    </div>
+                                </Button>
+                                <Button
+                                    onClick={() => handleGenerateReport('excel')}
+                                    variant="outline"
+                                    className="w-full justify-start h-auto py-4 px-4"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                                            <ArrowDownTrayIcon className="h-5 w-5 text-green-600" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-medium">Excel</div>
+                                            <div className="text-xs text-gray-500">Tableur avec plusieurs feuilles de données</div>
+                                        </div>
+                                    </div>
+                                </Button>
+                                <Button
+                                    onClick={() => handleGenerateReport('word')}
+                                    variant="outline"
+                                    className="w-full justify-start h-auto py-4 px-4"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                            <ArrowDownTrayIcon className="h-5 w-5 text-blue-600" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-medium">Word</div>
+                                            <div className="text-xs text-gray-500">Document modifiable pour annotations</div>
+                                        </div>
+                                    </div>
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </DashboardLayout>
     );
 }

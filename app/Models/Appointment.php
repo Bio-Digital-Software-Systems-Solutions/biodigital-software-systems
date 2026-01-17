@@ -47,6 +47,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read bool $is_future
  * @property-read bool $is_past
  * @property-read bool $is_today
+ *
  * @method static Builder<static>|Appointment betweenDates(string $startDate, string $endDate)
  * @method static Builder<static>|Appointment conflictsWith(\Carbon\Carbon $startDateTime, \Carbon\Carbon $endDateTime, ?int $excludeId = null)
  * @method static \Database\Factories\AppointmentFactory factory($count = null, $state = [])
@@ -78,11 +79,12 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static Builder<static>|Appointment whereVisibility($value)
  * @method static Builder<static>|Appointment withStatus(string $status)
  * @method static Builder<static>|Appointment withType(string $type)
+ *
  * @mixin \Eloquent
  */
 class Appointment extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -104,6 +106,9 @@ class Appointment extends Model
         'start_datetime',
         'end_datetime',
         'location',
+        'meeting_mode',
+        'meeting_link',
+        'meeting_platform',
         'status',
         'type',
         'visibility',
@@ -178,8 +183,8 @@ class Appointment extends Model
     public function resolveRouteBinding($value, $field = null)
     {
         return $this->with(['organizer:id,first_name,last_name,email', 'participants:id,first_name,last_name,email'])
-                    ->where($field ?? $this->getRouteKeyName(), $value)
-                    ->first();
+            ->where($field ?? $this->getRouteKeyName(), $value)
+            ->first();
     }
 
     /**
@@ -245,9 +250,9 @@ class Appointment extends Model
     {
         return $query->where(function ($q) use ($user) {
             $q->where('user_id', $user->id)
-              ->orWhereHas('participants', function ($q) use ($user) {
-                  $q->where('user_id', $user->id);
-              });
+                ->orWhereHas('participants', function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                });
         });
     }
 
@@ -258,7 +263,7 @@ class Appointment extends Model
     {
         $query = $query->where(function ($q) use ($startDateTime, $endDateTime) {
             $q->where('start_datetime', '<', $endDateTime)
-              ->where('end_datetime', '>', $startDateTime);
+                ->where('end_datetime', '>', $startDateTime);
         })->whereNotIn('status', ['cancelled']);
 
         if ($excludeId) {
@@ -305,8 +310,8 @@ class Appointment extends Model
      */
     public function getCanBeCancelledAttribute(): bool
     {
-        return !$this->is_past &&
-               !in_array($this->status, ['cancelled', 'completed']) &&
+        return ! $this->is_past &&
+               ! in_array($this->status, ['cancelled', 'completed']) &&
                $this->start_datetime->isAfter(now()->addHours(1)); // Min 1 hour notice
     }
 
@@ -315,8 +320,8 @@ class Appointment extends Model
      */
     public function getCanBeModifiedAttribute(): bool
     {
-        return !$this->is_past &&
-               !in_array($this->status, ['cancelled', 'completed']) &&
+        return ! $this->is_past &&
+               ! in_array($this->status, ['cancelled', 'completed']) &&
                $this->start_datetime->isAfter(now()->addHours(2)); // Min 2 hours notice
     }
 
@@ -333,7 +338,7 @@ class Appointment extends Model
      */
     public function getFormattedTimeRangeAttribute(): string
     {
-        return $this->start_datetime->format('H:i') . ' - ' . $this->end_datetime->format('H:i');
+        return $this->start_datetime->format('H:i').' - '.$this->end_datetime->format('H:i');
     }
 
     /**
@@ -412,12 +417,12 @@ class Appointment extends Model
             $isPast = $slotStart->isPast();
 
             // Always add the slot to show complete schedule
-            if ($isAvailable && !$isPast) {
+            if ($isAvailable && ! $isPast) {
                 $slots[] = [
                     'start_datetime' => $slotStart->format('Y-m-d\TH:i:s'),
                     'end_datetime' => $slotEnd->format('Y-m-d\TH:i:s'),
-                    'formatted_time' => $slotStart->format('H:i') . ' - ' . $slotEnd->format('H:i'),
-                    'available' => true
+                    'formatted_time' => $slotStart->format('H:i').' - '.$slotEnd->format('H:i'),
+                    'available' => true,
                 ];
             } else {
                 // Show occupied or past slots with appropriate reason
@@ -426,7 +431,7 @@ class Appointment extends Model
                     $reason = 'Passé';
                 } elseif ($conflictingAppointment) {
                     if ($conflictingAppointment->visibility === 'public') {
-                        $reason = 'Occupé - ' . $conflictingAppointment->title;
+                        $reason = 'Occupé - '.$conflictingAppointment->title;
                     } else {
                         $reason = 'Occupé';
                     }
@@ -435,9 +440,9 @@ class Appointment extends Model
                 $slots[] = [
                     'start_datetime' => $slotStart->format('Y-m-d\TH:i:s'),
                     'end_datetime' => $slotEnd->format('Y-m-d\TH:i:s'),
-                    'formatted_time' => $slotStart->format('H:i') . ' - ' . $slotEnd->format('H:i'),
+                    'formatted_time' => $slotStart->format('H:i').' - '.$slotEnd->format('H:i'),
                     'available' => false,
-                    'reason' => $reason
+                    'reason' => $reason,
                 ];
             }
         }
@@ -455,7 +460,7 @@ class Appointment extends Model
                 'status' => 'pending',
                 'invited_at' => now(),
                 'notes' => $notes,
-            ]
+            ],
         ]);
     }
 
@@ -605,12 +610,12 @@ class Appointment extends Model
             $isPast = $slotStart->isPast();
 
             // Always add the slot to show complete schedule
-            if ($isAvailable && !$isPast) {
+            if ($isAvailable && ! $isPast) {
                 $slots[] = [
                     'start_datetime' => $slotStart->format('Y-m-d\TH:i:s'),
                     'end_datetime' => $slotEnd->format('Y-m-d\TH:i:s'),
-                    'formatted_time' => $slotStart->format('H:i') . ' - ' . $slotEnd->format('H:i'),
-                    'available' => true
+                    'formatted_time' => $slotStart->format('H:i').' - '.$slotEnd->format('H:i'),
+                    'available' => true,
                 ];
             } else {
                 // Show occupied or past slots with appropriate reason
@@ -619,7 +624,7 @@ class Appointment extends Model
                     $reason = 'Passé';
                 } elseif ($conflictingAppointment) {
                     if ($conflictingAppointment->visibility === 'public') {
-                        $reason = 'Occupé - ' . $conflictingAppointment->title;
+                        $reason = 'Occupé - '.$conflictingAppointment->title;
                     } else {
                         $reason = 'Occupé';
                     }
@@ -628,9 +633,9 @@ class Appointment extends Model
                 $slots[] = [
                     'start_datetime' => $slotStart->format('Y-m-d\TH:i:s'),
                     'end_datetime' => $slotEnd->format('Y-m-d\TH:i:s'),
-                    'formatted_time' => $slotStart->format('H:i') . ' - ' . $slotEnd->format('H:i'),
+                    'formatted_time' => $slotStart->format('H:i').' - '.$slotEnd->format('H:i'),
                     'available' => false,
-                    'reason' => $reason
+                    'reason' => $reason,
                 ];
             }
         }

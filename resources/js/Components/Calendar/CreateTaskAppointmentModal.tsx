@@ -1,10 +1,17 @@
 import React, { useState, useEffect, FormEvent } from 'react';
-import { XMarkIcon, MapPinIcon, UserPlusIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, MapPinIcon, UserPlusIcon, CalendarIcon, VideoCameraIcon, LinkIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Textarea } from '@/Components/ui/textarea';
 import { Switch } from '@/Components/ui/switch';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/Components/ui/select';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -26,6 +33,8 @@ interface Props {
 }
 
 type AppointmentType = 'individual' | 'group' | 'consultation' | 'meeting';
+type MeetingMode = 'in_person' | 'online' | 'hybrid';
+type MeetingPlatform = 'zoom' | 'google_meet' | 'ms_teams' | 'other';
 
 export default function CreateTaskAppointmentModal({
     isOpen,
@@ -52,6 +61,9 @@ export default function CreateTaskAppointmentModal({
     const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
     const [showUserSearch, setShowUserSearch] = useState(false);
     const [userSearchTerm, setUserSearchTerm] = useState('');
+    const [meetingMode, setMeetingMode] = useState<MeetingMode>('in_person');
+    const [meetingPlatform, setMeetingPlatform] = useState<MeetingPlatform | ''>('');
+    const [meetingLink, setMeetingLink] = useState('');
 
     // Format date to local YYYY-MM-DD string (avoids timezone issues with toISOString)
     const formatLocalDate = (date: Date): string => {
@@ -83,6 +95,9 @@ export default function CreateTaskAppointmentModal({
             setMaxParticipants('');
             setSelectedParticipants([]);
             setActiveTab('meeting');
+            setMeetingMode('in_person');
+            setMeetingPlatform('');
+            setMeetingLink('');
         }
     }, [isOpen]);
 
@@ -134,6 +149,9 @@ export default function CreateTaskAppointmentModal({
                 start_datetime: startDatetime,
                 end_datetime: endDatetime,
                 location,
+                meeting_mode: meetingMode,
+                meeting_link: meetingMode !== 'in_person' ? meetingLink : null,
+                meeting_platform: meetingMode !== 'in_person' ? meetingPlatform : null,
                 type: activeTab,
                 visibility: isPublic ? 'public' : 'private',
                 max_participants: maxParticipants || null,
@@ -353,6 +371,58 @@ export default function CreateTaskAppointmentModal({
                             onChange={(e) => setLocation(e.target.value)}
                             className="flex-1 border-0 bg-gray-50 dark:bg-gray-700"
                         />
+                    </div>
+
+                    {/* Meeting Mode */}
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                            <VideoCameraIcon className="h-5 w-5 text-gray-400" />
+                            <Select
+                                value={meetingMode}
+                                onValueChange={(value) => setMeetingMode(value as MeetingMode)}
+                            >
+                                <SelectTrigger className="flex-1 bg-gray-50 dark:bg-gray-700 border-0">
+                                    <SelectValue placeholder="Mode de réunion" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="in_person">En présentiel</SelectItem>
+                                    <SelectItem value="online">En ligne</SelectItem>
+                                    <SelectItem value="hybrid">Hybride</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Meeting Platform & Link - shown only for online/hybrid */}
+                        {meetingMode !== 'in_person' && (
+                            <>
+                                <div className="flex items-center gap-3 ml-8">
+                                    <Select
+                                        value={meetingPlatform}
+                                        onValueChange={(value) => setMeetingPlatform(value as MeetingPlatform)}
+                                    >
+                                        <SelectTrigger className="flex-1 bg-gray-50 dark:bg-gray-700 border-0">
+                                            <SelectValue placeholder="Plateforme" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="zoom">Zoom</SelectItem>
+                                            <SelectItem value="google_meet">Google Meet</SelectItem>
+                                            <SelectItem value="ms_teams">Microsoft Teams</SelectItem>
+                                            <SelectItem value="other">Autre</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <LinkIcon className="h-5 w-5 text-gray-400" />
+                                    <Input
+                                        type="url"
+                                        placeholder="Lien de la réunion"
+                                        value={meetingLink}
+                                        onChange={(e) => setMeetingLink(e.target.value)}
+                                        className="flex-1 border-0 bg-gray-50 dark:bg-gray-700"
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {/* Description */}

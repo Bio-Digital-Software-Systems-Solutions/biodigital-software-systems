@@ -106,6 +106,7 @@ class UpdateRolesAndPermissions extends Command
             'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
             // Pastor specific (from PastorRoleSeeder)
             'manage pastor availability', 'manage pastoral appointments',
+            'view pastoral care client notes',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs',
@@ -212,6 +213,7 @@ class UpdateRolesAndPermissions extends Command
                 'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
                 'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
                 'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
+                'view pastoral care client notes',
                 'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
                 'view programs', 'create programs', 'edit programs', 'delete programs',
                 'view stocks', 'manage stocks', 'approve stock requests',
@@ -232,6 +234,7 @@ class UpdateRolesAndPermissions extends Command
             'pastor' => [
                 'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
                 'manage pastor availability', 'manage pastoral appointments',
+                'view pastoral care client notes',
                 'view appointments', 'create appointments', 'edit appointments',
                 'view events', 'attend events',
                 'view articles', 'use chat',

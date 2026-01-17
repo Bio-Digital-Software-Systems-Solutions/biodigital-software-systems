@@ -8,6 +8,9 @@ export interface Appointment {
     start_datetime: string;
     end_datetime: string;
     location?: string;
+    meeting_mode?: MeetingMode;
+    meeting_link?: string;
+    meeting_platform?: MeetingPlatform;
     status: AppointmentStatus;
     type: AppointmentType;
     visibility: AppointmentVisibility;
@@ -38,6 +41,8 @@ export interface Appointment {
 export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 export type AppointmentType = 'individual' | 'group' | 'consultation' | 'meeting';
 export type AppointmentVisibility = 'private' | 'public';
+export type MeetingMode = 'in_person' | 'online' | 'hybrid';
+export type MeetingPlatform = 'zoom' | 'google_meet' | 'ms_teams' | 'other';
 export type ParticipantStatus = 'pending' | 'accepted' | 'declined' | 'cancelled';
 
 export interface AppointmentParticipant extends User {
@@ -66,6 +71,9 @@ export interface AppointmentFormData {
     start_datetime: string;
     end_datetime: string;
     location: string;
+    meeting_mode: MeetingMode;
+    meeting_link?: string;
+    meeting_platform?: MeetingPlatform;
     type: AppointmentType;
     visibility: AppointmentVisibility;
     participant_ids: number[];

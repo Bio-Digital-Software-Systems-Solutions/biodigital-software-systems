@@ -116,6 +116,7 @@ class PastoralCare extends Model
         'confirmation_sent_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'pastor_notes' => 'array',
     ];
 
     protected $dates = [
@@ -128,6 +129,13 @@ class PastoralCare extends Model
         'updated_at',
         'deleted_at',
     ];
+
+    /**
+     * The relationships that should always be loaded.
+     *
+     * @var array<string>
+     */
+    protected $with = ['user', 'pastor'];
 
     protected $appends = [
         'can_be_confirmed',
@@ -336,6 +344,22 @@ class PastoralCare extends Model
         $this->update(['reminder_sent_at' => now()]);
 
         return true;
+    }
+
+    /**
+     * Add a new note with timestamp to pastor_notes
+     */
+    public function addPastorNote(string $content): self
+    {
+        $notes = $this->pastor_notes ?? [];
+        $notes[] = [
+            'content' => $content,
+            'created_at' => now()->toISOString(),
+        ];
+
+        $this->update(['pastor_notes' => $notes]);
+
+        return $this;
     }
 
     // Static methods for availability checking

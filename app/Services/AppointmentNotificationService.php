@@ -3,14 +3,12 @@
 namespace App\Services;
 
 use App\Models\Appointment;
-use App\Models\ChatRoom;
 use App\Models\ChatMessage;
+use App\Models\ChatRoom;
 use App\Models\Message;
 use App\Models\User;
 use App\Notifications\AppointmentInvitation;
 use App\Notifications\NewDirectMessageNotification;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class AppointmentNotificationService
 {
@@ -111,7 +109,7 @@ class AppointmentNotificationService
         $confirmUrl = url("/appointments/{$appointment->uuid}/confirm/{$confirmationToken}");
         $declineUrl = url("/appointments/{$appointment->uuid}/decline/{$confirmationToken}");
 
-        $message = "<p>🗓️ <strong>Invitation au rendez-vous</strong></p>";
+        $message = '<p>🗓️ <strong>Invitation au rendez-vous</strong></p>';
         $message .= "<p><strong>{$appointment->title}</strong></p>";
 
         if ($appointment->description) {
@@ -125,11 +123,19 @@ class AppointmentNotificationService
             $message .= "<p>📍 <strong>Lieu :</strong> {$appointment->location}</p>";
         }
 
-        $message .= "<p>🏷️ <strong>Type :</strong> " . ucfirst($appointment->type) . "</p>";
-        $message .= "<p>⚡ <strong>Actions rapides :</strong><br>";
+        $message .= '<p>🏷️ <strong>Type :</strong> '.ucfirst($appointment->type).'</p>';
+
+        // Add meeting link if present (online or hybrid meeting)
+        if ($appointment->meeting_link && in_array($appointment->meeting_mode, ['online', 'hybrid'])) {
+            $platformLabel = $this->getMeetingPlatformLabel($appointment->meeting_platform);
+            $message .= "<p>🎥 <strong>Réunion en ligne ({$platformLabel}) :</strong><br>";
+            $message .= "<a href=\"{$appointment->meeting_link}\">{$appointment->meeting_link}</a></p>";
+        }
+
+        $message .= '<p>⚡ <strong>Actions rapides :</strong><br>';
         $message .= "✅ <a href=\"{$confirmUrl}\">Confirmer</a><br>";
         $message .= "❌ <a href=\"{$declineUrl}\">Décliner</a></p>";
-        $message .= "<p>Merci de répondre à cette invitation !</p>";
+        $message .= '<p>Merci de répondre à cette invitation !</p>';
 
         return $message;
     }
@@ -195,7 +201,7 @@ class AppointmentNotificationService
             'completed' => '🎉 Rendez-vous terminé',
         ];
 
-        $subject = ($actionLabels[$action] ?? '📢 Mise à jour du rendez-vous') . " : {$appointment->title}";
+        $subject = ($actionLabels[$action] ?? '📢 Mise à jour du rendez-vous')." : {$appointment->title}";
         $content = $this->createUpdateMessageContent($appointment, $action);
 
         Message::create([
@@ -223,7 +229,7 @@ class AppointmentNotificationService
             'completed' => '🎉 <strong>Rendez-vous terminé</strong>',
         ];
 
-        $message = "<p>" . ($actionLabels[$action] ?? '📢 <strong>Mise à jour du rendez-vous</strong>') . "</p>";
+        $message = '<p>'.($actionLabels[$action] ?? '📢 <strong>Mise à jour du rendez-vous</strong>').'</p>';
         $message .= "<p><strong>{$appointment->title}</strong></p>";
 
         if ($action !== 'cancelled') {
@@ -233,9 +239,16 @@ class AppointmentNotificationService
             if ($appointment->location) {
                 $message .= "<p>📍 <strong>Lieu :</strong> {$appointment->location}</p>";
             }
+
+            // Add meeting link if present
+            if ($appointment->meeting_link && in_array($appointment->meeting_mode, ['online', 'hybrid'])) {
+                $platformLabel = $this->getMeetingPlatformLabel($appointment->meeting_platform);
+                $message .= "<p>🎥 <strong>Réunion en ligne ({$platformLabel}) :</strong><br>";
+                $message .= "<a href=\"{$appointment->meeting_link}\">{$appointment->meeting_link}</a></p>";
+            }
         }
 
-        $message .= "<p>📄 <a href=\"" . route('appointments.show', $appointment->uuid) . "\">Consultez le détail</a></p>";
+        $message .= '<p>📄 <a href="'.route('appointments.show', $appointment->uuid).'">Consultez le détail</a></p>';
 
         return $message;
     }
@@ -295,7 +308,7 @@ class AppointmentNotificationService
         $startDate = \Carbon\Carbon::parse($appointment->start_datetime);
         $endDate = \Carbon\Carbon::parse($appointment->end_datetime);
 
-        $message = "<p>✅ <strong>Rendez-vous créé avec succès</strong></p>";
+        $message = '<p>✅ <strong>Rendez-vous créé avec succès</strong></p>';
         $message .= "<p>📝 <strong>{$appointment->title}</strong></p>";
 
         if ($appointment->description) {
@@ -304,14 +317,14 @@ class AppointmentNotificationService
 
         $message .= "<p>📅 <strong>Date :</strong> {$startDate->format('d/m/Y')}<br>";
         $message .= "🕐 <strong>Heure :</strong> {$startDate->format('H:i')} - {$endDate->format('H:i')}<br>";
-        $message .= "⏱️ <strong>Durée :</strong> " . $startDate->diffInMinutes($endDate) . " minutes</p>";
+        $message .= '⏱️ <strong>Durée :</strong> '.$startDate->diffInMinutes($endDate).' minutes</p>';
 
         if ($appointment->location) {
             $message .= "<p>📍 <strong>Lieu :</strong> {$appointment->location}</p>";
         }
 
-        $message .= "<p>🏷️ <strong>Type :</strong> " . ucfirst($appointment->type) . "<br>";
-        $message .= "👁️ <strong>Visibilité :</strong> " . ucfirst($appointment->visibility) . "</p>";
+        $message .= '<p>🏷️ <strong>Type :</strong> '.ucfirst($appointment->type).'<br>';
+        $message .= '👁️ <strong>Visibilité :</strong> '.ucfirst($appointment->visibility).'</p>';
 
         // Add participants info
         $participantsCount = $appointment->participants()->count();
@@ -319,11 +332,25 @@ class AppointmentNotificationService
             $message .= "<p>👥 <strong>Participants :</strong> {$participantsCount} invité(s)</p>";
         }
 
-        $message .= "<p>📄 <strong>Détails :</strong> <a href=\"" . route('appointments.show', $appointment->uuid) . "\">Voir le rendez-vous</a><br>";
-        $message .= "✏️ <strong>Modifier :</strong> <a href=\"" . route('appointments.edit', $appointment->uuid) . "\">Modifier le rendez-vous</a></p>";
+        $message .= '<p>📄 <strong>Détails :</strong> <a href="'.route('appointments.show', $appointment->uuid).'">Voir le rendez-vous</a><br>';
+        $message .= '✏️ <strong>Modifier :</strong> <a href="'.route('appointments.edit', $appointment->uuid).'">Modifier le rendez-vous</a></p>';
 
-        $message .= "<p>Votre rendez-vous a été créé et les invitations ont été envoyées aux participants.</p>";
+        $message .= '<p>Votre rendez-vous a été créé et les invitations ont été envoyées aux participants.</p>';
 
         return $message;
+    }
+
+    /**
+     * Get human-readable meeting platform label.
+     */
+    protected function getMeetingPlatformLabel(?string $platform): string
+    {
+        return match ($platform) {
+            'zoom' => 'Zoom',
+            'google_meet' => 'Google Meet',
+            'ms_teams' => 'Microsoft Teams',
+            'other' => 'Autre',
+            default => 'Visioconférence',
+        };
     }
 }

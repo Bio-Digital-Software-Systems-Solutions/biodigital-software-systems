@@ -8,6 +8,7 @@ use App\Models\TaskAttachment;
 use App\Models\TaskComment;
 use App\Models\TaskParticipant;
 use App\Models\User;
+use App\Notifications\TaskCommentAdded;
 use App\Notifications\TaskParticipantAdded;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -151,7 +152,43 @@ class TaskController extends Controller
             'content' => $validated['content'],
         ]);
 
+        // Send notifications to all participants and assignee
+        $this->notifyTaskParticipants($task, $comment, auth()->user());
+
         return response()->json($comment->load('user'), 201);
+    }
+
+    /**
+     * Notify all task participants about a new comment.
+     */
+    private function notifyTaskParticipants(Task $task, TaskComment $comment, User $commentedBy): void
+    {
+        $task->load(['participants.user', 'assignee', 'project']);
+
+        // Collect all users to notify (participants + assignee)
+        $usersToNotify = collect();
+
+        // Add participants
+        foreach ($task->participants as $participant) {
+            if ($participant->user) {
+                $usersToNotify->push($participant->user);
+            }
+        }
+
+        // Add assignee if exists
+        if ($task->assignee) {
+            $usersToNotify->push($task->assignee);
+        }
+
+        // Remove duplicates and the user who commented
+        $usersToNotify = $usersToNotify
+            ->unique('id')
+            ->filter(fn ($user) => $user->id !== $commentedBy->id);
+
+        // Send notifications
+        foreach ($usersToNotify as $user) {
+            $user->notify(new TaskCommentAdded($task, $comment, $commentedBy));
+        }
     }
 
     /**
@@ -239,7 +276,7 @@ class TaskController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('task-attachments/' . $task->id, 'public');
+        $path = $file->store('task-attachments/'.$task->id, 'public');
 
         $attachment = TaskAttachment::create([
             'task_id' => $task->id,
