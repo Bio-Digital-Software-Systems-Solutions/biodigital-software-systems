@@ -7,7 +7,6 @@ use App\Enums\Form\FormStatus;
 use App\Enums\Form\SubmissionStatus;
 use App\Models\Department;
 use App\Models\DepartmentForm;
-use App\Models\DepartmentFormSubmission;
 use App\Models\FormField;
 use App\Models\FormShareLink;
 use App\Services\Form\FormService;
@@ -165,6 +164,7 @@ class FormController extends Controller
     {
         try {
             $this->formService->publishForm($form);
+
             return back()->with('success', 'Form published successfully.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -177,6 +177,7 @@ class FormController extends Controller
     public function unpublish(DepartmentForm $form)
     {
         $form->unpublish();
+
         return back()->with('success', 'Form unpublished successfully.');
     }
 
@@ -186,6 +187,7 @@ class FormController extends Controller
     public function archive(DepartmentForm $form)
     {
         $form->archive();
+
         return back()->with('success', 'Form archived successfully.');
     }
 
@@ -195,6 +197,7 @@ class FormController extends Controller
     public function duplicate(DepartmentForm $form)
     {
         $newForm = $form->duplicate();
+
         return redirect()->route('forms.edit', $newForm)
             ->with('success', 'Form duplicated successfully.');
     }
@@ -204,13 +207,23 @@ class FormController extends Controller
      */
     public function destroy(DepartmentForm $form)
     {
-        if ($form->submissions()->exists()) {
-            return back()->with('error', 'Cannot delete form with existing submissions.');
-        }
+        try {
+            if ($form->submissions()->exists()) {
+                return back()->with('error', 'Cannot delete form with existing submissions.');
+            }
 
-        $form->delete();
-        return redirect()->route('forms.index')
-            ->with('success', 'Form deleted successfully.');
+            $form->delete();
+
+            return redirect()->route('forms.index')
+                ->with('success', 'Form deleted successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Form deletion failed: '.$e->getMessage(), [
+                'form_id' => $form->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'Erreur lors de la suppression du formulaire: '.$e->getMessage());
+        }
     }
 
     /**
@@ -235,7 +248,7 @@ class FormController extends Controller
                 $form->fields()->delete();
 
                 // Create new fields using raw data to preserve children
-                if (!empty($rawFields)) {
+                if (! empty($rawFields)) {
                     $this->createFieldsRecursively($form->id, $rawFields, null);
                 }
             });
@@ -263,7 +276,7 @@ class FormController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error saving form fields: ' . $e->getMessage(),
+                    'message' => 'Error saving form fields: '.$e->getMessage(),
                 ], 500);
             }
 
@@ -300,7 +313,7 @@ class FormController extends Controller
             $filteredData['order'] = $index;
 
             // Set default step if not provided
-            if (!isset($filteredData['step'])) {
+            if (! isset($filteredData['step'])) {
                 $filteredData['step'] = 1;
             }
 
@@ -321,7 +334,7 @@ class FormController extends Controller
             $field = FormField::create($filteredData);
 
             // Recursively create children
-            if (!empty($children)) {
+            if (! empty($children)) {
                 $this->createFieldsRecursively($formId, $children, $field->id);
             }
         }
@@ -345,7 +358,7 @@ class FormController extends Controller
      */
     public function renderForm(DepartmentForm $form)
     {
-        if (!$form->isPublished()) {
+        if (! $form->isPublished()) {
             abort(404, 'Form not found.');
         }
 
@@ -396,7 +409,7 @@ class FormController extends Controller
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Erreur lors de la soumission: ' . $e->getMessage(),
+                    'message' => 'Erreur lors de la soumission: '.$e->getMessage(),
                 ], 500);
             }
 
@@ -412,7 +425,7 @@ class FormController extends Controller
         $data = $this->formService->exportForm($form);
 
         return response()->json($data)
-            ->header('Content-Disposition', 'attachment; filename="' . $form->name . '.json"');
+            ->header('Content-Disposition', 'attachment; filename="'.$form->name.'.json"');
     }
 
     /**
@@ -428,7 +441,7 @@ class FormController extends Controller
         $content = file_get_contents($request->file('file')->path());
         $formData = json_decode($content, true);
 
-        if (!$formData) {
+        if (! $formData) {
             return back()->with('error', 'Invalid JSON file.');
         }
 
@@ -481,34 +494,46 @@ class FormController extends Controller
             'max_uses' => 'nullable|integer|min:1|max:10000',
         ]);
 
-        $expiresInHours = $validated['expires_in_hours'] ?? 24; // Default 24 hours
-        $maxUses = $validated['max_uses'] ?? null;
-
-        $shareLink = FormShareLink::createForForm(
-            $form,
-            Auth::id(),
-            $expiresInHours,
-            $maxUses
-        );
-
-        $url = $shareLink->getUrl();
-
-        // Generate QR code with error handling
-        $qrCodeBase64 = null;
         try {
-            $qrCodeService = new QrCodeService();
-            $qrCodeBase64 = $qrCodeService->generateBase64($url);
-        } catch (\Exception $e) {
-            \Log::error('QR Code generation failed: ' . $e->getMessage());
-        }
+            $expiresInHours = $validated['expires_in_hours'] ?? 24; // Default 24 hours
+            $maxUses = $validated['max_uses'] ?? null;
 
-        return response()->json([
-            'url' => $url,
-            'token' => $shareLink->token,
-            'expires_at' => $shareLink->expires_at->toIso8601String(),
-            'max_uses' => $shareLink->max_uses,
-            'qr_code' => $qrCodeBase64,
-        ]);
+            $shareLink = FormShareLink::createForForm(
+                $form,
+                Auth::id(),
+                $expiresInHours,
+                $maxUses
+            );
+
+            $url = $shareLink->getUrl();
+
+            // Generate QR code with error handling
+            $qrCodeBase64 = null;
+            try {
+                $qrCodeService = new QrCodeService;
+                $qrCodeBase64 = $qrCodeService->generateBase64($url);
+            } catch (\Exception $e) {
+                \Log::error('QR Code generation failed: '.$e->getMessage());
+            }
+
+            return response()->json([
+                'url' => $url,
+                'token' => $shareLink->token,
+                'expires_at' => $shareLink->expires_at->toIso8601String(),
+                'max_uses' => $shareLink->max_uses,
+                'qr_code' => $qrCodeBase64,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Share link generation failed: '.$e->getMessage(), [
+                'form_id' => $form->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'error' => 'Erreur lors de la génération du lien de partage.',
+                'message' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
     }
 
     /**
@@ -518,7 +543,7 @@ class FormController extends Controller
     {
         $shareLink = FormShareLink::findValidByToken($token);
 
-        if (!$shareLink) {
+        if (! $shareLink) {
             return Inertia::render('Forms/SharedExpired', [
                 'message' => 'Ce lien de partage est invalide ou a expiré.',
             ]);
