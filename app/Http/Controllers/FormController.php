@@ -493,9 +493,14 @@ class FormController extends Controller
 
         $url = $shareLink->getUrl();
 
-        // Generate QR code
-        $qrCodeService = new QrCodeService();
-        $qrCodeBase64 = $qrCodeService->generateBase64($url);
+        // Generate QR code with error handling
+        $qrCodeBase64 = null;
+        try {
+            $qrCodeService = new QrCodeService();
+            $qrCodeBase64 = $qrCodeService->generateBase64($url);
+        } catch (\Exception $e) {
+            \Log::error('QR Code generation failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'url' => $url,

@@ -30,7 +30,7 @@ interface ShareLinkData {
     token: string;
     expires_at: string;
     max_uses: number | null;
-    qr_code: string;
+    qr_code: string | null;
 }
 
 interface FormStats {
@@ -174,6 +174,7 @@ export default function FormShow({ form, fields: propFields, submissionCount, st
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
                 body: JSON.stringify({
@@ -182,8 +183,8 @@ export default function FormShow({ form, fields: propFields, submissionCount, st
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Erreur lors de la génération du lien');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || errorData.message || 'Erreur lors de la génération du lien');
             }
 
             const data: ShareLinkData = await response.json();
@@ -213,7 +214,7 @@ export default function FormShow({ form, fields: propFields, submissionCount, st
     };
 
     const handleDownloadQrCode = () => {
-        if (!shareData) return;
+        if (!shareData || !shareData.qr_code) return;
         const link = document.createElement('a');
         link.href = shareData.qr_code;
         link.download = `qr-code-${form.name}.svg`;
@@ -560,15 +561,17 @@ export default function FormShow({ form, fields: propFields, submissionCount, st
                     {shareData && (
                         <div className="px-3 pb-3 space-y-4">
                             {/* QR Code */}
-                            <div className="flex justify-center">
-                                <div className="bg-white p-3 rounded-lg shadow-sm">
-                                    <img
-                                        src={shareData.qr_code}
-                                        alt="QR Code du formulaire"
-                                        className="w-48 h-48"
-                                    />
+                            {shareData.qr_code && (
+                                <div className="flex justify-center">
+                                    <div className="bg-white p-3 rounded-lg shadow-sm">
+                                        <img
+                                            src={shareData.qr_code}
+                                            alt="QR Code du formulaire"
+                                            className="w-48 h-48"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Link */}
                             <div className="space-y-2">
@@ -610,14 +613,16 @@ export default function FormShow({ form, fields: propFields, submissionCount, st
 
                             {/* Actions */}
                             <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    className="flex-1"
-                                    onClick={handleDownloadQrCode}
-                                >
-                                    <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
-                                    Télécharger QR Code
-                                </Button>
+                                {shareData.qr_code && (
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1"
+                                        onClick={handleDownloadQrCode}
+                                    >
+                                        <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                                        Télécharger QR Code
+                                    </Button>
+                                )}
                                 <Button
                                     className="flex-1"
                                     onClick={handleCopyLink}
