@@ -216,7 +216,7 @@ export default function FormShow({ form, fields: propFields, submissionCount, st
         if (!shareData) return;
         const link = document.createElement('a');
         link.href = shareData.qr_code;
-        link.download = `qr-code-${form.name}.png`;
+        link.download = `qr-code-${form.name}.svg`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

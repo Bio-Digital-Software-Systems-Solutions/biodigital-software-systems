@@ -8,21 +8,23 @@ use chillerlan\QRCode\QROptions;
 class QrCodeService
 {
     /**
-     * Generate a QR code as a base64 PNG data URL.
+     * Generate a QR code as a base64 data URL.
+     * Uses SVG format for better compatibility (no GD extension required).
      */
     public function generateBase64(string $data, int $size = 300): string
     {
+        // Use SVG for better compatibility - no GD extension required
         $options = new QROptions([
-            'outputType' => QRCode::OUTPUT_IMAGE_PNG,
+            'outputType' => QRCode::OUTPUT_MARKUP_SVG,
             'eccLevel' => QRCode::ECC_M,
-            'scale' => 10,
-            'imageBase64' => true,
             'addQuietzone' => true,
             'quietzoneSize' => 2,
+            'svgViewBoxSize' => $size,
         ]);
 
         $qrcode = new QRCode($options);
 
+        // The library already returns a base64 data URL for SVG output
         return $qrcode->render($data);
     }
 
