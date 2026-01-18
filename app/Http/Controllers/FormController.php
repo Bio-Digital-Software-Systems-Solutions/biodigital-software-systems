@@ -482,27 +482,40 @@ class FormController extends Controller
      */
     public function generateShareLink(Request $request, DepartmentForm $form)
     {
-        // Ensure form is published
-        if ($form->status !== FormStatus::PUBLISHED) {
+        // Log the request for debugging
+        \Log::info('generateShareLink called', [
+            'form_id' => $form->id,
+            'form_status' => $form->status,
+            'form_status_value' => $form->status?->value ?? $form->getRawOriginal('status'),
+        ]);
+
+        // Ensure form is published - handle both enum and string comparison
+        $isPublished = $form->status === FormStatus::PUBLISHED
+            || $form->status?->value === FormStatus::PUBLISHED->value
+            || $form->getRawOriginal('status') === FormStatus::PUBLISHED->value;
+
+        if (! $isPublished) {
             return response()->json([
                 'error' => 'Seuls les formulaires publiés peuvent être partagés.',
+                'status' => $form->status?->value ?? $form->getRawOriginal('status'),
             ], 422);
         }
 
+        // Validation - let Laravel handle validation errors (returns 422 automatically)
         $validated = $request->validate([
-            'expires_in_hours' => 'nullable|integer|min:1|max:8760', // Max 1 year
+            'expires_in_hours' => 'nullable|integer|min:1|max:8760',
             'max_uses' => 'nullable|integer|min:1|max:10000',
         ]);
 
         try {
-            $expiresInHours = $validated['expires_in_hours'] ?? 24; // Default 24 hours
+            $expiresInHours = $validated['expires_in_hours'] ?? 24;
             $maxUses = $validated['max_uses'] ?? null;
 
             $shareLink = FormShareLink::createForForm(
                 $form,
                 Auth::id(),
-                $expiresInHours,
-                $maxUses
+                (int) $expiresInHours,
+                $maxUses ? (int) $maxUses : null
             );
 
             $url = $shareLink->getUrl();
@@ -512,8 +525,11 @@ class FormController extends Controller
             try {
                 $qrCodeService = new QrCodeService;
                 $qrCodeBase64 = $qrCodeService->generateBase64($url);
-            } catch (\Exception $e) {
-                \Log::error('QR Code generation failed: '.$e->getMessage());
+            } catch (\Throwable $e) {
+                \Log::error('QR Code generation failed: '.$e->getMessage(), [
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                // Continue without QR code - it's not critical
             }
 
             return response()->json([
@@ -523,9 +539,10 @@ class FormController extends Controller
                 'max_uses' => $shareLink->max_uses,
                 'qr_code' => $qrCodeBase64,
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Share link generation failed: '.$e->getMessage(), [
-                'form_id' => $form->id,
+                'form_id' => $form->id ?? 'unknown',
+                'exception_class' => get_class($e),
                 'trace' => $e->getTraceAsString(),
             ]);
 
