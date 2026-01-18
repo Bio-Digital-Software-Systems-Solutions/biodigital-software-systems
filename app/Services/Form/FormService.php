@@ -32,6 +32,7 @@ class FormService
         }
 
         $form->update($data);
+
         return $form->fresh();
     }
 
@@ -77,6 +78,7 @@ class FormService
     public function updateField(FormField $field, array $data): FormField
     {
         $field->update($data);
+
         return $field->fresh();
     }
 
@@ -148,8 +150,8 @@ class FormService
     public function duplicateField(FormField $field): FormField
     {
         $newField = $field->replicate(['uuid']);
-        $newField->name = $field->name . '_copy';
-        $newField->label = $field->label . ' (Copy)';
+        $newField->name = $field->name.'_copy';
+        $newField->label = $field->label.' (Copy)';
         $newField->order = $field->order + 1;
         $newField->save();
 
@@ -177,10 +179,13 @@ class FormService
 
     /**
      * Start a new form submission.
+     *
+     * @param  int|null  $userId  User ID (null for anonymous submissions)
+     * @param  string|null  $shareToken  Share link token for anonymous submissions
      */
-    public function startSubmission(DepartmentForm $form, int $userId, array $initialData = []): DepartmentFormSubmission
+    public function startSubmission(DepartmentForm $form, ?int $userId = null, array $initialData = [], ?string $shareToken = null): DepartmentFormSubmission
     {
-        if (!$form->isPublished()) {
+        if (! $form->isPublished()) {
             throw new \Exception('Cannot submit to an unpublished form.');
         }
 
@@ -192,6 +197,7 @@ class FormService
             'current_step' => 0,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
+            'metadata' => $shareToken ? ['share_token' => $shareToken] : null,
         ]);
     }
 
@@ -200,7 +206,7 @@ class FormService
      */
     public function updateSubmission(DepartmentFormSubmission $submission, array $data): DepartmentFormSubmission
     {
-        if (!$submission->isDraft()) {
+        if (! $submission->isDraft()) {
             throw new \Exception('Cannot update a submitted form.');
         }
 
@@ -208,6 +214,7 @@ class FormService
         $sanitizedData = $this->sanitizeSubmissionData($submission->form, $data);
 
         $submission->updateData($sanitizedData);
+
         return $submission->fresh();
     }
 
@@ -219,7 +226,7 @@ class FormService
         $richTextFieldNames = $this->getRichTextFieldNames($form);
 
         foreach ($data as $fieldName => $value) {
-            if (in_array($fieldName, $richTextFieldNames) && is_string($value) && !empty($value)) {
+            if (in_array($fieldName, $richTextFieldNames) && is_string($value) && ! empty($value)) {
                 $data[$fieldName] = $this->sanitizeRichText($value);
             }
         }
@@ -254,7 +261,7 @@ class FormService
         // Validate the submission
         $errors = $this->validateSubmission($submission);
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw \Illuminate\Validation\ValidationException::withMessages($errors);
         }
 
@@ -272,7 +279,7 @@ class FormService
 
         foreach ($form->fields as $field) {
             // Skip hidden fields based on conditional logic
-            if (!$field->evaluateConditionalLogic($data)) {
+            if (! $field->evaluateConditionalLogic($data)) {
                 continue;
             }
 
@@ -353,7 +360,7 @@ class FormService
         return array_map(function ($field) use ($data) {
             $field['value'] = $data[$field['name']] ?? $field['default_value'] ?? null;
 
-            if (!empty($field['children'])) {
+            if (! empty($field['children'])) {
                 $field['children'] = $this->addValuesToFields($field['children'], $data);
             }
 
@@ -380,7 +387,7 @@ class FormService
                 'success_message' => $formData['success_message'] ?? null,
             ]);
 
-            if (!empty($formData['fields'])) {
+            if (! empty($formData['fields'])) {
                 $this->importFields($form, $formData['fields'], null);
             }
 
@@ -404,7 +411,7 @@ class FormService
                 'order' => $order++,
             ]));
 
-            if (!empty($children)) {
+            if (! empty($children)) {
                 $this->importFields($form, $children, $field->id);
             }
         }

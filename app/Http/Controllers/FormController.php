@@ -587,4 +587,64 @@ class FormController extends Controller
             'sharedToken' => $token, // Pass token for submission
         ]);
     }
+
+    /**
+     * Submit a form via secure share link (anonymous submission).
+     * This endpoint does not require authentication.
+     */
+    public function submitSharedForm(Request $request, string $token)
+    {
+        try {
+            // Validate the share link
+            $shareLink = FormShareLink::findValidByToken($token);
+
+            if (! $shareLink) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ce lien de partage est invalide ou a expiré.',
+                ], 403);
+            }
+
+            $form = $shareLink->form;
+
+            // Ensure form is still published
+            if ($form->status !== FormStatus::PUBLISHED) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ce formulaire n\'est plus disponible.',
+                ], 403);
+            }
+
+            // Get the authenticated user ID if logged in, null otherwise
+            $userId = Auth::id();
+
+            // Create the submission (anonymous if not logged in)
+            $submission = $this->formService->startSubmission($form, $userId, [], $token);
+
+            // Save the submitted data
+            $data = $request->input('data', $request->except(['_token']));
+            $submission->data = $data;
+            $submission->status = SubmissionStatus::SUBMITTED;
+            $submission->submitted_at = now();
+            $submission->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => $form->success_message ?? 'Formulaire soumis avec succès!',
+                'redirect_url' => $form->redirect_url,
+                'submission_id' => $submission->uuid,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Shared form submission error', [
+                'token' => $token,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la soumission du formulaire.',
+            ], 500);
+        }
+    }
 }

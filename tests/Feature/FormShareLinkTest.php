@@ -16,9 +16,13 @@ class FormShareLinkTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private User $adminUser;
+
     private Department $department;
+
     private DepartmentForm $publishedForm;
+
     private DepartmentForm $draftForm;
 
     protected function setUp(): void
@@ -624,5 +628,348 @@ class FormShareLinkTest extends TestCase
         $this->publishedForm->delete();
 
         $this->assertDatabaseMissing('form_share_links', ['id' => $shareLink->id]);
+    }
+
+    // ==========================================
+    // Anonymous Form Submission Tests
+    // ==========================================
+
+    /** @test */
+    public function anonymous_user_can_submit_form_via_valid_share_link(): void
+    {
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id
+        );
+
+        // Ensure we're not authenticated
+        $this->assertGuest();
+
+        $response = $this->postJson(route('forms.shared.submit', $shareLink->token), [
+            'data' => [
+                'name' => 'John Doe',
+                'email' => 'john@example.com',
+            ],
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+        ]);
+        $response->assertJsonStructure([
+            'success',
+            'message',
+            'redirect_url',
+            'submission_id',
+        ]);
+
+        // Verify submission was created without user_id
+        $this->assertDatabaseHas('department_form_submissions', [
+            'form_id' => $this->publishedForm->id,
+            'user_id' => null,
+            'status' => 'submitted',
+        ]);
+    }
+
+    /** @test */
+    public function authenticated_user_can_submit_form_via_share_link_with_user_id_saved(): void
+    {
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id
+        );
+
+        $submittingUser = User::factory()->create();
+
+        $response = $this->actingAs($submittingUser)
+            ->postJson(route('forms.shared.submit', $shareLink->token), [
+                'data' => [
+                    'name' => 'Jane Doe',
+                    'email' => 'jane@example.com',
+                ],
+            ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+        ]);
+
+        // Verify submission was created with user_id
+        $this->assertDatabaseHas('department_form_submissions', [
+            'form_id' => $this->publishedForm->id,
+            'user_id' => $submittingUser->id,
+            'status' => 'submitted',
+        ]);
+    }
+
+    /** @test */
+    public function cannot_submit_form_via_invalid_share_token(): void
+    {
+        $this->assertGuest();
+
+        $response = $this->postJson(route('forms.shared.submit', 'invalid-token-12345'), [
+            'data' => ['name' => 'Test'],
+        ]);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'success' => false,
+            'message' => 'Ce lien de partage est invalide ou a expiré.',
+        ]);
+    }
+
+    /** @test */
+    public function cannot_submit_form_via_expired_share_link(): void
+    {
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id,
+            1 // 1 hour expiration
+        );
+
+        // Manually expire the link
+        $shareLink->update(['expires_at' => now()->subHour()]);
+
+        $this->assertGuest();
+
+        $response = $this->postJson(route('forms.shared.submit', $shareLink->token), [
+            'data' => ['name' => 'Test'],
+        ]);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'success' => false,
+            'message' => 'Ce lien de partage est invalide ou a expiré.',
+        ]);
+    }
+
+    /** @test */
+    public function cannot_submit_form_via_deactivated_share_link(): void
+    {
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id
+        );
+
+        $shareLink->deactivate();
+
+        $this->assertGuest();
+
+        $response = $this->postJson(route('forms.shared.submit', $shareLink->token), [
+            'data' => ['name' => 'Test'],
+        ]);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'success' => false,
+        ]);
+    }
+
+    /** @test */
+    public function cannot_submit_form_when_max_uses_exceeded(): void
+    {
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id,
+            24,
+            1 // Max 1 use
+        );
+
+        // Simulate that the link has been used
+        $shareLink->update(['use_count' => 1]);
+
+        $this->assertGuest();
+
+        $response = $this->postJson(route('forms.shared.submit', $shareLink->token), [
+            'data' => ['name' => 'Test'],
+        ]);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'success' => false,
+        ]);
+    }
+
+    /** @test */
+    public function cannot_submit_to_unpublished_form_via_share_link(): void
+    {
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id
+        );
+
+        // Unpublish the form
+        $this->publishedForm->update(['status' => FormStatus::DRAFT]);
+
+        $this->assertGuest();
+
+        $response = $this->postJson(route('forms.shared.submit', $shareLink->token), [
+            'data' => ['name' => 'Test'],
+        ]);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'success' => false,
+            'message' => 'Ce formulaire n\'est plus disponible.',
+        ]);
+    }
+
+    /** @test */
+    public function submission_data_is_saved_correctly_via_share_link(): void
+    {
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id
+        );
+
+        $submissionData = [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'phone' => '+49123456789',
+            'message' => 'This is a test message',
+        ];
+
+        $this->assertGuest();
+
+        $response = $this->postJson(route('forms.shared.submit', $shareLink->token), [
+            'data' => $submissionData,
+        ]);
+
+        $response->assertOk();
+
+        // Get the submission from database
+        $submission = \App\Models\DepartmentFormSubmission::where('form_id', $this->publishedForm->id)
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($submission);
+        $this->assertEquals($submissionData, $submission->data);
+        $this->assertEquals('submitted', $submission->status->value);
+        $this->assertNotNull($submission->submitted_at);
+    }
+
+    /** @test */
+    public function share_token_is_saved_in_submission_metadata(): void
+    {
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id
+        );
+
+        $this->assertGuest();
+
+        $response = $this->postJson(route('forms.shared.submit', $shareLink->token), [
+            'data' => ['name' => 'Test'],
+        ]);
+
+        $response->assertOk();
+
+        // Get the submission from database
+        $submission = \App\Models\DepartmentFormSubmission::where('form_id', $this->publishedForm->id)
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($submission);
+        $this->assertNotNull($submission->metadata);
+        $this->assertEquals($shareLink->token, $submission->metadata['share_token']);
+    }
+
+    /** @test */
+    public function custom_success_message_is_returned_on_submission(): void
+    {
+        $customMessage = 'Merci pour votre soumission!';
+        $this->publishedForm->update(['success_message' => $customMessage]);
+
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id
+        );
+
+        $this->assertGuest();
+
+        $response = $this->postJson(route('forms.shared.submit', $shareLink->token), [
+            'data' => ['name' => 'Test'],
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'message' => $customMessage,
+        ]);
+    }
+
+    /** @test */
+    public function redirect_url_is_returned_on_submission(): void
+    {
+        $redirectUrl = 'https://example.com/thank-you';
+        $this->publishedForm->update(['redirect_url' => $redirectUrl]);
+
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id
+        );
+
+        $this->assertGuest();
+
+        $response = $this->postJson(route('forms.shared.submit', $shareLink->token), [
+            'data' => ['name' => 'Test'],
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'redirect_url' => $redirectUrl,
+        ]);
+    }
+
+    /** @test */
+    public function submission_records_ip_address_and_user_agent(): void
+    {
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id
+        );
+
+        $this->assertGuest();
+
+        $response = $this->postJson(route('forms.shared.submit', $shareLink->token), [
+            'data' => ['name' => 'Test'],
+        ]);
+
+        $response->assertOk();
+
+        $submission = \App\Models\DepartmentFormSubmission::where('form_id', $this->publishedForm->id)
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($submission);
+        $this->assertNotNull($submission->ip_address);
+        $this->assertNotNull($submission->user_agent);
+    }
+
+    /** @test */
+    public function multiple_anonymous_submissions_can_be_made_via_same_share_link(): void
+    {
+        $shareLink = FormShareLink::createForForm(
+            $this->publishedForm,
+            $this->user->id,
+            24,
+            null // Unlimited uses
+        );
+
+        $this->assertGuest();
+
+        // Make 3 submissions
+        for ($i = 1; $i <= 3; $i++) {
+            $response = $this->postJson(route('forms.shared.submit', $shareLink->token), [
+                'data' => ['name' => "User $i"],
+            ]);
+
+            $response->assertOk();
+        }
+
+        // Verify all 3 submissions exist
+        $submissionCount = \App\Models\DepartmentFormSubmission::where('form_id', $this->publishedForm->id)->count();
+        $this->assertEquals(3, $submissionCount);
     }
 }

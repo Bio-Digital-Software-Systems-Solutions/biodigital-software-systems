@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { Toaster } from '@/Components/ui/toaster';
 import { Button } from '@/Components/ui/button';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import FieldRenderer from '@/Components/FormBuilder/FieldRenderer';
@@ -9,9 +10,10 @@ import type { DepartmentForm, FormField } from '@/Types/form';
 interface Props {
     form: DepartmentForm;
     fields: FormField[];
+    sharedToken?: string; // Token for anonymous submissions via share link
 }
 
-export default function FormRender({ form, fields }: Props) {
+export default function FormRender({ form, fields, sharedToken }: Props) {
     const [values, setValues] = useState<Record<string, any>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,7 +76,12 @@ export default function FormRender({ form, fields }: Props) {
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-            const response = await fetch(route('forms.start-submission', form.uuid), {
+            // Use different endpoint based on whether we have a share token
+            const submitUrl = sharedToken
+                ? route('forms.shared.submit', sharedToken)
+                : route('forms.start-submission', form.uuid);
+
+            const response = await fetch(submitUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -204,6 +211,9 @@ export default function FormRender({ form, fields }: Props) {
                 cancelText="Non, continuer"
                 variant="default"
             />
+
+            {/* Toast notifications */}
+            <Toaster position="top-right" richColors closeButton />
         </div>
     );
 }

@@ -766,7 +766,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'show' => 'show',
                 'edit' => 'edit',
                 'update' => 'update',
-                'destroy' => 'destroy'
+                'destroy' => 'destroy',
             ])
             ->parameters(['appointments' => 'pastoralCare:uuid']);
 
@@ -795,7 +795,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'show' => 'show',
                 'edit' => 'edit',
                 'update' => 'update',
-                'destroy' => 'destroy'
+                'destroy' => 'destroy',
             ])
             ->parameters(['' => 'availability']);
 
@@ -814,7 +814,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $canSelectPastor = $user->can('select pastor for pastoral care');
 
         // Debug log
-        \Log::info('Pastoral Care Book - User: ' . $user->email . ', canSelectPastor: ' . ($canSelectPastor ? 'true' : 'false'));
+        \Log::info('Pastoral Care Book - User: '.$user->email.', canSelectPastor: '.($canSelectPastor ? 'true' : 'false'));
 
         return \Inertia\Inertia::render('PastoralCare/PublicBook', [
             'canSelectPastor' => $canSelectPastor,
@@ -889,8 +889,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{form}/share-link', [App\Http\Controllers\FormController::class, 'generateShareLink'])->name('generate-share-link');
     });
 
-    // Public shared form route (no auth required)
+    // Public shared form routes (no auth required)
     Route::get('/f/{token}', [App\Http\Controllers\FormController::class, 'renderSharedForm'])->name('forms.shared')->withoutMiddleware(['auth', 'verified']);
+    Route::post('/f/{token}/submit', [App\Http\Controllers\FormController::class, 'submitSharedForm'])->name('forms.shared.submit')->withoutMiddleware(['auth', 'verified']);
 
     // Form Submission Routes
     Route::prefix('form-submissions')->name('form-submissions.')->group(function () {
@@ -1017,6 +1018,7 @@ Route::get('appointments/{appointment:uuid}/confirm/{token}', [App\Http\Controll
             'user_agent' => $request->userAgent(),
             'url' => $request->fullUrl(),
         ]);
+
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $appointmentId,
         ]);
@@ -1032,6 +1034,7 @@ Route::get('appointments/{appointment:uuid}/decline/{token}', [App\Http\Controll
             'user_agent' => $request->userAgent(),
             'url' => $request->fullUrl(),
         ]);
+
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $appointmentId,
         ]);
@@ -1047,6 +1050,7 @@ Route::post('appointments/{appointment:uuid}/decline/{token}', [App\Http\Control
             'user_agent' => $request->userAgent(),
             'url' => $request->fullUrl(),
         ]);
+
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $appointmentId,
         ]);
@@ -1056,7 +1060,7 @@ Route::post('appointments/{appointment:uuid}/decline/{token}', [App\Http\Control
 Route::get('pastoral-care/appointments/{uuid}/confirm', function ($uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (!$appointment) {
+    if (! $appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $uuid,
         ]);
@@ -1070,12 +1074,13 @@ Route::get('pastoral-care/appointments/{uuid}/confirm', function ($uuid) {
 Route::post('pastoral-care/appointments/{uuid}/confirm', function (\Illuminate\Http\Request $request, $uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (!$appointment) {
+    if (! $appointment) {
         return response()->json(['success' => false, 'message' => 'Rendez-vous introuvable'], 404);
     }
 
     try {
         $appointment->confirm();
+
         return redirect()->route('pastoral-care.public.success', ['uuid' => $uuid])
             ->with('success', 'Rendez-vous confirmé avec succès.');
     } catch (\Exception $e) {
@@ -1086,7 +1091,7 @@ Route::post('pastoral-care/appointments/{uuid}/confirm', function (\Illuminate\H
 Route::get('pastoral-care/appointments/{uuid}/cancel', function ($uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (!$appointment) {
+    if (! $appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $uuid,
         ]);
@@ -1100,7 +1105,7 @@ Route::get('pastoral-care/appointments/{uuid}/cancel', function ($uuid) {
 Route::post('pastoral-care/appointments/{uuid}/cancel', function (\Illuminate\Http\Request $request, $uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (!$appointment) {
+    if (! $appointment) {
         return response()->json(['success' => false, 'message' => 'Rendez-vous introuvable'], 404);
     }
 
@@ -1110,6 +1115,7 @@ Route::post('pastoral-care/appointments/{uuid}/cancel', function (\Illuminate\Ht
 
     try {
         $appointment->cancel($validated['cancellation_reason'] ?? null);
+
         return redirect()->route('pastoral-care.public.success', ['uuid' => $uuid])
             ->with('success', 'Rendez-vous annulé avec succès.');
     } catch (\Exception $e) {
@@ -1120,7 +1126,7 @@ Route::post('pastoral-care/appointments/{uuid}/cancel', function (\Illuminate\Ht
 Route::get('pastoral-care/appointments/{uuid}/success', function ($uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (!$appointment) {
+    if (! $appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $uuid,
         ]);
@@ -1143,4 +1149,4 @@ Route::middleware(['auth'])->group(function () {
         ->name('sentry.test-breadcrumbs');
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
