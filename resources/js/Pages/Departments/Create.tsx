@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { SearchableSelect } from '@/Components/ui/searchable-select';
 
 interface User {
     id: number;
@@ -15,6 +16,33 @@ interface Props extends PageProps {
     users: User[];
 }
 
+// Helper function to generate code from name
+function generateCode(name: string): string {
+    if (!name) return '';
+
+    // Remove accents and special characters
+    const normalized = name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9\s]/g, '')
+        .trim();
+
+    // Split into words and take first letters or short words
+    const words = normalized.split(/\s+/).filter(w => w.length > 0);
+
+    if (words.length === 1) {
+        // Single word: take first 8 characters
+        return words[0].substring(0, 8);
+    }
+
+    // Multiple words: take first 3-4 letters of each word (up to 3 words)
+    return words
+        .slice(0, 3)
+        .map(w => w.substring(0, 3))
+        .join('-');
+}
+
 export default function Create({ users }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
@@ -24,6 +52,21 @@ export default function Create({ users }: Props) {
         budget: '',
         is_active: true,
     });
+
+    // Auto-generate code from name
+    useEffect(() => {
+        const generatedCode = generateCode(data.name);
+        setData('code', generatedCode);
+    }, [data.name]);
+
+    // Convert users to options for SearchableSelect
+    const userOptions = useMemo(() =>
+        users.map(user => ({
+            value: user.id,
+            label: `${user.first_name} ${user.last_name} (${user.email})`,
+        })),
+        [users]
+    );
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,15 +117,15 @@ export default function Create({ users }: Props) {
 
                                 <div>
                                     <label htmlFor="code" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Code *
+                                        Code * <span className="text-xs text-gray-500">(généré automatiquement)</span>
                                     </label>
                                     <input
                                         type="text"
                                         id="code"
                                         value={data.code}
                                         onChange={(e) => setData('code', e.target.value.toUpperCase())}
-                                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                        placeholder="DEPT-001"
+                                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm bg-gray-50 dark:bg-gray-600"
+                                        placeholder="CODE"
                                         maxLength={50}
                                         required
                                     />
@@ -111,19 +154,17 @@ export default function Create({ users }: Props) {
                                     <label htmlFor="head_of_department" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Chef de département
                                     </label>
-                                    <select
-                                        id="head_of_department"
-                                        value={data.head_of_department}
-                                        onChange={(e) => setData('head_of_department', e.target.value)}
-                                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                    >
-                                        <option value="">Sélectionner un chef</option>
-                                        {users.map(user => (
-                                            <option key={user.id} value={user.id}>
-                                                {user.first_name} {user.last_name} ({user.email})
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="mt-1">
+                                        <SearchableSelect
+                                            id="head_of_department"
+                                            options={userOptions}
+                                            value={data.head_of_department ? Number(data.head_of_department) : null}
+                                            onChange={(value) => setData('head_of_department', value ? String(value) : '')}
+                                            placeholder="Rechercher un chef..."
+                                            isClearable={true}
+                                            noOptionsMessage="Aucun utilisateur trouvé"
+                                        />
+                                    </div>
                                     {errors.head_of_department && <p className="mt-1 text-sm text-red-600">{errors.head_of_department}</p>}
                                 </div>
 

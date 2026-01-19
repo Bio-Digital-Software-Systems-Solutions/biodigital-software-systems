@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { SearchableSelect } from '@/Components/ui/searchable-select';
 
 interface User {
     id: number;
@@ -36,6 +37,15 @@ export default function Edit({ department, users }: Props) {
         budget: department.budget || '',
         is_active: department.is_active ?? true,
     });
+
+    // Convert users to options for SearchableSelect
+    const userOptions = useMemo(() =>
+        users.map(user => ({
+            value: user.id,
+            label: `${user.first_name} ${user.last_name} (${user.email})`,
+        })),
+        [users]
+    );
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -94,7 +104,7 @@ export default function Edit({ department, users }: Props) {
                                         value={data.code}
                                         onChange={(e) => setData('code', e.target.value.toUpperCase())}
                                         className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                        placeholder="DEPT-001"
+                                        placeholder="CODE"
                                         maxLength={50}
                                         required
                                     />
@@ -123,19 +133,17 @@ export default function Edit({ department, users }: Props) {
                                     <label htmlFor="head_of_department" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Chef de département
                                     </label>
-                                    <select
-                                        id="head_of_department"
-                                        value={data.head_of_department}
-                                        onChange={(e) => setData('head_of_department', e.target.value)}
-                                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                    >
-                                        <option value="">Sélectionner un chef</option>
-                                        {users.map(user => (
-                                            <option key={user.id} value={user.id}>
-                                                {user.first_name} {user.last_name} ({user.email})
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="mt-1">
+                                        <SearchableSelect
+                                            id="head_of_department"
+                                            options={userOptions}
+                                            value={data.head_of_department ? Number(data.head_of_department) : null}
+                                            onChange={(value) => setData('head_of_department', value ? String(value) : '')}
+                                            placeholder="Rechercher un chef..."
+                                            isClearable={true}
+                                            noOptionsMessage="Aucun utilisateur trouvé"
+                                        />
+                                    </div>
                                     {errors.head_of_department && <p className="mt-1 text-sm text-red-600">{errors.head_of_department}</p>}
                                 </div>
 
