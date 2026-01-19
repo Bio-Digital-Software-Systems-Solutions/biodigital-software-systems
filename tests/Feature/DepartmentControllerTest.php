@@ -288,17 +288,17 @@ class DepartmentControllerTest extends TestCase
         $this->assertContains($response->status(), [403, 302]);
     }
 
-    public function test_department_route_key_uses_code(): void
+    public function test_department_route_key_uses_uuid(): void
     {
         $department = Department::factory()->create(['code' => 'TEST-DEPT']);
 
         $this->user->givePermissionTo('view departments');
 
         $response = $this->actingAs($this->user)
-            ->get(route('departments.show', 'TEST-DEPT'));
+            ->get(route('departments.show', $department->uuid));
 
         $response->assertOk();
-        $response->assertInertia(fn ($assert) => $assert->where('department.code', 'TEST-DEPT')
+        $response->assertInertia(fn ($assert) => $assert->where('department.uuid', $department->uuid)
         );
     }
 
@@ -618,11 +618,9 @@ class DepartmentControllerTest extends TestCase
             ->component('Departments/Show')
             ->has('appointments', 1)
             // ISO 8601 format check
-            ->where('appointments.0.start_datetime', fn ($value) =>
-                preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value) === 1
+            ->where('appointments.0.start_datetime', fn ($value) => preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value) === 1
             )
-            ->where('appointments.0.end_datetime', fn ($value) =>
-                preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value) === 1
+            ->where('appointments.0.end_datetime', fn ($value) => preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value) === 1
             )
         );
     }

@@ -54,7 +54,16 @@ export type SwapRequestStatus =
 
 export type ShiftTaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
+export type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
+
 export type ShiftTaskStatus =
+    | 'todo'
+    | 'in_progress'
+    | 'completed'
+    | 'blocked'
+    | 'cancelled';
+
+export type TodoStatus =
     | 'todo'
     | 'in_progress'
     | 'completed'
@@ -206,6 +215,63 @@ export interface ChecklistItem {
     text: string;
     completed: boolean;
     completed_at: string | null;
+}
+
+export interface DepartmentTodo {
+    uuid: string;
+    title: string;
+    description: string | null;
+    status: TodoStatus;
+    status_label: string;
+    status_color: string;
+    priority: TodoPriority;
+    priority_label: string;
+    priority_color: string;
+    due_date: string | null;
+    estimated_minutes: number | null;
+    is_overdue: boolean;
+    is_due_today: boolean;
+    assignee: {
+        uuid: string;
+        name: string;
+        avatar_url?: string | null;
+    } | null;
+    backup_assignees: {
+        uuid: string;
+        name: string;
+        avatar_url?: string | null;
+    }[];
+    creator: {
+        uuid: string;
+        name: string;
+    } | null;
+    shift: {
+        uuid: string;
+        date: string;
+        time_range: string;
+    } | null;
+    completed_at: string | null;
+    completed_by: {
+        uuid: string;
+        name: string;
+    } | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TodoStats {
+    total: number;
+    pending: number;
+    completed: number;
+    overdue: number;
+    due_today: number;
+}
+
+export interface DepartmentMember {
+    uuid: string;
+    name: string;
+    email: string;
+    avatar_url?: string | null;
 }
 
 export interface EmployeeAvailability {
@@ -549,6 +615,12 @@ export interface ScheduleIndexProps {
     currentWeek: string;
     prevWeek: string;
     nextWeek: string;
+    // Todo-related props
+    todos?: DepartmentTodo[];
+    todoStats?: TodoStats;
+    members?: DepartmentMember[];
+    todoStatuses?: EnumOption<TodoStatus>[];
+    todoPriorities?: EnumOption<TodoPriority>[];
 }
 
 export interface ShiftFormProps {

@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -29,6 +29,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read int|null $users_count
  * @property-read \App\Models\User|null $headOfDepartment
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department active()
  * @method static \Database\Factories\DepartmentFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department newModelQuery()
@@ -48,17 +49,20 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department withoutTrashed()
+ *
  * @property string $uuid
  * @property string|null $image
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
  * @property-read int|null $activities_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 class Department extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
 
     /**
      * Configure activity log options.
@@ -70,6 +74,7 @@ class Department extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     protected static function boot()
     {
         parent::boot();
@@ -125,6 +130,14 @@ class Department extends Model
     public function members(): BelongsToMany
     {
         return $this->users();
+    }
+
+    /**
+     * Get the todos for this department.
+     */
+    public function todos(): HasMany
+    {
+        return $this->hasMany(\App\Models\Scheduling\DepartmentTodo::class);
     }
 
     /**

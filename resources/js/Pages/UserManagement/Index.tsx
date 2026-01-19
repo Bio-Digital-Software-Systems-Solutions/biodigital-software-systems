@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, router } from '@inertiajs/react';
 import { Button } from '@/Components/ui/button';
@@ -7,6 +7,8 @@ import { PlusIcon, PencilIcon, TrashIcon, UserPlusIcon, ShieldCheckIcon, Magnify
 import { toast } from 'sonner';
 import axios from 'axios';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import { Pagination, PaginationData } from '@/Components/ui/pagination';
+import { useDebouncedCallback } from 'use-debounce';
 
 interface Teacher {
     id: number;
@@ -21,15 +23,49 @@ interface Teacher {
     user: User;
 }
 
+interface Star {
+    id: number;
+    uuid: string;
+    user_id: number;
+    title: string | null;
+    description: string | null;
+    status: string;
+    type: string;
+    category: string;
+    level: number;
+    points: number;
+    recognition_date: string | null;
+    expiry_date: string | null;
+    user: User;
+}
+
+interface Employee {
+    id: number;
+    uuid: string;
+    user_id: number;
+    employee_number: string | null;
+    position: string | null;
+    job_title: string | null;
+    status: string;
+    employment_type: string;
+    hire_date: string | null;
+    user: User;
+}
+
+interface Filters {
+    search: string;
+    role: string;
+    per_page: number;
+}
+
 interface Props {
-    users: {
-        data: UserWithRelations[];
-        current_page: number;
-        last_page: number;
-    };
+    users: PaginationData<UserWithRelations>;
     roles: RoleWithPermissions[];
     permissions: Permission[];
     teachers: Teacher[];
+    stars: Star[];
+    employees: Employee[];
+    filters: Filters;
 }
 
 interface UserWithRelations extends User {
@@ -43,10 +79,10 @@ interface RoleWithPermissions extends Role {
     permissions: Permission[];
 }
 
-export default function Index({ users, roles, permissions, teachers }: Props) {
+export default function Index({ users, roles, permissions, teachers, stars, employees, filters }: Props) {
     const [selectedUser, setSelectedUser] = useState<UserWithRelations | null>(null);
     const [selectedRole, setSelectedRole] = useState<RoleWithPermissions | null>(null);
-    const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'permissions' | 'matrix' | 'teachers'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'permissions' | 'matrix' | 'teachers' | 'stars' | 'employees'>('users');
     const [showUserRoleDialog, setShowUserRoleDialog] = useState(false);
     const [showUserPermissionDialog, setShowUserPermissionDialog] = useState(false);
     const [showRoleDialog, setShowRoleDialog] = useState(false);
@@ -56,16 +92,64 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
     const [newPermissionName, setNewPermissionName] = useState('');
     const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
     const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+    const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
-    // Search and filter states
-    const [userSearch, setUserSearch] = useState('');
-    const [roleFilter, setRoleFilter] = useState('');
+    // Search and filter states - initialized from server filters
+    const [userSearch, setUserSearch] = useState(filters?.search || '');
+    const [roleFilter, setRoleFilter] = useState(filters?.role || '');
+
+    // Server-side pagination and filtering
+    const updateFilters = useCallback((newFilters: Partial<Filters & { page?: number }>) => {
+        setIsLoadingUsers(true);
+        router.get(
+            route('user-management.index'),
+            {
+                search: newFilters.search ?? userSearch,
+                role: newFilters.role ?? roleFilter,
+                per_page: newFilters.per_page ?? filters?.per_page ?? 20,
+                page: newFilters.page ?? 1,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['users', 'filters'],
+                onFinish: () => setIsLoadingUsers(false),
+            }
+        );
+    }, [userSearch, roleFilter, filters?.per_page]);
+
+    // Debounced search to avoid too many requests
+    const debouncedSearch = useDebouncedCallback((value: string) => {
+        updateFilters({ search: value, page: 1 });
+    }, 300);
+
+    const handleSearchChange = (value: string) => {
+        setUserSearch(value);
+        debouncedSearch(value);
+    };
+
+    const handleRoleFilterChange = (value: string) => {
+        setRoleFilter(value);
+        updateFilters({ role: value, page: 1 });
+    };
+
+    const handlePageChange = (page: number) => {
+        updateFilters({ page });
+    };
+
+    const handlePageSizeChange = (perPage: number) => {
+        updateFilters({ per_page: perPage, page: 1 });
+    };
     const [roleSearch, setRoleSearch] = useState('');
     const [permissionSearch, setPermissionSearch] = useState('');
     const [matrixSearch, setMatrixSearch] = useState('');
     const [selectedModels, setSelectedModels] = useState<string[]>([]);
     const [teacherSearch, setTeacherSearch] = useState('');
     const [nonTeacherSearch, setNonTeacherSearch] = useState('');
+    const [starSearch, setStarSearch] = useState('');
+    const [nonStarSearch, setNonStarSearch] = useState('');
+    const [employeeSearch, setEmployeeSearch] = useState('');
+    const [nonEmployeeSearch, setNonEmployeeSearch] = useState('');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [userToDelete, setUserToDelete] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -103,19 +187,8 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
         return groups;
     }, [permissions]);
 
-    // Filtered users
-    const filteredUsers = useMemo(() => {
-        return users.data.filter(user => {
-            const matchesSearch =
-                user.first_name.toLowerCase().includes(userSearch.toLowerCase()) ||
-                user.last_name.toLowerCase().includes(userSearch.toLowerCase()) ||
-                user.email.toLowerCase().includes(userSearch.toLowerCase());
-
-            const matchesRole = !roleFilter || user.roles.some(r => r.name === roleFilter);
-
-            return matchesSearch && matchesRole;
-        });
-    }, [users.data, userSearch, roleFilter]);
+    // Users are now server-side filtered and paginated
+    const filteredUsers = users.data;
 
     // Filtered roles
     const filteredRoles = useMemo(() => {
@@ -557,6 +630,68 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
         });
     }, [teachers, teacherSearch]);
 
+    // Get star user IDs for filtering
+    const starUserIds = useMemo(() => {
+        return new Set(stars.map(s => s.user_id));
+    }, [stars]);
+
+    // Filtered non-stars (users who are NOT stars)
+    const filteredNonStars = useMemo(() => {
+        return users.data.filter(user => {
+            const isNotStar = !starUserIds.has(user.id);
+            const matchesSearch =
+                user.first_name.toLowerCase().includes(nonStarSearch.toLowerCase()) ||
+                user.last_name.toLowerCase().includes(nonStarSearch.toLowerCase()) ||
+                user.email.toLowerCase().includes(nonStarSearch.toLowerCase());
+
+            return isNotStar && matchesSearch;
+        });
+    }, [users.data, starUserIds, nonStarSearch]);
+
+    // Filtered stars
+    const filteredStars = useMemo(() => {
+        return stars.filter(star => {
+            const user = star.user;
+            const matchesSearch =
+                user.first_name.toLowerCase().includes(starSearch.toLowerCase()) ||
+                user.last_name.toLowerCase().includes(starSearch.toLowerCase()) ||
+                user.email.toLowerCase().includes(starSearch.toLowerCase());
+
+            return matchesSearch;
+        });
+    }, [stars, starSearch]);
+
+    // Get employee user IDs for filtering
+    const employeeUserIds = useMemo(() => {
+        return new Set(employees.map(e => e.user_id));
+    }, [employees]);
+
+    // Filtered non-employees (users who are NOT employees)
+    const filteredNonEmployees = useMemo(() => {
+        return users.data.filter(user => {
+            const isNotEmployee = !employeeUserIds.has(user.id);
+            const matchesSearch =
+                user.first_name.toLowerCase().includes(nonEmployeeSearch.toLowerCase()) ||
+                user.last_name.toLowerCase().includes(nonEmployeeSearch.toLowerCase()) ||
+                user.email.toLowerCase().includes(nonEmployeeSearch.toLowerCase());
+
+            return isNotEmployee && matchesSearch;
+        });
+    }, [users.data, employeeUserIds, nonEmployeeSearch]);
+
+    // Filtered employees
+    const filteredEmployees = useMemo(() => {
+        return employees.filter(employee => {
+            const user = employee.user;
+            const matchesSearch =
+                user.first_name.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+                user.last_name.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+                user.email.toLowerCase().includes(employeeSearch.toLowerCase());
+
+            return matchesSearch;
+        });
+    }, [employees, employeeSearch]);
+
     // Add user as teacher
     const handleAddTeacher = async (user: UserWithRelations) => {
         try {
@@ -581,6 +716,50 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
         }
     };
 
+    // Add user as star
+    const handleAddStar = async (user: UserWithRelations) => {
+        try {
+            await axios.post(route('user-management.add-star', user.uuid), {});
+            toast.success(`${user.first_name} ${user.last_name} a été ajouté comme Star`);
+            router.reload({ only: ['users', 'stars'] });
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Erreur lors de l\'ajout du Star');
+        }
+    };
+
+    // Remove star
+    const handleRemoveStar = async (star: Star) => {
+        try {
+            await axios.delete(route('user-management.remove-star', star.uuid));
+            toast.success(`${star.user.first_name} ${star.user.last_name} a été retiré des Stars`);
+            router.reload({ only: ['users', 'stars'] });
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Erreur lors de la suppression du Star');
+        }
+    };
+
+    // Add user as employee
+    const handleAddEmployee = async (user: UserWithRelations) => {
+        try {
+            await axios.post(route('user-management.add-employee', user.uuid), {});
+            toast.success(`${user.first_name} ${user.last_name} a été ajouté comme Employé`);
+            router.reload({ only: ['users', 'employees'] });
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Erreur lors de l\'ajout de l\'Employé');
+        }
+    };
+
+    // Remove employee
+    const handleRemoveEmployee = async (employee: Employee) => {
+        try {
+            await axios.delete(route('user-management.remove-employee', employee.uuid));
+            toast.success(`${employee.user.first_name} ${employee.user.last_name} a été retiré des Employés`);
+            router.reload({ only: ['users', 'employees'] });
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Erreur lors de la suppression de l\'Employé');
+        }
+    };
+
     return (
         <DashboardLayout
             title="Gestion des Utilisateurs"
@@ -589,298 +768,198 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
             <Head title="Gestion des Utilisateurs" />
 
             <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div className="p-6">
-                        {/* Tabs */}
-                            <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
-                                <nav className="-mb-px flex space-x-8">
+                <div className="p-6">
+                    {/* Tabs */}
+                    <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
+                        <nav className="-mb-px flex space-x-8">
+                            <button
+                                onClick={() => setActiveTab('users')}
+                                className={`${activeTab === 'users'
+                                    ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                            >
+                                Utilisateurs ({users.data.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('roles')}
+                                className={`${activeTab === 'roles'
+                                    ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                            >
+                                Rôles ({roles.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('permissions')}
+                                className={`${activeTab === 'permissions'
+                                    ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                            >
+                                Permissions ({permissions.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('matrix')}
+                                className={`${activeTab === 'matrix'
+                                    ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                            >
+                                Matrice des Permissions
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('teachers')}
+                                className={`${activeTab === 'teachers'
+                                    ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                            >
+                                Enseignants ({teachers.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('stars')}
+                                className={`${activeTab === 'stars'
+                                    ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                            >
+                                Stars ({stars.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('employees')}
+                                className={`${activeTab === 'employees'
+                                    ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                            >
+                                Employés ({employees.length})
+                            </button>
+                        </nav>
+                    </div>
+
+                    {/* Users Tab */}
+                    {activeTab === 'users' && (
+                        <div>
+                            {/* Search, Filter and View Toggle */}
+                            <div className="mb-4 flex gap-4 flex-wrap">
+                                <div className="relative flex-1 min-w-[200px]">
+                                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Rechercher un utilisateur..."
+                                        value={userSearch}
+                                        onChange={(e) => handleSearchChange(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        disabled={isLoadingUsers}
+                                    />
+                                    {isLoadingUsers && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <div className="animate-spin h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+                                        </div>
+                                    )}
+                                </div>
+                                <select
+                                    value={roleFilter}
+                                    onChange={(e) => handleRoleFilterChange(e.target.value)}
+                                    className="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    disabled={isLoadingUsers}
+                                >
+                                    <option value="">Tous les rôles</option>
+                                    {roles.map(role => (
+                                        <option key={role.id} value={role.name}>{role.name}</option>
+                                    ))}
+                                </select>
+                                <div className="flex gap-1 border rounded-lg p-1 dark:border-gray-600">
                                     <button
-                                        onClick={() => setActiveTab('users')}
-                                        className={`${
-                                            activeTab === 'users'
-                                                ? 'border-violet-500 text-violet-600 dark:text-violet-400'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                        onClick={() => setUserViewMode('table')}
+                                        className={`p-2 rounded transition-colors ${userViewMode === 'table'
+                                            ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
+                                            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+                                            }`}
+                                        title="Vue tableau"
                                     >
-                                        Utilisateurs ({users.data.length})
+                                        <TableCellsIcon className="h-5 w-5" />
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('roles')}
-                                        className={`${
-                                            activeTab === 'roles'
-                                                ? 'border-violet-500 text-violet-600 dark:text-violet-400'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                        onClick={() => setUserViewMode('list')}
+                                        className={`p-2 rounded transition-colors ${userViewMode === 'list'
+                                            ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
+                                            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+                                            }`}
+                                        title="Vue liste"
                                     >
-                                        Rôles ({roles.length})
+                                        <ListBulletIcon className="h-5 w-5" />
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('permissions')}
-                                        className={`${
-                                            activeTab === 'permissions'
-                                                ? 'border-violet-500 text-violet-600 dark:text-violet-400'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                        onClick={() => setUserViewMode('grid')}
+                                        className={`p-2 rounded transition-colors ${userViewMode === 'grid'
+                                            ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
+                                            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+                                            }`}
+                                        title="Vue grille"
                                     >
-                                        Permissions ({permissions.length})
+                                        <Squares2X2Icon className="h-5 w-5" />
                                     </button>
-                                    <button
-                                        onClick={() => setActiveTab('matrix')}
-                                        className={`${
-                                            activeTab === 'matrix'
-                                                ? 'border-violet-500 text-violet-600 dark:text-violet-400'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                                    >
-                                        Matrice des Permissions
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('teachers')}
-                                        className={`${
-                                            activeTab === 'teachers'
-                                                ? 'border-violet-500 text-violet-600 dark:text-violet-400'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                                    >
-                                        Enseignants ({teachers.length})
-                                    </button>
-                                </nav>
+                                </div>
                             </div>
 
-                            {/* Users Tab */}
-                            {activeTab === 'users' && (
-                                <div>
-                                    {/* Search, Filter and View Toggle */}
-                                    <div className="mb-4 flex gap-4 flex-wrap">
-                                        <div className="relative flex-1 min-w-[200px]">
-                                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                            <input
-                                                type="text"
-                                                placeholder="Rechercher un utilisateur..."
-                                                value={userSearch}
-                                                onChange={(e) => setUserSearch(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                            />
-                                        </div>
-                                        <select
-                                            value={roleFilter}
-                                            onChange={(e) => setRoleFilter(e.target.value)}
-                                            className="px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        >
-                                            <option value="">Tous les rôles</option>
-                                            {roles.map(role => (
-                                                <option key={role.id} value={role.name}>{role.name}</option>
-                                            ))}
-                                        </select>
-                                        <div className="flex gap-1 border rounded-lg p-1 dark:border-gray-600">
-                                            <button
-                                                onClick={() => setUserViewMode('table')}
-                                                className={`p-2 rounded transition-colors ${
-                                                    userViewMode === 'table'
-                                                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
-                                                        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-                                                }`}
-                                                title="Vue tableau"
-                                            >
-                                                <TableCellsIcon className="h-5 w-5" />
-                                            </button>
-                                            <button
-                                                onClick={() => setUserViewMode('list')}
-                                                className={`p-2 rounded transition-colors ${
-                                                    userViewMode === 'list'
-                                                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
-                                                        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-                                                }`}
-                                                title="Vue liste"
-                                            >
-                                                <ListBulletIcon className="h-5 w-5" />
-                                            </button>
-                                            <button
-                                                onClick={() => setUserViewMode('grid')}
-                                                className={`p-2 rounded transition-colors ${
-                                                    userViewMode === 'grid'
-                                                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
-                                                        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-                                                }`}
-                                                title="Vue grille"
-                                            >
-                                                <Squares2X2Icon className="h-5 w-5" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Table View */}
-                                    {userViewMode === 'table' && (
-                                        <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                                <thead className="bg-gray-50 dark:bg-gray-900">
-                                                    <tr>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Utilisateur</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Rôles</th>
-                                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Statut</th>
-                                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                                    {filteredUsers.map((user) => {
-                                                        const isSuperAdmin = user.roles.some(r => r.name === 'SuperAdmin');
-
-                                                    return (
-                                                        <tr key={user.id} className={user.is_blocked ? 'bg-red-50 dark:bg-red-900/10' : ''}>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                <a
-                                                                    href={route('user-management.show', user.uuid)}
-                                                                    className="text-sm font-medium text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 hover:underline"
-                                                                >
-                                                                    {user.first_name} {user.last_name}
-                                                                </a>
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                                {user.email}
-                                                            </td>
-                                                            <td className="px-6 py-4">
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {user.roles.map((role) => (
-                                                                        <span key={role.id} className="px-2 py-1 text-xs font-medium rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200">
-                                                                            {role.name}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                {user.is_blocked ? (
-                                                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                                                        Bloqué
-                                                                    </span>
-                                                                ) : user.is_active === false ? (
-                                                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                                                                        Inactif
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                                                        Actif
-                                                                    </span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                                <div className="flex justify-end gap-2">
-                                                                    <button
-                                                                        onClick={() => openUserRoleDialog(user)}
-                                                                        className="text-violet-600 hover:text-violet-900 dark:text-violet-400"
-                                                                        title="Gérer les rôles"
-                                                                    >
-                                                                        <UserPlusIcon className="h-5 w-5" />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => openUserPermissionDialog(user)}
-                                                                        className="text-primary hover:text-blue-900 dark:text-blue-400"
-                                                                        title="Gérer les permissions"
-                                                                    >
-                                                                        <ShieldCheckIcon className="h-5 w-5" />
-                                                                    </button>
-
-                                                                    {!isSuperAdmin && (
-                                                                        <>
-                                                                            {user.is_blocked ? (
-                                                                                <button
-                                                                                    onClick={() => openStatusDialog(user.uuid, 'unblock')}
-                                                                                    className="text-green-600 hover:text-green-900 dark:text-green-400"
-                                                                                    title="Débloquer l'utilisateur"
-                                                                                >
-                                                                                    <CheckIcon className="h-5 w-5" />
-                                                                                </button>
-                                                                            ) : (
-                                                                                <button
-                                                                                    onClick={() => openStatusDialog(user.uuid, 'block')}
-                                                                                    className="text-orange-600 hover:text-orange-900 dark:text-orange-400"
-                                                                                    title="Bloquer l'utilisateur"
-                                                                                >
-                                                                                    <NoSymbolIcon className="h-5 w-5" />
-                                                                                </button>
-                                                                            )}
-
-                                                                            {user.is_active ? (
-                                                                                <button
-                                                                                    onClick={() => openStatusDialog(user.uuid, 'deactivate')}
-                                                                                    className="text-gray-600 hover:text-gray-900 dark:text-gray-400"
-                                                                                    title="Désactiver l'utilisateur"
-                                                                                >
-                                                                                    <LockClosedIcon className="h-5 w-5" />
-                                                                                </button>
-                                                                            ) : (
-                                                                                <button
-                                                                                    onClick={() => openStatusDialog(user.uuid, 'activate')}
-                                                                                    className="text-green-600 hover:text-green-900 dark:text-green-400"
-                                                                                    title="Activer l'utilisateur"
-                                                                                >
-                                                                                    <CheckIcon className="h-5 w-5" />
-                                                                                </button>
-                                                                            )}
-
-                                                                            <button
-                                                                                onClick={() => openDeleteDialog(user.uuid)}
-                                                                                className="text-red-600 hover:text-red-900 dark:text-red-400"
-                                                                                title="Supprimer l'utilisateur"
-                                                                            >
-                                                                                <TrashIcon className="h-5 w-5" />
-                                                                            </button>
-                                                                        </>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    )}
-
-                                    {/* List View */}
-                                    {userViewMode === 'list' && (
-                                        <div className="space-y-3">
+                            {/* Table View */}
+                            {userViewMode === 'table' && (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                        <thead className="bg-gray-50 dark:bg-gray-900">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Utilisateur</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Rôles</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Statut</th>
+                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                             {filteredUsers.map((user) => {
                                                 const isSuperAdmin = user.roles.some(r => r.name === 'SuperAdmin');
+
                                                 return (
-                                                    <div
-                                                        key={user.id}
-                                                        className={`p-4 border rounded-lg dark:border-gray-700 hover:shadow-md transition-shadow ${
-                                                            user.is_blocked ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800' : ''
-                                                        }`}
-                                                    >
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center gap-3 mb-2">
-                                                                    <a
-                                                                        href={route('user-management.show', user.uuid)}
-                                                                        className="text-lg font-semibold text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 hover:underline"
-                                                                    >
-                                                                        {user.first_name} {user.last_name}
-                                                                    </a>
-                                                                    {user.is_blocked ? (
-                                                                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                                                            Bloqué
-                                                                        </span>
-                                                                    ) : user.is_active === false ? (
-                                                                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                                                                            Inactif
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                                                            Actif
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{user.email}</p>
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {user.roles.map((role) => (
-                                                                        <span key={role.id} className="px-2 py-1 text-xs font-medium rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200">
-                                                                            {role.name}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
+                                                    <tr key={user.id} className={user.is_blocked ? 'bg-red-50 dark:bg-red-900/10' : ''}>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <a
+                                                                href={route('user-management.show', user.uuid)}
+                                                                className="text-sm font-medium text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 hover:underline"
+                                                            >
+                                                                {user.first_name} {user.last_name}
+                                                            </a>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                            {user.email}
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {user.roles.map((role) => (
+                                                                    <span key={role.id} className="px-2 py-1 text-xs font-medium rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200">
+                                                                        {role.name}
+                                                                    </span>
+                                                                ))}
                                                             </div>
-                                                            <div className="flex gap-2">
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            {user.is_blocked ? (
+                                                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                                                    Bloqué
+                                                                </span>
+                                                            ) : user.is_active === false ? (
+                                                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                                                    Inactif
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                                    Actif
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                            <div className="flex justify-end gap-2">
                                                                 <button
                                                                     onClick={() => openUserRoleDialog(user)}
                                                                     className="text-violet-600 hover:text-violet-900 dark:text-violet-400"
@@ -895,6 +974,7 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
                                                                 >
                                                                     <ShieldCheckIcon className="h-5 w-5" />
                                                                 </button>
+
                                                                 {!isSuperAdmin && (
                                                                     <>
                                                                         {user.is_blocked ? (
@@ -914,6 +994,7 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
                                                                                 <NoSymbolIcon className="h-5 w-5" />
                                                                             </button>
                                                                         )}
+
                                                                         {user.is_active ? (
                                                                             <button
                                                                                 onClick={() => openStatusDialog(user.uuid, 'deactivate')}
@@ -931,6 +1012,7 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
                                                                                 <CheckIcon className="h-5 w-5" />
                                                                             </button>
                                                                         )}
+
                                                                         <button
                                                                             onClick={() => openDeleteDialog(user.uuid)}
                                                                             className="text-red-600 hover:text-red-900 dark:text-red-400"
@@ -941,628 +1023,1056 @@ export default function Index({ users, roles, permissions, teachers }: Props) {
                                                                     </>
                                                                 )}
                                                             </div>
-                                                        </div>
-                                                    </div>
+                                                        </td>
+                                                    </tr>
                                                 );
                                             })}
-                                        </div>
-                                    )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
 
-                                    {/* Grid View */}
-                                    {userViewMode === 'grid' && (
-                                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                            {filteredUsers.map((user) => {
-                                                const isSuperAdmin = user.roles.some(r => r.name === 'SuperAdmin');
-                                                return (
+                            {/* List View */}
+                            {userViewMode === 'list' && (
+                                <div className="space-y-3">
+                                    {filteredUsers.map((user) => {
+                                        const isSuperAdmin = user.roles.some(r => r.name === 'SuperAdmin');
+                                        return (
+                                            <div
+                                                key={user.id}
+                                                className={`p-4 border rounded-lg dark:border-gray-700 hover:shadow-md transition-shadow ${user.is_blocked ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800' : ''
+                                                    }`}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <a
+                                                                href={route('user-management.show', user.uuid)}
+                                                                className="text-lg font-semibold text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 hover:underline"
+                                                            >
+                                                                {user.first_name} {user.last_name}
+                                                            </a>
+                                                            {user.is_blocked ? (
+                                                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                                                    Bloqué
+                                                                </span>
+                                                            ) : user.is_active === false ? (
+                                                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                                                    Inactif
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                                    Actif
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{user.email}</p>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {user.roles.map((role) => (
+                                                                <span key={role.id} className="px-2 py-1 text-xs font-medium rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200">
+                                                                    {role.name}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => openUserRoleDialog(user)}
+                                                            className="text-violet-600 hover:text-violet-900 dark:text-violet-400"
+                                                            title="Gérer les rôles"
+                                                        >
+                                                            <UserPlusIcon className="h-5 w-5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => openUserPermissionDialog(user)}
+                                                            className="text-primary hover:text-blue-900 dark:text-blue-400"
+                                                            title="Gérer les permissions"
+                                                        >
+                                                            <ShieldCheckIcon className="h-5 w-5" />
+                                                        </button>
+                                                        {!isSuperAdmin && (
+                                                            <>
+                                                                {user.is_blocked ? (
+                                                                    <button
+                                                                        onClick={() => openStatusDialog(user.uuid, 'unblock')}
+                                                                        className="text-green-600 hover:text-green-900 dark:text-green-400"
+                                                                        title="Débloquer l'utilisateur"
+                                                                    >
+                                                                        <CheckIcon className="h-5 w-5" />
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => openStatusDialog(user.uuid, 'block')}
+                                                                        className="text-orange-600 hover:text-orange-900 dark:text-orange-400"
+                                                                        title="Bloquer l'utilisateur"
+                                                                    >
+                                                                        <NoSymbolIcon className="h-5 w-5" />
+                                                                    </button>
+                                                                )}
+                                                                {user.is_active ? (
+                                                                    <button
+                                                                        onClick={() => openStatusDialog(user.uuid, 'deactivate')}
+                                                                        className="text-gray-600 hover:text-gray-900 dark:text-gray-400"
+                                                                        title="Désactiver l'utilisateur"
+                                                                    >
+                                                                        <LockClosedIcon className="h-5 w-5" />
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => openStatusDialog(user.uuid, 'activate')}
+                                                                        className="text-green-600 hover:text-green-900 dark:text-green-400"
+                                                                        title="Activer l'utilisateur"
+                                                                    >
+                                                                        <CheckIcon className="h-5 w-5" />
+                                                                    </button>
+                                                                )}
+                                                                <button
+                                                                    onClick={() => openDeleteDialog(user.uuid)}
+                                                                    className="text-red-600 hover:text-red-900 dark:text-red-400"
+                                                                    title="Supprimer l'utilisateur"
+                                                                >
+                                                                    <TrashIcon className="h-5 w-5" />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* Grid View */}
+                            {userViewMode === 'grid' && (
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                    {filteredUsers.map((user) => {
+                                        const isSuperAdmin = user.roles.some(r => r.name === 'SuperAdmin');
+                                        return (
+                                            <div
+                                                key={user.id}
+                                                className={`p-4 border rounded-lg dark:border-gray-700 hover:shadow-md transition-shadow ${user.is_blocked ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800' : ''
+                                                    }`}
+                                            >
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-10 w-10 rounded-full bg-violet-100 dark:bg-violet-900 flex items-center justify-center">
+                                                            <UserIcon className="h-6 w-6 text-violet-600 dark:text-violet-300" />
+                                                        </div>
+                                                        {user.is_blocked ? (
+                                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                                                Bloqué
+                                                            </span>
+                                                        ) : user.is_active === false ? (
+                                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                                                Inactif
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                                Actif
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <a
+                                                    href={route('user-management.show', user.uuid)}
+                                                    className="block text-lg font-semibold text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 hover:underline mb-1"
+                                                >
+                                                    {user.first_name} {user.last_name}
+                                                </a>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{user.email}</p>
+                                                <div className="mb-3">
+                                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Rôles:</p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {user.roles.map((role) => (
+                                                            <span key={role.id} className="px-2 py-1 text-xs font-medium rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200">
+                                                                {role.name}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2 pt-3 border-t dark:border-gray-700">
+                                                    <button
+                                                        onClick={() => openUserRoleDialog(user)}
+                                                        className="text-violet-600 hover:text-violet-900 dark:text-violet-400"
+                                                        title="Gérer les rôles"
+                                                    >
+                                                        <UserPlusIcon className="h-5 w-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openUserPermissionDialog(user)}
+                                                        className="text-primary hover:text-blue-900 dark:text-blue-400"
+                                                        title="Gérer les permissions"
+                                                    >
+                                                        <ShieldCheckIcon className="h-5 w-5" />
+                                                    </button>
+                                                    {!isSuperAdmin && (
+                                                        <>
+                                                            {user.is_blocked ? (
+                                                                <button
+                                                                    onClick={() => openStatusDialog(user.uuid, 'unblock')}
+                                                                    className="text-green-600 hover:text-green-900 dark:text-green-400"
+                                                                    title="Débloquer l'utilisateur"
+                                                                >
+                                                                    <CheckIcon className="h-5 w-5" />
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => openStatusDialog(user.uuid, 'block')}
+                                                                    className="text-orange-600 hover:text-orange-900 dark:text-orange-400"
+                                                                    title="Bloquer l'utilisateur"
+                                                                >
+                                                                    <NoSymbolIcon className="h-5 w-5" />
+                                                                </button>
+                                                            )}
+                                                            {user.is_active ? (
+                                                                <button
+                                                                    onClick={() => openStatusDialog(user.uuid, 'deactivate')}
+                                                                    className="text-gray-600 hover:text-gray-900 dark:text-gray-400"
+                                                                    title="Désactiver l'utilisateur"
+                                                                >
+                                                                    <LockClosedIcon className="h-5 w-5" />
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => openStatusDialog(user.uuid, 'activate')}
+                                                                    className="text-green-600 hover:text-green-900 dark:text-green-400"
+                                                                    title="Activer l'utilisateur"
+                                                                >
+                                                                    <CheckIcon className="h-5 w-5" />
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => openDeleteDialog(user.uuid)}
+                                                                className="text-red-600 hover:text-red-900 dark:text-red-400"
+                                                                title="Supprimer l'utilisateur"
+                                                            >
+                                                                <TrashIcon className="h-5 w-5" />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {/* Pagination */}
+                            {users.last_page > 1 && (
+                                <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                    <Pagination
+                                        currentPage={users.current_page}
+                                        lastPage={users.last_page}
+                                        total={users.total}
+                                        perPage={users.per_page}
+                                        from={users.from}
+                                        to={users.to}
+                                        onPageChange={handlePageChange}
+                                        showPageSizeSelector={true}
+                                        pageSizes={[10, 20, 50, 100]}
+                                        pageSize={filters?.per_page ?? 20}
+                                        onPageSizeChange={handlePageSizeChange}
+                                        isLoading={isLoadingUsers}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Summary when only one page */}
+                            {users.last_page === 1 && users.total > 0 && (
+                                <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                                    {users.total} utilisateur{users.total > 1 ? 's' : ''} au total
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Roles Tab */}
+                    {activeTab === 'roles' && (
+                        <div>
+                            {/* Search, View Toggle and Create */}
+                            <div className="mb-4 flex gap-4 items-center">
+                                <div className="relative flex-1">
+                                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Rechercher un rôle..."
+                                        value={roleSearch}
+                                        onChange={(e) => setRoleSearch(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    />
+                                </div>
+                                <div className="flex gap-1 border rounded-lg p-1 dark:border-gray-600">
+                                    <button
+                                        onClick={() => setRoleViewMode('grid')}
+                                        className={`p-2 rounded transition-colors ${roleViewMode === 'grid'
+                                            ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
+                                            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+                                            }`}
+                                        title="Vue grille"
+                                    >
+                                        <Squares2X2Icon className="h-5 w-5" />
+                                    </button>
+                                    <button
+                                        onClick={() => setRoleViewMode('list')}
+                                        className={`p-2 rounded transition-colors ${roleViewMode === 'list'
+                                            ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
+                                            : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+                                            }`}
+                                        title="Vue liste"
+                                    >
+                                        <ListBulletIcon className="h-5 w-5" />
+                                    </button>
+                                </div>
+                                <Button onClick={openCreateRoleDialog}>
+                                    <PlusIcon className="h-4 w-4 mr-2" />
+                                    Nouveau Rôle
+                                </Button>
+                            </div>
+
+                            {/* Grid View */}
+                            {roleViewMode === 'grid' && (
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                    {filteredRoles.map((role) => (
+                                        <div key={role.id} className="p-4 border rounded-lg dark:border-gray-700 hover:shadow-md transition-shadow">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <button
+                                                    onClick={() => openRoleDetailDialog(role)}
+                                                    className="font-semibold text-lg text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 hover:underline text-left"
+                                                >
+                                                    {role.name}
+                                                </button>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => openEditRoleDialog(role)}
+                                                        className="text-primary hover:text-blue-900 dark:text-blue-400"
+                                                        title="Éditer"
+                                                    >
+                                                        <PencilIcon className="h-4 w-4" />
+                                                    </button>
+                                                    {role.name !== 'SuperAdmin' && (
+                                                        <button
+                                                            onClick={() => openDeleteRoleDialog(role.id)}
+                                                            className="text-red-600 hover:text-red-900 dark:text-red-400"
+                                                            title="Supprimer"
+                                                        >
+                                                            <TrashIcon className="h-4 w-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                                {role.permissions.length} permissions
+                                            </div>
+                                            <div className="flex flex-wrap gap-1">
+                                                {role.permissions.slice(0, 5).map((permission) => (
+                                                    <span key={permission.id} className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                                        {permission.name}
+                                                    </span>
+                                                ))}
+                                                {role.permissions.length > 5 && (
+                                                    <span className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                                        +{role.permissions.length - 5}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* List View */}
+                            {roleViewMode === 'list' && (
+                                <div className="space-y-2">
+                                    {filteredRoles.map((role) => (
+                                        <div key={role.id} className="p-4 border rounded-lg dark:border-gray-700 hover:shadow-md transition-shadow">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4 flex-1">
+                                                    <button
+                                                        onClick={() => openRoleDetailDialog(role)}
+                                                        className="font-semibold text-lg text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 hover:underline"
+                                                    >
+                                                        {role.name}
+                                                    </button>
+                                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                        {role.permissions.length} permissions
+                                                    </span>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => openEditRoleDialog(role)}
+                                                        className="text-primary hover:text-blue-900 dark:text-blue-400"
+                                                        title="Éditer"
+                                                    >
+                                                        <PencilIcon className="h-4 w-4" />
+                                                    </button>
+                                                    {role.name !== 'SuperAdmin' && (
+                                                        <button
+                                                            onClick={() => openDeleteRoleDialog(role.id)}
+                                                            className="text-red-600 hover:text-red-900 dark:text-red-400"
+                                                            title="Supprimer"
+                                                        >
+                                                            <TrashIcon className="h-4 w-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1 mt-3">
+                                                {role.permissions.map((permission) => (
+                                                    <span key={permission.id} className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                                        {permission.name}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Permissions Tab */}
+                    {activeTab === 'permissions' && (
+                        <div>
+                            {/* Search and Create */}
+                            <div className="mb-4 flex gap-4 items-center">
+                                <div className="relative flex-1">
+                                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Rechercher une permission..."
+                                        value={permissionSearch}
+                                        onChange={(e) => setPermissionSearch(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    />
+                                </div>
+                                <Button onClick={() => setShowPermissionDialog(true)}>
+                                    <PlusIcon className="h-4 w-4 mr-2" />
+                                    Nouvelle Permission
+                                </Button>
+                            </div>
+
+                            {/* Grouped Permissions */}
+                            <div className="space-y-6">
+                                {Object.entries(filteredGroupedPermissions).sort().map(([model, perms]) => (
+                                    <div key={model}>
+                                        <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white border-b pb-2">
+                                            {model} ({perms.length})
+                                        </h3>
+                                        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                                            {perms.map((permission) => (
+                                                <div key={permission.id} className="flex justify-between items-center p-3 border rounded dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                                    <span className="text-sm text-gray-900 dark:text-white">{permission.name}</span>
+                                                    <button
+                                                        onClick={() => openDeletePermissionDialog(permission.id)}
+                                                        className="text-red-600 hover:text-red-900 dark:text-red-400"
+                                                        title="Supprimer"
+                                                    >
+                                                        <TrashIcon className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Matrix Tab */}
+                    {activeTab === 'matrix' && (
+                        <div>
+                            {/* Search and Filters */}
+                            <div className="mb-6 space-y-4">
+                                <div className="flex gap-4 items-center">
+                                    <div className="relative flex-1">
+                                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Rechercher un rôle ou un modèle..."
+                                            value={matrixSearch}
+                                            onChange={(e) => setMatrixSearch(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        />
+                                    </div>
+                                    {matrixSearch && (
+                                        <button
+                                            onClick={() => setMatrixSearch('')}
+                                            className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                            title="Effacer la recherche"
+                                        >
+                                            <XMarkIcon className="h-5 w-5" />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Model Selection */}
+                                <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                            Modèles à afficher ({selectedModels.length}/{allModels.length})
+                                        </h3>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={selectAllModels}
+                                                className="text-xs px-3 py-1 bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/40 dark:hover:bg-violet-900/60 text-violet-700 dark:text-violet-300 rounded transition-colors"
+                                            >
+                                                Tout sélectionner
+                                            </button>
+                                            <button
+                                                onClick={deselectAllModels}
+                                                className="text-xs px-3 py-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded transition-colors"
+                                            >
+                                                Tout désélectionner
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                                        {allModels.map(model => (
+                                            <label
+                                                key={model}
+                                                className="flex items-center space-x-2 p-2 hover:bg-white dark:hover:bg-gray-800 rounded cursor-pointer transition-colors"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedModels.includes(model)}
+                                                    onChange={() => toggleModelSelection(model)}
+                                                    className="rounded text-violet-600 focus:ring-violet-500"
+                                                />
+                                                <span className="text-sm text-gray-900 dark:text-white">
+                                                    {model.charAt(0).toUpperCase() + model.slice(1)}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Cliquez sur les cellules pour activer ou désactiver les permissions pour chaque rôle.
+                                </p>
+                            </div>
+
+                            {/* Matrix Table */}
+                            {Object.keys(filteredMatrixGroups).length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full border-collapse">
+                                        <thead>
+                                            <tr>
+                                                <th className="sticky left-0 z-20 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white border-b-2 border-r-2 border-gray-300 dark:border-gray-600">
+                                                    Rôle / Permission
+                                                </th>
+                                                {Object.entries(filteredMatrixGroups).sort().map(([model, actions]) => (
+                                                    <th key={model} colSpan={actions.length} className="px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white border-b-2 border-gray-300 dark:border-gray-600 bg-violet-50 dark:bg-violet-900/20">
+                                                        {model.charAt(0).toUpperCase() + model.slice(1)}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                            <tr>
+                                                <th className="sticky left-0 z-20 bg-gray-50 dark:bg-gray-900 border-r-2 border-b border-gray-300 dark:border-gray-600"></th>
+                                                {Object.entries(filteredMatrixGroups).sort().map(([model, actions]) =>
+                                                    actions.map(action => (
+                                                        <th key={`${model}-${action}`} className="px-2 py-2 text-center text-xs font-medium text-gray-700 dark:text-gray-300 border-b border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                                                            {action}
+                                                        </th>
+                                                    ))
+                                                )}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filteredMatrixRoles.map((role, roleIndex) => (
+                                                <tr key={role.id} className={roleIndex % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'}>
+                                                    <td className="sticky left-0 z-10 px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r-2 border-gray-300 dark:border-gray-600 bg-inherit">
+                                                        {role.name}
+                                                    </td>
+                                                    {Object.entries(filteredMatrixGroups).sort().map(([model, actions]) =>
+                                                        actions.map(action => {
+                                                            const permissionName = `${action} ${model}`;
+                                                            const hasPermission = role.permissions.some(p => p.name === permissionName);
+                                                            return (
+                                                                <td key={`${role.id}-${model}-${action}`} className="border-l border-b border-gray-200 dark:border-gray-700 p-0">
+                                                                    <button
+                                                                        onClick={() => handleToggleRolePermission(role, permissionName)}
+                                                                        disabled={role.name === 'SuperAdmin'}
+                                                                        className={`w-full h-full px-2 py-3 flex items-center justify-center transition-colors ${hasPermission
+                                                                            ? 'bg-green-100 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60'
+                                                                            : 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30'
+                                                                            } ${role.name === 'SuperAdmin' ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+                                                                        title={hasPermission ? `Désactiver ${permissionName}` : `Activer ${permissionName}`}
+                                                                    >
+                                                                        {hasPermission ? (
+                                                                            <CheckIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                                                        ) : (
+                                                                            <XCircleIcon className="h-5 w-5 text-red-400 dark:text-red-600" />
+                                                                        )}
+                                                                    </button>
+                                                                </td>
+                                                            );
+                                                        })
+                                                    )}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                                    <p>Aucun modèle sélectionné ou correspondant à votre recherche.</p>
+                                    <p className="text-sm mt-2">Sélectionnez au moins un modèle pour afficher la matrice.</p>
+                                </div>
+                            )}
+
+                            <div className="mt-4 flex items-center gap-6 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <CheckIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                    <span className="text-gray-600 dark:text-gray-400">Permission active</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <XCircleIcon className="h-5 w-5 text-red-400 dark:text-red-600" />
+                                    <span className="text-gray-600 dark:text-gray-400">Permission inactive</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Teachers Tab */}
+                    {activeTab === 'teachers' && (
+                        <div>
+                            <div className="mb-6">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Gérez les enseignants de votre organisation. Vous pouvez ajouter des utilisateurs comme enseignants ou les retirer.
+                                </p>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* Left Column - Non-Teachers (Users to Add) */}
+                                <div className="border rounded-lg dark:border-gray-700 overflow-hidden">
+                                    <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b dark:border-gray-700">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+                                            Utilisateurs disponibles ({filteredNonTeachers.length})
+                                        </h3>
+                                        <div className="relative">
+                                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                placeholder="Rechercher un utilisateur..."
+                                                value={nonTeacherSearch}
+                                                onChange={(e) => setNonTeacherSearch(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="p-4 max-h-[600px] overflow-y-auto">
+                                        {filteredNonTeachers.length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                                <UserIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                                <p className="text-sm">Aucun utilisateur disponible</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {filteredNonTeachers.map((user) => (
                                                     <div
                                                         key={user.id}
-                                                        className={`p-4 border rounded-lg dark:border-gray-700 hover:shadow-md transition-shadow ${
-                                                            user.is_blocked ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800' : ''
-                                                        }`}
+                                                        className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                                                     >
-                                                        <div className="flex items-start justify-between mb-3">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="h-10 w-10 rounded-full bg-violet-100 dark:bg-violet-900 flex items-center justify-center">
-                                                                    <UserIcon className="h-6 w-6 text-violet-600 dark:text-violet-300" />
-                                                                </div>
-                                                                {user.is_blocked ? (
-                                                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                                                        Bloqué
-                                                                    </span>
-                                                                ) : user.is_active === false ? (
-                                                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                                                                        Inactif
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                                                        Actif
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <a
-                                                            href={route('user-management.show', user.uuid)}
-                                                            className="block text-lg font-semibold text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 hover:underline mb-1"
-                                                        >
-                                                            {user.first_name} {user.last_name}
-                                                        </a>
-                                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{user.email}</p>
-                                                        <div className="mb-3">
-                                                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Rôles:</p>
-                                                            <div className="flex flex-wrap gap-1">
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium text-gray-900 dark:text-white truncate">
+                                                                {user.first_name} {user.last_name}
+                                                            </p>
+                                                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                                {user.email}
+                                                            </p>
+                                                            <div className="flex flex-wrap gap-1 mt-1">
                                                                 {user.roles.map((role) => (
-                                                                    <span key={role.id} className="px-2 py-1 text-xs font-medium rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200">
+                                                                    <span key={role.id} className="px-2 py-0.5 text-xs rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200">
                                                                         {role.name}
                                                                     </span>
                                                                 ))}
                                                             </div>
                                                         </div>
-                                                        <div className="flex gap-2 pt-3 border-t dark:border-gray-700">
-                                                            <button
-                                                                onClick={() => openUserRoleDialog(user)}
-                                                                className="text-violet-600 hover:text-violet-900 dark:text-violet-400"
-                                                                title="Gérer les rôles"
-                                                            >
-                                                                <UserPlusIcon className="h-5 w-5" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => openUserPermissionDialog(user)}
-                                                                className="text-primary hover:text-blue-900 dark:text-blue-400"
-                                                                title="Gérer les permissions"
-                                                            >
-                                                                <ShieldCheckIcon className="h-5 w-5" />
-                                                            </button>
-                                                            {!isSuperAdmin && (
-                                                                <>
-                                                                    {user.is_blocked ? (
-                                                                        <button
-                                                                            onClick={() => openStatusDialog(user.uuid, 'unblock')}
-                                                                            className="text-green-600 hover:text-green-900 dark:text-green-400"
-                                                                            title="Débloquer l'utilisateur"
-                                                                        >
-                                                                            <CheckIcon className="h-5 w-5" />
-                                                                        </button>
-                                                                    ) : (
-                                                                        <button
-                                                                            onClick={() => openStatusDialog(user.uuid, 'block')}
-                                                                            className="text-orange-600 hover:text-orange-900 dark:text-orange-400"
-                                                                            title="Bloquer l'utilisateur"
-                                                                        >
-                                                                            <NoSymbolIcon className="h-5 w-5" />
-                                                                        </button>
-                                                                    )}
-                                                                    {user.is_active ? (
-                                                                        <button
-                                                                            onClick={() => openStatusDialog(user.uuid, 'deactivate')}
-                                                                            className="text-gray-600 hover:text-gray-900 dark:text-gray-400"
-                                                                            title="Désactiver l'utilisateur"
-                                                                        >
-                                                                            <LockClosedIcon className="h-5 w-5" />
-                                                                        </button>
-                                                                    ) : (
-                                                                        <button
-                                                                            onClick={() => openStatusDialog(user.uuid, 'activate')}
-                                                                            className="text-green-600 hover:text-green-900 dark:text-green-400"
-                                                                            title="Activer l'utilisateur"
-                                                                        >
-                                                                            <CheckIcon className="h-5 w-5" />
-                                                                        </button>
-                                                                    )}
-                                                                    <button
-                                                                        onClick={() => openDeleteDialog(user.uuid)}
-                                                                        className="text-red-600 hover:text-red-900 dark:text-red-400"
-                                                                        title="Supprimer l'utilisateur"
-                                                                    >
-                                                                        <TrashIcon className="h-5 w-5" />
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Roles Tab */}
-                            {activeTab === 'roles' && (
-                                <div>
-                                    {/* Search, View Toggle and Create */}
-                                    <div className="mb-4 flex gap-4 items-center">
-                                        <div className="relative flex-1">
-                                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                            <input
-                                                type="text"
-                                                placeholder="Rechercher un rôle..."
-                                                value={roleSearch}
-                                                onChange={(e) => setRoleSearch(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                            />
-                                        </div>
-                                        <div className="flex gap-1 border rounded-lg p-1 dark:border-gray-600">
-                                            <button
-                                                onClick={() => setRoleViewMode('grid')}
-                                                className={`p-2 rounded transition-colors ${
-                                                    roleViewMode === 'grid'
-                                                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
-                                                        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-                                                }`}
-                                                title="Vue grille"
-                                            >
-                                                <Squares2X2Icon className="h-5 w-5" />
-                                            </button>
-                                            <button
-                                                onClick={() => setRoleViewMode('list')}
-                                                className={`p-2 rounded transition-colors ${
-                                                    roleViewMode === 'list'
-                                                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300'
-                                                        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-                                                }`}
-                                                title="Vue liste"
-                                            >
-                                                <ListBulletIcon className="h-5 w-5" />
-                                            </button>
-                                        </div>
-                                        <Button onClick={openCreateRoleDialog}>
-                                            <PlusIcon className="h-4 w-4 mr-2" />
-                                            Nouveau Rôle
-                                        </Button>
-                                    </div>
-
-                                    {/* Grid View */}
-                                    {roleViewMode === 'grid' && (
-                                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                            {filteredRoles.map((role) => (
-                                                <div key={role.id} className="p-4 border rounded-lg dark:border-gray-700 hover:shadow-md transition-shadow">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <button
-                                                            onClick={() => openRoleDetailDialog(role)}
-                                                            className="font-semibold text-lg text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 hover:underline text-left"
+                                                        <Button
+                                                            onClick={() => handleAddTeacher(user)}
+                                                            size="sm"
+                                                            className="ml-3 flex-shrink-0"
+                                                            title="Ajouter comme enseignant"
                                                         >
-                                                            {role.name}
-                                                        </button>
-                                                        <div className="flex gap-2">
-                                                            <button
-                                                                onClick={() => openEditRoleDialog(role)}
-                                                                className="text-primary hover:text-blue-900 dark:text-blue-400"
-                                                                title="Éditer"
-                                                            >
-                                                                <PencilIcon className="h-4 w-4" />
-                                                            </button>
-                                                            {role.name !== 'SuperAdmin' && (
-                                                                <button
-                                                                    onClick={() => openDeleteRoleDialog(role.id)}
-                                                                    className="text-red-600 hover:text-red-900 dark:text-red-400"
-                                                                    title="Supprimer"
-                                                                >
-                                                                    <TrashIcon className="h-4 w-4" />
-                                                                </button>
-                                                            )}
-                                                        </div>
+                                                            <ArrowRightIcon className="h-5 w-5" />
+                                                        </Button>
                                                     </div>
-                                                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                                        {role.permissions.length} permissions
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {role.permissions.slice(0, 5).map((permission) => (
-                                                            <span key={permission.id} className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                                                                {permission.name}
-                                                            </span>
-                                                        ))}
-                                                        {role.permissions.length > 5 && (
-                                                            <span className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                                                                +{role.permissions.length - 5}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* List View */}
-                                    {roleViewMode === 'list' && (
-                                        <div className="space-y-2">
-                                            {filteredRoles.map((role) => (
-                                                <div key={role.id} className="p-4 border rounded-lg dark:border-gray-700 hover:shadow-md transition-shadow">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-4 flex-1">
-                                                            <button
-                                                                onClick={() => openRoleDetailDialog(role)}
-                                                                className="font-semibold text-lg text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 hover:underline"
-                                                            >
-                                                                {role.name}
-                                                            </button>
-                                                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                                {role.permissions.length} permissions
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex gap-2">
-                                                            <button
-                                                                onClick={() => openEditRoleDialog(role)}
-                                                                className="text-primary hover:text-blue-900 dark:text-blue-400"
-                                                                title="Éditer"
-                                                            >
-                                                                <PencilIcon className="h-4 w-4" />
-                                                            </button>
-                                                            {role.name !== 'SuperAdmin' && (
-                                                                <button
-                                                                    onClick={() => openDeleteRoleDialog(role.id)}
-                                                                    className="text-red-600 hover:text-red-900 dark:text-red-400"
-                                                                    title="Supprimer"
-                                                                >
-                                                                    <TrashIcon className="h-4 w-4" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-1 mt-3">
-                                                        {role.permissions.map((permission) => (
-                                                            <span key={permission.id} className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                                                                {permission.name}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Permissions Tab */}
-                            {activeTab === 'permissions' && (
-                                <div>
-                                    {/* Search and Create */}
-                                    <div className="mb-4 flex gap-4 items-center">
-                                        <div className="relative flex-1">
-                                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                            <input
-                                                type="text"
-                                                placeholder="Rechercher une permission..."
-                                                value={permissionSearch}
-                                                onChange={(e) => setPermissionSearch(e.target.value)}
-                                                className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                            />
-                                        </div>
-                                        <Button onClick={() => setShowPermissionDialog(true)}>
-                                            <PlusIcon className="h-4 w-4 mr-2" />
-                                            Nouvelle Permission
-                                        </Button>
-                                    </div>
-
-                                    {/* Grouped Permissions */}
-                                    <div className="space-y-6">
-                                        {Object.entries(filteredGroupedPermissions).sort().map(([model, perms]) => (
-                                            <div key={model}>
-                                                <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white border-b pb-2">
-                                                    {model} ({perms.length})
-                                                </h3>
-                                                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-                                                    {perms.map((permission) => (
-                                                        <div key={permission.id} className="flex justify-between items-center p-3 border rounded dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                                            <span className="text-sm text-gray-900 dark:text-white">{permission.name}</span>
-                                                            <button
-                                                                onClick={() => openDeletePermissionDialog(permission.id)}
-                                                                className="text-red-600 hover:text-red-900 dark:text-red-400"
-                                                                title="Supprimer"
-                                                            >
-                                                                <TrashIcon className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Matrix Tab */}
-                            {activeTab === 'matrix' && (
-                                <div>
-                                    {/* Search and Filters */}
-                                    <div className="mb-6 space-y-4">
-                                        <div className="flex gap-4 items-center">
-                                            <div className="relative flex-1">
-                                                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                                <input
-                                                    type="text"
-                                                    placeholder="Rechercher un rôle ou un modèle..."
-                                                    value={matrixSearch}
-                                                    onChange={(e) => setMatrixSearch(e.target.value)}
-                                                    className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                                />
-                                            </div>
-                                            {matrixSearch && (
-                                                <button
-                                                    onClick={() => setMatrixSearch('')}
-                                                    className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                                                    title="Effacer la recherche"
-                                                >
-                                                    <XMarkIcon className="h-5 w-5" />
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        {/* Model Selection */}
-                                        <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                    Modèles à afficher ({selectedModels.length}/{allModels.length})
-                                                </h3>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={selectAllModels}
-                                                        className="text-xs px-3 py-1 bg-violet-100 hover:bg-violet-200 dark:bg-violet-900/40 dark:hover:bg-violet-900/60 text-violet-700 dark:text-violet-300 rounded transition-colors"
-                                                    >
-                                                        Tout sélectionner
-                                                    </button>
-                                                    <button
-                                                        onClick={deselectAllModels}
-                                                        className="text-xs px-3 py-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded transition-colors"
-                                                    >
-                                                        Tout désélectionner
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                                                {allModels.map(model => (
-                                                    <label
-                                                        key={model}
-                                                        className="flex items-center space-x-2 p-2 hover:bg-white dark:hover:bg-gray-800 rounded cursor-pointer transition-colors"
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedModels.includes(model)}
-                                                            onChange={() => toggleModelSelection(model)}
-                                                            className="rounded text-violet-600 focus:ring-violet-500"
-                                                        />
-                                                        <span className="text-sm text-gray-900 dark:text-white">
-                                                            {model.charAt(0).toUpperCase() + model.slice(1)}
-                                                        </span>
-                                                    </label>
                                                 ))}
                                             </div>
-                                        </div>
-
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Cliquez sur les cellules pour activer ou désactiver les permissions pour chaque rôle.
-                                        </p>
-                                    </div>
-
-                                    {/* Matrix Table */}
-                                    {Object.keys(filteredMatrixGroups).length > 0 ? (
-                                        <div className="overflow-x-auto">
-                                            <table className="min-w-full border-collapse">
-                                                <thead>
-                                                    <tr>
-                                                        <th className="sticky left-0 z-20 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white border-b-2 border-r-2 border-gray-300 dark:border-gray-600">
-                                                            Rôle / Permission
-                                                        </th>
-                                                        {Object.entries(filteredMatrixGroups).sort().map(([model, actions]) => (
-                                                            <th key={model} colSpan={actions.length} className="px-4 py-3 text-center text-sm font-semibold text-gray-900 dark:text-white border-b-2 border-gray-300 dark:border-gray-600 bg-violet-50 dark:bg-violet-900/20">
-                                                                {model.charAt(0).toUpperCase() + model.slice(1)}
-                                                            </th>
-                                                        ))}
-                                                    </tr>
-                                                    <tr>
-                                                        <th className="sticky left-0 z-20 bg-gray-50 dark:bg-gray-900 border-r-2 border-b border-gray-300 dark:border-gray-600"></th>
-                                                        {Object.entries(filteredMatrixGroups).sort().map(([model, actions]) =>
-                                                            actions.map(action => (
-                                                                <th key={`${model}-${action}`} className="px-2 py-2 text-center text-xs font-medium text-gray-700 dark:text-gray-300 border-b border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                                                                    {action}
-                                                                </th>
-                                                            ))
-                                                        )}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {filteredMatrixRoles.map((role, roleIndex) => (
-                                                        <tr key={role.id} className={roleIndex % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'}>
-                                                            <td className="sticky left-0 z-10 px-4 py-3 text-sm font-medium text-gray-900 dark:text-white border-r-2 border-gray-300 dark:border-gray-600 bg-inherit">
-                                                                {role.name}
-                                                            </td>
-                                                            {Object.entries(filteredMatrixGroups).sort().map(([model, actions]) =>
-                                                                actions.map(action => {
-                                                                    const permissionName = `${action} ${model}`;
-                                                                    const hasPermission = role.permissions.some(p => p.name === permissionName);
-                                                                    return (
-                                                                        <td key={`${role.id}-${model}-${action}`} className="border-l border-b border-gray-200 dark:border-gray-700 p-0">
-                                                                            <button
-                                                                                onClick={() => handleToggleRolePermission(role, permissionName)}
-                                                                                disabled={role.name === 'SuperAdmin'}
-                                                                                className={`w-full h-full px-2 py-3 flex items-center justify-center transition-colors ${
-                                                                                    hasPermission
-                                                                                        ? 'bg-green-100 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60'
-                                                                                        : 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30'
-                                                                                } ${role.name === 'SuperAdmin' ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-                                                                                title={hasPermission ? `Désactiver ${permissionName}` : `Activer ${permissionName}`}
-                                                                            >
-                                                                                {hasPermission ? (
-                                                                                    <CheckIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
-                                                                                ) : (
-                                                                                    <XCircleIcon className="h-5 w-5 text-red-400 dark:text-red-600" />
-                                                                                )}
-                                                                            </button>
-                                                                        </td>
-                                                                    );
-                                                                })
-                                                            )}
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                                            <p>Aucun modèle sélectionné ou correspondant à votre recherche.</p>
-                                            <p className="text-sm mt-2">Sélectionnez au moins un modèle pour afficher la matrice.</p>
-                                        </div>
-                                    )}
-
-                                    <div className="mt-4 flex items-center gap-6 text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <CheckIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
-                                            <span className="text-gray-600 dark:text-gray-400">Permission active</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <XCircleIcon className="h-5 w-5 text-red-400 dark:text-red-600" />
-                                            <span className="text-gray-600 dark:text-gray-400">Permission inactive</span>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
-                            )}
 
-                            {/* Teachers Tab */}
-                            {activeTab === 'teachers' && (
-                                <div>
-                                    <div className="mb-6">
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Gérez les enseignants de votre organisation. Vous pouvez ajouter des utilisateurs comme enseignants ou les retirer.
-                                        </p>
-                                    </div>
-
-                                    <div className="grid md:grid-cols-2 gap-6">
-                                        {/* Left Column - Non-Teachers (Users to Add) */}
-                                        <div className="border rounded-lg dark:border-gray-700 overflow-hidden">
-                                            <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b dark:border-gray-700">
-                                                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
-                                                    Utilisateurs disponibles ({filteredNonTeachers.length})
-                                                </h3>
-                                                <div className="relative">
-                                                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Rechercher un utilisateur..."
-                                                        value={nonTeacherSearch}
-                                                        onChange={(e) => setNonTeacherSearch(e.target.value)}
-                                                        className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="p-4 max-h-[600px] overflow-y-auto">
-                                                {filteredNonTeachers.length === 0 ? (
-                                                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                                        <UserIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                                        <p className="text-sm">Aucun utilisateur disponible</p>
-                                                    </div>
-                                                ) : (
-                                                    <div className="space-y-2">
-                                                        {filteredNonTeachers.map((user) => (
-                                                            <div
-                                                                key={user.id}
-                                                                className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                                                            >
-                                                                <div className="flex-1 min-w-0">
-                                                                    <p className="font-medium text-gray-900 dark:text-white truncate">
-                                                                        {user.first_name} {user.last_name}
-                                                                    </p>
-                                                                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                                                        {user.email}
-                                                                    </p>
-                                                                    <div className="flex flex-wrap gap-1 mt-1">
-                                                                        {user.roles.map((role) => (
-                                                                            <span key={role.id} className="px-2 py-0.5 text-xs rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200">
-                                                                                {role.name}
-                                                                            </span>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                                <Button
-                                                                    onClick={() => handleAddTeacher(user)}
-                                                                    size="sm"
-                                                                    className="ml-3 flex-shrink-0"
-                                                                    title="Ajouter comme enseignant"
-                                                                >
-                                                                    <ArrowRightIcon className="h-5 w-5" />
-                                                                </Button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
+                                {/* Right Column - Teachers (Can Remove) */}
+                                <div className="border rounded-lg dark:border-gray-700 overflow-hidden">
+                                    <div className="bg-violet-50 dark:bg-violet-900/20 px-4 py-3 border-b dark:border-gray-700">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+                                            Enseignants actuels ({filteredTeachers.length})
+                                        </h3>
+                                        <div className="relative">
+                                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                placeholder="Rechercher un enseignant..."
+                                                value={teacherSearch}
+                                                onChange={(e) => setTeacherSearch(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                                            />
                                         </div>
-
-                                        {/* Right Column - Teachers (Can Remove) */}
-                                        <div className="border rounded-lg dark:border-gray-700 overflow-hidden">
-                                            <div className="bg-violet-50 dark:bg-violet-900/20 px-4 py-3 border-b dark:border-gray-700">
-                                                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
-                                                    Enseignants actuels ({filteredTeachers.length})
-                                                </h3>
-                                                <div className="relative">
-                                                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Rechercher un enseignant..."
-                                                        value={teacherSearch}
-                                                        onChange={(e) => setTeacherSearch(e.target.value)}
-                                                        className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
-                                                    />
-                                                </div>
+                                    </div>
+                                    <div className="p-4 max-h-[600px] overflow-y-auto">
+                                        {filteredTeachers.length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                                <UserIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                                <p className="text-sm">Aucun enseignant</p>
                                             </div>
-                                            <div className="p-4 max-h-[600px] overflow-y-auto">
-                                                {filteredTeachers.length === 0 ? (
-                                                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                                        <UserIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                                        <p className="text-sm">Aucun enseignant</p>
-                                                    </div>
-                                                ) : (
-                                                    <div className="space-y-2">
-                                                        {filteredTeachers.map((teacher) => (
-                                                            <div
-                                                                key={teacher.uuid}
-                                                                className="p-3 border rounded-lg dark:border-gray-700 hover:bg-violet-50/50 dark:hover:bg-violet-900/10 transition-colors"
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {filteredTeachers.map((teacher) => (
+                                                    <div
+                                                        key={teacher.uuid}
+                                                        className="p-3 border rounded-lg dark:border-gray-700 hover:bg-violet-50/50 dark:hover:bg-violet-900/10 transition-colors"
+                                                    >
+                                                        <div className="flex items-start justify-between mb-2">
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-medium text-gray-900 dark:text-white truncate">
+                                                                    {teacher.user.first_name} {teacher.user.last_name}
+                                                                </p>
+                                                                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                                    {teacher.user.email}
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleRemoveTeacher(teacher)}
+                                                                className="ml-3 text-red-600 hover:text-red-900 dark:text-red-400 flex-shrink-0"
+                                                                title="Retirer l'enseignant"
                                                             >
-                                                                <div className="flex items-start justify-between mb-2">
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className="font-medium text-gray-900 dark:text-white truncate">
-                                                                            {teacher.user.first_name} {teacher.user.last_name}
-                                                                        </p>
-                                                                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                                                            {teacher.user.email}
-                                                                        </p>
-                                                                    </div>
-                                                                    <button
-                                                                        onClick={() => handleRemoveTeacher(teacher)}
-                                                                        className="ml-3 text-red-600 hover:text-red-900 dark:text-red-400 flex-shrink-0"
-                                                                        title="Retirer l'enseignant"
-                                                                    >
-                                                                        <TrashIcon className="h-5 w-5" />
-                                                                    </button>
-                                                                </div>
-                                                                {(teacher.specialization || teacher.experience_years || teacher.phone) && (
-                                                                    <div className="mt-2 pt-2 border-t dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                                                                        {teacher.specialization && (
-                                                                            <p>
-                                                                                <span className="font-medium">Spécialisation:</span> {teacher.specialization}
-                                                                            </p>
-                                                                        )}
-                                                                        {teacher.experience_years !== null && teacher.experience_years > 0 && (
-                                                                            <p>
-                                                                                <span className="font-medium">Expérience:</span> {teacher.experience_years} an{teacher.experience_years > 1 ? 's' : ''}
-                                                                            </p>
-                                                                        )}
-                                                                        {teacher.phone && (
-                                                                            <p>
-                                                                                <span className="font-medium">Téléphone:</span> {teacher.phone}
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
+                                                                <TrashIcon className="h-5 w-5" />
+                                                            </button>
+                                                        </div>
+                                                        {(teacher.specialization || teacher.experience_years || teacher.phone) && (
+                                                            <div className="mt-2 pt-2 border-t dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                                                                {teacher.specialization && (
+                                                                    <p>
+                                                                        <span className="font-medium">Spécialisation:</span> {teacher.specialization}
+                                                                    </p>
+                                                                )}
+                                                                {teacher.experience_years !== null && teacher.experience_years > 0 && (
+                                                                    <p>
+                                                                        <span className="font-medium">Expérience:</span> {teacher.experience_years} an{teacher.experience_years > 1 ? 's' : ''}
+                                                                    </p>
+                                                                )}
+                                                                {teacher.phone && (
+                                                                    <p>
+                                                                        <span className="font-medium">Téléphone:</span> {teacher.phone}
+                                                                    </p>
                                                                 )}
                                                             </div>
-                                                        ))}
+                                                        )}
                                                     </div>
-                                                )}
+                                                ))}
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
-                            )}
+                            </div>
                         </div>
-                    </div>
+                    )}
+
+                    {/* Stars Tab */}
+                    {activeTab === 'stars' && (
+                        <div>
+                            <div className="mb-6">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Gérez les Stars (bénévoles) de votre organisation. Vous pouvez ajouter des utilisateurs comme Stars ou les retirer.
+                                </p>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* Left Column - Non-Stars (Users to Add) */}
+                                <div className="border rounded-lg dark:border-gray-700 overflow-hidden">
+                                    <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b dark:border-gray-700">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+                                            Utilisateurs disponibles ({filteredNonStars.length})
+                                        </h3>
+                                        <div className="relative">
+                                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                placeholder="Rechercher un utilisateur..."
+                                                value={nonStarSearch}
+                                                onChange={(e) => setNonStarSearch(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="p-4 max-h-[600px] overflow-y-auto">
+                                        {filteredNonStars.length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                                <UserIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                                <p className="text-sm">Aucun utilisateur disponible</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {filteredNonStars.map((user) => (
+                                                    <div
+                                                        key={user.id}
+                                                        className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                                    >
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium text-gray-900 dark:text-white truncate">
+                                                                {user.first_name} {user.last_name}
+                                                            </p>
+                                                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                                {user.email}
+                                                            </p>
+                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                {user.roles.map((role) => (
+                                                                    <span key={role.id} className="px-2 py-0.5 text-xs rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200">
+                                                                        {role.name}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            onClick={() => handleAddStar(user)}
+                                                            size="sm"
+                                                            className="ml-3 flex-shrink-0"
+                                                            title="Ajouter comme Star"
+                                                        >
+                                                            <ArrowRightIcon className="h-5 w-5" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Right Column - Stars (Can Remove) */}
+                                <div className="border rounded-lg dark:border-gray-700 overflow-hidden">
+                                    <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border-b dark:border-gray-700">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+                                            Stars actuels ({filteredStars.length})
+                                        </h3>
+                                        <div className="relative">
+                                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                placeholder="Rechercher un Star..."
+                                                value={starSearch}
+                                                onChange={(e) => setStarSearch(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="p-4 max-h-[600px] overflow-y-auto">
+                                        {filteredStars.length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                                <UserIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                                <p className="text-sm">Aucun Star</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {filteredStars.map((star) => (
+                                                    <div
+                                                        key={star.uuid}
+                                                        className="p-3 border rounded-lg dark:border-gray-700 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors"
+                                                    >
+                                                        <div className="flex items-start justify-between mb-2">
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-medium text-gray-900 dark:text-white truncate">
+                                                                    {star.user.first_name} {star.user.last_name}
+                                                                </p>
+                                                                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                                    {star.user.email}
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleRemoveStar(star)}
+                                                                className="ml-3 text-red-600 hover:text-red-900 dark:text-red-400 flex-shrink-0"
+                                                                title="Retirer le Star"
+                                                            >
+                                                                <TrashIcon className="h-5 w-5" />
+                                                            </button>
+                                                        </div>
+                                                        {(star.title || star.type || star.level) && (
+                                                            <div className="mt-2 pt-2 border-t dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                                                                {star.title && (
+                                                                    <p>
+                                                                        <span className="font-medium">Titre:</span> {star.title}
+                                                                    </p>
+                                                                )}
+                                                                {star.type && (
+                                                                    <p>
+                                                                        <span className="font-medium">Type:</span> {star.type}
+                                                                    </p>
+                                                                )}
+                                                                {star.level && (
+                                                                    <p>
+                                                                        <span className="font-medium">Niveau:</span> {star.level}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Employees Tab */}
+                    {activeTab === 'employees' && (
+                        <div>
+                            <div className="mb-6">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    Gérez les Employés de votre organisation. Vous pouvez ajouter des utilisateurs comme Employés ou les retirer.
+                                </p>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* Left Column - Non-Employees (Users to Add) */}
+                                <div className="border rounded-lg dark:border-gray-700 overflow-hidden">
+                                    <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b dark:border-gray-700">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+                                            Utilisateurs disponibles ({filteredNonEmployees.length})
+                                        </h3>
+                                        <div className="relative">
+                                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                placeholder="Rechercher un utilisateur..."
+                                                value={nonEmployeeSearch}
+                                                onChange={(e) => setNonEmployeeSearch(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="p-4 max-h-[600px] overflow-y-auto">
+                                        {filteredNonEmployees.length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                                <UserIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                                <p className="text-sm">Aucun utilisateur disponible</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {filteredNonEmployees.map((user) => (
+                                                    <div
+                                                        key={user.id}
+                                                        className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                                    >
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium text-gray-900 dark:text-white truncate">
+                                                                {user.first_name} {user.last_name}
+                                                            </p>
+                                                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                                {user.email}
+                                                            </p>
+                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                {user.roles.map((role) => (
+                                                                    <span key={role.id} className="px-2 py-0.5 text-xs rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200">
+                                                                        {role.name}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            onClick={() => handleAddEmployee(user)}
+                                                            size="sm"
+                                                            className="ml-3 flex-shrink-0"
+                                                            title="Ajouter comme Employé"
+                                                        >
+                                                            <ArrowRightIcon className="h-5 w-5" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Right Column - Employees (Can Remove) */}
+                                <div className="border rounded-lg dark:border-gray-700 overflow-hidden">
+                                    <div className="bg-green-50 dark:bg-green-900/20 px-4 py-3 border-b dark:border-gray-700">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+                                            Employés actuels ({filteredEmployees.length})
+                                        </h3>
+                                        <div className="relative">
+                                            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                placeholder="Rechercher un Employé..."
+                                                value={employeeSearch}
+                                                onChange={(e) => setEmployeeSearch(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="p-4 max-h-[600px] overflow-y-auto">
+                                        {filteredEmployees.length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                                <UserIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                                <p className="text-sm">Aucun Employé</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {filteredEmployees.map((employee) => (
+                                                    <div
+                                                        key={employee.uuid}
+                                                        className="p-3 border rounded-lg dark:border-gray-700 hover:bg-green-50/50 dark:hover:bg-green-900/10 transition-colors"
+                                                    >
+                                                        <div className="flex items-start justify-between mb-2">
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-medium text-gray-900 dark:text-white truncate">
+                                                                    {employee.user.first_name} {employee.user.last_name}
+                                                                </p>
+                                                                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                                    {employee.user.email}
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleRemoveEmployee(employee)}
+                                                                className="ml-3 text-red-600 hover:text-red-900 dark:text-red-400 flex-shrink-0"
+                                                                title="Retirer l'Employé"
+                                                            >
+                                                                <TrashIcon className="h-5 w-5" />
+                                                            </button>
+                                                        </div>
+                                                        {(employee.position || employee.job_title || employee.employee_number) && (
+                                                            <div className="mt-2 pt-2 border-t dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                                                                {employee.position && (
+                                                                    <p>
+                                                                        <span className="font-medium">Poste:</span> {employee.position}
+                                                                    </p>
+                                                                )}
+                                                                {employee.job_title && (
+                                                                    <p>
+                                                                        <span className="font-medium">Titre:</span> {employee.job_title}
+                                                                    </p>
+                                                                )}
+                                                                {employee.employee_number && (
+                                                                    <p>
+                                                                        <span className="font-medium">Numéro:</span> {employee.employee_number}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {/* User Role Dialog */}
             {showUserRoleDialog && selectedUser && (

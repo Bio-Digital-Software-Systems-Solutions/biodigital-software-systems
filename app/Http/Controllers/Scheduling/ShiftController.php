@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Scheduling;
 use App\Enums\Employee\EmployeeStatus;
 use App\Enums\Scheduling\ShiftStatus;
 use App\Enums\Scheduling\ShiftType;
+use App\Enums\Scheduling\TodoPriority;
 use App\Enums\Star\StarStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\Scheduling\DepartmentTodo;
 use App\Models\Scheduling\Shift;
 use App\Models\Scheduling\WeeklySchedule;
 use App\Models\Star;
@@ -210,11 +212,38 @@ class ShiftController extends Controller
             $conflicts = $this->conflictService->detectConflicts($shift, $shift->user);
         }
 
+        // Get TODOs linked to this shift
+        $shiftTodos = DepartmentTodo::forDepartment($department)
+            ->forShift($shift)
+            ->with(['assignee', 'creator', 'completedBy', 'shift.user'])
+            ->ordered()
+            ->get()
+            ->map(fn ($todo) => $todo->toArrayForApi());
+
+        // Get department members for assignment
+        $members = $department->members()
+            ->select('users.uuid', 'users.first_name', 'users.last_name', 'users.email')
+            ->get()
+            ->map(fn ($user) => [
+                'uuid' => $user->uuid,
+                'name' => $user->first_name && $user->last_name
+                    ? "{$user->first_name} {$user->last_name}"
+                    : ($user->name ?? $user->email),
+                'email' => $user->email,
+            ]);
+
         return Inertia::render('Departments/Schedule/Shifts/Show', [
             'department' => $department,
             'schedule' => $schedule,
             'shift' => $shift,
             'conflicts' => $conflicts,
+            'shiftTodos' => $shiftTodos,
+            'members' => $members,
+            'todoPriorities' => collect(TodoPriority::cases())->map(fn ($p) => [
+                'value' => $p->value,
+                'label' => $p->label(),
+                'color' => $p->color(),
+            ]),
         ]);
     }
 

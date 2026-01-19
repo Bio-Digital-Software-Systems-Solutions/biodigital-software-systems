@@ -7,8 +7,6 @@ use App\Models\User;
 use App\Services\CacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Permission;
@@ -23,24 +21,41 @@ class UserManagementController extends Controller
             if (!$request->user()->hasRole(RoleEnum::SUPER_ADMIN)) {
                 abort(403, 'Access denied. SuperAdmin role required.');
             }
+
             return $next($request);
         });
     }
 
     /**
-     * Display the user management page
+     * Display the user management page with server-side pagination and filtering
      */
     public function index(Request $request): Response
     {
-        $page = $request->get('page', 1);
+        $perPage = $request->get('per_page', 20);
+        $search = $request->get('search', '');
+        $roleFilter = $request->get('role', '');
 
-        // Cache users list per page (5 minutes cache)
-        $users = CacheService::rememberPaginated(
-            'user_management.users',
-            $page,
-            fn() => User::with(['roles', 'permissions', 'teacher'])->paginate(20),
-            CacheService::SHORT_CACHE
-        );
+        // Build query with filters - no caching for real-time filtering
+        $query = User::with(['roles', 'permissions', 'teacher', 'star', 'employee']);
+
+        // Apply search filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply role filter
+        if ($roleFilter) {
+            $query->whereHas('roles', function ($q) use ($roleFilter) {
+                $q->where('name', $roleFilter);
+            });
+        }
+
+        // Order by name and paginate
+        $users = $query->orderBy('first_name')->orderBy('last_name')->paginate($perPage);
 
         // Cache roles and permissions (1 hour cache)
         $roles = CacheService::remember(
@@ -62,13 +77,27 @@ class UserManagementController extends Controller
             CacheService::SHORT_CACHE
         );
 
+        // Fetch stars with user relation (no cache to avoid N+1 from serialization)
+        $stars = \App\Models\Star::with('user')->get();
+
+        // Fetch employees with user relation (no cache to avoid N+1 from serialization)
+        $employees = \App\Models\Employee::with('user')->get();
+
         return Inertia::render('UserManagement/Index', [
             'users' => $users,
             'roles' => $roles,
             'permissions' => $permissions,
             'teachers' => $teachers,
+            'stars' => $stars,
+            'employees' => $employees,
+            'filters' => [
+                'search' => $search,
+                'role' => $roleFilter,
+                'per_page' => (int) $perPage,
+            ],
         ]);
     }
+
 
     /**
      * Assign roles to a user
@@ -461,4 +490,115 @@ class UserManagementController extends Controller
             'teacher' => $teacher->load('user'),
         ]);
     }
+
+    /**
+     * Add a user as a star (volunteer)
+     */
+    public function addStar(Request $request, User $user): JsonResponse
+    {
+        $request->validate([
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'type' => 'nullable|string',
+            'category' => 'nullable|string',
+        ]);
+
+        // Check if user is already a star
+        if ($user->star) {
+            return response()->json([
+                'message' => 'User is already a star',
+            ], 422);
+        }
+
+        $star = \App\Models\Star::create([
+            'user_id' => $user->id,
+            'title' => $request->title,
+            'description' => $request->description,
+            'type' => $request->type ?? \App\Enums\Star\StarType::VOLUNTEER,
+            'category' => $request->category ?? \App\Enums\Star\StarCategory::SERVICE,
+            'status' => \App\Enums\Star\StarStatus::ACTIVE,
+            'recognition_date' => now(),
+            'level' => 1,
+            'points' => 0,
+        ]);
+
+        // Invalidate user management cache
+        CacheService::forgetPattern('user_management');
+
+        return response()->json([
+            'message' => 'Star added successfully',
+            'star' => $star->load('user'),
+        ]);
+    }
+
+    /**
+     * Remove a star
+     */
+    public function removeStar(\App\Models\Star $star): JsonResponse
+    {
+        $star->delete();
+
+        // Invalidate user management cache
+        CacheService::forgetPattern('user_management');
+
+        return response()->json([
+            'message' => 'Star removed successfully',
+        ]);
+    }
+
+    /**
+     * Add a user as an employee
+     */
+    public function addEmployee(Request $request, User $user): JsonResponse
+    {
+        $request->validate([
+            'position' => 'nullable|string|max:255',
+            'job_title' => 'nullable|string|max:255',
+            'employment_type' => 'nullable|string',
+            'hire_date' => 'nullable|date',
+        ]);
+
+        // Check if user is already an employee
+        if ($user->employee) {
+            return response()->json([
+                'message' => 'User is already an employee',
+            ], 422);
+        }
+
+        $employee = \App\Models\Employee::create([
+            'user_id' => $user->id,
+            'position' => $request->position,
+            'job_title' => $request->job_title,
+            'employment_type' => $request->employment_type ?? \App\Enums\Employee\EmploymentType::FULL_TIME,
+            'status' => \App\Enums\Employee\EmployeeStatus::ACTIVE,
+            'hire_date' => $request->hire_date ?? now(),
+            'annual_leave_days' => 25,
+            'remaining_leave_days' => 25,
+            'sick_days_taken' => 0,
+        ]);
+
+        // Invalidate user management cache
+        CacheService::forgetPattern('user_management');
+
+        return response()->json([
+            'message' => 'Employee added successfully',
+            'employee' => $employee->load('user'),
+        ]);
+    }
+
+    /**
+     * Remove an employee
+     */
+    public function removeEmployee(\App\Models\Employee $employee): JsonResponse
+    {
+        $employee->delete();
+
+        // Invalidate user management cache
+        CacheService::forgetPattern('user_management');
+
+        return response()->json([
+            'message' => 'Employee removed successfully',
+        ]);
+    }
 }
+

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Scheduling;
 
+use App\Enums\Scheduling\ShiftTaskStatus;
+use App\Enums\Scheduling\TodoPriority;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\Scheduling\DepartmentTodo;
 use App\Models\Scheduling\WeeklySchedule;
 use App\Services\Scheduling\SchedulingService;
 use Carbon\Carbon;
@@ -45,6 +48,34 @@ class ScheduleController extends Controller
             ->take(12)
             ->get(['uuid', 'week_start', 'week_end', 'status', 'notes']);
 
+        // Get department todos (all todos, filtering done on frontend)
+        $todos = DepartmentTodo::forDepartment($department)
+            ->with(['assignee', 'creator', 'completedBy', 'shift.user'])
+            ->ordered()
+            ->get()
+            ->map(fn ($todo) => $todo->toArrayForApi());
+
+        // Get todo stats
+        $todoStats = [
+            'total' => DepartmentTodo::forDepartment($department)->count(),
+            'pending' => DepartmentTodo::forDepartment($department)->pending()->count(),
+            'completed' => DepartmentTodo::forDepartment($department)->completed()->count(),
+            'overdue' => DepartmentTodo::forDepartment($department)->overdue()->count(),
+            'due_today' => DepartmentTodo::forDepartment($department)->dueToday()->count(),
+        ];
+
+        // Get department members for assignment dropdown
+        $members = $department->users()
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get()
+            ->map(fn ($user) => [
+                'uuid' => $user->uuid,
+                'name' => $user->full_name ?? $user->name,
+                'email' => $user->email,
+                'avatar_url' => $user->avatar_url ?? null,
+            ]);
+
         return Inertia::render('Departments/Schedule/Index', [
             'department' => $department,
             'schedule' => $schedule,
@@ -55,6 +86,19 @@ class ScheduleController extends Controller
             'currentWeek' => $weekStart->format('Y-m-d'),
             'prevWeek' => $weekStart->copy()->subWeek()->format('Y-m-d'),
             'nextWeek' => $weekStart->copy()->addWeek()->format('Y-m-d'),
+            'todos' => $todos,
+            'todoStats' => $todoStats,
+            'members' => $members,
+            'todoStatuses' => collect(ShiftTaskStatus::cases())->map(fn ($s) => [
+                'value' => $s->value,
+                'label' => $s->label(),
+                'color' => $s->color(),
+            ]),
+            'todoPriorities' => collect(TodoPriority::cases())->map(fn ($p) => [
+                'value' => $p->value,
+                'label' => $p->label(),
+                'color' => $p->color(),
+            ]),
         ]);
     }
 
@@ -109,7 +153,7 @@ class ScheduleController extends Controller
     {
         $this->authorize('update', $department);
 
-        if (!$schedule->status->canTransitionTo(\App\Enums\Scheduling\ScheduleStatus::PUBLISHED)) {
+        if (! $schedule->status->canTransitionTo(\App\Enums\Scheduling\ScheduleStatus::PUBLISHED)) {
             return back()->with('error', 'Ce planning ne peut pas être publié.');
         }
 
@@ -127,7 +171,7 @@ class ScheduleController extends Controller
     {
         $this->authorize('update', $department);
 
-        if (!$schedule->status->canTransitionTo(\App\Enums\Scheduling\ScheduleStatus::LOCKED)) {
+        if (! $schedule->status->canTransitionTo(\App\Enums\Scheduling\ScheduleStatus::LOCKED)) {
             return back()->with('error', 'Ce planning ne peut pas être verrouillé.');
         }
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import { Toaster } from '@/Components/ui/toaster';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
@@ -29,9 +30,14 @@ import {
     PlayIcon,
     StopIcon,
     XCircleIcon,
+    PlusIcon,
+    ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
-import type { Shift, WeeklySchedule, ShiftType, ShiftStatus } from '@/Types/scheduling';
+import type { Shift, WeeklySchedule, ShiftType, ShiftStatus, DepartmentTodo, DepartmentMember, EnumOption, TodoPriority } from '@/Types/scheduling';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import TodoCreateModal from '@/Components/Scheduling/TodoCreateModal';
+import TodoEditModal from '@/Components/Scheduling/TodoEditModal';
+import TodoList from '@/Components/Scheduling/TodoList';
 
 interface Department {
     id: number;
@@ -49,6 +55,9 @@ interface Props {
         conflicts: Array<{ type: string; message: string }>;
         warnings: Array<{ type: string; message: string }>;
     } | null;
+    shiftTodos?: DepartmentTodo[];
+    members?: DepartmentMember[];
+    todoPriorities?: EnumOption<TodoPriority>[];
 }
 
 const TYPE_LABELS: Record<ShiftType, string> = {
@@ -72,9 +81,12 @@ const STATUS_INFO: Record<ShiftStatus, { color: string; label: string; bgColor: 
     no_show: { color: 'text-red-700', label: 'Absent', bgColor: 'bg-red-200' },
 };
 
-export default function ShiftShow({ department, schedule, shift, conflicts }: Props) {
+export default function ShiftShow({ department, schedule, shift, conflicts, shiftTodos = [], members = [], todoPriorities = [] }: Props) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [todoModalOpen, setTodoModalOpen] = useState(false);
+    const [editingTodo, setEditingTodo] = useState<DepartmentTodo | null>(null);
+    const [editModalOpen, setEditModalOpen] = useState(false);
 
     const cancelForm = useForm({
         cancellation_reason: '',
@@ -141,6 +153,11 @@ export default function ShiftShow({ department, schedule, shift, conflicts }: Pr
     const canCheckIn = shift.can_check_in;
     const canCheckOut = shift.can_check_out;
     const isEditable = schedule.status !== 'locked';
+
+    const handleEditTodo = (todo: DepartmentTodo) => {
+        setEditingTodo(todo);
+        setEditModalOpen(true);
+    };
 
     return (
         <DashboardLayout>
@@ -360,6 +377,42 @@ export default function ShiftShow({ department, schedule, shift, conflicts }: Pr
                                 </CardContent>
                             </Card>
                         )}
+
+                        {/* Shift TODOs */}
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                <div>
+                                    <CardTitle className="text-base flex items-center gap-2">
+                                        <ClipboardDocumentListIcon className="h-5 w-5" />
+                                        TODOs du shift
+                                        {shiftTodos.length > 0 && (
+                                            <Badge variant="secondary" className="ml-2">
+                                                {shiftTodos.filter(t => t.status !== 'completed' && t.status !== 'cancelled').length} en cours
+                                            </Badge>
+                                        )}
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Taches associees a ce shift
+                                    </CardDescription>
+                                </div>
+                                {isEditable && (
+                                    <Button size="sm" onClick={() => setTodoModalOpen(true)}>
+                                        <PlusIcon className="h-4 w-4 mr-1" />
+                                        Ajouter
+                                    </Button>
+                                )}
+                            </CardHeader>
+                            <CardContent>
+                                <TodoList
+                                    todos={shiftTodos}
+                                    departmentUuid={department.uuid}
+                                    members={members}
+                                    compact={true}
+                                    showShiftInfo={false}
+                                    onEdit={isEditable ? handleEditTodo : undefined}
+                                />
+                            </CardContent>
+                        </Card>
                     </div>
 
                     {/* Sidebar */}
@@ -536,6 +589,31 @@ export default function ShiftShow({ department, schedule, shift, conflicts }: Pr
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* TODO Create Modal for this shift */}
+            <TodoCreateModal
+                open={todoModalOpen}
+                onOpenChange={setTodoModalOpen}
+                departmentUuid={department.uuid}
+                members={members}
+                priorities={todoPriorities}
+                shifts={[shift]}
+                defaultShiftUuid={shift.uuid}
+            />
+
+            {/* TODO Edit Modal */}
+            <TodoEditModal
+                open={editModalOpen}
+                onOpenChange={setEditModalOpen}
+                todo={editingTodo}
+                departmentUuid={department.uuid}
+                members={members}
+                priorities={todoPriorities}
+                shifts={[shift]}
+            />
+
+            {/* Toast notifications */}
+            <Toaster position="top-right" richColors closeButton />
         </DashboardLayout>
     );
 }

@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import { Toaster } from '@/Components/ui/toaster';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select';
 import { Label } from '@/Components/ui/label';
+import { Input } from '@/Components/ui/input';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import {
     Dialog,
@@ -35,13 +37,22 @@ import {
     DocumentDuplicateIcon,
     CogIcon,
     GlobeAltIcon,
+    ClipboardDocumentListIcon,
+    MinusIcon,
+    MagnifyingGlassIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import WeeklyCalendar from '@/Components/Scheduling/WeeklyCalendar';
 import ShiftCard from '@/Components/Scheduling/ShiftCard';
+import TodoCreateModal from '@/Components/Scheduling/TodoCreateModal';
+import TodoEditModal from '@/Components/Scheduling/TodoEditModal';
+import TodoList from '@/Components/Scheduling/TodoList';
+import { filterTodos } from '@/utils/todoFilters';
 import type {
     ScheduleIndexProps,
     Shift,
     ScheduleStatus,
+    DepartmentTodo,
 } from '@/Types/scheduling';
 
 // Register French locale for DatePicker
@@ -62,10 +73,22 @@ export default function ScheduleIndex({
     currentWeek,
     prevWeek,
     nextWeek,
+    todos = [],
+    todoStats,
+    members = [],
+    todoStatuses = [],
+    todoPriorities = [],
 }: ScheduleIndexProps) {
     const [isPublishing, setIsPublishing] = useState(false);
     const [isAutoAssigning, setIsAutoAssigning] = useState(false);
     const [showGlobalStats, setShowGlobalStats] = useState(false);
+    const [todoModalOpen, setTodoModalOpen] = useState(false);
+    const [showTodoPanel, setShowTodoPanel] = useState(false);
+    const [todoAccordionOpen, setTodoAccordionOpen] = useState(false);
+    const [showAllTodos, setShowAllTodos] = useState(false);
+    const [todoSearchQuery, setTodoSearchQuery] = useState('');
+    const [editingTodo, setEditingTodo] = useState<DepartmentTodo | null>(null);
+    const [editModalOpen, setEditModalOpen] = useState(false);
 
     // Confirmation dialogs state
     const [publishDialogOpen, setPublishDialogOpen] = useState(false);
@@ -76,6 +99,20 @@ export default function ScheduleIndex({
 
     // Use either weekly or global stats based on toggle (with fallback to stats if globalStats is undefined)
     const displayStats = showGlobalStats && globalStats ? globalStats : stats;
+
+    // Handle editing a todo
+    const handleEditTodo = (todo: DepartmentTodo) => {
+        setEditingTodo(todo);
+        setEditModalOpen(true);
+    };
+
+    // Filter todos based on showAllTodos toggle and search query
+    const filteredTodos = useMemo(() => {
+        return filterTodos(todos, {
+            showAll: showAllTodos,
+            searchQuery: todoSearchQuery,
+        });
+    }, [todos, showAllTodos, todoSearchQuery]);
 
     const handleWeekChange = (direction: 'prev' | 'next') => {
         const targetWeek = direction === 'prev' ? prevWeek : nextWeek;
@@ -302,26 +339,43 @@ export default function ScheduleIndex({
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                         {showGlobalStats && globalStats ? 'Statistiques globales' : 'Statistiques de la semaine'}
                     </h2>
-                    {globalStats && (
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant={showGlobalStats ? 'outline' : 'default'}
-                                size="sm"
-                                onClick={() => setShowGlobalStats(false)}
-                            >
-                                <CalendarDaysIcon className="h-4 w-4 mr-1" />
-                                Semaine
-                            </Button>
-                            <Button
-                                variant={showGlobalStats ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => setShowGlobalStats(true)}
-                            >
-                                <GlobeAltIcon className="h-4 w-4 mr-1" />
-                                Global
-                            </Button>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {/* TODO Button */}
+                        <Button
+                            variant={showTodoPanel ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setShowTodoPanel(!showTodoPanel)}
+                            className="relative"
+                        >
+                            <ClipboardDocumentListIcon className="h-4 w-4 mr-1" />
+                            Taches
+                            {todoStats && todoStats.pending > 0 && (
+                                <Badge className="ml-1 h-5 min-w-5 px-1.5 text-xs bg-blue-500">
+                                    {todoStats.pending}
+                                </Badge>
+                            )}
+                        </Button>
+                        {globalStats && (
+                            <>
+                                <Button
+                                    variant={showGlobalStats ? 'outline' : 'default'}
+                                    size="sm"
+                                    onClick={() => setShowGlobalStats(false)}
+                                >
+                                    <CalendarDaysIcon className="h-4 w-4 mr-1" />
+                                    Semaine
+                                </Button>
+                                <Button
+                                    variant={showGlobalStats ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setShowGlobalStats(true)}
+                                >
+                                    <GlobeAltIcon className="h-4 w-4 mr-1" />
+                                    Global
+                                </Button>
+                            </>
+                        )}
+                    </div>
                 </div>
 
                 {/* Stats */}
@@ -379,6 +433,99 @@ export default function ScheduleIndex({
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* TODO Panel - Accordion */}
+                {showTodoPanel && (
+                    <Card>
+                        <div
+                            className="flex items-center justify-between px-6 py-4 cursor-pointer select-none hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                            onClick={() => setTodoAccordionOpen(!todoAccordionOpen)}
+                        >
+                            <div className="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    className="flex items-center justify-center w-6 h-6 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setTodoAccordionOpen(!todoAccordionOpen);
+                                    }}
+                                >
+                                    {todoAccordionOpen ? (
+                                        <MinusIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                    ) : (
+                                        <PlusIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                    )}
+                                </button>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                        Taches du departement
+                                    </h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        {todoStats && (
+                                            <span>
+                                                {todoStats.pending} en cours
+                                                {todoStats.overdue > 0 && (
+                                                    <span className="text-red-600 dark:text-red-400 ml-2">
+                                                        ({todoStats.overdue} en retard)
+                                                    </span>
+                                                )}
+                                                {showAllTodos && todoStats.completed > 0 && (
+                                                    <span className="text-green-600 dark:text-green-400 ml-2">
+                                                        ({todoStats.completed} terminee(s))
+                                                    </span>
+                                                )}
+                                            </span>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                {/* Search input */}
+                                <div className="relative">
+                                    <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        type="text"
+                                        placeholder="Rechercher..."
+                                        value={todoSearchQuery}
+                                        onChange={(e) => setTodoSearchQuery(e.target.value)}
+                                        className="pl-8 pr-8 h-8 w-48 text-sm"
+                                    />
+                                    {todoSearchQuery && (
+                                        <button
+                                            type="button"
+                                            aria-label="Effacer la recherche"
+                                            onClick={() => setTodoSearchQuery('')}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                        >
+                                            <XMarkIcon className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
+                                <Button
+                                    variant={showAllTodos ? 'secondary' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setShowAllTodos(!showAllTodos)}
+                                >
+                                    {showAllTodos ? 'Toutes' : 'Actives'}
+                                </Button>
+                                <Button size="sm" onClick={() => setTodoModalOpen(true)}>
+                                    <PlusIcon className="h-4 w-4 mr-1" />
+                                    Nouvelle tache
+                                </Button>
+                            </div>
+                        </div>
+                        {todoAccordionOpen && (
+                            <CardContent className="pt-0 border-t border-gray-200 dark:border-gray-700">
+                                <TodoList
+                                    todos={filteredTodos}
+                                    departmentUuid={department.uuid}
+                                    members={members}
+                                    onEdit={handleEditTodo}
+                                />
+                            </CardContent>
+                        )}
+                    </Card>
+                )}
 
                 {/* Weekly Calendar */}
                 <WeeklyCalendar
@@ -505,6 +652,30 @@ export default function ScheduleIndex({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* TODO Create Modal */}
+            <TodoCreateModal
+                open={todoModalOpen}
+                onOpenChange={setTodoModalOpen}
+                departmentUuid={department.uuid}
+                members={members}
+                priorities={todoPriorities}
+                shifts={schedule.shifts || []}
+            />
+
+            {/* TODO Edit Modal */}
+            <TodoEditModal
+                open={editModalOpen}
+                onOpenChange={setEditModalOpen}
+                todo={editingTodo}
+                departmentUuid={department.uuid}
+                members={members}
+                priorities={todoPriorities}
+                shifts={schedule.shifts || []}
+            />
+
+            {/* Toast notifications */}
+            <Toaster position="top-right" richColors closeButton />
         </DashboardLayout>
     );
 }

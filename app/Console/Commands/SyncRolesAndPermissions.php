@@ -54,6 +54,7 @@ class SyncRolesAndPermissions extends Command
             // Users & Departments
             'view users', 'create users', 'edit users', 'delete users',
             'view departments', 'create departments', 'edit departments', 'delete departments', 'manage departments', 'assign department members',
+            'view department statistics',
             // Books & Library
             'view books', 'rent books', 'create books', 'edit books', 'delete books', 'manage library', 'approve rentals',
             // Videos
@@ -119,6 +120,7 @@ class SyncRolesAndPermissions extends Command
                 // Users & Departments
                 'view users', 'edit users',
                 'view departments', 'create departments', 'edit departments', 'manage departments', 'assign department members',
+                'view department statistics',
                 // Books & Library
                 'view books', 'rent books', 'create books', 'edit books', 'delete books', 'manage library', 'approve rentals',
                 // Videos
@@ -166,7 +168,7 @@ class SyncRolesAndPermissions extends Command
                 'view projects', 'create projects', 'edit projects', 'delete projects', 'manage projects',
                 'view groups', 'create groups', 'edit groups', 'manage group members',
                 'view stocks', 'manage stocks',
-                'view users', 'view departments',
+                'view users', 'view departments', 'view department statistics',
                 'view events', 'create events', 'edit events', 'attend events', 'manage event participants',
                 'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
                 'view appointments', 'create appointments', 'edit appointments', 'manage appointment participants',
@@ -218,6 +220,7 @@ class SyncRolesAndPermissions extends Command
 
             'department-leader' => [
                 'view departments', 'edit departments', 'manage departments', 'assign department members',
+                'view department statistics',
                 'view users',
                 'view tasks', 'create tasks', 'edit tasks', 'assign tasks',
                 'view programs', 'create programs', 'edit programs', 'create program steps',
@@ -325,9 +328,10 @@ class SyncRolesAndPermissions extends Command
         $isForce = $this->option('force');
 
         // Safety check for production
-        if (app()->environment('production') && !$isDryRun && !$isForce) {
-            if (!$this->confirm('You are about to modify roles and permissions in PRODUCTION. Are you sure?')) {
+        if (app()->environment('production') && ! $isDryRun && ! $isForce) {
+            if (! $this->confirm('You are about to modify roles and permissions in PRODUCTION. Are you sure?')) {
                 $this->info('Operation cancelled.');
+
                 return self::SUCCESS;
             }
         }
@@ -338,7 +342,7 @@ class SyncRolesAndPermissions extends Command
         }
 
         // Clear permission cache
-        if (!$isDryRun) {
+        if (! $isDryRun) {
             app()[PermissionRegistrar::class]->forgetCachedPermissions();
         }
 
@@ -367,7 +371,7 @@ class SyncRolesAndPermissions extends Command
             ]
         );
 
-        if (!$isDryRun) {
+        if (! $isDryRun) {
             // Clear cache after sync
             app()[PermissionRegistrar::class]->forgetCachedPermissions();
             $this->newLine();
@@ -398,7 +402,7 @@ class SyncRolesAndPermissions extends Command
                 $existed++;
             } else {
                 $created++;
-                if (!$isDryRun) {
+                if (! $isDryRun) {
                     Permission::create(['name' => $permission]);
                 }
                 $this->line("   + Created permission: <info>{$permission}</info>");
@@ -433,7 +437,7 @@ class SyncRolesAndPermissions extends Command
                 $existed++;
             } else {
                 $created++;
-                if (!$isDryRun) {
+                if (! $isDryRun) {
                     Role::firstOrCreate(['name' => $roleName]);
                 }
                 $this->line("   + Created role: <info>{$roleName}</info>");
@@ -460,8 +464,9 @@ class SyncRolesAndPermissions extends Command
         foreach ($rolesWithPermissions as $roleName => $permissions) {
             $role = Role::where('name', $roleName)->first();
 
-            if (!$role) {
+            if (! $role) {
                 $this->warn("   ⚠️  Role '{$roleName}' not found, skipping...");
+
                 continue;
             }
 
@@ -470,10 +475,10 @@ class SyncRolesAndPermissions extends Command
 
             if (count($missingPermissions) > 0) {
                 $updated++;
-                if (!$isDryRun) {
+                if (! $isDryRun) {
                     $role->givePermissionTo($missingPermissions);
                 }
-                $this->line("   ↳ <info>{$roleName}</info>: Added " . count($missingPermissions) . ' permission(s)');
+                $this->line("   ↳ <info>{$roleName}</info>: Added ".count($missingPermissions).' permission(s)');
                 foreach ($missingPermissions as $perm) {
                     $this->line("      + {$perm}");
                 }
@@ -503,10 +508,10 @@ class SyncRolesAndPermissions extends Command
         foreach ($aliases as $aliasName => $sourceRoleName) {
             $wasCreated = false;
 
-            if (!in_array($aliasName, $existingRoles)) {
+            if (! in_array($aliasName, $existingRoles)) {
                 $created++;
                 $wasCreated = true;
-                if (!$isDryRun) {
+                if (! $isDryRun) {
                     Role::firstOrCreate(['name' => $aliasName]);
                 }
                 $this->line("   + Created alias role: <info>{$aliasName}</info>");
@@ -515,22 +520,22 @@ class SyncRolesAndPermissions extends Command
             }
 
             // Re-fetch the role to ensure we have it
-            $aliasRole = !$isDryRun ? Role::where('name', $aliasName)->first() : null;
+            $aliasRole = ! $isDryRun ? Role::where('name', $aliasName)->first() : null;
 
             // Sync permissions
             if ($sourceRoleName === '*') {
                 // SuperAdmin gets all permissions
                 $allPermissions = Permission::all();
-                if (!$isDryRun && $aliasRole) {
+                if (! $isDryRun && $aliasRole) {
                     $currentCount = $aliasRole->permissions->count();
                     $aliasRole->syncPermissions($allPermissions);
                     if ($currentCount !== $allPermissions->count()) {
                         $updated++;
-                        $this->line("   ↳ <info>{$aliasName}</info>: Synced all " . $allPermissions->count() . ' permissions');
+                        $this->line("   ↳ <info>{$aliasName}</info>: Synced all ".$allPermissions->count().' permissions');
                     }
                 }
             } else {
-                $sourceRole = !$isDryRun ? Role::where('name', $sourceRoleName)->first() : null;
+                $sourceRole = ! $isDryRun ? Role::where('name', $sourceRoleName)->first() : null;
                 if ($sourceRole && $aliasRole) {
                     $sourcePermissions = $sourceRole->permissions->pluck('name')->toArray();
                     $currentPermissions = $aliasRole->permissions->pluck('name')->toArray();

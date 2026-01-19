@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\BookRental::class => \App\Policies\BookRentalPolicy::class,
         \App\Models\ChatRoom::class => \App\Policies\ChatRoomPolicy::class,
         \App\Models\PastoralCare::class => \App\Policies\PastoralCarePolicy::class,
+        \App\Models\Department::class => \App\Policies\DepartmentPolicy::class,
+        \App\Models\Scheduling\DepartmentTodo::class => \App\Policies\DepartmentTodoPolicy::class,
     ];
 
     /**

@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Employee\EmployeeStatus;
+use App\Enums\Scheduling\AbsenceStatus;
+use App\Enums\Scheduling\ShiftTaskStatus;
+use App\Enums\Scheduling\SwapRequestStatus;
 use App\Enums\Star\StarStatus;
 use App\Models\Department;
 use App\Models\DepartmentDocument;
@@ -10,6 +13,10 @@ use App\Models\DepartmentForm;
 use App\Models\DepartmentNeed;
 use App\Models\DepartmentWorkflow;
 use App\Models\Employee;
+use App\Models\Scheduling\Absence;
+use App\Models\Scheduling\DepartmentTodo;
+use App\Models\Scheduling\Shift;
+use App\Models\Scheduling\ShiftSwapRequest;
 use App\Models\Star;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -103,7 +110,7 @@ class DepartmentController extends Controller
         // Handle image from TUS upload (just filename)
         elseif ($request->filled('image') && is_string($request->image)) {
             // Image has already been uploaded via TUS to departments directory
-            $validated['image'] = 'departments/' . $request->image;
+            $validated['image'] = 'departments/'.$request->image;
         }
 
         $department = Department::create($validated);
@@ -115,6 +122,10 @@ class DepartmentController extends Controller
     public function show(Department $department)
     {
         $department->load(['users', 'headOfDepartment']);
+
+        // Check if user can view statistics
+        $user = auth()->user();
+        $canViewStatistics = $this->canUserViewStatistics($user, $department);
 
         // Get IDs of users already in the department
         $existingUserIds = $department->users->pluck('id')->toArray();
@@ -139,7 +150,7 @@ class DepartmentController extends Controller
             ->where('status', EmployeeStatus::ACTIVE)
             ->whereNotIn('user_id', $existingUserIds)
             ->get()
-            ->map(fn($employee) => [
+            ->map(fn ($employee) => [
                 'id' => $employee->user_id,
                 'uuid' => $employee->uuid,
                 'name' => $employee->user->name ?? '',
@@ -153,7 +164,7 @@ class DepartmentController extends Controller
             ->where('status', StarStatus::ACTIVE)
             ->whereNotIn('user_id', $existingUserIds)
             ->get()
-            ->map(fn($star) => [
+            ->map(fn ($star) => [
                 'id' => $star->user_id,
                 'uuid' => $star->uuid,
                 'name' => $star->user->name ?? '',
@@ -189,7 +200,8 @@ class DepartmentController extends Controller
             'availableUsers' => $allUsers,
             'availableEmployees' => $employees,
             'availableStars' => $stars,
-            'canManage' => auth()->user()->can('manage departments'),
+            'canManage' => $user->can('manage departments'),
+            'canViewStatistics' => $canViewStatistics,
             'workflows' => DepartmentWorkflow::where('department_id', $department->id)
                 ->withCount(['steps', 'instances'])
                 ->orderBy('created_at', 'desc')
@@ -231,14 +243,15 @@ class DepartmentController extends Controller
                 ->with([
                     'appointment' => function ($query) {
                         $query->with(['organizer:id,uuid,first_name,last_name,email', 'participants:id,uuid,first_name,last_name,email'])
-                              ->withCount('participants');
+                            ->withCount('participants');
                     },
-                    'creator:id,uuid,first_name,last_name,email'
+                    'creator:id,uuid,first_name,last_name,email',
                 ])
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($meeting) {
                     $appointment = $meeting->appointment;
+
                     return [
                         'uuid' => $meeting->uuid,
                         'is_mandatory' => $meeting->is_mandatory,
@@ -271,7 +284,9 @@ class DepartmentController extends Controller
                     ];
                 }),
             'documentsTree' => DepartmentDocument::getTreeForDepartment($department->id),
-            'documentsCount' => $department->documents()->count(),
+            'documentsCount' => DepartmentDocument::where('department_id', $department->id)->count(),
+            // Only load statistics if user has permission to view them
+            'statistics' => $canViewStatistics ? $this->getDepartmentStatistics($department) : null,
         ]);
     }
 
@@ -313,7 +328,7 @@ class DepartmentController extends Controller
                 \Storage::disk('public')->delete($department->image);
             }
             // Image has already been uploaded via TUS to departments directory
-            $validated['image'] = 'departments/' . $request->image;
+            $validated['image'] = 'departments/'.$request->image;
         }
 
         $department->update($validated);
@@ -346,5 +361,427 @@ class DepartmentController extends Controller
         $department->users()->detach($user->id);
 
         return back()->with('success', 'User removed from department successfully.');
+    }
+
+    /**
+     * Get comprehensive statistics for a department
+     * Note: Uses direct model queries instead of relationships to avoid issues with Inertia rendering
+     */
+    private function getDepartmentStatistics(Department $department): array
+    {
+        $departmentId = $department->id;
+
+        // Workflows stats
+        $workflows = DepartmentWorkflow::where('department_id', $departmentId)->get();
+        $workflowsStats = [
+            'total' => $workflows->count(),
+            'active' => $workflows->where('status', 'active')->count(),
+            'draft' => $workflows->where('status', 'draft')->count(),
+            'deprecated' => $workflows->where('status', 'deprecated')->count(),
+        ];
+
+        // Forms stats
+        $forms = DepartmentForm::where('department_id', $departmentId)->withCount('submissions')->get();
+        $formsStats = [
+            'total' => $forms->count(),
+            'published' => $forms->where('status', 'published')->count(),
+            'draft' => $forms->where('status', 'draft')->count(),
+            'archived' => $forms->where('status', 'archived')->count(),
+            'total_submissions' => $forms->sum('submissions_count'),
+        ];
+
+        // Needs stats
+        $needs = DepartmentNeed::where('department_id', $departmentId)->get();
+        $needsByStatus = $needs->groupBy(fn ($need) => $need->status?->value ?? 'unknown')->map->count()->toArray();
+        $needsByPriority = $needs->groupBy(fn ($need) => $need->priority?->value ?? 'unknown')->map->count()->toArray();
+        $needsStats = [
+            'total' => $needs->count(),
+            'by_status' => $needsByStatus,
+            'by_priority' => $needsByPriority,
+            'total_cost' => (int) ($needs->sum('estimated_cost') ?? 0),
+        ];
+
+        // Documents stats - use direct query, not relationship
+        $totalDocSize = DepartmentDocument::where('department_id', $departmentId)->sum('file_size');
+        $documentsStats = [
+            'total' => DepartmentDocument::where('department_id', $departmentId)->count(),
+            'total_size' => (int) $totalDocSize,
+            'formatted_size' => $this->formatBytes((int) $totalDocSize),
+        ];
+
+        // Scheduling stats
+        $schedulingStats = [
+            'total_shifts' => Shift::where('department_id', $departmentId)->count(),
+            'upcoming_shifts' => Shift::where('department_id', $departmentId)
+                ->where('date', '>=', now()->toDateString())
+                ->count(),
+            'pending_absences' => Absence::where('department_id', $departmentId)
+                ->where('status', AbsenceStatus::PENDING)
+                ->count(),
+            'approved_absences' => Absence::where('department_id', $departmentId)
+                ->where('status', AbsenceStatus::APPROVED)
+                ->where('end_date', '>=', now()->toDateString())
+                ->count(),
+            'pending_swap_requests' => ShiftSwapRequest::whereHas('requestedShift', function ($query) use ($departmentId) {
+                $query->where('department_id', $departmentId);
+            })
+                ->whereIn('status', [SwapRequestStatus::PENDING_COLLEAGUE, SwapRequestStatus::PENDING_MANAGER])
+                ->count(),
+        ];
+
+        // Todos stats - enhanced with detailed breakdown
+        $todos = DepartmentTodo::where('department_id', $departmentId)
+            ->with(['assignee:id,uuid,first_name,last_name'])
+            ->get();
+
+        $todosStats = [
+            'total' => $todos->count(),
+            'completed' => $todos->where('status', ShiftTaskStatus::COMPLETED)->count(),
+            'in_progress' => $todos->where('status', ShiftTaskStatus::IN_PROGRESS)->count(),
+            'pending' => $todos->where('status', ShiftTaskStatus::TODO)->count(),
+            'overdue' => $todos->filter(fn ($todo) => $todo->is_overdue)->count(),
+            'by_priority' => [
+                'critical' => $todos->filter(fn ($t) => $t->priority?->value === 'critical')->count(),
+                'high' => $todos->filter(fn ($t) => $t->priority?->value === 'high')->count(),
+                'medium' => $todos->filter(fn ($t) => $t->priority?->value === 'medium')->count(),
+                'low' => $todos->filter(fn ($t) => $t->priority?->value === 'low')->count(),
+            ],
+        ];
+
+        // Task evolution over time
+        $taskEvolution = $this->getTaskEvolution($departmentId);
+
+        // Task distribution by member
+        $tasksByMember = $this->getTasksByMember($todos, $department);
+
+        // Performance metrics
+        $performanceMetrics = $this->getPerformanceMetrics($todos, $department);
+
+        return [
+            'members' => [
+                'total' => $department->users()->count(),
+                'has_head' => $department->head_of_department !== null,
+            ],
+            'workflows' => $workflowsStats,
+            'forms' => $formsStats,
+            'needs' => $needsStats,
+            'documents' => $documentsStats,
+            'scheduling' => $schedulingStats,
+            'todos' => $todosStats,
+            'task_evolution' => $taskEvolution,
+            'tasks_by_member' => $tasksByMember,
+            'performance' => $performanceMetrics,
+        ];
+    }
+
+    /**
+     * Get task evolution data over different time periods
+     */
+    private function getTaskEvolution(int $departmentId): array
+    {
+        $now = now();
+
+        // Weekly data (last 8 weeks)
+        $weeklyData = [];
+        for ($i = 7; $i >= 0; $i--) {
+            $weekStart = $now->copy()->subWeeks($i)->startOfWeek();
+            $weekEnd = $now->copy()->subWeeks($i)->endOfWeek();
+
+            $created = DepartmentTodo::where('department_id', $departmentId)
+                ->whereBetween('created_at', [$weekStart, $weekEnd])
+                ->count();
+
+            $completed = DepartmentTodo::where('department_id', $departmentId)
+                ->where('status', ShiftTaskStatus::COMPLETED)
+                ->whereBetween('completed_at', [$weekStart, $weekEnd])
+                ->count();
+
+            $weeklyData[] = [
+                'label' => 'S'.$weekStart->weekOfYear,
+                'period' => $weekStart->format('d/m').' - '.$weekEnd->format('d/m'),
+                'created' => $created,
+                'completed' => $completed,
+            ];
+        }
+
+        // Monthly data (last 6 months)
+        $monthlyData = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $monthStart = $now->copy()->subMonths($i)->startOfMonth();
+            $monthEnd = $now->copy()->subMonths($i)->endOfMonth();
+
+            $created = DepartmentTodo::where('department_id', $departmentId)
+                ->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->count();
+
+            $completed = DepartmentTodo::where('department_id', $departmentId)
+                ->where('status', ShiftTaskStatus::COMPLETED)
+                ->whereBetween('completed_at', [$monthStart, $monthEnd])
+                ->count();
+
+            $monthlyData[] = [
+                'label' => $monthStart->translatedFormat('M'),
+                'period' => $monthStart->translatedFormat('F Y'),
+                'created' => $created,
+                'completed' => $completed,
+            ];
+        }
+
+        // Quarterly data (last 4 quarters)
+        $quarterlyData = [];
+        for ($i = 3; $i >= 0; $i--) {
+            $quarterStart = $now->copy()->subQuarters($i)->startOfQuarter();
+            $quarterEnd = $now->copy()->subQuarters($i)->endOfQuarter();
+
+            $created = DepartmentTodo::where('department_id', $departmentId)
+                ->whereBetween('created_at', [$quarterStart, $quarterEnd])
+                ->count();
+
+            $completed = DepartmentTodo::where('department_id', $departmentId)
+                ->where('status', ShiftTaskStatus::COMPLETED)
+                ->whereBetween('completed_at', [$quarterStart, $quarterEnd])
+                ->count();
+
+            $quarterlyData[] = [
+                'label' => 'T'.$quarterStart->quarter.' '.$quarterStart->year,
+                'period' => $quarterStart->translatedFormat('M').' - '.$quarterEnd->translatedFormat('M Y'),
+                'created' => $created,
+                'completed' => $completed,
+            ];
+        }
+
+        // Semester data (last 2 semesters)
+        $semesterData = [];
+        for ($i = 1; $i >= 0; $i--) {
+            $semesterStart = $now->copy()->subMonths($i * 6)->startOfMonth();
+            if ($semesterStart->month <= 6) {
+                $semesterStart = $semesterStart->copy()->startOfYear();
+                $semesterEnd = $semesterStart->copy()->addMonths(5)->endOfMonth();
+                $label = 'S1 '.$semesterStart->year;
+            } else {
+                $semesterStart = $semesterStart->copy()->setMonth(7)->startOfMonth();
+                $semesterEnd = $semesterStart->copy()->endOfYear();
+                $label = 'S2 '.$semesterStart->year;
+            }
+
+            $created = DepartmentTodo::where('department_id', $departmentId)
+                ->whereBetween('created_at', [$semesterStart, $semesterEnd])
+                ->count();
+
+            $completed = DepartmentTodo::where('department_id', $departmentId)
+                ->where('status', ShiftTaskStatus::COMPLETED)
+                ->whereBetween('completed_at', [$semesterStart, $semesterEnd])
+                ->count();
+
+            $semesterData[] = [
+                'label' => $label,
+                'period' => $semesterStart->translatedFormat('M').' - '.$semesterEnd->translatedFormat('M Y'),
+                'created' => $created,
+                'completed' => $completed,
+            ];
+        }
+
+        return [
+            'weekly' => $weeklyData,
+            'monthly' => $monthlyData,
+            'quarterly' => $quarterlyData,
+            'semester' => $semesterData,
+        ];
+    }
+
+    /**
+     * Get task distribution by member
+     */
+    private function getTasksByMember($todos, Department $department): array
+    {
+        $members = $department->users()->get(['users.id', 'users.uuid', 'users.first_name', 'users.last_name']);
+
+        $tasksByMember = [];
+        foreach ($members as $member) {
+            $memberTodos = $todos->where('assigned_to', $member->id);
+            $totalTasks = $memberTodos->count();
+            $completedTasks = $memberTodos->where('status', ShiftTaskStatus::COMPLETED)->count();
+            $inProgressTasks = $memberTodos->where('status', ShiftTaskStatus::IN_PROGRESS)->count();
+            $overdueTasks = $memberTodos->filter(fn ($t) => $t->is_overdue)->count();
+
+            $tasksByMember[] = [
+                'uuid' => $member->uuid,
+                'name' => trim($member->first_name.' '.$member->last_name),
+                'total' => $totalTasks,
+                'completed' => $completedTasks,
+                'in_progress' => $inProgressTasks,
+                'pending' => $totalTasks - $completedTasks - $inProgressTasks,
+                'overdue' => $overdueTasks,
+                'completion_rate' => $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100, 1) : 0,
+            ];
+        }
+
+        // Sort by total tasks descending
+        usort($tasksByMember, fn ($a, $b) => $b['total'] - $a['total']);
+
+        // Add unassigned tasks
+        $unassignedTodos = $todos->whereNull('assigned_to');
+        if ($unassignedTodos->count() > 0) {
+            $tasksByMember[] = [
+                'uuid' => null,
+                'name' => 'Non assigné',
+                'total' => $unassignedTodos->count(),
+                'completed' => $unassignedTodos->where('status', ShiftTaskStatus::COMPLETED)->count(),
+                'in_progress' => $unassignedTodos->where('status', ShiftTaskStatus::IN_PROGRESS)->count(),
+                'pending' => $unassignedTodos->where('status', ShiftTaskStatus::TODO)->count(),
+                'overdue' => $unassignedTodos->filter(fn ($t) => $t->is_overdue)->count(),
+                'completion_rate' => 0,
+            ];
+        }
+
+        return $tasksByMember;
+    }
+
+    /**
+     * Get individual and collective performance metrics
+     */
+    private function getPerformanceMetrics($todos, Department $department): array
+    {
+        $members = $department->users()->get(['users.id', 'users.uuid', 'users.first_name', 'users.last_name']);
+        $now = now();
+
+        // Collective metrics
+        $totalTasks = $todos->count();
+        $completedTasks = $todos->where('status', ShiftTaskStatus::COMPLETED)->count();
+        $overdueTasks = $todos->filter(fn ($t) => $t->is_overdue)->count();
+
+        // This month's velocity
+        $thisMonthStart = $now->copy()->startOfMonth();
+        $completedThisMonth = $todos
+            ->where('status', ShiftTaskStatus::COMPLETED)
+            ->filter(fn ($t) => $t->completed_at && $t->completed_at->gte($thisMonthStart))
+            ->count();
+
+        // Last month's velocity for comparison
+        $lastMonthStart = $now->copy()->subMonth()->startOfMonth();
+        $lastMonthEnd = $now->copy()->subMonth()->endOfMonth();
+        $completedLastMonth = DepartmentTodo::where('department_id', $department->id)
+            ->where('status', ShiftTaskStatus::COMPLETED)
+            ->whereBetween('completed_at', [$lastMonthStart, $lastMonthEnd])
+            ->count();
+
+        $velocityChange = $completedLastMonth > 0
+            ? round((($completedThisMonth - $completedLastMonth) / $completedLastMonth) * 100, 1)
+            : ($completedThisMonth > 0 ? 100 : 0);
+
+        // Average completion time (for completed tasks with both created_at and completed_at)
+        $completedWithTimes = $todos
+            ->where('status', ShiftTaskStatus::COMPLETED)
+            ->filter(fn ($t) => $t->completed_at !== null);
+
+        $avgCompletionDays = 0;
+        if ($completedWithTimes->count() > 0) {
+            $totalDays = $completedWithTimes->sum(function ($todo) {
+                return $todo->created_at->diffInDays($todo->completed_at);
+            });
+            $avgCompletionDays = round($totalDays / $completedWithTimes->count(), 1);
+        }
+
+        // Individual performance
+        $individualPerformance = [];
+        foreach ($members as $member) {
+            $memberTodos = $todos->where('assigned_to', $member->id);
+            $memberTotal = $memberTodos->count();
+            $memberCompleted = $memberTodos->where('status', ShiftTaskStatus::COMPLETED)->count();
+            $memberOverdue = $memberTodos->filter(fn ($t) => $t->is_overdue)->count();
+
+            // Member's completion time
+            $memberCompletedWithTimes = $memberTodos
+                ->where('status', ShiftTaskStatus::COMPLETED)
+                ->filter(fn ($t) => $t->completed_at !== null);
+
+            $memberAvgDays = 0;
+            if ($memberCompletedWithTimes->count() > 0) {
+                $memberTotalDays = $memberCompletedWithTimes->sum(function ($todo) {
+                    return $todo->created_at->diffInDays($todo->completed_at);
+                });
+                $memberAvgDays = round($memberTotalDays / $memberCompletedWithTimes->count(), 1);
+            }
+
+            // Tasks completed this month by member
+            $memberCompletedThisMonth = $memberTodos
+                ->where('status', ShiftTaskStatus::COMPLETED)
+                ->filter(fn ($t) => $t->completed_at && $t->completed_at->gte($thisMonthStart))
+                ->count();
+
+            $individualPerformance[] = [
+                'uuid' => $member->uuid,
+                'name' => trim($member->first_name.' '.$member->last_name),
+                'total_tasks' => $memberTotal,
+                'completed_tasks' => $memberCompleted,
+                'overdue_tasks' => $memberOverdue,
+                'completion_rate' => $memberTotal > 0 ? round(($memberCompleted / $memberTotal) * 100, 1) : 0,
+                'overdue_rate' => $memberTotal > 0 ? round(($memberOverdue / $memberTotal) * 100, 1) : 0,
+                'avg_completion_days' => $memberAvgDays,
+                'completed_this_month' => $memberCompletedThisMonth,
+            ];
+        }
+
+        // Sort by completion rate descending
+        usort($individualPerformance, fn ($a, $b) => $b['completion_rate'] <=> $a['completion_rate']);
+
+        return [
+            'collective' => [
+                'total_tasks' => $totalTasks,
+                'completed_tasks' => $completedTasks,
+                'completion_rate' => $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100, 1) : 0,
+                'overdue_tasks' => $overdueTasks,
+                'overdue_rate' => $totalTasks > 0 ? round(($overdueTasks / $totalTasks) * 100, 1) : 0,
+                'velocity_this_month' => $completedThisMonth,
+                'velocity_last_month' => $completedLastMonth,
+                'velocity_change' => $velocityChange,
+                'avg_completion_days' => $avgCompletionDays,
+            ],
+            'individual' => $individualPerformance,
+        ];
+    }
+
+    /**
+     * Format bytes to human readable format
+     */
+    private function formatBytes(int $bytes, int $precision = 2): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+
+        $bytes /= pow(1024, $pow);
+
+        return round($bytes, $precision).' '.$units[$pow];
+    }
+
+    /**
+     * Check if a user can view department statistics
+     * Access is granted if:
+     * - User is the head of department
+     * - User is a member of the department
+     * - User has "manage departments" permission
+     * - User has "view department statistics" permission
+     */
+    private function canUserViewStatistics($user, Department $department): bool
+    {
+        // Admin/manager with permission can always view
+        if ($user->can('manage departments') || $user->can('view department statistics')) {
+            return true;
+        }
+
+        // Head of department can view
+        if ($department->head_of_department === $user->id) {
+            return true;
+        }
+
+        // Member of the department can view
+        if ($department->users->contains('id', $user->id)) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -42,14 +42,18 @@ class PastoralCareFollowUpNotification extends Mailable implements ShouldQueue
      */
     public function content(): Content
     {
+        // Use token-based confirmation URL for dual confirmation system
+        $confirmUrl = url('/api/pastoral-care/confirm-by-client?token='.$this->appointment->client_confirmation_token);
+        $cancelUrl = route('pastoral-care.public.cancel', ['uuid' => $this->appointment->uuid]);
+
         return new Content(
             markdown: 'emails.pastoral-care.follow-up-notification',
             with: [
                 'appointment' => $this->appointment,
                 'parentAppointment' => $this->parentAppointment,
                 'pastor' => $this->appointment->pastor,
-                'confirmUrl' => route('pastoral-care.public.confirm', ['uuid' => $this->appointment->uuid]),
-                'cancelUrl' => route('pastoral-care.public.cancel', ['uuid' => $this->appointment->uuid]),
+                'confirmUrl' => $confirmUrl,
+                'cancelUrl' => $cancelUrl,
                 'churchName' => 'ICC Munich',
                 'churchWebsite' => 'https://icc-munich.de',
                 'churchEmail' => 'info@icc-munich.de',

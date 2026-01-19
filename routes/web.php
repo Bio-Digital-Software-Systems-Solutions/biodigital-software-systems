@@ -360,6 +360,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('pending-count');
     });
 
+    // Department TODOs routes
+    Route::prefix('departments/{department}/todos')->name('departments.todos.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'index'])
+            ->name('index');
+        Route::post('/', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'store'])
+            ->name('store');
+        Route::get('/{todo}', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'show'])
+            ->name('show');
+        Route::put('/{todo}', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'update'])
+            ->name('update');
+        Route::delete('/{todo}', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'destroy'])
+            ->name('destroy');
+        Route::post('/{todo}/toggle-complete', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'toggleComplete'])
+            ->name('toggle-complete');
+        Route::post('/{todo}/status', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'updateStatus'])
+            ->name('update-status');
+        Route::post('/{todo}/assign', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'assign'])
+            ->name('assign');
+        Route::get('/shift/{shift}', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'forShift'])
+            ->name('for-shift');
+        Route::post('/bulk', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'bulkUpdate'])
+            ->name('bulk-update');
+    });
+
     // Library routes (for library management)
     Route::resource('libraries', App\Http\Controllers\LibraryController::class);
 
@@ -717,6 +741,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('user-management/teachers/{teacher}', [App\Http\Controllers\UserManagementController::class, 'updateTeacher'])
         ->name('user-management.update-teacher');
 
+    // Star (volunteer) management routes
+    Route::post('user-management/users/{user}/add-star', [App\Http\Controllers\UserManagementController::class, 'addStar'])
+        ->name('user-management.add-star');
+    Route::delete('user-management/stars/{star}', [App\Http\Controllers\UserManagementController::class, 'removeStar'])
+        ->name('user-management.remove-star');
+
+    // Employee management routes
+    Route::post('user-management/users/{user}/add-employee', [App\Http\Controllers\UserManagementController::class, 'addEmployee'])
+        ->name('user-management.add-employee');
+    Route::delete('user-management/employees/{employee}', [App\Http\Controllers\UserManagementController::class, 'removeEmployee'])
+        ->name('user-management.remove-employee');
+
     // Appointment routes - specific routes must come before resource routes
     Route::get('appointments', [App\Http\Controllers\AppointmentController::class, 'index'])
         ->name('appointments.index');
@@ -814,7 +850,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $canSelectPastor = $user->can('select pastor for pastoral care');
 
         // Debug log
-        \Log::info('Pastoral Care Book - User: '.$user->email.', canSelectPastor: '.($canSelectPastor ? 'true' : 'false'));
+        \Log::info('Pastoral Care Book - User: ' . $user->email . ', canSelectPastor: ' . ($canSelectPastor ? 'true' : 'false'));
 
         return \Inertia\Inertia::render('PastoralCare/PublicBook', [
             'canSelectPastor' => $canSelectPastor,
@@ -1060,7 +1096,7 @@ Route::post('appointments/{appointment:uuid}/decline/{token}', [App\Http\Control
 Route::get('pastoral-care/appointments/{uuid}/confirm', function ($uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (! $appointment) {
+    if (!$appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $uuid,
         ]);
@@ -1074,7 +1110,7 @@ Route::get('pastoral-care/appointments/{uuid}/confirm', function ($uuid) {
 Route::post('pastoral-care/appointments/{uuid}/confirm', function (\Illuminate\Http\Request $request, $uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (! $appointment) {
+    if (!$appointment) {
         return response()->json(['success' => false, 'message' => 'Rendez-vous introuvable'], 404);
     }
 
@@ -1091,7 +1127,7 @@ Route::post('pastoral-care/appointments/{uuid}/confirm', function (\Illuminate\H
 Route::get('pastoral-care/appointments/{uuid}/cancel', function ($uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (! $appointment) {
+    if (!$appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $uuid,
         ]);
@@ -1105,7 +1141,7 @@ Route::get('pastoral-care/appointments/{uuid}/cancel', function ($uuid) {
 Route::post('pastoral-care/appointments/{uuid}/cancel', function (\Illuminate\Http\Request $request, $uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (! $appointment) {
+    if (!$appointment) {
         return response()->json(['success' => false, 'message' => 'Rendez-vous introuvable'], 404);
     }
 
@@ -1126,7 +1162,7 @@ Route::post('pastoral-care/appointments/{uuid}/cancel', function (\Illuminate\Ht
 Route::get('pastoral-care/appointments/{uuid}/success', function ($uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (! $appointment) {
+    if (!$appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $uuid,
         ]);
@@ -1149,4 +1185,4 @@ Route::middleware(['auth'])->group(function () {
         ->name('sentry.test-breadcrumbs');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

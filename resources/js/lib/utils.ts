@@ -94,3 +94,95 @@ function formatTrendText(percentageChange: number, isPercentage: boolean): strin
 
   return `${sign}${formatNumber(percentageChange, 1)}% vs période précédente`;
 }
+
+/**
+ * API Fetch wrapper with better error handling and timeout
+ * Provides detailed error messages for debugging connection issues
+ */
+export interface ApiFetchOptions extends RequestInit {
+  timeout?: number;
+}
+
+export interface ApiFetchResult<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  status?: number;
+}
+
+export async function apiFetch<T = unknown>(
+  url: string,
+  options: ApiFetchOptions = {}
+): Promise<ApiFetchResult<T>> {
+  const { timeout = 30000, ...fetchOptions } = options;
+
+  // Create abort controller for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...fetchOptions,
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...fetchOptions.headers,
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    // Check response status first
+    if (!response.ok) {
+      let errorMessage = `Erreur serveur (${response.status})`;
+
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch {
+        // Response wasn't JSON, use default message
+      }
+
+      console.error(`API Error [${url}]:`, response.status, errorMessage);
+
+      return {
+        success: false,
+        error: errorMessage,
+        status: response.status,
+      };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      data,
+      status: response.status,
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    // Determine error type
+    let errorMessage = 'Erreur de connexion';
+
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = 'Délai d\'attente dépassé. Veuillez réessayer.';
+        console.error(`API Timeout [${url}]: Request exceeded ${timeout}ms`);
+      } else if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+        console.error(`API Network Error [${url}]:`, error.message);
+      } else {
+        errorMessage = `Erreur: ${error.message}`;
+        console.error(`API Error [${url}]:`, error);
+      }
+    }
+
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}

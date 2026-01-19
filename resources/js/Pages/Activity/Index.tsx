@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import { fr } from 'date-fns/locale';
+import { format, parseISO } from 'date-fns';
+import 'react-datepicker/dist/react-datepicker.css';
 import {
     CalendarDaysIcon,
     BookOpenIcon,
@@ -129,11 +133,13 @@ const eventColors: Record<string, string> = {
     default: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
 };
 
+registerLocale('fr', fr);
+
 export default function Index({ activities, logNames, stats, filters }: ActivityIndexProps) {
     const [search, setSearch] = useState(filters.search || '');
     const [selectedType, setSelectedType] = useState(filters.type || '');
-    const [fromDate, setFromDate] = useState(filters.from || '');
-    const [toDate, setToDate] = useState(filters.to || '');
+    const [fromDate, setFromDate] = useState<Date | null>(filters.from ? parseISO(filters.from) : null);
+    const [toDate, setToDate] = useState<Date | null>(filters.to ? parseISO(filters.to) : null);
 
     const handleFilter = () => {
         router.get(
@@ -141,8 +147,8 @@ export default function Index({ activities, logNames, stats, filters }: Activity
             {
                 search: search || undefined,
                 type: selectedType || undefined,
-                from: fromDate || undefined,
-                to: toDate || undefined,
+                from: fromDate ? format(fromDate, 'yyyy-MM-dd') : undefined,
+                to: toDate ? format(toDate, 'yyyy-MM-dd') : undefined,
             },
             { preserveState: true }
         );
@@ -151,8 +157,8 @@ export default function Index({ activities, logNames, stats, filters }: Activity
     const clearFilters = () => {
         setSearch('');
         setSelectedType('');
-        setFromDate('');
-        setToDate('');
+        setFromDate(null);
+        setToDate(null);
         router.get(route('activity.index'));
     };
 
@@ -277,18 +283,25 @@ export default function Index({ activities, logNames, stats, filters }: Activity
                                 </SelectContent>
                             </Select>
 
-                            <Input
-                                type="date"
-                                placeholder="Date de début"
-                                value={fromDate}
-                                onChange={(e) => setFromDate(e.target.value)}
+                            <DatePicker
+                                selected={fromDate}
+                                onChange={(date) => setFromDate(date)}
+                                locale="fr"
+                                dateFormat="dd/MM/yyyy"
+                                placeholderText="Date de début"
+                                className="w-full px-3 py-2 rounded-md border text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                                isClearable
                             />
 
-                            <Input
-                                type="date"
-                                placeholder="Date de fin"
-                                value={toDate}
-                                onChange={(e) => setToDate(e.target.value)}
+                            <DatePicker
+                                selected={toDate}
+                                onChange={(date) => setToDate(date)}
+                                locale="fr"
+                                dateFormat="dd/MM/yyyy"
+                                placeholderText="Date de fin"
+                                className="w-full px-3 py-2 rounded-md border text-sm bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                                isClearable
+                                minDate={fromDate || undefined}
                             />
 
                             <div className="flex gap-2">

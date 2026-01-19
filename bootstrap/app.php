@@ -62,8 +62,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ]);
             }
 
-            // Handle 403 errors with a flash message instead of redirecting
-            if ($response->getStatusCode() === 403) {
+            // Handle 403 errors with a flash message instead of redirecting (only for non-JSON requests)
+            if ($response->getStatusCode() === 403 && ! request()->expectsJson()) {
                 return back()->with([
                     'unauthorized' => now()->timestamp,
                 ]);

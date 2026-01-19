@@ -29,7 +29,15 @@
 
     ---
 
-    ## Actions requises
+    ## Double confirmation requise
+
+    <x-mail::panel>
+        ⚠️ **Important :** Ce rendez-vous nécessite une confirmation de votre part ET du pasteur.
+
+        Le pasteur recevra également une notification et devra confirmer de son côté.
+
+        Le rendez-vous ne sera définitivement validé que lorsque les deux parties auront confirmé.
+    </x-mail::panel>
 
     **Veuillez confirmer votre présence** en cliquant sur le bouton ci-dessous :
 
@@ -47,9 +55,10 @@
 
     ## Informations importantes
 
-    - **Confirmation requise :** Ce rendez-vous doit être confirmé avant la date prévue
+    - **Double confirmation :** Ce rendez-vous doit être confirmé par les deux parties avant la date prévue
     - **Annulation :** Les annulations doivent être effectuées au moins 24h à l'avance
     - **Reprogrammation :** Pour reprogrammer, veuillez d'abord annuler ce rendez-vous puis prendre un nouveau créneau
+    - **Historique :** L'historique des confirmations sera visible dans le système
 
     ---
 

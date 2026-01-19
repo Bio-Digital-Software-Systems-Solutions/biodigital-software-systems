@@ -74,6 +74,17 @@ Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function () {
     // Cancel appointment via UUID (public endpoint)
     Route::post('/appointments/{uuid}/cancel', [PastoralCareController::class, 'cancel'])
         ->name('appointments.cancel');
+
+    // Get confirmation status by UUID (public endpoint)
+    Route::get('/appointments/{uuid}/confirmation-status', [PastoralCareController::class, 'getConfirmationStatus'])
+        ->name('appointments.confirmation-status');
+
+    // Dual confirmation endpoints (token-based, public)
+    Route::post('/confirm-by-client', [PastoralCareController::class, 'confirmByClient'])
+        ->name('confirm-by-client');
+
+    Route::post('/confirm-by-pastor', [PastoralCareController::class, 'confirmByPastor'])
+        ->name('confirm-by-pastor');
 });
 
 Route::middleware('auth:sanctum')->group(function () {

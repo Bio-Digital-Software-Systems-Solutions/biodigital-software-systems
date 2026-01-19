@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property-read bool $can_be_confirmed
@@ -85,7 +87,7 @@ use Illuminate\Support\Str;
  */
 class PastoralCare extends Model
 {
-    use ClearsCache, HasFactory, SoftDeletes;
+    use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'uuid',
@@ -104,6 +106,10 @@ class PastoralCare extends Model
         'notes',
         'pastor_notes',
         'confirmation_sent_at',
+        'client_confirmed_at',
+        'pastor_confirmed_at',
+        'client_confirmation_token',
+        'pastor_confirmation_token',
         'reminder_sent_at',
         'cancelled_at',
         'cancellation_reason',
@@ -114,6 +120,8 @@ class PastoralCare extends Model
         'appointment_time' => 'datetime',
         'duration_minutes' => 'integer',
         'confirmation_sent_at' => 'datetime',
+        'client_confirmed_at' => 'datetime',
+        'pastor_confirmed_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
         'cancelled_at' => 'datetime',
         'pastor_notes' => 'array',
@@ -123,6 +131,8 @@ class PastoralCare extends Model
         'appointment_date',
         'appointment_time',
         'confirmation_sent_at',
+        'client_confirmed_at',
+        'pastor_confirmed_at',
         'reminder_sent_at',
         'cancelled_at',
         'created_at',
@@ -140,9 +150,29 @@ class PastoralCare extends Model
     protected $appends = [
         'can_be_confirmed',
         'can_be_cancelled',
+        'is_fully_confirmed',
+        'confirmation_status',
     ];
 
-    // Boot method to auto-generate UUID
+    /**
+     * Configure activity logging
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'status',
+                'client_confirmed_at',
+                'pastor_confirmed_at',
+                'cancelled_at',
+                'cancellation_reason',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('pastoral-care');
+    }
+
+    // Boot method to auto-generate UUID and confirmation tokens
     protected static function boot()
     {
         parent::boot();
@@ -150,6 +180,13 @@ class PastoralCare extends Model
         static::creating(function ($model) {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid();
+            }
+            // Generate unique confirmation tokens
+            if (empty($model->client_confirmation_token)) {
+                $model->client_confirmation_token = Str::random(64);
+            }
+            if (empty($model->pastor_confirmation_token)) {
+                $model->pastor_confirmation_token = Str::random(64);
             }
         });
     }
@@ -262,7 +299,34 @@ class PastoralCare extends Model
         return $this->status === 'pending' && $this->appointment_time > now();
     }
 
+    /**
+     * Check if both parties have confirmed the appointment
+     */
+    public function getIsFullyConfirmedAttribute(): bool
+    {
+        return $this->client_confirmed_at !== null && $this->pastor_confirmed_at !== null;
+    }
+
+    /**
+     * Get a human-readable confirmation status
+     */
+    public function getConfirmationStatusAttribute(): array
+    {
+        return [
+            'client_confirmed' => $this->client_confirmed_at !== null,
+            'pastor_confirmed' => $this->pastor_confirmed_at !== null,
+            'client_confirmed_at' => $this->client_confirmed_at?->toISOString(),
+            'pastor_confirmed_at' => $this->pastor_confirmed_at?->toISOString(),
+            'is_fully_confirmed' => $this->is_fully_confirmed,
+        ];
+    }
+
     // Business Logic Methods
+
+    /**
+     * Legacy confirm method - now confirms both parties at once
+     * Kept for backward compatibility
+     */
     public function confirm()
     {
         if (! $this->can_be_confirmed) {
@@ -305,6 +369,154 @@ class PastoralCare extends Model
             'status' => 'cancelled',
             'cancelled_at' => now(),
             'cancellation_reason' => $reason,
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * Confirm appointment by client using their confirmation token
+     *
+     * @throws \Exception
+     */
+    public function confirmByClient(string $token): self
+    {
+        // Validate token
+        if ($this->client_confirmation_token !== $token) {
+            throw new \Exception('Token de confirmation invalide.');
+        }
+
+        // Check if already confirmed
+        if ($this->client_confirmed_at !== null) {
+            throw new \Exception('Vous avez déjà confirmé ce rendez-vous.');
+        }
+
+        // Check if appointment is in the past
+        if ($this->appointment_time <= now()) {
+            throw new \Exception('Ce rendez-vous est déjà passé et ne peut plus être confirmé.');
+        }
+
+        // Check if appointment is cancelled
+        if ($this->status === 'cancelled') {
+            throw new \Exception('Ce rendez-vous a été annulé.');
+        }
+
+        // Log the confirmation with activity
+        activity('pastoral-care')
+            ->performedOn($this)
+            ->withProperties([
+                'confirmed_by' => 'client',
+                'client_name' => $this->client_name,
+                'client_email' => $this->client_email,
+            ])
+            ->log('Client a confirmé le rendez-vous');
+
+        $this->update([
+            'client_confirmed_at' => now(),
+        ]);
+
+        // Check if both parties have confirmed - if so, update status
+        $this->checkAndUpdateConfirmationStatus();
+
+        return $this;
+    }
+
+    /**
+     * Confirm appointment by pastor using their confirmation token
+     *
+     * @throws \Exception
+     */
+    public function confirmByPastor(string $token): self
+    {
+        // Validate token
+        if ($this->pastor_confirmation_token !== $token) {
+            throw new \Exception('Token de confirmation invalide.');
+        }
+
+        // Check if already confirmed
+        if ($this->pastor_confirmed_at !== null) {
+            throw new \Exception('Vous avez déjà confirmé ce rendez-vous.');
+        }
+
+        // Check if appointment is in the past
+        if ($this->appointment_time <= now()) {
+            throw new \Exception('Ce rendez-vous est déjà passé et ne peut plus être confirmé.');
+        }
+
+        // Check if appointment is cancelled
+        if ($this->status === 'cancelled') {
+            throw new \Exception('Ce rendez-vous a été annulé.');
+        }
+
+        // Log the confirmation with activity
+        activity('pastoral-care')
+            ->performedOn($this)
+            ->causedBy($this->pastor)
+            ->withProperties([
+                'confirmed_by' => 'pastor',
+                'pastor_name' => $this->pastor->first_name.' '.$this->pastor->last_name,
+            ])
+            ->log('Pasteur a confirmé le rendez-vous');
+
+        $this->update([
+            'pastor_confirmed_at' => now(),
+        ]);
+
+        // Check if both parties have confirmed - if so, update status
+        $this->checkAndUpdateConfirmationStatus();
+
+        return $this;
+    }
+
+    /**
+     * Check if both parties have confirmed and update status accordingly
+     */
+    protected function checkAndUpdateConfirmationStatus(): void
+    {
+        // Refresh the model to get latest data
+        $this->refresh();
+
+        if ($this->client_confirmed_at !== null && $this->pastor_confirmed_at !== null) {
+            // Both parties have confirmed - update status to confirmed
+            activity('pastoral-care')
+                ->performedOn($this)
+                ->withProperties([
+                    'client_confirmed_at' => $this->client_confirmed_at->toISOString(),
+                    'pastor_confirmed_at' => $this->pastor_confirmed_at->toISOString(),
+                ])
+                ->log('Rendez-vous confirmé par les deux parties');
+
+            $this->update([
+                'status' => 'confirmed',
+                'confirmation_sent_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Find an appointment by client confirmation token
+     */
+    public static function findByClientToken(string $token): ?self
+    {
+        return static::where('client_confirmation_token', $token)->first();
+    }
+
+    /**
+     * Find an appointment by pastor confirmation token
+     */
+    public static function findByPastorToken(string $token): ?self
+    {
+        return static::where('pastor_confirmation_token', $token)->first();
+    }
+
+    /**
+     * Regenerate confirmation tokens (useful if tokens are compromised)
+     */
+    public function regenerateConfirmationTokens(): self
+    {
+        $this->update([
+            'client_confirmation_token' => Str::random(64),
+            'pastor_confirmation_token' => Str::random(64),
         ]);
 
         return $this;

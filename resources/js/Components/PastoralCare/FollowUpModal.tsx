@@ -32,6 +32,7 @@ import {
 import { toast } from 'sonner';
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { apiFetch } from '@/lib/utils';
 
 interface FollowUpModalProps {
     isOpen: boolean;
@@ -126,18 +127,14 @@ export default function FollowUpModal({ isOpen, onClose, parentAppointment }: Fo
                 end_date: format(endDate, 'yyyy-MM-dd'),
             });
 
-            const response = await fetch(`/api/pastoral-care/available-days?${params}`);
-            const data = await response.json();
+            const result = await apiFetch<{ success: boolean; data: { available_days: AvailableDay[] } }>(`/api/pastoral-care/available-days?${params}`);
 
-            if (data.success) {
-                setAvailableDays(data.data.available_days);
+            if (result.success && result.data?.success) {
+                setAvailableDays(result.data.data.available_days);
             } else {
-                toast.error('Erreur lors du chargement des jours disponibles');
+                toast.error(result.error || 'Erreur lors du chargement des jours disponibles');
                 setAvailableDays([]);
             }
-        } catch (error) {
-            toast.error('Erreur de connexion');
-            setAvailableDays([]);
         } finally {
             setIsLoadingDays(false);
         }
@@ -152,18 +149,14 @@ export default function FollowUpModal({ isOpen, onClose, parentAppointment }: Fo
                 duration: formData.duration_minutes.toString(),
             });
 
-            const response = await fetch(`/api/pastoral-care/available-slots?${params}`);
-            const data = await response.json();
+            const result = await apiFetch<{ success: boolean; data: { slots: string[] } }>(`/api/pastoral-care/available-slots?${params}`);
 
-            if (data.success) {
-                setAvailableSlots(data.data.slots);
+            if (result.success && result.data?.success) {
+                setAvailableSlots(result.data.data.slots);
             } else {
-                toast.error('Erreur lors du chargement des créneaux');
+                toast.error(result.error || 'Erreur lors du chargement des créneaux');
                 setAvailableSlots([]);
             }
-        } catch (error) {
-            toast.error('Erreur de connexion');
-            setAvailableSlots([]);
         } finally {
             setIsLoadingSlots(false);
         }
@@ -225,26 +218,26 @@ export default function FollowUpModal({ isOpen, onClose, parentAppointment }: Fo
 
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/pastoral-care/appointments/${parentAppointment.uuid}/follow-up`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify(formData),
-            });
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-            const data = await response.json();
+            const result = await apiFetch<{ success: boolean; message?: string; data: { uuid: string } }>(
+                `/api/pastoral-care/appointments/${parentAppointment.uuid}/follow-up`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify(formData),
+                }
+            );
 
-            if (data.success) {
-                toast.success(data.message || 'Rendez-vous de suivi créé avec succès');
+            if (result.success && result.data?.success) {
+                toast.success(result.data.message || 'Rendez-vous de suivi créé avec succès');
                 onClose();
-                router.visit(`/pastoral-care/appointments/${data.data.uuid}`);
+                router.visit(`/pastoral-care/appointments/${result.data.data.uuid}`);
             } else {
-                toast.error(data.message || 'Erreur lors de la création du rendez-vous');
+                toast.error(result.error || result.data?.message || 'Erreur lors de la création du rendez-vous');
             }
-        } catch (error) {
-            toast.error('Erreur de connexion');
         } finally {
             setIsLoading(false);
         }

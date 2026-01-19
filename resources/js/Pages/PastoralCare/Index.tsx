@@ -51,6 +51,7 @@ import {
 import { format, addDays, isBefore, startOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/utils';
 
 interface User {
     id: number;
@@ -266,15 +267,12 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
     const fetchPastors = async () => {
         setIsLoadingPastors(true);
         try {
-            const response = await fetch('/api/pastoral-care/pastors');
-            const data = await response.json();
-            if (data.success) {
-                setPastors(data.data);
+            const result = await apiFetch<{ success: boolean; data: Pastor[] }>('/api/pastoral-care/pastors');
+            if (result.success && result.data?.success) {
+                setPastors(result.data.data);
             } else {
-                toast.error('Erreur lors du chargement des pasteurs');
+                toast.error(result.error || 'Erreur lors du chargement des pasteurs');
             }
-        } catch (error) {
-            toast.error('Erreur de connexion');
         } finally {
             setIsLoadingPastors(false);
         }
@@ -289,26 +287,22 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                 duration: formData.duration_minutes.toString(),
             });
 
-            const response = await fetch(`/api/pastoral-care/available-slots?${params}`);
-            const data = await response.json();
+            const result = await apiFetch<{ success: boolean; data: { slots: string[]; consultation_mode?: string } }>(`/api/pastoral-care/available-slots?${params}`);
 
-            if (data.success) {
-                setAvailableSlots(data.data.slots);
+            if (result.success && result.data?.success) {
+                setAvailableSlots(result.data.data.slots);
 
                 // Update location type from consultation mode
-                if (data.data.consultation_mode) {
+                if (result.data.data.consultation_mode) {
                     setFormData(prev => ({
                         ...prev,
-                        location_type: data.data.consultation_mode
+                        location_type: result.data!.data.consultation_mode as 'in_person' | 'zoom' | 'hybrid'
                     }));
                 }
             } else {
-                toast.error('Erreur lors du chargement des créneaux');
+                toast.error(result.error || 'Erreur lors du chargement des créneaux');
                 setAvailableSlots([]);
             }
-        } catch (error) {
-            toast.error('Erreur de connexion');
-            setAvailableSlots([]);
         } finally {
             setIsLoadingSlots(false);
         }
@@ -326,15 +320,14 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                 end_date: format(endDate, 'yyyy-MM-dd'),
             });
 
-            const response = await fetch(`/api/pastoral-care/all-available-days?${params}`);
-            const data = await response.json();
+            const result = await apiFetch<{ success: boolean; data: { available_days: { date: string }[] } }>(`/api/pastoral-care/all-available-days?${params}`);
 
-            if (data.success && data.data.available_days.length > 0) {
-                const availableDatesArray = data.data.available_days.map((day: any) => day.date);
+            if (result.success && result.data?.success && result.data.data.available_days.length > 0) {
+                const availableDatesArray = result.data.data.available_days.map((day) => day.date);
                 setAvailableDates(availableDatesArray);
 
                 // Select the first available date
-                const firstAvailableDate = data.data.available_days[0].date;
+                const firstAvailableDate = result.data.data.available_days[0].date;
                 setFormData(prev => ({
                     ...prev,
                     appointment_date: firstAvailableDate,
@@ -347,12 +340,11 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                     setCurrentDate(firstDate);
                 }
             } else {
+                if (result.error) {
+                    toast.error(result.error);
+                }
                 setAvailableDates([]);
             }
-        } catch (error) {
-            console.error('Error fetching all available days:', error);
-            toast.error('Erreur de connexion');
-            setAvailableDates([]);
         } finally {
             setIsLoadingDates(false);
         }
@@ -367,22 +359,17 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                 duration: formData.duration_minutes.toString(),
             });
 
-            const response = await fetch(`/api/pastoral-care/all-available-slots?${params}`);
-            const data = await response.json();
+            const result = await apiFetch<{ success: boolean; data: { slots: SlotWithPastor[] } }>(`/api/pastoral-care/all-available-slots?${params}`);
 
-            if (data.success) {
-                setAvailableSlotsWithPastor(data.data.slots);
+            if (result.success && result.data?.success) {
+                setAvailableSlotsWithPastor(result.data.data.slots);
                 // Also set regular slots for compatibility
-                setAvailableSlots(data.data.slots.map((s: SlotWithPastor) => s.time));
+                setAvailableSlots(result.data.data.slots.map((s) => s.time));
             } else {
-                toast.error('Erreur lors du chargement des créneaux');
+                toast.error(result.error || 'Erreur lors du chargement des créneaux');
                 setAvailableSlotsWithPastor([]);
                 setAvailableSlots([]);
             }
-        } catch (error) {
-            toast.error('Erreur de connexion');
-            setAvailableSlotsWithPastor([]);
-            setAvailableSlots([]);
         } finally {
             setIsLoadingSlots(false);
         }

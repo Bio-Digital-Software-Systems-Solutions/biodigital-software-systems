@@ -38,6 +38,7 @@ import {
 import { toast } from 'sonner';
 import { format, addDays, isBefore, startOfDay, startOfWeek, endOfWeek, addWeeks, subWeeks, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { apiFetch } from '@/lib/utils';
 
 interface Pastor {
     id: number;
@@ -160,15 +161,12 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
 
     const fetchPastors = async () => {
         try {
-            const response = await fetch('/api/pastoral-care/pastors');
-            const data = await response.json();
-            if (data.success) {
-                setPastors(data.data);
+            const result = await apiFetch<{ success: boolean; data: Pastor[] }>('/api/pastoral-care/pastors');
+            if (result.success && result.data?.success) {
+                setPastors(result.data.data);
             } else {
-                toast.error('Erreur lors du chargement des pasteurs');
+                toast.error(result.error || 'Erreur lors du chargement des pasteurs');
             }
-        } catch (error) {
-            toast.error('Erreur de connexion');
         } finally {
             setIsLoadingPastors(false);
         }
@@ -199,19 +197,14 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                 end_date: format(endDate, 'yyyy-MM-dd'),
             });
 
-            const apiUrl = `/api/pastoral-care/available-days?${params}`;
-            const response = await fetch(apiUrl);
-            const data = await response.json();
+            const result = await apiFetch<{ success: boolean; data: { available_days: AvailableDay[] } }>(`/api/pastoral-care/available-days?${params}`);
 
-            if (data.success) {
-                setAvailableDays(data.data.available_days);
+            if (result.success && result.data?.success) {
+                setAvailableDays(result.data.data.available_days);
             } else {
-                toast.error('Erreur lors du chargement des jours disponibles');
+                toast.error(result.error || 'Erreur lors du chargement des jours disponibles');
                 setAvailableDays([]);
             }
-        } catch (error) {
-            toast.error('Erreur de connexion');
-            setAvailableDays([]);
         } finally {
             setIsLoadingDays(false);
         }
@@ -226,18 +219,14 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                 duration: formData.duration_minutes.toString(),
             });
 
-            const response = await fetch(`/api/pastoral-care/available-slots?${params}`);
-            const data = await response.json();
+            const result = await apiFetch<{ success: boolean; data: { slots: string[] } }>(`/api/pastoral-care/available-slots?${params}`);
 
-            if (data.success) {
-                setAvailableSlots(data.data.slots);
+            if (result.success && result.data?.success) {
+                setAvailableSlots(result.data.data.slots);
             } else {
-                toast.error('Erreur lors du chargement des créneaux');
+                toast.error(result.error || 'Erreur lors du chargement des créneaux');
                 setAvailableSlots([]);
             }
-        } catch (error) {
-            toast.error('Erreur de connexion');
-            setAvailableSlots([]);
         } finally {
             setIsLoadingSlots(false);
         }
@@ -264,19 +253,14 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                 end_date: format(endDate, 'yyyy-MM-dd'),
             });
 
-            const apiUrl = `/api/pastoral-care/all-available-days?${params}`;
-            const response = await fetch(apiUrl);
-            const data = await response.json();
+            const result = await apiFetch<{ success: boolean; data: { available_days: AvailableDay[] } }>(`/api/pastoral-care/all-available-days?${params}`);
 
-            if (data.success) {
-                setAvailableDays(data.data.available_days);
+            if (result.success && result.data?.success) {
+                setAvailableDays(result.data.data.available_days);
             } else {
-                toast.error('Erreur lors du chargement des jours disponibles');
+                toast.error(result.error || 'Erreur lors du chargement des jours disponibles');
                 setAvailableDays([]);
             }
-        } catch (error) {
-            toast.error('Erreur de connexion');
-            setAvailableDays([]);
         } finally {
             setIsLoadingDays(false);
         }
@@ -291,22 +275,17 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                 duration: formData.duration_minutes.toString(),
             });
 
-            const response = await fetch(`/api/pastoral-care/all-available-slots?${params}`);
-            const data = await response.json();
+            const result = await apiFetch<{ success: boolean; data: { slots: SlotWithPastor[] } }>(`/api/pastoral-care/all-available-slots?${params}`);
 
-            if (data.success) {
-                setAvailableSlotsWithPastor(data.data.slots);
+            if (result.success && result.data?.success) {
+                setAvailableSlotsWithPastor(result.data.data.slots);
                 // Also set regular slots for compatibility
-                setAvailableSlots(data.data.slots.map((s: SlotWithPastor) => s.time));
+                setAvailableSlots(result.data.data.slots.map((s) => s.time));
             } else {
-                toast.error('Erreur lors du chargement des créneaux');
+                toast.error(result.error || 'Erreur lors du chargement des créneaux');
                 setAvailableSlotsWithPastor([]);
                 setAvailableSlots([]);
             }
-        } catch (error) {
-            toast.error('Erreur de connexion');
-            setAvailableSlotsWithPastor([]);
-            setAvailableSlots([]);
         } finally {
             setIsLoadingSlots(false);
         }

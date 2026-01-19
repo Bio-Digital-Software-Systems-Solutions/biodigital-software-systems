@@ -25,6 +25,10 @@ class PastoralCareController extends Controller
             'store',
             'confirm',
             'cancel',
+            'show',
+            'confirmByClient',
+            'confirmByPastor',
+            'getConfirmationStatus',
         ]);
     }
 
@@ -558,6 +562,132 @@ class PastoralCareController extends Controller
     }
 
     /**
+     * Confirm appointment by client using their unique token (public endpoint)
+     */
+    public function confirmByClient(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'token' => 'required|string|size:64',
+        ]);
+
+        $appointment = PastoralCare::findByClientToken($validated['token']);
+
+        if (! $appointment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rendez-vous introuvable ou token invalide',
+            ], 404);
+        }
+
+        try {
+            $appointment->confirmByClient($validated['token']);
+
+            // Check if both parties have now confirmed
+            $appointment->refresh();
+
+            $message = 'Votre confirmation a été enregistrée avec succès.';
+            if ($appointment->is_fully_confirmed) {
+                $message = 'Rendez-vous confirmé par les deux parties. Le rendez-vous est maintenant validé.';
+                // Send final confirmation notifications
+                $this->sendDualConfirmationNotifications($appointment);
+            } else {
+                // Notify the other party that client has confirmed
+                $this->sendPartialConfirmationNotification($appointment, 'client');
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => [
+                    'confirmation_status' => $appointment->confirmation_status,
+                    'status' => $appointment->status,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Confirm appointment by pastor using their unique token (public endpoint)
+     */
+    public function confirmByPastor(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'token' => 'required|string|size:64',
+        ]);
+
+        $appointment = PastoralCare::findByPastorToken($validated['token']);
+
+        if (! $appointment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rendez-vous introuvable ou token invalide',
+            ], 404);
+        }
+
+        try {
+            $appointment->confirmByPastor($validated['token']);
+
+            // Check if both parties have now confirmed
+            $appointment->refresh();
+
+            $message = 'Votre confirmation a été enregistrée avec succès.';
+            if ($appointment->is_fully_confirmed) {
+                $message = 'Rendez-vous confirmé par les deux parties. Le rendez-vous est maintenant validé.';
+                // Send final confirmation notifications
+                $this->sendDualConfirmationNotifications($appointment);
+            } else {
+                // Notify the other party that pastor has confirmed
+                $this->sendPartialConfirmationNotification($appointment, 'pastor');
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => [
+                    'confirmation_status' => $appointment->confirmation_status,
+                    'status' => $appointment->status,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Get confirmation status for an appointment (public endpoint)
+     */
+    public function getConfirmationStatus($uuid): JsonResponse
+    {
+        $appointment = PastoralCare::where('uuid', $uuid)->first();
+
+        if (! $appointment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rendez-vous introuvable',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'uuid' => $appointment->uuid,
+                'status' => $appointment->status,
+                'confirmation_status' => $appointment->confirmation_status,
+                'appointment_date' => $appointment->appointment_date->format('d/m/Y'),
+                'appointment_time' => $appointment->appointment_time->format('H:i'),
+            ],
+        ]);
+    }
+
+    /**
      * Update appointment (authenticated pastor only)
      */
     public function update(Request $request, $uuid): JsonResponse
@@ -1032,20 +1162,27 @@ class PastoralCareController extends Controller
     }
 
     /**
-     * Send notifications for follow-up appointment
+     * Send notifications for follow-up appointment (dual confirmation system)
+     * Both client and pastor receive emails with their own confirmation links
      */
     private function sendFollowUpNotifications(PastoralCare $appointment, PastoralCare $parentAppointment): void
     {
         try {
             $pastor = $appointment->pastor;
 
-            // 1. Send email notification to client
+            // 1. Send email notification to client with their confirmation token
             if ($appointment->client_email) {
                 Mail::to($appointment->client_email)
                     ->send(new \App\Mail\PastoralCareFollowUpNotification($appointment, $parentAppointment));
             }
 
-            // 2. Send internal message to pastor
+            // 2. Send email notification to pastor with their confirmation token
+            if ($pastor && $pastor->email) {
+                Mail::to($pastor->email)
+                    ->send(new \App\Mail\PastoralCarePastorFollowUpNotification($appointment, $parentAppointment));
+            }
+
+            // 3. Send internal message to pastor
             $pastorMessageContent = "Vous avez créé un rendez-vous de suivi :\n\n".
                 '📅 Date : '.$appointment->appointment_date->format('d/m/Y')."\n".
                 '⏰ Heure : '.$appointment->appointment_time->format('H:i')."\n".
@@ -1053,10 +1190,11 @@ class PastoralCareController extends Controller
                 '👤 Client : '.($appointment->client_name ?? 'Non renseigné')."\n".
                 '📧 Email : '.($appointment->client_email ?? 'Non renseigné')."\n".
                 '📍 Type : '.$this->getLocationTypeLabel($appointment->location_type)."\n".
-                "\n🔗 Suite au rendez-vous du ".$parentAppointment->appointment_date->format('d/m/Y');
+                "\n🔗 Suite au rendez-vous du ".$parentAppointment->appointment_date->format('d/m/Y')."\n".
+                "\n⚠️ Double confirmation requise : Vous et le client devez chacun confirmer le rendez-vous via le lien reçu par email.";
 
             Message::create([
-                'subject' => 'Rendez-vous de suivi créé - '.$appointment->appointment_date->format('d/m/Y'),
+                'subject' => 'Rendez-vous de suivi créé - Confirmation requise - '.$appointment->appointment_date->format('d/m/Y'),
                 'content' => $pastorMessageContent,
                 'sender_id' => 1, // System user
                 'receiver_id' => $pastor->id,
@@ -1064,7 +1202,7 @@ class PastoralCareController extends Controller
                 'recipient_type' => 'user',
             ]);
 
-            // 3. Send internal message to client if they have an account
+            // 4. Send internal message to client if they have an account
             $clientUser = User::where('email', $appointment->client_email)->first();
             if ($clientUser) {
                 $clientMessageContent = "Un rendez-vous de suivi a été planifié pour vous :\n\n".
@@ -1073,11 +1211,12 @@ class PastoralCareController extends Controller
                     '⌛ Durée : '.$appointment->duration_minutes." minutes\n".
                     '👨‍💼 Pasteur : '.$pastor->first_name.' '.$pastor->last_name."\n".
                     '📍 Type : '.$this->getLocationTypeLabel($appointment->location_type)."\n".
-                    "\n⏳ Statut : En attente de votre confirmation\n".
+                    "\n⏳ Statut : En attente de double confirmation\n".
+                    "⚠️ Vous et le pasteur devez chacun confirmer le rendez-vous.\n".
                     'Veuillez confirmer votre présence via le lien reçu par email.';
 
                 Message::create([
-                    'subject' => 'Rendez-vous de suivi planifié - '.$appointment->appointment_date->format('d/m/Y'),
+                    'subject' => 'Rendez-vous de suivi planifié - Confirmation requise - '.$appointment->appointment_date->format('d/m/Y'),
                     'content' => $clientMessageContent,
                     'sender_id' => 1, // System user
                     'receiver_id' => $clientUser->id,
@@ -1141,6 +1280,110 @@ class PastoralCareController extends Controller
                 'success' => false,
                 'message' => 'Erreur lors de la génération du rapport: '.$e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Send notifications when both parties have confirmed the appointment
+     */
+    private function sendDualConfirmationNotifications(PastoralCare $appointment): void
+    {
+        try {
+            $appointment->load(['pastor', 'user']);
+
+            // Send final confirmation email to client
+            if ($appointment->client_email) {
+                Mail::to($appointment->client_email)
+                    ->send(new \App\Mail\PastoralCareDualConfirmationNotification($appointment, 'client'));
+            }
+
+            // Send final confirmation email to pastor
+            if ($appointment->pastor && $appointment->pastor->email) {
+                Mail::to($appointment->pastor->email)
+                    ->send(new \App\Mail\PastoralCareDualConfirmationNotification($appointment, 'pastor'));
+            }
+
+            // Send platform message to client if they have an account
+            if ($appointment->user_id) {
+                Message::create([
+                    'sender_id' => $appointment->pastor_id,
+                    'receiver_id' => $appointment->user_id,
+                    'subject' => 'Rendez-vous confirmé par les deux parties',
+                    'content' => "Votre rendez-vous de soin pastoral avec {$appointment->pastor->first_name} {$appointment->pastor->last_name} "
+                        .'prévu le '.$appointment->appointment_date->format('d/m/Y')
+                        .' à '.$appointment->appointment_time->format('H:i')
+                        .' a été confirmé par les deux parties. Le rendez-vous est maintenant validé.',
+                    'type' => 'system',
+                ]);
+            }
+
+            // Send platform message to pastor
+            Message::create([
+                'sender_id' => $appointment->user_id ?? 1,
+                'receiver_id' => $appointment->pastor_id,
+                'subject' => "Rendez-vous confirmé - {$appointment->client_name}",
+                'content' => "Le rendez-vous de soin pastoral avec {$appointment->client_name} prévu le "
+                    .$appointment->appointment_date->format('d/m/Y')
+                    .' à '.$appointment->appointment_time->format('H:i')
+                    .' a été confirmé par les deux parties. Le rendez-vous est maintenant validé.',
+                'type' => 'system',
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send dual confirmation notifications: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Send notification when one party has confirmed (to notify the other party)
+     */
+    private function sendPartialConfirmationNotification(PastoralCare $appointment, string $confirmedBy): void
+    {
+        try {
+            $appointment->load(['pastor', 'user']);
+
+            if ($confirmedBy === 'client') {
+                // Client confirmed - notify pastor
+                if ($appointment->pastor && $appointment->pastor->email) {
+                    Mail::to($appointment->pastor->email)
+                        ->send(new \App\Mail\PastoralCarePartialConfirmationNotification($appointment, 'pastor', $confirmedBy));
+                }
+
+                // Send platform message to pastor
+                Message::create([
+                    'sender_id' => $appointment->user_id ?? 1,
+                    'receiver_id' => $appointment->pastor_id,
+                    'subject' => "Confirmation client reçue - {$appointment->client_name}",
+                    'content' => "{$appointment->client_name} a confirmé sa présence au rendez-vous du "
+                        .$appointment->appointment_date->format('d/m/Y')
+                        .' à '.$appointment->appointment_time->format('H:i')
+                        .'. En attente de votre confirmation.',
+                    'type' => 'system',
+                ]);
+            } else {
+                // Pastor confirmed - notify client
+                if ($appointment->client_email) {
+                    Mail::to($appointment->client_email)
+                        ->send(new \App\Mail\PastoralCarePartialConfirmationNotification($appointment, 'client', $confirmedBy));
+                }
+
+                // Send platform message to client if they have an account
+                if ($appointment->user_id) {
+                    Message::create([
+                        'sender_id' => $appointment->pastor_id,
+                        'receiver_id' => $appointment->user_id,
+                        'subject' => 'Confirmation du pasteur reçue',
+                        'content' => "{$appointment->pastor->first_name} {$appointment->pastor->last_name} a confirmé le rendez-vous du "
+                            .$appointment->appointment_date->format('d/m/Y')
+                            .' à '.$appointment->appointment_time->format('H:i')
+                            .'. En attente de votre confirmation.',
+                        'type' => 'system',
+                    ]);
+                }
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send partial confirmation notification: '.$e->getMessage());
         }
     }
 }
