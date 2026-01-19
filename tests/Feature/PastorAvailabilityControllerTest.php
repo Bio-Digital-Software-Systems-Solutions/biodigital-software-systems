@@ -30,10 +30,11 @@ class PastorAvailabilityControllerTest extends TestCase
         $response = $this->actingAs($pastor)->get('/pastoral-availability');
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => $page
-            ->component('PastoralCare/Availability/Index')
-            ->has('availabilities')
-            ->has('pastor')
+        $response->assertInertia(
+            fn($page) => $page
+                ->component('PastoralCare/Availability/Index')
+                ->has('availabilities')
+                ->has('pastor')
         );
     }
 
@@ -62,9 +63,10 @@ class PastorAvailabilityControllerTest extends TestCase
         $response = $this->actingAs($pastor)->get('/pastoral-availability/create');
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => $page
-            ->component('PastoralCare/Availability/Create')
-            ->has('pastor')
+        $response->assertInertia(
+            fn($page) => $page
+                ->component('PastoralCare/Availability/Create')
+                ->has('pastor')
         );
     }
 
@@ -80,6 +82,7 @@ class PastorAvailabilityControllerTest extends TestCase
             'end_time' => '17:00',
             'slot_duration' => 60,
             'is_active' => true,
+            'consultation_mode' => 'in_person',
             'notes' => 'Standard Monday availability',
         ];
 
@@ -100,6 +103,95 @@ class PastorAvailabilityControllerTest extends TestCase
         ]);
     }
 
+    public function test_pastor_can_create_weekly_availability_for_sunday()
+    {
+        $pastor = User::factory()->create();
+        $pastor->assignRole('pastor');
+
+        // Sunday is day_of_week = 0 in JavaScript convention
+        $data = [
+            'type' => 'weekly',
+            'day_of_week' => 0, // Sunday
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'slot_duration' => 60,
+            'is_active' => true,
+            'consultation_mode' => 'in_person',
+            'notes' => 'Sunday availability',
+        ];
+
+        $response = $this->actingAs($pastor)->post('/pastoral-availability', $data);
+
+        $response->assertRedirect('/pastoral-availability');
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('pastor_availability', [
+            'pastor_id' => $pastor->id,
+            'type' => 'weekly',
+            'day_of_week' => 0,
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'slot_duration' => 60,
+            'is_active' => 1,
+            'notes' => 'Sunday availability',
+        ]);
+    }
+
+    public function test_day_of_week_validation_accepts_all_valid_days()
+    {
+        $pastor = User::factory()->create();
+        $pastor->assignRole('pastor');
+
+        // Test all valid days (0-6)
+        for ($day = 0; $day <= 6; $day++) {
+            $data = [
+                'type' => 'weekly',
+                'day_of_week' => $day,
+                'start_time' => '09:00',
+                'end_time' => '17:00',
+                'slot_duration' => 60,
+                'is_active' => true,
+                'consultation_mode' => 'in_person',
+            ];
+
+            $response = $this->actingAs($pastor)->post('/pastoral-availability', $data);
+
+            // Should redirect (success) or have conflict error (not validation error for day_of_week)
+            $this->assertNotTrue(
+                $response->getSession()->has('errors') &&
+                $response->getSession()->get('errors')->has('day_of_week'),
+                "Day {$day} should be valid but got validation error"
+            );
+        }
+    }
+
+    public function test_day_of_week_validation_rejects_invalid_days()
+    {
+        $pastor = User::factory()->create();
+        $pastor->assignRole('pastor');
+
+        // Test invalid day (7 - out of range)
+        $data = [
+            'type' => 'weekly',
+            'day_of_week' => 7, // Invalid - should be 0-6
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'slot_duration' => 60,
+            'is_active' => true,
+            'consultation_mode' => 'in_person',
+        ];
+
+        $response = $this->actingAs($pastor)->post('/pastoral-availability', $data);
+
+        $response->assertSessionHasErrors(['day_of_week']);
+
+        // Test invalid day (-1 - negative)
+        $data['day_of_week'] = -1;
+        $response = $this->actingAs($pastor)->post('/pastoral-availability', $data);
+
+        $response->assertSessionHasErrors(['day_of_week']);
+    }
+
     public function test_pastor_can_create_specific_date_availability()
     {
         $pastor = User::factory()->create();
@@ -107,11 +199,12 @@ class PastorAvailabilityControllerTest extends TestCase
 
         $data = [
             'type' => 'specific_date',
-            'specific_date' => '2025-12-25',
+            'specific_date' => '2027-12-25',
             'start_time' => '10:00',
             'end_time' => '12:00',
             'slot_duration' => 30,
             'is_active' => true,
+            'consultation_mode' => 'in_person',
             'notes' => 'Christmas consultation',
         ];
 
@@ -148,6 +241,7 @@ class PastorAvailabilityControllerTest extends TestCase
             'start_time' => '14:00',
             'end_time' => '18:00',
             'slot_duration' => 45,
+            'consultation_mode' => 'in_person',
         ];
 
         $response = $this->actingAs($pastor)->post('/pastoral-availability', $data);
@@ -165,17 +259,18 @@ class PastorAvailabilityControllerTest extends TestCase
         PastorAvailability::factory()->create([
             'pastor_id' => $pastor->id,
             'type' => 'specific_date',
-            'specific_date' => '2025-12-25',
+            'specific_date' => '2027-12-25',
             'is_active' => true,
         ]);
 
         // Try to create another availability for same date
         $data = [
             'type' => 'specific_date',
-            'specific_date' => '2025-12-25',
+            'specific_date' => '2027-12-25',
             'start_time' => '14:00',
             'end_time' => '18:00',
             'slot_duration' => 45,
+            'consultation_mode' => 'in_person',
         ];
 
         $response = $this->actingAs($pastor)->post('/pastoral-availability', $data);
@@ -191,7 +286,7 @@ class PastorAvailabilityControllerTest extends TestCase
         // Test missing required fields
         $response = $this->actingAs($pastor)->post('/pastoral-availability', []);
 
-        $response->assertSessionHasErrors(['type', 'start_time', 'end_time', 'slot_duration']);
+        $response->assertSessionHasErrors(['type', 'start_time', 'end_time', 'slot_duration', 'consultation_mode']);
 
         // Test weekly without day_of_week
         $response = $this->actingAs($pastor)->post('/pastoral-availability', [
@@ -239,10 +334,11 @@ class PastorAvailabilityControllerTest extends TestCase
         $response = $this->actingAs($pastor)->get("/pastoral-availability/{$availability->id}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => $page
-            ->component('PastoralCare/Availability/Show')
-            ->has('availability')
-            ->has('sampleSlots')
+        $response->assertInertia(
+            fn($page) => $page
+                ->component('PastoralCare/Availability/Show')
+                ->has('availability')
+                ->has('sampleSlots')
         );
     }
 
@@ -280,9 +376,10 @@ class PastorAvailabilityControllerTest extends TestCase
         $response = $this->actingAs($pastor)->get("/pastoral-availability/{$availability->id}/edit");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn ($page) => $page
-            ->component('PastoralCare/Availability/Edit')
-            ->has('availability')
+        $response->assertInertia(
+            fn($page) => $page
+                ->component('PastoralCare/Availability/Edit')
+                ->has('availability')
         );
     }
 
@@ -466,12 +563,13 @@ class PastorAvailabilityControllerTest extends TestCase
 
         $response = $this->actingAs($pastor)->get('/pastoral-availability');
 
-        $response->assertInertia(fn ($page) => $page
-            ->component('PastoralCare/Availability/Index')
-            ->where('availabilities', function ($availabilities) {
-                return count($availabilities) === 2;
-            })
-            ->where('pastor.id', $pastor->id)
+        $response->assertInertia(
+            fn($page) => $page
+                ->component('PastoralCare/Availability/Index')
+                ->where('availabilities', function ($availabilities) {
+                    return count($availabilities) === 2;
+                })
+                ->where('pastor.id', $pastor->id)
         );
     }
 }
