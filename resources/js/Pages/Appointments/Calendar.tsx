@@ -156,7 +156,7 @@ export default function AppointmentCalendar() {
         <DashboardLayout>
             <Head title="Calendrier des rendez-vous" />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between">
@@ -276,24 +276,21 @@ export default function AppointmentCalendar() {
                                 return (
                                     <div
                                         key={index}
-                                        className={`min-h-[120px] p-2 border-r border-b last:border-r-0 ${
-                                            !isCurrentMonth ? 'bg-gray-50 dark:bg-gray-800/50' : ''
-                                        } ${isDayToday ? 'bg-blue-50 dark:bg-blue-900/20' : ''} ${
-                                            isPastDay
+                                        className={`min-h-[120px] p-2 border-r border-b last:border-r-0 ${!isCurrentMonth ? 'bg-gray-50 dark:bg-gray-800/50' : ''
+                                            } ${isDayToday ? 'bg-blue-50 dark:bg-blue-900/20' : ''} ${isPastDay
                                                 ? 'bg-gray-100 dark:bg-gray-700/30 cursor-not-allowed opacity-60'
                                                 : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer'
-                                        } transition-colors`}
+                                            } transition-colors`}
                                         onClick={() => !isPastDay && handleDayClick(day)}
                                     >
-                                        <div className={`text-sm font-medium mb-2 ${
-                                            !isCurrentMonth
+                                        <div className={`text-sm font-medium mb-2 ${!isCurrentMonth
                                                 ? 'text-gray-400'
                                                 : isPastDay
-                                                ? 'text-gray-400 dark:text-gray-500'
-                                                : isDayToday
-                                                ? 'text-blue-600 dark:text-blue-400'
-                                                : 'text-gray-900 dark:text-white'
-                                        }`}>
+                                                    ? 'text-gray-400 dark:text-gray-500'
+                                                    : isDayToday
+                                                        ? 'text-blue-600 dark:text-blue-400'
+                                                        : 'text-gray-900 dark:text-white'
+                                            }`}>
                                             {format(day, 'd')}
                                         </div>
 
