@@ -142,6 +142,100 @@ php artisan optimize
 - **Authorization**: Permission-based access testing
 - **Validation**: Form validation and business logic testing
 
+### 📊 Velocity Statistics
+
+La vélocité mesure la productivité en comptant les tâches terminées sur une période donnée.
+
+#### Département (DepartmentController)
+
+**Formule** : Nombre de tâches terminées ce mois vs mois dernier
+
+```php
+// Tâches terminées CE mois
+$completedThisMonth = DepartmentTodo::where('department_id', $id)
+    ->where('status', 'completed')
+    ->where('completed_at', '>=', now()->startOfMonth())
+    ->count();
+
+// Tâches terminées le mois DERNIER
+$completedLastMonth = DepartmentTodo::where('department_id', $id)
+    ->where('status', 'completed')
+    ->whereBetween('completed_at', [
+        now()->subMonth()->startOfMonth(),
+        now()->subMonth()->endOfMonth()
+    ])
+    ->count();
+
+// Évolution en pourcentage
+$velocityChange = $completedLastMonth > 0
+    ? (($completedThisMonth - $completedLastMonth) / $completedLastMonth) * 100
+    : ($completedThisMonth > 0 ? 100 : 0);
+```
+
+**Exemple** :
+- Janvier : 12 tâches terminées
+- Février : 15 tâches terminées
+- Évolution : ((15 - 12) / 12) × 100 = **+25%**
+
+**Affichage** : `15 tâches/mois` avec `↑ 25% vs mois dernier (12)`
+
+#### Projet (ProjectStatisticsService)
+
+**Formule** : Moyenne de tâches terminées par période
+
+```php
+// Vélocité quotidienne (30 derniers jours)
+$dailyTasks = $completedTasks->filter(fn($t) =>
+    $t->updated_at->between(now()->subDays(30), now())
+)->count();
+$dailyAverage = round($dailyTasks / 30, 1);
+
+// Vélocité hebdomadaire (8 dernières semaines)
+$weeklyTasks = $completedTasks->filter(fn($t) =>
+    $t->updated_at->between(now()->subWeeks(8), now())
+)->count();
+$weeklyAverage = round($weeklyTasks / 8, 1);
+
+// Vélocité mensuelle (12 derniers mois)
+$monthlyTasks = $completedTasks->filter(fn($t) =>
+    $t->updated_at->between(now()->subMonths(12), now())
+)->count();
+$monthlyAverage = round($monthlyTasks / 12, 1);
+```
+
+**Exemple** :
+- 30 tâches terminées en 30 jours → `1.0 tâche/jour`
+- 30 tâches terminées en 8 semaines → `3.8 tâches/semaine`
+- 30 tâches terminées en 12 mois → `2.5 tâches/mois`
+
+#### Jauge Speedometer
+
+La jauge affiche la vélocité avec :
+- **Échelle fixe** : 0 à 300
+- **Graduations** : tous les 20, labels majeurs (0, 100, 200, 300) en gras
+- **Couleur de l'aiguille** selon le ratio valeur/max :
+  - Vert (`#10b981`) : ratio < 33%
+  - Orange (`#f59e0b`) : ratio < 66%
+  - Rouge (`#ef4444`) : ratio ≥ 66%
+
+#### Seeders de données de test
+
+**Département (DepartmentTodo) :**
+```bash
+php artisan db:seed --class=DepartmentTodoSeeder
+```
+Crée ~200 tâches par département sur 12 mois avec distribution réaliste des statuts.
+
+**Projets, Tasks, Sprints, Epics :**
+```bash
+php artisan db:seed --class=ProjectTaskHistoricalSeeder
+```
+Crée ~1000 tâches de projet sur 12 mois avec :
+- Distribution réaliste des statuts (85% terminées pour les anciennes tâches)
+- Sprints avec dates historiques
+- Epics avec stories associées
+- Données de vélocité (daily, weekly, monthly)
+
 ### 🔍 Monitoring & Debugging
 1. **Sentry Integration**: Real-time error tracking and performance monitoring
    - Automatic exception capturing

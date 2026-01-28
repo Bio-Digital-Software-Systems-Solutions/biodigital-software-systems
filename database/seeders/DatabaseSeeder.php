@@ -38,9 +38,12 @@ class DatabaseSeeder extends Seeder
             EventSeeder::class,
             ArticleSeeder::class,
             ProgramSeeder::class,
+            EpicSeeder::class,
+            SprintSeeder::class,
             TaskSeeder::class,
             StockSeeder::class,
             ProjectSeeder::class,
+            ProjectTaskHistoricalSeeder::class,
             TeacherSeeder::class,
             StudentSeeder::class,
             TrainingSeeder::class,
@@ -52,6 +55,7 @@ class DatabaseSeeder extends Seeder
             QuizAttemptSeeder::class,
             PastorAvailabilitySeeder::class,
             PastoralCareSeeder::class,
+            DepartmentTodoSeeder::class,
         ]);
     }
 }

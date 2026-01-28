@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
@@ -14,6 +14,7 @@ import {
     CalendarIcon,
     ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
+import ProjectStatisticsAnalytical, { ProjectAnalyticsData } from '@/Components/Project/ProjectStatisticsAnalytical';
 
 interface Project {
     id: number;
@@ -55,9 +56,11 @@ interface Props {
     projects: Project[];
     stats: Stats;
     recentProjects: Project[];
+    analyticsStats?: ProjectAnalyticsData;
 }
 
-export default function ProjectsDashboard({ projects, stats, recentProjects }: Props) {
+export default function ProjectsDashboard({ projects, stats, recentProjects, analyticsStats }: Props) {
+    const [activeTab, setActiveTab] = useState<'operational' | 'analytics'>('operational');
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'active':
@@ -133,6 +136,39 @@ export default function ProjectsDashboard({ projects, stats, recentProjects }: P
             <Head title="Dashboard Projets" />
 
             <div className="space-y-6">
+
+                {/* Tab Switcher */}
+                <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-fit">
+                    <button
+                        onClick={() => setActiveTab('operational')}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                            activeTab === 'operational'
+                                ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                    >
+                        Opérationnel
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('analytics')}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                            activeTab === 'analytics'
+                                ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                    >
+                        Analytique
+                    </button>
+                </div>
+
+                {activeTab === 'analytics' && analyticsStats ? (
+                    <ProjectStatisticsAnalytical statistics={analyticsStats} context="dashboard" />
+                ) : activeTab === 'analytics' ? (
+                    <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                        Aucune donnée analytique disponible
+                    </div>
+                ) : (
+                <>
 
                 {/* Main Statistics Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -526,6 +562,8 @@ export default function ProjectsDashboard({ projects, stats, recentProjects }: P
                         </Card>
                     </div>
                 </div>
+                </>
+                )}
             </div>
         </DashboardLayout>
     );

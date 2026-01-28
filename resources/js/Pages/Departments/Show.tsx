@@ -30,6 +30,7 @@ import {
     ClockIcon,
     InboxStackIcon,
     PresentationChartLineIcon,
+    BriefcaseIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import type { DepartmentWorkflow } from '@/Types/workflow';
@@ -116,6 +117,29 @@ interface Assignable {
     title?: string;
 }
 
+interface DepartmentPosition {
+    id: number;
+    uuid: string;
+    name: string;
+    code: string | null;
+    description: string | null;
+    color: string | null;
+    hourly_rate: string | null;
+    is_active: boolean;
+}
+
+interface Nomination {
+    uuid: string;
+    position: { id: number; uuid: string; name: string; color: string | null };
+    user: User;
+    nominated_by: { id: number; name: string } | null;
+    start_date: string | null;
+    end_date: string | null;
+    notes: string | null;
+    is_active: boolean;
+    created_at: string;
+}
+
 interface Department {
     id: number;
     uuid: string;
@@ -125,6 +149,8 @@ interface Department {
     budget: number | null;
     is_active: boolean;
     head_of_department: User | null;
+    first_deputy: User | null;
+    second_deputy: User | null;
     users: User[];
     users_count: number;
 }
@@ -143,16 +169,241 @@ interface Props {
     meetings?: DepartmentMeeting[];
     documentsTree?: YearData[];
     documentsCount?: number;
+    positions?: DepartmentPosition[];
+    nominations?: Nomination[];
     statistics?: DepartmentStatistics;
 }
 
-export default function ShowDepartment({ department, availableUsers, availableEmployees = [], availableStars = [], canManage, canViewStatistics, workflows = [], forms = [], needs = [], appointments = [], meetings = [], documentsTree = [], documentsCount = 0, statistics }: Props) {
+interface PositionFormData {
+    name: string;
+    code: string;
+    description: string;
+    color: string;
+    hourly_rate: string;
+    is_active: boolean;
+}
+
+function PositionForm({ departmentUuid, editingPosition, onCancel }: { departmentUuid: string; editingPosition?: DepartmentPosition | null; onCancel?: () => void }) {
+    const [formData, setFormData] = useState<PositionFormData>({
+        name: editingPosition?.name || '',
+        code: editingPosition?.code || '',
+        description: editingPosition?.description || '',
+        color: editingPosition?.color || '#3b82f6',
+        hourly_rate: editingPosition?.hourly_rate || '',
+        is_active: editingPosition?.is_active ?? true,
+    });
+    const [processing, setProcessing] = useState(false);
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!formData.name.trim()) return;
+        setProcessing(true);
+
+        const url = editingPosition
+            ? `/departments/${departmentUuid}/positions/${editingPosition.uuid}`
+            : `/departments/${departmentUuid}/positions`;
+
+        const method = editingPosition ? 'put' : 'post';
+
+        router[method](url, {
+            ...formData,
+            hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
+        }, {
+            preserveScroll: true,
+            onFinish: () => {
+                setProcessing(false);
+                if (!editingPosition) {
+                    setFormData({
+                        name: '',
+                        code: '',
+                        description: '',
+                        color: '#3b82f6',
+                        hourly_rate: '',
+                        is_active: true,
+                    });
+                }
+                onCancel?.();
+            },
+        });
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nom du poste *</label>
+                    <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Ex: Responsable technique"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                        required
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Code</label>
+                    <input
+                        type="text"
+                        value={formData.code}
+                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                        placeholder="Ex: RT"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="position-color" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Couleur</label>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="color"
+                            id="position-color"
+                            value={formData.color}
+                            onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                            className="h-9 w-14 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                            aria-label="Sélectionner une couleur"
+                        />
+                        <input
+                            type="text"
+                            value={formData.color}
+                            onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                            className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                            placeholder="#3b82f6"
+                            aria-label="Code couleur hexadécimal"
+                        />
+                    </div>
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Taux horaire (EUR)</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.hourly_rate}
+                        onChange={(e) => setFormData({ ...formData, hourly_rate: e.target.value })}
+                        placeholder="Ex: 15.00"
+                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                    />
+                </div>
+                <div className="flex items-center">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={formData.is_active}
+                            onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                            className="rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Poste actif</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={2}
+                    placeholder="Description des responsabilités..."
+                    className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                />
+            </div>
+            <div className="flex justify-end gap-2">
+                {onCancel && (
+                    <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+                        Annuler
+                    </Button>
+                )}
+                <Button type="submit" disabled={processing || !formData.name.trim()} size="sm">
+                    <PlusIcon className="h-4 w-4 mr-1" />
+                    {processing ? 'Enregistrement...' : editingPosition ? 'Mettre à jour' : 'Créer le poste'}
+                </Button>
+            </div>
+        </form>
+    );
+}
+
+function NominationForm({ departmentUuid, positions, members }: { departmentUuid: string; positions: DepartmentPosition[]; members: User[] }) {
+    const [positionId, setPositionId] = useState<string | number | null>(null);
+    const [userId, setUserId] = useState<string | number | null>(null);
+    const [startDate, setStartDate] = useState('');
+    const [notes, setNotes] = useState('');
+    const [processing, setProcessing] = useState(false);
+
+    const positionOptions = positions.filter(p => p.is_active).map(p => ({ value: p.id, label: p.name }));
+    const memberOptions = members.map(u => ({ value: u.id, label: `${u.name} (${u.email})` }));
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!positionId || !userId) return;
+        setProcessing(true);
+        router.post(`/departments/${departmentUuid}/nominations`, {
+            department_position_id: positionId,
+            user_id: userId,
+            start_date: startDate || null,
+            notes: notes || null,
+        }, {
+            preserveScroll: true,
+            onFinish: () => {
+                setProcessing(false);
+                setPositionId(null);
+                setUserId(null);
+                setStartDate('');
+                setNotes('');
+            },
+        });
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Poste *</label>
+                <SearchableSelect
+                    options={positionOptions}
+                    value={positionId ? Number(positionId) : null}
+                    onChange={(v) => setPositionId(v)}
+                    placeholder="Sélectionner un poste..."
+                    noOptionsMessage="Aucun poste"
+                />
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Membre *</label>
+                <SearchableSelect
+                    options={memberOptions}
+                    value={userId ? Number(userId) : null}
+                    onChange={(v) => setUserId(v)}
+                    placeholder="Sélectionner un membre..."
+                    noOptionsMessage="Aucun membre"
+                />
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date de début</label>
+                <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                />
+            </div>
+            <div>
+                <Button type="submit" disabled={processing || !positionId || !userId} size="sm" className="w-full">
+                    <PlusIcon className="h-4 w-4 mr-1" />
+                    {processing ? 'Nomination...' : 'Nommer'}
+                </Button>
+            </div>
+        </form>
+    );
+}
+
+export default function ShowDepartment({ department, availableUsers, availableEmployees = [], availableStars = [], canManage, canViewStatistics, workflows = [], forms = [], needs = [], appointments = [], meetings = [], documentsTree = [], documentsCount = 0, positions = [], nominations = [], statistics }: Props) {
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<string | number | null>(null);
     const [memberFilter, setMemberFilter] = useState<'all' | 'user' | 'employee' | 'star'>('all');
     const [activeTab, setActiveTab] = useState('overview');
     const [statsViewMode, setStatsViewMode] = useState<'operational' | 'analytical'>('operational');
+    const [showPositionForm, setShowPositionForm] = useState(false);
+    const [editingPosition, setEditingPosition] = useState<DepartmentPosition | null>(null);
     const { confirm } = useConfirm();
     const { showSuccess, showError } = useToast();
 
@@ -363,6 +614,32 @@ export default function ShowDepartment({ department, availableUsers, availableEm
                     )}
                 </CardContent>
                     </Card>
+
+                    {/* Deputies */}
+                    {(department.first_deputy || department.second_deputy) && (
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Adjoints</CardTitle>
+                                <UserGroupIcon className="h-5 w-5 text-gray-500" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    {department.first_deputy && (
+                                        <div>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">1er Adjoint</p>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{department.first_deputy.name}</p>
+                                        </div>
+                                    )}
+                                    {department.second_deputy && (
+                                        <div>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">2ème Adjoint</p>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{department.second_deputy.name}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
 
                 {/* Description */}
@@ -381,7 +658,7 @@ export default function ShowDepartment({ department, availableUsers, availableEm
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList className={`grid w-full ${canViewStatistics ? 'grid-cols-8' : 'grid-cols-7'}`}>
+                    <TabsList className={`grid w-full ${canViewStatistics ? 'grid-cols-9' : 'grid-cols-8'}`}>
                         <TabsTrigger value="overview" className="flex items-center gap-2">
                             <UserGroupIcon className="h-4 w-4" />
                             <span className="hidden sm:inline">Membres</span>
@@ -415,6 +692,11 @@ export default function ShowDepartment({ department, availableUsers, availableEm
                         <TabsTrigger value="schedule" className="flex items-center gap-2">
                             <ClockIcon className="h-4 w-4" />
                             <span className="hidden sm:inline">Planning</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="nominations" className="flex items-center gap-2">
+                            <BriefcaseIcon className="h-4 w-4" />
+                            <span className="hidden sm:inline">Nominations</span>
+                            <Badge variant="secondary" className="ml-1">{nominations.length}</Badge>
                         </TabsTrigger>
                         {canViewStatistics && (
                             <TabsTrigger value="statistics" className="flex items-center gap-2">
@@ -910,6 +1192,228 @@ export default function ShowDepartment({ department, availableUsers, availableEm
                                 )}
                             </CardContent>
                         </Card>
+                    </TabsContent>
+
+                    {/* Nominations Tab */}
+                    <TabsContent value="nominations">
+                        <div className="space-y-6">
+                            {/* Positions Management Card */}
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle>Postes du Département</CardTitle>
+                                            <CardDescription>
+                                                Gérez les postes disponibles dans ce département
+                                            </CardDescription>
+                                        </div>
+                                        {canManage && !showPositionForm && !editingPosition && (
+                                            <Button onClick={() => setShowPositionForm(true)} size="sm">
+                                                <PlusIcon className="h-4 w-4 mr-1" />
+                                                Nouveau poste
+                                            </Button>
+                                        )}
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    {/* Position Form (Create/Edit) */}
+                                    {canManage && (showPositionForm || editingPosition) && (
+                                        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                                                {editingPosition ? 'Modifier le poste' : 'Créer un poste'}
+                                            </h3>
+                                            <PositionForm
+                                                departmentUuid={department.uuid}
+                                                editingPosition={editingPosition}
+                                                onCancel={() => {
+                                                    setShowPositionForm(false);
+                                                    setEditingPosition(null);
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Positions List */}
+                                    {positions.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {positions.map((position) => (
+                                                <div
+                                                    key={position.uuid}
+                                                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div
+                                                            className="w-3 h-3 rounded-full"
+                                                            style={{ backgroundColor: position.color || '#6b7280' }}
+                                                        />
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-medium text-gray-900 dark:text-white">
+                                                                    {position.name}
+                                                                </span>
+                                                                {position.code && (
+                                                                    <Badge variant="outline" className="text-xs">
+                                                                        {position.code}
+                                                                    </Badge>
+                                                                )}
+                                                                {!position.is_active && (
+                                                                    <Badge variant="secondary" className="text-xs">
+                                                                        Inactif
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                            {position.description && (
+                                                                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                                                                    {position.description}
+                                                                </p>
+                                                            )}
+                                                            {position.hourly_rate && (
+                                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                    {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(parseFloat(position.hourly_rate))}/h
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    {canManage && (
+                                                        <div className="flex items-center gap-1">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    setShowPositionForm(false);
+                                                                    setEditingPosition(position);
+                                                                }}
+                                                            >
+                                                                <PencilIcon className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-red-600 hover:text-red-700"
+                                                                onClick={async () => {
+                                                                    const confirmed = await confirm({
+                                                                        title: 'Supprimer le poste',
+                                                                        message: `Êtes-vous sûr de vouloir supprimer le poste "${position.name}" ? Les nominations associées seront également supprimées.`,
+                                                                        confirmText: 'Supprimer',
+                                                                        cancelText: 'Annuler',
+                                                                        type: 'danger'
+                                                                    });
+                                                                    if (confirmed) {
+                                                                        router.delete(
+                                                                            `/departments/${department.uuid}/positions/${position.uuid}`,
+                                                                            { preserveScroll: true }
+                                                                        );
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <TrashIcon className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                            <BriefcaseIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                                            <p>Aucun poste défini pour ce département.</p>
+                                            {canManage && !showPositionForm && (
+                                                <Button className="mt-4" size="sm" onClick={() => setShowPositionForm(true)}>
+                                                    <PlusIcon className="h-4 w-4 mr-1" />
+                                                    Créer un poste
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Nominations Card */}
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle>Nominations aux Postes</CardTitle>
+                                            <CardDescription>
+                                                Attribuez des postes aux membres du département
+                                            </CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    {/* Nomination Form */}
+                                    {canManage && positions.filter(p => p.is_active).length > 0 && department.users.length > 0 && (
+                                        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Nouvelle nomination</h3>
+                                            <NominationForm
+                                                departmentUuid={department.uuid}
+                                                positions={positions}
+                                                members={department.users}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {positions.filter(p => p.is_active).length === 0 && (
+                                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                            <BriefcaseIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                                            <p>Aucun poste actif. Créez d'abord des postes ci-dessus.</p>
+                                        </div>
+                                    )}
+
+                                    {/* Active Nominations List */}
+                                    {nominations.length > 0 ? (
+                                        <div className="space-y-3">
+                                            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Nominations actives</h3>
+                                            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                                {nominations.map((nomination) => (
+                                                    <div key={nomination.uuid} className="py-3 flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <span
+                                                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                                style={{
+                                                                    backgroundColor: nomination.position.color ? `${nomination.position.color}20` : '#e5e7eb',
+                                                                    color: nomination.position.color || '#374151',
+                                                                }}
+                                                            >
+                                                                {nomination.position.name}
+                                                            </span>
+                                                            <div>
+                                                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                    {nomination.user.name}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                    {nomination.user.email}
+                                                                    {nomination.start_date && ` — depuis le ${new Date(nomination.start_date).toLocaleDateString('fr-FR')}`}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        {canManage && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-red-600 hover:text-red-700"
+                                                                onClick={() => {
+                                                                    router.delete(
+                                                                        `/departments/${department.uuid}/nominations/${nomination.uuid}`,
+                                                                        { preserveScroll: true }
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <TrashIcon className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : positions.filter(p => p.is_active).length > 0 ? (
+                                        <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                                            <p>Aucune nomination active.</p>
+                                        </div>
+                                    ) : null}
+                                </CardContent>
+                            </Card>
+                        </div>
                     </TabsContent>
 
                     {/* Statistics Tab - Only visible to authorized users */}

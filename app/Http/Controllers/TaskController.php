@@ -13,6 +13,7 @@ use App\Models\TaskAttachment;
 use App\Models\TaskComment;
 use App\Models\TaskParticipant;
 use App\Models\User;
+use App\Services\ProjectStatisticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -38,15 +39,15 @@ class TaskController extends Controller
                 $q->where('name', $status);
             });
         })
-        ->when(request('program'), function ($query, $program) {
-            $query->where('program_id', $program);
-        })
-        ->when(request('priority'), function ($query, $priority) {
-            $query->where('priority', $priority);
-        })
-        ->when(request('assigned_to'), function ($query, $userId) {
-            $query->where('assigned_to', $userId);
-        });
+            ->when(request('program'), function ($query, $program) {
+                $query->where('program_id', $program);
+            })
+            ->when(request('priority'), function ($query, $priority) {
+                $query->where('priority', $priority);
+            })
+            ->when(request('assigned_to'), function ($query, $userId) {
+                $query->where('assigned_to', $userId);
+            });
 
         // Apply sorting
         $sortBy = request('sort_by');
@@ -60,20 +61,20 @@ class TaskController extends Controller
             $query->orderBy('tasks.due_date', $direction);
         } elseif ($sortBy === 'status') {
             $query->leftJoin('statuses', 'tasks.status_id', '=', 'statuses.id')
-                  ->orderBy('statuses.name', $direction)
-                  ->select('tasks.*');
+                ->orderBy('statuses.name', $direction)
+                ->select('tasks.*');
         } elseif ($sortBy === 'assigned_to') {
             $query->leftJoin('users', 'tasks.assigned_to', '=', 'users.id')
-                  ->orderBy('users.first_name', $direction)
-                  ->select('tasks.*');
+                ->orderBy('users.first_name', $direction)
+                ->select('tasks.*');
         } elseif ($sortBy === 'program') {
             $query->leftJoin('programs', 'tasks.program_id', '=', 'programs.id')
-                  ->orderBy('programs.name', $direction)
-                  ->select('tasks.*');
+                ->orderBy('programs.name', $direction)
+                ->select('tasks.*');
         } elseif ($sortBy === 'project') {
             $query->leftJoin('projects', 'tasks.project_id', '=', 'projects.id')
-                  ->orderBy('projects.name', $direction)
-                  ->select('tasks.*');
+                ->orderBy('projects.name', $direction)
+                ->select('tasks.*');
         } else {
             // Default sorting when no sort specified
             $query->orderBy('tasks.created_at', 'desc');
@@ -89,12 +90,15 @@ class TaskController extends Controller
         $statuses = Status::all();
         $users = User::all();
 
+        $taskStatistics = (new ProjectStatisticsService)->getTaskStatistics();
+
         return Inertia::render('Tasks/Index', [
             'tasks' => $tasks,
             'programs' => $programs,
             'statuses' => $statuses,
             'users' => $users,
             'filters' => request()->only(['status', 'program', 'priority', 'assigned_to', 'sort_by', 'sort_direction']),
+            'taskStatistics' => $taskStatistics,
         ]);
     }
 
@@ -105,7 +109,7 @@ class TaskController extends Controller
         $statuses = Status::all();
 
         // Get all users
-        $users = User::all()->map(fn($user) => [
+        $users = User::all()->map(fn ($user) => [
             'id' => $user->id,
             'uuid' => $user->uuid ?? null,
             'first_name' => $user->first_name,
@@ -118,7 +122,7 @@ class TaskController extends Controller
         $employees = Employee::with('user')
             ->where('status', EmployeeStatus::ACTIVE)
             ->get()
-            ->map(fn($employee) => [
+            ->map(fn ($employee) => [
                 'id' => $employee->user_id,
                 'uuid' => $employee->uuid,
                 'first_name' => $employee->user->first_name ?? '',
@@ -132,7 +136,7 @@ class TaskController extends Controller
         $stars = Star::with('user')
             ->where('status', StarStatus::ACTIVE)
             ->get()
-            ->map(fn($star) => [
+            ->map(fn ($star) => [
                 'id' => $star->user_id,
                 'uuid' => $star->uuid,
                 'first_name' => $star->user->first_name ?? '',
@@ -190,7 +194,7 @@ class TaskController extends Controller
         // Handle image from TUS upload (just filename)
         elseif ($request->filled('image') && is_string($request->image)) {
             // Image has already been uploaded via TUS to tasks directory
-            $validated['image'] = 'tasks/' . $request->image;
+            $validated['image'] = 'tasks/'.$request->image;
         }
 
         $task = Task::create($validated);
@@ -336,7 +340,7 @@ class TaskController extends Controller
                 \Storage::disk('public')->delete($task->image);
             }
             // Image has already been uploaded via TUS to tasks directory
-            $validated['image'] = 'tasks/' . $request->image;
+            $validated['image'] = 'tasks/'.$request->image;
         }
 
         $task->update($validated);
@@ -537,7 +541,7 @@ class TaskController extends Controller
         $isSuperAdmin = $user->hasRole('super-admin');
         $isAuthor = $comment->user_id === $user->id;
 
-        if (!$isAuthor && !$isSuperAdmin) {
+        if (! $isAuthor && ! $isSuperAdmin) {
             abort(403, 'Only the comment author or super admin can delete this comment.');
         }
 
@@ -560,7 +564,7 @@ class TaskController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('task-attachments/' . $task->id, 'public');
+        $path = $file->store('task-attachments/'.$task->id, 'public');
 
         TaskAttachment::create([
             'task_id' => $task->id,

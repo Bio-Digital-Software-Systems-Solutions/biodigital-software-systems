@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\Project;
 use App\Models\Star;
 use App\Models\User;
+use App\Services\ProjectStatisticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -100,10 +101,13 @@ class ProjectController extends Controller
                 return $project;
             });
 
+        $analyticsStats = (new ProjectStatisticsService)->getGlobalStatistics();
+
         return Inertia::render('Projects/Dashboard', [
             'projects' => $projects,
             'stats' => $stats,
             'recentProjects' => $recentProjects,
+            'analyticsStats' => $analyticsStats,
         ]);
     }
 
@@ -134,8 +138,8 @@ class ProjectController extends Controller
                     $query->orderBy('tasks_count', $direction);
                 } elseif ($sortBy === 'manager') {
                     $query->leftJoin('users', 'projects.project_manager_id', '=', 'users.id')
-                          ->orderBy('users.first_name', $direction)
-                          ->select('projects.*');
+                        ->orderBy('users.first_name', $direction)
+                        ->select('projects.*');
                 }
             }, function ($query) {
                 // Default sorting when no sort specified
@@ -167,7 +171,7 @@ class ProjectController extends Controller
     public function create()
     {
         // Get all users
-        $users = User::all()->map(fn($user) => [
+        $users = User::all()->map(fn ($user) => [
             'id' => $user->id,
             'uuid' => $user->uuid ?? null,
             'first_name' => $user->first_name,
@@ -180,7 +184,7 @@ class ProjectController extends Controller
         $employees = Employee::with('user')
             ->where('status', EmployeeStatus::ACTIVE)
             ->get()
-            ->map(fn($employee) => [
+            ->map(fn ($employee) => [
                 'id' => $employee->user_id,
                 'uuid' => $employee->uuid,
                 'first_name' => $employee->user->first_name ?? '',
@@ -194,7 +198,7 @@ class ProjectController extends Controller
         $stars = Star::with('user')
             ->where('status', StarStatus::ACTIVE)
             ->get()
-            ->map(fn($star) => [
+            ->map(fn ($star) => [
                 'id' => $star->user_id,
                 'uuid' => $star->uuid,
                 'first_name' => $star->user->first_name ?? '',
@@ -235,7 +239,7 @@ class ProjectController extends Controller
         // Handle image from TUS upload (just filename)
         elseif ($request->filled('image') && is_string($request->image)) {
             // Image has already been uploaded via TUS to projects directory
-            $validated['image'] = 'projects/' . $request->image;
+            $validated['image'] = 'projects/'.$request->image;
         }
 
         $validated['slug'] = Str::slug($validated['name']);
@@ -302,6 +306,8 @@ class ProjectController extends Controller
         // Load activity logs for the project and related models
         $activities = $this->getProjectActivities($project);
 
+        $projectStatistics = (new ProjectStatisticsService)->getProjectStatistics($project);
+
         return Inertia::render('Projects/Show', [
             'project' => array_merge($project->toArray(), [
                 'progress' => $progress,
@@ -310,6 +316,7 @@ class ProjectController extends Controller
             ]),
             'users' => $users,
             'activities' => $activities,
+            'projectStatistics' => $projectStatistics,
         ]);
     }
 
@@ -405,12 +412,12 @@ class ProjectController extends Controller
                 default => 'Participant modifié',
             },
             'attachment' => match ($event) {
-                'created' => 'Document ajouté: ' . ($properties['attributes']['file_name'] ?? 'fichier'),
+                'created' => 'Document ajouté: '.($properties['attributes']['file_name'] ?? 'fichier'),
                 'deleted' => 'Document supprimé',
                 default => 'Document modifié',
             },
             'task' => match ($event) {
-                'created' => 'Tâche ajoutée: ' . ($properties['attributes']['title'] ?? 'tâche'),
+                'created' => 'Tâche ajoutée: '.($properties['attributes']['title'] ?? 'tâche'),
                 'deleted' => 'Tâche supprimée',
                 default => 'Tâche modifiée',
             },
@@ -497,7 +504,7 @@ class ProjectController extends Controller
                 \Storage::disk('public')->delete($project->image);
             }
             // Image has already been uploaded via TUS to projects directory
-            $validated['image'] = 'projects/' . $request->image;
+            $validated['image'] = 'projects/'.$request->image;
         }
 
         if ($validated['name'] !== $project->name) {

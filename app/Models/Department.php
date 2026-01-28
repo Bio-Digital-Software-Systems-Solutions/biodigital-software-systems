@@ -97,6 +97,8 @@ class Department extends Model
         'code',
         'description',
         'head_of_department',
+        'first_deputy_id',
+        'second_deputy_id',
         'budget',
         'is_active',
         'image',
@@ -146,6 +148,22 @@ class Department extends Model
     public function headOfDepartment(): BelongsTo
     {
         return $this->belongsTo(User::class, 'head_of_department');
+    }
+
+    /**
+     * Get the first deputy of the department.
+     */
+    public function firstDeputy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'first_deputy_id');
+    }
+
+    /**
+     * Get the second deputy of the department.
+     */
+    public function secondDeputy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'second_deputy_id');
     }
 
     /**

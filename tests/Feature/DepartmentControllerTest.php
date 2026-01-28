@@ -833,4 +833,146 @@ class DepartmentControllerTest extends TestCase
             ->has('statistics.task_evolution.semester')
         );
     }
+
+    // ==================== Deputy Tests ====================
+
+    public function test_store_creates_department_with_deputies(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+
+        $firstDeputy = User::factory()->create();
+        $secondDeputy = User::factory()->create();
+
+        $departmentData = [
+            'name' => 'Test Department with Deputies',
+            'code' => 'TEST-DEP',
+            'description' => 'Test department description',
+            'head_of_department' => $this->headUser->id,
+            'first_deputy_id' => $firstDeputy->id,
+            'second_deputy_id' => $secondDeputy->id,
+            'budget' => '100000.00',
+            'is_active' => true,
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->post(route('departments.store'), $departmentData);
+
+        $response->assertRedirect(route('departments.index'));
+
+        $this->assertDatabaseHas('departments', [
+            'name' => 'Test Department with Deputies',
+            'code' => 'TEST-DEP',
+            'head_of_department' => $this->headUser->id,
+            'first_deputy_id' => $firstDeputy->id,
+            'second_deputy_id' => $secondDeputy->id,
+        ]);
+    }
+
+    public function test_store_creates_department_without_deputies(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+
+        $departmentData = [
+            'name' => 'Test Department No Deputies',
+            'code' => 'TEST-ND',
+            'is_active' => true,
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->post(route('departments.store'), $departmentData);
+
+        $response->assertRedirect(route('departments.index'));
+
+        $this->assertDatabaseHas('departments', [
+            'name' => 'Test Department No Deputies',
+            'code' => 'TEST-ND',
+            'first_deputy_id' => null,
+            'second_deputy_id' => null,
+        ]);
+    }
+
+    public function test_update_modifies_department_deputies(): void
+    {
+        $department = Department::factory()->create();
+        $newFirstDeputy = User::factory()->create();
+        $newSecondDeputy = User::factory()->create();
+
+        $this->user->givePermissionTo('manage departments');
+
+        $updateData = [
+            'name' => $department->name,
+            'code' => $department->code,
+            'first_deputy_id' => $newFirstDeputy->id,
+            'second_deputy_id' => $newSecondDeputy->id,
+            'is_active' => true,
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->put(route('departments.update', $department), $updateData);
+
+        $response->assertRedirect(route('departments.index'));
+
+        $department->refresh();
+        $this->assertEquals($newFirstDeputy->id, $department->first_deputy_id);
+        $this->assertEquals($newSecondDeputy->id, $department->second_deputy_id);
+    }
+
+    public function test_first_deputy_must_exist(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+
+        $response = $this->actingAs($this->user)
+            ->post(route('departments.store'), [
+                'name' => 'Test Department',
+                'code' => 'TEST-INV-D',
+                'first_deputy_id' => 99999, // Non-existent user
+            ]);
+
+        $response->assertSessionHasErrors(['first_deputy_id']);
+    }
+
+    public function test_second_deputy_must_exist(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+
+        $response = $this->actingAs($this->user)
+            ->post(route('departments.store'), [
+                'name' => 'Test Department',
+                'code' => 'TEST-INV-D2',
+                'second_deputy_id' => 99999, // Non-existent user
+            ]);
+
+        $response->assertSessionHasErrors(['second_deputy_id']);
+    }
+
+    public function test_show_displays_deputies_info(): void
+    {
+        $firstDeputy = User::factory()->create(['first_name' => 'Premier', 'last_name' => 'Adjoint']);
+        $secondDeputy = User::factory()->create(['first_name' => 'Deuxième', 'last_name' => 'Adjoint']);
+
+        $department = Department::factory()->create([
+            'first_deputy_id' => $firstDeputy->id,
+            'second_deputy_id' => $secondDeputy->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('department.first_deputy', fn ($assert) => $assert
+                ->where('id', $firstDeputy->id)
+                ->where('name', 'Premier Adjoint')
+                ->etc()
+            )
+            ->has('department.second_deputy', fn ($assert) => $assert
+                ->where('id', $secondDeputy->id)
+                ->where('name', 'Deuxième Adjoint')
+                ->etc()
+            )
+        );
+    }
 }

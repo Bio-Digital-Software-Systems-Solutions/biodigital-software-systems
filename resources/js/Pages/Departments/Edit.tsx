@@ -20,6 +20,8 @@ interface Department {
     description?: string;
     budget?: number;
     head_of_department?: number;
+    first_deputy_id?: number;
+    second_deputy_id?: number;
     is_active: boolean;
 }
 
@@ -34,6 +36,8 @@ export default function Edit({ department, users }: Props) {
         code: department.code || '',
         description: department.description || '',
         head_of_department: department.head_of_department || '',
+        first_deputy_id: department.first_deputy_id || '',
+        second_deputy_id: department.second_deputy_id || '',
         budget: department.budget || '',
         is_active: department.is_active ?? true,
     });
@@ -162,6 +166,45 @@ export default function Edit({ department, users }: Props) {
                                         step="0.01"
                                     />
                                     {errors.budget && <p className="mt-1 text-sm text-red-600">{errors.budget}</p>}
+                                </div>
+                            </div>
+
+                            {/* Deputies */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label htmlFor="first_deputy_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        1er Adjoint
+                                    </label>
+                                    <div className="mt-1">
+                                        <SearchableSelect
+                                            id="first_deputy_id"
+                                            options={userOptions}
+                                            value={data.first_deputy_id ? Number(data.first_deputy_id) : null}
+                                            onChange={(value) => setData('first_deputy_id', value ? String(value) : '')}
+                                            placeholder="Rechercher un adjoint..."
+                                            isClearable={true}
+                                            noOptionsMessage="Aucun utilisateur trouvé"
+                                        />
+                                    </div>
+                                    {errors.first_deputy_id && <p className="mt-1 text-sm text-red-600">{errors.first_deputy_id}</p>}
+                                </div>
+
+                                <div>
+                                    <label htmlFor="second_deputy_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        2ème Adjoint
+                                    </label>
+                                    <div className="mt-1">
+                                        <SearchableSelect
+                                            id="second_deputy_id"
+                                            options={userOptions}
+                                            value={data.second_deputy_id ? Number(data.second_deputy_id) : null}
+                                            onChange={(value) => setData('second_deputy_id', value ? String(value) : '')}
+                                            placeholder="Rechercher un adjoint..."
+                                            isClearable={true}
+                                            noOptionsMessage="Aucun utilisateur trouvé"
+                                        />
+                                    </div>
+                                    {errors.second_deputy_id && <p className="mt-1 text-sm text-red-600">{errors.second_deputy_id}</p>}
                                 </div>
                             </div>
 

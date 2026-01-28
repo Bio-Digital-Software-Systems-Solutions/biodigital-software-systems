@@ -578,11 +578,11 @@ describe('DepartmentStatisticsAnalytical Component', () => {
             expect(gridContainers.length).toBeGreaterThan(0);
         });
 
-        it('uses responsive grid for area and bar charts', () => {
+        it('uses responsive grid for area, velocity and bar charts', () => {
             const stats = createMockStatistics();
             const { container } = render(<DepartmentStatisticsAnalytical statistics={stats} />);
 
-            const gridContainers = container.querySelectorAll('.grid.grid-cols-1.lg\\:grid-cols-2');
+            const gridContainers = container.querySelectorAll('.grid.grid-cols-1.lg\\:grid-cols-3');
             expect(gridContainers.length).toBeGreaterThan(0);
         });
     });
@@ -613,6 +613,100 @@ describe('DepartmentStatisticsAnalytical Component', () => {
 
             const coloredElements = container.querySelectorAll('[style*="background"]');
             expect(coloredElements.length).toBeGreaterThan(0);
+        });
+    });
+
+    describe('Velocity Gauge', () => {
+        it('renders velocity gauge when performance data exists', () => {
+            const stats = createMockStatistics();
+            render(<DepartmentStatisticsAnalytical statistics={stats} />);
+
+            expect(screen.getByText('Vélocité')).toBeInTheDocument();
+            expect(screen.getByText('Tâches terminées ce mois')).toBeInTheDocument();
+        });
+
+        it('displays monthly velocity value', () => {
+            const stats = createMockStatistics();
+            render(<DepartmentStatisticsAnalytical statistics={stats} />);
+
+            // velocity_this_month is 15 in mock data
+            expect(screen.getAllByText('15').length).toBeGreaterThan(0);
+            expect(screen.getByText('tâches / mois')).toBeInTheDocument();
+        });
+
+        it('displays velocity change comparison', () => {
+            const stats = createMockStatistics();
+            render(<DepartmentStatisticsAnalytical statistics={stats} />);
+
+            // velocity_change is 25% in mock data, velocity_last_month is 12
+            expect(screen.getByText('↑ 25%')).toBeInTheDocument();
+            expect(screen.getByText(/vs mois dernier \(12\)/)).toBeInTheDocument();
+        });
+
+        it('displays downward arrow for negative velocity change', () => {
+            const stats = createMockStatistics({
+                performance: {
+                    ...createMockStatistics().performance!,
+                    collective: {
+                        ...createMockStatistics().performance!.collective,
+                        velocity_this_month: 10,
+                        velocity_last_month: 15,
+                        velocity_change: -33,
+                    },
+                },
+            });
+            render(<DepartmentStatisticsAnalytical statistics={stats} />);
+
+            expect(screen.getByText('↓ 33%')).toBeInTheDocument();
+        });
+
+        it('does not render velocity gauge when performance is undefined', () => {
+            const stats = createMockStatistics({
+                performance: undefined,
+            });
+            render(<DepartmentStatisticsAnalytical statistics={stats} />);
+
+            expect(screen.queryByText('Vélocité')).toBeNull();
+        });
+
+        it('renders SVG gauge elements', () => {
+            const stats = createMockStatistics();
+            const { container } = render(<DepartmentStatisticsAnalytical statistics={stats} />);
+
+            // Should have SVG elements for the gauge
+            const svgElements = container.querySelectorAll('svg');
+            expect(svgElements.length).toBeGreaterThan(0);
+
+            // Should have tick marks (0, max/2, max)
+            const tickLabels = container.querySelectorAll('svg text');
+            expect(tickLabels.length).toBeGreaterThan(0);
+        });
+
+        it('displays velocity gauge with zero velocity', () => {
+            const stats = createMockStatistics({
+                performance: {
+                    ...createMockStatistics().performance!,
+                    collective: {
+                        ...createMockStatistics().performance!.collective,
+                        velocity_this_month: 0,
+                        velocity_last_month: 0,
+                        velocity_change: 0,
+                    },
+                },
+            });
+            render(<DepartmentStatisticsAnalytical statistics={stats} />);
+
+            expect(screen.getByText('Vélocité')).toBeInTheDocument();
+            expect(screen.getByText('↑ 0%')).toBeInTheDocument();
+        });
+
+        it('renders gauge in correct grid position', () => {
+            const stats = createMockStatistics();
+            const { container } = render(<DepartmentStatisticsAnalytical statistics={stats} />);
+
+            // Velocity gauge should be in the lg:grid-cols-3 section
+            const gridContainers = container.querySelectorAll('.grid.grid-cols-1.lg\\:grid-cols-3');
+            expect(gridContainers.length).toBeGreaterThan(0);
         });
     });
 });

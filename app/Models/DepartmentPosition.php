@@ -14,7 +14,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class DepartmentPosition extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'uuid',
@@ -75,6 +75,11 @@ class DepartmentPosition extends Model
     public function shifts(): HasMany
     {
         return $this->hasMany(\App\Models\Scheduling\Shift::class, 'position_id');
+    }
+
+    public function nominations(): HasMany
+    {
+        return $this->hasMany(DepartmentPositionNomination::class, 'department_position_id');
     }
 
     public function scopeActive($query)

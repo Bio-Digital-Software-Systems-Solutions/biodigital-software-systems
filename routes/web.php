@@ -219,6 +219,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('departments/{department}/users/{user}', [App\Http\Controllers\DepartmentController::class, 'removeUser'])
         ->name('departments.remove-user');
 
+    // Department Position Nominations
+    Route::prefix('departments/{department}/nominations')->name('departments.nominations.')->group(function () {
+        Route::get('/', [App\Http\Controllers\DepartmentPositionNominationController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\DepartmentPositionNominationController::class, 'store'])->name('store');
+        Route::put('/{nomination}', [App\Http\Controllers\DepartmentPositionNominationController::class, 'update'])->name('update');
+        Route::delete('/{nomination}', [App\Http\Controllers\DepartmentPositionNominationController::class, 'destroy'])->name('destroy');
+    });
+
+    // Department Positions
+    Route::prefix('departments/{department}/positions')->name('departments.positions.')->group(function () {
+        Route::get('/', [App\Http\Controllers\DepartmentPositionController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\DepartmentPositionController::class, 'store'])->name('store');
+        Route::put('/{position}', [App\Http\Controllers\DepartmentPositionController::class, 'update'])->name('update');
+        Route::delete('/{position}', [App\Http\Controllers\DepartmentPositionController::class, 'destroy'])->name('destroy');
+        Route::post('/reorder', [App\Http\Controllers\DepartmentPositionController::class, 'reorder'])->name('reorder');
+    });
+
     // ============================================
     // Department Scheduling Routes
     // ============================================
@@ -850,7 +867,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $canSelectPastor = $user->can('select pastor for pastoral care');
 
         // Debug log
-        \Log::info('Pastoral Care Book - User: ' . $user->email . ', canSelectPastor: ' . ($canSelectPastor ? 'true' : 'false'));
+        \Log::info('Pastoral Care Book - User: '.$user->email.', canSelectPastor: '.($canSelectPastor ? 'true' : 'false'));
 
         return \Inertia\Inertia::render('PastoralCare/PublicBook', [
             'canSelectPastor' => $canSelectPastor,
@@ -1096,7 +1113,7 @@ Route::post('appointments/{appointment:uuid}/decline/{token}', [App\Http\Control
 Route::get('pastoral-care/appointments/{uuid}/confirm', function ($uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (!$appointment) {
+    if (! $appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $uuid,
         ]);
@@ -1110,7 +1127,7 @@ Route::get('pastoral-care/appointments/{uuid}/confirm', function ($uuid) {
 Route::post('pastoral-care/appointments/{uuid}/confirm', function (\Illuminate\Http\Request $request, $uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (!$appointment) {
+    if (! $appointment) {
         return response()->json(['success' => false, 'message' => 'Rendez-vous introuvable'], 404);
     }
 
@@ -1127,7 +1144,7 @@ Route::post('pastoral-care/appointments/{uuid}/confirm', function (\Illuminate\H
 Route::get('pastoral-care/appointments/{uuid}/cancel', function ($uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (!$appointment) {
+    if (! $appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $uuid,
         ]);
@@ -1141,7 +1158,7 @@ Route::get('pastoral-care/appointments/{uuid}/cancel', function ($uuid) {
 Route::post('pastoral-care/appointments/{uuid}/cancel', function (\Illuminate\Http\Request $request, $uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (!$appointment) {
+    if (! $appointment) {
         return response()->json(['success' => false, 'message' => 'Rendez-vous introuvable'], 404);
     }
 
@@ -1162,7 +1179,7 @@ Route::post('pastoral-care/appointments/{uuid}/cancel', function (\Illuminate\Ht
 Route::get('pastoral-care/appointments/{uuid}/success', function ($uuid) {
     $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
 
-    if (!$appointment) {
+    if (! $appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
             'appointmentId' => $uuid,
         ]);
@@ -1185,4 +1202,4 @@ Route::middleware(['auth'])->group(function () {
         ->name('sentry.test-breadcrumbs');
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

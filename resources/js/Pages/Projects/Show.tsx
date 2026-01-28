@@ -29,6 +29,7 @@ import { Button } from '@/Components/ui/button';
 import ProjectCalendarWidget from '@/Components/Calendar/ProjectCalendarWidget';
 import CreateAppointmentModal from '@/Components/Calendar/CreateAppointmentModal';
 import AppointmentDetailModal from '@/Components/Calendar/AppointmentDetailModal';
+import ProjectStatisticsAnalytical, { ProjectAnalyticsData } from '@/Components/Project/ProjectStatisticsAnalytical';
 import axios from 'axios';
 
 interface Activity {
@@ -82,9 +83,10 @@ interface Props {
     project: Project;
     users: User[];
     activities: Activity[];
+    projectStatistics?: ProjectAnalyticsData;
 }
 
-export default function ShowProject({ project, users, activities }: Props) {
+export default function ShowProject({ project, users, activities, projectStatistics }: Props) {
     const [uploading, setUploading] = useState(false);
     const [commentContent, setCommentContent] = useState('');
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
@@ -92,6 +94,7 @@ export default function ShowProject({ project, users, activities }: Props) {
     const [showAddParticipant, setShowAddParticipant] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState('');
     const [selectedRole, setSelectedRole] = useState<'member' | 'contributor' | 'observer'>('member');
+    const [statisticsExpanded, setStatisticsExpanded] = useState(true);
     const [tasksExpanded, setTasksExpanded] = useState(true);
     const [historyExpanded, setHistoryExpanded] = useState(false);
     const [calendarExpanded, setCalendarExpanded] = useState(true);
@@ -448,6 +451,31 @@ export default function ShowProject({ project, users, activities }: Props) {
                                 </p>
                             </div>
                         </div>
+
+                        {/* Statistics Accordion */}
+                        {projectStatistics && (
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+                                <button
+                                    type="button"
+                                    onClick={() => setStatisticsExpanded(!statisticsExpanded)}
+                                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                >
+                                    <h2 className="text-xl font-semibold dark:text-white flex items-center gap-2">
+                                        Statistiques du projet
+                                    </h2>
+                                    {statisticsExpanded ? (
+                                        <MinusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                    ) : (
+                                        <PlusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                    )}
+                                </button>
+                                {statisticsExpanded && (
+                                    <div className="px-6 pb-6">
+                                        <ProjectStatisticsAnalytical statistics={projectStatistics} context="project" />
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Tasks Accordion */}
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow">

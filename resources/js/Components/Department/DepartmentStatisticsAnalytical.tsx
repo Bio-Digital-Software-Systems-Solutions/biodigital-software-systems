@@ -4,6 +4,7 @@ import {
     ClipboardDocumentCheckIcon,
     CheckBadgeIcon,
     ClockIcon,
+    BoltIcon,
 } from '@heroicons/react/24/outline';
 import type { DepartmentStatistics } from './DepartmentStatisticsOperational';
 
@@ -356,6 +357,176 @@ function AreaChart({ data, title, subtitle }: {
     );
 }
 
+function VelocityGauge({ velocityThisMonth, velocityLastMonth, velocityChange }: {
+    velocityThisMonth: number;
+    velocityLastMonth: number;
+    velocityChange: number;
+}) {
+    const max = 300; // Fixed max scale
+    const value = velocityThisMonth;
+    const steps = 20;
+    const totalSteps = max / steps;
+
+    // Calculate needle color based on value ratio
+    const getNeedleColor = (val: number) => {
+        const ratio = val / max;
+        if (ratio < 0.33) return '#10b981'; // Green
+        if (ratio < 0.66) return '#f59e0b'; // Orange/Yellow
+        return '#ef4444'; // Red
+    };
+
+    const needleColor = getNeedleColor(value);
+    const clampedValue = Math.min(value, max); // Clamp value to max
+    const rotation = (clampedValue / max) * 180 - 90; // From -90 (left) to 90 (right) degrees
+
+    // Generate tick marks
+    const ticks: { val: number; angle: number }[] = [];
+    for (let i = 0; i <= totalSteps; i++) {
+        const val = i * steps;
+        const tickAngle = (val / max) * 180 - 180;
+        ticks.push({ val, angle: tickAngle });
+    }
+
+    const isPositiveChange = velocityChange >= 0;
+
+    // Unique gradient ID
+    const gradientId = `dept-gauge-gradient-${Math.random().toString(36).substring(2, 11)}`;
+
+    return (
+        <Card className="h-full">
+            <CardContent className="pt-6 pb-4">
+                <div className="flex items-center gap-3 mb-4">
+                    <BoltIcon className="h-6 w-6 text-muted-foreground" />
+                    <div>
+                        <h3 className="font-semibold text-base">Vélocité</h3>
+                        <p className="text-sm text-muted-foreground uppercase tracking-wide">Tâches terminées ce mois</p>
+                    </div>
+                </div>
+                <div className="relative flex flex-col items-center justify-center h-full w-full pt-4">
+                    <div className="relative w-full max-w-[360px] h-[200px]">
+                        <svg viewBox="0 0 200 120" className="w-full h-full overflow-visible">
+                            {/* Gradient definition for arc */}
+                            <defs>
+                                <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stopColor="#10b981" />
+                                    <stop offset="50%" stopColor="#f59e0b" />
+                                    <stop offset="100%" stopColor="#ef4444" />
+                                </linearGradient>
+                            </defs>
+
+                            {/* Background arc (track) */}
+                            <path
+                                d="M20 100 A 80 80 0 0 1 180 100"
+                                fill="none"
+                                stroke="#f1f5f9"
+                                strokeWidth="10"
+                                strokeLinecap="round"
+                                className="dark:stroke-gray-700"
+                            />
+
+                            {/* Colored arc (Gradient) */}
+                            <path
+                                d="M20 100 A 80 80 0 0 1 180 100"
+                                fill="none"
+                                stroke={`url(#${gradientId})`}
+                                strokeWidth="10"
+                                strokeLinecap="round"
+                                opacity="0.8"
+                            />
+
+                            {/* Tick marks (graduations) - show all labels */}
+                            {ticks.map((tick, i) => {
+                                const isMajor = tick.val % 100 === 0;
+                                const isMedium = tick.val % 50 === 0;
+                                const rad = (tick.angle * Math.PI) / 180;
+                                const x1 = 100 + Math.cos(rad) * 80;
+                                const y1 = 100 + Math.sin(rad) * 80;
+                                const x2 = 100 + Math.cos(rad) * (isMajor ? 66 : isMedium ? 70 : 74);
+                                const y2 = 100 + Math.sin(rad) * (isMajor ? 66 : isMedium ? 70 : 74);
+
+                                // Text position - closer for minor ticks
+                                const tx = 100 + Math.cos(rad) * (isMajor ? 52 : 56);
+                                const ty = 100 + Math.sin(rad) * (isMajor ? 52 : 56);
+
+                                return (
+                                    <g key={i}>
+                                        <line
+                                            x1={x1}
+                                            y1={y1}
+                                            x2={x2}
+                                            y2={y2}
+                                            stroke="#94a3b8"
+                                            strokeWidth={isMajor ? 2 : isMedium ? 1 : 0.5}
+                                            className="dark:stroke-gray-500"
+                                        />
+                                        <text
+                                            x={tx}
+                                            y={ty}
+                                            fontSize={isMajor ? '8' : '5'}
+                                            fontWeight={isMajor ? 'bold' : 'normal'}
+                                            fill={isMajor ? '#475569' : '#94a3b8'}
+                                            textAnchor="middle"
+                                            alignmentBaseline="middle"
+                                            className={isMajor ? 'dark:fill-gray-300' : 'dark:fill-gray-500'}
+                                        >
+                                            {Math.round(tick.val)}
+                                        </text>
+                                    </g>
+                                );
+                            })}
+
+                            {/* Needle (triangular instrument-style) */}
+                            <g
+                                transform={`rotate(${rotation}, 100, 100)`}
+                                className="transition-transform duration-1000 ease-out"
+                            >
+                                <path
+                                    d="M97 100 L100 35 L103 100 Z"
+                                    fill={needleColor}
+                                    stroke="#fff"
+                                    strokeWidth="0.5"
+                                />
+                                <circle
+                                    cx="100"
+                                    cy="100"
+                                    r="4"
+                                    fill="#1e293b"
+                                    stroke="#fff"
+                                    strokeWidth="1"
+                                    className="dark:fill-gray-200"
+                                />
+                            </g>
+                        </svg>
+
+                        {/* Central value display */}
+                        <div className="absolute -bottom-6 left-0 right-0 text-center">
+                            <p
+                                className="text-4xl font-black tracking-tighter"
+                                style={{ color: needleColor }}
+                            >
+                                {value}
+                            </p>
+                            <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                tâches / mois
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Comparison with last month */}
+                    <div className="flex items-center gap-2 mt-3 text-base">
+                        <span className={`flex items-center gap-1 font-semibold ${isPositiveChange ? 'text-green-600' : 'text-red-600'}`}>
+                            {isPositiveChange ? '↑' : '↓'} {Math.abs(velocityChange)}%
+                        </span>
+                        <span className="text-muted-foreground">
+                            vs mois dernier ({velocityLastMonth})
+                        </span>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 function HorizontalBarChart({ data, title, subtitle }: {
     data: { name: string; value: number; color: string; completed?: number; total?: number }[];
     title: string;
@@ -488,13 +659,20 @@ export default function DepartmentStatisticsAnalytical({ statistics }: Props) {
                 />
             </div>
 
-            {/* Area Chart + Horizontal Bars */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Area Chart + Velocity Gauge + Horizontal Bars */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <AreaChart
                     data={weeklyEvolution}
                     title="Évolution Hebdomadaire"
                     subtitle="Tâches créées vs terminées"
                 />
+                {statistics?.performance?.collective && (
+                    <VelocityGauge
+                        velocityThisMonth={statistics.performance.collective.velocity_this_month}
+                        velocityLastMonth={statistics.performance.collective.velocity_last_month}
+                        velocityChange={statistics.performance.collective.velocity_change}
+                    />
+                )}
                 <HorizontalBarChart
                     data={efficiencyData}
                     title="Taux de Complétion"

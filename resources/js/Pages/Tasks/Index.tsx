@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Task, Program, Status, User, PageProps } from '@/Types';
 import { Button } from '@/Components/ui/button';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import ProjectStatisticsAnalytical, { ProjectAnalyticsData } from '@/Components/Project/ProjectStatisticsAnalytical';
 
 interface Props extends PageProps {
     tasks: {
@@ -27,13 +28,15 @@ interface Props extends PageProps {
         sort_by?: string;
         sort_direction?: string;
     };
+    taskStatistics?: ProjectAnalyticsData;
 }
 
 type ViewMode = 'table' | 'list' | 'grid';
 
-export default function Index({ tasks, programs, statuses, users, filters }: Props) {
+export default function Index({ tasks, programs, statuses, users, filters, taskStatistics }: Props) {
     const [showFilters, setShowFilters] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('table');
+    const [activeTab, setActiveTab] = useState<'tasks' | 'statistics'>('tasks');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
@@ -171,6 +174,41 @@ export default function Index({ tasks, programs, statuses, users, filters }: Pro
             <Head title="Tasks" />
 
             <div className="mx-auto sm:px-6 lg:px-8">
+                {/* Tab Switcher */}
+                <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-fit mb-6">
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('tasks')}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                            activeTab === 'tasks'
+                                ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                    >
+                        Tâches
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('statistics')}
+                        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                            activeTab === 'statistics'
+                                ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                    >
+                        Statistiques
+                    </button>
+                </div>
+
+                {activeTab === 'statistics' ? (
+                    taskStatistics ? (
+                        <ProjectStatisticsAnalytical statistics={taskStatistics} context="tasks" />
+                    ) : (
+                        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                            Aucune donnée statistique disponible
+                        </div>
+                    )
+                ) : (
                 <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div className="p-4 text-gray-900 dark:text-gray-100">
                         {showFilters && (
@@ -521,6 +559,7 @@ export default function Index({ tasks, programs, statuses, users, filters }: Pro
                         )}
                     </div>
                 </div>
+                )}
             </div>
 
             <DeleteConfirmationDialog

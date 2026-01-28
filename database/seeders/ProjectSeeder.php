@@ -85,7 +85,14 @@ class ProjectSeeder extends Seeder
         ];
 
         foreach ($projects as $projectData) {
-            $projectData['slug'] = Str::slug($projectData['name']);
+            $slug = Str::slug($projectData['name']);
+
+            // Skip if project with this slug already exists
+            if (Project::where('slug', $slug)->exists()) {
+                continue;
+            }
+
+            $projectData['slug'] = $slug;
             $projectData['project_manager_id'] = $managers->random()->id;
 
             $project = Project::create($projectData);

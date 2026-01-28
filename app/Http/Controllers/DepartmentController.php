@@ -11,6 +11,7 @@ use App\Models\Department;
 use App\Models\DepartmentDocument;
 use App\Models\DepartmentForm;
 use App\Models\DepartmentNeed;
+use App\Models\DepartmentPositionNomination;
 use App\Models\DepartmentWorkflow;
 use App\Models\Employee;
 use App\Models\Scheduling\Absence;
@@ -98,6 +99,8 @@ class DepartmentController extends Controller
             'code' => 'required|string|max:50|unique:departments',
             'description' => 'nullable|string',
             'head_of_department' => 'nullable|exists:users,id',
+            'first_deputy_id' => 'nullable|exists:users,id',
+            'second_deputy_id' => 'nullable|exists:users,id',
             'budget' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
             'image' => 'nullable',
@@ -121,7 +124,7 @@ class DepartmentController extends Controller
 
     public function show(Department $department)
     {
-        $department->load(['users', 'headOfDepartment']);
+        $department->load(['users', 'headOfDepartment', 'firstDeputy', 'secondDeputy']);
 
         // Check if user can view statistics
         $user = auth()->user();
@@ -186,6 +189,16 @@ class DepartmentController extends Controller
                     'id' => $department->headOfDepartment->id,
                     'name' => $department->headOfDepartment->name,
                     'email' => $department->headOfDepartment->email,
+                ] : null,
+                'first_deputy' => $department->firstDeputy ? [
+                    'id' => $department->firstDeputy->id,
+                    'name' => $department->firstDeputy->name,
+                    'email' => $department->firstDeputy->email,
+                ] : null,
+                'second_deputy' => $department->secondDeputy ? [
+                    'id' => $department->secondDeputy->id,
+                    'name' => $department->secondDeputy->name,
+                    'email' => $department->secondDeputy->email,
                 ] : null,
                 'users' => $department->users->map(function ($user) {
                     return [
@@ -283,6 +296,45 @@ class DepartmentController extends Controller
                         ] : null,
                     ];
                 }),
+            'positions' => $department->positions()->ordered()->get()->map(fn ($p) => [
+                'id' => $p->id,
+                'uuid' => $p->uuid,
+                'name' => $p->name,
+                'code' => $p->code,
+                'description' => $p->description,
+                'color' => $p->color,
+                'hourly_rate' => $p->hourly_rate,
+                'is_active' => $p->is_active,
+            ]),
+            'nominations' => DepartmentPositionNomination::with(['position', 'user', 'nominatedBy'])
+                ->where('department_id', $department->id)
+                ->active()
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(fn ($n) => [
+                    'uuid' => $n->uuid,
+                    'position' => [
+                        'id' => $n->position->id,
+                        'uuid' => $n->position->uuid,
+                        'name' => $n->position->name,
+                        'color' => $n->position->color,
+                    ],
+                    'user' => [
+                        'id' => $n->user->id,
+                        'uuid' => $n->user->uuid,
+                        'name' => $n->user->name,
+                        'email' => $n->user->email,
+                    ],
+                    'nominated_by' => $n->nominatedBy ? [
+                        'id' => $n->nominatedBy->id,
+                        'name' => $n->nominatedBy->name,
+                    ] : null,
+                    'start_date' => $n->start_date?->toDateString(),
+                    'end_date' => $n->end_date?->toDateString(),
+                    'notes' => $n->notes,
+                    'is_active' => $n->is_active,
+                    'created_at' => $n->created_at->toISOString(),
+                ]),
             'documentsTree' => DepartmentDocument::getTreeForDepartment($department->id),
             'documentsCount' => DepartmentDocument::where('department_id', $department->id)->count(),
             // Only load statistics if user has permission to view them
@@ -292,7 +344,7 @@ class DepartmentController extends Controller
 
     public function edit(Department $department)
     {
-        $department->load(['users']);
+        $department->load(['users', 'firstDeputy', 'secondDeputy']);
         $users = User::all();
 
         return Inertia::render('Departments/Edit', [
@@ -308,6 +360,8 @@ class DepartmentController extends Controller
             'code' => 'required|string|max:50|unique:departments,code,'.$department->id,
             'description' => 'nullable|string',
             'head_of_department' => 'nullable|exists:users,id',
+            'first_deputy_id' => 'nullable|exists:users,id',
+            'second_deputy_id' => 'nullable|exists:users,id',
             'budget' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
             'image' => 'nullable',
