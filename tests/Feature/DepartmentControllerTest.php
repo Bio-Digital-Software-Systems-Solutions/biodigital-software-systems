@@ -658,4 +658,179 @@ class DepartmentControllerTest extends TestCase
             ->where('canManage', false)
         );
     }
+
+    // ==================== Statistics Tests ====================
+
+    public function test_show_includes_statistics_for_department_member(): void
+    {
+        $department = Department::factory()->create();
+        $department->users()->attach($this->user);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->where('canViewStatistics', true)
+            ->has('statistics', fn ($assert) => $assert
+                ->has('members')
+                ->has('workflows')
+                ->has('forms')
+                ->has('needs')
+                ->has('documents')
+                ->has('scheduling')
+                ->has('todos')
+                ->has('task_evolution')
+                ->has('tasks_by_member')
+                ->has('performance')
+            )
+        );
+    }
+
+    public function test_show_includes_statistics_for_manage_departments_permission(): void
+    {
+        $department = Department::factory()->create();
+
+        $this->user->givePermissionTo(['view departments', 'manage departments']);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->where('canViewStatistics', true)
+            ->has('statistics')
+        );
+    }
+
+    public function test_show_includes_statistics_for_head_of_department(): void
+    {
+        $department = Department::factory()->create([
+            'head_of_department' => $this->user->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->where('canViewStatistics', true)
+            ->has('statistics')
+        );
+    }
+
+    public function test_show_excludes_statistics_for_non_member_without_permission(): void
+    {
+        $department = Department::factory()->create();
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->where('canViewStatistics', false)
+            ->where('statistics', null)
+        );
+    }
+
+    public function test_statistics_todos_breakdown_is_correct(): void
+    {
+        $department = Department::factory()->create();
+        $department->users()->attach($this->user);
+
+        $this->user->givePermissionTo('view departments');
+
+        // Create todos with different statuses
+        \App\Models\Scheduling\DepartmentTodo::factory()->count(3)->create([
+            'department_id' => $department->id,
+            'created_by' => $this->user->id,
+            'status' => \App\Enums\Scheduling\ShiftTaskStatus::COMPLETED,
+            'completed_at' => now(),
+            'completed_by' => $this->user->id,
+        ]);
+
+        \App\Models\Scheduling\DepartmentTodo::factory()->count(2)->create([
+            'department_id' => $department->id,
+            'created_by' => $this->user->id,
+            'status' => \App\Enums\Scheduling\ShiftTaskStatus::IN_PROGRESS,
+        ]);
+
+        \App\Models\Scheduling\DepartmentTodo::factory()->create([
+            'department_id' => $department->id,
+            'created_by' => $this->user->id,
+            'status' => \App\Enums\Scheduling\ShiftTaskStatus::TODO,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('statistics.todos', fn ($assert) => $assert
+                ->where('total', 6)
+                ->where('completed', 3)
+                ->where('in_progress', 2)
+                ->where('pending', 1)
+                ->etc()
+            )
+        );
+    }
+
+    public function test_statistics_performance_includes_collective_metrics(): void
+    {
+        $department = Department::factory()->create();
+        $department->users()->attach($this->user);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('statistics.performance.collective', fn ($assert) => $assert
+                ->has('total_tasks')
+                ->has('completed_tasks')
+                ->has('completion_rate')
+                ->has('overdue_tasks')
+                ->has('overdue_rate')
+                ->has('velocity_this_month')
+                ->has('velocity_last_month')
+                ->has('velocity_change')
+                ->has('avg_completion_days')
+            )
+        );
+    }
+
+    public function test_statistics_task_evolution_has_all_periods(): void
+    {
+        $department = Department::factory()->create();
+        $department->users()->attach($this->user);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->has('statistics.task_evolution.weekly')
+            ->has('statistics.task_evolution.monthly')
+            ->has('statistics.task_evolution.quarterly')
+            ->has('statistics.task_evolution.semester')
+        );
+    }
 }

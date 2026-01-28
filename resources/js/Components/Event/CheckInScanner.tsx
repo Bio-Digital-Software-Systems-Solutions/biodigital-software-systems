@@ -279,7 +279,7 @@ export const CheckInScanner: React.FC<CheckInScannerProps> = ({
                                     {t('events.checkin.rate', 'Taux')}
                                 </p>
                                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                    {stats.attendance_rate.toFixed(1)}%
+                                    {(stats.attendance_rate ?? 0).toFixed(1)}%
                                 </p>
                             </div>
                         </div>

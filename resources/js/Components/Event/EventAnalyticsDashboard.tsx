@@ -184,7 +184,7 @@ export const EventAnalyticsDashboard: React.FC<EventAnalyticsDashboardProps> = (
                     <div className="mt-4">
                         <div className="flex justify-between text-sm mb-1">
                             <span>{t('events.analytics.utilization', 'Taux de remplissage')}</span>
-                            <span>{dashboard.overview.capacity.utilization.toFixed(1)}%</span>
+                            <span>{(dashboard.overview.capacity.utilization ?? 0).toFixed(1)}%</span>
                         </div>
                         <div className="h-2 bg-white/30 rounded-full overflow-hidden">
                             <div
@@ -245,7 +245,7 @@ const OverviewTab: React.FC<{ dashboard: EventDashboard }> = ({ dashboard }) => 
                 <MetricCard
                     title={t('events.analytics.checked_in', 'Présents')}
                     value={dashboard.checkins.checked_in}
-                    subtitle={`${dashboard.checkins.attendance_rate.toFixed(1)}%`}
+                    subtitle={`${(dashboard.checkins.attendance_rate ?? 0).toFixed(1)}%`}
                     icon={CheckCircleIcon}
                     color="green"
                 />
@@ -308,7 +308,7 @@ const OverviewTab: React.FC<{ dashboard: EventDashboard }> = ({ dashboard }) => 
                                 <div className="flex justify-between text-sm mb-1">
                                     <span className="font-medium text-gray-700 dark:text-gray-300 capitalize">{type}</span>
                                     <span className="text-gray-500 dark:text-gray-400">
-                                        {data.sold} / {data.count} ({((data.sold / data.count) * 100).toFixed(0)}%)
+                                        {data.sold} / {data.count} ({data.count > 0 ? ((data.sold / data.count) * 100).toFixed(0) : 0}%)
                                     </span>
                                 </div>
                                 <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -356,7 +356,7 @@ const RegistrationsTab: React.FC<{ stats: RegistrationStats }> = ({ stats }) => 
                 />
                 <MetricCard
                     title={t('events.analytics.conversion_rate', 'Taux de conversion')}
-                    value={`${stats.conversion_rate.toFixed(1)}%`}
+                    value={`${(stats.conversion_rate ?? 0).toFixed(1)}%`}
                     icon={ArrowTrendingUpIcon}
                     color="purple"
                 />
@@ -541,7 +541,7 @@ const AttendanceTab: React.FC<{ checkins: CheckInStats; badges: BadgeStats }> = 
                 />
                 <MetricCard
                     title={t('events.analytics.attendance_rate', 'Taux de présence')}
-                    value={`${checkins.attendance_rate.toFixed(1)}%`}
+                    value={`${(checkins.attendance_rate ?? 0).toFixed(1)}%`}
                     icon={ChartPieIcon}
                     color="purple"
                 />
@@ -612,7 +612,7 @@ const FeedbackTab: React.FC<{ stats: FeedbackStats }> = ({ stats }) => {
                 <MetricCard
                     title={t('events.analytics.responses', 'Réponses')}
                     value={stats.count}
-                    subtitle={`${stats.response_rate.toFixed(1)}% de taux`}
+                    subtitle={`${(stats.response_rate ?? 0).toFixed(1)}% de taux`}
                     icon={UserGroupIcon}
                     color="blue"
                 />
