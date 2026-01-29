@@ -388,25 +388,24 @@ const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = 
                                 )}
 
                                 {/* Participants */}
-                                {event.max_participants && (
-                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-700/50 overflow-hidden">
-                                        <Accordion>
-                                            <AccordionItem value="participants" className="border-none">
-                                                <AccordionTrigger className="px-4 py-4 hover:no-underline">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="p-2 rounded-lg bg-white dark:bg-gray-700">
-                                                            <UserGroupIcon className="w-6 h-6 text-icc-blue" />
+                                <div className="rounded-xl bg-gray-50 dark:bg-gray-700/50 overflow-hidden">
+                                    <Accordion>
+                                        <AccordionItem value="participants" className="border-none">
+                                            <AccordionTrigger className="px-4 py-4 hover:no-underline">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-2 rounded-lg bg-white dark:bg-gray-700">
+                                                        <UserGroupIcon className="w-6 h-6 text-icc-blue" />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                            Participants
                                                         </div>
-                                                        <div className="text-left">
-                                                            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                                                Participants
-                                                            </div>
-                                                            <div className="text-gray-900 dark:text-white font-medium">
-                                                                {event.participants?.length || 0} / {event.max_participants} inscrits
-                                                            </div>
+                                                        <div className="text-gray-900 dark:text-white font-medium">
+                                                            {event.participants?.length || 0}{event.max_participants ? ` / ${event.max_participants}` : ''} inscrits
                                                         </div>
                                                     </div>
-                                                </AccordionTrigger>
+                                                </div>
+                                            </AccordionTrigger>
                                                 <AccordionContent>
                                                     {event.participants && event.participants.length > 0 && (
                                                         <div className="flex flex-wrap gap-2 px-4 pb-4">
@@ -436,7 +435,6 @@ const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = 
                                             </AccordionItem>
                                         </Accordion>
                                     </div>
-                                )}
                             </div>
                         </div>
                     </div>
