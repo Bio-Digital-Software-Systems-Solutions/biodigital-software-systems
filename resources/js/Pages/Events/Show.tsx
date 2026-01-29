@@ -389,42 +389,52 @@ const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = 
 
                                 {/* Participants */}
                                 {event.max_participants && (
-                                    <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-                                        <div className="p-2 rounded-lg bg-white dark:bg-gray-700">
-                                            <UserGroupIcon className="w-6 h-6 text-icc-blue" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                                                Participants
-                                            </div>
-                                            <div className="text-gray-900 dark:text-white font-medium">
-                                                {event.participants?.length || 0} / {event.max_participants} inscrits
-                                            </div>
-                                            {event.participants && event.participants.length > 0 && (
-                                                <div className="flex flex-wrap gap-2 mt-3">
-                                                    {event.participants.slice(0, 5).map((participant) => (
-                                                        <div
-                                                            key={participant.id}
-                                                            className="flex items-center gap-2 bg-white dark:bg-gray-700 rounded-full pl-1 pr-3 py-1 border border-gray-200 dark:border-gray-600"
-                                                        >
-                                                            <div className="w-6 h-6 rounded-full bg-icc-blue text-white flex items-center justify-center text-xs font-medium">
-                                                                {(participant.first_name?.[0] || participant.name[0]).toUpperCase()}
-                                                            </div>
-                                                            <span className="text-sm text-gray-700 dark:text-gray-300">
-                                                                {participant.first_name && participant.last_name
-                                                                    ? `${participant.first_name} ${participant.last_name}`
-                                                                    : participant.name}
-                                                            </span>
+                                    <div className="rounded-xl bg-gray-50 dark:bg-gray-700/50 overflow-hidden">
+                                        <Accordion>
+                                            <AccordionItem value="participants" className="border-none">
+                                                <AccordionTrigger className="px-4 py-4 hover:no-underline">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="p-2 rounded-lg bg-white dark:bg-gray-700">
+                                                            <UserGroupIcon className="w-6 h-6 text-icc-blue" />
                                                         </div>
-                                                    ))}
-                                                    {event.participants.length > 5 && (
-                                                        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-600 rounded-full px-3 py-1 text-sm text-gray-600 dark:text-gray-300">
-                                                            +{event.participants.length - 5} autres
+                                                        <div className="text-left">
+                                                            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                                Participants
+                                                            </div>
+                                                            <div className="text-gray-900 dark:text-white font-medium">
+                                                                {event.participants?.length || 0} / {event.max_participants} inscrits
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </AccordionTrigger>
+                                                <AccordionContent>
+                                                    {event.participants && event.participants.length > 0 && (
+                                                        <div className="flex flex-wrap gap-2 px-4 pb-4">
+                                                            {event.participants.map((participant) => (
+                                                                <div
+                                                                    key={participant.id}
+                                                                    className="flex items-center gap-2 bg-white dark:bg-gray-700 rounded-full pl-1 pr-3 py-1 border border-gray-200 dark:border-gray-600"
+                                                                >
+                                                                    <div className="w-6 h-6 rounded-full bg-icc-blue text-white flex items-center justify-center text-xs font-medium">
+                                                                        {(participant.first_name?.[0] || participant.name[0]).toUpperCase()}
+                                                                    </div>
+                                                                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                                                                        {participant.first_name && participant.last_name
+                                                                            ? `${participant.first_name} ${participant.last_name}`
+                                                                            : participant.name}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     )}
-                                                </div>
-                                            )}
-                                        </div>
+                                                    {(!event.participants || event.participants.length === 0) && (
+                                                        <div className="px-4 pb-4 text-sm text-gray-500 dark:text-gray-400">
+                                                            Aucun participant inscrit pour le moment.
+                                                        </div>
+                                                    )}
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        </Accordion>
                                     </div>
                                 )}
                             </div>

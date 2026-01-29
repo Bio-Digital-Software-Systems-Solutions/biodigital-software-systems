@@ -1,5 +1,5 @@
 import * as React from "react"
-import { ChevronDownIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, MinusIcon } from '@heroicons/react/24/outline'
 
 interface AccordionProps {
   children: React.ReactNode
@@ -8,6 +8,7 @@ interface AccordionProps {
 interface AccordionItemProps {
   value: string
   children: React.ReactNode
+  className?: string
 }
 
 interface AccordionTriggerProps {
@@ -43,7 +44,7 @@ const AccordionItemContext = React.createContext<{
   toggle: () => void
 } | null>(null)
 
-const AccordionItem = ({ value, children }: AccordionItemProps) => {
+const AccordionItem = ({ value, children, className }: AccordionItemProps) => {
   const context = React.useContext(AccordionContext)
   if (!context) throw new Error("AccordionItem must be used within Accordion")
 
@@ -54,7 +55,7 @@ const AccordionItem = ({ value, children }: AccordionItemProps) => {
 
   return (
     <AccordionItemContext.Provider value={{ value, isOpen, toggle }}>
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+      <div className={className ?? "border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"}>
         {children}
       </div>
     </AccordionItemContext.Provider>
@@ -72,9 +73,11 @@ const AccordionTrigger = ({ children, className = "" }: AccordionTriggerProps) =
       className={`flex items-center justify-between w-full px-4 py-3 text-left font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${className}`}
     >
       {children}
-      <ChevronDownIcon
-        className={`h-5 w-5 text-gray-500 transition-transform ${context.isOpen ? 'rotate-180' : ''}`}
-      />
+      {context.isOpen ? (
+        <MinusIcon className="h-5 w-5 text-gray-500 flex-shrink-0" />
+      ) : (
+        <PlusIcon className="h-5 w-5 text-gray-500 flex-shrink-0" />
+      )}
     </button>
   )
 }
