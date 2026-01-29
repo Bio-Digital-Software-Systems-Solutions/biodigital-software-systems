@@ -55,6 +55,10 @@ export interface Event {
     sessions?: EventSession[];
     registrations?: EventRegistration[];
     sponsors?: EventSponsor[];
+    media?: EventMedia[];
+    banners?: EventMedia[];
+    gallery_images?: EventMedia[];
+    gallery_videos?: EventMedia[];
 
     // Computed
     registrations_count?: number;
@@ -448,6 +452,46 @@ export interface EventWaitlist {
 
     // Computed
     full_name?: string;
+}
+
+export type EventMediaType = 'image' | 'video';
+export type EventMediaCollection = 'banner' | 'gallery';
+
+export interface EventMedia {
+    id: number;
+    uuid: string;
+    event_id: number;
+    uploaded_by?: number;
+    title?: string;
+    description?: string;
+    file_path: string;
+    file_name: string;
+    file_type: string;
+    file_size: number;
+    media_type: EventMediaType;
+    collection: EventMediaCollection;
+    is_featured: boolean;
+    thumbnail_path?: string;
+    width?: number;
+    height?: number;
+    duration?: number;
+    sort_order: number;
+    metadata?: Record<string, any>;
+    created_at: string;
+    updated_at: string;
+    deleted_at?: string;
+
+    // Computed
+    file_url?: string;
+    thumbnail_url?: string;
+    file_size_for_humans?: string;
+    duration_for_humans?: string;
+    dimensions?: string;
+    aspect_ratio?: number;
+
+    // Relationships
+    event?: Event;
+    uploader?: User;
 }
 
 // ===== API Response Types =====

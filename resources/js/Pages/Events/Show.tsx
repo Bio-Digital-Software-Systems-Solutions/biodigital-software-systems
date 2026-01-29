@@ -17,6 +17,7 @@ import {
     ClipboardDocumentListIcon,
     QrCodeIcon,
     ChartBarIcon,
+    PhotoIcon,
 } from '@heroicons/react/24/outline';
 import { format, parseISO, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -24,6 +25,8 @@ import { isAdmin } from '@/Enums/Role';
 import { userHasPermission } from '@/Enums/Permission';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import { TicketManager, RegistrationList, CheckInScanner, EventAnalyticsDashboard } from '@/Components/Event';
+import { EventMediaGallery, EventBanner } from '@/Components/Events';
+import { EventMedia } from '@/Types/event.d';
 
 interface Address {
     id: number;
@@ -67,18 +70,24 @@ interface Event {
     creator?: Creator;
     address?: Address;
     participants?: Participant[];
+    media?: EventMedia[];
 }
 
 interface ShowProps extends PageProps {
     event: Event;
+    banners?: EventMedia[];
+    galleryImages?: EventMedia[];
+    galleryVideos?: EventMedia[];
 }
 
-type TabType = 'details' | 'tickets' | 'registrations' | 'checkin' | 'analytics';
+type TabType = 'details' | 'gallery' | 'tickets' | 'registrations' | 'checkin' | 'analytics';
 
-const Show: React.FC<ShowProps> = ({ auth, event }) => {
+const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = [], galleryVideos = [] }) => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('details');
     const eventColor = event.color || '#3b82f6';
+
+    const allGalleryMedia = [...galleryImages, ...galleryVideos];
     const startDate = parseISO(event.start_date);
     const endDate = parseISO(event.end_date);
 
@@ -123,8 +132,11 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
         userHasPermission(auth.user, 'view events') ||
         auth.user?.id === event.creator?.id;
 
+    const hasMedia = allGalleryMedia.length > 0 || banners.length > 0;
+
     const tabs = [
         { id: 'details' as TabType, label: 'Détails', icon: CalendarIcon, show: true },
+        { id: 'gallery' as TabType, label: `Galerie${hasMedia ? ` (${allGalleryMedia.length})` : ''}`, icon: PhotoIcon, show: hasMedia },
         { id: 'tickets' as TabType, label: 'Billets', icon: TicketIcon, show: canManageTickets },
         { id: 'registrations' as TabType, label: 'Inscriptions', icon: ClipboardDocumentListIcon, show: canViewRegistrations },
         { id: 'checkin' as TabType, label: 'Check-in', icon: QrCodeIcon, show: canCheckIn },
@@ -217,10 +229,21 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
 
                 {/* Hero Section with Color */}
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden mb-6">
-                    <div
-                        className="h-2"
-                        style={{ backgroundColor: eventColor }}
-                    />
+                    {banners.length > 0 ? (
+                        <div className="relative h-56 sm:h-72 md:h-96">
+                            <img
+                                src={banners[0].file_url || `/storage/${banners[0].file_path}`}
+                                alt={event.title}
+                                className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        </div>
+                    ) : (
+                        <div
+                            className="h-2"
+                            style={{ backgroundColor: eventColor }}
+                        />
+                    )}
                     <div className="p-6">
                         <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
@@ -377,19 +400,25 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
                                                 {event.participants?.length || 0} / {event.max_participants} inscrits
                                             </div>
                                             {event.participants && event.participants.length > 0 && (
-                                                <div className="flex -space-x-2 mt-3">
+                                                <div className="flex flex-wrap gap-2 mt-3">
                                                     {event.participants.slice(0, 5).map((participant) => (
                                                         <div
                                                             key={participant.id}
-                                                            className="w-8 h-8 rounded-full bg-icc-blue text-white flex items-center justify-center text-xs font-medium border-2 border-white dark:border-gray-800"
-                                                            title={`${participant.first_name || ''} ${participant.last_name || participant.name}`}
+                                                            className="flex items-center gap-2 bg-white dark:bg-gray-700 rounded-full pl-1 pr-3 py-1 border border-gray-200 dark:border-gray-600"
                                                         >
-                                                            {(participant.first_name?.[0] || participant.name[0]).toUpperCase()}
+                                                            <div className="w-6 h-6 rounded-full bg-icc-blue text-white flex items-center justify-center text-xs font-medium">
+                                                                {(participant.first_name?.[0] || participant.name[0]).toUpperCase()}
+                                                            </div>
+                                                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                                                                {participant.first_name && participant.last_name
+                                                                    ? `${participant.first_name} ${participant.last_name}`
+                                                                    : participant.name}
+                                                            </span>
                                                         </div>
                                                     ))}
                                                     {event.participants.length > 5 && (
-                                                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 flex items-center justify-center text-xs font-medium border-2 border-white dark:border-gray-800">
-                                                            +{event.participants.length - 5}
+                                                        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-600 rounded-full px-3 py-1 text-sm text-gray-600 dark:text-gray-300">
+                                                            +{event.participants.length - 5} autres
                                                         </div>
                                                     )}
                                                 </div>
@@ -467,7 +496,7 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
                                                         : participant.name}
                                                 </div>
                                             </div>
-                                            {participant.pivot?.attended && (
+                                            {participant.pivot?.attended === true && (
                                                 <CheckCircleIcon className="w-5 h-5 text-green-500" title="A participé" />
                                             )}
                                         </div>
@@ -497,6 +526,39 @@ const Show: React.FC<ShowProps> = ({ auth, event }) => {
                 {/* Analytics Tab */}
                 {activeTab === 'analytics' && (
                     <EventAnalyticsDashboard eventId={event.uuid} />
+                )}
+
+                {/* Gallery Tab */}
+                {activeTab === 'gallery' && (
+                    <div className="space-y-6">
+                        {/* Banner */}
+                        {banners.length > 0 && (
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                                    Banner / Flyer
+                                </h2>
+                                <EventBanner
+                                    banner={banners[0]}
+                                    eventTitle={event.title}
+                                    className="max-w-sm mx-auto"
+                                />
+                            </div>
+                        )}
+
+                        {/* Media Gallery */}
+                        {allGalleryMedia.length > 0 && (
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                                    Photos et Vidéos
+                                </h2>
+                                <EventMediaGallery
+                                    media={allGalleryMedia}
+                                    eventUuid={event.uuid}
+                                    canEdit={canEditEvent}
+                                />
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
 

@@ -5,11 +5,10 @@ namespace App\Models;
 use App\Enums\Event\EventStatus;
 use App\Enums\Event\EventType;
 use App\Enums\Event\EventVisibility;
-use App\Models\Event\EventBadge;
 use App\Models\Event\EventCategory;
-use App\Models\Event\EventCheckin;
 use App\Models\Event\EventDocument;
 use App\Models\Event\EventFeedback;
+use App\Models\Event\EventMedia;
 use App\Models\Event\EventNotification;
 use App\Models\Event\EventPromoCode;
 use App\Models\Event\EventRegistration;
@@ -50,6 +49,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read int|null $participants_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $participants
  * @property-read \App\Models\User $user
+ *
  * @method static \Database\Factories\EventFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event newQuery()
@@ -72,19 +72,22 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereUserId($value)
+ *
  * @property string $uuid
  * @property string|null $avatar
  * @property array<array-key, mixed>|null $images
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
  * @property-read int|null $activities_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereAvatar($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereImages($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 class Event extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache, SoftDeletes;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity, SoftDeletes;
 
     /**
      * Configure activity log options.
@@ -289,6 +292,46 @@ class Event extends Model
         return $this->hasMany(EventFeedback::class);
     }
 
+    /**
+     * Get all media for the event.
+     */
+    public function media(): HasMany
+    {
+        return $this->hasMany(EventMedia::class);
+    }
+
+    /**
+     * Get all images for the event.
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(EventMedia::class)->images()->ordered();
+    }
+
+    /**
+     * Get all videos for the event.
+     */
+    public function videos(): HasMany
+    {
+        return $this->hasMany(EventMedia::class)->videos()->ordered();
+    }
+
+    /**
+     * Get banner/flyer images for the event.
+     */
+    public function banners(): HasMany
+    {
+        return $this->hasMany(EventMedia::class)->banner()->ordered();
+    }
+
+    /**
+     * Get gallery media for the event.
+     */
+    public function galleryMedia(): HasMany
+    {
+        return $this->hasMany(EventMedia::class)->gallery()->ordered();
+    }
+
     // ==================
     // Existing Accessors
     // ==================
@@ -392,7 +435,7 @@ class Event extends Model
      */
     public function isFull(): bool
     {
-        if (!$this->max_participants) {
+        if (! $this->max_participants) {
             return false;
         }
 
@@ -404,7 +447,7 @@ class Event extends Model
      */
     public function canAddParticipant(): bool
     {
-        return !$this->isFull();
+        return ! $this->isFull();
     }
 
     /**
@@ -446,7 +489,7 @@ class Event extends Model
      */
     public function canBeModifiedBy(?User $user = null): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -491,7 +534,7 @@ class Event extends Model
      */
     public function isOngoing(): bool
     {
-        return $this->hasStarted() && !$this->hasEnded();
+        return $this->hasStarted() && ! $this->hasEnded();
     }
 
     /**
@@ -499,7 +542,7 @@ class Event extends Model
      */
     public function hasWaitlistAvailable(): bool
     {
-        if (!$this->waitlist_enabled) {
+        if (! $this->waitlist_enabled) {
             return false;
         }
 
@@ -515,7 +558,7 @@ class Event extends Model
      */
     public function canAcceptRegistrations(): bool
     {
-        if (!$this->isRegistrationOpen()) {
+        if (! $this->isRegistrationOpen()) {
             return false;
         }
 
@@ -546,6 +589,7 @@ class Event extends Model
     public function getAverageFeedbackRating(): ?float
     {
         $avg = $this->feedback()->whereNotNull('overall_rating')->avg('overall_rating');
+
         return $avg ? round($avg, 1) : null;
     }
 
@@ -706,17 +750,17 @@ class Event extends Model
         parent::boot();
 
         static::creating(function ($event) {
-            if (!$event->color) {
+            if (! $event->color) {
                 $event->color = self::generateRandomColor();
             }
 
             // Set default type if not set
-            if (!$event->type) {
+            if (! $event->type) {
                 $event->type = EventType::OTHER;
             }
 
             // Set default visibility if not set
-            if (!$event->visibility) {
+            if (! $event->visibility) {
                 $event->visibility = $event->is_public ? EventVisibility::PUBLIC : EventVisibility::PRIVATE;
             }
         });

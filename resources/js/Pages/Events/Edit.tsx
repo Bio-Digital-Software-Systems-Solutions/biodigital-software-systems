@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps, User } from '@/Types';
-import { ArrowLeftIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, MapPinIcon, PhotoIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
 import UserMultiSelect from '@/Components/UserMultiSelect';
+import { EventMediaUploader, EventMediaGallery, EventBanner } from '@/Components/Events';
+import { EventMedia } from '@/Types/event.d';
 
 interface Event {
     id: number;
@@ -17,6 +19,7 @@ interface Event {
     is_public: boolean;
     status: string;
     participants?: User[];
+    media?: EventMedia[];
     address?: {
         street?: string;
         city?: string;
@@ -27,10 +30,41 @@ interface Event {
 
 interface Props extends PageProps {
     event: Event;
+    banners?: EventMedia[];
+    galleryImages?: EventMedia[];
+    galleryVideos?: EventMedia[];
 }
 
-export default function Edit({ event }: Props) {
+export default function Edit({ event, banners = [], galleryImages = [], galleryVideos = [] }: Props) {
     const [showAddress, setShowAddress] = useState(!!event.address && Object.values(event.address).some(value => value));
+    const [showMediaSection, setShowMediaSection] = useState(false);
+    const [currentMedia, setCurrentMedia] = useState<EventMedia[]>(event.media || []);
+    const [currentBanners, setCurrentBanners] = useState<EventMedia[]>(banners);
+
+    const handleMediaUploadComplete = (uploadedMedia: EventMedia[]) => {
+        setCurrentMedia((prev) => [...prev, ...uploadedMedia]);
+        // Refresh the page to get updated data
+        router.reload({ only: ['event', 'banners', 'galleryImages', 'galleryVideos'] });
+    };
+
+    const handleMediaDeleted = (mediaId: number) => {
+        setCurrentMedia((prev) => prev.filter((m) => m.id !== mediaId));
+        setCurrentBanners((prev) => prev.filter((m) => m.id !== mediaId));
+    };
+
+    const handleMediaUpdated = (updatedMedia: EventMedia) => {
+        setCurrentMedia((prev) =>
+            prev.map((m) => (m.id === updatedMedia.id ? updatedMedia : m))
+        );
+        if (updatedMedia.collection === 'banner') {
+            setCurrentBanners((prev) => {
+                const filtered = prev.filter((m) => m.id !== updatedMedia.id);
+                return [...filtered, updatedMedia];
+            });
+        } else {
+            setCurrentBanners((prev) => prev.filter((m) => m.id !== updatedMedia.id));
+        }
+    };
 
     const { data, setData, put, processing, errors } = useForm({
         title: event.title || '',
@@ -242,6 +276,83 @@ export default function Edit({ event }: Props) {
                                                 placeholder="Pays"
                                             />
                                         </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Media Section */}
+                            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                                        <PhotoIcon className="h-5 w-5" />
+                                        Images & Vidéos
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowMediaSection(!showMediaSection)}
+                                        className="text-sm text-primary dark:text-blue-400 hover:text-primary/80"
+                                    >
+                                        {showMediaSection ? 'Masquer' : 'Afficher'}
+                                    </button>
+                                </div>
+
+                                {showMediaSection && (
+                                    <div className="space-y-6">
+                                        {/* Banner Section */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Banner / Flyer
+                                            </label>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <EventBanner
+                                                        banner={currentBanners[0]}
+                                                        eventTitle={event.title}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                                                        Uploader un nouveau banner
+                                                    </p>
+                                                    <EventMediaUploader
+                                                        eventUuid={event.uuid}
+                                                        collection="banner"
+                                                        acceptedTypes="images"
+                                                        onUploadComplete={handleMediaUploadComplete}
+                                                        maxFiles={1}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Gallery Upload Section */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Ajouter des photos et vidéos à la galerie
+                                            </label>
+                                            <EventMediaUploader
+                                                eventUuid={event.uuid}
+                                                collection="gallery"
+                                                onUploadComplete={handleMediaUploadComplete}
+                                                maxFiles={20}
+                                            />
+                                        </div>
+
+                                        {/* Gallery */}
+                                        {currentMedia.length > 0 && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Galerie ({currentMedia.length} médias)
+                                                </label>
+                                                <EventMediaGallery
+                                                    media={currentMedia}
+                                                    eventUuid={event.uuid}
+                                                    canEdit={true}
+                                                    onMediaDeleted={handleMediaDeleted}
+                                                    onMediaUpdated={handleMediaUpdated}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

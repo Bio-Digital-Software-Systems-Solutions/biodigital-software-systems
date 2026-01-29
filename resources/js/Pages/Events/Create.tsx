@@ -2,21 +2,13 @@ import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
-import { ArrowLeftIcon, MapPinIcon } from '@heroicons/react/24/outline';
-import DateTimePicker from '@/Components/DateTimePicker';
+import { ArrowLeftIcon, MapPinIcon, PhotoIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
 import UserMultiSelect from '@/Components/UserMultiSelect';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { registerLocale } from 'react-datepicker';
-
-registerLocale('fr', fr);
 
 export default function Create() {
     const [showAddress, setShowAddress] = useState(false);
-    const [startDate, setStartDate] = useState<Date | null>(null);
-    const [endDate, setEndDate] = useState<Date | null>(null);
 
-    const { data, setData, post, processing, errors, transform } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         title: '',
         description: '',
         start_date: '',
@@ -24,6 +16,7 @@ export default function Create() {
         location: '',
         max_participants: '',
         is_public: true,
+        status: 'planned',
         participant_ids: [] as number[],
         address: {
             street: '',
@@ -35,20 +28,11 @@ export default function Create() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!startDate || !endDate) {
-            return;
-        }
-
-        // Transform data before sending to include formatted dates
-        transform((data) => ({
-            ...data,
-            start_date: format(startDate, 'yyyy-MM-dd HH:mm:ss'),
-            end_date: format(endDate, 'yyyy-MM-dd HH:mm:ss'),
-        }));
-
-        // Submit the form
         post(route('events.store'));
+    };
+
+    const handleDateTimeChange = (field: 'start_date' | 'end_date', value: string) => {
+        setData(field, value);
     };
 
     return (
@@ -113,15 +97,14 @@ export default function Create() {
                                     <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Date et heure de début *
                                     </label>
-                                    <div className="mt-1">
-                                        <DateTimePicker
-                                            selected={startDate}
-                                            onChange={(date) => setStartDate(date)}
-                                            minDate={new Date()}
-                                            placeholderText="Sélectionner une date de début"
-                                            required
-                                        />
-                                    </div>
+                                    <input
+                                        type="datetime-local"
+                                        id="start_date"
+                                        value={data.start_date}
+                                        onChange={(e) => handleDateTimeChange('start_date', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                        required
+                                    />
                                     {errors.start_date && <p className="mt-1 text-sm text-red-600">{errors.start_date}</p>}
                                 </div>
 
@@ -129,15 +112,15 @@ export default function Create() {
                                     <label htmlFor="end_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                         Date et heure de fin *
                                     </label>
-                                    <div className="mt-1">
-                                        <DateTimePicker
-                                            selected={endDate}
-                                            onChange={(date) => setEndDate(date)}
-                                            minDate={startDate || new Date()}
-                                            placeholderText="Sélectionner une date de fin"
-                                            required
-                                        />
-                                    </div>
+                                    <input
+                                        type="datetime-local"
+                                        id="end_date"
+                                        value={data.end_date}
+                                        onChange={(e) => handleDateTimeChange('end_date', e.target.value)}
+                                        min={data.start_date}
+                                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                        required
+                                    />
                                     {errors.end_date && <p className="mt-1 text-sm text-red-600">{errors.end_date}</p>}
                                 </div>
                             </div>
@@ -235,6 +218,28 @@ export default function Create() {
                                 )}
                             </div>
 
+                            {/* Media Section Info */}
+                            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <PhotoIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                                        Images & Vidéos
+                                    </h3>
+                                </div>
+                                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md p-4">
+                                    <div className="flex">
+                                        <div className="flex-shrink-0">
+                                            <VideoCameraIcon className="h-5 w-5 text-amber-500" />
+                                        </div>
+                                        <div className="ml-3">
+                                            <p className="text-sm text-amber-700 dark:text-amber-300">
+                                                <strong>Info :</strong> Vous pourrez ajouter un banner, des photos et des vidéos après avoir créé l'événement. Une fois l'événement créé, vous serez redirigé vers la page de modification où vous pourrez gérer les médias.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Participants Selection */}
                             <div>
                                 <UserMultiSelect
@@ -242,7 +247,7 @@ export default function Create() {
                                     onChange={(userIds) => setData('participant_ids', userIds)}
                                     error={errors.participant_ids}
                                     label="Participants"
-                                    placeholder="Rechercher des participants..."
+                                    placeholder="Sélectionner des participants..."
                                 />
                             </div>
 
@@ -264,19 +269,38 @@ export default function Create() {
                                     {errors.max_participants && <p className="mt-1 text-sm text-red-600">{errors.max_participants}</p>}
                                 </div>
 
-                                <div className="flex items-center justify-center">
-                                    <label className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            checked={data.is_public}
-                                            onChange={(e) => setData('is_public', e.target.checked)}
-                                            className="rounded border-gray-300 text-primary shadow-sm focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
-                                        />
-                                        <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                                            Événement public
-                                        </span>
+                                <div>
+                                    <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Statut
                                     </label>
+                                    <select
+                                        id="status"
+                                        value={data.status}
+                                        onChange={(e) => setData('status', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                        required
+                                    >
+                                        <option value="planned">Planifié</option>
+                                        <option value="ongoing">En cours</option>
+                                        <option value="completed">Terminé</option>
+                                        <option value="cancelled">Annulé</option>
+                                    </select>
+                                    {errors.status && <p className="mt-1 text-sm text-red-600">{errors.status}</p>}
                                 </div>
+                            </div>
+
+                            <div className="flex items-center justify-center">
+                                <label className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.is_public}
+                                        onChange={(e) => setData('is_public', e.target.checked)}
+                                        className="rounded border-gray-300 text-primary shadow-sm focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+                                    />
+                                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                        Événement public
+                                    </span>
+                                </label>
                             </div>
 
                             {/* Info Box */}

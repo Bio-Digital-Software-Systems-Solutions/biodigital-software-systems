@@ -61,6 +61,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('events/{event}/leave', [App\Http\Controllers\EventController::class, 'leave'])
         ->name('events.leave');
 
+    // Event Media routes
+    Route::get('events/{event}/media', [App\Http\Controllers\EventMediaController::class, 'index'])
+        ->name('events.media.index');
+    Route::post('events/{event}/media', [App\Http\Controllers\EventMediaController::class, 'store'])
+        ->name('events.media.store');
+    Route::post('events/{event}/media/tus', [App\Http\Controllers\EventMediaController::class, 'storeFromTus'])
+        ->name('events.media.store-tus');
+    Route::put('events/{event}/media/{media}', [App\Http\Controllers\EventMediaController::class, 'update'])
+        ->name('events.media.update');
+    Route::delete('events/{event}/media/{media}', [App\Http\Controllers\EventMediaController::class, 'destroy'])
+        ->name('events.media.destroy');
+    Route::post('events/{event}/media/reorder', [App\Http\Controllers\EventMediaController::class, 'reorder'])
+        ->name('events.media.reorder');
+    Route::post('events/{event}/media/{media}/set-banner', [App\Http\Controllers\EventMediaController::class, 'setBanner'])
+        ->name('events.media.set-banner');
+    Route::post('events/{event}/media/{media}/set-featured', [App\Http\Controllers\EventMediaController::class, 'setFeatured'])
+        ->name('events.media.set-featured');
+
     // Book routes
     Route::resource('books', App\Http\Controllers\BookController::class);
     Route::post('books/{book}/rent', [App\Http\Controllers\BookController::class, 'rent'])

@@ -1,4 +1,4 @@
-.PHONY: phpstan phpcs phpmd pint pest test clear db quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean
+.PHONY: phpstan phpcs phpmd pint pest test clear db quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean clean-event-media clean-event-media-preview
 
 # PHPStan static analysis (level 10)
 phpstan:
@@ -92,6 +92,16 @@ db:
 	@echo "Resetting database with fresh migrations and seeders..."
 	@php artisan migrate:fresh --seed
 	@echo "Database reset complete!"
+
+# Clean orphaned event media records (files that don't exist on disk)
+clean-event-media:
+	@echo "Cleaning orphaned event media records..."
+	@php artisan events:clean-orphaned-media
+
+# Preview orphaned event media (dry-run)
+clean-event-media-preview:
+	@echo "Previewing orphaned event media records (dry-run)..."
+	@php artisan events:clean-orphaned-media --dry-run
 
 # Generate API documentation
 docs:
@@ -258,6 +268,8 @@ help:
 	@echo "🔧 Utilities:"
 	@echo "  make clear              - Clear all Laravel caches"
 	@echo "  make db                 - Reset database with fresh migrations and seeders"
+	@echo "  make clean-event-media  - Clean orphaned event media records"
+	@echo "  make clean-event-media-preview - Preview orphaned records (dry-run)"
 	@echo "  make composer-fix       - Fix Composer/Artisan bootstrap issues"
 	@echo "  make docs               - Generate API documentation with PHPDocumentor"
 	@echo "  make schema-docs        - Generate database schema documentation with SchemaSpy"

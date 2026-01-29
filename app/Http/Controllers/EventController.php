@@ -39,8 +39,8 @@ class EventController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%");
             });
         }
 
@@ -104,7 +104,7 @@ class EventController extends Controller
         // Handle avatar from TUS upload (just filename)
         elseif ($request->filled('avatar') && is_string($request->avatar)) {
             // Avatar has already been uploaded via TUS to events/avatars directory
-            $validated['avatar'] = 'events/avatars/' . $request->avatar;
+            $validated['avatar'] = 'events/avatars/'.$request->avatar;
         }
 
         $address = null;
@@ -134,8 +134,8 @@ class EventController extends Controller
         // Invalidate events cache
         CacheService::forgetPattern('events');
 
-        return redirect()->route('events.index')
-            ->with('message', 'Événement créé avec succès.');
+        return redirect()->route('events.edit', $event->uuid)
+            ->with('message', 'Événement créé avec succès. Vous pouvez maintenant ajouter des images et vidéos.');
     }
 
     /**
@@ -143,10 +143,17 @@ class EventController extends Controller
      */
     public function show(Event $event): Response
     {
-        $event->load(['creator', 'address', 'participants']);
+        $event->load(['creator', 'address', 'participants', 'media' => fn ($q) => $q->ordered()]);
+
+        // Filter out media without existing files
+        $mediaWithFiles = $event->media->filter(fn ($m) => $m->fileExists());
+        $event->setRelation('media', $mediaWithFiles);
 
         return Inertia::render('Events/Show', [
             'event' => $event,
+            'banners' => $event->banners()->get()->filter(fn ($m) => $m->fileExists())->values(),
+            'galleryImages' => $event->images()->gallery()->get()->filter(fn ($m) => $m->fileExists())->values(),
+            'galleryVideos' => $event->videos()->gallery()->get()->filter(fn ($m) => $m->fileExists())->values(),
         ]);
     }
 
@@ -155,10 +162,17 @@ class EventController extends Controller
      */
     public function edit(Event $event): Response
     {
-        $event->load('address', 'participants');
+        $event->load(['address', 'participants', 'media' => fn ($q) => $q->ordered()]);
+
+        // Filter out media without existing files
+        $mediaWithFiles = $event->media->filter(fn ($m) => $m->fileExists());
+        $event->setRelation('media', $mediaWithFiles);
 
         return Inertia::render('Events/Edit', [
             'event' => $event,
+            'banners' => $event->banners()->get()->filter(fn ($m) => $m->fileExists())->values(),
+            'galleryImages' => $event->images()->gallery()->get()->filter(fn ($m) => $m->fileExists())->values(),
+            'galleryVideos' => $event->videos()->gallery()->get()->filter(fn ($m) => $m->fileExists())->values(),
         ]);
     }
 
@@ -170,7 +184,7 @@ class EventController extends Controller
         $this->authorize('update', $event);
 
         // Additional check with user-friendly message
-        if (!$event->canBeModifiedBy(Auth::user())) {
+        if (! $event->canBeModifiedBy(Auth::user())) {
             return back()->with('error', 'Cet événement est terminé et ne peut plus être modifié. Seuls les SuperAdmins peuvent modifier les événements passés.');
         }
 
@@ -208,7 +222,7 @@ class EventController extends Controller
                 \Storage::disk('public')->delete($event->avatar);
             }
             // Avatar has already been uploaded via TUS to events/avatars directory
-            $validated['avatar'] = 'events/avatars/' . $request->avatar;
+            $validated['avatar'] = 'events/avatars/'.$request->avatar;
         }
 
         if ($request->has('address') && ! empty(array_filter($request->address))) {
@@ -242,7 +256,7 @@ class EventController extends Controller
         $this->authorize('delete', $event);
 
         // Additional check with user-friendly message
-        if (!$event->canBeModifiedBy(Auth::user())) {
+        if (! $event->canBeModifiedBy(Auth::user())) {
             return back()->with('error', 'Cet événement est terminé et ne peut plus être supprimé. Seuls les SuperAdmins peuvent supprimer les événements passés.');
         }
 
@@ -270,7 +284,7 @@ class EventController extends Controller
         $user = Auth::user();
 
         // Additional check with user-friendly message
-        if (!$event->canAcceptParticipationChanges($user)) {
+        if (! $event->canAcceptParticipationChanges($user)) {
             return back()->with('error', 'Cet événement est terminé et la participation ne peut plus être modifiée. Seuls les SuperAdmins peuvent gérer la participation aux événements passés.');
         }
 
@@ -309,7 +323,7 @@ class EventController extends Controller
         $user = Auth::user();
 
         // Additional check with user-friendly message
-        if (!$event->canAcceptParticipationChanges($user)) {
+        if (! $event->canAcceptParticipationChanges($user)) {
             return back()->with('error', 'Cet événement est terminé et vous ne pouvez plus vous y inscrire. Seuls les SuperAdmins peuvent gérer la participation aux événements passés.');
         }
 
@@ -345,12 +359,12 @@ class EventController extends Controller
         $user = Auth::user();
 
         // Additional check with user-friendly message
-        if (!$event->canAcceptParticipationChanges($user)) {
+        if (! $event->canAcceptParticipationChanges($user)) {
             return back()->with('error', 'Cet événement est terminé et vous ne pouvez plus vous en désinscrire. Seuls les SuperAdmins peuvent gérer la participation aux événements passés.');
         }
 
         // Check if user is a participant
-        if (!$event->participants->contains($user)) {
+        if (! $event->participants->contains($user)) {
             return back()->with('error', 'Vous ne participez pas à cet événement.');
         }
 
