@@ -24,6 +24,7 @@ import { fr } from 'date-fns/locale';
 import { isAdmin } from '@/Enums/Role';
 import { userHasPermission } from '@/Enums/Permission';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/Components/ui/accordion';
 import { TicketManager, RegistrationList, CheckInScanner, EventAnalyticsDashboard } from '@/Components/Event';
 import { EventMediaGallery, EventBanner } from '@/Components/Events';
 import { EventMedia } from '@/Types/event.d';
@@ -477,31 +478,17 @@ const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = 
                             </div>
                         </div>
 
-                        {/* Participants List */}
-                        {event.participants && event.participants.length > 0 && (
+                        {/* Banner Preview */}
+                        {banners.length > 0 && (
                             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                    Participants ({event.participants.length})
+                                    Banner
                                 </h3>
-                                <div className="space-y-3 max-h-64 overflow-y-auto">
-                                    {event.participants.map((participant) => (
-                                        <div key={participant.id} className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center justify-center text-sm font-medium">
-                                                {(participant.first_name?.[0] || participant.name[0]).toUpperCase()}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                                    {participant.first_name && participant.last_name
-                                                        ? `${participant.first_name} ${participant.last_name}`
-                                                        : participant.name}
-                                                </div>
-                                            </div>
-                                            {participant.pivot?.attended === true && (
-                                                <CheckCircleIcon className="w-5 h-5 text-green-500" title="A participé" />
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
+                                <EventBanner
+                                    banner={banners[0]}
+                                    eventTitle={event.title}
+                                    className="w-full"
+                                />
                             </div>
                         )}
                     </div>
@@ -531,17 +518,26 @@ const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = 
                 {/* Gallery Tab */}
                 {activeTab === 'gallery' && (
                     <div className="space-y-6">
-                        {/* Banner */}
+                        {/* Banner Accordion */}
                         {banners.length > 0 && (
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                                    Banner / Flyer
-                                </h2>
-                                <EventBanner
-                                    banner={banners[0]}
-                                    eventTitle={event.title}
-                                    className="max-w-sm mx-auto"
-                                />
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                                <Accordion>
+                                    <AccordionItem value="banner">
+                                        <AccordionTrigger className="text-xl font-semibold">
+                                            <div className="flex items-center gap-2">
+                                                <PhotoIcon className="h-5 w-5 text-gray-500" />
+                                                Banner / Flyer
+                                            </div>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="p-4">
+                                            <EventBanner
+                                                banner={banners[0]}
+                                                eventTitle={event.title}
+                                                className="max-w-sm mx-auto"
+                                            />
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
                             </div>
                         )}
 
