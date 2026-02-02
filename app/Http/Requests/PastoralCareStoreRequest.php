@@ -3,9 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Models\PastoralCare;
+use App\Models\PastoralCareTheme;
 use App\Models\User;
-use Illuminate\Foundation\Http\FormRequest;
 use Carbon\Carbon;
+use Illuminate\Foundation\Http\FormRequest;
 
 class PastoralCareStoreRequest extends FormRequest
 {
@@ -37,11 +38,11 @@ class PastoralCareStoreRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     if ($value) {
                         $user = User::find($value);
-                        if (!$user || !$user->hasRole('pastor')) {
+                        if (! $user || ! $user->hasRole('pastor')) {
                             $fail('Le pasteur sélectionné n\'est pas valide.');
                         }
                     }
-                }
+                },
             ],
             'client_name' => auth()->check() ? 'nullable|string|max:255' : 'required|string|max:255',
             'client_email' => auth()->check() ? 'nullable|email|max:255' : 'required|email|max:255',
@@ -61,7 +62,7 @@ class PastoralCareStoreRequest extends FormRequest
                         // (Laravel's built-in date validation will catch invalid formats)
                         return;
                     }
-                }
+                },
             ],
             'appointment_time' => [
                 'required',
@@ -78,7 +79,7 @@ class PastoralCareStoreRequest extends FormRequest
                         // (Laravel's built-in date_format validation will catch invalid formats)
                         return;
                     }
-                }
+                },
             ],
             'duration_minutes' => [
                 'required',
@@ -90,11 +91,23 @@ class PastoralCareStoreRequest extends FormRequest
                     if (is_numeric($value) && ($value % 30 !== 0)) {
                         $fail('La durée doit être un multiple de 30 minutes.');
                     }
-                }
+                },
             ],
             'location_type' => 'required|in:in_person,zoom,hybrid',
             'zoom_link' => 'nullable|url|required_if:location_type,zoom,hybrid',
-            'notes' => 'nullable|string|max:1000',
+            'notes' => 'required|string|max:1000',
+            'theme_ids' => 'required|array|min:1',
+            'theme_ids.*' => [
+                'required',
+                'integer',
+                'exists:pastoral_care_themes,id',
+                function ($attribute, $value, $fail) {
+                    $theme = PastoralCareTheme::find($value);
+                    if ($theme && ! $theme->is_active) {
+                        $fail('Le thème sélectionné n\'est plus disponible.');
+                    }
+                },
+            ],
         ];
     }
 
@@ -124,7 +137,14 @@ class PastoralCareStoreRequest extends FormRequest
             'location_type.in' => 'Le type de lieu doit être: présentiel, zoom ou hybride.',
             'zoom_link.url' => 'Le lien Zoom doit être une URL valide.',
             'zoom_link.required_if' => 'Le lien Zoom est requis pour les rendez-vous en ligne ou hybrides.',
+            'notes.required' => 'Veuillez décrire le sujet ou vos préoccupations.',
             'notes.max' => 'Les notes ne doivent pas dépasser 1000 caractères.',
+            'theme_ids.required' => 'Veuillez sélectionner au moins un thème.',
+            'theme_ids.array' => 'Le format des thèmes est invalide.',
+            'theme_ids.min' => 'Veuillez sélectionner au moins un thème.',
+            'theme_ids.*.required' => 'Chaque thème doit être sélectionné.',
+            'theme_ids.*.integer' => 'Le thème sélectionné est invalide.',
+            'theme_ids.*.exists' => 'Le thème sélectionné n\'existe pas.',
         ];
     }
 
@@ -147,7 +167,7 @@ class PastoralCareStoreRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            if (!$validator->errors()->any()) {
+            if (! $validator->errors()->any()) {
                 $this->validateTimeSlotAvailability($validator);
             }
         });
@@ -168,11 +188,11 @@ class PastoralCareStoreRequest extends FormRequest
                 // Combine date and time
                 $appointmentDateTime = Carbon::createFromFormat(
                     'Y-m-d H:i',
-                    $appointmentDate . ' ' . $appointmentTime
+                    $appointmentDate.' '.$appointmentTime
                 );
 
                 // Check if the time slot is available
-                if (!PastoralCare::isTimeSlotAvailable($pastorId, $appointmentDateTime, $duration)) {
+                if (! PastoralCare::isTimeSlotAvailable($pastorId, $appointmentDateTime, $duration)) {
                     $validator->errors()->add(
                         'appointment_time',
                         'Ce créneau horaire n\'est pas disponible.'
@@ -202,6 +222,7 @@ class PastoralCareStoreRequest extends FormRequest
             'location_type' => 'type de lieu',
             'zoom_link' => 'lien Zoom',
             'notes' => 'notes',
+            'theme_ids' => 'thèmes',
         ];
     }
 }

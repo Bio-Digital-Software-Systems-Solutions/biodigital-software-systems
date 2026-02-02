@@ -42,6 +42,8 @@ class SyncRolesAndPermissions extends Command
             'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
             'select pastor for pastoral care', 'manage pastor availability', 'manage pastoral appointments',
             'view pastoral care client notes',
+            // MLR (Pastoral Care Dashboard)
+            'view mlr dashboard', 'view all pastoral care', 'transfer pastoral care', 'view pastoral care statistics',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs', 'create program steps',
@@ -88,6 +90,8 @@ class SyncRolesAndPermissions extends Command
             'view employees', 'create employees', 'edit employees', 'delete employees', 'manage employees',
             // Stars (Volunteers)
             'view stars', 'create stars', 'edit stars', 'delete stars', 'manage stars',
+            // Availabilities (Mes Disponibilités)
+            'view availabilities', 'create availabilities', 'edit availabilities', 'delete availabilities', 'manage availabilities',
         ];
     }
 
@@ -108,6 +112,8 @@ class SyncRolesAndPermissions extends Command
                 // Pastoral Care
                 'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
                 'select pastor for pastoral care', 'view pastoral care client notes',
+                // MLR
+                'view mlr dashboard', 'view all pastoral care', 'transfer pastoral care', 'view pastoral care statistics',
                 // Tasks & Programs
                 'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
                 'view programs', 'create programs', 'edit programs', 'delete programs', 'create program steps',
@@ -148,6 +154,12 @@ class SyncRolesAndPermissions extends Command
                 'view forms', 'create forms', 'edit forms', 'delete forms', 'manage forms', 'submit forms', 'process form submissions',
                 // Needs
                 'view needs', 'create needs', 'edit needs', 'delete needs', 'approve needs', 'manage needs',
+                // Employees
+                'view employees', 'create employees', 'edit employees', 'delete employees', 'manage employees',
+                // Stars (Volunteers)
+                'view stars', 'create stars', 'edit stars', 'delete stars', 'manage stars',
+                // Availabilities
+                'view availabilities', 'create availabilities', 'edit availabilities', 'delete availabilities', 'manage availabilities',
             ],
 
             'writer' => [
@@ -260,6 +272,8 @@ class SyncRolesAndPermissions extends Command
                 'view appointments', 'create appointments',
                 'view pastoral care', 'create pastoral care', 'view pastoral care client notes',
                 'view needs', 'create needs', 'submit forms',
+                // Availabilities (own availabilities)
+                'view availabilities', 'create availabilities', 'edit availabilities', 'delete availabilities',
             ],
 
             'student' => [
@@ -294,10 +308,70 @@ class SyncRolesAndPermissions extends Command
                 'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
                 'select pastor for pastoral care', 'manage pastor availability', 'manage pastoral appointments',
                 'view pastoral care client notes',
+                // MLR (limited access)
+                'view mlr dashboard', 'view pastoral care statistics',
                 'view messages', 'create messages', 'edit messages', 'delete messages',
                 'use chat',
                 'view groups', 'manage group members',
                 'view reports',
+            ],
+
+            'employee' => [
+                // Viewing permissions
+                'view articles', 'view trainings', 'view events', 'attend events', 'view videos', 'view books',
+                'view groups', 'view departments', 'view users',
+                // Books
+                'rent books',
+                // Messages & Chat
+                'view messages', 'create messages', 'edit messages', 'delete messages', 'use chat',
+                // Appointments
+                'view appointments', 'create appointments', 'edit appointments',
+                // Pastoral Care
+                'view pastoral care', 'create pastoral care',
+                // Tasks
+                'view tasks', 'create tasks', 'edit tasks',
+                // Projects
+                'view projects',
+                // Needs
+                'view needs', 'create needs', 'edit needs', 'submit forms',
+                // Reports
+                'view reports',
+                // Availabilities
+                'view availabilities', 'create availabilities', 'edit availabilities', 'delete availabilities',
+            ],
+
+            'star' => [
+                // Viewing permissions
+                'view articles', 'view trainings', 'view events', 'attend events', 'view videos', 'view books',
+                'view groups', 'view departments',
+                // Books
+                'rent books',
+                // Messages & Chat
+                'view messages', 'create messages', 'edit messages', 'delete messages', 'use chat',
+                // Appointments
+                'view appointments', 'create appointments',
+                // Pastoral Care
+                'view pastoral care', 'create pastoral care',
+                // Tasks (can view and work on assigned tasks)
+                'view tasks',
+                // Needs (can submit needs)
+                'view needs', 'create needs', 'submit forms',
+                // Availabilities (own availabilities)
+                'view availabilities', 'create availabilities', 'edit availabilities', 'delete availabilities',
+            ],
+
+            'mlr_agent' => [
+                // MLR-specific permissions
+                'view mlr dashboard', 'view all pastoral care', 'transfer pastoral care', 'view pastoral care statistics',
+                // Base pastoral care permissions
+                'view pastoral care', 'create pastoral care', 'edit pastoral care', 'manage pastoral care',
+                'select pastor for pastoral care',
+                // Basic viewing
+                'view users', 'view departments', 'view groups',
+                // Messages & Chat
+                'view messages', 'create messages', 'edit messages', 'delete messages', 'use chat',
+                // Appointments
+                'view appointments', 'create appointments', 'edit appointments',
             ],
         ];
     }
@@ -316,6 +390,8 @@ class SyncRolesAndPermissions extends Command
             'ProjectManager' => 'project-manager',
             'EventManager' => 'event-manager',
             'Editor' => 'writer',
+            'Employee' => 'employee',
+            'Star' => 'star',
         ];
     }
 
@@ -427,13 +503,16 @@ class SyncRolesAndPermissions extends Command
         $aliasRoles = array_keys($this->getRoleAliases());
         $allRoles = array_merge($allRoles, $aliasRoles);
 
+        // Get existing roles (lowercase for case-insensitive comparison)
         $existingRoles = Role::pluck('name')->toArray();
+        $existingRolesLower = array_map('strtolower', $existingRoles);
 
         $created = 0;
         $existed = 0;
 
         foreach ($allRoles as $roleName) {
-            if (in_array($roleName, $existingRoles)) {
+            // Case-insensitive check (MySQL uses case-insensitive collation)
+            if (in_array(strtolower($roleName), $existingRolesLower)) {
                 $existed++;
             } else {
                 $created++;
@@ -501,6 +580,7 @@ class SyncRolesAndPermissions extends Command
 
         $aliases = $this->getRoleAliases();
         $existingRoles = Role::pluck('name')->toArray();
+        $existingRolesLower = array_map('strtolower', $existingRoles);
         $created = 0;
         $existed = 0;
         $updated = 0;
@@ -508,7 +588,8 @@ class SyncRolesAndPermissions extends Command
         foreach ($aliases as $aliasName => $sourceRoleName) {
             $wasCreated = false;
 
-            if (! in_array($aliasName, $existingRoles)) {
+            // Case-insensitive check (MySQL uses case-insensitive collation)
+            if (! in_array(strtolower($aliasName), $existingRolesLower)) {
                 $created++;
                 $wasCreated = true;
                 if (! $isDryRun) {

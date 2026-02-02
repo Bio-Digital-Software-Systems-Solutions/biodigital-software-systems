@@ -161,6 +161,17 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
     const [dateViewType, setDateViewType] = useState<'week' | 'month'>('month');
     const [currentDate, setCurrentDate] = useState(new Date());
 
+    // Proposal mode state
+    const [proposalMode, setProposalMode] = useState(false);
+    const [proposalSlots, setProposalSlots] = useState<Array<{date: string; time: string}>>([]);
+    const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
+    const [proposalFormData, setProposalFormData] = useState({
+        client_name: '',
+        client_email: '',
+        client_phone: '',
+        notes: '',
+    });
+
     const [formData, setFormData] = useState<BookingFormData>({
         pastor_id: '',
         client_name: `${auth.user.first_name} ${auth.user.last_name}`,
@@ -476,6 +487,121 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                 setIsSubmitting(false);
             }
         });
+    };
+
+    // Proposal mode functions
+    const switchToProposalMode = () => {
+        setProposalMode(true);
+        // Initialize proposal form with user's info and keep the selected date
+        setProposalFormData({
+            client_name: `${auth.user.first_name} ${auth.user.last_name}`,
+            client_email: auth.user.email,
+            client_phone: '',
+            notes: '',
+        });
+        // Pre-populate with selected date if exists
+        if (formData.appointment_date) {
+            setProposalSlots([{ date: formData.appointment_date, time: '' }]);
+        } else {
+            setProposalSlots([{ date: '', time: '' }]);
+        }
+    };
+
+    const cancelProposalMode = () => {
+        setProposalMode(false);
+        setProposalSlots([]);
+        setProposalFormData({
+            client_name: '',
+            client_email: '',
+            client_phone: '',
+            notes: '',
+        });
+    };
+
+    const addProposalSlot = () => {
+        setProposalSlots(prev => [...prev, { date: formData.appointment_date || '', time: '' }]);
+    };
+
+    const removeProposalSlot = (index: number) => {
+        setProposalSlots(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const updateProposalSlot = (index: number, field: 'date' | 'time', value: string) => {
+        setProposalSlots(prev => {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], [field]: value };
+            return updated;
+        });
+    };
+
+    const submitProposal = async () => {
+        // Validate proposal
+        const validSlots = proposalSlots.filter(s => s.date && s.time);
+        if (validSlots.length === 0) {
+            toast.error('Veuillez ajouter au moins un créneau avec date et heure');
+            return;
+        }
+        if (!proposalFormData.client_name.trim()) {
+            toast.error('Votre nom est requis');
+            return;
+        }
+        if (!proposalFormData.client_email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(proposalFormData.client_email)) {
+            toast.error('Veuillez entrer un email valide');
+            return;
+        }
+        if (!proposalFormData.notes.trim()) {
+            toast.error('Veuillez indiquer la raison de votre proposition');
+            return;
+        }
+
+        setIsSubmittingProposal(true);
+
+        try {
+            // Use the first slot as the primary appointment date/time
+            const primarySlot = validSlots[0];
+
+            // Build proposal reason with all proposed slots
+            let proposalReason = proposalFormData.notes;
+            if (validSlots.length > 1) {
+                proposalReason += '\n\nCréneaux proposés:\n';
+                validSlots.forEach((slot, index) => {
+                    proposalReason += `${index + 1}. ${slot.date} à ${slot.time}\n`;
+                });
+            }
+
+            const response = await fetch('/api/pastoral-care/proposals', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    appointment_date: primarySlot.date,
+                    appointment_time: primarySlot.time,
+                    duration_minutes: formData.duration_minutes,
+                    location_type: formData.location_type || 'in_person',
+                    client_name: proposalFormData.client_name,
+                    client_email: proposalFormData.client_email,
+                    client_phone: proposalFormData.client_phone || null,
+                    notes: proposalFormData.notes || null,
+                    proposal_reason: proposalReason,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                toast.success('Proposition envoyée avec succès! Vous recevrez un email de confirmation.');
+                cancelProposalMode();
+                setActiveTab('dashboard');
+            } else {
+                toast.error(data.message || 'Erreur lors de l\'envoi de la proposition');
+            }
+        } catch (error) {
+            toast.error('Erreur lors de l\'envoi de la proposition');
+        } finally {
+            setIsSubmittingProposal(false);
+        }
     };
 
     const getAvailableDates = () => {
@@ -800,10 +926,182 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                         <TabsContent value="booking" className="space-y-6">
                             <div className="text-center mb-8">
                                 <p className="text-lg text-gray-600 dark:text-gray-300">
-                                    Prenez rendez-vous avec un membre de notre équipe pastorale pour un accompagnement spirituel personnalisé
+                                    {proposalMode
+                                        ? "Proposez vos créneaux préférés à notre équipe pastorale"
+                                        : "Prenez rendez-vous avec un membre de notre équipe pastorale pour un accompagnement spirituel personnalisé"
+                                    }
                                 </p>
                             </div>
 
+                            {/* Proposal Mode Form */}
+                            {proposalMode ? (
+                                <Card className="shadow-xl">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center">
+                                            <CalendarDays className="h-6 w-6 mr-2 text-orange-500" />
+                                            Proposer vos créneaux
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Indiquez les dates et heures qui vous conviennent. Notre équipe vous recontactera.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        {/* Proposed Slots */}
+                                        <div>
+                                            <Label className="text-base font-medium mb-3 block">
+                                                Créneaux proposés *
+                                            </Label>
+                                            <div className="space-y-3">
+                                                {proposalSlots.map((slot, index) => (
+                                                    <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                                        <div className="flex-1">
+                                                            <Label className="text-sm text-gray-500 mb-1 block">Date</Label>
+                                                            <Input
+                                                                type="date"
+                                                                value={slot.date}
+                                                                min={format(new Date(), 'yyyy-MM-dd')}
+                                                                onChange={(e) => updateProposalSlot(index, 'date', e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <Label className="text-sm text-gray-500 mb-1 block">Heure</Label>
+                                                            <Input
+                                                                type="time"
+                                                                value={slot.time}
+                                                                onChange={(e) => updateProposalSlot(index, 'time', e.target.value)}
+                                                            />
+                                                        </div>
+                                                        {proposalSlots.length > 1 && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="text-red-500 hover:text-red-700 mt-6"
+                                                                onClick={() => removeProposalSlot(index)}
+                                                            >
+                                                                <XCircleIcon className="h-5 w-5" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="mt-3"
+                                                onClick={addProposalSlot}
+                                            >
+                                                <PlusIcon className="h-4 w-4 mr-2" />
+                                                Ajouter un autre créneau
+                                            </Button>
+                                        </div>
+
+                                        <Separator />
+
+                                        {/* Duration */}
+                                        <div>
+                                            <Label className="text-base font-medium">Durée souhaitée</Label>
+                                            <Select
+                                                value={formData.duration_minutes.toString()}
+                                                onValueChange={(value) => handleInputChange('duration_minutes', parseInt(value))}
+                                            >
+                                                <SelectTrigger className="mt-2">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="30">30 minutes</SelectItem>
+                                                    <SelectItem value="45">45 minutes</SelectItem>
+                                                    <SelectItem value="60">1 heure</SelectItem>
+                                                    <SelectItem value="90">1 heure 30</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
+                                        <Separator />
+
+                                        {/* Contact Information */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <Label htmlFor="proposal_name">Votre nom *</Label>
+                                                <Input
+                                                    id="proposal_name"
+                                                    value={proposalFormData.client_name}
+                                                    onChange={(e) => setProposalFormData(prev => ({ ...prev, client_name: e.target.value }))}
+                                                    className="mt-2"
+                                                    placeholder="Jean Dupont"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="proposal_email">Votre email *</Label>
+                                                <Input
+                                                    id="proposal_email"
+                                                    type="email"
+                                                    value={proposalFormData.client_email}
+                                                    onChange={(e) => setProposalFormData(prev => ({ ...prev, client_email: e.target.value }))}
+                                                    className="mt-2"
+                                                    placeholder="email@exemple.com"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="proposal_phone">Votre téléphone</Label>
+                                                <Input
+                                                    id="proposal_phone"
+                                                    type="tel"
+                                                    value={proposalFormData.client_phone}
+                                                    onChange={(e) => setProposalFormData(prev => ({ ...prev, client_phone: e.target.value }))}
+                                                    className="mt-2"
+                                                    placeholder="+33 6 12 34 56 78"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Notes - Required */}
+                                        <div>
+                                            <Label htmlFor="proposal_notes">Raison de votre proposition *</Label>
+                                            <Textarea
+                                                id="proposal_notes"
+                                                value={proposalFormData.notes}
+                                                onChange={(e) => setProposalFormData(prev => ({ ...prev, notes: e.target.value }))}
+                                                className="mt-2"
+                                                placeholder="Précisez ici le sujet de votre demande ou toute information utile..."
+                                                rows={4}
+                                                required
+                                            />
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex justify-between pt-4">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={cancelProposalMode}
+                                            >
+                                                <ChevronLeft className="h-4 w-4 mr-2" />
+                                                Retour
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                onClick={submitProposal}
+                                                disabled={isSubmittingProposal}
+                                                className="bg-orange-500 hover:bg-orange-600 text-white"
+                                            >
+                                                {isSubmittingProposal ? (
+                                                    <>
+                                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                        Envoi...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        Envoyer la proposition
+                                                        <ChevronRight className="h-4 w-4 ml-2" />
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                            <>
                             {/* Progress Steps */}
                             <div className="flex items-center justify-center mb-8">
                                 <div className="flex items-center space-x-4">
@@ -1145,10 +1443,24 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                             ))}
                                                         </div>
                                                     ) : (
-                                                        <div className="text-center py-8 text-gray-500">
-                                                            <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                                                            <p>Aucun créneau disponible pour cette date.</p>
-                                                            <p className="text-sm">Veuillez choisir une autre date.</p>
+                                                        <div className="text-center py-8">
+                                                            <div className="bg-orange-50 dark:bg-orange-900/30 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
+                                                                <Clock className="h-12 w-12 mx-auto mb-3 text-orange-500" />
+                                                                <p className="text-gray-700 dark:text-gray-200 font-medium mb-2">
+                                                                    Aucun créneau disponible pour cette date.
+                                                                </p>
+                                                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                                                    Souhaitez-vous proposer un ou plusieurs créneaux à notre équipe ?
+                                                                </p>
+                                                                <Button
+                                                                    type="button"
+                                                                    onClick={switchToProposalMode}
+                                                                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                                                                >
+                                                                    <CalendarDays className="h-4 w-4 mr-2" />
+                                                                    Proposer mes créneaux
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                     )}
                                                     {errors.appointment_time && (
@@ -1193,10 +1505,24 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                             ))}
                                                         </div>
                                                     ) : (
-                                                        <div className="text-center py-8 text-gray-500">
-                                                            <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                                                            <p>Aucun créneau disponible pour cette date.</p>
-                                                            <p className="text-sm">Veuillez choisir une autre date.</p>
+                                                        <div className="text-center py-8">
+                                                            <div className="bg-orange-50 dark:bg-orange-900/30 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
+                                                                <Clock className="h-12 w-12 mx-auto mb-3 text-orange-500" />
+                                                                <p className="text-gray-700 dark:text-gray-200 font-medium mb-2">
+                                                                    Aucun créneau disponible pour cette date.
+                                                                </p>
+                                                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                                                    Souhaitez-vous proposer un ou plusieurs créneaux à notre équipe ?
+                                                                </p>
+                                                                <Button
+                                                                    type="button"
+                                                                    onClick={switchToProposalMode}
+                                                                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                                                                >
+                                                                    <CalendarDays className="h-4 w-4 mr-2" />
+                                                                    Proposer mes créneaux
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                     )}
                                                     {errors.appointment_time && (
@@ -1456,6 +1782,8 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                     </div>
                                 </CardContent>
                             </Card>
+                            </>
+                            )}
                         </TabsContent>
 
                         {/* Pending Appointments Tab */}

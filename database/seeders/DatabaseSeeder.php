@@ -57,6 +57,7 @@ class DatabaseSeeder extends Seeder
             PastoralCareSeeder::class,
             DepartmentTodoSeeder::class,
             MlrPermissionsSeeder::class,
+            PastoralCareThemeSeeder::class,
         ]);
     }
 }

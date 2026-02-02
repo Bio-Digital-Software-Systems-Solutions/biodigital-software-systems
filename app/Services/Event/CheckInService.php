@@ -8,8 +8,8 @@ use App\Models\Event\EventCheckin;
 use App\Models\Event\EventRegistration;
 use App\Models\Event\EventSession;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class CheckInService
 {
@@ -26,7 +26,7 @@ class CheckInService
             ->with(['event', 'ticket'])
             ->first();
 
-        if (!$registration) {
+        if (! $registration) {
             return [
                 'success' => false,
                 'message' => 'QR code invalide ou inscription introuvable.',
@@ -50,12 +50,29 @@ class CheckInService
             ->with(['event', 'ticket'])
             ->first();
 
-        if (!$registration) {
+        if (! $registration) {
             return [
                 'success' => false,
                 'message' => 'Numéro d\'inscription invalide.',
                 'registration' => null,
             ];
+        }
+
+        return $this->processCheckIn($registration, $checkedInBy, $session, $metadata);
+    }
+
+    /**
+     * Check in directly by registration model (for manual check-in).
+     */
+    public function checkInByRegistration(
+        EventRegistration $registration,
+        ?User $checkedInBy = null,
+        ?EventSession $session = null,
+        array $metadata = []
+    ): array {
+        // Load relationships if not already loaded
+        if (! $registration->relationLoaded('event')) {
+            $registration->load(['event', 'ticket']);
         }
 
         return $this->processCheckIn($registration, $checkedInBy, $session, $metadata);
@@ -144,7 +161,7 @@ class CheckInService
             ]);
 
             // Update registration status only for main event check-in
-            if (!$session && $registration->status !== RegistrationStatus::CHECKED_IN) {
+            if (! $session && $registration->status !== RegistrationStatus::CHECKED_IN) {
                 $registration->update([
                     'status' => RegistrationStatus::CHECKED_IN,
                 ]);
@@ -181,7 +198,7 @@ class CheckInService
 
         $checkin = $query->latest('checked_in_at')->first();
 
-        if (!$checkin) {
+        if (! $checkin) {
             return [
                 'success' => false,
                 'message' => 'Aucun check-in trouvé à clôturer.',
@@ -308,7 +325,7 @@ class CheckInService
      */
     public function markNoShows(Event $event): int
     {
-        if (!$event->hasEnded()) {
+        if (! $event->hasEnded()) {
             return 0;
         }
 
@@ -361,14 +378,14 @@ class CheckInService
             $checkin->delete();
 
             // If this was the main event check-in, revert status
-            if (!$checkin->session_id) {
+            if (! $checkin->session_id) {
                 // Check if there are other main check-ins
                 $hasOtherCheckins = EventCheckin::where('registration_id', $registration->id)
                     ->whereNull('session_id')
                     ->where('check_type', 'entry')
                     ->exists();
 
-                if (!$hasOtherCheckins) {
+                if (! $hasOtherCheckins) {
                     $registration->update([
                         'status' => RegistrationStatus::CONFIRMED,
                     ]);

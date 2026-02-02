@@ -43,6 +43,10 @@ Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function () {
     Route::get('/pastors', [PastoralCareController::class, 'getPastors'])
         ->name('pastors');
 
+    // Get list of available themes for booking
+    Route::get('/themes', [PastoralCareController::class, 'getThemes'])
+        ->name('themes');
+
     // Get available days for a pastor within a date range
     Route::get('/available-days', [PastoralCareController::class, 'getAvailableDays'])
         ->name('available-days');
@@ -85,6 +89,19 @@ Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function () {
 
     Route::post('/confirm-by-pastor', [PastoralCareController::class, 'confirmByPastor'])
         ->name('confirm-by-pastor');
+
+    // Proposal system public endpoints
+    Route::post('/proposals', [PastoralCareController::class, 'submitProposal'])
+        ->name('proposals.submit');
+
+    Route::get('/proposals/show', [PastoralCareController::class, 'showProposal'])
+        ->name('proposals.show');
+
+    Route::post('/proposals/accept-counter', [PastoralCareController::class, 'acceptCounterProposal'])
+        ->name('proposals.accept-counter');
+
+    Route::post('/proposals/reject-counter', [PastoralCareController::class, 'rejectCounterProposal'])
+        ->name('proposals.reject-counter');
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -221,6 +238,16 @@ Route::middleware('auth:sanctum')->group(function () {
         // Generate report for appointment (authenticated pastor only)
         Route::get('/appointments/{uuid}/report', [PastoralCareController::class, 'generateReport'])
             ->name('appointments.report');
+
+        // Proposal management endpoints (MLR/Admin only)
+        Route::get('/proposals', [PastoralCareController::class, 'getPendingProposals'])
+            ->name('proposals.index');
+
+        Route::post('/proposals/{uuid}/accept', [PastoralCareController::class, 'acceptProposal'])
+            ->name('proposals.accept');
+
+        Route::post('/proposals/{uuid}/reject', [PastoralCareController::class, 'rejectProposal'])
+            ->name('proposals.reject');
     });
 
     // ========================================

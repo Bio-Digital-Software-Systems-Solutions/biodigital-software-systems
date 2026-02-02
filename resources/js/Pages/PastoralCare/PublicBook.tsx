@@ -16,7 +16,7 @@ import {
 import { Badge } from '@/Components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
 import { Separator } from '@/Components/ui/separator';
-import { SearchableSelect } from '@/Components/ui/searchable-select';
+import { SearchableSelect, SearchableMultiSelect } from '@/Components/ui/searchable-select';
 import {
     CalendarDays,
     Clock,
@@ -65,6 +65,15 @@ interface SlotWithPastor {
     pastor_id: number;
 }
 
+interface PastoralCareTheme {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    color: string;
+    icon: string | null;
+}
+
 interface BookingFormData {
     pastor_id: string;
     client_name: string;
@@ -76,6 +85,21 @@ interface BookingFormData {
     location_type: 'in_person' | 'zoom' | 'hybrid';
     zoom_link: string;
     notes: string;
+    theme_ids: number[];
+}
+
+interface ProposalFormData {
+    client_name: string;
+    client_email: string;
+    client_phone: string;
+    appointment_date: string;
+    appointment_time: string;
+    duration_minutes: number;
+    location_type: 'in_person' | 'zoom' | 'hybrid';
+    zoom_link: string;
+    notes: string;
+    proposal_reason: string;
+    theme_ids: number[];
 }
 
 interface Props {
@@ -92,10 +116,12 @@ interface Props {
 
 export default function PublicBook({ auth, canSelectPastor = false }: Props) {
     const [pastors, setPastors] = useState<Pastor[]>([]);
+    const [themes, setThemes] = useState<PastoralCareTheme[]>([]);
     const [availableSlots, setAvailableSlots] = useState<string[]>([]);
     const [availableSlotsWithPastor, setAvailableSlotsWithPastor] = useState<SlotWithPastor[]>([]);
     const [availableDays, setAvailableDays] = useState<AvailableDay[]>([]);
     const [isLoadingPastors, setIsLoadingPastors] = useState(true);
+    const [isLoadingThemes, setIsLoadingThemes] = useState(true);
     const [isLoadingSlots, setIsLoadingSlots] = useState(false);
     const [isLoadingDays, setIsLoadingDays] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -103,6 +129,23 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [dateViewType, setDateViewType] = useState<'week' | 'month'>('month');
     const [currentDate, setCurrentDate] = useState(new Date());
+
+    // Proposal mode states
+    const [isProposalMode, setIsProposalMode] = useState(false);
+    const [proposalFormData, setProposalFormData] = useState<ProposalFormData>({
+        client_name: `${auth.user.first_name} ${auth.user.last_name}`,
+        client_email: auth.user.email,
+        client_phone: '',
+        appointment_date: '',
+        appointment_time: '',
+        duration_minutes: 60,
+        location_type: 'in_person',
+        zoom_link: '',
+        notes: '',
+        proposal_reason: '',
+        theme_ids: [],
+    });
+    const [proposalSubmitted, setProposalSubmitted] = useState(false);
 
     const [formData, setFormData] = useState<BookingFormData>({
         pastor_id: '',
@@ -115,6 +158,7 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
         location_type: 'in_person',
         zoom_link: '',
         notes: '',
+        theme_ids: [],
     });
 
     // Load pastors on component mount (only if user can select pastor)
@@ -126,6 +170,8 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
             // Auto-load available days for all pastors
             fetchAllAvailableDays();
         }
+        // Always load themes
+        fetchThemes();
     }, [canSelectPastor]);
 
     // Load available days when pastor is selected or date range changes (only for users who can select pastor)
@@ -169,6 +215,19 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
             }
         } finally {
             setIsLoadingPastors(false);
+        }
+    };
+
+    const fetchThemes = async () => {
+        try {
+            const result = await apiFetch<{ success: boolean; data: PastoralCareTheme[] }>('/api/pastoral-care/themes');
+            if (result.success && result.data?.success) {
+                setThemes(result.data.data);
+            } else {
+                toast.error(result.error || 'Erreur lors du chargement des thèmes');
+            }
+        } finally {
+            setIsLoadingThemes(false);
         }
     };
 
@@ -319,6 +378,12 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
             if (formData.location_type === 'zoom' && !formData.zoom_link.trim()) {
                 stepErrors.zoom_link = 'Le lien Zoom est requis pour la visioconférence';
             }
+            if (formData.theme_ids.length === 0) {
+                stepErrors.theme_ids = 'Veuillez sélectionner au moins un thème';
+            }
+            if (!formData.notes.trim()) {
+                stepErrors.notes = 'Veuillez décrire le sujet ou vos préoccupations';
+            }
         }
 
         setErrors(stepErrors);
@@ -363,6 +428,77 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                 setIsSubmitting(false);
             }
         });
+    };
+
+    const handleProposalInputChange = (field: keyof ProposalFormData, value: string | number) => {
+        setProposalFormData(prev => ({ ...prev, [field]: value }));
+        if (errors[field]) {
+            setErrors(prev => ({ ...prev, [field]: '' }));
+        }
+    };
+
+    const validateProposalForm = (): boolean => {
+        const proposalErrors: Record<string, string> = {};
+
+        if (!proposalFormData.client_name.trim()) proposalErrors.client_name = 'Votre nom est requis';
+        if (!proposalFormData.client_email.trim()) proposalErrors.client_email = 'Votre email est requis';
+        if (proposalFormData.client_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(proposalFormData.client_email)) {
+            proposalErrors.client_email = 'Veuillez entrer un email valide';
+        }
+        if (!proposalFormData.appointment_date) proposalErrors.appointment_date = 'Veuillez sélectionner une date';
+        if (!proposalFormData.appointment_time) proposalErrors.appointment_time = 'Veuillez sélectionner une heure';
+        if (!proposalFormData.proposal_reason.trim()) proposalErrors.proposal_reason = 'Veuillez expliquer pourquoi vous proposez ce créneau';
+        if (proposalFormData.theme_ids.length === 0) proposalErrors.theme_ids = 'Veuillez sélectionner au moins un thème';
+
+        setErrors(proposalErrors);
+        return Object.keys(proposalErrors).length === 0;
+    };
+
+    const handleSubmitProposal = async () => {
+        if (!validateProposalForm()) {
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            const result = await apiFetch<{ success: boolean; message: string; data: any }>('/api/pastoral-care/proposals', {
+                method: 'POST',
+                body: JSON.stringify(proposalFormData),
+            });
+
+            if (result.success && result.data?.success) {
+                setProposalSubmitted(true);
+                toast.success('Votre proposition de rendez-vous a été soumise avec succès !');
+            } else {
+                const errorMessage = result.error || result.data?.message || 'Erreur lors de la soumission de la proposition';
+                toast.error(errorMessage);
+            }
+        } catch (error) {
+            toast.error('Erreur lors de la soumission de la proposition');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const switchToProposalMode = () => {
+        setIsProposalMode(true);
+        // Pre-fill with any data from the main form
+        setProposalFormData(prev => ({
+            ...prev,
+            client_name: formData.client_name,
+            client_email: formData.client_email,
+            client_phone: formData.client_phone,
+            duration_minutes: formData.duration_minutes,
+            appointment_date: formData.appointment_date,
+            notes: formData.notes,
+            theme_ids: formData.theme_ids,
+        }));
+    };
+
+    const switchToBookingMode = () => {
+        setIsProposalMode(false);
+        setErrors({});
     };
 
     const getAvailableDates = () => {
@@ -439,6 +575,8 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                         </div>
                     </div>
 
+                    {/* Booking Mode View */}
+                    {!isProposalMode && !proposalSubmitted && (
                     <Card className="shadow-xl">
                         <CardHeader>
                             <CardTitle className="flex items-center">
@@ -670,23 +808,49 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                                                     <span className="ml-2">Chargement des créneaux...</span>
                                                 </div>
                                             ) : availableSlots.length > 0 ? (
-                                                <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mt-2">
-                                                    {availableSlots.map((time) => (
-                                                        <Button
-                                                            key={time}
-                                                            variant={formData.appointment_time === time ? 'default' : 'outline'}
-                                                            className="h-12"
-                                                            onClick={() => handleInputChange('appointment_time', time)}
+                                                <>
+                                                    <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mt-2">
+                                                        {availableSlots.map((time) => (
+                                                            <Button
+                                                                key={time}
+                                                                variant={formData.appointment_time === time ? 'default' : 'outline'}
+                                                                className="h-12"
+                                                                onClick={() => handleInputChange('appointment_time', time)}
+                                                            >
+                                                                {time}
+                                                            </Button>
+                                                        ))}
+                                                    </div>
+                                                    {/* Proposal option when slots are available */}
+                                                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                                        <button
+                                                            type="button"
+                                                            onClick={switchToProposalMode}
+                                                            className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 flex items-center"
                                                         >
-                                                            {time}
-                                                        </Button>
-                                                    ))}
-                                                </div>
+                                                            <CalendarDays className="h-4 w-4 mr-1" />
+                                                            Ces créneaux ne vous conviennent pas ? Proposez votre propre horaire
+                                                        </button>
+                                                    </div>
+                                                </>
                                             ) : (
-                                                <div className="text-center py-8 text-gray-500">
-                                                    <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                                                    <p>Aucun créneau disponible pour cette date.</p>
-                                                    <p className="text-sm">Veuillez choisir une autre date.</p>
+                                                <div className="text-center py-8">
+                                                    <div className="bg-orange-50 dark:bg-orange-900/30 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
+                                                        <Clock className="h-12 w-12 mx-auto mb-3 text-orange-500" />
+                                                        <p className="text-gray-700 dark:text-gray-200 font-medium mb-2">
+                                                            Aucun créneau disponible pour cette date.
+                                                        </p>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                                            Souhaitez-vous proposer un ou plusieurs créneaux à notre équipe ?
+                                                        </p>
+                                                        <Button
+                                                            onClick={switchToProposalMode}
+                                                            className="bg-orange-500 hover:bg-orange-600 text-white"
+                                                        >
+                                                            <CalendarDays className="h-4 w-4 mr-2" />
+                                                            Proposer mes créneaux pour cette date
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             )}
                                             {errors.appointment_time && (
@@ -711,30 +875,56 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                                                     <span className="ml-2">Chargement des créneaux...</span>
                                                 </div>
                                             ) : availableSlotsWithPastor.length > 0 ? (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
-                                                    {availableSlotsWithPastor.map((slot, index) => (
-                                                        <Button
-                                                            key={`${slot.time}-${slot.pastor_id}-${index}`}
-                                                            variant={formData.appointment_time === slot.time && formData.pastor_id === slot.pastor_id.toString() ? 'default' : 'outline'}
-                                                            className="h-auto p-3 flex flex-col items-start text-left"
-                                                            onClick={() => {
-                                                                // Set both time and pastor_id when slot is clicked
-                                                                setFormData(prev => ({
-                                                                    ...prev,
-                                                                    appointment_time: slot.time,
-                                                                    pastor_id: slot.pastor_id.toString()
-                                                                }));
-                                                            }}
+                                                <>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+                                                        {availableSlotsWithPastor.map((slot, index) => (
+                                                            <Button
+                                                                key={`${slot.time}-${slot.pastor_id}-${index}`}
+                                                                variant={formData.appointment_time === slot.time && formData.pastor_id === slot.pastor_id.toString() ? 'default' : 'outline'}
+                                                                className="h-auto p-3 flex flex-col items-start text-left"
+                                                                onClick={() => {
+                                                                    // Set both time and pastor_id when slot is clicked
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        appointment_time: slot.time,
+                                                                        pastor_id: slot.pastor_id.toString()
+                                                                    }));
+                                                                }}
+                                                            >
+                                                                <span className="text-lg font-bold">{slot.time}</span>
+                                                            </Button>
+                                                        ))}
+                                                    </div>
+                                                    {/* Proposal option when slots are available */}
+                                                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                                        <button
+                                                            type="button"
+                                                            onClick={switchToProposalMode}
+                                                            className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 flex items-center"
                                                         >
-                                                            <span className="text-lg font-bold">{slot.time}</span>
-                                                        </Button>
-                                                    ))}
-                                                </div>
+                                                            <CalendarDays className="h-4 w-4 mr-1" />
+                                                            Ces créneaux ne vous conviennent pas ? Proposez votre propre horaire
+                                                        </button>
+                                                    </div>
+                                                </>
                                             ) : (
-                                                <div className="text-center py-8 text-gray-500">
-                                                    <Clock className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                                                    <p>Aucun créneau disponible pour cette date.</p>
-                                                    <p className="text-sm">Veuillez choisir une autre date.</p>
+                                                <div className="text-center py-8">
+                                                    <div className="bg-orange-50 dark:bg-orange-900/30 p-6 rounded-lg border border-orange-200 dark:border-orange-800">
+                                                        <Clock className="h-12 w-12 mx-auto mb-3 text-orange-500" />
+                                                        <p className="text-gray-700 dark:text-gray-200 font-medium mb-2">
+                                                            Aucun créneau disponible pour cette date.
+                                                        </p>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                                            Souhaitez-vous proposer un ou plusieurs créneaux à notre équipe ?
+                                                        </p>
+                                                        <Button
+                                                            onClick={switchToProposalMode}
+                                                            className="bg-orange-500 hover:bg-orange-600 text-white"
+                                                        >
+                                                            <CalendarDays className="h-4 w-4 mr-2" />
+                                                            Proposer mes créneaux pour cette date
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             )}
                                             {errors.appointment_time && (
@@ -745,6 +935,25 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                                             )}
                                         </div>
                                     )}
+
+                                    {/* Proposal Alternative Link */}
+                                    <div className="pt-6 border-t mt-6">
+                                        <div className="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg text-center">
+                                            <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
+                                                <AlertCircle className="h-4 w-4 inline mr-1" />
+                                                Aucun créneau ne vous convient ?
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={switchToProposalMode}
+                                                className="border-amber-500 text-amber-700 hover:bg-amber-100 dark:border-amber-400 dark:text-amber-300 dark:hover:bg-amber-900/50"
+                                            >
+                                                <CalendarDays className="h-4 w-4 mr-2" />
+                                                Proposer ma propre date et heure
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
@@ -860,10 +1069,47 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                                         </div>
                                     )}
 
+                                    {/* Theme Selection */}
+                                    <div>
+                                        <Label className="text-base font-medium">Thème(s) du rendez-vous *</Label>
+                                        <p className="text-sm text-gray-500 mb-2">
+                                            Sélectionnez un ou plusieurs thèmes qui correspondent à votre besoin
+                                        </p>
+                                        {isLoadingThemes ? (
+                                            <div className="flex items-center py-4">
+                                                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                                                <span className="text-sm text-gray-500">Chargement des thèmes...</span>
+                                            </div>
+                                        ) : (
+                                            <SearchableMultiSelect
+                                                options={themes.map(theme => ({
+                                                    value: theme.id,
+                                                    label: theme.name,
+                                                }))}
+                                                value={formData.theme_ids}
+                                                onChange={(values) => {
+                                                    setFormData(prev => ({ ...prev, theme_ids: values as number[] }));
+                                                    if (errors.theme_ids) {
+                                                        setErrors(prev => ({ ...prev, theme_ids: '' }));
+                                                    }
+                                                }}
+                                                placeholder="Sélectionnez un ou plusieurs thèmes..."
+                                                noOptionsMessage="Aucun thème trouvé"
+                                                className="mt-2"
+                                            />
+                                        )}
+                                        {errors.theme_ids && (
+                                            <p className="text-red-600 text-sm mt-1 flex items-center">
+                                                <AlertCircle className="h-4 w-4 mr-1" />
+                                                {errors.theme_ids}
+                                            </p>
+                                        )}
+                                    </div>
+
                                     {/* Notes */}
                                     <div>
                                         <Label htmlFor="notes">
-                                            Sujet ou préoccupations (optionnel)
+                                            Sujet ou préoccupations *
                                         </Label>
                                         <Textarea
                                             id="notes"
@@ -873,8 +1119,14 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                                             rows={4}
                                             placeholder="Décrivez brièvement le sujet que vous aimeriez aborder ou vos préoccupations spirituelles..."
                                         />
+                                        {errors.notes && (
+                                            <p className="text-red-600 text-sm mt-1 flex items-center">
+                                                <AlertCircle className="h-4 w-4 mr-1" />
+                                                {errors.notes}
+                                            </p>
+                                        )}
                                         <p className="text-sm text-gray-500 mt-1">
-                                            Ces informations aideront le pasteur ou le MLR à mieux se préparer pour votre rencontre.
+                                            Ces informations aideront le pasteur à mieux se préparer pour votre rencontre.
                                         </p>
                                     </div>
                                 </div>
@@ -935,6 +1187,23 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                                                 <span className="font-medium">Contact :</span>
                                                 <span className="ml-2">{formData.client_email}</span>
                                             </div>
+
+                                            <div className="flex items-start">
+                                                <Heart className="h-5 w-5 text-blue-600 mr-3 mt-0.5" />
+                                                <div>
+                                                    <span className="font-medium">Thème(s) :</span>
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {formData.theme_ids.map(themeId => {
+                                                            const theme = themes.find(t => t.id === themeId);
+                                                            return theme ? (
+                                                                <Badge key={themeId} variant="secondary" className="text-xs">
+                                                                    {theme.name}
+                                                                </Badge>
+                                                            ) : null;
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -993,6 +1262,342 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                             </div>
                         </CardContent>
                     </Card>
+                    )}
+
+                    {/* Proposal Mode View */}
+                    {isProposalMode && !proposalSubmitted && (
+                        <Card className="shadow-xl">
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="flex items-center">
+                                            <CalendarDays className="h-6 w-6 mr-2" />
+                                            Proposer un rendez-vous
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Proposez une date et un horaire qui vous conviennent. Notre équipe examinera votre demande.
+                                        </CardDescription>
+                                    </div>
+                                    <Button variant="ghost" size="sm" onClick={switchToBookingMode}>
+                                        <ChevronLeft className="h-4 w-4 mr-1" />
+                                        Retour aux créneaux
+                                    </Button>
+                                </div>
+                            </CardHeader>
+
+                            <CardContent className="space-y-6">
+                                {/* Personal Information */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label htmlFor="proposal_client_name">Votre nom complet *</Label>
+                                        <Input
+                                            id="proposal_client_name"
+                                            value={proposalFormData.client_name}
+                                            onChange={(e) => handleProposalInputChange('client_name', e.target.value)}
+                                            className="mt-2"
+                                            placeholder="Jean Dupont"
+                                        />
+                                        {errors.client_name && (
+                                            <p className="text-red-600 text-sm mt-1 flex items-center">
+                                                <AlertCircle className="h-4 w-4 mr-1" />
+                                                {errors.client_name}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="proposal_client_email">Votre email *</Label>
+                                        <Input
+                                            id="proposal_client_email"
+                                            type="email"
+                                            value={proposalFormData.client_email}
+                                            onChange={(e) => handleProposalInputChange('client_email', e.target.value)}
+                                            className="mt-2"
+                                            placeholder="jean.dupont@example.com"
+                                        />
+                                        {errors.client_email && (
+                                            <p className="text-red-600 text-sm mt-1 flex items-center">
+                                                <AlertCircle className="h-4 w-4 mr-1" />
+                                                {errors.client_email}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="proposal_client_phone">Votre téléphone (optionnel)</Label>
+                                    <Input
+                                        id="proposal_client_phone"
+                                        type="tel"
+                                        value={proposalFormData.client_phone}
+                                        onChange={(e) => handleProposalInputChange('client_phone', e.target.value)}
+                                        className="mt-2"
+                                        placeholder="+49 1 23 45 67 89"
+                                    />
+                                </div>
+
+                                <Separator />
+
+                                {/* Proposed Date and Time */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <Label htmlFor="proposal_date">Date souhaitée *</Label>
+                                        <Input
+                                            id="proposal_date"
+                                            type="date"
+                                            value={proposalFormData.appointment_date}
+                                            onChange={(e) => handleProposalInputChange('appointment_date', e.target.value)}
+                                            className="mt-2"
+                                            min={format(addDays(new Date(), 1), 'yyyy-MM-dd')}
+                                            max={format(addMonths(new Date(), 3), 'yyyy-MM-dd')}
+                                        />
+                                        {errors.appointment_date && (
+                                            <p className="text-red-600 text-sm mt-1 flex items-center">
+                                                <AlertCircle className="h-4 w-4 mr-1" />
+                                                {errors.appointment_date}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="proposal_time">Heure souhaitée *</Label>
+                                        <Input
+                                            id="proposal_time"
+                                            type="time"
+                                            value={proposalFormData.appointment_time}
+                                            onChange={(e) => handleProposalInputChange('appointment_time', e.target.value)}
+                                            className="mt-2"
+                                            min="08:00"
+                                            max="19:00"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Entre 08:00 et 19:00</p>
+                                        {errors.appointment_time && (
+                                            <p className="text-red-600 text-sm mt-1 flex items-center">
+                                                <AlertCircle className="h-4 w-4 mr-1" />
+                                                {errors.appointment_time}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <Label>Durée du rendez-vous</Label>
+                                        <Select
+                                            value={proposalFormData.duration_minutes.toString()}
+                                            onValueChange={(value) => handleProposalInputChange('duration_minutes', parseInt(value))}
+                                        >
+                                            <SelectTrigger className="mt-2">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="30">30 minutes</SelectItem>
+                                                <SelectItem value="60">1 heure</SelectItem>
+                                                <SelectItem value="90">1 heure 30</SelectItem>
+                                                <SelectItem value="120">2 heures</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                {/* Meeting Type */}
+                                <div>
+                                    <Label className="text-base font-medium">Type de rendez-vous</Label>
+                                    <RadioGroup
+                                        value={proposalFormData.location_type}
+                                        onValueChange={(value: 'in_person' | 'zoom' | 'hybrid') =>
+                                            handleProposalInputChange('location_type', value)
+                                        }
+                                        className="mt-3"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="in_person" id="proposal_in_person" />
+                                            <Label htmlFor="proposal_in_person" className="flex items-center cursor-pointer">
+                                                <MapPin className="h-4 w-4 mr-2" />
+                                                En présentiel à l'église
+                                            </Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="zoom" id="proposal_zoom" />
+                                            <Label htmlFor="proposal_zoom" className="flex items-center cursor-pointer">
+                                                <Video className="h-4 w-4 mr-2" />
+                                                Visioconférence (Zoom)
+                                            </Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="hybrid" id="proposal_hybrid" />
+                                            <Label htmlFor="proposal_hybrid" className="flex items-center cursor-pointer">
+                                                <Users className="h-4 w-4 mr-2" />
+                                                Hybride (au choix du pasteur)
+                                            </Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+
+                                <Separator />
+
+                                {/* Theme Selection */}
+                                <div>
+                                    <Label className="text-base font-medium">Thème(s) du rendez-vous *</Label>
+                                    <p className="text-sm text-gray-500 mb-2">
+                                        Sélectionnez un ou plusieurs thèmes qui correspondent à votre besoin
+                                    </p>
+                                    {isLoadingThemes ? (
+                                        <div className="flex items-center py-4">
+                                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                                            <span className="text-sm text-gray-500">Chargement des thèmes...</span>
+                                        </div>
+                                    ) : (
+                                        <SearchableMultiSelect
+                                            options={themes.map(theme => ({
+                                                value: theme.id,
+                                                label: theme.name,
+                                            }))}
+                                            value={proposalFormData.theme_ids}
+                                            onChange={(values) => {
+                                                setProposalFormData(prev => ({ ...prev, theme_ids: values as number[] }));
+                                                if (errors.theme_ids) {
+                                                    setErrors(prev => ({ ...prev, theme_ids: '' }));
+                                                }
+                                            }}
+                                            placeholder="Sélectionnez un ou plusieurs thèmes..."
+                                            noOptionsMessage="Aucun thème trouvé"
+                                            className="mt-2"
+                                        />
+                                    )}
+                                    {errors.theme_ids && (
+                                        <p className="text-red-600 text-sm mt-1 flex items-center">
+                                            <AlertCircle className="h-4 w-4 mr-1" />
+                                            {errors.theme_ids}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Reason for Proposal */}
+                                <div>
+                                    <Label htmlFor="proposal_reason">
+                                        Pourquoi proposez-vous ce créneau ? *
+                                    </Label>
+                                    <Textarea
+                                        id="proposal_reason"
+                                        value={proposalFormData.proposal_reason}
+                                        onChange={(e) => handleProposalInputChange('proposal_reason', e.target.value)}
+                                        className="mt-2"
+                                        rows={3}
+                                        placeholder="Ex: Les créneaux proposés ne correspondent pas à mes disponibilités car je travaille le matin..."
+                                    />
+                                    {errors.proposal_reason && (
+                                        <p className="text-red-600 text-sm mt-1 flex items-center">
+                                            <AlertCircle className="h-4 w-4 mr-1" />
+                                            {errors.proposal_reason}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Notes */}
+                                <div>
+                                    <Label htmlFor="proposal_notes">
+                                        Message (optionnel)
+                                    </Label>
+                                    <Textarea
+                                        id="proposal_notes"
+                                        value={proposalFormData.notes}
+                                        onChange={(e) => handleProposalInputChange('notes', e.target.value)}
+                                        className="mt-2"
+                                        rows={3}
+                                        placeholder="Décrivez brièvement le sujet que vous aimeriez aborder..."
+                                    />
+                                </div>
+
+                                {/* Info Box */}
+                                <div className="bg-amber-50 dark:bg-amber-950 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                                    <div className="flex items-start">
+                                        <AlertCircle className="h-5 w-5 text-amber-600 mr-3 mt-0.5" />
+                                        <div className="text-sm text-amber-800 dark:text-amber-200">
+                                            <h4 className="font-medium mb-2">Comment ça marche ?</h4>
+                                            <ul className="space-y-1">
+                                                <li>• Votre proposition sera examinée par notre équipe MLR</li>
+                                                <li>• Si un pasteur est disponible, votre rendez-vous sera confirmé</li>
+                                                <li>• Sinon, nous vous proposerons une date alternative</li>
+                                                <li>• Vous recevrez une réponse par email dans les 24-48h</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Submit Button */}
+                                <div className="flex justify-end pt-6 border-t">
+                                    <Button
+                                        onClick={handleSubmitProposal}
+                                        disabled={isSubmitting}
+                                        className="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        {isSubmitting ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                Envoi en cours...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Mail className="h-4 w-4 mr-2" />
+                                                Soumettre ma proposition
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Proposal Submitted Success */}
+                    {isProposalMode && proposalSubmitted && (
+                        <Card className="shadow-xl">
+                            <CardContent className="py-12">
+                                <div className="text-center">
+                                    <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-6">
+                                        <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                                        Proposition envoyée !
+                                    </h2>
+                                    <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
+                                        Votre proposition de rendez-vous a été soumise avec succès.
+                                        Notre équipe MLR l'examinera et vous répondra par email dans les 24-48h.
+                                    </p>
+                                    <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg inline-block mb-6">
+                                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                                            📅 Date proposée : {proposalFormData.appointment_date && format(new Date(proposalFormData.appointment_date), 'EEEE d MMMM yyyy', { locale: fr })}
+                                            <br />
+                                            🕐 Heure proposée : {proposalFormData.appointment_time}
+                                        </p>
+                                    </div>
+                                    <div className="flex justify-center gap-4">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => {
+                                                setProposalSubmitted(false);
+                                                setIsProposalMode(false);
+                                                setProposalFormData({
+                                                    client_name: `${auth.user.first_name} ${auth.user.last_name}`,
+                                                    client_email: auth.user.email,
+                                                    client_phone: '',
+                                                    appointment_date: '',
+                                                    appointment_time: '',
+                                                    duration_minutes: 60,
+                                                    location_type: 'in_person',
+                                                    zoom_link: '',
+                                                    notes: '',
+                                                    proposal_reason: '',
+                                                    theme_ids: [],
+                                                });
+                                            }}
+                                        >
+                                            <CalendarDays className="h-4 w-4 mr-2" />
+                                            Prendre un autre rendez-vous
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Footer Info */}
                     <div className="text-center mt-8 text-gray-600 dark:text-gray-400">

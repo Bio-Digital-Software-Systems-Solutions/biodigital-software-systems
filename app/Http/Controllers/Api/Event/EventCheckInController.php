@@ -36,7 +36,7 @@ class EventCheckInController extends Controller
         ]);
 
         $session = null;
-        if (!empty($validated['session_id'])) {
+        if (! empty($validated['session_id'])) {
             $session = EventSession::find($validated['session_id']);
             if ($session && $session->event_id !== $event->id) {
                 return response()->json(['error' => 'Session invalide.'], 422);
@@ -72,7 +72,7 @@ class EventCheckInController extends Controller
         ]);
 
         $session = null;
-        if (!empty($validated['session_id'])) {
+        if (! empty($validated['session_id'])) {
             $session = EventSession::find($validated['session_id']);
             if ($session && $session->event_id !== $event->id) {
                 return response()->json(['error' => 'Session invalide.'], 422);
@@ -111,12 +111,12 @@ class EventCheckInController extends Controller
         ]);
 
         $session = null;
-        if (!empty($validated['session_id'])) {
+        if (! empty($validated['session_id'])) {
             $session = EventSession::find($validated['session_id']);
         }
 
-        $result = $this->checkInService->checkInByQRCode(
-            $registration->qr_code,
+        $result = $this->checkInService->checkInByRegistration(
+            $registration,
             Auth::user(),
             $session,
             [
@@ -255,7 +255,7 @@ class EventCheckInController extends Controller
      */
     public function markNoShows(Event $event): JsonResponse
     {
-        if (!$event->hasEnded()) {
+        if (! $event->hasEnded()) {
             return response()->json([
                 'error' => 'L\'événement n\'est pas encore terminé.',
             ], 422);

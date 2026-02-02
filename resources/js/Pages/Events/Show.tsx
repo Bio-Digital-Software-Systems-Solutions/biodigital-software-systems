@@ -510,17 +510,17 @@ const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = 
 
                 {/* Registrations Tab */}
                 {activeTab === 'registrations' && (
-                    <RegistrationList eventId={event.uuid} />
+                    <RegistrationList eventId={event.id} />
                 )}
 
                 {/* Check-in Tab */}
                 {activeTab === 'checkin' && (
-                    <CheckInScanner eventId={event.uuid} />
+                    <CheckInScanner eventId={event.id} />
                 )}
 
                 {/* Analytics Tab */}
                 {activeTab === 'analytics' && (
-                    <EventAnalyticsDashboard eventId={event.uuid} />
+                    <EventAnalyticsDashboard eventId={event.id} />
                 )}
 
                 {/* Gallery Tab */}

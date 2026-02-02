@@ -8,6 +8,7 @@ use App\Mail\PastoralCareNewAppointmentNotification;
 use App\Mail\PastoralCareStatusChangeNotification;
 use App\Models\Message;
 use App\Models\PastoralCare;
+use App\Models\PastoralCareTheme;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +22,10 @@ class PastoralCareController extends Controller
         $this->middleware('auth:sanctum')->except([
             'getPastors',
             'getAvailableDays',
+            'getAllAvailableDays',
             'getAvailableSlots',
+            'getAllAvailableSlots',
+            'getThemes',
             'store',
             'confirm',
             'cancel',
@@ -29,6 +33,11 @@ class PastoralCareController extends Controller
             'confirmByClient',
             'confirmByPastor',
             'getConfirmationStatus',
+            // Proposal system public endpoints
+            'submitProposal',
+            'showProposal',
+            'acceptCounterProposal',
+            'rejectCounterProposal',
         ]);
     }
 
@@ -55,6 +64,31 @@ class PastoralCareController extends Controller
         return response()->json([
             'success' => true,
             'data' => $pastors,
+        ]);
+    }
+
+    /**
+     * Get list of available themes for booking
+     */
+    public function getThemes(): JsonResponse
+    {
+        $themes = PastoralCareTheme::active()
+            ->ordered()
+            ->get()
+            ->map(function ($theme) {
+                return [
+                    'id' => $theme->id,
+                    'name' => $theme->name,
+                    'slug' => $theme->slug,
+                    'description' => $theme->description,
+                    'color' => $theme->color,
+                    'icon' => $theme->icon,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $themes,
         ]);
     }
 
@@ -368,12 +402,17 @@ class PastoralCareController extends Controller
             'duration_minutes' => $validated['duration_minutes'],
             'location_type' => $validated['location_type'],
             'zoom_link' => $validated['zoom_link'] ?? null,
-            'notes' => $validated['notes'],
+            'notes' => $validated['notes'] ?? null,
             'status' => 'pending',
         ]);
 
+        // Attach themes
+        if (! empty($validated['theme_ids'])) {
+            $appointment->themes()->sync($validated['theme_ids']);
+        }
+
         // Load relationships for response
-        $appointment->load('pastor');
+        $appointment->load(['pastor', 'themes']);
 
         // Send notifications
         $this->sendAppointmentNotifications($appointment);
@@ -1387,6 +1426,589 @@ class PastoralCareController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Failed to send partial confirmation notification: '.$e->getMessage());
+        }
+    }
+
+    // ==========================================
+    // PROPOSAL SYSTEM ENDPOINTS
+    // ==========================================
+
+    /**
+     * Submit a new appointment proposal (public endpoint)
+     * Used when client wants to propose a specific date/time not in the available slots
+     */
+    public function submitProposal(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'client_name' => 'required|string|max:255',
+            'client_email' => 'required|email|max:255',
+            'client_phone' => 'nullable|string|max:20',
+            'appointment_date' => 'required|date|after_or_equal:today',
+            'appointment_time' => 'required|date_format:H:i',
+            'duration_minutes' => 'required|integer|min:30|max:180',
+            'location_type' => 'required|in:in_person,zoom,hybrid',
+            'zoom_link' => 'nullable|url',
+            'notes' => 'nullable|string|max:1000',
+            'proposal_reason' => 'required|string|max:1000',
+            'theme_ids' => 'required|array|min:1',
+            'theme_ids.*' => 'required|integer|exists:pastoral_care_themes,id',
+        ]);
+
+        // Combine date and time
+        $appointmentDateTime = Carbon::createFromFormat(
+            'Y-m-d H:i',
+            $validated['appointment_date'].' '.$validated['appointment_time']
+        );
+
+        // Validate that the proposed time is within reasonable hours (8:00 - 20:00)
+        $hour = (int) $appointmentDateTime->format('H');
+        if ($hour < 8 || $hour >= 20) {
+            return response()->json([
+                'success' => false,
+                'message' => 'L\'heure proposée doit être entre 08:00 et 20:00.',
+            ], 422);
+        }
+
+        // Check if the date is not too far in the future (max 3 months)
+        $maxDate = now()->addMonths(3)->endOfDay();
+        if ($appointmentDateTime->gt($maxDate)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La date proposée ne peut pas être à plus de 3 mois.',
+            ], 422);
+        }
+
+        // Create the proposal without assigning a pastor yet
+        // Pastor will be assigned when MLR accepts the proposal
+        $proposal = PastoralCare::create([
+            'pastor_id' => User::role('pastor')->first()->id, // Temporary, will be reassigned
+            'client_name' => $validated['client_name'],
+            'client_email' => $validated['client_email'],
+            'client_phone' => $validated['client_phone'] ?? null,
+            'appointment_date' => $validated['appointment_date'],
+            'appointment_time' => $appointmentDateTime,
+            'duration_minutes' => $validated['duration_minutes'],
+            'location_type' => $validated['location_type'],
+            'zoom_link' => $validated['zoom_link'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            'status' => 'proposed',
+            'is_proposal' => true,
+            'proposal_reason' => $validated['proposal_reason'],
+        ]);
+
+        // Attach themes
+        if (! empty($validated['theme_ids'])) {
+            $proposal->themes()->sync($validated['theme_ids']);
+        }
+
+        // Send notifications to MLR team
+        $this->sendProposalNotifications($proposal);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Votre proposition de rendez-vous a été soumise. Vous recevrez une réponse par email.',
+            'data' => [
+                'uuid' => $proposal->uuid,
+                'proposal_token' => $proposal->proposal_token,
+                'appointment' => [
+                    'client_name' => $proposal->client_name,
+                    'client_email' => $proposal->client_email,
+                    'appointment_date' => $proposal->appointment_date->format('Y-m-d'),
+                    'appointment_time' => $proposal->appointment_time->format('H:i'),
+                    'duration_minutes' => $proposal->duration_minutes,
+                    'location_type' => $proposal->location_type,
+                    'status' => $proposal->status,
+                    'proposal_response_status' => $proposal->proposal_response_status,
+                ],
+            ],
+        ], 201);
+    }
+
+    /**
+     * Show a proposal by token (public endpoint)
+     */
+    public function showProposal(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'token' => 'required|string|size:64',
+        ]);
+
+        $proposal = PastoralCare::findByProposalToken($validated['token']);
+
+        if (! $proposal) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Proposition introuvable ou token invalide',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'uuid' => $proposal->uuid,
+                'client_name' => $proposal->client_name,
+                'client_email' => $proposal->client_email,
+                'appointment_date' => $proposal->appointment_date->format('d/m/Y'),
+                'appointment_time' => $proposal->appointment_time->format('H:i'),
+                'duration_minutes' => $proposal->duration_minutes,
+                'location_type' => $proposal->location_type,
+                'status' => $proposal->status,
+                'proposal_reason' => $proposal->proposal_reason,
+                'proposal_response_status' => $proposal->proposal_response_status,
+                'proposal_status_label' => $proposal->proposal_status_label,
+                'counter_proposed_date' => $proposal->counter_proposed_date?->format('d/m/Y'),
+                'counter_proposed_time' => $proposal->counter_proposed_time,
+                'counter_proposal_message' => $proposal->counter_proposal_message,
+                'has_counter_proposal' => $proposal->hasCounterProposal(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get all pending proposals (authenticated MLR/Admin only)
+     */
+    public function getPendingProposals(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->hasAnyRole(['admin', 'super-admin', 'mlr-agent', 'pastor'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - MLR access required',
+            ], 403);
+        }
+
+        $query = PastoralCare::with(['mlrAgent'])
+            ->isProposal()
+            ->orderBy('proposal_submitted_at', 'desc');
+
+        // Apply filters
+        if ($request->filled('status')) {
+            $query->where('proposal_response_status', $request->status);
+        } else {
+            // Default to pending proposals
+            $query->where('proposal_response_status', 'pending');
+        }
+
+        $proposals = $query->paginate($request->input('per_page', 15));
+
+        $stats = [
+            'pending' => PastoralCare::isProposal()->where('proposal_response_status', 'pending')->count(),
+            'counter_proposed' => PastoralCare::isProposal()->where('proposal_response_status', 'counter_proposed')->count(),
+            'accepted' => PastoralCare::isProposal()->where('proposal_response_status', 'accepted')->count(),
+            'rejected' => PastoralCare::isProposal()->where('proposal_response_status', 'rejected')->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $proposals,
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Accept a proposal and assign a pastor (authenticated MLR/Admin only)
+     */
+    public function acceptProposal(Request $request, $uuid): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->hasAnyRole(['admin', 'super-admin', 'mlr-agent', 'pastor'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - MLR access required',
+            ], 403);
+        }
+
+        $proposal = PastoralCare::where('uuid', $uuid)->isProposal()->first();
+
+        if (! $proposal) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Proposition introuvable',
+            ], 404);
+        }
+
+        // Check if proposal is already processed before any other checks
+        if ($proposal->proposal_response_status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette proposition a déjà été traitée.',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'pastor_id' => 'required|exists:users,id',
+        ]);
+
+        // Verify the selected user is a pastor
+        $pastor = User::findOrFail($validated['pastor_id']);
+        if (! $pastor->hasRole('pastor')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'L\'utilisateur sélectionné n\'est pas un pasteur.',
+            ], 422);
+        }
+
+        // Check if the pastor is available at the proposed time
+        if (! PastoralCare::isTimeSlotAvailable($validated['pastor_id'], $proposal->appointment_time, $proposal->duration_minutes)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le pasteur sélectionné n\'est pas disponible à ce créneau.',
+            ], 422);
+        }
+
+        try {
+            $proposal->acceptProposal($validated['pastor_id'], $user->id);
+
+            // Send acceptance notification to client
+            $this->sendProposalAcceptedNotification($proposal);
+
+            // Send notification to assigned pastor
+            $this->sendAppointmentNotifications($proposal->fresh());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Proposition acceptée. Le client et le pasteur ont été notifiés.',
+                'data' => $proposal->fresh(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Reject a proposal with optional counter-proposal (authenticated MLR/Admin only)
+     */
+    public function rejectProposal(Request $request, $uuid): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->hasAnyRole(['admin', 'super-admin', 'mlr-agent', 'pastor'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - MLR access required',
+            ], 403);
+        }
+
+        $proposal = PastoralCare::where('uuid', $uuid)->isProposal()->first();
+
+        if (! $proposal) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Proposition introuvable',
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+            'counter_proposed_date' => 'nullable|date|after_or_equal:today',
+            'counter_proposed_time' => 'nullable|date_format:H:i|required_with:counter_proposed_date',
+            'counter_proposal_message' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            $proposal->rejectProposal(
+                $user->id,
+                $validated['rejection_reason'],
+                $validated['counter_proposed_date'] ?? null,
+                $validated['counter_proposed_time'] ?? null,
+                $validated['counter_proposal_message'] ?? null
+            );
+
+            // Send notification to client
+            if ($proposal->hasCounterProposal()) {
+                $this->sendCounterProposalNotification($proposal);
+                $message = 'Contre-proposition envoyée. Le client a été notifié.';
+            } else {
+                $this->sendProposalRejectedNotification($proposal);
+                $message = 'Proposition refusée. Le client a été notifié.';
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => $proposal->fresh(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Client accepts the counter-proposal (public endpoint)
+     */
+    public function acceptCounterProposal(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'token' => 'required|string|size:64',
+        ]);
+
+        $proposal = PastoralCare::findByProposalToken($validated['token']);
+
+        if (! $proposal) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Proposition introuvable ou token invalide',
+            ], 404);
+        }
+
+        try {
+            $proposal->acceptCounterProposal($validated['token']);
+
+            // Send notifications that the appointment is now pending
+            $this->sendAppointmentNotifications($proposal->fresh());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Vous avez accepté la contre-proposition. Votre rendez-vous est maintenant en attente de confirmation.',
+                'data' => [
+                    'uuid' => $proposal->uuid,
+                    'appointment_date' => $proposal->appointment_date->format('d/m/Y'),
+                    'appointment_time' => $proposal->appointment_time->format('H:i'),
+                    'status' => $proposal->status,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Client rejects the counter-proposal (public endpoint)
+     */
+    public function rejectCounterProposal(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'token' => 'required|string|size:64',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $proposal = PastoralCare::findByProposalToken($validated['token']);
+
+        if (! $proposal) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Proposition introuvable ou token invalide',
+            ], 404);
+        }
+
+        try {
+            $proposal->rejectCounterProposal($validated['token'], $validated['reason'] ?? null);
+
+            // Notify MLR that client rejected the counter-proposal
+            $this->sendCounterProposalRejectedNotification($proposal);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Vous avez refusé la contre-proposition. Vous pouvez soumettre une nouvelle proposition si vous le souhaitez.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    // ==========================================
+    // PROPOSAL NOTIFICATION METHODS
+    // ==========================================
+
+    /**
+     * Send notifications for new proposal to MLR team
+     */
+    private function sendProposalNotifications(PastoralCare $proposal): void
+    {
+        try {
+            // Get all MLR agents and admins
+            $mlrUsers = User::role(['admin', 'super-admin', 'mlr-agent'])->get();
+
+            $messageContent = "Nouvelle proposition de rendez-vous reçue :\n\n".
+                '👤 Client : '.$proposal->client_name."\n".
+                '📧 Email : '.$proposal->client_email."\n".
+                '📅 Date proposée : '.$proposal->appointment_date->format('d/m/Y')."\n".
+                '⏰ Heure proposée : '.$proposal->appointment_time->format('H:i')."\n".
+                '⌛ Durée : '.$proposal->duration_minutes." minutes\n".
+                '📍 Type : '.$this->getLocationTypeLabel($proposal->location_type)."\n".
+                "\n💬 Raison de la proposition :\n".$proposal->proposal_reason."\n".
+                "\n🔗 Veuillez traiter cette demande dans le tableau de bord MLR.";
+
+            foreach ($mlrUsers as $mlrUser) {
+                // Send internal message
+                Message::create([
+                    'subject' => 'Nouvelle proposition de rendez-vous - '.$proposal->client_name,
+                    'content' => $messageContent,
+                    'sender_id' => 1, // System user
+                    'receiver_id' => $mlrUser->id,
+                    'type' => 'system',
+                    'recipient_type' => 'user',
+                ]);
+
+                // Send email notification
+                Mail::raw($messageContent, function ($message) use ($mlrUser, $proposal) {
+                    $message->to($mlrUser->email)
+                        ->subject('Nouvelle proposition de rendez-vous - '.$proposal->client_name)
+                        ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
+                });
+            }
+
+            // Send confirmation email to client
+            $clientContent = "Bonjour {$proposal->client_name},\n\n".
+                "Votre proposition de rendez-vous a été soumise avec succès.\n\n".
+                "Détails de votre proposition :\n".
+                '📅 Date : '.$proposal->appointment_date->format('d/m/Y')."\n".
+                '⏰ Heure : '.$proposal->appointment_time->format('H:i')."\n".
+                '⌛ Durée : '.$proposal->duration_minutes." minutes\n".
+                '📍 Type : '.$this->getLocationTypeLabel($proposal->location_type)."\n\n".
+                "Notre équipe examinera votre proposition et vous répondra dans les plus brefs délais.\n\n".
+                "Cordialement,\nL'équipe ICC Munich";
+
+            Mail::raw($clientContent, function ($message) use ($proposal) {
+                $message->to($proposal->client_email)
+                    ->subject('Proposition de rendez-vous reçue - ICC Munich')
+                    ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
+            });
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send proposal notifications: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Send notification when proposal is accepted
+     */
+    private function sendProposalAcceptedNotification(PastoralCare $proposal): void
+    {
+        try {
+            $proposal->load('pastor');
+
+            $clientContent = "Bonjour {$proposal->client_name},\n\n".
+                "Bonne nouvelle ! Votre proposition de rendez-vous a été acceptée.\n\n".
+                "Détails de votre rendez-vous :\n".
+                '📅 Date : '.$proposal->appointment_date->format('d/m/Y')."\n".
+                '⏰ Heure : '.$proposal->appointment_time->format('H:i')."\n".
+                '⌛ Durée : '.$proposal->duration_minutes." minutes\n".
+                '👨‍💼 Pasteur : '.$proposal->pastor->first_name.' '.$proposal->pastor->last_name."\n".
+                '📍 Type : '.$this->getLocationTypeLabel($proposal->location_type)."\n\n".
+                "Vous recevrez un email de confirmation avec les détails complets.\n\n".
+                "Cordialement,\nL'équipe ICC Munich";
+
+            Mail::raw($clientContent, function ($message) use ($proposal) {
+                $message->to($proposal->client_email)
+                    ->subject('Votre proposition de rendez-vous a été acceptée - ICC Munich')
+                    ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
+            });
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send proposal accepted notification: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Send notification when proposal is rejected without counter-proposal
+     */
+    private function sendProposalRejectedNotification(PastoralCare $proposal): void
+    {
+        try {
+            $clientContent = "Bonjour {$proposal->client_name},\n\n".
+                "Nous sommes désolés, votre proposition de rendez-vous n'a pas pu être acceptée.\n\n".
+                "Proposition initiale :\n".
+                '📅 Date : '.$proposal->appointment_date->format('d/m/Y')."\n".
+                '⏰ Heure : '.$proposal->appointment_time->format('H:i')."\n\n".
+                "Raison du refus :\n".
+                $proposal->proposal_rejection_reason."\n\n".
+                "Nous vous invitons à soumettre une nouvelle proposition ou à choisir parmi les créneaux disponibles.\n\n".
+                "Cordialement,\nL'équipe ICC Munich";
+
+            Mail::raw($clientContent, function ($message) use ($proposal) {
+                $message->to($proposal->client_email)
+                    ->subject('Votre proposition de rendez-vous n\'a pas pu être acceptée - ICC Munich')
+                    ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
+            });
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send proposal rejected notification: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Send notification when counter-proposal is sent
+     */
+    private function sendCounterProposalNotification(PastoralCare $proposal): void
+    {
+        try {
+            $confirmUrl = config('app.url').'/pastoral-care/proposal/respond?token='.$proposal->proposal_token;
+
+            $clientContent = "Bonjour {$proposal->client_name},\n\n".
+                "Nous avons examiné votre proposition de rendez-vous et aimerions vous suggérer un autre créneau.\n\n".
+                "Votre proposition initiale :\n".
+                '📅 Date : '.$proposal->appointment_date->format('d/m/Y')."\n".
+                '⏰ Heure : '.$proposal->appointment_time->format('H:i')."\n\n".
+                "Notre contre-proposition :\n".
+                '📅 Date : '.$proposal->counter_proposed_date->format('d/m/Y')."\n".
+                '⏰ Heure : '.$proposal->counter_proposed_time."\n\n";
+
+            if ($proposal->counter_proposal_message) {
+                $clientContent .= "Message de l'équipe :\n".$proposal->counter_proposal_message."\n\n";
+            }
+
+            $clientContent .= "Pour accepter ou refuser cette contre-proposition, veuillez cliquer sur le lien suivant :\n".
+                $confirmUrl."\n\n".
+                "Cordialement,\nL'équipe ICC Munich";
+
+            Mail::raw($clientContent, function ($message) use ($proposal) {
+                $message->to($proposal->client_email)
+                    ->subject('Contre-proposition pour votre rendez-vous - ICC Munich')
+                    ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
+            });
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send counter-proposal notification: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Send notification when client rejects counter-proposal
+     */
+    private function sendCounterProposalRejectedNotification(PastoralCare $proposal): void
+    {
+        try {
+            // Notify MLR team
+            $mlrUsers = User::role(['admin', 'super-admin', 'mlr-agent'])->get();
+
+            $messageContent = "Le client a refusé la contre-proposition :\n\n".
+                '👤 Client : '.$proposal->client_name."\n".
+                '📧 Email : '.$proposal->client_email."\n".
+                '📅 Date proposée initialement : '.$proposal->appointment_date->format('d/m/Y')."\n".
+                '📅 Contre-proposition refusée : '.$proposal->counter_proposed_date?->format('d/m/Y').' à '.$proposal->counter_proposed_time."\n";
+
+            if ($proposal->cancellation_reason) {
+                $messageContent .= "\n💬 Raison du refus : ".$proposal->cancellation_reason;
+            }
+
+            foreach ($mlrUsers as $mlrUser) {
+                Message::create([
+                    'subject' => 'Contre-proposition refusée - '.$proposal->client_name,
+                    'content' => $messageContent,
+                    'sender_id' => 1,
+                    'receiver_id' => $mlrUser->id,
+                    'type' => 'system',
+                    'recipient_type' => 'user',
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to send counter-proposal rejected notification: '.$e->getMessage());
         }
     }
 }

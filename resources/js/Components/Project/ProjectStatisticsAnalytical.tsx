@@ -209,14 +209,14 @@ function VelocityGauge({ data, title }: {
     const gradientId = `gauge-gradient-${Math.random().toString(36).substring(2, 11)}`;
 
     return (
-        <Card className="h-full">
+        <Card className="h-full overflow-hidden">
             <CardContent className="pt-6 pb-8">
                 <div className="flex items-center gap-3 mb-4">
                     <RocketLaunchIcon className="h-6 w-6 text-muted-foreground shrink-0" />
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
                             <h3 className="font-semibold text-base">{title}</h3>
-                            <div className="relative shrink-0">
+                            <div className="relative">
                                 <select
                                     value={period}
                                     onChange={(e) => setPeriod(e.target.value as VelocityPeriod)}

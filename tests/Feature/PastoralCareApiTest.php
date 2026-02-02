@@ -3,18 +3,20 @@
 namespace Tests\Feature;
 
 use App\Models\PastoralCare;
+use App\Models\PastoralCareTheme;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use Carbon\Carbon;
 use Spatie\Permission\Models\Role;
+use Tests\TestCase;
 
 class PastoralCareApiTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
 
     protected $pastor;
+
     protected $appointment;
 
     protected function setUp(): void
@@ -24,6 +26,9 @@ class PastoralCareApiTest extends TestCase
         // Create necessary roles
         Role::create(['name' => 'pastor']);
         Role::create(['name' => 'member']);
+
+        // Seed themes
+        $this->artisan('db:seed', ['--class' => 'PastoralCareThemeSeeder']);
 
         // Create a pastor user
         $this->pastor = User::factory()->create([
@@ -54,17 +59,17 @@ class PastoralCareApiTest extends TestCase
         $response = $this->getJson('/api/pastoral-care/pastors');
 
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'success',
-                    'data' => [
-                        '*' => [
-                            'id',
-                            'name',
-                            'email',
-                            'phone'
-                        ]
-                    ]
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'data' => [
+                    '*' => [
+                        'id',
+                        'name',
+                        'email',
+                        'phone',
+                    ],
+                ],
+            ]);
 
         $this->assertTrue($response->json('success'));
         $this->assertCount(1, $response->json('data'));
@@ -79,13 +84,13 @@ class PastoralCareApiTest extends TestCase
         $response = $this->getJson("/api/pastoral-care/available-slots?pastor_id={$this->pastor->id}&date={$tomorrow}&duration=60");
 
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'success',
-                    'data' => [
-                        'date',
-                        'slots'
-                    ]
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'data' => [
+                    'date',
+                    'slots',
+                ],
+            ]);
 
         $this->assertTrue($response->json('success'));
         $this->assertEquals($tomorrow, $response->json('data.date'));
@@ -95,6 +100,8 @@ class PastoralCareApiTest extends TestCase
     /** @test */
     public function it_can_create_new_appointment()
     {
+        $themes = PastoralCareTheme::take(2)->pluck('id')->toArray();
+
         $appointmentData = [
             'pastor_id' => $this->pastor->id,
             'client_name' => 'New Client',
@@ -105,34 +112,35 @@ class PastoralCareApiTest extends TestCase
             'duration_minutes' => 60,
             'location_type' => 'zoom',
             'zoom_link' => 'https://zoom.us/j/123456789',
-            'notes' => 'Follow-up consultation'
+            'notes' => 'Follow-up consultation',
+            'theme_ids' => $themes,
         ];
 
         $response = $this->postJson('/api/pastoral-care/appointments', $appointmentData);
 
         $response->assertStatus(201)
-                ->assertJsonStructure([
-                    'success',
-                    'message',
-                    'data' => [
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'data' => [
+                    'uuid',
+                    'appointment' => [
+                        'id',
                         'uuid',
-                        'appointment' => [
-                            'id',
-                            'uuid',
-                            'client_name',
-                            'client_email',
-                            'appointment_date',
-                            'appointment_time',
-                            'duration_minutes',
-                            'location_type',
-                            'status',
-                            'pastor' => [
-                                'name',
-                                'email'
-                            ]
-                        ]
-                    ]
-                ]);
+                        'client_name',
+                        'client_email',
+                        'appointment_date',
+                        'appointment_time',
+                        'duration_minutes',
+                        'location_type',
+                        'status',
+                        'pastor' => [
+                            'name',
+                            'email',
+                        ],
+                    ],
+                ],
+            ]);
 
         $this->assertTrue($response->json('success'));
         $this->assertEquals('New Client', $response->json('data.appointment.client_name'));
@@ -141,7 +149,7 @@ class PastoralCareApiTest extends TestCase
         $this->assertDatabaseHas('pastoral_cares', [
             'client_name' => 'New Client',
             'client_email' => 'newclient@example.com',
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
     }
 
@@ -151,29 +159,29 @@ class PastoralCareApiTest extends TestCase
         $response = $this->getJson("/api/pastoral-care/appointments/{$this->appointment->uuid}");
 
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'success',
-                    'data' => [
-                        'id',
-                        'uuid',
-                        'client_name',
-                        'client_email',
-                        'client_phone',
-                        'appointment_date',
-                        'appointment_time',
-                        'duration_minutes',
-                        'location_type',
-                        'status',
-                        'notes',
-                        'pastor_notes',
-                        'pastor' => [
-                            'name',
-                            'email'
-                        ],
-                        'can_be_confirmed',
-                        'can_be_cancelled'
-                    ]
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'data' => [
+                    'id',
+                    'uuid',
+                    'client_name',
+                    'client_email',
+                    'client_phone',
+                    'appointment_date',
+                    'appointment_time',
+                    'duration_minutes',
+                    'location_type',
+                    'status',
+                    'notes',
+                    'pastor_notes',
+                    'pastor' => [
+                        'name',
+                        'email',
+                    ],
+                    'can_be_confirmed',
+                    'can_be_cancelled',
+                ],
+            ]);
 
         $this->assertTrue($response->json('success'));
         $this->assertEquals($this->appointment->client_name, $response->json('data.client_name'));
@@ -186,10 +194,10 @@ class PastoralCareApiTest extends TestCase
         $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/confirm");
 
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'success',
-                    'message'
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'message',
+            ]);
 
         $this->assertTrue($response->json('success'));
 
@@ -207,10 +215,10 @@ class PastoralCareApiTest extends TestCase
         $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/confirm");
 
         $response->assertStatus(400)
-                ->assertJsonStructure([
-                    'success',
-                    'message'
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'message',
+            ]);
 
         $this->assertFalse($response->json('success'));
     }
@@ -219,14 +227,14 @@ class PastoralCareApiTest extends TestCase
     public function it_can_cancel_appointment()
     {
         $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/cancel", [
-            'cancellation_reason' => 'Client requested cancellation'
+            'cancellation_reason' => 'Client requested cancellation',
         ]);
 
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'success',
-                    'message'
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'message',
+            ]);
 
         $this->assertTrue($response->json('success'));
 
@@ -239,16 +247,18 @@ class PastoralCareApiTest extends TestCase
     /** @test */
     public function it_can_complete_appointment()
     {
+        $this->actingAs($this->pastor);
+
         // First confirm the appointment
         $this->appointment->update(['status' => 'confirmed']);
 
         $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/complete");
 
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'success',
-                    'message'
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'message',
+            ]);
 
         $this->assertTrue($response->json('success'));
 
@@ -259,14 +269,16 @@ class PastoralCareApiTest extends TestCase
     /** @test */
     public function it_cannot_complete_appointment_that_is_not_confirmed()
     {
+        $this->actingAs($this->pastor);
+
         // Appointment is pending, not confirmed
         $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/complete");
 
         $response->assertStatus(400)
-                ->assertJsonStructure([
-                    'success',
-                    'message'
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'message',
+            ]);
 
         $this->assertFalse($response->json('success'));
     }
@@ -274,20 +286,22 @@ class PastoralCareApiTest extends TestCase
     /** @test */
     public function it_can_mark_appointment_as_no_show()
     {
+        $this->actingAs($this->pastor);
+
         // Set appointment to confirmed and in the past
         $this->appointment->update([
             'status' => 'confirmed',
             'appointment_date' => Carbon::yesterday(),
-            'appointment_time' => Carbon::yesterday()->setHour(14)->setMinute(0)
+            'appointment_time' => Carbon::yesterday()->setHour(14)->setMinute(0),
         ]);
 
         $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/no-show");
 
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'success',
-                    'message'
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'message',
+            ]);
 
         $this->assertTrue($response->json('success'));
 
@@ -300,21 +314,21 @@ class PastoralCareApiTest extends TestCase
     {
         $this->actingAs($this->pastor);
 
-        $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}", [
-            'pastor_notes' => 'Client discussed family issues. Provided guidance on communication strategies. Recommended follow-up in 2 weeks.'
+        $response = $this->patchJson("/api/pastoral-care/appointments/{$this->appointment->uuid}", [
+            'pastor_notes' => 'Client discussed family issues. Provided guidance on communication strategies. Recommended follow-up in 2 weeks.',
         ]);
 
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'success',
-                    'message',
-                    'data'
-                ]);
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'data',
+            ]);
 
         $this->assertTrue($response->json('success'));
 
         $this->appointment->refresh();
-        $this->assertStringContains('Client discussed family issues', $this->appointment->pastor_notes);
+        $this->assertStringContainsString('Client discussed family issues', $this->appointment->pastor_notes);
     }
 
     /** @test */
@@ -325,20 +339,20 @@ class PastoralCareApiTest extends TestCase
         // Generate a string longer than 2000 characters
         $longNotes = str_repeat('A very long note. ', 150); // Should exceed 2000 chars
 
-        $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}", [
-            'pastor_notes' => $longNotes
+        $response = $this->patchJson("/api/pastoral-care/appointments/{$this->appointment->uuid}", [
+            'pastor_notes' => $longNotes,
         ]);
 
         $response->assertStatus(422)
-                ->assertJsonValidationErrors(['pastor_notes']);
+            ->assertJsonValidationErrors(['pastor_notes']);
     }
 
     /** @test */
     public function it_requires_authentication_for_protected_endpoints()
     {
         // Test update endpoint requires authentication
-        $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}", [
-            'pastor_notes' => 'Some notes'
+        $response = $this->patchJson("/api/pastoral-care/appointments/{$this->appointment->uuid}", [
+            'pastor_notes' => 'Some notes',
         ]);
 
         $response->assertStatus(401);
@@ -359,15 +373,15 @@ class PastoralCareApiTest extends TestCase
         $this->actingAs($regularUser);
 
         // Try to update pastor notes
-        $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}", [
-            'pastor_notes' => 'Some notes'
+        $response = $this->patchJson("/api/pastoral-care/appointments/{$this->appointment->uuid}", [
+            'pastor_notes' => 'Some notes',
         ]);
 
         $response->assertStatus(403)
-                ->assertJson([
-                    'success' => false,
-                    'message' => 'Unauthorized - Pastor access required'
-                ]);
+            ->assertJson([
+                'success' => false,
+                'message' => 'Unauthorized - Pastor access required',
+            ]);
     }
 
     /** @test */
@@ -381,21 +395,23 @@ class PastoralCareApiTest extends TestCase
             'appointment_time' => 'invalid-time',
             'duration_minutes' => 'invalid',
             'location_type' => 'invalid-type',
-            'zoom_link' => 'invalid-url'
+            'zoom_link' => 'invalid-url',
         ];
 
         $response = $this->postJson('/api/pastoral-care/appointments', $invalidData);
 
         $response->assertStatus(422)
-                ->assertJsonValidationErrors([
-                    'pastor_id',
-                    'client_name',
-                    'client_email',
-                    'appointment_date',
-                    'appointment_time',
-                    'duration_minutes',
-                    'location_type'
-                ]);
+            ->assertJsonValidationErrors([
+                'pastor_id',
+                'client_name',
+                'client_email',
+                'appointment_date',
+                'appointment_time',
+                'duration_minutes',
+                'location_type',
+                'theme_ids',
+                'notes',
+            ]);
     }
 
     /** @test */
@@ -404,15 +420,17 @@ class PastoralCareApiTest extends TestCase
         $response = $this->getJson('/api/pastoral-care/appointments/non-existent-uuid');
 
         $response->assertStatus(404)
-                ->assertJson([
-                    'success' => false,
-                    'message' => 'Rendez-vous introuvable'
-                ]);
+            ->assertJson([
+                'success' => false,
+                'message' => 'Rendez-vous introuvable',
+            ]);
     }
 
     /** @test */
     public function it_checks_time_slot_availability_when_creating_appointment()
     {
+        $themes = PastoralCareTheme::take(1)->pluck('id')->toArray();
+
         // Create an appointment that conflicts with existing one
         $conflictingData = [
             'pastor_id' => $this->pastor->id,
@@ -422,13 +440,14 @@ class PastoralCareApiTest extends TestCase
             'appointment_time' => $this->appointment->appointment_time->format('H:i'),
             'duration_minutes' => 60,
             'location_type' => 'in_person',
-            'notes' => 'This should conflict'
+            'notes' => 'This should conflict',
+            'theme_ids' => $themes,
         ];
 
         $response = $this->postJson('/api/pastoral-care/appointments', $conflictingData);
 
         $response->assertStatus(422)
-                ->assertJsonValidationErrors(['appointment_time']);
+            ->assertJsonValidationErrors(['appointment_time']);
     }
 
     /** @test */
@@ -439,32 +458,32 @@ class PastoralCareApiTest extends TestCase
         // Create another appointment for the same pastor
         PastoralCare::factory()->create([
             'pastor_id' => $this->pastor->id,
-            'status' => 'confirmed'
+            'status' => 'confirmed',
         ]);
 
         $response = $this->getJson('/api/pastoral-care/appointments');
 
         $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'success',
+            ->assertJsonStructure([
+                'success',
+                'data' => [
                     'data' => [
-                        'data' => [
-                            '*' => [
-                                'id',
-                                'uuid',
-                                'client_name',
-                                'appointment_date',
-                                'status'
-                            ]
-                        ]
+                        '*' => [
+                            'id',
+                            'uuid',
+                            'client_name',
+                            'appointment_date',
+                            'status',
+                        ],
                     ],
-                    'stats' => [
-                        'pending',
-                        'confirmed',
-                        'completed',
-                        'cancelled'
-                    ]
-                ]);
+                ],
+                'stats' => [
+                    'pending',
+                    'confirmed',
+                    'completed',
+                    'cancelled',
+                ],
+            ]);
 
         $this->assertTrue($response->json('success'));
     }
@@ -477,12 +496,12 @@ class PastoralCareApiTest extends TestCase
         // Create appointments with different statuses
         PastoralCare::factory()->create([
             'pastor_id' => $this->pastor->id,
-            'status' => 'confirmed'
+            'status' => 'confirmed',
         ]);
 
         PastoralCare::factory()->create([
             'pastor_id' => $this->pastor->id,
-            'status' => 'completed'
+            'status' => 'completed',
         ]);
 
         $response = $this->getJson('/api/pastoral-care/appointments?status=pending');
@@ -503,13 +522,13 @@ class PastoralCareApiTest extends TestCase
         $response = $this->deleteJson("/api/pastoral-care/appointments/{$this->appointment->uuid}");
 
         $response->assertStatus(200)
-                ->assertJson([
-                    'success' => true,
-                    'message' => 'Rendez-vous supprimé avec succès'
-                ]);
+            ->assertJson([
+                'success' => true,
+                'message' => 'Rendez-vous supprimé avec succès',
+            ]);
 
         $this->assertSoftDeleted('pastoral_cares', [
-            'id' => $this->appointment->id
+            'id' => $this->appointment->id,
         ]);
     }
 }
