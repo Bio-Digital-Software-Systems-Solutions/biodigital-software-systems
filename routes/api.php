@@ -106,6 +106,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Project comments
     Route::post('projects/{project}/comments', [ProjectController::class, 'storeComment'])->name('api.projects.storeComment');
     Route::delete('projects/{project}/comments/{comment}', [ProjectController::class, 'deleteComment'])->name('api.projects.deleteComment');
+    Route::get('projects/{project}/mentionable-users', [ProjectController::class, 'getMentionableUsers'])->name('api.projects.mentionableUsers');
 
     // Project attachments
     Route::post('projects/{project}/attachments', [ProjectController::class, 'uploadAttachment'])->name('api.projects.uploadAttachment');
@@ -125,6 +126,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Task comments
     Route::post('tasks/{task}/comments', [TaskController::class, 'storeComment'])->name('api.tasks.storeComment');
     Route::delete('tasks/{task}/comments/{comment}', [TaskController::class, 'deleteComment'])->name('api.tasks.deleteComment');
+    Route::get('tasks/{task}/mentionable-users', [TaskController::class, 'getMentionableUsers'])->name('api.tasks.mentionableUsers');
 
     // Task participants
     Route::post('tasks/{task}/participants', [TaskController::class, 'addParticipant'])->name('api.tasks.addParticipant');
@@ -209,13 +211,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/appointments/{uuid}/no-show', [PastoralCareController::class, 'noShow'])
             ->name('appointments.no-show');
 
-        // Confirm appointment (authenticated pastor only)
-        Route::post('/appointments/{uuid}/confirm', [PastoralCareController::class, 'confirm'])
-            ->name('appointments.confirm');
-
-        // Cancel appointment (authenticated pastor only)
-        Route::post('/appointments/{uuid}/cancel', [PastoralCareController::class, 'cancel'])
-            ->name('appointments.cancel');
+        // Note: confirm and cancel routes are defined in the PUBLIC section above (lines 70-76)
+        // to allow unauthenticated access from confirmation emails
 
         // Create follow-up appointment (authenticated pastor only)
         Route::post('/appointments/{uuid}/follow-up', [PastoralCareController::class, 'createFollowUp'])

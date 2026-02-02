@@ -35,4 +35,21 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Twilio SMS & WhatsApp Service
+    |--------------------------------------------------------------------------
+    |
+    | Credentials for Twilio SMS and WhatsApp messaging service.
+    | Used for pastoral care appointment reminders and notifications.
+    |
+    */
+
+    'twilio' => [
+        'sid' => env('TWILIO_ACCOUNT_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        'from' => env('TWILIO_FROM_NUMBER'),
+        'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
+    ],
+
 ];

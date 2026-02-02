@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TransferPastoralCareRequest;
 use App\Mail\PastoralCareAppointmentConfirmation;
 use App\Mail\PastoralCareNewAppointmentNotification;
+use App\Mail\PastoralCareTransferNotification;
 use App\Models\Message;
 use App\Models\PastoralCare;
 use App\Models\User;
+use App\Services\PastoralCareStatisticsService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -120,6 +124,8 @@ class PastoralCareController extends Controller
                 'canDelete' => $user->can('delete pastoral care'),
                 'canManage' => $user->can('manage pastoral care'),
                 'canSelectPastor' => $user->can('select pastor for pastoral care'),
+                'canViewMlrDashboard' => $user->can('view mlr dashboard'),
+                'canTransfer' => $user->can('transfer pastoral care'),
             ],
             'stats' => [
                 'total_appointments' => (clone $statsQuery)->count(),
@@ -253,6 +259,9 @@ class PastoralCareController extends Controller
             if ($appointment->client_email) {
                 Mail::to($appointment->client_email)
                     ->send(new PastoralCareAppointmentConfirmation($appointment));
+
+                // Track that the notification email was sent
+                $appointment->update(['notification_email_sent_at' => now()]);
             }
 
             // Email to pastor
@@ -505,7 +514,7 @@ class PastoralCareController extends Controller
     /**
      * Get available time slots for a specific date
      */
-    public function getAvailableSlots(Request $request): \Illuminate\Http\JsonResponse
+    public function getAvailableSlots(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'date' => 'required|date|after_or_equal:today',
@@ -519,6 +528,179 @@ class PastoralCareController extends Controller
         );
 
         return response()->json(['slots' => $slots]);
+    }
+
+    /**
+     * Display the MLR dashboard
+     */
+    public function mlr(Request $request, PastoralCareStatisticsService $statisticsService): Response
+    {
+        $user = $request->user();
+
+        // Check if user has permission to view MLR dashboard
+        if (! $user->can('view mlr dashboard')) {
+            abort(403, 'Accès non autorisé au tableau de bord MLR.');
+        }
+
+        $period = $request->get('period', 'month');
+
+        // Get all pastors/agents for transfer functionality
+        $pastors = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', ['admin', 'pastor', 'mlr_agent']);
+        })
+            ->select('id', 'first_name', 'last_name', 'email')
+            ->orderBy('first_name')
+            ->get();
+
+        // Get comprehensive statistics
+        $stats = $statisticsService->getMlrDashboardStats($period);
+
+        // Get all appointments for the MLR view (with pagination)
+        $appointments = PastoralCare::with(['user', 'pastor', 'transferredFrom', 'transferredTo', 'parent'])
+            ->orderBy('appointment_date', 'desc')
+            ->orderBy('appointment_time', 'desc')
+            ->paginate(20);
+
+        return Inertia::render('PastoralCare/Mlr', [
+            'stats' => $stats,
+            'appointments' => [
+                'data' => $appointments->items(),
+                'links' => $appointments->linkCollection()->toArray(),
+                'meta' => [
+                    'current_page' => $appointments->currentPage(),
+                    'last_page' => $appointments->lastPage(),
+                    'per_page' => $appointments->perPage(),
+                    'total' => $appointments->total(),
+                    'from' => $appointments->firstItem(),
+                    'to' => $appointments->lastItem(),
+                ],
+            ],
+            'pastors' => $pastors,
+            'themes' => PastoralCare::THEMES,
+            'currentPeriod' => $period,
+            'can' => [
+                'transfer' => $user->can('transfer pastoral care'),
+                'viewAll' => $user->can('view all pastoral care'),
+                'viewStatistics' => $user->can('view pastoral care statistics'),
+            ],
+        ]);
+    }
+
+    /**
+     * Get MLR statistics as JSON (for AJAX updates)
+     */
+    public function mlrStatistics(Request $request, PastoralCareStatisticsService $statisticsService): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->can('view pastoral care statistics')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $period = $request->get('period', 'month');
+        $stats = $statisticsService->getMlrDashboardStats($period);
+
+        return response()->json($stats);
+    }
+
+    /**
+     * Transfer an appointment to another pastor/agent
+     */
+    public function transfer(TransferPastoralCareRequest $request, PastoralCare $pastoralCare): RedirectResponse
+    {
+        try {
+            $validated = $request->validated();
+
+            // Get the new pastor for notifications
+            $newPastor = User::findOrFail($validated['transferred_to_id']);
+            $oldPastor = $pastoralCare->pastor;
+
+            // Perform the transfer
+            $pastoralCare->transferTo(
+                $validated['transferred_to_id'],
+                $validated['transfer_reason'] ?? null
+            );
+
+            // Send notifications
+            $this->sendTransferNotifications($pastoralCare, $oldPastor, $newPastor);
+
+            return back()->with('success', "Rendez-vous transféré avec succès à {$newPastor->first_name} {$newPastor->last_name}.");
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Send notifications when an appointment is transferred
+     */
+    private function sendTransferNotifications(PastoralCare $appointment, User $oldPastor, User $newPastor): void
+    {
+        try {
+            // Refresh appointment to get updated data
+            $appointment->refresh();
+
+            // 1. Notify NEW PASTOR - Platform message
+            Message::create([
+                'sender_id' => Auth::id(),
+                'receiver_id' => $newPastor->id,
+                'subject' => 'Nouveau rendez-vous de soin pastoral transféré',
+                'content' => "Un rendez-vous de soin pastoral vous a été transféré par {$oldPastor->first_name} {$oldPastor->last_name}.\n\n".
+                    "Date: {$appointment->appointment_date->format('d/m/Y')}\n".
+                    "Heure: {$appointment->appointment_time->format('H:i')}\n".
+                    "Client: {$appointment->client_name}\n".
+                    ($appointment->transfer_reason ? "\nRaison du transfert: {$appointment->transfer_reason}" : ''),
+                'type' => 'system',
+            ]);
+
+            // 1b. Notify NEW PASTOR - Email
+            Mail::to($newPastor->email)->send(
+                new PastoralCareTransferNotification($appointment, $oldPastor, $newPastor, 'new_pastor')
+            );
+
+            // 2. Notify OLD PASTOR - Platform message
+            Message::create([
+                'sender_id' => Auth::id(),
+                'receiver_id' => $oldPastor->id,
+                'subject' => 'Rendez-vous de soin pastoral transféré',
+                'content' => "Votre rendez-vous de soin pastoral a été transféré à {$newPastor->first_name} {$newPastor->last_name}.\n\n".
+                    "Date: {$appointment->appointment_date->format('d/m/Y')}\n".
+                    "Heure: {$appointment->appointment_time->format('H:i')}\n".
+                    "Client: {$appointment->client_name}",
+                'type' => 'system',
+            ]);
+
+            // 2b. Notify OLD PASTOR - Email
+            Mail::to($oldPastor->email)->send(
+                new PastoralCareTransferNotification($appointment, $oldPastor, $newPastor, 'old_pastor')
+            );
+
+            // 3. Notify CLIENT - Platform message (if they have an account)
+            if ($appointment->user_id) {
+                Message::create([
+                    'sender_id' => Auth::id(),
+                    'receiver_id' => $appointment->user_id,
+                    'subject' => 'Changement de responsable pour votre rendez-vous',
+                    'content' => "Votre rendez-vous de soin pastoral du {$appointment->appointment_date->format('d/m/Y')} à {$appointment->appointment_time->format('H:i')} ".
+                        "a été transféré de {$oldPastor->first_name} {$oldPastor->last_name} à {$newPastor->first_name} {$newPastor->last_name}.\n\n".
+                        'Veuillez confirmer à nouveau votre rendez-vous si nécessaire.',
+                    'type' => 'system',
+                ]);
+            }
+
+            // 3b. Notify CLIENT - Email (always send to client_email, even if they don't have an account)
+            if ($appointment->client_email) {
+                Mail::to($appointment->client_email)->send(
+                    new PastoralCareTransferNotification($appointment, $oldPastor, $newPastor, 'client')
+                );
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to send transfer notifications: '.$e->getMessage(), [
+                'appointment_id' => $appointment->id,
+                'old_pastor_id' => $oldPastor->id,
+                'new_pastor_id' => $newPastor->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

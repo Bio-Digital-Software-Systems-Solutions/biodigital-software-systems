@@ -30,6 +30,7 @@ import ProjectCalendarWidget from '@/Components/Calendar/ProjectCalendarWidget';
 import CreateAppointmentModal from '@/Components/Calendar/CreateAppointmentModal';
 import AppointmentDetailModal from '@/Components/Calendar/AppointmentDetailModal';
 import ProjectStatisticsAnalytical, { ProjectAnalyticsData } from '@/Components/Project/ProjectStatisticsAnalytical';
+import { MentionInput, renderMentionedContent } from '@/Components/ui/mention-input';
 import axios from 'axios';
 
 interface Activity {
@@ -89,8 +90,10 @@ interface Props {
 export default function ShowProject({ project, users, activities, projectStatistics }: Props) {
     const [uploading, setUploading] = useState(false);
     const [commentContent, setCommentContent] = useState('');
+    const [commentMentions, setCommentMentions] = useState<number[]>([]);
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
     const [replyContent, setReplyContent] = useState('');
+    const [replyMentions, setReplyMentions] = useState<number[]>([]);
     const [showAddParticipant, setShowAddParticipant] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState('');
     const [selectedRole, setSelectedRole] = useState<'member' | 'contributor' | 'observer'>('member');
@@ -222,6 +225,7 @@ export default function ShowProject({ project, users, activities, projectStatist
     const handleAddComment = async (e: React.FormEvent, parentId: number | null = null) => {
         e.preventDefault();
         const content = parentId ? replyContent : commentContent;
+        const mentions = parentId ? replyMentions : commentMentions;
         if (!content.trim()) return;
 
         try {
@@ -233,15 +237,18 @@ export default function ShowProject({ project, users, activities, projectStatist
                 },
                 body: JSON.stringify({
                     content,
-                    parent_id: parentId
+                    parent_id: parentId,
+                    mentions
                 }),
             });
             showSuccess(parentId ? 'Réponse ajoutée avec succès' : 'Commentaire ajouté avec succès');
             if (parentId) {
                 setReplyContent('');
+                setReplyMentions([]);
                 setReplyingTo(null);
             } else {
                 setCommentContent('');
+                setCommentMentions([]);
             }
             router.reload({ preserveState: true, preserveScroll: true } as any);
         } catch (error) {
@@ -709,12 +716,15 @@ export default function ShowProject({ project, users, activities, projectStatist
 
                             {/* Add Comment Form */}
                             <form onSubmit={handleAddComment} className="mb-6">
-                                <textarea
+                                <MentionInput
                                     value={commentContent}
-                                    onChange={(e) => setCommentContent(e.target.value)}
-                                    placeholder="Ajouter un commentaire..."
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white resize-none"
+                                    onChange={(value, mentions) => {
+                                        setCommentContent(value);
+                                        setCommentMentions(mentions);
+                                    }}
+                                    placeholder="Ajouter un commentaire... Utilisez @ pour mentionner quelqu'un"
                                     rows={3}
+                                    mentionableUsersUrl={`/api/projects/${project.uuid}/mentionable-users`}
                                 />
                                 <button
                                     type="submit"
@@ -746,14 +756,17 @@ export default function ShowProject({ project, users, activities, projectStatist
                                                             </span>
                                                         </div>
                                                         <button
+                                                            type="button"
                                                             onClick={() => handleDeleteComment(comment.id)}
                                                             className="text-red-600 hover:text-red-700"
+                                                            title="Supprimer"
                                                         >
                                                             <TrashIcon className="h-4 w-4" />
                                                         </button>
                                                     </div>
-                                                    <p className="text-gray-700 dark:text-gray-300 mt-1">{comment.content}</p>
+                                                    <p className="text-gray-700 dark:text-gray-300 mt-1">{renderMentionedContent(comment.content)}</p>
                                                     <button
+                                                        type="button"
                                                         onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
                                                         className="text-sm text-primary dark:text-blue-400 hover:underline mt-2"
                                                     >
@@ -763,13 +776,16 @@ export default function ShowProject({ project, users, activities, projectStatist
                                                     {/* Reply Form */}
                                                     {replyingTo === comment.id && (
                                                         <form onSubmit={(e) => handleAddComment(e, comment.id)} className="mt-3">
-                                                            <textarea
+                                                            <MentionInput
                                                                 value={replyContent}
-                                                                onChange={(e) => setReplyContent(e.target.value)}
-                                                                placeholder="Votre réponse..."
-                                                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white resize-none text-sm"
+                                                                onChange={(value, mentions) => {
+                                                                    setReplyContent(value);
+                                                                    setReplyMentions(mentions);
+                                                                }}
+                                                                placeholder="Votre réponse... Utilisez @ pour mentionner quelqu'un"
                                                                 rows={2}
                                                                 autoFocus
+                                                                mentionableUsersUrl={`/api/projects/${project.uuid}/mentionable-users`}
                                                             />
                                                             <div className="flex gap-2 mt-2">
                                                                 <button
@@ -784,6 +800,7 @@ export default function ShowProject({ project, users, activities, projectStatist
                                                                     onClick={() => {
                                                                         setReplyingTo(null);
                                                                         setReplyContent('');
+                                                                        setReplyMentions([]);
                                                                     }}
                                                                     className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded hover:bg-gray-300 dark:hover:bg-gray-600"
                                                                 >
@@ -814,13 +831,15 @@ export default function ShowProject({ project, users, activities, projectStatist
                                                                         </span>
                                                                     </div>
                                                                     <button
+                                                                        type="button"
                                                                         onClick={() => handleDeleteComment(reply.id)}
                                                                         className="text-red-600 hover:text-red-700"
+                                                                        title="Supprimer"
                                                                     >
                                                                         <TrashIcon className="h-3.5 w-3.5" />
                                                                     </button>
                                                                 </div>
-                                                                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{reply.content}</p>
+                                                                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{renderMentionedContent(reply.content)}</p>
                                                             </div>
                                                         </div>
                                                     ))}

@@ -10,6 +10,8 @@ use App\Models\ProjectParticipant;
 use App\Models\User;
 use App\Notifications\ProjectCommentAdded;
 use App\Notifications\ProjectParticipantAdded;
+use App\Notifications\UserMentionedInComment;
+use App\Services\Comment\MentionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -171,18 +173,79 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'content' => 'required|string',
             'parent_id' => 'nullable|exists:project_comments,id',
+            'mentions' => 'nullable|array',
+            'mentions.*' => 'integer|exists:users,id',
         ]);
 
+        $mentionService = new MentionService;
+        $currentUser = $request->user();
+
+        // Parse mentions from content and merge with explicit mentions
+        $parsedMentions = $mentionService->parseMentions($validated['content']);
+        $explicitMentions = $validated['mentions'] ?? [];
+        $allMentions = array_unique(array_merge($parsedMentions, $explicitMentions));
+
+        // Validate mentions against mentionable users
+        $mentionableUsers = $mentionService->getMentionableUsersForProject($project->id);
+        $validMentions = $mentionService->validateMentionedUsers($allMentions, $mentionableUsers);
+
         $comment = $project->comments()->create([
-            'user_id' => $request->user()->id,
+            'user_id' => $currentUser->id,
             'content' => $validated['content'],
             'parent_id' => $validated['parent_id'] ?? null,
+            'mentions' => ! empty($validMentions) ? $validMentions : null,
         ]);
 
         // Send notifications to all project participants
-        $this->notifyProjectParticipants($project, $comment, $request->user());
+        $this->notifyProjectParticipants($project, $comment, $currentUser);
+
+        // Send mention notifications
+        $this->notifyMentionedUsersOnProject($project, $comment, $currentUser, $validMentions);
 
         return response()->json($comment->load(['user', 'replies']), 201);
+    }
+
+    /**
+     * Notify users that were mentioned in a project comment.
+     *
+     * @param  array<int>  $mentionedUserIds
+     */
+    private function notifyMentionedUsersOnProject(Project $project, ProjectComment $comment, User $mentionedBy, array $mentionedUserIds): void
+    {
+        if (empty($mentionedUserIds)) {
+            return;
+        }
+
+        // Don't notify the user who wrote the comment
+        $mentionedUserIds = array_filter($mentionedUserIds, fn ($id) => $id !== $mentionedBy->id);
+
+        if (empty($mentionedUserIds)) {
+            return;
+        }
+
+        $users = User::whereIn('id', $mentionedUserIds)->get();
+
+        foreach ($users as $user) {
+            $user->notify(new UserMentionedInComment('project', $project, $comment, $mentionedBy));
+        }
+    }
+
+    /**
+     * Get users that can be mentioned in a project comment.
+     */
+    public function getMentionableUsers(Project $project): JsonResponse
+    {
+        $mentionService = new MentionService;
+        $users = $mentionService->getMentionableUsersForProject($project->id);
+
+        return response()->json($users->map(fn ($user) => [
+            'id' => $user->id,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'full_name' => $user->first_name.' '.$user->last_name,
+            'email' => $user->email,
+            'avatar' => $user->profile_photo_url ?? null,
+        ]));
     }
 
     /**

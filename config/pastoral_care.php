@@ -372,6 +372,10 @@ return [
             'enabled' => env('SMS_INTEGRATION_ENABLED', false),
             'provider' => env('SMS_PROVIDER', 'twilio'),
         ],
+        'whatsapp' => [
+            'enabled' => env('WHATSAPP_INTEGRATION_ENABLED', false),
+            'provider' => env('WHATSAPP_PROVIDER', 'twilio'),
+        ],
     ],
 
     /*

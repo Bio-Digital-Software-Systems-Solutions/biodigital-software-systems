@@ -19,7 +19,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Employee extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'uuid',
@@ -95,6 +95,13 @@ class Employee extends Model
     ];
 
     protected $appends = ['full_name', 'is_on_probation', 'years_of_service'];
+
+    /**
+     * The relationships that should always be loaded.
+     *
+     * @var array<string>
+     */
+    protected $with = ['user'];
 
     protected static function boot(): void
     {
@@ -173,42 +180,47 @@ class Employee extends Model
 
     public function getIsOnProbationAttribute(): bool
     {
-        if (!$this->probation_end_date) {
+        if (! $this->probation_end_date) {
             return false;
         }
+
         return $this->probation_end_date->isFuture();
     }
 
     public function getYearsOfServiceAttribute(): ?float
     {
-        if (!$this->hire_date) {
+        if (! $this->hire_date) {
             return null;
         }
         $endDate = $this->termination_date ?? Carbon::now();
+
         return round($this->hire_date->diffInYears($endDate), 1);
     }
 
     public function getAgeAttribute(): ?int
     {
-        if (!$this->birth_date) {
+        if (! $this->birth_date) {
             return null;
         }
+
         return $this->birth_date->age;
     }
 
     public function getRemainingProbationDaysAttribute(): ?int
     {
-        if (!$this->probation_end_date || $this->probation_end_date->isPast()) {
+        if (! $this->probation_end_date || $this->probation_end_date->isPast()) {
             return null;
         }
+
         return Carbon::now()->diffInDays($this->probation_end_date);
     }
 
     public function getContractRemainingDaysAttribute(): ?int
     {
-        if (!$this->contract_end_date || $this->contract_end_date->isPast()) {
+        if (! $this->contract_end_date || $this->contract_end_date->isPast()) {
             return null;
         }
+
         return Carbon::now()->diffInDays($this->contract_end_date);
     }
 
@@ -321,7 +333,7 @@ class Employee extends Model
             $newNumber = 1;
         }
 
-        return $prefix . $year . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        return $prefix.$year.str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 
     public function canWork(): bool
@@ -331,15 +343,16 @@ class Employee extends Model
 
     public function isAvailableOn(Carbon $date): bool
     {
-        if (!$this->canWork()) {
+        if (! $this->canWork()) {
             return false;
         }
 
-        if (!$this->working_days) {
+        if (! $this->working_days) {
             return true;
         }
 
         $dayOfWeek = strtolower($date->format('l'));
+
         return in_array($dayOfWeek, $this->working_days);
     }
 
@@ -373,6 +386,7 @@ class Employee extends Model
         }
 
         $this->decrement('remaining_leave_days', $days);
+
         return true;
     }
 
@@ -397,7 +411,7 @@ class Employee extends Model
     public function addSkill(string $skill): void
     {
         $skills = $this->skills ?? [];
-        if (!$this->hasSkill($skill)) {
+        if (! $this->hasSkill($skill)) {
             $skills[] = $skill;
             $this->update(['skills' => $skills]);
         }
@@ -405,11 +419,11 @@ class Employee extends Model
 
     public function removeSkill(string $skill): void
     {
-        if (!$this->skills) {
+        if (! $this->skills) {
             return;
         }
 
-        $skills = array_filter($this->skills, fn($s) => strtolower($s) !== strtolower($skill));
+        $skills = array_filter($this->skills, fn ($s) => strtolower($s) !== strtolower($skill));
         $this->update(['skills' => array_values($skills)]);
     }
 

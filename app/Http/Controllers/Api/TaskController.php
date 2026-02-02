@@ -10,6 +10,8 @@ use App\Models\TaskParticipant;
 use App\Models\User;
 use App\Notifications\TaskCommentAdded;
 use App\Notifications\TaskParticipantAdded;
+use App\Notifications\UserMentionedInComment;
+use App\Services\Comment\MentionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -144,18 +146,61 @@ class TaskController extends Controller
     {
         $validated = $request->validate([
             'content' => 'required|string|max:10000',
+            'mentions' => 'nullable|array',
+            'mentions.*' => 'integer|exists:users,id',
         ]);
+
+        $mentionService = new MentionService;
+        $currentUser = auth()->user();
+
+        // Parse mentions from content and merge with explicit mentions
+        $parsedMentions = $mentionService->parseMentions($validated['content']);
+        $explicitMentions = $validated['mentions'] ?? [];
+        $allMentions = array_unique(array_merge($parsedMentions, $explicitMentions));
+
+        // Validate mentions against mentionable users
+        $mentionableUsers = $mentionService->getMentionableUsersForTask($task->id, $task->project_id);
+        $validMentions = $mentionService->validateMentionedUsers($allMentions, $mentionableUsers);
 
         $comment = TaskComment::create([
             'task_id' => $task->id,
-            'user_id' => auth()->id(),
+            'user_id' => $currentUser->id,
             'content' => $validated['content'],
+            'mentions' => ! empty($validMentions) ? $validMentions : null,
         ]);
 
         // Send notifications to all participants and assignee
-        $this->notifyTaskParticipants($task, $comment, auth()->user());
+        $this->notifyTaskParticipants($task, $comment, $currentUser);
+
+        // Send mention notifications
+        $this->notifyMentionedUsers($task, $comment, $currentUser, $validMentions);
 
         return response()->json($comment->load('user'), 201);
+    }
+
+    /**
+     * Notify users that were mentioned in a comment.
+     *
+     * @param  array<int>  $mentionedUserIds
+     */
+    private function notifyMentionedUsers(Task $task, TaskComment $comment, User $mentionedBy, array $mentionedUserIds): void
+    {
+        if (empty($mentionedUserIds)) {
+            return;
+        }
+
+        // Don't notify the user who wrote the comment
+        $mentionedUserIds = array_filter($mentionedUserIds, fn ($id) => $id !== $mentionedBy->id);
+
+        if (empty($mentionedUserIds)) {
+            return;
+        }
+
+        $users = User::whereIn('id', $mentionedUserIds)->get();
+
+        foreach ($users as $user) {
+            $user->notify(new UserMentionedInComment('task', $task, $comment, $mentionedBy));
+        }
     }
 
     /**
@@ -203,6 +248,24 @@ class TaskController extends Controller
         $comment->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Get users that can be mentioned in a task comment.
+     */
+    public function getMentionableUsers(Task $task)
+    {
+        $mentionService = new MentionService;
+        $users = $mentionService->getMentionableUsersForTask($task->id, $task->project_id);
+
+        return response()->json($users->map(fn ($user) => [
+            'id' => $user->id,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'full_name' => $user->first_name.' '.$user->last_name,
+            'email' => $user->email,
+            'avatar' => $user->profile_photo_url ?? null,
+        ]));
     }
 
     // ==========================================

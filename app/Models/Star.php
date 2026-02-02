@@ -18,7 +18,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Star extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'uuid',
@@ -83,6 +83,13 @@ class Star extends Model
 
     protected $appends = ['full_name', 'is_expired', 'days_until_expiry', 'service_duration'];
 
+    /**
+     * The relationships that should always be loaded.
+     *
+     * @var array<string>
+     */
+    protected $with = ['user'];
+
     protected static function boot(): void
     {
         parent::boot();
@@ -140,28 +147,31 @@ class Star extends Model
 
     public function getIsExpiredAttribute(): bool
     {
-        if (!$this->expiry_date) {
+        if (! $this->expiry_date) {
             return false;
         }
+
         return $this->expiry_date->isPast();
     }
 
     public function getDaysUntilExpiryAttribute(): ?int
     {
-        if (!$this->expiry_date || $this->expiry_date->isPast()) {
+        if (! $this->expiry_date || $this->expiry_date->isPast()) {
             return null;
         }
+
         return Carbon::now()->diffInDays($this->expiry_date);
     }
 
     public function getServiceDurationAttribute(): ?float
     {
-        if (!$this->recognition_date) {
+        if (! $this->recognition_date) {
             return null;
         }
         $endDate = $this->expiry_date && $this->expiry_date->isPast()
             ? $this->expiry_date
             : Carbon::now();
+
         return round($this->recognition_date->diffInMonths($endDate), 1);
     }
 
@@ -195,6 +205,7 @@ class Star extends Model
         if ($required === 0) {
             return 100;
         }
+
         return min(100, (int) (($this->points / $required) * 100));
     }
 
@@ -350,25 +361,26 @@ class Star extends Model
             $newNumber = 1;
         }
 
-        return $prefix . $year . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        return $prefix.$year.str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 
     public function canServe(): bool
     {
-        return $this->status === StarStatus::ACTIVE && !$this->is_expired;
+        return $this->status === StarStatus::ACTIVE && ! $this->is_expired;
     }
 
     public function isAvailableOn(Carbon $date): bool
     {
-        if (!$this->canServe()) {
+        if (! $this->canServe()) {
             return false;
         }
 
-        if (!$this->available_days) {
+        if (! $this->available_days) {
             return true;
         }
 
         $dayOfWeek = strtolower($date->format('l'));
+
         return in_array($dayOfWeek, $this->available_days);
     }
 
@@ -444,7 +456,7 @@ class Star extends Model
     public function addAchievement(string $achievement): void
     {
         $achievements = $this->achievements ?? [];
-        if (!in_array($achievement, $achievements)) {
+        if (! in_array($achievement, $achievements)) {
             $achievements[] = $achievement;
             $this->update(['achievements' => $achievements]);
         }
@@ -452,11 +464,11 @@ class Star extends Model
 
     public function removeAchievement(string $achievement): void
     {
-        if (!$this->achievements) {
+        if (! $this->achievements) {
             return;
         }
 
-        $achievements = array_filter($this->achievements, fn($a) => $a !== $achievement);
+        $achievements = array_filter($this->achievements, fn ($a) => $a !== $achievement);
         $this->update(['achievements' => array_values($achievements)]);
     }
 
@@ -468,7 +480,7 @@ class Star extends Model
     public function addBadge(string $badge): void
     {
         $badges = $this->badges ?? [];
-        if (!in_array($badge, $badges)) {
+        if (! in_array($badge, $badges)) {
             $badges[] = $badge;
             $this->update(['badges' => $badges]);
         }
@@ -476,11 +488,11 @@ class Star extends Model
 
     public function removeBadge(string $badge): void
     {
-        if (!$this->badges) {
+        if (! $this->badges) {
             return;
         }
 
-        $badges = array_filter($this->badges, fn($b) => $b !== $badge);
+        $badges = array_filter($this->badges, fn ($b) => $b !== $badge);
         $this->update(['badges' => array_values($badges)]);
     }
 
@@ -497,7 +509,7 @@ class Star extends Model
     public function addSkill(string $skill): void
     {
         $skills = $this->skills ?? [];
-        if (!$this->hasSkill($skill)) {
+        if (! $this->hasSkill($skill)) {
             $skills[] = $skill;
             $this->update(['skills' => $skills]);
         }
@@ -505,11 +517,11 @@ class Star extends Model
 
     public function removeSkill(string $skill): void
     {
-        if (!$this->skills) {
+        if (! $this->skills) {
             return;
         }
 
-        $skills = array_filter($this->skills, fn($s) => strtolower($s) !== strtolower($skill));
+        $skills = array_filter($this->skills, fn ($s) => strtolower($s) !== strtolower($skill));
         $this->update(['skills' => array_values($skills)]);
     }
 

@@ -136,6 +136,8 @@ interface Props {
         canDelete: boolean;
         canManage: boolean;
         canSelectPastor: boolean;
+        canViewMlrDashboard?: boolean;
+        canTransfer?: boolean;
     };
     auth: {
         user: User;
@@ -645,13 +647,25 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
             <div className="py-6">
                 <div className="mx-auto sm:px-6 lg:px-8">
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                        <TabsList className="grid w-full grid-cols-5">
-                            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                            <TabsTrigger value="booking">Prise de RDV</TabsTrigger>
-                            <TabsTrigger value="pending">En attente ({stats.pending_appointments})</TabsTrigger>
-                            <TabsTrigger value="confirmed">Confirmés ({stats.confirmed_appointments})</TabsTrigger>
-                            <TabsTrigger value="all">Tous ({stats.total_appointments})</TabsTrigger>
-                        </TabsList>
+                        <div className="flex items-center justify-between">
+                            <TabsList className={`grid w-full ${permissions?.canViewMlrDashboard ? 'grid-cols-5' : 'grid-cols-5'}`}>
+                                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                                <TabsTrigger value="booking">Prise de RDV</TabsTrigger>
+                                <TabsTrigger value="pending">En attente ({stats.pending_appointments})</TabsTrigger>
+                                <TabsTrigger value="confirmed">Confirmés ({stats.confirmed_appointments})</TabsTrigger>
+                                <TabsTrigger value="all">Tous ({stats.total_appointments})</TabsTrigger>
+                            </TabsList>
+                            {permissions?.canViewMlrDashboard && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => router.visit('/pastoral-care/mlr')}
+                                    className="ml-4 bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700 dark:hover:bg-purple-900/50"
+                                >
+                                    <Heart className="h-4 w-4 mr-2" />
+                                    MLR
+                                </Button>
+                            )}
+                        </div>
 
                         {/* Dashboard Tab */}
                         <TabsContent value="dashboard" className="space-y-6">

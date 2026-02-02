@@ -13,6 +13,8 @@ use App\Models\TaskAttachment;
 use App\Models\TaskComment;
 use App\Models\TaskParticipant;
 use App\Models\User;
+use App\Notifications\UserMentionedInComment;
+use App\Services\Comment\MentionService;
 use App\Services\ProjectStatisticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -492,18 +494,61 @@ class TaskController extends Controller
         $validated = $request->validate([
             'content' => 'required|string|max:10000',
             'parent_id' => 'nullable|exists:task_comments,id',
+            'mentions' => 'nullable|array',
+            'mentions.*' => 'integer|exists:users,id',
         ]);
 
-        TaskComment::create([
+        $mentionService = new MentionService;
+        $currentUser = auth()->user();
+
+        // Parse mentions from content and merge with explicit mentions
+        $parsedMentions = $mentionService->parseMentions($validated['content']);
+        $explicitMentions = $validated['mentions'] ?? [];
+        $allMentions = array_unique(array_merge($parsedMentions, $explicitMentions));
+
+        // Validate mentions against mentionable users
+        $mentionableUsers = $mentionService->getMentionableUsersForTask($task->id, $task->project_id);
+        $validMentions = $mentionService->validateMentionedUsers($allMentions, $mentionableUsers);
+
+        $comment = TaskComment::create([
             'task_id' => $task->id,
-            'user_id' => auth()->id(),
+            'user_id' => $currentUser->id,
             'content' => $validated['content'],
             'parent_id' => $validated['parent_id'] ?? null,
+            'mentions' => ! empty($validMentions) ? $validMentions : null,
         ]);
+
+        // Send mention notifications
+        $this->notifyMentionedUsers($task, $comment, $currentUser, $validMentions);
 
         $message = $validated['parent_id'] ? 'Reply added successfully.' : 'Comment added successfully.';
 
         return back()->with('success', $message);
+    }
+
+    /**
+     * Notify users that were mentioned in a task comment.
+     *
+     * @param  array<int>  $mentionedUserIds
+     */
+    private function notifyMentionedUsers(Task $task, TaskComment $comment, User $mentionedBy, array $mentionedUserIds): void
+    {
+        if (empty($mentionedUserIds)) {
+            return;
+        }
+
+        // Don't notify the user who wrote the comment
+        $mentionedUserIds = array_filter($mentionedUserIds, fn ($id) => $id !== $mentionedBy->id);
+
+        if (empty($mentionedUserIds)) {
+            return;
+        }
+
+        $users = User::whereIn('id', $mentionedUserIds)->get();
+
+        foreach ($users as $user) {
+            $user->notify(new UserMentionedInComment('task', $task, $comment, $mentionedBy));
+        }
     }
 
     /**

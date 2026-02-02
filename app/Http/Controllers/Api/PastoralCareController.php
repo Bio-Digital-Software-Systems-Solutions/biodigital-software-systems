@@ -924,6 +924,9 @@ class PastoralCareController extends Controller
                         ->subject($clientSubject)
                         ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
                 });
+
+                // Track that the notification email was sent
+                $appointment->update(['notification_email_sent_at' => now()]);
             }
 
             // 4. Send internal message to client (if they are a registered user)

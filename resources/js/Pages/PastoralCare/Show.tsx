@@ -86,6 +86,7 @@ interface PastoralCareAppointment {
     cancelled_at?: string;
     confirmation_sent_at?: string;
     reminder_sent_at?: string;
+    notification_email_sent_at?: string;
     can_be_confirmed: boolean;
     can_be_cancelled: boolean;
 }
@@ -759,7 +760,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, canV
                                                 Modifier le rendez-vous
                                             </Button>
                                         )}
-                                        {isPastor && availableStatusUpdates.includes('confirmed') && (
+                                        {(isPastor || canConfirm) && availableStatusUpdates.includes('confirmed') && (
                                             <Button
                                                 onClick={handleConfirm}
                                                 disabled={isUpdatingStatus || !appointment.can_be_confirmed}
@@ -770,7 +771,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, canV
                                             </Button>
                                         )}
 
-                                        {isPastor && availableStatusUpdates.includes('completed') && (
+                                        {(isPastor || canConfirm) && availableStatusUpdates.includes('completed') && (
                                             <Button
                                                 onClick={handleComplete}
                                                 disabled={isUpdatingStatus}
@@ -781,7 +782,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, canV
                                             </Button>
                                         )}
 
-                                        {isPastor && availableStatusUpdates.includes('no_show') && (
+                                        {(isPastor || canConfirm) && availableStatusUpdates.includes('no_show') && (
                                             <Button
                                                 onClick={handleNoShow}
                                                 disabled={isUpdatingStatus}
@@ -806,7 +807,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, canV
                                         )}
 
                                         {/* Follow-up Button - visible for completed or confirmed appointments */}
-                                        {isPastor && ['completed', 'confirmed'].includes(appointment.status) && (
+                                        {(isPastor || canConfirm) && ['completed', 'confirmed'].includes(appointment.status) && (
                                             <Button
                                                 onClick={() => setShowFollowUpModal(true)}
                                                 variant="outline"
@@ -827,11 +828,20 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, canV
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     <div className="text-sm">
-                                        <div className="flex justify-between items-center py-2">
+                                        <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
+                                            <span className="text-gray-600 dark:text-gray-400">Email de notification</span>
+                                            <span className={appointment.notification_email_sent_at ? 'text-green-600' : 'text-gray-400'}>
+                                                {appointment.notification_email_sent_at ?
+                                                    format(new Date(appointment.notification_email_sent_at), 'd/M/y à HH:mm', { locale: fr }) :
+                                                    'Non envoyé'
+                                                }
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
                                             <span className="text-gray-600 dark:text-gray-400">Email de confirmation</span>
                                             <span className={appointment.confirmation_sent_at ? 'text-green-600' : 'text-gray-400'}>
                                                 {appointment.confirmation_sent_at ?
-                                                    format(new Date(appointment.confirmation_sent_at), 'd/M/y', { locale: fr }) :
+                                                    format(new Date(appointment.confirmation_sent_at), 'd/M/y à HH:mm', { locale: fr }) :
                                                     'Non envoyé'
                                                 }
                                             </span>
@@ -840,7 +850,7 @@ export default function Show({ appointment, canEdit, canConfirm, canCancel, canV
                                             <span className="text-gray-600 dark:text-gray-400">Rappel</span>
                                             <span className={appointment.reminder_sent_at ? 'text-green-600' : 'text-gray-400'}>
                                                 {appointment.reminder_sent_at ?
-                                                    format(new Date(appointment.reminder_sent_at), 'd/M/y', { locale: fr }) :
+                                                    format(new Date(appointment.reminder_sent_at), 'd/M/y à HH:mm', { locale: fr }) :
                                                     'Non envoyé'
                                                 }
                                             </span>

@@ -85,6 +85,13 @@ return Application::configure(basePath: dirname(__DIR__))
             ->dailyAt('09:00')
             ->timezone('Europe/Paris');
 
+        // Send pastoral care reminders every hour (checks for appointments 24h ahead)
+        $schedule->command('pastoral-care:send-reminders')
+            ->hourly()
+            ->timezone('Europe/Paris')
+            ->withoutOverlapping()
+            ->runInBackground();
+
         // Clean expired sessions every hour
         $schedule->command('sessions:clean')
             ->hourly()

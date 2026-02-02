@@ -8,6 +8,7 @@ import { useConfirm } from '@/Components/ui/confirm-dialog';
 import TaskCalendarWidget from '@/Components/Calendar/TaskCalendarWidget';
 import CreateTaskAppointmentModal from '@/Components/Calendar/CreateTaskAppointmentModal';
 import TaskAppointmentDetailModal from '@/Components/Calendar/TaskAppointmentDetailModal';
+import { MentionInput, renderMentionedContent } from '@/Components/ui/mention-input';
 import axios from 'axios';
 import {
     ArrowLeftIcon,
@@ -70,8 +71,10 @@ export default function Show({ task, users, activities }: Props) {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [commentContent, setCommentContent] = useState('');
+    const [commentMentions, setCommentMentions] = useState<number[]>([]);
     const [replyingTo, setReplyingTo] = useState<number | null>(null);
     const [replyContent, setReplyContent] = useState('');
+    const [replyMentions, setReplyMentions] = useState<number[]>([]);
     const [showAddParticipant, setShowAddParticipant] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState('');
     const [selectedRole, setSelectedRole] = useState<string>('member');
@@ -267,6 +270,7 @@ export default function Show({ task, users, activities }: Props) {
     const handleAddComment = async (e: React.FormEvent, parentId?: number) => {
         e.preventDefault();
         const content = parentId ? replyContent : commentContent;
+        const mentions = parentId ? replyMentions : commentMentions;
         if (!content.trim()) return;
 
         try {
@@ -276,15 +280,17 @@ export default function Show({ task, users, activities }: Props) {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
                 },
-                body: JSON.stringify({ content, parent_id: parentId || null }),
+                body: JSON.stringify({ content, parent_id: parentId || null, mentions }),
             });
             if (response.ok) {
                 showSuccess(parentId ? 'Réponse ajoutée avec succès' : 'Commentaire ajouté avec succès');
                 if (parentId) {
                     setReplyContent('');
+                    setReplyMentions([]);
                     setReplyingTo(null);
                 } else {
                     setCommentContent('');
+                    setCommentMentions([]);
                 }
                 router.reload({ preserveState: true, preserveScroll: true } as any);
             } else {
@@ -626,12 +632,15 @@ export default function Show({ task, users, activities }: Props) {
                             {/* Add Comment Form */}
                             {!isTaskClosed ? (
                                 <form onSubmit={handleAddComment} className="mb-6">
-                                    <textarea
+                                    <MentionInput
                                         value={commentContent}
-                                        onChange={(e) => setCommentContent(e.target.value)}
-                                        placeholder="Ajouter un commentaire..."
-                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white resize-none"
+                                        onChange={(value, mentions) => {
+                                            setCommentContent(value);
+                                            setCommentMentions(mentions);
+                                        }}
+                                        placeholder="Ajouter un commentaire... Utilisez @ pour mentionner quelqu'un"
                                         rows={3}
+                                        mentionableUsersUrl={`/api/tasks/${task.uuid}/mentionable-users`}
                                     />
                                     <button
                                         type="submit"
@@ -691,18 +700,21 @@ export default function Show({ task, users, activities }: Props) {
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <p className="text-gray-700 dark:text-gray-300 mt-1">{comment.content}</p>
+                                                    <p className="text-gray-700 dark:text-gray-300 mt-1">{renderMentionedContent(comment.content)}</p>
 
                                                     {/* Reply Form */}
                                                     {replyingTo === comment.id && (
                                                         <form onSubmit={(e) => handleAddComment(e, comment.id)} className="mt-3">
-                                                            <textarea
+                                                            <MentionInput
                                                                 value={replyContent}
-                                                                onChange={(e) => setReplyContent(e.target.value)}
-                                                                placeholder="Écrire une réponse..."
-                                                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white resize-none text-sm"
+                                                                onChange={(value, mentions) => {
+                                                                    setReplyContent(value);
+                                                                    setReplyMentions(mentions);
+                                                                }}
+                                                                placeholder="Écrire une réponse... Utilisez @ pour mentionner quelqu'un"
                                                                 rows={2}
                                                                 autoFocus
+                                                                mentionableUsersUrl={`/api/tasks/${task.uuid}/mentionable-users`}
                                                             />
                                                             <div className="flex gap-2 mt-2">
                                                                 <button
@@ -717,6 +729,7 @@ export default function Show({ task, users, activities }: Props) {
                                                                     onClick={() => {
                                                                         setReplyingTo(null);
                                                                         setReplyContent('');
+                                                                        setReplyMentions([]);
                                                                     }}
                                                                     className="px-3 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                                                                 >
@@ -755,7 +768,7 @@ export default function Show({ task, users, activities }: Props) {
                                                                                 </button>
                                                                             )}
                                                                         </div>
-                                                                        <p className="text-gray-700 dark:text-gray-300 text-sm mt-1">{reply.content}</p>
+                                                                        <p className="text-gray-700 dark:text-gray-300 text-sm mt-1">{renderMentionedContent(reply.content)}</p>
                                                                     </div>
                                                                 </div>
                                                             ))}

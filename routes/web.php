@@ -47,7 +47,7 @@ Route::post('contact', [App\Http\Controllers\ContactController::class, 'store'])
 Route::middleware(['auth', 'verified'])->group(function () {
     // Contact management routes (admin only)
     Route::resource('contacts', App\Http\Controllers\ContactController::class)->except(['create', 'store']);
-    Route::get('/profile/{user}', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/{user:uuid}', [ProfileController::class, 'publicShow'])->name('profile.public');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -850,6 +850,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('complete');
         Route::post('appointments/{pastoralCare:uuid}/no-show', [App\Http\Controllers\PastoralCareController::class, 'noShow'])
             ->name('no-show');
+
+        // Transfer appointment to another pastor/agent
+        Route::post('appointments/{pastoralCare:uuid}/transfer', [App\Http\Controllers\PastoralCareController::class, 'transfer'])
+            ->name('transfer');
+
+        // MLR Dashboard routes
+        Route::get('mlr', [App\Http\Controllers\PastoralCareController::class, 'mlr'])
+            ->name('mlr');
+        Route::get('mlr/statistics', [App\Http\Controllers\PastoralCareController::class, 'mlrStatistics'])
+            ->name('mlr.statistics');
 
         // AJAX endpoint for available time slots
         Route::get('available-slots', [App\Http\Controllers\PastoralCareController::class, 'getAvailableSlots'])

@@ -15,7 +15,24 @@ use Inertia\Response;
 class ProfileController extends Controller
 {
     /**
-     * Display the specified user's profile.
+     * Display the public profile view (accessible to everyone).
+     */
+    public function publicShow(User $user): Response
+    {
+        return Inertia::render('Profile/Public', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'avatar' => $user->avatar,
+                'created_at' => $user->created_at,
+            ],
+        ]);
+    }
+
+    /**
+     * Display the specified user's profile (authenticated users only).
      */
     public function show(User $user): Response
     {
@@ -88,7 +105,7 @@ class ProfileController extends Controller
                 \Storage::disk('public')->delete($request->user()->avatar);
             }
             // Avatar has already been uploaded via TUS to avatars directory
-            $validated['avatar'] = 'avatars/' . $request->avatar;
+            $validated['avatar'] = 'avatars/'.$request->avatar;
         }
 
         $request->user()->fill($validated);

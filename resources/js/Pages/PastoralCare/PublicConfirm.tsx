@@ -7,6 +7,7 @@ import { CalendarIcon, ClockIcon, MapPinIcon, VideoCameraIcon, PhoneIcon, Envelo
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/utils';
 
 interface PastoralCareAppointment {
     id: number;
@@ -42,15 +43,16 @@ export default function PublicConfirm({ appointment }: Props) {
         setIsConfirming(true);
 
         try {
-            await router.post(`/api/pastoral-care/${appointment.uuid}/confirm`, {}, {
-                onSuccess: () => {
-                    toast.success('Rendez-vous confirmé avec succès !');
-                    router.visit('/pastoral-care/success');
-                },
-                onError: () => {
-                    toast.error('Erreur lors de la confirmation. Veuillez réessayer.');
-                }
+            const response = await apiFetch<{ success: boolean; message: string }>(`/api/pastoral-care/appointments/${appointment.uuid}/confirm`, {
+                method: 'POST',
             });
+
+            if (response.success && response.data?.success) {
+                toast.success(response.data.message || 'Rendez-vous confirmé avec succès !');
+                router.visit('/pastoral-care/success');
+            } else {
+                toast.error(response.data?.message || response.error || 'Erreur lors de la confirmation. Veuillez réessayer.');
+            }
         } catch (error) {
             toast.error('Erreur lors de la confirmation. Veuillez réessayer.');
         } finally {

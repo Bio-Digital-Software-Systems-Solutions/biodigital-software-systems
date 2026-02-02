@@ -9,6 +9,7 @@ import { CalendarIcon, ClockIcon, MapPinIcon, VideoCameraIcon, PhoneIcon, Envelo
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/utils';
 
 interface PastoralCareAppointment {
     id: number;
@@ -50,17 +51,19 @@ export default function PublicCancel({ appointment }: Props) {
         setIsCancelling(true);
 
         try {
-            await router.post(`/api/pastoral-care/${appointment.uuid}/cancel`, {
-                cancellation_reason: cancellationReason
-            }, {
-                onSuccess: () => {
-                    toast.success('Rendez-vous annulé avec succès.');
-                    router.visit('/pastoral-care/success?action=cancelled');
-                },
-                onError: () => {
-                    toast.error('Erreur lors de l\'annulation. Veuillez réessayer.');
-                }
+            const response = await apiFetch<{ success: boolean; message: string }>(`/api/pastoral-care/appointments/${appointment.uuid}/cancel`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    cancellation_reason: cancellationReason
+                }),
             });
+
+            if (response.success && response.data?.success) {
+                toast.success(response.data.message || 'Rendez-vous annulé avec succès.');
+                router.visit('/pastoral-care/success?action=cancelled');
+            } else {
+                toast.error(response.data?.message || response.error || 'Erreur lors de l\'annulation. Veuillez réessayer.');
+            }
         } catch (error) {
             toast.error('Erreur lors de l\'annulation. Veuillez réessayer.');
         } finally {

@@ -37,6 +37,10 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string|null $pastor_notes
  * @property \Illuminate\Support\Carbon|null $confirmation_sent_at
  * @property \Illuminate\Support\Carbon|null $reminder_sent_at
+ * @property \Illuminate\Support\Carbon|null $notification_email_sent_at
+ * @property array|null $notification_channels
+ * @property \Illuminate\Support\Carbon|null $sms_reminder_sent_at
+ * @property \Illuminate\Support\Carbon|null $whatsapp_reminder_sent_at
  * @property \Illuminate\Support\Carbon|null $cancelled_at
  * @property string|null $cancellation_reason
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -89,6 +93,17 @@ class PastoralCare extends Model
 {
     use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
 
+    public const THEMES = [
+        'spiritual_guidance' => 'Accompagnement spirituel',
+        'grief_counseling' => 'Accompagnement de deuil',
+        'marriage_counseling' => 'Conseil conjugal',
+        'family_issues' => 'Questions familiales',
+        'faith_questions' => 'Questions de foi',
+        'crisis_support' => 'Soutien en situation de crise',
+        'prayer_request' => 'Demande de prière',
+        'other' => 'Autre',
+    ];
+
     protected $fillable = [
         'uuid',
         'user_id',
@@ -104,6 +119,7 @@ class PastoralCare extends Model
         'client_email',
         'client_phone',
         'notes',
+        'theme',
         'pastor_notes',
         'confirmation_sent_at',
         'client_confirmed_at',
@@ -111,8 +127,16 @@ class PastoralCare extends Model
         'client_confirmation_token',
         'pastor_confirmation_token',
         'reminder_sent_at',
+        'notification_email_sent_at',
+        'notification_channels',
+        'sms_reminder_sent_at',
+        'whatsapp_reminder_sent_at',
         'cancelled_at',
         'cancellation_reason',
+        'transferred_from_id',
+        'transferred_to_id',
+        'transferred_at',
+        'transfer_reason',
     ];
 
     protected $casts = [
@@ -123,7 +147,12 @@ class PastoralCare extends Model
         'client_confirmed_at' => 'datetime',
         'pastor_confirmed_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
+        'notification_email_sent_at' => 'datetime',
+        'notification_channels' => 'array',
+        'sms_reminder_sent_at' => 'datetime',
+        'whatsapp_reminder_sent_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'transferred_at' => 'datetime',
         'pastor_notes' => 'array',
     ];
 
@@ -134,7 +163,11 @@ class PastoralCare extends Model
         'client_confirmed_at',
         'pastor_confirmed_at',
         'reminder_sent_at',
+        'notification_email_sent_at',
+        'sms_reminder_sent_at',
+        'whatsapp_reminder_sent_at',
         'cancelled_at',
+        'transferred_at',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -145,13 +178,14 @@ class PastoralCare extends Model
      *
      * @var array<string>
      */
-    protected $with = ['user', 'pastor'];
+    protected $with = ['user', 'pastor', 'transferredFrom', 'transferredTo'];
 
     protected $appends = [
         'can_be_confirmed',
         'can_be_cancelled',
         'is_fully_confirmed',
         'confirmation_status',
+        'theme_label',
     ];
 
     /**
@@ -218,6 +252,22 @@ class PastoralCare extends Model
         return $this->hasMany(PastoralCare::class, 'parent_id');
     }
 
+    /**
+     * Get the user who transferred this appointment
+     */
+    public function transferredFrom(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'transferred_from_id');
+    }
+
+    /**
+     * Get the user to whom this appointment was transferred
+     */
+    public function transferredTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'transferred_to_id');
+    }
+
     // Scopes
     public function scopePending($query)
     {
@@ -258,6 +308,26 @@ class PastoralCare extends Model
     public function scopeBetweenDates($query, $startDate, $endDate)
     {
         return $query->whereBetween('appointment_date', [$startDate, $endDate]);
+    }
+
+    public function scopeTransferred($query)
+    {
+        return $query->whereNotNull('transferred_at');
+    }
+
+    public function scopeIsFollowUp($query)
+    {
+        return $query->whereNotNull('parent_id');
+    }
+
+    public function scopeByTheme($query, $theme)
+    {
+        return $query->where('theme', $theme);
+    }
+
+    public function scopeNotTransferred($query)
+    {
+        return $query->whereNull('transferred_at');
     }
 
     // Accessors & Mutators
@@ -556,6 +626,67 @@ class PastoralCare extends Model
         $this->update(['reminder_sent_at' => now()]);
 
         return true;
+    }
+
+    /**
+     * Transfer the appointment to another pastor/agent
+     *
+     * @throws \Exception
+     */
+    public function transferTo(int $newPastorId, ?string $reason = null): self
+    {
+        if (! in_array($this->status, ['pending', 'confirmed'])) {
+            throw new \Exception('Seuls les rendez-vous en attente ou confirmés peuvent être transférés.');
+        }
+
+        if ($this->pastor_id === $newPastorId) {
+            throw new \Exception('Le rendez-vous est déjà assigné à ce pasteur/agent.');
+        }
+
+        $oldPastorId = $this->pastor_id;
+
+        activity('pastoral-care')
+            ->performedOn($this)
+            ->withProperties([
+                'transferred_from' => $oldPastorId,
+                'transferred_to' => $newPastorId,
+                'reason' => $reason,
+            ])
+            ->log('Rendez-vous transféré');
+
+        $this->update([
+            'transferred_from_id' => $oldPastorId,
+            'transferred_to_id' => $newPastorId,
+            'transferred_at' => now(),
+            'transfer_reason' => $reason,
+            'pastor_id' => $newPastorId,
+            // Reset confirmations as new pastor needs to confirm
+            'pastor_confirmed_at' => null,
+            'pastor_confirmation_token' => Str::random(64),
+        ]);
+
+        // Reset status to pending if it was confirmed
+        if ($this->status === 'confirmed') {
+            $this->update(['status' => 'pending']);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Check if this appointment was transferred
+     */
+    public function wasTransferred(): bool
+    {
+        return $this->transferred_at !== null;
+    }
+
+    /**
+     * Get the theme label
+     */
+    public function getThemeLabelAttribute(): ?string
+    {
+        return $this->theme ? (self::THEMES[$this->theme] ?? $this->theme) : null;
     }
 
     /**

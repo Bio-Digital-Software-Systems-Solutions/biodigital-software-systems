@@ -5,6 +5,7 @@ import { Button } from '@/Components/ui/button';
 import { apiLogger } from '@/utils/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import { MentionInput, renderMentionedContent } from '@/Components/ui/mention-input';
 import {
     ArrowLeftIcon,
     PencilIcon,
@@ -124,6 +125,7 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
     const [uploading, setUploading] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [commentContent, setCommentContent] = useState('');
+    const [commentMentions, setCommentMentions] = useState<number[]>([]);
     const [submittingComment, setSubmittingComment] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deleteAttachmentDialogOpen, setDeleteAttachmentDialogOpen] = useState(false);
@@ -326,11 +328,12 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
-                body: JSON.stringify({ content: commentContent }),
+                body: JSON.stringify({ content: commentContent, mentions: commentMentions }),
             });
 
             if (response.ok) {
                 setCommentContent('');
+                setCommentMentions([]);
                 router.reload({ preserveState: true, preserveScroll: true } as any);
             } else {
                 alert('Erreur lors de l\'ajout du commentaire');
@@ -525,7 +528,7 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
                                                 </span>
                                             </div>
                                             <p className="text-sm text-gray-700 dark:text-gray-300">
-                                                {comment.content}
+                                                {renderMentionedContent(comment.content)}
                                             </p>
                                         </div>
                                     ))}
@@ -538,13 +541,16 @@ export default function Show({ task, users, epics = [], sprints = [] }: Props) {
 
                                 {/* Add Comment Form */}
                                 <form onSubmit={submitComment} className="border-t pt-4 dark:border-gray-700">
-                                    <textarea
+                                    <MentionInput
                                         value={commentContent}
-                                        onChange={(e) => setCommentContent(e.target.value)}
-                                        placeholder="Ajouter un commentaire..."
-                                        className="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                                        onChange={(value, mentions) => {
+                                            setCommentContent(value);
+                                            setCommentMentions(mentions);
+                                        }}
+                                        placeholder="Ajouter un commentaire... Utilisez @ pour mentionner quelqu'un"
                                         rows={3}
                                         disabled={submittingComment}
+                                        mentionableUsersUrl={`/api/tasks/${task.uuid}/mentionable-users`}
                                     />
                                     <div className="flex justify-end mt-2">
                                         <Button

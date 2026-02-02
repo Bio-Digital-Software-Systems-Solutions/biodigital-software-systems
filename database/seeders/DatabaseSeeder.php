@@ -56,6 +56,7 @@ class DatabaseSeeder extends Seeder
             PastorAvailabilitySeeder::class,
             PastoralCareSeeder::class,
             DepartmentTodoSeeder::class,
+            MlrPermissionsSeeder::class,
         ]);
     }
 }
