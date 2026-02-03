@@ -18,6 +18,10 @@ export interface Appointment {
     appointmentable_type?: string;
     appointmentable_id?: number;
     metadata?: Record<string, any>;
+    notification_channels?: NotificationChannel[];
+    reminder_sent_at?: string;
+    sms_reminder_sent_at?: string;
+    whatsapp_reminder_sent_at?: string;
     created_at: string;
     updated_at: string;
 
@@ -65,6 +69,8 @@ export interface User {
     avatar?: string;
 }
 
+export type NotificationChannel = 'email' | 'sms' | 'whatsapp';
+
 export interface AppointmentFormData {
     title: string;
     description: string;
@@ -77,6 +83,7 @@ export interface AppointmentFormData {
     type: AppointmentType;
     visibility: AppointmentVisibility;
     participant_ids: number[];
+    notification_channels?: NotificationChannel[];
 }
 
 export interface AvailableSlot {

@@ -29,6 +29,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string|null $appointmentable_type
  * @property int|null $appointmentable_id
  * @property array|null $metadata
+ * @property array|null $notification_channels
+ * @property \Illuminate\Support\Carbon|null $reminder_sent_at
+ * @property \Illuminate\Support\Carbon|null $sms_reminder_sent_at
+ * @property \Illuminate\Support\Carbon|null $whatsapp_reminder_sent_at
+ * @property \Illuminate\Support\Carbon|null $telegram_reminder_sent_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\User $organizer
@@ -116,6 +121,11 @@ class Appointment extends Model
         'appointmentable_type',
         'appointmentable_id',
         'metadata',
+        'notification_channels',
+        'reminder_sent_at',
+        'sms_reminder_sent_at',
+        'whatsapp_reminder_sent_at',
+        'telegram_reminder_sent_at',
     ];
 
     /**
@@ -125,6 +135,11 @@ class Appointment extends Model
         'start_datetime' => 'datetime',
         'end_datetime' => 'datetime',
         'metadata' => 'array',
+        'notification_channels' => 'array',
+        'reminder_sent_at' => 'datetime',
+        'sms_reminder_sent_at' => 'datetime',
+        'whatsapp_reminder_sent_at' => 'datetime',
+        'telegram_reminder_sent_at' => 'datetime',
     ];
 
     /**
@@ -693,5 +708,126 @@ class Appointment extends Model
         return $this->belongsToMany(Department::class, 'department_meetings')
             ->withPivot(['uuid', 'created_by', 'notify_all_members', 'is_mandatory', 'notes', 'notified_at'])
             ->withTimestamps();
+    }
+
+    /**
+     * Scope: Get appointments needing reminders (not yet sent, within time window).
+     */
+    public function scopeNeedingReminders(Builder $query, int $hoursAhead = 24): Builder
+    {
+        $startTime = now()->addHours($hoursAhead - 1);
+        $endTime = now()->addHours($hoursAhead + 1);
+
+        return $query->whereIn('status', ['pending', 'confirmed'])
+            ->whereNull('reminder_sent_at')
+            ->whereBetween('start_datetime', [$startTime, $endTime]);
+    }
+
+    /**
+     * Check if SMS notifications are enabled for this appointment.
+     */
+    public function hasSmsNotificationEnabled(): bool
+    {
+        $channels = $this->notification_channels ?? ['email'];
+
+        return in_array('sms', $channels);
+    }
+
+    /**
+     * Check if WhatsApp notifications are enabled for this appointment.
+     */
+    public function hasWhatsAppNotificationEnabled(): bool
+    {
+        $channels = $this->notification_channels ?? ['email'];
+
+        return in_array('whatsapp', $channels);
+    }
+
+    /**
+     * Check if email notifications are enabled for this appointment.
+     */
+    public function hasEmailNotificationEnabled(): bool
+    {
+        $channels = $this->notification_channels ?? ['email'];
+
+        return in_array('email', $channels);
+    }
+
+    /**
+     * Check if Telegram notifications are enabled for this appointment.
+     */
+    public function hasTelegramNotificationEnabled(): bool
+    {
+        $channels = $this->notification_channels ?? ['email'];
+
+        return in_array('telegram', $channels);
+    }
+
+    /**
+     * Mark SMS reminder as sent.
+     */
+    public function markSmsReminderSent(): void
+    {
+        $this->update([
+            'sms_reminder_sent_at' => now(),
+            'reminder_sent_at' => $this->reminder_sent_at ?? now(),
+        ]);
+    }
+
+    /**
+     * Mark WhatsApp reminder as sent.
+     */
+    public function markWhatsAppReminderSent(): void
+    {
+        $this->update([
+            'whatsapp_reminder_sent_at' => now(),
+            'reminder_sent_at' => $this->reminder_sent_at ?? now(),
+        ]);
+    }
+
+    /**
+     * Mark Telegram reminder as sent.
+     */
+    public function markTelegramReminderSent(): void
+    {
+        $this->update([
+            'telegram_reminder_sent_at' => now(),
+            'reminder_sent_at' => $this->reminder_sent_at ?? now(),
+        ]);
+    }
+
+    /**
+     * Mark all reminders as sent.
+     */
+    public function markRemindersSent(): void
+    {
+        $this->update(['reminder_sent_at' => now()]);
+    }
+
+    /**
+     * Get participants with phone numbers for SMS/WhatsApp.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    public function getParticipantsWithPhones(): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->participants()
+            ->whereNotNull('phone_number')
+            ->where('phone_number', '!=', '')
+            ->get();
+    }
+
+    /**
+     * Get participants with Telegram chat IDs for Telegram notifications.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    public function getParticipantsWithTelegram(): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->participants()
+            ->whereNotNull('telegram_chat_id')
+            ->where('telegram_chat_id', '!=', '')
+            ->where('telegram_notifications', true)
+            ->get();
     }
 }

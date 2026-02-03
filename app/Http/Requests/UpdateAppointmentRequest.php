@@ -87,6 +87,8 @@ class UpdateAppointmentRequest extends FormRequest
             'appointmentable_type' => ['nullable', 'string'],
             'appointmentable_id' => ['nullable', 'integer'],
             'metadata' => ['nullable', 'array'],
+            'notification_channels' => ['nullable', 'array'],
+            'notification_channels.*' => ['in:email,sms,whatsapp'],
         ];
     }
 
@@ -120,6 +122,8 @@ class UpdateAppointmentRequest extends FormRequest
             'status.in' => 'Le statut sélectionné est invalide.',
             'participant_ids.array' => 'Les participants doivent être un tableau.',
             'participant_ids.*.exists' => 'Un ou plusieurs participants sélectionnés n\'existent pas.',
+            'notification_channels.array' => 'Les canaux de notification doivent être un tableau.',
+            'notification_channels.*.in' => 'Canal de notification invalide. Valeurs acceptées : email, sms, whatsapp.',
         ];
     }
 

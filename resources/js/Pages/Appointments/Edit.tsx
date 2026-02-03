@@ -30,12 +30,16 @@ import {
     EyeOff,
     Video,
     Link as LinkIcon,
+    Bell,
+    Mail,
+    MessageSquare,
+    Smartphone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, addHours, parseISO } from 'date-fns';
 import TimeSlotPicker from '@/Components/appointments/TimeSlotPicker';
 
-import type { AppointmentCreateEditProps, AppointmentFormData, User as UserType, MeetingMode, MeetingPlatform } from '@/Types/appointment';
+import type { AppointmentCreateEditProps, AppointmentFormData, User as UserType, MeetingMode, MeetingPlatform, NotificationChannel } from '@/Types/appointment';
 
 export default function AppointmentEdit() {
     const { appointment, users, types, auth } = usePage<AppointmentCreateEditProps>().props;
@@ -60,6 +64,7 @@ export default function AppointmentEdit() {
         type: appointment.type,
         visibility: appointment.visibility || 'private',
         participant_ids: appointment.participants?.map(p => p.id) || [],
+        notification_channels: appointment.notification_channels || ['email'],
     });
 
     const [selectedParticipants, setSelectedParticipants] = useState<UserType[]>(
@@ -79,6 +84,19 @@ export default function AppointmentEdit() {
     const removeParticipant = (userId: number) => {
         setSelectedParticipants(selectedParticipants.filter(p => p.id !== userId));
         setData('participant_ids', (data.participant_ids || []).filter(id => id !== userId));
+    };
+
+    const handleNotificationChannelToggle = (channel: NotificationChannel, checked: boolean) => {
+        const currentChannels = data.notification_channels || [];
+        if (checked) {
+            setData('notification_channels', [...currentChannels, channel]);
+        } else {
+            // Ensure at least email is always selected
+            if (channel === 'email' && currentChannels.length === 1) {
+                return;
+            }
+            setData('notification_channels', currentChannels.filter(c => c !== channel));
+        }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -413,6 +431,7 @@ export default function AppointmentEdit() {
                                                     type="button"
                                                     onClick={() => removeParticipant(participant.id)}
                                                     className="ml-2 hover:text-red-600"
+                                                    title={`Retirer ${participant.name}`}
                                                 >
                                                     <X className="h-3 w-3" />
                                                 </button>
@@ -447,6 +466,81 @@ export default function AppointmentEdit() {
                                     ))}
                                 </div>
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Notification Settings */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center space-x-2">
+                                <Bell className="h-5 w-5" />
+                                <span>Notifications de rappel</span>
+                            </CardTitle>
+                            <CardDescription>
+                                Choisissez comment les participants recevront les rappels de rendez-vous (24h avant)
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* Email */}
+                                <div className="flex items-center space-x-3 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                                    <Checkbox
+                                        id="notification-email"
+                                        checked={(data.notification_channels || []).includes('email')}
+                                        onCheckedChange={(checked) => handleNotificationChannelToggle('email', checked as boolean)}
+                                        disabled={true}
+                                    />
+                                    <Label htmlFor="notification-email" className="flex-1 cursor-pointer">
+                                        <div className="flex items-center space-x-2">
+                                            <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                            <div>
+                                                <p className="font-medium text-blue-900 dark:text-blue-100">Email</p>
+                                                <p className="text-sm text-blue-600 dark:text-blue-400">Toujours activé</p>
+                                            </div>
+                                        </div>
+                                    </Label>
+                                </div>
+
+                                {/* SMS */}
+                                <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                    <Checkbox
+                                        id="notification-sms"
+                                        checked={(data.notification_channels || []).includes('sms')}
+                                        onCheckedChange={(checked) => handleNotificationChannelToggle('sms', checked as boolean)}
+                                    />
+                                    <Label htmlFor="notification-sms" className="flex-1 cursor-pointer">
+                                        <div className="flex items-center space-x-2">
+                                            <Smartphone className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                            <div>
+                                                <p className="font-medium">SMS</p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">Rappel par SMS</p>
+                                            </div>
+                                        </div>
+                                    </Label>
+                                </div>
+
+                                {/* WhatsApp */}
+                                <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                    <Checkbox
+                                        id="notification-whatsapp"
+                                        checked={(data.notification_channels || []).includes('whatsapp')}
+                                        onCheckedChange={(checked) => handleNotificationChannelToggle('whatsapp', checked as boolean)}
+                                    />
+                                    <Label htmlFor="notification-whatsapp" className="flex-1 cursor-pointer">
+                                        <div className="flex items-center space-x-2">
+                                            <MessageSquare className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                                            <div>
+                                                <p className="font-medium">WhatsApp</p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">Rappel par WhatsApp</p>
+                                            </div>
+                                        </div>
+                                    </Label>
+                                </div>
+                            </div>
+
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Les rappels SMS et WhatsApp ne seront envoyés qu'aux participants ayant un numéro de téléphone enregistré.
+                            </p>
                         </CardContent>
                     </Card>
 

@@ -52,4 +52,48 @@ return [
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | SMS Integration Settings
+    |--------------------------------------------------------------------------
+    |
+    | Global SMS notification settings for the application.
+    |
+    */
+
+    'sms' => [
+        'enabled' => env('SMS_INTEGRATION_ENABLED', false),
+        'provider' => env('SMS_PROVIDER', 'twilio'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp Integration Settings
+    |--------------------------------------------------------------------------
+    |
+    | Global WhatsApp notification settings for the application.
+    |
+    */
+
+    'whatsapp' => [
+        'enabled' => env('WHATSAPP_INTEGRATION_ENABLED', false),
+        'provider' => env('WHATSAPP_PROVIDER', 'twilio'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Telegram Bot API Integration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Telegram Bot API used for appointment reminders.
+    | Create a bot via @BotFather on Telegram to get your bot token.
+    |
+    */
+
+    'telegram' => [
+        'enabled' => env('TELEGRAM_INTEGRATION_ENABLED', false),
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'bot_username' => env('TELEGRAM_BOT_USERNAME'),
+    ],
+
 ];

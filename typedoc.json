@@ -1,5 +1,5 @@
 {
-    "entryPoints": ["src"],
+    "entryPoints": ["resources/js"],
     "entryPointStrategy": "expand",
     "out": "docs/api-typescript",
     "exclude": ["**/*.test.tsx", "**/*.spec.ts", "**/node_modules/**"],

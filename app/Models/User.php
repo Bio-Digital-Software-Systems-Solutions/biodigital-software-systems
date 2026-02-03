@@ -13,9 +13,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
@@ -66,6 +66,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read \App\Models\Teacher|null $teacher
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Training> $trainings
  * @property-read int|null $trainings_count
+ *
  * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
@@ -88,6 +89,7 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutPermission($permissions)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutRole($roles, $guard = null)
+ *
  * @property string $uuid
  * @property string|null $phone_number
  * @property \Illuminate\Support\Carbon|null $last_login_at
@@ -105,6 +107,9 @@ use Spatie\Activitylog\LogOptions;
  * @property bool $event_reminders
  * @property bool $training_updates
  * @property bool $message_notifications
+ * @property string|null $telegram_chat_id
+ * @property string|null $telegram_username
+ * @property bool $telegram_notifications
  * @property string|null $deleted_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PastorAvailability> $activeAvailability
  * @property-read int|null $active_availability_count
@@ -121,6 +126,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $participatedEvents
  * @property-read int|null $participated_events_count
  * @property-read \App\Models\Pastor|null $pastor
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailNotifications($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEventReminders($value)
@@ -139,12 +145,13 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStatusReason($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTrainingUpdates($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, HasUuid, Notifiable, TwoFactorAuthenticatable, LogsActivity, ClearsCache;
+    use ClearsCache, HasApiTokens, HasFactory, HasRoles, HasUuid, LogsActivity, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * Configure activity log options.
@@ -156,6 +163,7 @@ class User extends Authenticatable implements MustVerifyEmail
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -183,6 +191,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'event_reminders',
         'training_updates',
         'message_notifications',
+        'telegram_chat_id',
+        'telegram_username',
+        'telegram_notifications',
     ];
 
     /**
@@ -238,6 +249,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'event_reminders' => 'boolean',
             'training_updates' => 'boolean',
             'message_notifications' => 'boolean',
+            'telegram_notifications' => 'boolean',
         ];
     }
 
@@ -605,5 +617,13 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(\App\Models\Scheduling\Skill::class, 'employee_skills')
             ->withPivot(['proficiency_level', 'acquired_date', 'certified_until'])
             ->withTimestamps();
+    }
+
+    /**
+     * Route notifications for the Telegram channel.
+     */
+    public function routeNotificationForTelegram(): ?string
+    {
+        return $this->telegram_chat_id;
     }
 }

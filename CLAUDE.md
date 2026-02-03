@@ -249,6 +249,159 @@ Crée ~1000 tâches de projet sur 12 mois avec :
    - Only logs changed attributes
    - Complete audit trail available
 
+### 📱 Notification System (SMS, WhatsApp, Telegram)
+
+L'application supporte plusieurs canaux de notification pour les rappels de rendez-vous.
+
+#### Configuration
+
+Variables d'environnement requises dans `.env` :
+
+```env
+# Twilio SMS/WhatsApp
+TWILIO_ACCOUNT_SID=your_sid
+TWILIO_AUTH_TOKEN=your_token
+TWILIO_FROM_NUMBER=+1234567890
+TWILIO_WHATSAPP_FROM=+1234567890
+SMS_INTEGRATION_ENABLED=true
+WHATSAPP_INTEGRATION_ENABLED=true
+
+# Telegram Bot
+TELEGRAM_INTEGRATION_ENABLED=true
+TELEGRAM_BOT_TOKEN=your_bot_token_from_botfather
+TELEGRAM_BOT_USERNAME=YourBotUsername
+```
+
+#### Services disponibles
+
+| Service | Classe | Description |
+|---------|--------|-------------|
+| SMS/WhatsApp | `AppointmentSmsNotificationService` | Via Twilio API |
+| Telegram | `TelegramNotificationService` | Via Telegram Bot API |
+
+#### Telegram Bot API
+
+**Création du bot :**
+1. Ouvrir Telegram et chercher **@BotFather**
+2. Envoyer `/newbot` et suivre les instructions
+3. Copier le token API fourni dans `TELEGRAM_BOT_TOKEN`
+4. Copier le username du bot dans `TELEGRAM_BOT_USERNAME`
+
+**Structure des fichiers Telegram :**
+```
+app/
+├── Services/
+│   └── TelegramNotificationService.php    # Service principal
+├── Notifications/
+│   ├── Channels/
+│   │   └── TelegramChannel.php            # Canal Laravel
+│   └── Messages/
+│       └── TelegramMessage.php            # Builder de messages
+```
+
+**Utilisation du service :**
+```php
+use App\Services\TelegramNotificationService;
+
+$telegram = app(TelegramNotificationService::class);
+
+// Vérifier si activé
+if ($telegram->isEnabled()) {
+    // Envoyer un message
+    $telegram->sendMessage($chatId, 'Votre message');
+
+    // Envoyer un rappel de rendez-vous
+    $telegram->sendReminder($appointment, $participant);
+
+    // Envoyer à l'organisateur
+    $telegram->sendOrganizerReminder($appointment);
+
+    // Autres notifications
+    $telegram->sendConfirmation($appointment, $participant);
+    $telegram->sendCancellation($appointment, $participant);
+    $telegram->sendInvitation($appointment, $participant, $confirmUrl, $declineUrl);
+    $telegram->sendUpdate($appointment, $participant, $changes);
+}
+```
+
+**Utilisation via Laravel Notifications :**
+```php
+use App\Notifications\AppointmentReminder;
+
+// Le canal Telegram est ajouté automatiquement si l'utilisateur a configuré Telegram
+$user->notify(new AppointmentReminder($appointment));
+```
+
+**Builder TelegramMessage :**
+```php
+use App\Notifications\Messages\TelegramMessage;
+
+$message = TelegramMessage::create()
+    ->line('Ligne de texte')
+    ->bold('Texte en gras')
+    ->italic('Texte en italique')
+    ->link('Cliquez ici', 'https://example.com')
+    ->lineBreak()
+    ->content('Contenu supplémentaire')
+    ->html()           // ou ->markdown() ou ->markdownV2()
+    ->silent()         // Envoyer sans notification
+    ->replyTo($msgId); // Répondre à un message
+```
+
+#### Champs de base de données
+
+**Table `users` :**
+- `telegram_chat_id` : ID du chat Telegram de l'utilisateur
+- `telegram_username` : Username Telegram (optionnel)
+- `telegram_notifications` : Préférence de notification (boolean)
+
+**Table `appointments` :**
+- `telegram_reminder_sent_at` : Timestamp du dernier rappel envoyé
+
+#### Commande de rappels automatiques
+
+```bash
+# Envoyer les rappels 24h avant (par défaut)
+php artisan appointments:send-reminders
+
+# Envoyer les rappels 18h avant
+php artisan appointments:send-reminders --hours=18
+
+# Mode simulation (dry-run)
+php artisan appointments:send-reminders --dry-run
+```
+
+La commande est planifiée automatiquement dans `routes/console.php` :
+- 9h00 : rappels 24h avant
+- 18h00 : rappels 18h avant
+
+#### Tests
+
+```bash
+# Tests du service Telegram
+php artisan test tests/Feature/TelegramNotificationServiceTest.php
+
+# Tests du builder de messages
+php artisan test tests/Unit/TelegramChannelTest.php
+```
+
+#### Obtenir le chat_id d'un utilisateur
+
+Pour qu'un utilisateur reçoive des notifications Telegram, il doit :
+1. Démarrer une conversation avec le bot en envoyant `/start`
+2. L'application peut récupérer le `chat_id` via `$telegram->getUpdates()`
+
+```php
+// Récupérer les derniers messages envoyés au bot
+$updates = $telegram->getUpdates();
+
+foreach ($updates as $update) {
+    $chatId = $update['message']['chat']['id'];
+    $username = $update['message']['from']['username'] ?? null;
+    // Sauvegarder dans la table users
+}
+```
+
 ## Development Guidelines
 
 ### Code Style
