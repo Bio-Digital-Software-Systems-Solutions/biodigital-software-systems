@@ -183,13 +183,15 @@ export default function Create({ projects, statuses, users, employees = [], star
 
                                 {/* Description */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="description">Description</Label>
+                                    <Label htmlFor="description">Description *</Label>
                                     <Textarea
                                         id="description"
                                         rows={4}
                                         value={data.description}
                                         onChange={(e) => setData('description', e.target.value)}
-                                        placeholder="Description de la tâche..."
+                                        placeholder="Description de la tâche (minimum 10 caractères)..."
+                                        required
+                                        minLength={10}
                                     />
                                     {errors.description && <p className="text-sm text-red-600">{errors.description}</p>}
                                 </div>

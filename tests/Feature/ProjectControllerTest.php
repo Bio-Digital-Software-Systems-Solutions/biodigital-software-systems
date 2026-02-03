@@ -273,7 +273,46 @@ class ProjectControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post('/projects', []);
 
-        $response->assertSessionHasErrors(['name', 'status', 'priority']);
+        $response->assertSessionHasErrors(['name', 'description', 'status', 'priority']);
+    }
+
+    public function test_project_creation_validates_description_minimum_length(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('admin');
+
+        $projectData = [
+            'name' => 'Test Project',
+            'description' => 'Too short', // Less than 10 characters
+            'status' => 'planning',
+            'priority' => 'medium',
+        ];
+
+        $response = $this->actingAs($user)->post('/projects', $projectData);
+
+        $response->assertSessionHasErrors(['description']);
+    }
+
+    public function test_project_creation_accepts_valid_description(): void
+    {
+        $user = User::factory()->create();
+        $user->assignRole('admin');
+
+        $projectData = [
+            'name' => 'Test Project',
+            'description' => 'This is a valid description with more than 10 characters',
+            'status' => 'planning',
+            'priority' => 'medium',
+        ];
+
+        $response = $this->actingAs($user)->post('/projects', $projectData);
+
+        $response->assertSessionDoesntHaveErrors(['description']);
+        $response->assertRedirect();
+        $this->assertDatabaseHas('projects', [
+            'name' => 'Test Project',
+            'description' => 'This is a valid description with more than 10 characters',
+        ]);
     }
 
     public function test_project_creation_validates_status_values(): void
@@ -283,6 +322,7 @@ class ProjectControllerTest extends TestCase
 
         $projectData = [
             'name' => 'Test Project',
+            'description' => 'A valid description for the test project',
             'status' => 'invalid_status',
             'priority' => 'medium',
         ];
@@ -299,6 +339,7 @@ class ProjectControllerTest extends TestCase
 
         $projectData = [
             'name' => 'Test Project',
+            'description' => 'A valid description for the test project',
             'status' => 'planning',
             'priority' => 'invalid_priority',
         ];
@@ -315,6 +356,7 @@ class ProjectControllerTest extends TestCase
 
         $projectData = [
             'name' => 'Test Project',
+            'description' => 'A valid description for the test project',
             'status' => 'planning',
             'priority' => 'medium',
             'start_date' => '2026-03-15',
@@ -333,6 +375,7 @@ class ProjectControllerTest extends TestCase
 
         $projectData = [
             'name' => 'Test Project',
+            'description' => 'A valid description for the test project',
             'status' => 'planning',
             'priority' => 'medium',
             'budget' => -100, // Negative budget
@@ -350,6 +393,7 @@ class ProjectControllerTest extends TestCase
 
         $projectData = [
             'name' => 'Test Project',
+            'description' => 'A valid description for the test project',
             'status' => 'planning',
             'priority' => 'medium',
             'project_manager_id' => 99999, // Non-existent user
@@ -367,6 +411,7 @@ class ProjectControllerTest extends TestCase
 
         $projectData = [
             'name' => 'Test Project',
+            'description' => 'A valid description for the test project',
             'status' => 'planning',
             'priority' => 'medium',
             'participants' => [99999, 99998], // Non-existent users

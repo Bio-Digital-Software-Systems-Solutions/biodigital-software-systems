@@ -219,7 +219,7 @@ class ProjectController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'required|string|min:10',
             'status' => 'required|in:planning,active,on_hold,completed,cancelled',
             'priority' => 'required|in:lowest,low,medium,high,highest',
             'color' => 'nullable|string|max:7',

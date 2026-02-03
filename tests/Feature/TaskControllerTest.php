@@ -121,7 +121,48 @@ class TaskControllerTest extends TestCase
         $response = $this->actingAs($this->user)
             ->post(route('tasks.store'), []);
 
-        $response->assertSessionHasErrors(['title', 'priority', 'status_id', 'program_id']);
+        $response->assertSessionHasErrors(['title', 'description', 'priority', 'status_id']);
+    }
+
+    public function test_store_validates_description_minimum_length(): void
+    {
+        $this->user->givePermissionTo('create tasks');
+
+        $taskData = [
+            'title' => 'Test Task',
+            'description' => 'Too short', // Less than 10 characters
+            'priority' => 'medium',
+            'status_id' => $this->status->id,
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->post(route('tasks.store'), $taskData);
+
+        $response->assertSessionHasErrors(['description']);
+    }
+
+    public function test_store_accepts_valid_description(): void
+    {
+        $this->user->givePermissionTo('create tasks');
+
+        $taskData = [
+            'title' => 'Test Task',
+            'description' => 'This is a valid description with more than 10 characters',
+            'due_date' => now()->addDays(7)->format('Y-m-d'),
+            'priority' => 'medium',
+            'status_id' => $this->status->id,
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->post(route('tasks.store'), $taskData);
+
+        $response->assertSessionDoesntHaveErrors(['description']);
+        $response->assertRedirect(route('tasks.index'));
+
+        $this->assertDatabaseHas('tasks', [
+            'title' => 'Test Task',
+            'description' => 'This is a valid description with more than 10 characters',
+        ]);
     }
 
     public function test_store_validates_priority_values(): void
@@ -131,6 +172,7 @@ class TaskControllerTest extends TestCase
         $response = $this->actingAs($this->user)
             ->post(route('tasks.store'), [
                 'title' => 'Test Task',
+                'description' => 'A valid description for the test task',
                 'priority' => 'invalid',
                 'status_id' => $this->status->id,
                 'program_id' => $this->program->id,
@@ -278,6 +320,7 @@ class TaskControllerTest extends TestCase
         $response = $this->actingAs($this->user)
             ->post(route('tasks.store'), [
                 'title' => 'Test Task',
+                'description' => 'A valid description for the test task',
                 'due_date' => now()->subDay()->format('Y-m-d'),
                 'priority' => 'medium',
                 'status_id' => $this->status->id,

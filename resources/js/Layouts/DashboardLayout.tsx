@@ -332,11 +332,11 @@ export default function DashboardLayout({ children, title, description, actions,
                 {/* Page content */}
                 <main
                     id="main-content"
-                    className="flex-1 overflow-auto"
+                    className="flex-1 overflow-x-hidden overflow-y-auto"
                     role="main"
                     aria-label="Contenu principal"
                 >
-                    <div className="p-4">
+                    <div className="p-4 max-w-full">
                         {header || (
                             <PageHeader
                                 title={title}

@@ -173,7 +173,7 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
         >
             <Head title="Tasks" />
 
-            <div className="mx-auto sm:px-6 lg:px-8">
+            <div className="w-full max-w-full overflow-hidden sm:px-6 lg:px-8">
                 {/* Tab Switcher */}
                 <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 w-fit mb-6">
                     <button
@@ -209,8 +209,8 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
                         </div>
                     )
                 ) : (
-                <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div className="p-4 text-gray-900 dark:text-gray-100">
+                <div className="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
+                    <div className="p-4 text-gray-900 dark:text-gray-100 overflow-x-auto">
                         {showFilters && (
                                 <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -286,52 +286,52 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
 
                             {/* Table View */}
                             {viewMode === 'table' && (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <div className="-mx-4 sm:mx-0 overflow-x-auto">
+                                    <table className="w-full min-w-[800px] divide-y divide-gray-200 dark:divide-gray-700">
                                         <thead className="bg-gray-50 dark:bg-gray-800">
                                             <tr>
-                                                <th className="px-3 py-3 text-left">
+                                                <th className="px-2 py-3 text-left w-16">
                                                     <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                                         Complete
                                                     </span>
                                                 </th>
                                                 <th
-                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
                                                     onClick={() => handleSort('title')}
                                                 >
                                                     Task {getSortIcon('title')}
                                                 </th>
                                                 <th
-                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 hidden lg:table-cell"
                                                     onClick={() => handleSort('program')}
                                                 >
                                                     Program {getSortIcon('program')}
                                                 </th>
                                                 <th
-                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
                                                     onClick={() => handleSort('status')}
                                                 >
                                                     Status {getSortIcon('status')}
                                                 </th>
                                                 <th
-                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
                                                     onClick={() => handleSort('priority')}
                                                 >
                                                     Priority {getSortIcon('priority')}
                                                 </th>
                                                 <th
-                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 hidden md:table-cell"
                                                     onClick={() => handleSort('due_date')}
                                                 >
                                                     Due Date {getSortIcon('due_date')}
                                                 </th>
                                                 <th
-                                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
+                                                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 hidden xl:table-cell"
                                                     onClick={() => handleSort('assigned_to')}
                                                 >
                                                     Assigned To {getSortIcon('assigned_to')}
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
                                                     Actions
                                                 </th>
                                             </tr>
@@ -339,7 +339,7 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
                                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                             {tasks.data.map((task: any) => (
                                                 <tr key={task.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                    <td className="px-3 py-4">
+                                                    <td className="px-2 py-4 w-16">
                                                         <input
                                                             type="checkbox"
                                                             checked={task.status?.id === completedStatus?.id}
@@ -347,56 +347,56 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
                                                             className="w-5 h-5 text-green-600 rounded border-gray-300 cursor-pointer"
                                                         />
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div>
+                                                    <td className="px-3 py-4">
+                                                        <div className="max-w-xs lg:max-w-sm">
                                                             <Link
                                                                 href={route('tasks.show', task.uuid)}
                                                                 className={`text-sm font-medium hover:text-primary hover:underline ${task.status?.id === completedStatus?.id ? 'line-through text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}
                                                             >
                                                                 {task.title}
                                                             </Link>
-                                                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                                {task.description && task.description.substring(0, 100)}
-                                                                {task.description && task.description.length > 100 && '...'}
+                                                            <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                                {task.description && task.description.substring(0, 60)}
+                                                                {task.description && task.description.length > 60 && '...'}
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 hidden lg:table-cell">
                                                         {task.program?.name}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="px-3 py-4 whitespace-nowrap">
                                                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(task.status?.name)}`}>
                                                             {task.status?.name}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="px-3 py-4 whitespace-nowrap">
                                                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
                                                             {task.priority}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 hidden md:table-cell">
                                                         {task.due_date ? new Date(task.due_date).toLocaleDateString() : '-'}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 hidden xl:table-cell">
                                                         {task.assigned_user ? `${task.assigned_user.first_name} ${task.assigned_user.last_name}` : 'Unassigned'}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                        <div className="flex space-x-2">
+                                                    <td className="px-3 py-4 whitespace-nowrap text-sm font-medium w-24">
+                                                        <div className="flex items-center gap-1">
                                                             <Link
                                                                 href={route('tasks.show', task.uuid)}
-                                                                className="text-primary hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                                                                className="text-primary hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1"
                                                             >
                                                                 <EyeIcon className="w-4 h-4" />
                                                             </Link>
                                                             <Link
                                                                 href={route('tasks.edit', task.uuid)}
-                                                                className="text-primary hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                                className="text-primary hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 p-1"
                                                             >
                                                                 <PencilIcon className="w-4 h-4" />
                                                             </Link>
                                                             <button
                                                                 onClick={() => handleDelete(task)}
-                                                                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                                                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1"
                                                             >
                                                                 <TrashIcon className="w-4 h-4" />
                                                             </button>
