@@ -29,15 +29,15 @@ export default function Login({
         <GuestLayout title="Connexion">
             <Head title="Connexion" />
 
-            <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
-                <div className="flex min-h-[calc(100vh-20rem)] items-center justify-center">
+            <div className="container mx-auto px-4 py-8 sm:py-16 sm:px-6 lg:px-8">
+                <div className="flex min-h-[calc(100vh-16rem)] sm:min-h-[calc(100vh-20rem)] items-center justify-center">
                     <div className="w-full max-w-md">
-                        <div className="rounded-2xl border border-border bg-card p-8 shadow-lg">
-                            <div className="mb-8 text-center">
-                                <h2 className="text-3xl font-bold text-foreground">
+                        <div className="rounded-2xl border border-border bg-card p-5 sm:p-8 shadow-lg">
+                            <div className="mb-6 sm:mb-8 text-center">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
                                     Connexion
                                 </h2>
-                                <p className="mt-2 text-sm text-muted-foreground">
+                                <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
                                     Connectez-vous à votre compte pour continuer
                                 </p>
                             </div>
@@ -90,7 +90,7 @@ export default function Login({
                                     <InputError message={errors.password} className="mt-2" />
                                 </div>
 
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                     <label className="flex items-center cursor-pointer">
                                         <input
                                             type="checkbox"
@@ -99,7 +99,7 @@ export default function Login({
                                             onChange={(e) => setData('remember', e.target.checked)}
                                             className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                                         />
-                                        <span className="ml-2 text-sm text-muted-foreground">
+                                        <span className="ml-2 text-xs sm:text-sm text-muted-foreground">
                                             Se souvenir de moi
                                         </span>
                                     </label>
@@ -107,7 +107,7 @@ export default function Login({
                                     {canResetPassword && (
                                         <Link
                                             href={route('password.request')}
-                                            className="text-sm text-primary hover:underline"
+                                            className="text-xs sm:text-sm text-primary hover:underline"
                                         >
                                             Mot de passe oublié ?
                                         </Link>

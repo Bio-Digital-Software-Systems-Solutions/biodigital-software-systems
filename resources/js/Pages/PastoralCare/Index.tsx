@@ -760,32 +760,32 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                 canManageAll ? (
                     <Button
                         onClick={() => router.visit('/pastoral-care/appointments/create')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center shadow-md"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-2 sm:px-4 py-2 rounded-lg flex items-center shadow-md text-sm"
                     >
-                        <PlusIcon className="h-4 w-4 mr-2" />
-                        Nouveau rendez-vous
+                        <PlusIcon className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Nouveau rendez-vous</span>
                     </Button>
                 ) : undefined
             }
         >
             <Head title="Soin Pastoral - Dashboard" />
 
-            <div className="py-6">
-                <div className="mx-auto sm:px-6 lg:px-8">
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <TabsList className={`grid w-full ${permissions?.canViewMlrDashboard ? 'grid-cols-5' : 'grid-cols-5'}`}>
-                                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                                <TabsTrigger value="booking">Prise de RDV</TabsTrigger>
-                                <TabsTrigger value="pending">En attente ({stats.pending_appointments})</TabsTrigger>
-                                <TabsTrigger value="confirmed">Confirmés ({stats.confirmed_appointments})</TabsTrigger>
-                                <TabsTrigger value="all">Tous ({stats.total_appointments})</TabsTrigger>
+            <div className="py-4 sm:py-6">
+                <div className="mx-auto px-2 sm:px-6 lg:px-8">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto gap-1 p-1">
+                                <TabsTrigger value="dashboard" className="text-xs sm:text-sm py-2">Dashboard</TabsTrigger>
+                                <TabsTrigger value="booking" className="text-xs sm:text-sm py-2">Prise de RDV</TabsTrigger>
+                                <TabsTrigger value="pending" className="text-xs sm:text-sm py-2">En attente ({stats.pending_appointments})</TabsTrigger>
+                                <TabsTrigger value="confirmed" className="text-xs sm:text-sm py-2">Confirmés ({stats.confirmed_appointments})</TabsTrigger>
+                                <TabsTrigger value="all" className="text-xs sm:text-sm py-2 col-span-2 sm:col-span-1">Tous ({stats.total_appointments})</TabsTrigger>
                             </TabsList>
                             {permissions?.canViewMlrDashboard && (
                                 <Button
                                     variant="outline"
                                     onClick={() => router.visit('/pastoral-care/mlr')}
-                                    className="ml-4 bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700 dark:hover:bg-purple-900/50"
+                                    className="w-full sm:w-auto bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700 dark:hover:bg-purple-900/50"
                                 >
                                     <Heart className="h-4 w-4 mr-2" />
                                     MLR
@@ -869,33 +869,35 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                             </p>
                                         </div>
                                     ) : (
-                                        <div className="space-y-4">
+                                        <div className="space-y-3 sm:space-y-4">
                                             {upcomingAppointments.map((appointment) => (
                                                 <div
                                                     key={appointment.id}
-                                                    className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors gap-3"
                                                 >
-                                                    <div className="flex items-center space-x-4">
+                                                    <div className="flex items-center space-x-3 sm:space-x-4">
                                                         <div className="flex-shrink-0">
-                                                            <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
-                                                                <span className="text-white font-semibold text-sm">
+                                                            <div className="h-9 w-9 sm:h-10 sm:w-10 bg-blue-600 rounded-full flex items-center justify-center">
+                                                                <span className="text-white font-semibold text-xs sm:text-sm">
                                                                     {appointment.client_name ? appointment.client_name.charAt(0) : 'R'}
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        <div>
-                                                            <h3 className="font-medium text-gray-900 dark:text-white">
+                                                        <div className="min-w-0 flex-1">
+                                                            <h3 className="font-medium text-gray-900 dark:text-white text-sm sm:text-base truncate">
                                                                 {appointment.client_name || 'Rendez-vous interne'}
                                                             </h3>
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                                                 {formatDate(appointment.appointment_date)} à {formatTime(appointment.appointment_time)}
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center space-x-3">
-                                                        {getLocationIcon(appointment.location_type)}
-                                                        {getStatusBadge(appointment.status)}
-                                                        <div className="flex space-x-2">
+                                                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 pl-12 sm:pl-0">
+                                                        <div className="flex items-center gap-2">
+                                                            {getLocationIcon(appointment.location_type)}
+                                                            {getStatusBadge(appointment.status)}
+                                                        </div>
+                                                        <div className="flex gap-2">
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
@@ -1335,8 +1337,9 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                         {/* Day headers */}
                                                         <div className="grid grid-cols-7">
                                                             {['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'].map(day => (
-                                                                <div key={day} className="bg-gray-100 dark:bg-gray-700 p-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300 border-r border-b border-gray-200 dark:border-gray-600 last:border-r-0">
-                                                                    {day}
+                                                                <div key={day} className="bg-gray-100 dark:bg-gray-700 p-1 sm:p-3 text-center text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 border-r border-b border-gray-200 dark:border-gray-600 last:border-r-0">
+                                                                    <span className="hidden sm:inline">{day}</span>
+                                                                    <span className="sm:hidden">{day.charAt(0)}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -1358,7 +1361,7 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                             return (
                                                                 <div
                                                                     key={idx}
-                                                                    className={`min-h-[100px] p-3 transition-all duration-200 border-r border-b border-gray-100 dark:border-gray-700 ${
+                                                                    className={`min-h-[48px] sm:min-h-[80px] p-1 sm:p-3 transition-all duration-200 border-r border-b border-gray-100 dark:border-gray-700 ${
                                                                         !isCurrentMonth ? 'opacity-30' : ''
                                                                     } ${
                                                                         isClickable
@@ -1377,11 +1380,11 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                                         }
                                                                     }}
                                                                 >
-                                                                    <div className={`text-sm font-medium ${
+                                                                    <div className={`text-xs sm:text-sm font-medium ${
                                                                         isToday && !isSelected
-                                                                            ? 'text-white w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center'
+                                                                            ? 'text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-500 flex items-center justify-center'
                                                                             : isSelected
-                                                                                ? '!text-white dark:!text-white !font-bold !text-lg'
+                                                                                ? '!text-white dark:!text-white !font-bold text-sm sm:!text-lg'
                                                                                 : hasAvailableSlots
                                                                                     ? 'text-purple-800 dark:text-purple-200 font-bold'
                                                                                     : isPast || !isCurrentMonth
@@ -1430,12 +1433,12 @@ export default function Index({ appointments, stats, canManageAll, permissions, 
                                                             <span className="ml-2">Chargement des créneaux...</span>
                                                         </div>
                                                     ) : availableSlots.length > 0 ? (
-                                                        <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mt-2">
+                                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 mt-2">
                                                             {availableSlots.map((time) => (
                                                                 <Button
                                                                     key={time}
                                                                     variant={formData.appointment_time === time ? 'default' : 'outline'}
-                                                                    className="h-12"
+                                                                    className="h-10 sm:h-12 text-sm sm:text-base"
                                                                     onClick={() => handleInputChange('appointment_time', time)}
                                                                 >
                                                                     {time}

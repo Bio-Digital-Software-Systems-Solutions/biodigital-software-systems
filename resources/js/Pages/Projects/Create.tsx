@@ -170,12 +170,12 @@ export default function CreateProject({ users = [], employees = [], stars = [] }
         type: 'all' | 'user' | 'employee' | 'star';
         setType: (t: 'all' | 'user' | 'employee' | 'star') => void;
     }) => (
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
             <Button
                 type="button"
                 variant={type === 'all' ? 'default' : 'outline'}
                 size="sm"
-                className="h-6 px-2 text-xs"
+                className="h-7 sm:h-6 px-2 sm:px-2 text-xs"
                 onClick={() => setType('all')}
             >
                 Tous
@@ -184,7 +184,7 @@ export default function CreateProject({ users = [], employees = [], stars = [] }
                 type="button"
                 variant={type === 'employee' ? 'default' : 'outline'}
                 size="sm"
-                className={`h-6 px-2 text-xs ${type === 'employee' ? '' : 'border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20'}`}
+                className={`h-7 sm:h-6 px-2 sm:px-2 text-xs ${type === 'employee' ? '' : 'border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20'}`}
                 onClick={() => setType('employee')}
             >
                 Employés
@@ -193,7 +193,7 @@ export default function CreateProject({ users = [], employees = [], stars = [] }
                 type="button"
                 variant={type === 'star' ? 'default' : 'outline'}
                 size="sm"
-                className={`h-6 px-2 text-xs ${type === 'star' ? '' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20'}`}
+                className={`h-7 sm:h-6 px-2 sm:px-2 text-xs ${type === 'star' ? '' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20'}`}
                 onClick={() => setType('star')}
             >
                 Stars
@@ -205,18 +205,18 @@ export default function CreateProject({ users = [], employees = [], stars = [] }
         <DashboardLayout>
             <Head title="Créer un projet" />
 
-            <div className="p-6">
+            <div className="p-3 sm:p-6">
                 <Card>
-                    <CardHeader>
-                        <div className="flex items-center">
+                    <CardHeader className="p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                             <Link
                                 href={route('projects.index')}
-                                className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 mr-4"
+                                className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 sm:mr-4"
                             >
                                 <ArrowLeftIcon className="w-4 h-4 mr-1" />
                                 Retour
                             </Link>
-                            <CardTitle>Créer un nouveau projet</CardTitle>
+                            <CardTitle className="text-lg sm:text-xl">Créer un nouveau projet</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent>

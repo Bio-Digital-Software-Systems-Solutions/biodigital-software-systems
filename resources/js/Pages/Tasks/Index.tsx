@@ -124,31 +124,32 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
             title="Tasks"
             description="Manage and track all your tasks"
             actions={
-                <>
-                    <Button variant="outline" size="sm" asChild>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="outline" size="sm" asChild className="hidden sm:flex">
                         <Link href="/projects">
                             <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                            Retour aux Projets
+                            <span className="hidden md:inline">Retour aux Projets</span>
+                            <span className="md:hidden">Retour</span>
                         </Link>
                     </Button>
                     <div className="flex bg-gray-100 dark:bg-gray-700 rounded-md p-1">
                         <button
                             onClick={() => setViewMode('table')}
-                            className={`p-2 rounded ${viewMode === 'table' ? 'bg-white dark:bg-gray-600 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                            className={`p-1.5 sm:p-2 rounded ${viewMode === 'table' ? 'bg-white dark:bg-gray-600 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
                             title="Table View"
                         >
                             <TableCellsIcon className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-2 rounded ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                            className={`p-1.5 sm:p-2 rounded ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
                             title="List View"
                         >
                             <ListBulletIcon className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded ${viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                            className={`p-1.5 sm:p-2 rounded ${viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`}
                             title="Grid View"
                         >
                             <Squares2X2Icon className="w-4 h-4" />
@@ -156,19 +157,19 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
                     </div>
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600"
+                        className="flex items-center px-2 sm:px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600"
                     >
-                        <FunnelIcon className="w-4 h-4 mr-2" />
-                        Filters
+                        <FunnelIcon className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Filters</span>
                     </button>
                     <Link
                         href={route('tasks.create')}
-                        className="flex items-center px-4 py-2 bg-primary hover:bg-primary text-white text-sm font-medium rounded-md"
+                        className="flex items-center px-2 sm:px-4 py-2 bg-primary hover:bg-primary text-white text-sm font-medium rounded-md"
                     >
-                        <PlusIcon className="w-4 h-4 mr-2" />
-                        New Task
+                        <PlusIcon className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">New Task</span>
                     </Link>
-                </>
+                </div>
             }
         >
             <Head title="Tasks" />

@@ -115,10 +115,10 @@ export default function Index({ trainings, filters }: Props) {
             description="Gérez et consultez toutes les formations disponibles"
             actions={
                 canCreateTrainings ? (
-                    <Button asChild>
+                    <Button asChild className="px-2 sm:px-4 text-sm">
                         <Link href="/trainings/create">
-                            <PlusIcon className="h-5 w-5 mr-2" />
-                            Nouvelle Formation
+                            <PlusIcon className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Nouvelle Formation</span>
                         </Link>
                     </Button>
                 ) : undefined
@@ -127,8 +127,8 @@ export default function Index({ trainings, filters }: Props) {
             <Head title="Formations - Administration" />
 
             {/* Filters */}
-                            <div className="mb-6 space-y-4">
-                                <div className="flex flex-col sm:flex-row gap-4">
+                            <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                                     {/* Search */}
                                     <div className="flex-1 relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -136,10 +136,10 @@ export default function Index({ trainings, filters }: Props) {
                                         </div>
                                         <input
                                             type="text"
-                                            placeholder="Rechercher par titre ou description..."
+                                            placeholder="Rechercher..."
                                             value={search}
                                             onChange={(e) => handleSearchChange(e.target.value)}
-                                            className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                                            className="block w-full pl-10 pr-10 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm sm:text-base"
                                         />
                                         {search && (
                                             <button
@@ -155,9 +155,9 @@ export default function Index({ trainings, filters }: Props) {
                                     <select
                                         value={level}
                                         onChange={(e) => handleLevelChange(e.target.value)}
-                                        className="w-[220px] flex-shrink-0 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                                        className="w-full sm:w-[180px] flex-shrink-0 px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm sm:text-base"
                                     >
-                                        <option value="">Tous les niveaux</option>
+                                        <option value="">Tous niveaux</option>
                                         <option value="beginner">Débutant</option>
                                         <option value="intermediate">Intermédiaire</option>
                                         <option value="advanced">Avancé</option>
@@ -169,50 +169,53 @@ export default function Index({ trainings, filters }: Props) {
                                         placeholder="Catégorie..."
                                         value={category}
                                         onChange={(e) => handleCategoryChange(e.target.value)}
-                                        className="w-[220px] flex-shrink-0 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                                        className="w-full sm:w-[180px] flex-shrink-0 px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm sm:text-base"
                                     />
 
-                                    {/* Clear Filters */}
-                                    {hasActiveFilters && (
-                                        <Button
-                                            variant="outline"
-                                            onClick={clearFilters}
-                                            className="whitespace-nowrap"
-                                        >
-                                            <XMarkIcon className="h-4 w-4 mr-2" />
-                                            Réinitialiser
-                                        </Button>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        {/* Clear Filters */}
+                                        {hasActiveFilters && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={clearFilters}
+                                                className="whitespace-nowrap"
+                                            >
+                                                <XMarkIcon className="h-4 w-4 sm:mr-2" />
+                                                <span className="hidden sm:inline">Réinitialiser</span>
+                                            </Button>
+                                        )}
 
-                                    {/* View Mode Selector */}
-                                    <div className="flex items-center gap-0.5 border border-gray-300 dark:border-gray-600 rounded-lg p-0.5">
-                                        <Button
-                                            variant={viewMode === 'table' ? 'default' : 'ghost'}
-                                            size="sm"
-                                            onClick={() => setViewMode('table')}
-                                            className="h-9 w-9 p-0"
-                                            title="Vue tableau"
-                                        >
-                                            <TableCellsIcon className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant={viewMode === 'list' ? 'default' : 'ghost'}
-                                            size="sm"
-                                            onClick={() => setViewMode('list')}
-                                            className="h-9 w-9 p-0"
-                                            title="Vue liste"
-                                        >
-                                            <ListBulletIcon className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                                            size="sm"
-                                            onClick={() => setViewMode('grid')}
-                                            className="h-9 w-9 p-0"
-                                            title="Vue grille"
-                                        >
-                                            <Squares2X2Icon className="h-4 w-4" />
-                                        </Button>
+                                        {/* View Mode Selector */}
+                                        <div className="flex items-center gap-0.5 border border-gray-300 dark:border-gray-600 rounded-lg p-0.5">
+                                            <Button
+                                                variant={viewMode === 'table' ? 'default' : 'ghost'}
+                                                size="sm"
+                                                onClick={() => setViewMode('table')}
+                                                className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+                                                title="Vue tableau"
+                                            >
+                                                <TableCellsIcon className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                                                size="sm"
+                                                onClick={() => setViewMode('list')}
+                                                className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+                                                title="Vue liste"
+                                            >
+                                                <ListBulletIcon className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                                                size="sm"
+                                                onClick={() => setViewMode('grid')}
+                                                className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+                                                title="Vue grille"
+                                            >
+                                                <Squares2X2Icon className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -254,22 +257,22 @@ export default function Index({ trainings, filters }: Props) {
                                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                         <thead className="bg-gray-50 dark:bg-gray-900">
                                             <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                                     Formation
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                                     Niveau
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                                     Prix
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                <th className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                                     Étudiants
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                                     Status
                                                 </th>
-                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                                     Actions
                                                 </th>
                                             </tr>
@@ -277,29 +280,29 @@ export default function Index({ trainings, filters }: Props) {
                                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                             {trainings.data.map((training) => (
                                                 <tr key={training.id}>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                                                         <Link
                                                             href={route('trainings.show', training.uuid)}
-                                                            className="text-sm font-medium text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300"
+                                                            className="text-sm font-medium text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 truncate max-w-[150px] sm:max-w-none block"
                                                         >
                                                             {training.title}
                                                         </Link>
-                                                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                        <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                                             {training.category}
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
                                                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                                                             {training.level}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                                    <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                                         {training.price} €
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                                    <td className="hidden md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                                         {training.students_count}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                                             training.is_active
                                                                 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -308,8 +311,8 @@ export default function Index({ trainings, filters }: Props) {
                                                             {training.is_active ? 'Actif' : 'Inactif'}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                        <div className="flex justify-end items-center gap-3">
+                                                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <div className="flex justify-end items-center gap-2 sm:gap-3">
                                                             <Link
                                                                 href={route('trainings.show', training.uuid)}
                                                                 className="text-primary hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
@@ -348,26 +351,22 @@ export default function Index({ trainings, filters }: Props) {
                             {viewMode === 'list' && (
                                 <div className="space-y-3">
                                     {trainings.data.map((training) => (
-                                        <div key={training.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex-1">
+                                        <div key={training.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                                                <div className="flex-1 min-w-0">
                                                     <Link
                                                         href={route('trainings.show', training.uuid)}
-                                                        className="text-lg font-semibold text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300"
+                                                        className="text-base sm:text-lg font-semibold text-violet-600 hover:text-violet-900 dark:text-violet-400 dark:hover:text-violet-300 truncate block"
                                                     >
                                                         {training.title}
                                                     </Link>
-                                                    <div className="mt-1 flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                                                        <span>{training.category}</span>
-                                                        <span>•</span>
+                                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                                        <span className="truncate max-w-[100px] sm:max-w-none">{training.category}</span>
                                                         <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs font-medium">
                                                             {training.level}
                                                         </span>
-                                                        <span>•</span>
                                                         <span className="font-medium">{training.price} €</span>
-                                                        <span>•</span>
-                                                        <span>{training.students_count} étudiants</span>
-                                                        <span>•</span>
+                                                        <span className="hidden sm:inline">{training.students_count} étudiants</span>
                                                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                                                             training.is_active
                                                                 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -377,7 +376,7 @@ export default function Index({ trainings, filters }: Props) {
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-3 ml-4">
+                                                <div className="flex items-center gap-2 sm:gap-3 sm:ml-4">
                                                     <Link
                                                         href={route('trainings.show', training.uuid)}
                                                         className="text-primary hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
@@ -412,7 +411,7 @@ export default function Index({ trainings, filters }: Props) {
 
                             {/* Grid View */}
                             {viewMode === 'grid' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                     {trainings.data.map((training) => (
                                         <div key={training.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-all">
                                             <div className="flex items-start justify-between mb-3">

@@ -508,19 +508,20 @@ export default function ShowDepartment({ department, availableUsers, availableEm
         <DashboardLayout>
             <Head title={department.name} />
 
-            <div className="p-6">
+            <div className="p-3 sm:p-6">
                 {/* Header */}
-                <div className="mb-6 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                <Button variant="outline" size="sm" asChild>
+                <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                <Button variant="outline" size="sm" asChild className="w-fit">
                     <Link href="/departments">
                         <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                        Retour aux Départements
+                        <span className="hidden sm:inline">Retour aux Départements</span>
+                        <span className="sm:hidden">Retour</span>
                     </Link>
                 </Button>
                 <div>
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                             {department.name}
                         </h1>
                         {department.is_active ? (
@@ -535,82 +536,85 @@ export default function ShowDepartment({ department, availableUsers, availableEm
                             </Badge>
                         )}
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Code: {department.code}
                     </p>
                 </div>
                     </div>
 
                     {canManage && (
-                <div className="flex gap-2">
-                    <Button variant="outline" asChild>
+                <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" asChild>
                         <Link href={`/departments/${department.uuid}/edit`}>
-                            <PencilIcon className="h-4 w-4 mr-2" />
-                            Modifier
+                            <PencilIcon className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Modifier</span>
                         </Link>
                     </Button>
-                    <Button asChild>
+                    <Button size="sm" asChild>
                         <Link href={`/reports/create?department_id=${department.id}`}>
-                            <ChartBarIcon className="h-4 w-4 mr-2" />
-                            Créer un rapport
+                            <ChartBarIcon className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Créer un rapport</span>
                         </Link>
                     </Button>
                     <Button
                         variant="outline"
+                        size="sm"
                         onClick={() => setIsDeactivateModalOpen(true)}
+                        className="text-xs sm:text-sm"
                     >
-                        {department.is_active ? 'Désactiver' : 'Activer'}
+                        <span className="hidden sm:inline">{department.is_active ? 'Désactiver' : 'Activer'}</span>
+                        <span className="sm:hidden">{department.is_active ? 'Off' : 'On'}</span>
                     </Button>
                 </div>
                     )}
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
                     <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Budget</CardTitle>
-                    <BanknotesIcon className="h-5 w-5 text-gray-500" />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6 sm:pb-2">
+                    <CardTitle className="text-xs sm:text-sm font-medium">Budget</CardTitle>
+                    <BanknotesIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
                 </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                    <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                         {formatBudget(department.budget)}
                     </div>
                 </CardContent>
                     </Card>
 
                     <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Membres</CardTitle>
-                    <UserGroupIcon className="h-5 w-5 text-gray-500" />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6 sm:pb-2">
+                    <CardTitle className="text-xs sm:text-sm font-medium">Membres</CardTitle>
+                    <UserGroupIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
                 </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                    <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                         {department.users_count}
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
                         membres dans ce département
                     </p>
                 </CardContent>
                     </Card>
 
                     <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Chef de Département</CardTitle>
-                    <UserIcon className="h-5 w-5 text-gray-500" />
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6 sm:pb-2">
+                    <CardTitle className="text-xs sm:text-sm font-medium">Chef</CardTitle>
+                    <UserIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
                     {department.head_of_department ? (
                         <div>
-                            <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                            <div className="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
                                 {department.head_of_department.name}
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate hidden sm:block">
                                 {department.head_of_department.email}
                             </p>
                         </div>
                     ) : (
-                        <div className="text-gray-400">Non assigné</div>
+                        <div className="text-gray-400 text-sm">Non assigné</div>
                     )}
                 </CardContent>
                     </Card>
@@ -658,53 +662,55 @@ export default function ShowDepartment({ department, availableUsers, availableEm
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                    <TabsList className={`grid w-full ${canViewStatistics ? 'grid-cols-9' : 'grid-cols-8'}`}>
-                        <TabsTrigger value="overview" className="flex items-center gap-2">
+                    <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+                    <TabsList className={`flex w-max sm:grid sm:w-full ${canViewStatistics ? 'sm:grid-cols-9' : 'sm:grid-cols-8'} gap-1 p-1`}>
+                        <TabsTrigger value="overview" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 whitespace-nowrap">
                             <UserGroupIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">Membres</span>
-                            <Badge variant="secondary" className="ml-1">{department.users_count}</Badge>
+                            <span className="hidden md:inline">Membres</span>
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 sm:px-1.5">{department.users_count}</Badge>
                         </TabsTrigger>
-                        <TabsTrigger value="workflows" className="flex items-center gap-2">
+                        <TabsTrigger value="workflows" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 whitespace-nowrap">
                             <ArrowPathIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">Workflows</span>
-                            <Badge variant="secondary" className="ml-1">{workflows.length}</Badge>
+                            <span className="hidden md:inline">Workflows</span>
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 sm:px-1.5">{workflows.length}</Badge>
                         </TabsTrigger>
-                        <TabsTrigger value="forms" className="flex items-center gap-2">
+                        <TabsTrigger value="forms" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 whitespace-nowrap">
                             <DocumentTextIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">Formulaires</span>
-                            <Badge variant="secondary" className="ml-1">{forms.length}</Badge>
+                            <span className="hidden md:inline">Formulaires</span>
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 sm:px-1.5">{forms.length}</Badge>
                         </TabsTrigger>
-                        <TabsTrigger value="needs" className="flex items-center gap-2">
+                        <TabsTrigger value="needs" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 whitespace-nowrap">
                             <ClipboardDocumentCheckIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">Besoins</span>
-                            <Badge variant="secondary" className="ml-1">{needs.length}</Badge>
+                            <span className="hidden md:inline">Besoins</span>
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 sm:px-1.5">{needs.length}</Badge>
                         </TabsTrigger>
-                        <TabsTrigger value="calendar" className="flex items-center gap-2">
+                        <TabsTrigger value="calendar" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 whitespace-nowrap">
                             <CalendarDaysIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">Agenda</span>
-                            <Badge variant="secondary" className="ml-1">{meetings.length + appointments.length}</Badge>
+                            <span className="hidden md:inline">Agenda</span>
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 sm:px-1.5">{meetings.length + appointments.length}</Badge>
                         </TabsTrigger>
-                        <TabsTrigger value="documents" className="flex items-center gap-2">
+                        <TabsTrigger value="documents" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 whitespace-nowrap">
                             <FolderIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">Documents</span>
-                            <Badge variant="secondary" className="ml-1">{documentsCount}</Badge>
+                            <span className="hidden md:inline">Documents</span>
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 sm:px-1.5">{documentsCount}</Badge>
                         </TabsTrigger>
-                        <TabsTrigger value="schedule" className="flex items-center gap-2">
+                        <TabsTrigger value="schedule" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 whitespace-nowrap">
                             <ClockIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">Planning</span>
+                            <span className="hidden md:inline">Planning</span>
                         </TabsTrigger>
-                        <TabsTrigger value="nominations" className="flex items-center gap-2">
+                        <TabsTrigger value="nominations" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 whitespace-nowrap">
                             <BriefcaseIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">Nominations</span>
-                            <Badge variant="secondary" className="ml-1">{nominations.length}</Badge>
+                            <span className="hidden md:inline">Nominations</span>
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 sm:px-1.5">{nominations.length}</Badge>
                         </TabsTrigger>
                         {canViewStatistics && (
-                            <TabsTrigger value="statistics" className="flex items-center gap-2">
+                            <TabsTrigger value="statistics" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 whitespace-nowrap">
                                 <PresentationChartLineIcon className="h-4 w-4" />
-                                <span className="hidden sm:inline">Statistiques</span>
+                                <span className="hidden md:inline">Stats</span>
                             </TabsTrigger>
                         )}
                     </TabsList>
+                    </div>
 
                     {/* Members Tab */}
                     <TabsContent value="overview">

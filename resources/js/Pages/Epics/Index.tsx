@@ -354,21 +354,21 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
             title="Gestion des Epics"
             description="Fonctionnalités majeures et initiatives stratégiques"
             actions={
-                <>
-                    <Button variant="outline" size="sm" asChild>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="outline" size="sm" asChild className="px-2 sm:px-3">
                         <Link href="/projects">
-                            <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                            Retour aux Projets
+                            <ArrowLeftIcon className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Retour aux Projets</span>
                         </Link>
                     </Button>
                     <Button onClick={() => {
                         resetForm();
                         setIsCreateModalOpen(true);
-                    }}>
-                        <PlusIcon className="h-4 w-4 mr-2" />
-                        Nouvel Epic
+                    }} className="px-2 sm:px-4">
+                        <PlusIcon className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Nouvel Epic</span>
                     </Button>
-                </>
+                </div>
             }
         >
             <Head title="Epics" />

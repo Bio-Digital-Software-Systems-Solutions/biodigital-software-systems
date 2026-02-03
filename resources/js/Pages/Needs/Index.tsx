@@ -94,25 +94,25 @@ export default function NeedsIndex({ needs: paginatedNeeds }: Props) {
 
             <div className="h-[calc(100vh-64px)] flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                    <div className="min-w-0">
+                        <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
                             Gestion des besoins
                         </h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                             {filteredNeeds.length} besoin{filteredNeeds.length > 1 ? 's' : ''}
                         </p>
                     </div>
                     <Link
                         href={route('needs.create')}
                         className="
-                            inline-flex items-center gap-2 px-4 py-2 rounded-md
-                            bg-primary text-white font-medium
+                            inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md
+                            bg-primary text-white font-medium text-sm
                             hover:bg-primary/90 transition-colors
                         "
                     >
-                        <PlusIcon className="h-5 w-5" />
-                        Nouveau besoin
+                        <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                        <span className="hidden sm:inline">Nouveau besoin</span>
                     </Link>
                 </div>
 
@@ -151,7 +151,7 @@ export default function NeedsIndex({ needs: paginatedNeeds }: Props) {
 
                     {/* Detail Panel */}
                     {detailPanelOpen && selectedNeed && (
-                        <aside className="w-96 border-l border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <aside className="fixed inset-0 z-50 bg-white dark:bg-gray-800 sm:relative sm:inset-auto sm:z-auto sm:w-80 lg:w-96 border-l border-gray-200 dark:border-gray-700 overflow-hidden">
                             <NeedDetailPanel
                                 need={selectedNeed}
                                 onClose={handleCloseDetail}

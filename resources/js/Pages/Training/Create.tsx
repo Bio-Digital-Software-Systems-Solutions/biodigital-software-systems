@@ -64,23 +64,23 @@ export default function Create({ teachers = [] }: Props) {
         <DashboardLayout>
             <Head title="Nouvelle Formation" />
 
-            <div className="py-12">
-                <div className="mx-auto sm:px-6 lg:px-8">
+            <div className="py-4 sm:py-12">
+                <div className="mx-auto px-3 sm:px-6 lg:px-8">
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                        <div className="p-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        <div className="p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
+                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                                     Nouvelle Formation
                                 </h2>
-                                <Button variant="outline" asChild>
+                                <Button variant="outline" size="sm" asChild>
                                     <Link href={route('trainings.index')}>
                                         Retour
                                     </Link>
                                 </Button>
                             </div>
 
-                            <form onSubmit={submit} className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <form onSubmit={submit} className="space-y-4 sm:space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                                     {/* Title */}
                                     <div className="md:col-span-2">
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

@@ -128,25 +128,25 @@ export default function Index() {
             title="Bibliothèque"
             description="Découvrez et louez des livres de votre organisation"
             actions={
-                <>
+                <div className="flex flex-wrap items-center gap-2">
                     <ViewSwitcher currentView={viewMode} onViewChange={(view) => setViewMode(view)} />
                     {canManageLibrary && (
                         <Link
                             href={route('books.create')}
-                            className="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary text-white font-medium rounded-lg transition duration-200"
+                            className="inline-flex items-center px-2 sm:px-4 py-2 bg-primary hover:bg-primary text-white font-medium rounded-lg transition duration-200 text-sm"
                         >
-                            <PlusIcon className="h-5 w-5 mr-2" />
-                            Ajouter un livre
+                            <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                            <span className="hidden sm:inline">Ajouter un livre</span>
                         </Link>
                     )}
-                </>
+                </div>
             }
         >
             <Head title="Livres - AIG-App" />
 
             {/* Filters */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6 mb-6">
-                    <form onSubmit={handleSearch} className="space-y-4 sm:space-y-0 sm:flex sm:items-end sm:space-x-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-3 sm:p-6 mb-4 sm:mb-6">
+                    <form onSubmit={handleSearch} className="space-y-3 sm:space-y-0 sm:flex sm:items-end sm:gap-4">
                         <div className="flex-1">
                             <label htmlFor="search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Rechercher
@@ -183,21 +183,22 @@ export default function Index() {
                             </select>
                         </div>
 
-                        <div className="flex space-x-2">
+                        <div className="flex gap-2">
                             <button
                                 type="submit"
-                                className="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary text-white font-medium rounded-lg transition duration-200"
+                                className="inline-flex items-center px-3 sm:px-4 py-2 bg-primary hover:bg-primary text-white font-medium rounded-lg transition duration-200 text-sm sm:text-base"
                             >
-                                <FunnelIcon className="h-5 w-5 mr-2" />
-                                Filtrer
+                                <FunnelIcon className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                                <span className="hidden sm:inline">Filtrer</span>
                             </button>
                             {(search || selectedCategory) && (
                                 <button
                                     type="button"
                                     onClick={clearFilters}
-                                    className="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition duration-200"
+                                    className="inline-flex items-center px-3 sm:px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition duration-200 text-sm sm:text-base"
                                 >
-                                    Effacer
+                                    <span className="hidden sm:inline">Effacer</span>
+                                    <span className="sm:hidden">×</span>
                                 </button>
                             )}
                         </div>
@@ -211,25 +212,25 @@ export default function Index() {
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-700">
                                     <tr>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Titre
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Auteur
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Catégorie
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             ISBN
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Stock
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Prix/Durée
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Actions
                                         </th>
                                     </tr>
@@ -237,21 +238,21 @@ export default function Index() {
                                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                     {books.data.map((book) => (
                                         <tr key={book.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                            <td className="px-6 py-4">
+                                            <td className="px-3 sm:px-6 py-4">
                                                 <div className="flex items-center">
                                                     <BookOpenIcon className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
                                                     <Link
                                                         href={route('books.show', book.uuid)}
-                                                        className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary dark:hover:text-blue-400 transition-colors"
+                                                        className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary dark:hover:text-blue-400 transition-colors truncate max-w-[120px] sm:max-w-none"
                                                     >
                                                         {book.title}
                                                     </Link>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                            <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                                 {book.author}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="hidden md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
                                                 {book.category ? (
                                                     <div className="flex items-center text-sm text-gray-900 dark:text-white">
                                                         <TagIcon className="h-4 w-4 mr-1 text-gray-400" />
@@ -261,26 +262,27 @@ export default function Index() {
                                                     <span className="text-sm text-gray-500 dark:text-gray-400">N/A</span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                            <td className="hidden lg:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                                 {book.isbn || 'N/A'}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                                                 {book.stock_quantity > 0 ? (
-                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                                        Disponible ({book.stock_quantity})
+                                                    <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                        <span className="hidden sm:inline">Disponible </span>({book.stock_quantity})
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                                        Indisponible
+                                                    <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                                        <span className="sm:hidden">0</span>
+                                                        <span className="hidden sm:inline">Indisponible</span>
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                            <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                                 {book.rental_price ? `${book.rental_price}€/jour` : 'Gratuit'}
                                                 <br />
                                                 <span className="text-xs text-gray-500 dark:text-gray-400">Max: {book.max_rental_days}j</span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Link
                                                         href={route('books.show', book.uuid)}
@@ -319,7 +321,7 @@ export default function Index() {
 
                 {/* Grid View */}
                 {viewMode === 'grid' && (
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {books.data.map((book) => (
                             <div
                                 key={book.id}

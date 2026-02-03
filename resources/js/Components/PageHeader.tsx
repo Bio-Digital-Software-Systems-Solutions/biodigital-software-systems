@@ -12,37 +12,36 @@ interface PageHeaderProps {
 export default function PageHeader({ title, description, actions }: PageHeaderProps) {
     const { auth } = usePage<PageProps>().props;
 
-    const defaultTitle = `Bienvenue, ${auth.user?.first_name || 'Utilisateur'} ! 👋`;
-    const defaultDescription = "Voici un aperçu de vos activités récentes et des statistiques de votre espace de travail.";
+    const defaultTitle = `Bienvenue, ${auth.user?.first_name || 'Utilisateur'} !`;
 
     return (
-        <div className="mb-6">
-            <div className="sm:flex sm:items-center sm:justify-between">
-                <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16 border-2 border-primary">
+        <div className="mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary flex-shrink-0">
                         <AvatarImage
                             src={auth.user?.avatar ? `/storage/${auth.user.avatar}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(auth.user?.first_name || 'User')}`}
                             alt={auth.user?.first_name || 'User'}
                         />
-                        <AvatarFallback className="bg-primary text-white text-lg font-semibold">
+                        <AvatarFallback className="bg-primary text-white text-base sm:text-lg font-semibold">
                             {auth.user?.first_name?.[0] || 'U'}
                         </AvatarFallback>
                     </Avatar>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <div className="min-w-0 flex-1">
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
                             {title || defaultTitle}
                         </h1>
                     </div>
                 </div>
                 {actions && (
-                    <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-2 sm:gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
                         {actions}
                     </div>
                 )}
             </div>
             {description && (
-                <div className="mt-4">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                <div className="mt-3 sm:mt-4">
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                         {description}
                     </p>
                 </div>

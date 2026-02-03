@@ -234,20 +234,20 @@ export default function Create({ pastor }: Props) {
         >
             <Head title="Créer des créneaux de disponibilité" />
 
-            <div className="p-6">
+            <div className="p-3 sm:p-6">
                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center space-x-2">
-                            <CalendarIcon className="h-5 w-5" />
+                    <CardHeader className="p-4 sm:p-6">
+                        <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                            <CalendarIcon className="h-5 w-5 flex-shrink-0" />
                             <span>Configuration des créneaux</span>
                         </CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-xs sm:text-sm">
                             Configurez vos créneaux de disponibilité pour les consultations pastorales
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                                 {/* Form Fields */}
                                 <div className="space-y-6">
                                     {/* Type Selection */}
@@ -311,14 +311,14 @@ export default function Create({ pastor }: Props) {
 
                                     {/* Time Range */}
                                     <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                             <Label>Horaires de disponibilité</Label>
-                                            <div className="flex gap-2 text-xs">
+                                            <div className="flex flex-wrap gap-2 text-xs">
                                                 <Button
                                                     type="button"
                                                     variant="outline"
                                                     size="sm"
-                                                    className="h-6 px-2 text-xs"
+                                                    className="h-7 sm:h-6 px-3 sm:px-2 text-xs flex-1 sm:flex-none"
                                                     onClick={() => {
                                                         setData('start_time', '08:00');
                                                         setData('end_time', '18:00');
@@ -330,7 +330,7 @@ export default function Create({ pastor }: Props) {
                                                     type="button"
                                                     variant="outline"
                                                     size="sm"
-                                                    className="h-6 px-2 text-xs"
+                                                    className="h-7 sm:h-6 px-3 sm:px-2 text-xs flex-1 sm:flex-none"
                                                     onClick={() => {
                                                         setData('start_time', '05:00');
                                                         setData('end_time', '23:00');
@@ -529,26 +529,26 @@ export default function Create({ pastor }: Props) {
                                     )}
 
                                     {/* Submit Buttons */}
-                                    <div className="flex justify-end space-x-3 pt-4">
-                                        <Button type="button" variant="outline" asChild>
+                                    <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
+                                        <Button type="button" variant="outline" asChild className="w-full sm:w-auto">
                                             <a href={route('pastoral-availability.index')}>
                                                 Annuler
                                             </a>
                                         </Button>
-                                        <Button type="submit" disabled={processing}>
+                                        <Button type="submit" disabled={processing} className="w-full sm:w-auto">
                                             {processing ? 'Création...' : 'Créer les créneaux'}
                                         </Button>
                                     </div>
                                 </div>
 
                                 {/* Preview */}
-                                <div>
+                                <div className="lg:border-l lg:pl-6 pt-4 lg:pt-0 border-t lg:border-t-0 mt-4 lg:mt-0">
                                     <div className="mb-4">
-                                        <h3 className="font-medium text-lg flex items-center space-x-2">
-                                            <ClockIcon className="h-5 w-5" />
+                                        <h3 className="font-medium text-base sm:text-lg flex items-center space-x-2">
+                                            <ClockIcon className="h-5 w-5 flex-shrink-0" />
                                             <span>Aperçu des créneaux</span>
                                         </h3>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                                             Créneaux de consultation qui seront disponibles
                                         </p>
                                     </div>
@@ -598,14 +598,14 @@ export default function Create({ pastor }: Props) {
                                                 </div>
                                             )}
 
-                                            <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 sm:max-h-60 overflow-y-auto">
                                                 {previewSlots.map((slot, index) => {
                                                     const isSelected = selectedSlots.includes(slot);
                                                     return (
                                                         <Badge
                                                             key={index}
                                                             variant={isSelected ? "default" : "secondary"}
-                                                            className={`justify-center cursor-pointer transition-all duration-200 hover:scale-105 ${
+                                                            className={`justify-center cursor-pointer transition-all duration-200 hover:scale-105 py-2 sm:py-1 text-xs sm:text-sm ${
                                                                 isSelected
                                                                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
                                                                     : 'hover:bg-gray-300'

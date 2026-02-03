@@ -45,7 +45,6 @@ interface Props extends PageProps {
 export default function Edit({ stock, categories, departments, statuses }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         name: stock.name || '',
-        sku: stock.sku || '',
         description: stock.description || '',
         quantity: stock.quantity || 0,
         minimum_quantity: stock.minimum_quantity || 0,
@@ -108,18 +107,18 @@ export default function Edit({ stock, categories, departments, statuses }: Props
 
                                 <div>
                                     <label htmlFor="sku" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        SKU *
+                                        SKU
                                     </label>
                                     <input
                                         type="text"
                                         id="sku"
-                                        value={data.sku}
-                                        onChange={(e) => setData('sku', e.target.value)}
-                                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                        placeholder="ex: STK-001"
-                                        required
+                                        value={stock.sku}
+                                        disabled
+                                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-600 dark:text-gray-300 text-gray-500 shadow-sm sm:text-sm cursor-not-allowed"
                                     />
-                                    {errors.sku && <p className="mt-1 text-sm text-red-600">{errors.sku}</p>}
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Le code SKU est généré automatiquement et ne peut pas être modifié
+                                    </p>
                                 </div>
                             </div>
 

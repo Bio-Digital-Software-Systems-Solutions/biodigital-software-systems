@@ -248,11 +248,11 @@ export default function ProjectGantt({ project }: Props) {
                                 Retour
                             </Link>
                         </Button>
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        <div className="min-w-0 flex-1">
+                            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white truncate">
                                 {project.name}
                             </h1>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                 Diagramme de Gantt
                             </p>
                         </div>
@@ -271,23 +271,23 @@ export default function ProjectGantt({ project }: Props) {
                                         size="sm"
                                         onClick={() => setDisplayMode('gantt')}
                                     >
-                                        <ChartBarIcon className="h-4 w-4 mr-2" />
-                                        Gantt
+                                        <ChartBarIcon className="h-4 w-4 sm:mr-2" />
+                                        <span className="hidden sm:inline">Gantt</span>
                                     </Button>
                                     <Button
                                         variant={displayMode === 'calendar' ? 'default' : 'outline'}
                                         size="sm"
                                         onClick={() => setDisplayMode('calendar')}
                                     >
-                                        <CalendarIcon className="h-4 w-4 mr-2" />
-                                        Calendrier
+                                        <CalendarIcon className="h-4 w-4 sm:mr-2" />
+                                        <span className="hidden sm:inline">Calendrier</span>
                                     </Button>
                                 </div>
                             </div>
 
                             {/* Timeline Navigation */}
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 sm:gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -295,7 +295,7 @@ export default function ProjectGantt({ project }: Props) {
                                     >
                                         <ChevronLeftIcon className="h-4 w-4" />
                                     </Button>
-                                    <div className="text-sm font-medium min-w-[200px] text-center">
+                                    <div className="text-xs sm:text-sm font-medium min-w-[100px] sm:min-w-[200px] text-center truncate">
                                         {getCurrentPeriodLabel()}
                                     </div>
                                     <Button
@@ -309,23 +309,25 @@ export default function ProjectGantt({ project }: Props) {
                                         variant="outline"
                                         size="sm"
                                         onClick={() => setCurrentDate(new Date())}
+                                        className="hidden sm:inline-flex"
                                     >
                                         Aujourd'hui
                                     </Button>
                                 </div>
 
-                                <div className="flex gap-2">
+                                <div className="flex gap-1 sm:gap-2">
                                     {(['day', 'week', 'month', 'year'] as ViewMode[]).map((mode) => (
                                         <Button
                                             key={mode}
                                             variant={viewMode === mode ? 'default' : 'outline'}
                                             size="sm"
                                             onClick={() => setViewMode(mode)}
+                                            className="px-2 sm:px-3 text-xs sm:text-sm"
                                         >
-                                            {mode === 'day' && 'Jour'}
-                                            {mode === 'week' && 'Semaine'}
-                                            {mode === 'month' && 'Mois'}
-                                            {mode === 'year' && 'Année'}
+                                            {mode === 'day' && <><span className="sm:hidden">J</span><span className="hidden sm:inline">Jour</span></>}
+                                            {mode === 'week' && <><span className="sm:hidden">S</span><span className="hidden sm:inline">Semaine</span></>}
+                                            {mode === 'month' && <><span className="sm:hidden">M</span><span className="hidden sm:inline">Mois</span></>}
+                                            {mode === 'year' && <><span className="sm:hidden">A</span><span className="hidden sm:inline">Année</span></>}
                                         </Button>
                                     ))}
                                 </div>
@@ -341,7 +343,7 @@ export default function ProjectGantt({ project }: Props) {
                             <div className="min-w-[800px]">
                                 {/* Timeline Header */}
                                 <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                                    <div className="w-64 p-4 font-semibold border-r border-gray-200 dark:border-gray-700">
+                                    <div className="w-32 sm:w-48 md:w-64 p-2 sm:p-4 font-semibold border-r border-gray-200 dark:border-gray-700 text-xs sm:text-sm">
                                         Tâche
                                     </div>
                                     <div className="flex-1 flex">
@@ -377,11 +379,11 @@ export default function ProjectGantt({ project }: Props) {
                                                     onClick={handleTaskClick}
                                                     className="flex hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
                                                 >
-                                                    <div className="w-64 p-4 border-r border-gray-200 dark:border-gray-700">
-                                                        <div className="text-sm hover:text-primary dark:hover:text-blue-400">
+                                                    <div className="w-32 sm:w-48 md:w-64 p-2 sm:p-4 border-r border-gray-200 dark:border-gray-700">
+                                                        <div className="text-xs sm:text-sm hover:text-primary dark:hover:text-blue-400 truncate">
                                                             {task.title}
                                                         </div>
-                                                        <div className="text-xs text-gray-500 mt-1">
+                                                        <div className="text-xs text-gray-500 mt-1 truncate hidden sm:block">
                                                             {task.assignee && `Assigné: ${task.assignee.first_name} ${task.assignee.last_name}`}
                                                         </div>
                                                     </div>

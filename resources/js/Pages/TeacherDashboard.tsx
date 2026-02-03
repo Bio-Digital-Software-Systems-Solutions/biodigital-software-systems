@@ -228,16 +228,16 @@ const TeacherDashboard: React.FC<Props> = ({
       title={`Espace Enseignant${auth.user.experience_years ? ` • ${auth.user.experience_years} ans d'expérience` : ''}`}
       description={auth.user.specialization || 'Tableau de bord enseignant'}
       actions={
-        <>
-          <Button variant="outline" className="border-gray-300 dark:border-gray-600">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Messages
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" className="border-gray-300 dark:border-gray-600 px-2 sm:px-4">
+            <MessageSquare className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Messages</span>
           </Button>
-          <Button className="bg-primary hover:bg-primary shadow-lg">
-            <Settings className="h-4 w-4 mr-2" />
-            Paramètres
+          <Button className="bg-primary hover:bg-primary shadow-lg px-2 sm:px-4">
+            <Settings className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Paramètres</span>
           </Button>
-        </>
+        </div>
       }
     >
       <Head title="Espace Enseignant" />

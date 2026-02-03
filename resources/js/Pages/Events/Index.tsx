@@ -119,18 +119,18 @@ export default function Index() {
             title="Événements"
             description="Gérez et participez aux événements de votre organisation"
             actions={
-                <>
+                <div className="flex flex-wrap items-center gap-2">
                     <ViewSwitcher currentView={viewMode} onViewChange={(view) => setViewMode(view)} showCalendar={true} />
                     {canManageEvents && (
                         <Link
                             href={route('events.create')}
-                            className="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary text-white font-medium rounded-lg transition duration-200"
+                            className="inline-flex items-center px-2 sm:px-4 py-2 bg-primary hover:bg-primary text-white font-medium rounded-lg transition duration-200 text-sm"
                         >
-                            <PlusIcon className="h-5 w-5 mr-2" />
-                            Nouvel événement
+                            <PlusIcon className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Nouvel événement</span>
                         </Link>
                     )}
-                </>
+                </div>
             }
         >
             <Head title="Événements - AIG-App" />
@@ -150,22 +150,22 @@ export default function Index() {
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-700">
                                     <tr>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Événement
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Date
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Lieu
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Participants
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Statut
                                         </th>
-                                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        <th scope="col" className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Actions
                                         </th>
                                     </tr>
@@ -173,26 +173,26 @@ export default function Index() {
                                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                     {events.data.map((event) => (
                                         <tr key={event.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                            <td className="px-6 py-4">
+                                            <td className="px-3 sm:px-6 py-3 sm:py-4">
                                                 <div className="flex flex-col">
                                                     <Link
                                                         href={route('events.show', event.uuid)}
-                                                        className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary dark:hover:text-blue-400 transition-colors"
+                                                        className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white hover:text-primary dark:hover:text-blue-400 transition-colors line-clamp-2"
                                                     >
                                                         {event.title}
                                                     </Link>
-                                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
                                                         Par {event.creator.full_name}
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center text-sm text-gray-900 dark:text-white">
-                                                    <ClockIcon className="h-4 w-4 mr-2 text-gray-400" />
-                                                    {formatDate(event.start_date)}
+                                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                                                <div className="flex items-center text-xs sm:text-sm text-gray-900 dark:text-white">
+                                                    <ClockIcon className="h-4 w-4 mr-1 sm:mr-2 text-gray-400 hidden sm:block" />
+                                                    <span className="text-xs sm:text-sm">{formatDate(event.start_date)}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="hidden md:table-cell px-6 py-4">
                                                 <div className="flex items-center text-sm text-gray-900 dark:text-white">
                                                     <MapPinIcon className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
                                                     <span className="truncate max-w-xs">
@@ -200,32 +200,32 @@ export default function Index() {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center text-sm text-gray-900 dark:text-white">
                                                     <UsersIcon className="h-4 w-4 mr-2 text-gray-400" />
                                                     {event.participants.length}
                                                     {event.max_participants && ` / ${event.max_participants}`}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
+                                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
                                                     {getStatusLabel(event.status)}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex items-center justify-end gap-2">
+                                            <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex items-center justify-end gap-1 sm:gap-2">
                                                     <Link
                                                         href={route('events.show', event.uuid)}
                                                         className="text-primary dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                                                         title="Voir détails"
                                                     >
-                                                        <EyeIcon className="h-5 w-5" />
+                                                        <EyeIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                                                     </Link>
                                                     {canModifyEvent(event) && (
                                                         <>
                                                             <Link
                                                                 href={route('events.edit', event.uuid)}
-                                                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hidden sm:block"
                                                                 title="Modifier"
                                                             >
                                                                 <PencilIcon className="h-5 w-5" />
@@ -234,7 +234,7 @@ export default function Index() {
                                                                 href={route('events.destroy', event.uuid)}
                                                                 method="delete"
                                                                 as="button"
-                                                                className="text-gray-400 hover:text-red-600"
+                                                                className="text-gray-400 hover:text-red-600 hidden sm:block"
                                                                 data-confirm="Êtes-vous sûr de vouloir supprimer cet événement ?"
                                                                 title="Supprimer"
                                                             >

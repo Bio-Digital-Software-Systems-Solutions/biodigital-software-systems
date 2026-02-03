@@ -149,34 +149,34 @@ export default function Dashboard() {
             <Head title="Dashboard - AIG-App" />
 
             {/* Stats Grid */}
-                <div className="grid gap-6 mb-6 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-3 sm:gap-6 mb-4 sm:mb-6 grid-cols-2 lg:grid-cols-4">
                     {stats.map((stat) => (
                         <Link
                             key={stat.title}
                             href={stat.url}
-                            className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-blue-300 dark:hover:border-primary transition duration-200 cursor-pointer"
+                            className="p-3 sm:p-6 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-blue-300 dark:hover:border-primary transition duration-200 cursor-pointer"
                         >
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
                                         {stat.title}
                                     </p>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                                         {stat.value}
                                     </p>
                                 </div>
-                                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
-                                    <stat.icon className="h-6 w-6 text-primary dark:text-blue-400" />
+                                <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900 rounded-full ml-2 flex-shrink-0">
+                                    <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary dark:text-blue-400" />
                                 </div>
                             </div>
-                            <div className="mt-4 flex items-center">
+                            <div className="mt-2 sm:mt-4 flex items-center flex-wrap">
                                 {stat.changeType === 'increase' ? (
-                                    <ArrowUpIcon className="h-4 w-4 text-green-500" />
+                                    <ArrowUpIcon className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                                 ) : (
-                                    <ArrowDownIcon className="h-4 w-4 text-red-500" />
+                                    <ArrowDownIcon className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
                                 )}
                                 <span
-                                    className={`ml-1 text-sm font-medium ${
+                                    className={`ml-1 text-xs sm:text-sm font-medium ${
                                         stat.changeType === 'increase'
                                             ? 'text-green-600 dark:text-green-400'
                                             : 'text-red-600 dark:text-red-400'
@@ -184,7 +184,7 @@ export default function Dashboard() {
                                 >
                                     {stat.change}
                                 </span>
-                                <span className="ml-1 text-sm text-gray-500 dark:text-gray-400">
+                                <span className="ml-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:inline">
                                     vs mois dernier
                                 </span>
                             </div>
@@ -193,52 +193,52 @@ export default function Dashboard() {
                 </div>
 
                 {/* Quick Actions & Recent Activity */}
-                <div className="grid gap-6 lg:grid-cols-2">
+                <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
                     {/* Quick Actions */}
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-                        <div className="p-6">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                        <div className="p-4 sm:p-6">
+                            <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-3 sm:mb-4">
                                 Actions rapides
                             </h3>
-                            <div className="grid gap-3 grid-cols-2">
+                            <div className="grid gap-2 sm:gap-3 grid-cols-2">
                                 <Link
                                     href={route('events.create')}
-                                    className="flex items-center p-3 text-left bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition duration-200"
+                                    className="flex items-center p-2 sm:p-3 text-left bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition duration-200"
                                 >
-                                    <CalendarDaysIcon className="h-8 w-8 text-primary dark:text-blue-400 mr-3" />
-                                    <div>
-                                        <p className="font-medium text-gray-900 dark:text-white">Nouvel événement</p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">Créer un événement</p>
+                                    <CalendarDaysIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary dark:text-blue-400 mr-2 sm:mr-3 flex-shrink-0" />
+                                    <div className="min-w-0">
+                                        <p className="font-medium text-gray-900 dark:text-white text-xs sm:text-base truncate">Nouvel événement</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">Créer un événement</p>
                                     </div>
                                 </Link>
                                 <Link
                                     href={route('articles.create')}
-                                    className="flex items-center p-3 text-left bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition duration-200"
+                                    className="flex items-center p-2 sm:p-3 text-left bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition duration-200"
                                 >
-                                    <PencilSquareIcon className="h-8 w-8 text-green-600 dark:text-green-400 mr-3" />
-                                    <div>
-                                        <p className="font-medium text-gray-900 dark:text-white">Nouvel article</p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">Écrire un article</p>
+                                    <PencilSquareIcon className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 dark:text-green-400 mr-2 sm:mr-3 flex-shrink-0" />
+                                    <div className="min-w-0">
+                                        <p className="font-medium text-gray-900 dark:text-white text-xs sm:text-base truncate">Nouvel article</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">Écrire un article</p>
                                     </div>
                                 </Link>
                                 <Link
                                     href={route('books.index')}
-                                    className="flex items-center p-3 text-left bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition duration-200"
+                                    className="flex items-center p-2 sm:p-3 text-left bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition duration-200"
                                 >
-                                    <BookOpenIcon className="h-8 w-8 text-purple-600 dark:text-purple-400 mr-3" />
-                                    <div>
-                                        <p className="font-medium text-gray-900 dark:text-white">Emprunter livre</p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">Bibliothèque</p>
+                                    <BookOpenIcon className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 dark:text-purple-400 mr-2 sm:mr-3 flex-shrink-0" />
+                                    <div className="min-w-0">
+                                        <p className="font-medium text-gray-900 dark:text-white text-xs sm:text-base truncate">Emprunter livre</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">Bibliothèque</p>
                                     </div>
                                 </Link>
                                 <Link
                                     href={route('departments.index')}
-                                    className="flex items-center p-3 text-left bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded-lg transition duration-200"
+                                    className="flex items-center p-2 sm:p-3 text-left bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded-lg transition duration-200"
                                 >
-                                    <UsersIcon className="h-8 w-8 text-orange-600 dark:text-orange-400 mr-3" />
-                                    <div>
-                                        <p className="font-medium text-gray-900 dark:text-white">Gérer équipe</p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">Départements</p>
+                                    <UsersIcon className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600 dark:text-orange-400 mr-2 sm:mr-3 flex-shrink-0" />
+                                    <div className="min-w-0">
+                                        <p className="font-medium text-gray-900 dark:text-white text-xs sm:text-base truncate">Gérer équipe</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">Départements</p>
                                     </div>
                                 </Link>
                             </div>

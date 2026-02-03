@@ -74,9 +74,9 @@ export default function NeedFilters({ showViewToggle = true }: NeedFiltersProps)
     return (
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             {/* Main Filter Bar */}
-            <div className="px-4 py-3 flex items-center gap-4">
+            <div className="px-4 py-3 flex flex-wrap items-center gap-2 sm:gap-4">
                 {/* Search */}
-                <div className="flex-1 max-w-md relative">
+                <div className="w-full sm:flex-1 sm:max-w-md relative order-1">
                     <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
                         type="text"
@@ -93,7 +93,7 @@ export default function NeedFilters({ showViewToggle = true }: NeedFiltersProps)
                     onChange={(e) =>
                         setFilters({ category: (e.target.value || undefined) as NeedCategory | undefined })
                     }
-                    className={`${inputClasses} w-40`}
+                    className={`${inputClasses} w-28 sm:w-40 order-3 sm:order-2`}
                     aria-label="Filtrer par catégorie"
                 >
                     <option value="">Catégorie</option>
@@ -109,7 +109,7 @@ export default function NeedFilters({ showViewToggle = true }: NeedFiltersProps)
                     onChange={(e) =>
                         setFilters({ priority: (e.target.value || undefined) as NeedPriority | undefined })
                     }
-                    className={`${inputClasses} w-32`}
+                    className={`${inputClasses} w-24 sm:w-32 order-4 sm:order-3`}
                 >
                     <option value="">Priorité</option>
                     {priorityOptions.map((opt) => (
@@ -124,15 +124,16 @@ export default function NeedFilters({ showViewToggle = true }: NeedFiltersProps)
                     type="button"
                     onClick={() => setIsExpanded(!isExpanded)}
                     className={`
-                        flex items-center gap-2 px-3 py-2 rounded-md
+                        flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 rounded-md
                         border border-gray-300 dark:border-gray-600
                         text-sm text-gray-700 dark:text-gray-300
                         hover:bg-gray-50 dark:hover:bg-gray-700
+                        order-5 sm:order-4
                         ${isExpanded ? 'bg-gray-100 dark:bg-gray-700' : ''}
                     `}
                 >
                     <FunnelIcon className="h-4 w-4" />
-                    <span>Filtres</span>
+                    <span className="hidden sm:inline">Filtres</span>
                     {hasActiveFilters && (
                         <span className="h-2 w-2 rounded-full bg-primary" />
                     )}
@@ -144,19 +145,20 @@ export default function NeedFilters({ showViewToggle = true }: NeedFiltersProps)
                         type="button"
                         onClick={clearFilters}
                         className="
-                            flex items-center gap-1 px-3 py-2 rounded-md
+                            flex items-center gap-1 px-2 sm:px-3 py-2 rounded-md
                             text-sm text-red-600 dark:text-red-400
                             hover:bg-red-50 dark:hover:bg-red-900/20
+                            order-6 sm:order-5
                         "
                     >
                         <XMarkIcon className="h-4 w-4" />
-                        <span>Effacer</span>
+                        <span className="hidden sm:inline">Effacer</span>
                     </button>
                 )}
 
                 {/* View Toggle */}
                 {showViewToggle && (
-                    <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md">
+                    <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md order-2 sm:order-6 ml-auto sm:ml-0">
                         {viewModes.map((mode, index) => {
                             const Icon = mode.icon;
                             return (
@@ -166,7 +168,7 @@ export default function NeedFilters({ showViewToggle = true }: NeedFiltersProps)
                                     onClick={() => setViewMode(mode.value)}
                                     title={mode.label}
                                     className={`
-                                        p-2
+                                        p-1.5 sm:p-2
                                         ${index > 0 ? 'border-l border-gray-300 dark:border-gray-600' : ''}
                                         ${viewMode === mode.value
                                             ? 'bg-primary text-white'
@@ -174,7 +176,7 @@ export default function NeedFilters({ showViewToggle = true }: NeedFiltersProps)
                                         }
                                     `}
                                 >
-                                    <Icon className="h-5 w-5" />
+                                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </button>
                             );
                         })}
@@ -185,7 +187,7 @@ export default function NeedFilters({ showViewToggle = true }: NeedFiltersProps)
             {/* Expanded Filters */}
             {isExpanded && (
                 <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                    <div className="grid grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Status Filter */}
                         <div>
                             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">

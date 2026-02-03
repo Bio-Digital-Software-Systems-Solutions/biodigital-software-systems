@@ -180,25 +180,25 @@ export default function Index() {
             title="Articles"
             description="Découvrez et partagez des articles avec votre organisation"
             actions={
-                <>
+                <div className="flex flex-wrap items-center gap-2">
                     <ViewSwitcher currentView={viewMode} onViewChange={(view) => setViewMode(view)} />
                     {canCreateArticles && (
                         <Link
                             href={route('articles.create')}
-                            className="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary text-white font-medium rounded-lg transition duration-200"
+                            className="inline-flex items-center px-2 sm:px-4 py-2 bg-primary hover:bg-primary text-white font-medium rounded-lg transition duration-200 text-sm"
                         >
-                            <PlusIcon className="h-5 w-5 mr-2" />
-                            Nouvel article
+                            <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                            <span className="hidden sm:inline">Nouvel article</span>
                         </Link>
                     )}
-                </>
+                </div>
             }
         >
             <Head title="Articles - AIG-App" />
 
             {/* Filters */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6 mb-6">
-                    <div className="space-y-4 sm:space-y-0 sm:flex sm:items-end sm:space-x-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-3 sm:p-6 mb-4 sm:mb-6">
+                    <div className="space-y-3 sm:space-y-0 sm:flex sm:items-end sm:gap-4">
                         <div className="flex-1">
                             <label htmlFor="search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Rechercher
@@ -273,25 +273,25 @@ export default function Index() {
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Article
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <th scope="col" className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Auteur
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <th scope="col" className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Catégorie
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <th scope="col" className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Statut
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Statistiques
+                                    <th scope="col" className="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Stats
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <th scope="col" className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Date
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <th scope="col" className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>
@@ -301,47 +301,47 @@ export default function Index() {
                                     const status = article.published_at ? 'published' : 'draft';
                                     return (
                                         <tr key={article.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                            <td className="px-6 py-4">
+                                            <td className="px-3 sm:px-6 py-4">
                                                 <div className="flex items-center">
                                                     {article.cover_image && (
                                                         <img
                                                             src={`/storage/${article.cover_image}`}
                                                             alt={article.title}
-                                                            className="h-10 w-10 rounded object-cover mr-3"
+                                                            className="h-8 w-8 sm:h-10 sm:w-10 rounded object-cover mr-2 sm:mr-3 flex-shrink-0"
                                                         />
                                                     )}
-                                                    <div className="max-w-md">
+                                                    <div className="min-w-0">
                                                         <Link
                                                             href={route('articles.show', article.slug)}
-                                                            className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary dark:hover:text-blue-400 truncate block"
+                                                            className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary dark:hover:text-blue-400 truncate block max-w-[120px] sm:max-w-none"
                                                         >
                                                             {article.title}
                                                         </Link>
                                                         <div
-                                                            className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1"
+                                                            className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 line-clamp-1 hidden sm:block"
                                                             dangerouslySetInnerHTML={{ __html: truncateAndSanitizeHtml(article.content, 60) }}
                                                         />
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="hidden md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center text-sm text-gray-900 dark:text-gray-300">
                                                     <UserIcon className="h-4 w-4 mr-1 text-gray-400" />
                                                     {article.user.first_name} {article.user.last_name}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                            <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
+                                                <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                                                     {article.category.name}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                                                <span className={`inline-flex px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
                                                     {getStatusLabel(status)}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                                            <td className="hidden lg:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-2 sm:gap-3 text-sm text-gray-500 dark:text-gray-400">
                                                     <div className="flex items-center">
                                                         <EyeIcon className="h-4 w-4 mr-1" />
                                                         {article.views_count || 0}
@@ -352,13 +352,13 @@ export default function Index() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            <td className="hidden md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                 <div className="flex items-center">
                                                     <CalendarDaysIcon className="h-4 w-4 mr-1" />
                                                     {formatDate(article.published_at || article.created_at)}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <Link
                                                         href={route('articles.show', article.slug)}
@@ -409,7 +409,7 @@ export default function Index() {
 
                 {/* Articles Grid View */}
                 {viewMode === 'grid' && (
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                         {articles.data.map((article) => (
                         <div
                             key={article.id}
@@ -427,7 +427,7 @@ export default function Index() {
                             )}
 
                             {/* Article Content */}
-                            <div className="p-6">
+                            <div className="p-4 sm:p-6">
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex-1">
                                         <Link

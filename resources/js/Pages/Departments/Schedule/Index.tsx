@@ -217,56 +217,57 @@ export default function ScheduleIndex({
         <DashboardLayout>
             <Head title={`Planning - ${department.name}`} />
 
-            <div className="p-6 space-y-6">
+            <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Button variant="outline" size="sm" asChild>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                        <Button variant="outline" size="sm" asChild className="w-fit">
                             <Link href={`/departments/${department.uuid}`}>
                                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
                                 Retour
                             </Link>
                         </Button>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                                 Planning - {department.name}
                             </h1>
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
                                 {getStatusBadge(schedule.status)}
                                 {schedule.week_label && (
-                                    <span className="text-sm text-gray-500">{schedule.week_label}</span>
+                                    <span className="text-xs sm:text-sm text-gray-500">{schedule.week_label}</span>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         {schedule.status === 'draft' && (
                             <>
                                 <Button
                                     variant="outline"
+                                    size="sm"
                                     onClick={() => setAutoAssignDialogOpen(true)}
                                     disabled={isAutoAssigning || stats.unassigned_shifts === 0}
                                 >
-                                    <ArrowPathIcon className={`h-4 w-4 mr-2 ${isAutoAssigning ? 'animate-spin' : ''}`} />
-                                    Auto-assigner
+                                    <ArrowPathIcon className={`h-4 w-4 sm:mr-2 ${isAutoAssigning ? 'animate-spin' : ''}`} />
+                                    <span className="hidden sm:inline">Auto-assigner</span>
                                 </Button>
-                                <Button onClick={() => setPublishDialogOpen(true)} disabled={isPublishing}>
-                                    <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                                    Publier
+                                <Button size="sm" onClick={() => setPublishDialogOpen(true)} disabled={isPublishing}>
+                                    <PaperAirplaneIcon className="h-4 w-4 sm:mr-2" />
+                                    <span className="hidden sm:inline">Publier</span>
                                 </Button>
                             </>
                         )}
                         {schedule.status === 'published' && (
-                            <Button variant="outline" onClick={() => setLockDialogOpen(true)}>
-                                <LockClosedIcon className="h-4 w-4 mr-2" />
-                                Verrouiller
+                            <Button variant="outline" size="sm" onClick={() => setLockDialogOpen(true)}>
+                                <LockClosedIcon className="h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Verrouiller</span>
                             </Button>
                         )}
-                        <Button variant="outline" asChild>
+                        <Button variant="outline" size="sm" asChild>
                             <Link href={`/departments/${department.uuid}/schedule/${schedule.uuid}/shifts/create`}>
-                                <PlusIcon className="h-4 w-4 mr-2" />
-                                Nouveau Shift
+                                <PlusIcon className="h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Nouveau Shift</span>
                             </Link>
                         </Button>
                     </div>
@@ -274,23 +275,24 @@ export default function ScheduleIndex({
 
                 {/* Week Navigation */}
                 <Card>
-                    <CardContent className="py-4">
-                        <div className="flex items-center justify-between">
-                            <Button variant="outline" size="sm" onClick={() => handleWeekChange('prev')}>
+                    <CardContent className="py-3 sm:py-4">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <Button variant="outline" size="sm" onClick={() => handleWeekChange('prev')} className="w-full sm:w-auto">
                                 <ChevronLeftIcon className="h-4 w-4 mr-1" />
-                                Semaine précédente
+                                <span className="hidden sm:inline">Semaine précédente</span>
+                                <span className="sm:hidden">Précédent</span>
                             </Button>
 
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
                                 <Select
                                     value={currentWeek}
                                     onValueChange={handleSelectWeek}
                                 >
-                                    <SelectTrigger className="w-64">
+                                    <SelectTrigger className="w-full sm:w-64">
                                         <SelectValue>
                                             <div className="flex items-center gap-2">
                                                 <CalendarDaysIcon className="h-4 w-4" />
-                                                {formatWeekDisplay(currentWeek)}
+                                                <span className="text-sm">{formatWeekDisplay(currentWeek)}</span>
                                             </div>
                                         </SelectValue>
                                     </SelectTrigger>
@@ -321,13 +323,15 @@ export default function ScheduleIndex({
                                         const monday = new Date(today.setDate(diff));
                                         handleSelectWeek(monday.toISOString().split('T')[0]);
                                     }}
+                                    className="hidden sm:inline-flex"
                                 >
                                     Aujourd'hui
                                 </Button>
                             </div>
 
-                            <Button variant="outline" size="sm" onClick={() => handleWeekChange('next')}>
-                                Semaine suivante
+                            <Button variant="outline" size="sm" onClick={() => handleWeekChange('next')} className="w-full sm:w-auto">
+                                <span className="hidden sm:inline">Semaine suivante</span>
+                                <span className="sm:hidden">Suivant</span>
                                 <ChevronRightIcon className="h-4 w-4 ml-1" />
                             </Button>
                         </div>
@@ -379,56 +383,56 @@ export default function ScheduleIndex({
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                     <Card>
-                        <CardContent className="pt-6">
+                        <CardContent className="p-3 sm:pt-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-500">Total Shifts</p>
-                                    <p className="text-2xl font-bold">{displayStats.total_shifts}</p>
+                                    <p className="text-xs sm:text-sm text-gray-500">Total Shifts</p>
+                                    <p className="text-lg sm:text-2xl font-bold">{displayStats.total_shifts}</p>
                                     {showGlobalStats && globalStats && displayStats.total_schedules !== undefined && (
-                                        <p className="text-xs text-gray-400">{displayStats.total_schedules} semaines</p>
+                                        <p className="text-xs text-gray-400 hidden sm:block">{displayStats.total_schedules} semaines</p>
                                     )}
                                 </div>
-                                <CalendarDaysIcon className="h-8 w-8 text-gray-400" />
+                                <CalendarDaysIcon className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card>
-                        <CardContent className="pt-6">
+                        <CardContent className="p-3 sm:pt-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-500">Assignés</p>
-                                    <p className="text-2xl font-bold text-green-600">{displayStats.assigned_shifts}</p>
+                                    <p className="text-xs sm:text-sm text-gray-500">Assignés</p>
+                                    <p className="text-lg sm:text-2xl font-bold text-green-600">{displayStats.assigned_shifts}</p>
                                     <p className="text-xs text-gray-400">{displayStats.assignment_rate}%</p>
                                 </div>
-                                <CheckCircleIcon className="h-8 w-8 text-green-400" />
+                                <CheckCircleIcon className="h-6 w-6 sm:h-8 sm:w-8 text-green-400" />
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card>
-                        <CardContent className="pt-6">
+                        <CardContent className="p-3 sm:pt-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-500">Non assignés</p>
-                                    <p className="text-2xl font-bold text-orange-600">{displayStats.unassigned_shifts}</p>
+                                    <p className="text-xs sm:text-sm text-gray-500">Non assignés</p>
+                                    <p className="text-lg sm:text-2xl font-bold text-orange-600">{displayStats.unassigned_shifts}</p>
                                 </div>
-                                <ExclamationTriangleIcon className="h-8 w-8 text-orange-400" />
+                                <ExclamationTriangleIcon className="h-6 w-6 sm:h-8 sm:w-8 text-orange-400" />
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card>
-                        <CardContent className="pt-6">
+                        <CardContent className="p-3 sm:pt-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-500">Heures totales</p>
-                                    <p className="text-2xl font-bold">{displayStats.total_hours}h</p>
-                                    <p className="text-xs text-gray-400">{displayStats.assigned_hours}h assignées</p>
+                                    <p className="text-xs sm:text-sm text-gray-500">Heures</p>
+                                    <p className="text-lg sm:text-2xl font-bold">{displayStats.total_hours}h</p>
+                                    <p className="text-xs text-gray-400 hidden sm:block">{displayStats.assigned_hours}h assignées</p>
                                 </div>
-                                <ClockIcon className="h-8 w-8 text-gray-400" />
+                                <ClockIcon className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />
                             </div>
                         </CardContent>
                     </Card>

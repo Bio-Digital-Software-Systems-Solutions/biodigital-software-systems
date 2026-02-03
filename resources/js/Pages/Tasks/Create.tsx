@@ -133,23 +133,23 @@ export default function Create({ projects, statuses, users, employees = [], star
         <DashboardLayout>
             <Head title="Créer une Tâche" />
 
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
                 <div className="mx-auto sm:px-6 lg:px-8">
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                        <div className="p-6 text-gray-900 dark:text-gray-100">
-                            <div className="flex items-center mb-6">
+                        <div className="p-4 sm:p-6 text-gray-900 dark:text-gray-100">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-6">
                                 <Link
                                     href={
                                         projectId
                                             ? route('projects.show', projectId)
                                             : route('tasks.index')
                                     }
-                                    className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 mr-4"
+                                    className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 sm:mr-4"
                                 >
                                     <ArrowLeftIcon className="w-4 h-4 mr-1" />
                                     {projectId ? 'Retour au Projet' : 'Retour aux Tâches'}
                                 </Link>
-                                <h1 className="text-2xl font-semibold">Créer une Tâche</h1>
+                                <h1 className="text-xl sm:text-2xl font-semibold">Créer une Tâche</h1>
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-6">

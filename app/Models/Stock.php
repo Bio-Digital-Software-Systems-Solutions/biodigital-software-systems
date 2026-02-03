@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Traits\ClearsCache;
+use App\Traits\HasSku;
+use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -32,6 +33,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read string $stock_status
  * @property-read string $stock_status_label
  * @property-read float $total_value
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock active()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock bySupplier($supplier)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock expired()
@@ -57,17 +59,20 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereSupplierContact($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereUnitPrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereUpdatedAt($value)
+ *
  * @property string $uuid
  * @property string|null $image
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
  * @property-read int|null $activities_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 class Stock extends Model
 {
-    use HasFactory, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasSku, HasUuid, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -79,30 +84,20 @@ class Stock extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
-    protected static function boot()
-    {
-        parent::boot();
 
-        static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
-            }
-        });
-    }
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     /**
      * Status constants.
      */
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_INACTIVE = 'inactive';
+
     public const STATUS_IN_USE = 'in_use';
+
     public const STATUS_IN_MAINTENANCE = 'in_maintenance';
+
     public const STATUS_RESERVED = 'reserved';
+
     public const STATUS_DISPOSED = 'disposed';
 
     public const STATUSES = [
@@ -166,36 +161,6 @@ class Stock extends Model
     }
 
     /**
-     * Generate a unique SKU.
-     */
-    public static function generateSku(?int $categoryId = null): string
-    {
-        $prefix = 'STK';
-
-        // Get category prefix if available
-        if ($categoryId) {
-            $category = Category::find($categoryId);
-            if ($category) {
-                // Use first 3 letters of category name as prefix
-                $prefix = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $category->name), 0, 3));
-            }
-        }
-
-        $date = now()->format('Ymd');
-        $random = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-
-        $sku = "STK-{$prefix}-{$date}-{$random}";
-
-        // Ensure uniqueness
-        while (static::where('sku', $sku)->exists()) {
-            $random = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-            $sku = "STK-{$prefix}-{$date}-{$random}";
-        }
-
-        return $sku;
-    }
-
-    /**
      * Get the total value of the stock item.
      */
     public function getTotalValueAttribute(): float
@@ -232,7 +197,7 @@ class Stock extends Model
      */
     public function isNearExpiry(): bool
     {
-        if (!$this->expiry_date) {
+        if (! $this->expiry_date) {
             return false;
         }
 
@@ -245,7 +210,7 @@ class Stock extends Model
      */
     public function getDaysUntilExpiryAttribute(): ?int
     {
-        if (!$this->expiry_date) {
+        if (! $this->expiry_date) {
             return null;
         }
 
@@ -347,13 +312,5 @@ class Stock extends Model
     public function scopeBySupplier($query, $supplier)
     {
         return $query->where('supplier', 'like', "%{$supplier}%");
-    }
-
-    /**
-     * Get the route key for the model.
-     */
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
     }
 }

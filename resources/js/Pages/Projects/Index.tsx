@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Squares2X2Icon, ListBulletIcon, TableCellsIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { Squares2X2Icon, ListBulletIcon, TableCellsIcon, ChevronUpIcon, ChevronDownIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 interface Project {
   id: number;
@@ -65,49 +65,50 @@ export default function ProjectsIndex({ projects, filters }: Props) {
       title="Projets"
       description="Gérez vos projets et suivez leur progression"
       actions={
-        <>
-          <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-0.5 sm:gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 sm:p-1 flex-shrink-0">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded ${
+              className={`p-1 sm:p-2 rounded ${
                 viewMode === 'grid'
                   ? 'bg-white dark:bg-gray-700 shadow'
                   : 'hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               title="Vue grille"
             >
-              <Squares2X2Icon className="h-5 w-5 dark:text-white" />
+              <Squares2X2Icon className="h-4 w-4 sm:h-5 sm:w-5 dark:text-white" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded ${
+              className={`p-1 sm:p-2 rounded ${
                 viewMode === 'list'
                   ? 'bg-white dark:bg-gray-700 shadow'
                   : 'hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               title="Vue liste"
             >
-              <ListBulletIcon className="h-5 w-5 dark:text-white" />
+              <ListBulletIcon className="h-4 w-4 sm:h-5 sm:w-5 dark:text-white" />
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`p-2 rounded ${
+              className={`p-1 sm:p-2 rounded ${
                 viewMode === 'table'
                   ? 'bg-white dark:bg-gray-700 shadow'
                   : 'hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               title="Vue tableau"
             >
-              <TableCellsIcon className="h-5 w-5 dark:text-white" />
+              <TableCellsIcon className="h-4 w-4 sm:h-5 sm:w-5 dark:text-white" />
             </button>
           </div>
           <Link
             href="/projects/create"
-            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary"
+            className="inline-flex items-center px-2 sm:px-4 py-2 bg-primary text-white rounded-md hover:bg-primary text-sm"
           >
-            Nouveau projet
+            <PlusIcon className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Nouveau projet</span>
           </Link>
-        </>
+        </div>
       }
     >
       <Head title="Projets" />

@@ -20,7 +20,6 @@ interface Props extends PageProps {
 export default function Create({ categories, departments, statuses }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
-        sku: '',
         description: '',
         quantity: '',
         minimum_quantity: '',
@@ -60,37 +59,22 @@ export default function Create({ categories, departments, statuses }: Props) {
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            Name *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="name"
-                                            value={data.name}
-                                            onChange={(e) => setData('name', e.target.value)}
-                                            className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                            required
-                                        />
-                                        {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
-                                    </div>
-
-                                    <div>
-                                        <label htmlFor="sku" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            SKU
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="sku"
-                                            value={data.sku}
-                                            onChange={(e) => setData('sku', e.target.value)}
-                                            className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                                            placeholder="Généré automatiquement si vide"
-                                        />
-                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Laissez vide pour générer automatiquement</p>
-                                        {errors.sku && <p className="mt-1 text-sm text-red-600">{errors.sku}</p>}
-                                    </div>
+                                <div>
+                                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Name *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        value={data.name}
+                                        onChange={(e) => setData('name', e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                        required
+                                    />
+                                    {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Le code SKU sera généré automatiquement lors de la création
+                                    </p>
                                 </div>
 
                                 <div>
