@@ -180,6 +180,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit availabilities',
             'delete availabilities',
             'manage availabilities',
+            // Pastor Availability (specific for pastoral care scheduling)
+            'manage pastor availability',
         ];
 
         foreach ($permissions as $permission) {
@@ -341,6 +343,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit availabilities',
             'delete availabilities',
             'manage availabilities',
+            // Pastor Availability
+            'manage pastor availability',
         ]);
 
         // Writer - Content management focused
@@ -917,6 +921,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit pastoral care',
             'delete pastoral care',
             'manage pastoral care',
+            // Pastor Availability (for scheduling pastoral care appointments)
+            'manage pastor availability',
             // Messages & Chat
             'view messages',
             'create messages',

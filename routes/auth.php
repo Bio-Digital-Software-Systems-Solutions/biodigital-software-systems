@@ -2,12 +2,14 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Auth\EmailTwoFactorController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -58,4 +60,38 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    // Email 2FA management routes (for authenticated users)
+    Route::prefix('user/email-two-factor')->group(function () {
+        Route::post('/', [EmailTwoFactorController::class, 'enable'])
+            ->name('email-two-factor.enable');
+
+        Route::delete('/', [EmailTwoFactorController::class, 'disable'])
+            ->name('email-two-factor.disable');
+
+        Route::get('/status', [EmailTwoFactorController::class, 'status'])
+            ->name('email-two-factor.status');
+
+        Route::post('/preferred-method', [EmailTwoFactorController::class, 'setPreferredMethod'])
+            ->name('email-two-factor.preferred-method');
+    });
+});
+
+// Two-factor challenge routes (for users in 2FA challenge phase - not fully authenticated yet)
+Route::middleware(['web'])->group(function () {
+    // GET route for 2FA challenge page (Fortify doesn't register this when 'views' => false)
+    Route::get('/two-factor-challenge', [TwoFactorChallengeController::class, 'create'])
+        ->name('two-factor.login');
+});
+
+// Email 2FA challenge routes (for users in 2FA challenge phase - not fully authenticated yet)
+Route::middleware(['web', 'throttle:two-factor'])->group(function () {
+    Route::post('/two-factor-challenge/email/send', [EmailTwoFactorController::class, 'sendCode'])
+        ->name('two-factor.email.send');
+
+    Route::post('/two-factor-challenge/email/resend', [EmailTwoFactorController::class, 'resendCode'])
+        ->name('two-factor.email.resend');
+
+    Route::post('/two-factor-challenge/email/verify', [EmailTwoFactorController::class, 'verify'])
+        ->name('two-factor.email.verify');
 });

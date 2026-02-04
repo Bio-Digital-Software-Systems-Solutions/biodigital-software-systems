@@ -6,6 +6,7 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -37,8 +38,15 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
 
         // Inertia responses for 2FA
-        Fortify::twoFactorChallengeView(function () {
-            return Inertia::render('Auth/TwoFactorChallenge');
+        Fortify::twoFactorChallengeView(function (Request $request) {
+            $userId = $request->session()->get('login.id');
+            $user = $userId ? User::find($userId) : null;
+
+            return Inertia::render('Auth/TwoFactorChallenge', [
+                'totpEnabled' => $user && $user->two_factor_confirmed_at,
+                'emailEnabled' => $user && $user->email_two_factor_enabled,
+                'preferredMethod' => $user?->preferred_two_factor_method ?? 'totp',
+            ]);
         });
 
         RateLimiter::for('login', function (Request $request) {

@@ -1,10 +1,11 @@
 import { Button } from '@/Components/ui/button';
 import { useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { FormEventHandler, useState } from 'react';
+import { FormEventHandler, useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Shield, Smartphone, Key, CheckCircle2, XCircle } from 'lucide-react';
+import { Shield, Smartphone, Key, CheckCircle2, XCircle, Mail } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface Props {
     className?: string;
@@ -17,6 +18,12 @@ export default function TwoFactorAuthenticationForm({ className = '' }: Props) {
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [setupKey, setSetupKey] = useState<string | null>(null);
     const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+    const [showDisableDialog, setShowDisableDialog] = useState(false);
+    const [disableTarget, setDisableTarget] = useState<'totp' | 'email' | null>(null);
+
+    // Email 2FA state
+    const [emailTwoFactorEnabled, setEmailTwoFactorEnabled] = useState(user.email_two_factor_enabled || false);
+    const [preferredMethod, setPreferredMethod] = useState<string | null>(user.preferred_two_factor_method);
 
     const passwordForm = useForm({
         password: '',
@@ -67,13 +74,9 @@ export default function TwoFactorAuthenticationForm({ className = '' }: Props) {
     };
 
     const disableTwoFactorAuthentication = async () => {
-        if (!confirm('Êtes-vous sûr de vouloir désactiver l\'authentification à deux facteurs ?')) {
-            return;
-        }
-
         try {
             await axios.delete(route('two-factor.disable'));
-            toast.success('Authentification à deux facteurs désactivée');
+            toast.success('Authentification par application désactivée');
             setQrCode(null);
             setSetupKey(null);
             setRecoveryCodes([]);
@@ -81,6 +84,50 @@ export default function TwoFactorAuthenticationForm({ className = '' }: Props) {
         } catch (error) {
             toast.error('Erreur lors de la désactivation');
             apiLogger.error('Error disabling 2FA', error);
+        }
+    };
+
+    const enableEmailTwoFactor = async () => {
+        try {
+            await axios.post(route('email-two-factor.enable'));
+            setEmailTwoFactorEnabled(true);
+            toast.success('Authentification par email activée !');
+            window.location.reload();
+        } catch (error) {
+            toast.error('Erreur lors de l\'activation de l\'authentification par email');
+            apiLogger.error('Error enabling email 2FA', error);
+        }
+    };
+
+    const disableEmailTwoFactor = async () => {
+        try {
+            await axios.delete(route('email-two-factor.disable'));
+            setEmailTwoFactorEnabled(false);
+            toast.success('Authentification par email désactivée');
+            window.location.reload();
+        } catch (error) {
+            toast.error('Erreur lors de la désactivation');
+            apiLogger.error('Error disabling email 2FA', error);
+        }
+    };
+
+    const handleDisableConfirm = async () => {
+        if (disableTarget === 'totp') {
+            await disableTwoFactorAuthentication();
+        } else if (disableTarget === 'email') {
+            await disableEmailTwoFactor();
+        }
+        setShowDisableDialog(false);
+        setDisableTarget(null);
+    };
+
+    const setPreferred = async (method: 'totp' | 'email') => {
+        try {
+            await axios.post(route('email-two-factor.preferred-method'), { method });
+            setPreferredMethod(method);
+            toast.success('Méthode préférée mise à jour');
+        } catch (error) {
+            toast.error('Erreur lors de la mise à jour');
         }
     };
 
@@ -121,6 +168,9 @@ export default function TwoFactorAuthenticationForm({ className = '' }: Props) {
         setConfirmingPassword(true);
     };
 
+    const hasTotpEnabled = !!user.two_factor_confirmed_at;
+    const hasAny2FA = hasTotpEnabled || emailTwoFactorEnabled;
+
     return (
         <section className={className}>
             <header>
@@ -136,9 +186,9 @@ export default function TwoFactorAuthenticationForm({ className = '' }: Props) {
             </header>
 
             <div className="mt-6 space-y-6">
-                {/* Status */}
+                {/* Overall Status */}
                 <div className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                    {user.two_factor_confirmed_at ? (
+                    {hasAny2FA ? (
                         <>
                             <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                             <div className="flex-1">
@@ -165,114 +215,196 @@ export default function TwoFactorAuthenticationForm({ className = '' }: Props) {
                     )}
                 </div>
 
-                {!user.two_factor_confirmed_at ? (
-                    /* Enable 2FA */
-                    <div className="space-y-4">
-                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                            <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                                Comment ça marche ?
-                            </h3>
-                            <ol className="list-decimal list-inside text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                                <li>Activez l'authentification à deux facteurs</li>
-                                <li>Scannez le QR code avec Microsoft Authenticator ou Google Authenticator</li>
-                                <li>Conservez vos codes de récupération en lieu sûr</li>
-                                <li>À chaque connexion, entrez le code de votre application</li>
-                            </ol>
-                        </div>
-
-                        <Button
-                            onClick={handleEnable}
-                            disabled={passwordForm.processing}
-                            className="w-full sm:w-auto"
-                        >
-                            <Smartphone className="h-4 w-4 mr-2" />
-                            Activer l'authentification à deux facteurs
-                        </Button>
-                    </div>
-                ) : (
-                    /* Manage 2FA */
-                    <div className="space-y-4">
-                        {qrCode && (
-                            <div className="p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">
-                                    Scannez ce QR code avec votre application d'authentification :
-                                </h3>
-                                <div
-                                    className="flex justify-center mb-4"
-                                    dangerouslySetInnerHTML={{ __html: qrCode }}
-                                />
-                                {setupKey && (
-                                    <div className="mt-4">
-                                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                                            Ou entrez cette clé manuellement :
-                                        </p>
-                                        <code className="block p-3 bg-gray-100 dark:bg-gray-800 rounded text-sm font-mono text-center break-all">
-                                            {setupKey}
-                                        </code>
-                                    </div>
+                {/* Methods Section */}
+                <div className="space-y-4">
+                    {/* TOTP Method */}
+                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-3">
+                                <Smartphone className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        Application d'authentification
+                                    </h3>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                        Utilisez Microsoft Authenticator, Google Authenticator ou une application similaire.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {hasTotpEnabled && preferredMethod === 'totp' && (
+                                    <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                                        Préféré
+                                    </span>
+                                )}
+                                {hasTotpEnabled ? (
+                                    <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                ) : (
+                                    <XCircle className="h-5 w-5 text-gray-400" />
                                 )}
                             </div>
-                        )}
+                        </div>
 
-                        {recoveryCodes.length > 0 && (
-                            <div className="p-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                                <div className="flex items-start gap-3 mb-4">
-                                    <Key className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-                                    <div>
-                                        <h3 className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
-                                            Codes de récupération
-                                        </h3>
-                                        <p className="text-xs text-amber-800 dark:text-amber-200">
-                                            Conservez ces codes en lieu sûr. Ils vous permettront de vous connecter si vous perdez accès à votre appareil.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 mb-4">
-                                    {recoveryCodes.map((code, index) => (
-                                        <code
-                                            key={index}
-                                            className="block p-2 bg-white dark:bg-gray-900 rounded text-xs font-mono text-center border border-amber-200 dark:border-amber-800"
-                                        >
-                                            {code}
-                                        </code>
-                                    ))}
+                        {!hasTotpEnabled ? (
+                            <div className="mt-4">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-4">
+                                    <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                                        Comment ça marche ?
+                                    </h4>
+                                    <ol className="list-decimal list-inside text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                                        <li>Activez l'authentification à deux facteurs</li>
+                                        <li>Scannez le QR code avec votre application</li>
+                                        <li>Conservez vos codes de récupération en lieu sûr</li>
+                                        <li>À chaque connexion, entrez le code de votre application</li>
+                                    </ol>
                                 </div>
                                 <Button
-                                    onClick={downloadRecoveryCodes}
-                                    variant="outline"
+                                    onClick={handleEnable}
+                                    disabled={passwordForm.processing}
                                     size="sm"
-                                    className="w-full"
                                 >
-                                    Télécharger les codes
+                                    <Smartphone className="h-4 w-4 mr-2" />
+                                    Activer
                                 </Button>
                             </div>
+                        ) : (
+                            <div className="mt-4 space-y-4">
+                                {qrCode && (
+                                    <div className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                                            Scannez ce QR code :
+                                        </h4>
+                                        <div
+                                            className="flex justify-center mb-3"
+                                            dangerouslySetInnerHTML={{ __html: qrCode }}
+                                        />
+                                        {setupKey && (
+                                            <div className="mt-3">
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                    Ou entrez cette clé manuellement :
+                                                </p>
+                                                <code className="block p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono text-center break-all">
+                                                    {setupKey}
+                                                </code>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex flex-wrap gap-2">
+                                    {!qrCode && (
+                                        <Button onClick={showRecoveryCodes} variant="outline" size="sm">
+                                            <Key className="h-4 w-4 mr-2" />
+                                            Voir les codes
+                                        </Button>
+                                    )}
+                                    <Button onClick={regenerateRecoveryCodes} variant="outline" size="sm">
+                                        Régénérer les codes
+                                    </Button>
+                                    {emailTwoFactorEnabled && preferredMethod !== 'totp' && (
+                                        <Button onClick={() => setPreferred('totp')} variant="outline" size="sm">
+                                            Définir comme préféré
+                                        </Button>
+                                    )}
+                                    <Button
+                                        onClick={() => {
+                                            setDisableTarget('totp');
+                                            setShowDisableDialog(true);
+                                        }}
+                                        variant="destructive"
+                                        size="sm"
+                                    >
+                                        Désactiver
+                                    </Button>
+                                </div>
+                            </div>
                         )}
+                    </div>
 
-                        <div className="flex flex-wrap gap-3">
-                            {!qrCode && (
-                                <Button
-                                    onClick={showRecoveryCodes}
-                                    variant="outline"
-                                >
-                                    <Key className="h-4 w-4 mr-2" />
-                                    Afficher les codes de récupération
-                                </Button>
-                            )}
-
-                            <Button
-                                onClick={regenerateRecoveryCodes}
-                                variant="outline"
-                            >
-                                Régénérer les codes de récupération
-                            </Button>
-
-                            <Button
-                                onClick={disableTwoFactorAuthentication}
-                                variant="destructive"
-                            >
-                                Désactiver l'authentification à deux facteurs
-                            </Button>
+                    {/* Email Method */}
+                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-3">
+                                <Mail className="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5" />
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        Code par email
+                                    </h3>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                        Recevez un code à 8 chiffres par email à chaque connexion. Le code expire après 10 minutes.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {emailTwoFactorEnabled && preferredMethod === 'email' && (
+                                    <span className="text-xs px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                                        Préféré
+                                    </span>
+                                )}
+                                {emailTwoFactorEnabled ? (
+                                    <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                ) : (
+                                    <XCircle className="h-5 w-5 text-gray-400" />
+                                )}
+                            </div>
                         </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            {!emailTwoFactorEnabled ? (
+                                <Button onClick={enableEmailTwoFactor} size="sm">
+                                    <Mail className="h-4 w-4 mr-2" />
+                                    Activer
+                                </Button>
+                            ) : (
+                                <>
+                                    {hasTotpEnabled && preferredMethod !== 'email' && (
+                                        <Button onClick={() => setPreferred('email')} variant="outline" size="sm">
+                                            Définir comme préféré
+                                        </Button>
+                                    )}
+                                    <Button
+                                        onClick={() => {
+                                            setDisableTarget('email');
+                                            setShowDisableDialog(true);
+                                        }}
+                                        variant="destructive"
+                                        size="sm"
+                                    >
+                                        Désactiver
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Recovery Codes */}
+                {recoveryCodes.length > 0 && (
+                    <div className="p-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                        <div className="flex items-start gap-3 mb-4">
+                            <Key className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                            <div>
+                                <h3 className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-1">
+                                    Codes de récupération
+                                </h3>
+                                <p className="text-xs text-amber-800 dark:text-amber-200">
+                                    Conservez ces codes en lieu sûr. Ils vous permettront de vous connecter si vous perdez accès à votre appareil.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                            {recoveryCodes.map((code, index) => (
+                                <code
+                                    key={index}
+                                    className="block p-2 bg-white dark:bg-gray-900 rounded text-xs font-mono text-center border border-amber-200 dark:border-amber-800"
+                                >
+                                    {code}
+                                </code>
+                            ))}
+                        </div>
+                        <Button onClick={downloadRecoveryCodes} variant="outline" size="sm" className="w-full">
+                            Télécharger les codes
+                        </Button>
                     </div>
                 )}
             </div>
@@ -305,11 +437,7 @@ export default function TwoFactorAuthenticationForm({ className = '' }: Props) {
                                 )}
                             </div>
                             <div className="flex gap-3">
-                                <Button
-                                    type="submit"
-                                    disabled={passwordForm.processing}
-                                    className="flex-1"
-                                >
+                                <Button type="submit" disabled={passwordForm.processing} className="flex-1">
                                     Confirmer
                                 </Button>
                                 <Button
@@ -329,6 +457,23 @@ export default function TwoFactorAuthenticationForm({ className = '' }: Props) {
                     </div>
                 </div>
             )}
+
+            {/* Disable Confirmation Dialog */}
+            <DeleteConfirmationDialog
+                open={showDisableDialog}
+                onOpenChange={(open) => {
+                    setShowDisableDialog(open);
+                    if (!open) setDisableTarget(null);
+                }}
+                onConfirm={handleDisableConfirm}
+                title="Désactiver l'authentification"
+                description={
+                    disableTarget === 'totp'
+                        ? "Êtes-vous sûr de vouloir désactiver l'authentification par application ? Cela réduira la sécurité de votre compte."
+                        : "Êtes-vous sûr de vouloir désactiver l'authentification par email ?"
+                }
+                confirmText="Désactiver"
+            />
         </section>
     );
 }

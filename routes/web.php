@@ -158,32 +158,43 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('tasks.attachments.download');
 
     // Program routes
-    Route::resource('programs', App\Http\Controllers\ProgramController::class);
+    Route::resource('programs', App\Http\Controllers\ProgramController::class)
+        ->middleware('can:view programs');
 
     // Program Step routes
     Route::post('programs/{program}/steps', [App\Http\Controllers\ProgramStepController::class, 'store'])
+        ->middleware('can:create program steps')
         ->name('programs.steps.store');
     Route::patch('programs/{program}/steps/{step}', [App\Http\Controllers\ProgramStepController::class, 'update'])
+        ->middleware('can:edit programs')
         ->name('programs.steps.update');
     Route::delete('programs/{program}/steps/{step}', [App\Http\Controllers\ProgramStepController::class, 'destroy'])
+        ->middleware('can:delete programs')
         ->name('programs.steps.destroy');
     Route::post('programs/{program}/steps/{step}/participants', [App\Http\Controllers\ProgramStepController::class, 'attachParticipant'])
+        ->middleware('can:edit programs')
         ->name('programs.steps.participants.attach');
     Route::delete('programs/{program}/steps/{step}/participants/{user}', [App\Http\Controllers\ProgramStepController::class, 'detachParticipant'])
+        ->middleware('can:edit programs')
         ->name('programs.steps.participants.detach');
 
     // Program Step Task routes
     Route::post('programs/{program}/steps/{step}/tasks', [App\Http\Controllers\ProgramStepTaskController::class, 'store'])
+        ->middleware('can:create tasks')
         ->name('programs.steps.tasks.store');
     Route::patch('programs/{program}/steps/{step}/tasks/{task}', [App\Http\Controllers\ProgramStepTaskController::class, 'update'])
+        ->middleware('can:edit tasks')
         ->name('programs.steps.tasks.update');
     Route::delete('programs/{program}/steps/{step}/tasks/{task}', [App\Http\Controllers\ProgramStepTaskController::class, 'destroy'])
+        ->middleware('can:delete tasks')
         ->name('programs.steps.tasks.destroy');
     Route::patch('programs/{program}/steps/{step}/tasks/{task}/status', [App\Http\Controllers\ProgramStepTaskController::class, 'updateStatus'])
+        ->middleware('can:edit tasks')
         ->name('programs.steps.tasks.update-status');
 
     // Stock routes
-    Route::resource('stocks', App\Http\Controllers\StockController::class);
+    Route::resource('stocks', App\Http\Controllers\StockController::class)
+        ->middleware('can:view stocks');
 
     // Employee routes
     Route::resource('employees', App\Http\Controllers\EmployeeController::class);
@@ -561,7 +572,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Student Training routes (authenticated)
     Route::get('student/dashboard', [App\Http\Controllers\TrainingController::class, 'studentDashboard'])
-        ->middleware('restrict.member')
+        ->middleware(['restrict.member', 'can:access student dashboard'])
         ->name('student.dashboard');
     Route::post('trainings/{training}/enroll', [App\Http\Controllers\TrainingController::class, 'enroll'])
         ->name('trainings.enroll');
@@ -571,7 +582,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Teacher Dashboard routes
     Route::get('teacher/dashboard', [App\Http\Controllers\TrainingController::class, 'teacherDashboard'])
-        ->middleware('restrict.member')
+        ->middleware(['restrict.member', 'can:access teacher dashboard'])
         ->name('teacher.dashboard');
     Route::get('teacher/formations', [App\Http\Controllers\TrainingController::class, 'teacherFormations'])
         ->middleware('restrict.member')
@@ -867,7 +878,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Pastor Availability Management routes
-    Route::prefix('pastoral-availability')->name('pastoral-availability.')->group(function () {
+    Route::prefix('pastoral-availability')->name('pastoral-availability.')->middleware('can:manage pastor availability')->group(function () {
         Route::resource('', App\Http\Controllers\PastorAvailabilityController::class)
             ->names([
                 'index' => 'index',
@@ -905,19 +916,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     // Workflow Builder Routes
     // ============================================
-    Route::prefix('workflows')->name('workflows.')->group(function () {
+    Route::prefix('workflows')->name('workflows.')->middleware('can:view workflows')->group(function () {
         Route::get('/', [App\Http\Controllers\WorkflowController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\WorkflowController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\WorkflowController::class, 'store'])->name('store');
+        Route::get('/create', [App\Http\Controllers\WorkflowController::class, 'create'])->middleware('can:create workflows')->name('create');
+        Route::post('/', [App\Http\Controllers\WorkflowController::class, 'store'])->middleware('can:create workflows')->name('store');
         Route::get('/{workflow}', [App\Http\Controllers\WorkflowController::class, 'show'])->name('show');
-        Route::get('/{workflow}/edit', [App\Http\Controllers\WorkflowController::class, 'edit'])->name('edit');
-        Route::put('/{workflow}', [App\Http\Controllers\WorkflowController::class, 'update'])->name('update');
-        Route::delete('/{workflow}', [App\Http\Controllers\WorkflowController::class, 'destroy'])->name('destroy');
-        Route::post('/{workflow}/activate', [App\Http\Controllers\WorkflowController::class, 'activate'])->name('activate');
-        Route::post('/{workflow}/deprecate', [App\Http\Controllers\WorkflowController::class, 'deprecate'])->name('deprecate');
-        Route::post('/{workflow}/duplicate', [App\Http\Controllers\WorkflowController::class, 'duplicate'])->name('duplicate');
-        Route::post('/{workflow}/steps', [App\Http\Controllers\WorkflowController::class, 'saveSteps'])->name('save-steps');
-        Route::post('/{workflow}/start', [App\Http\Controllers\WorkflowController::class, 'startInstance'])->name('start');
+        Route::get('/{workflow}/edit', [App\Http\Controllers\WorkflowController::class, 'edit'])->middleware('can:edit workflows')->name('edit');
+        Route::put('/{workflow}', [App\Http\Controllers\WorkflowController::class, 'update'])->middleware('can:edit workflows')->name('update');
+        Route::delete('/{workflow}', [App\Http\Controllers\WorkflowController::class, 'destroy'])->middleware('can:delete workflows')->name('destroy');
+        Route::post('/{workflow}/activate', [App\Http\Controllers\WorkflowController::class, 'activate'])->middleware('can:manage workflows')->name('activate');
+        Route::post('/{workflow}/deprecate', [App\Http\Controllers\WorkflowController::class, 'deprecate'])->middleware('can:manage workflows')->name('deprecate');
+        Route::post('/{workflow}/duplicate', [App\Http\Controllers\WorkflowController::class, 'duplicate'])->middleware('can:create workflows')->name('duplicate');
+        Route::post('/{workflow}/steps', [App\Http\Controllers\WorkflowController::class, 'saveSteps'])->middleware('can:edit workflows')->name('save-steps');
+        Route::post('/{workflow}/start', [App\Http\Controllers\WorkflowController::class, 'startInstance'])->middleware('can:execute workflows')->name('start');
         Route::get('/{workflow}/instances', [App\Http\Controllers\WorkflowController::class, 'instances'])->name('instances');
     });
 
@@ -948,26 +959,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     // Form Builder Routes
     // ============================================
-    Route::prefix('forms')->name('forms.')->group(function () {
+    Route::prefix('forms')->name('forms.')->middleware('can:view forms')->group(function () {
         Route::get('/', [App\Http\Controllers\FormController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\FormController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\FormController::class, 'store'])->name('store');
-        Route::post('/import', [App\Http\Controllers\FormController::class, 'import'])->name('import');
+        Route::get('/create', [App\Http\Controllers\FormController::class, 'create'])->middleware('can:create forms')->name('create');
+        Route::post('/', [App\Http\Controllers\FormController::class, 'store'])->middleware('can:create forms')->name('store');
+        Route::post('/import', [App\Http\Controllers\FormController::class, 'import'])->middleware('can:create forms')->name('import');
         Route::get('/{form}', [App\Http\Controllers\FormController::class, 'show'])->name('show');
-        Route::get('/{form}/edit', [App\Http\Controllers\FormController::class, 'edit'])->name('edit');
-        Route::put('/{form}', [App\Http\Controllers\FormController::class, 'update'])->name('update');
-        Route::delete('/{form}', [App\Http\Controllers\FormController::class, 'destroy'])->name('destroy');
-        Route::post('/{form}/publish', [App\Http\Controllers\FormController::class, 'publish'])->name('publish');
-        Route::post('/{form}/unpublish', [App\Http\Controllers\FormController::class, 'unpublish'])->name('unpublish');
-        Route::post('/{form}/archive', [App\Http\Controllers\FormController::class, 'archive'])->name('archive');
-        Route::post('/{form}/duplicate', [App\Http\Controllers\FormController::class, 'duplicate'])->name('duplicate');
-        Route::post('/{form}/fields', [App\Http\Controllers\FormController::class, 'saveFields'])->name('save-fields');
+        Route::get('/{form}/edit', [App\Http\Controllers\FormController::class, 'edit'])->middleware('can:edit forms')->name('edit');
+        Route::put('/{form}', [App\Http\Controllers\FormController::class, 'update'])->middleware('can:edit forms')->name('update');
+        Route::delete('/{form}', [App\Http\Controllers\FormController::class, 'destroy'])->middleware('can:delete forms')->name('destroy');
+        Route::post('/{form}/publish', [App\Http\Controllers\FormController::class, 'publish'])->middleware('can:manage forms')->name('publish');
+        Route::post('/{form}/unpublish', [App\Http\Controllers\FormController::class, 'unpublish'])->middleware('can:manage forms')->name('unpublish');
+        Route::post('/{form}/archive', [App\Http\Controllers\FormController::class, 'archive'])->middleware('can:manage forms')->name('archive');
+        Route::post('/{form}/duplicate', [App\Http\Controllers\FormController::class, 'duplicate'])->middleware('can:create forms')->name('duplicate');
+        Route::post('/{form}/fields', [App\Http\Controllers\FormController::class, 'saveFields'])->middleware('can:edit forms')->name('save-fields');
         Route::get('/{form}/preview', [App\Http\Controllers\FormController::class, 'preview'])->name('preview');
         Route::get('/{form}/render', [App\Http\Controllers\FormController::class, 'renderForm'])->name('render');
-        Route::post('/{form}/start-submission', [App\Http\Controllers\FormController::class, 'startSubmission'])->name('start-submission');
-        Route::get('/{form}/export', [App\Http\Controllers\FormController::class, 'export'])->name('export');
-        Route::get('/{form}/submissions', [App\Http\Controllers\FormController::class, 'submissions'])->name('submissions');
-        Route::post('/{form}/share-link', [App\Http\Controllers\FormController::class, 'generateShareLink'])->name('generate-share-link');
+        Route::post('/{form}/start-submission', [App\Http\Controllers\FormController::class, 'startSubmission'])->middleware('can:submit forms')->name('start-submission');
+        Route::get('/{form}/export', [App\Http\Controllers\FormController::class, 'export'])->middleware('can:manage forms')->name('export');
+        Route::get('/{form}/submissions', [App\Http\Controllers\FormController::class, 'submissions'])->middleware('can:process form submissions')->name('submissions');
+        Route::post('/{form}/share-link', [App\Http\Controllers\FormController::class, 'generateShareLink'])->middleware('can:manage forms')->name('generate-share-link');
     });
 
     // Public shared form routes (no auth required)
@@ -991,31 +1002,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     // Department Need Management Routes
     // ============================================
-    Route::prefix('needs')->name('needs.')->group(function () {
+    Route::prefix('needs')->name('needs.')->middleware('can:view needs')->group(function () {
         Route::get('/', [App\Http\Controllers\NeedController::class, 'index'])->name('index');
         Route::get('/kanban', [App\Http\Controllers\NeedController::class, 'kanban'])->name('kanban');
         Route::get('/my-needs', [App\Http\Controllers\NeedController::class, 'myNeeds'])->name('my-needs');
         Route::get('/stats', [App\Http\Controllers\NeedController::class, 'stats'])->name('stats');
-        Route::get('/create', [App\Http\Controllers\NeedController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\NeedController::class, 'store'])->name('store');
+        Route::get('/create', [App\Http\Controllers\NeedController::class, 'create'])->middleware('can:create needs')->name('create');
+        Route::post('/', [App\Http\Controllers\NeedController::class, 'store'])->middleware('can:create needs')->name('store');
         Route::get('/{need}', [App\Http\Controllers\NeedController::class, 'show'])->name('show');
-        Route::get('/{need}/edit', [App\Http\Controllers\NeedController::class, 'edit'])->name('edit');
-        Route::put('/{need}', [App\Http\Controllers\NeedController::class, 'update'])->name('update');
-        Route::delete('/{need}', [App\Http\Controllers\NeedController::class, 'destroy'])->name('destroy');
+        Route::get('/{need}/edit', [App\Http\Controllers\NeedController::class, 'edit'])->middleware('can:edit needs')->name('edit');
+        Route::put('/{need}', [App\Http\Controllers\NeedController::class, 'update'])->middleware('can:edit needs')->name('update');
+        Route::delete('/{need}', [App\Http\Controllers\NeedController::class, 'destroy'])->middleware('can:delete needs')->name('destroy');
 
         // Status transitions
         Route::post('/{need}/submit', [App\Http\Controllers\NeedController::class, 'submit'])->name('submit');
         Route::post('/{need}/withdraw', [App\Http\Controllers\NeedController::class, 'withdraw'])->name('withdraw');
-        Route::post('/{need}/start-review', [App\Http\Controllers\NeedController::class, 'startReview'])->name('start-review');
-        Route::post('/{need}/approve', [App\Http\Controllers\NeedController::class, 'approve'])->name('approve');
-        Route::post('/{need}/reject', [App\Http\Controllers\NeedController::class, 'reject'])->name('reject');
-        Route::post('/{need}/order', [App\Http\Controllers\NeedController::class, 'markOrdered'])->name('order');
-        Route::post('/{need}/deliver', [App\Http\Controllers\NeedController::class, 'markDelivered'])->name('deliver');
-        Route::post('/{need}/complete', [App\Http\Controllers\NeedController::class, 'complete'])->name('complete');
-        Route::post('/{need}/cancel', [App\Http\Controllers\NeedController::class, 'cancel'])->name('cancel');
-        Route::post('/{need}/assign', [App\Http\Controllers\NeedController::class, 'assign'])->name('assign');
-        Route::post('/{need}/duplicate', [App\Http\Controllers\NeedController::class, 'duplicate'])->name('duplicate');
-        Route::patch('/{need}/update-status', [App\Http\Controllers\NeedController::class, 'updateStatus'])->name('update-status');
+        Route::post('/{need}/start-review', [App\Http\Controllers\NeedController::class, 'startReview'])->middleware('can:manage needs')->name('start-review');
+        Route::post('/{need}/approve', [App\Http\Controllers\NeedController::class, 'approve'])->middleware('can:approve needs')->name('approve');
+        Route::post('/{need}/reject', [App\Http\Controllers\NeedController::class, 'reject'])->middleware('can:approve needs')->name('reject');
+        Route::post('/{need}/order', [App\Http\Controllers\NeedController::class, 'markOrdered'])->middleware('can:manage needs')->name('order');
+        Route::post('/{need}/deliver', [App\Http\Controllers\NeedController::class, 'markDelivered'])->middleware('can:manage needs')->name('deliver');
+        Route::post('/{need}/complete', [App\Http\Controllers\NeedController::class, 'complete'])->middleware('can:manage needs')->name('complete');
+        Route::post('/{need}/cancel', [App\Http\Controllers\NeedController::class, 'cancel'])->middleware('can:manage needs')->name('cancel');
+        Route::post('/{need}/assign', [App\Http\Controllers\NeedController::class, 'assign'])->middleware('can:manage needs')->name('assign');
+        Route::post('/{need}/duplicate', [App\Http\Controllers\NeedController::class, 'duplicate'])->middleware('can:create needs')->name('duplicate');
+        Route::patch('/{need}/update-status', [App\Http\Controllers\NeedController::class, 'updateStatus'])->middleware('can:manage needs')->name('update-status');
 
         // Attachments
         Route::post('/{need}/attachments', [App\Http\Controllers\NeedController::class, 'uploadAttachment'])->name('attachments.upload');
@@ -1039,32 +1050,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('need-comments.destroy');
 
     // Department Reports
-    Route::prefix('reports')->name('reports.')->group(function () {
+    Route::prefix('reports')->name('reports.')->middleware('can:view reports')->group(function () {
         Route::get('/', [App\Http\Controllers\DepartmentReportController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\DepartmentReportController::class, 'create'])->name('create');
-        Route::post('/', [App\Http\Controllers\DepartmentReportController::class, 'store'])->name('store');
+        Route::get('/create', [App\Http\Controllers\DepartmentReportController::class, 'create'])->middleware('can:generate reports')->name('create');
+        Route::post('/', [App\Http\Controllers\DepartmentReportController::class, 'store'])->middleware('can:generate reports')->name('store');
         Route::get('/{report}', [App\Http\Controllers\DepartmentReportController::class, 'show'])->name('show');
-        Route::get('/{report}/edit', [App\Http\Controllers\DepartmentReportController::class, 'edit'])->name('edit');
-        Route::put('/{report}', [App\Http\Controllers\DepartmentReportController::class, 'update'])->name('update');
-        Route::delete('/{report}', [App\Http\Controllers\DepartmentReportController::class, 'destroy'])->name('destroy');
+        Route::get('/{report}/edit', [App\Http\Controllers\DepartmentReportController::class, 'edit'])->middleware('can:generate reports')->name('edit');
+        Route::put('/{report}', [App\Http\Controllers\DepartmentReportController::class, 'update'])->middleware('can:generate reports')->name('update');
+        Route::delete('/{report}', [App\Http\Controllers\DepartmentReportController::class, 'destroy'])->middleware('can:generate reports')->name('destroy');
 
         // Section management
-        Route::put('/{report}/sections/{section}', [App\Http\Controllers\DepartmentReportController::class, 'updateSection'])->name('sections.update');
+        Route::put('/{report}/sections/{section}', [App\Http\Controllers\DepartmentReportController::class, 'updateSection'])->middleware('can:generate reports')->name('sections.update');
 
         // Report actions
-        Route::post('/{report}/populate', [App\Http\Controllers\DepartmentReportController::class, 'populate'])->name('populate');
-        Route::post('/{report}/submit', [App\Http\Controllers\DepartmentReportController::class, 'submit'])->name('submit');
-        Route::post('/{report}/approve', [App\Http\Controllers\DepartmentReportController::class, 'approve'])->name('approve');
-        Route::post('/{report}/publish', [App\Http\Controllers\DepartmentReportController::class, 'publish'])->name('publish');
-        Route::post('/{report}/archive', [App\Http\Controllers\DepartmentReportController::class, 'archive'])->name('archive');
-        Route::post('/{report}/duplicate', [App\Http\Controllers\DepartmentReportController::class, 'duplicate'])->name('duplicate');
+        Route::post('/{report}/populate', [App\Http\Controllers\DepartmentReportController::class, 'populate'])->middleware('can:generate reports')->name('populate');
+        Route::post('/{report}/submit', [App\Http\Controllers\DepartmentReportController::class, 'submit'])->middleware('can:generate reports')->name('submit');
+        Route::post('/{report}/approve', [App\Http\Controllers\DepartmentReportController::class, 'approve'])->middleware('can:generate reports')->name('approve');
+        Route::post('/{report}/publish', [App\Http\Controllers\DepartmentReportController::class, 'publish'])->middleware('can:generate reports')->name('publish');
+        Route::post('/{report}/archive', [App\Http\Controllers\DepartmentReportController::class, 'archive'])->middleware('can:generate reports')->name('archive');
+        Route::post('/{report}/duplicate', [App\Http\Controllers\DepartmentReportController::class, 'duplicate'])->middleware('can:generate reports')->name('duplicate');
 
         // PDF Export
         Route::get('/{report}/export', [App\Http\Controllers\DepartmentReportController::class, 'export'])->name('export');
-        Route::post('/{report}/generate-pdf', [App\Http\Controllers\DepartmentReportController::class, 'generatePdf'])->name('generate-pdf');
+        Route::post('/{report}/generate-pdf', [App\Http\Controllers\DepartmentReportController::class, 'generatePdf'])->middleware('can:generate reports')->name('generate-pdf');
         Route::get('/{report}/download-pdf', [App\Http\Controllers\DepartmentReportController::class, 'downloadPdf'])->name('download-pdf');
         Route::get('/{report}/stream-pdf', [App\Http\Controllers\DepartmentReportController::class, 'streamPdf'])->name('stream-pdf');
-        Route::post('/{report}/regenerate-pdf', [App\Http\Controllers\DepartmentReportController::class, 'regeneratePdf'])->name('regenerate-pdf');
+        Route::post('/{report}/regenerate-pdf', [App\Http\Controllers\DepartmentReportController::class, 'regeneratePdf'])->middleware('can:generate reports')->name('regenerate-pdf');
         Route::get('/{report}/preview', [App\Http\Controllers\DepartmentReportController::class, 'preview'])->name('preview');
 
         // Comments

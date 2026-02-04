@@ -32,6 +32,10 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property string|null $two_factor_confirmed_at
+ * @property string|null $email_two_factor_code
+ * @property \Illuminate\Support\Carbon|null $email_two_factor_expires_at
+ * @property bool $email_two_factor_enabled
+ * @property string|null $preferred_two_factor_method
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Article> $articles
  * @property-read int|null $articles_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $assignedTasks
@@ -199,6 +203,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'telegram_username',
         'telegram_notifications',
         'privacy_settings',
+        'email_two_factor_code',
+        'email_two_factor_expires_at',
+        'email_two_factor_enabled',
+        'preferred_two_factor_method',
     ];
 
     /**
@@ -209,6 +217,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'email_two_factor_code',
     ];
 
     /**
@@ -257,6 +266,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'message_notifications' => 'boolean',
             'telegram_notifications' => 'boolean',
             'privacy_settings' => 'array',
+            'email_two_factor_expires_at' => 'datetime',
+            'email_two_factor_enabled' => 'boolean',
         ];
     }
 
