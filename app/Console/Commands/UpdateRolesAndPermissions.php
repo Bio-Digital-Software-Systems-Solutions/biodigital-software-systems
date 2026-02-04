@@ -2,16 +2,16 @@
 
 namespace App\Console\Commands;
 
+use App\Services\CacheService;
 use Illuminate\Console\Command;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use App\Services\CacheService;
 
 class UpdateRolesAndPermissions extends Command
 {
     /**
      * The name and signature of the console command.
-     * # Prévisualiser les changements 
+     * # Prévisualiser les changements
      * php artisan permissions:sync --dry-run
      * Appliquer les changements
      * php artisan permissions:sync --force
@@ -47,7 +47,7 @@ class UpdateRolesAndPermissions extends Command
         }
 
         // Clear permission cache first
-        if (!$dryRun) {
+        if (! $dryRun) {
             app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
             $this->info('✅ Permission cache cleared');
         }
@@ -68,19 +68,20 @@ class UpdateRolesAndPermissions extends Command
             }
 
             // 5. Clear application caches
-            if (!$dryRun) {
+            if (! $dryRun) {
                 $this->clearApplicationCaches();
             }
 
             $this->info('🎉 Roles and permissions update completed successfully!');
 
-            if (!$dryRun) {
+            if (! $dryRun) {
                 $this->displaySummary();
             }
 
         } catch (\Exception $e) {
-            $this->error('❌ Error during update: ' . $e->getMessage());
+            $this->error('❌ Error during update: '.$e->getMessage());
             $this->error($e->getTraceAsString());
+
             return Command::FAILURE;
         }
 
@@ -117,6 +118,7 @@ class UpdateRolesAndPermissions extends Command
             // Users & Departments
             'view users', 'create users', 'edit users', 'delete users',
             'view departments', 'create departments', 'edit departments', 'delete departments', 'manage departments', 'assign department members',
+            'access all departments', 'view department statistics',
             // Books & Library
             'view books', 'rent books', 'create books', 'edit books', 'delete books', 'manage library', 'approve rentals',
             // Videos
@@ -143,7 +145,7 @@ class UpdateRolesAndPermissions extends Command
         foreach ($permissions as $permission) {
             $exists = Permission::where('name', $permission)->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 if ($dryRun) {
                     $this->line("  Would create: {$permission}");
                 } else {
@@ -157,7 +159,7 @@ class UpdateRolesAndPermissions extends Command
         if ($created === 0) {
             $this->info('  ✅ All permissions already exist');
         } else {
-            $this->info("  📊 {$created} permission(s) " . ($dryRun ? 'would be created' : 'created'));
+            $this->info("  📊 {$created} permission(s) ".($dryRun ? 'would be created' : 'created'));
         }
     }
 
@@ -173,14 +175,14 @@ class UpdateRolesAndPermissions extends Command
             'group-leader', 'department-leader', 'impact-family-leader', 'member',
             'student', 'teacher', 'pastor',
             // PascalCase aliases
-            'SuperAdmin', 'Admin', 'Member', 'Student', 'Teacher', 'ProjectManager', 'EventManager', 'Editor'
+            'SuperAdmin', 'Admin', 'Member', 'Student', 'Teacher', 'ProjectManager', 'EventManager', 'Editor',
         ];
 
         $created = 0;
         foreach ($roles as $roleName) {
             $exists = Role::where('name', $roleName)->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 if ($dryRun) {
                     $this->line("  Would create role: {$roleName}");
                 } else {
@@ -194,7 +196,7 @@ class UpdateRolesAndPermissions extends Command
         if ($created === 0) {
             $this->info('  ✅ All roles already exist');
         } else {
-            $this->info("  📊 {$created} role(s) " . ($dryRun ? 'would be created' : 'created'));
+            $this->info("  📊 {$created} role(s) ".($dryRun ? 'would be created' : 'created'));
         }
     }
 
@@ -220,6 +222,7 @@ class UpdateRolesAndPermissions extends Command
                 'view groups', 'create groups', 'edit groups', 'delete groups', 'manage group members',
                 'view users', 'edit users',
                 'view departments', 'create departments', 'edit departments', 'manage departments', 'assign department members',
+                'access all departments', 'view department statistics',
                 'view books', 'rent books', 'create books', 'edit books', 'delete books', 'manage library', 'approve rentals',
                 'view videos', 'upload videos', 'edit videos', 'delete videos',
                 'view trainings', 'create trainings', 'edit trainings', 'delete trainings', 'manage trainings',
@@ -262,12 +265,12 @@ class UpdateRolesAndPermissions extends Command
                 $currentPermissions = $role->permissions->pluck('name')->toArray();
                 $permissionsToAdd = array_diff($permissions, $currentPermissions);
 
-                if (!empty($permissionsToAdd)) {
+                if (! empty($permissionsToAdd)) {
                     if ($dryRun) {
-                        $this->line("  Would update {$roleName}: " . implode(', ', $permissionsToAdd));
+                        $this->line("  Would update {$roleName}: ".implode(', ', $permissionsToAdd));
                     } else {
                         $role->givePermissionTo($permissionsToAdd);
-                        $this->line("  ✅ Updated {$roleName}: " . implode(', ', $permissionsToAdd));
+                        $this->line("  ✅ Updated {$roleName}: ".implode(', ', $permissionsToAdd));
                     }
                     $updated++;
                 }
@@ -277,7 +280,7 @@ class UpdateRolesAndPermissions extends Command
         if ($updated === 0) {
             $this->info('  ✅ All role permissions are up to date');
         } else {
-            $this->info("  📊 {$updated} role(s) " . ($dryRun ? 'would be updated' : 'updated'));
+            $this->info("  📊 {$updated} role(s) ".($dryRun ? 'would be updated' : 'updated'));
         }
     }
 
@@ -290,7 +293,7 @@ class UpdateRolesAndPermissions extends Command
 
         $superAdmin = Role::where('name', 'SuperAdmin')->first();
 
-        if (!$superAdmin) {
+        if (! $superAdmin) {
             if ($dryRun) {
                 $this->line('  Would create SuperAdmin role');
             } else {
@@ -299,14 +302,14 @@ class UpdateRolesAndPermissions extends Command
             }
         }
 
-        if ($superAdmin || !$dryRun) {
+        if ($superAdmin || ! $dryRun) {
             $allPermissions = Permission::all();
             $totalPermissions = $allPermissions->count();
 
             if ($dryRun) {
                 $this->line("  Would assign all {$totalPermissions} permissions to SuperAdmin");
             } else {
-                if (!$superAdmin) {
+                if (! $superAdmin) {
                     $superAdmin = Role::where('name', 'SuperAdmin')->first();
                 }
                 $superAdmin->syncPermissions($allPermissions);
@@ -348,7 +351,7 @@ class UpdateRolesAndPermissions extends Command
         $superAdmin = Role::where('name', 'SuperAdmin')->with('permissions')->first();
 
         $this->table([
-            'Metric', 'Count'
+            'Metric', 'Count',
         ], [
             ['Total Permissions', $totalPermissions],
             ['Total Roles', $totalRoles],

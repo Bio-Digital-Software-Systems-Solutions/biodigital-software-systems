@@ -116,11 +116,28 @@ class DepartmentControllerTest extends TestCase
         $response->assertSessionHasErrors(['budget']);
     }
 
-    public function test_show_displays_department(): void
+    public function test_show_displays_department_for_member(): void
+    {
+        $department = Department::factory()->create();
+        $department->users()->attach($this->user);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert->component('Departments/Show')
+            ->where('department.id', $department->id)
+            ->where('department.name', $department->name)
+        );
+    }
+
+    public function test_show_displays_department_for_manager(): void
     {
         $department = Department::factory()->create();
 
-        $this->user->givePermissionTo('view departments');
+        $this->user->givePermissionTo(['view departments', 'manage departments']);
 
         $response = $this->actingAs($this->user)
             ->get(route('departments.show', $department));
@@ -291,6 +308,7 @@ class DepartmentControllerTest extends TestCase
     public function test_department_route_key_uses_uuid(): void
     {
         $department = Department::factory()->create(['code' => 'TEST-DEPT']);
+        $department->users()->attach($this->user);
 
         $this->user->givePermissionTo('view departments');
 
@@ -334,6 +352,7 @@ class DepartmentControllerTest extends TestCase
     public function test_show_displays_department_appointments(): void
     {
         $department = Department::factory()->create();
+        $department->users()->attach($this->user);
         $organizer = User::factory()->create();
 
         // Create appointments for this department
@@ -369,6 +388,7 @@ class DepartmentControllerTest extends TestCase
     public function test_show_appointments_are_ordered_by_start_datetime(): void
     {
         $department = Department::factory()->create();
+        $department->users()->attach($this->user);
         $organizer = User::factory()->create();
 
         // Create appointments with specific dates
@@ -407,6 +427,7 @@ class DepartmentControllerTest extends TestCase
     public function test_show_appointments_include_organizer_info(): void
     {
         $department = Department::factory()->create();
+        $department->users()->attach($this->user);
         $organizer = User::factory()->create([
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
@@ -438,6 +459,7 @@ class DepartmentControllerTest extends TestCase
     public function test_show_appointments_include_participants_count(): void
     {
         $department = Department::factory()->create();
+        $department->users()->attach($this->user);
         $organizer = User::factory()->create();
         $participants = User::factory()->count(5)->create();
 
@@ -466,6 +488,7 @@ class DepartmentControllerTest extends TestCase
     public function test_show_returns_empty_appointments_array_for_department_without_appointments(): void
     {
         $department = Department::factory()->create();
+        $department->users()->attach($this->user);
 
         $this->user->givePermissionTo('view departments');
 
@@ -482,6 +505,7 @@ class DepartmentControllerTest extends TestCase
     public function test_show_only_returns_appointments_for_this_department(): void
     {
         $department1 = Department::factory()->create();
+        $department1->users()->attach($this->user);
         $department2 = Department::factory()->create();
         $organizer = User::factory()->create();
 
@@ -514,6 +538,7 @@ class DepartmentControllerTest extends TestCase
     public function test_show_appointments_include_all_statuses(): void
     {
         $department = Department::factory()->create();
+        $department->users()->attach($this->user);
         $organizer = User::factory()->create();
 
         // Create appointments with different statuses
@@ -556,6 +581,7 @@ class DepartmentControllerTest extends TestCase
     public function test_show_appointments_include_all_types(): void
     {
         $department = Department::factory()->create();
+        $department->users()->attach($this->user);
         $organizer = User::factory()->create();
 
         // Create appointments with different types
@@ -598,6 +624,7 @@ class DepartmentControllerTest extends TestCase
     public function test_show_appointments_datetime_format_is_iso_string(): void
     {
         $department = Department::factory()->create();
+        $department->users()->attach($this->user);
         $organizer = User::factory()->create();
 
         $appointment = Appointment::factory()->create([
@@ -645,6 +672,7 @@ class DepartmentControllerTest extends TestCase
     public function test_show_cannot_manage_for_regular_user(): void
     {
         $department = Department::factory()->create();
+        $department->users()->attach($this->user);
 
         // User with only view permission
         $this->user->givePermissionTo('view departments');
@@ -726,7 +754,7 @@ class DepartmentControllerTest extends TestCase
         );
     }
 
-    public function test_show_excludes_statistics_for_non_member_without_permission(): void
+    public function test_show_denies_access_for_non_member_without_permission(): void
     {
         $department = Department::factory()->create();
 
@@ -735,12 +763,8 @@ class DepartmentControllerTest extends TestCase
         $response = $this->actingAs($this->user)
             ->get(route('departments.show', $department));
 
-        $response->assertOk();
-        $response->assertInertia(fn ($assert) => $assert
-            ->component('Departments/Show')
-            ->where('canViewStatistics', false)
-            ->where('statistics', null)
-        );
+        // Authorization can return 403 or redirect (302)
+        $this->assertContains($response->status(), [403, 302]);
     }
 
     public function test_statistics_todos_breakdown_is_correct(): void
@@ -955,7 +979,7 @@ class DepartmentControllerTest extends TestCase
             'second_deputy_id' => $secondDeputy->id,
         ]);
 
-        $this->user->givePermissionTo('view departments');
+        $this->user->givePermissionTo(['view departments', 'manage departments']);
 
         $response = $this->actingAs($this->user)
             ->get(route('departments.show', $department));
@@ -974,5 +998,275 @@ class DepartmentControllerTest extends TestCase
                 ->etc()
             )
         );
+    }
+
+    // ==================== Department Accessibility Tests ====================
+
+    public function test_index_returns_is_accessible_for_each_department(): void
+    {
+        $department = Department::factory()->create();
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Index')
+            ->has('departments.data.0.is_accessible')
+        );
+    }
+
+    public function test_index_member_sees_department_as_accessible(): void
+    {
+        $department = Department::factory()->create();
+        $department->users()->attach($this->user);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Index')
+            ->where('departments.data.0.is_accessible', true)
+        );
+    }
+
+    public function test_index_non_member_sees_department_as_not_accessible(): void
+    {
+        $department = Department::factory()->create();
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Index')
+            ->where('departments.data.0.is_accessible', false)
+        );
+    }
+
+    public function test_index_manager_sees_all_departments_as_accessible(): void
+    {
+        $department = Department::factory()->create();
+
+        $this->user->givePermissionTo(['view departments', 'manage departments']);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Index')
+            ->where('departments.data.0.is_accessible', true)
+        );
+    }
+
+    public function test_index_head_of_department_sees_department_as_accessible(): void
+    {
+        $department = Department::factory()->create([
+            'head_of_department' => $this->user->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Index')
+            ->where('departments.data.0.is_accessible', true)
+        );
+    }
+
+    public function test_index_first_deputy_sees_department_as_accessible(): void
+    {
+        $department = Department::factory()->create([
+            'first_deputy_id' => $this->user->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Index')
+            ->where('departments.data.0.is_accessible', true)
+        );
+    }
+
+    public function test_index_second_deputy_sees_department_as_accessible(): void
+    {
+        $department = Department::factory()->create([
+            'second_deputy_id' => $this->user->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Index')
+            ->where('departments.data.0.is_accessible', true)
+        );
+    }
+
+    public function test_show_allows_access_for_head_of_department(): void
+    {
+        $department = Department::factory()->create([
+            'head_of_department' => $this->user->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->where('department.id', $department->id)
+        );
+    }
+
+    public function test_show_allows_access_for_first_deputy(): void
+    {
+        $department = Department::factory()->create([
+            'first_deputy_id' => $this->user->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->where('department.id', $department->id)
+        );
+    }
+
+    public function test_show_allows_access_for_second_deputy(): void
+    {
+        $department = Department::factory()->create([
+            'second_deputy_id' => $this->user->id,
+        ]);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->where('department.id', $department->id)
+        );
+    }
+
+    public function test_index_shows_mixed_accessibility_for_multiple_departments(): void
+    {
+        // Create department where user is member
+        $memberDepartment = Department::factory()->create(['name' => 'AAA Member Dept']);
+        $memberDepartment->users()->attach($this->user);
+
+        // Create department where user is not member
+        $nonMemberDepartment = Department::factory()->create(['name' => 'BBB Non-Member Dept']);
+
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Index')
+            ->has('departments.data', 2)
+            // First department (AAA Member Dept) should be accessible
+            ->where('departments.data.0.is_accessible', true)
+            // Second department (BBB Non-Member Dept) should not be accessible
+            ->where('departments.data.1.is_accessible', false)
+        );
+    }
+
+    // ==================== Access All Departments Permission Tests ====================
+
+    public function test_index_user_with_access_all_departments_permission_sees_all_as_accessible(): void
+    {
+        // Create departments where user is NOT a member
+        Department::factory()->create(['name' => 'AAA Dept']);
+        Department::factory()->create(['name' => 'BBB Dept']);
+
+        $this->user->givePermissionTo(['view departments', 'access all departments']);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Index')
+            ->has('departments.data', 2)
+            ->where('departments.data.0.is_accessible', true)
+            ->where('departments.data.1.is_accessible', true)
+        );
+    }
+
+    public function test_show_allows_access_for_user_with_access_all_departments_permission(): void
+    {
+        $department = Department::factory()->create();
+
+        // User is not a member but has 'access all departments' permission
+        $this->user->givePermissionTo(['view departments', 'access all departments']);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->where('department.id', $department->id)
+        );
+    }
+
+    public function test_user_with_access_all_departments_can_view_statistics(): void
+    {
+        $department = Department::factory()->create();
+
+        $this->user->givePermissionTo(['view departments', 'access all departments', 'view department statistics']);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert
+            ->component('Departments/Show')
+            ->where('canViewStatistics', true)
+            ->has('statistics')
+        );
+    }
+
+    public function test_user_without_access_all_departments_but_with_view_departments_cannot_access_show(): void
+    {
+        $department = Department::factory()->create();
+
+        // User only has 'view departments' but not 'access all departments' or 'manage departments'
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        // Should be denied access (403 or redirect)
+        $this->assertContains($response->status(), [403, 302]);
     }
 }

@@ -11,12 +11,21 @@ class DepartmentPolicy
     use HandlesAuthorization;
 
     /**
-     * Determine whether the user can view the department.
+     * Determine whether the user can view the department list.
      */
     public function view(User $user, Department $department): bool
     {
         // Users with view or manage departments permission can view any department
         return $user->can('view departments') || $user->can('manage departments');
+    }
+
+    /**
+     * Determine whether the user can access the department details.
+     * More restrictive than view: requires membership, being head/deputy, or manage permission.
+     */
+    public function access(User $user, Department $department): bool
+    {
+        return $department->isAccessibleBy($user);
     }
 
     /**

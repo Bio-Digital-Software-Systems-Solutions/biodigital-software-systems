@@ -33,7 +33,9 @@ class DepartmentController extends Controller
 
     public function index()
     {
-        $departments = Department::with(['headOfDepartment'])
+        $user = auth()->user();
+
+        $departments = Department::with(['headOfDepartment', 'users:users.id'])
             ->withCount('users')
             ->when(request('status'), function ($query, $status) {
                 if ($status === 'active') {
@@ -44,8 +46,8 @@ class DepartmentController extends Controller
             ->paginate(10)
             ->appends(request()->query());
 
-        // Map departments to include head_of_department_user for frontend compatibility
-        $data = collect($departments->items())->map(function ($department) {
+        // Map departments to include head_of_department_user and is_accessible for frontend
+        $data = collect($departments->items())->map(function ($department) use ($user) {
             return [
                 'id' => $department->id,
                 'uuid' => $department->uuid,
@@ -61,6 +63,7 @@ class DepartmentController extends Controller
                     'last_name' => $department->headOfDepartment->last_name,
                 ] : null,
                 'users_count' => $department->users_count,
+                'is_accessible' => $department->isAccessibleBy($user),
                 'created_at' => $department->created_at,
                 'updated_at' => $department->updated_at,
             ];
@@ -124,6 +127,9 @@ class DepartmentController extends Controller
 
     public function show(Department $department)
     {
+        // Check if user can access this department (member, head, deputy, or has manage permission)
+        $this->authorize('access', $department);
+
         $department->load(['users', 'headOfDepartment', 'firstDeputy', 'secondDeputy']);
 
         // Check if user can view statistics

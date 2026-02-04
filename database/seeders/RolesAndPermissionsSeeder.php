@@ -86,6 +86,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete departments',
             'manage departments',
             'assign department members',
+            'access all departments',
+            'view department statistics',
             // Books & Library
             'view books',
             'rent books',
@@ -251,6 +253,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit departments',
             'manage departments',
             'assign department members',
+            'access all departments',
+            'view department statistics',
             // Books & Library
             'view books',
             'rent books',
@@ -591,6 +595,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit departments',
             'manage departments',
             'assign department members',
+            'access all departments',
+            'view department statistics',
             // Users
             'view users',
             // Tasks & Programs

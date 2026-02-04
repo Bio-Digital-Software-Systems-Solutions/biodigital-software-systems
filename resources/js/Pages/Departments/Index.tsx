@@ -14,7 +14,8 @@ import {
     CheckCircleIcon,
     XCircleIcon,
     UserIcon,
-    BanknotesIcon
+    BanknotesIcon,
+    LockClosedIcon
 } from '@heroicons/react/24/outline';
 import { userHasPermission } from '@/Enums/Permission';
 
@@ -34,6 +35,7 @@ interface Department {
     description?: string;
     budget?: number;
     is_active: boolean;
+    is_accessible: boolean;
     head_of_department?: number;
     head_of_department_user?: User;
     users: User[];
@@ -186,16 +188,26 @@ const Index: React.FC<IndexProps> = ({ departments, filters }) => {
                                     </thead>
                                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                         {departments.data.map((department) => (
-                                            <tr key={department.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                            <tr key={department.id} className={`transition-colors ${department.is_accessible ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : 'opacity-60'}`}>
                                                 <td className="px-3 sm:px-6 py-4">
                                                     <div className="flex items-center">
-                                                        <BuildingOfficeIcon className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                                                        <Link
-                                                            href={route('departments.show', department.uuid)}
-                                                            className="text-sm font-medium text-primary dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:underline truncate max-w-[120px] sm:max-w-none"
-                                                        >
-                                                            {department.name}
-                                                        </Link>
+                                                        {department.is_accessible ? (
+                                                            <BuildingOfficeIcon className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+                                                        ) : (
+                                                            <LockClosedIcon className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+                                                        )}
+                                                        {department.is_accessible ? (
+                                                            <Link
+                                                                href={route('departments.show', department.uuid)}
+                                                                className="text-sm font-medium text-primary dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:underline truncate max-w-[120px] sm:max-w-none"
+                                                            >
+                                                                {department.name}
+                                                            </Link>
+                                                        ) : (
+                                                            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate max-w-[120px] sm:max-w-none cursor-not-allowed">
+                                                                {department.name}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
@@ -233,13 +245,22 @@ const Index: React.FC<IndexProps> = ({ departments, filters }) => {
                                                 </td>
                                                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div className="flex items-center justify-end gap-1 sm:gap-2">
-                                                        <Link
-                                                            href={route('departments.show', department.uuid)}
-                                                            className="text-primary dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
-                                                            title="Voir détails"
-                                                        >
-                                                            <EyeIcon className="h-5 w-5" />
-                                                        </Link>
+                                                        {department.is_accessible ? (
+                                                            <Link
+                                                                href={route('departments.show', department.uuid)}
+                                                                className="text-primary dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+                                                                title="Voir détails"
+                                                            >
+                                                                <EyeIcon className="h-5 w-5" />
+                                                            </Link>
+                                                        ) : (
+                                                            <span
+                                                                className="text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                                                                title="Accès restreint - Vous devez être membre du département"
+                                                            >
+                                                                <LockClosedIcon className="h-5 w-5" />
+                                                            </span>
+                                                        )}
                                                         {canEditDepartments && (
                                                             <Link
                                                                 href={route('departments.edit', department.uuid)}
@@ -251,6 +272,7 @@ const Index: React.FC<IndexProps> = ({ departments, filters }) => {
                                                         )}
                                                         {canDeleteDepartments && (
                                                             <button
+                                                                type="button"
                                                                 onClick={() => handleDelete(department)}
                                                                 className="text-gray-400 hover:text-red-600"
                                                                 title="Supprimer"
@@ -274,19 +296,29 @@ const Index: React.FC<IndexProps> = ({ departments, filters }) => {
                             {departments.data.map((department) => (
                                 <div
                                     key={department.id}
-                                    className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden"
+                                    className={`bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden ${!department.is_accessible ? 'opacity-60' : ''}`}
                                 >
                                     <div className="p-4 sm:p-6">
                                         <div className="flex items-start justify-between mb-3 sm:mb-4">
                                             <div className="flex-1">
                                                 <div className="flex items-center mb-2">
-                                                    <BuildingOfficeIcon className="h-5 w-5 text-gray-400 mr-2" />
-                                                    <Link
-                                                        href={route('departments.show', department.uuid)}
-                                                        className="text-lg font-semibold text-primary dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:underline"
-                                                    >
-                                                        {department.name}
-                                                    </Link>
+                                                    {department.is_accessible ? (
+                                                        <BuildingOfficeIcon className="h-5 w-5 text-gray-400 mr-2" />
+                                                    ) : (
+                                                        <LockClosedIcon className="h-5 w-5 text-gray-400 mr-2" />
+                                                    )}
+                                                    {department.is_accessible ? (
+                                                        <Link
+                                                            href={route('departments.show', department.uuid)}
+                                                            className="text-lg font-semibold text-primary dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 hover:underline"
+                                                        >
+                                                            {department.name}
+                                                        </Link>
+                                                    ) : (
+                                                        <span className="text-lg font-semibold text-gray-500 dark:text-gray-400 cursor-not-allowed">
+                                                            {department.name}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                                                     Code: {department.code}
@@ -353,13 +385,23 @@ const Index: React.FC<IndexProps> = ({ departments, filters }) => {
                                     {/* Actions */}
                                     <div className="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
                                         <div className="flex items-center justify-between">
-                                            <Link
-                                                href={route('departments.show', department.uuid)}
-                                                className="inline-flex items-center text-sm text-primary dark:text-blue-400 hover:text-primary dark:hover:text-blue-300"
-                                            >
-                                                <EyeIcon className="h-4 w-4 mr-1" />
-                                                Voir détails
-                                            </Link>
+                                            {department.is_accessible ? (
+                                                <Link
+                                                    href={route('departments.show', department.uuid)}
+                                                    className="inline-flex items-center text-sm text-primary dark:text-blue-400 hover:text-primary dark:hover:text-blue-300"
+                                                >
+                                                    <EyeIcon className="h-4 w-4 mr-1" />
+                                                    Voir détails
+                                                </Link>
+                                            ) : (
+                                                <span
+                                                    className="inline-flex items-center text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                                                    title="Accès restreint - Vous devez être membre du département"
+                                                >
+                                                    <LockClosedIcon className="h-4 w-4 mr-1" />
+                                                    Accès restreint
+                                                </span>
+                                            )}
 
                                             {(canEditDepartments || canDeleteDepartments) && (
                                                 <div className="flex space-x-2">
@@ -374,6 +416,7 @@ const Index: React.FC<IndexProps> = ({ departments, filters }) => {
                                                     )}
                                                     {canDeleteDepartments && (
                                                         <button
+                                                            type="button"
                                                             onClick={() => handleDelete(department)}
                                                             className="text-gray-400 hover:text-red-600"
                                                             title="Supprimer"

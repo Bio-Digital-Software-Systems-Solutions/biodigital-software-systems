@@ -203,6 +203,46 @@ class Department extends Model
     }
 
     /**
+     * Check if a user can access this department.
+     * Access is granted if:
+     * - User has "manage departments" permission
+     * - User has "access all departments" permission
+     * - User is the head of department
+     * - User is a first or second deputy
+     * - User is a member of the department
+     */
+    public function isAccessibleBy(User $user): bool
+    {
+        // Admin/manager with permission can always access
+        if ($user->can('manage departments')) {
+            return true;
+        }
+
+        // Users with "access all departments" permission can access any department
+        if ($user->can('access all departments')) {
+            return true;
+        }
+
+        // Head of department can access
+        if ($this->head_of_department === $user->id) {
+            return true;
+        }
+
+        // Deputies can access
+        if ($this->first_deputy_id === $user->id || $this->second_deputy_id === $user->id) {
+            return true;
+        }
+
+        // Member of the department can access
+        // Use eager-loaded relationship if available
+        if ($this->relationLoaded('users')) {
+            return $this->users->contains('id', $user->id);
+        }
+
+        return $this->users()->where('user_id', $user->id)->exists();
+    }
+
+    /**
      * Scope a query to only include active departments.
      */
     public function scopeActive($query)

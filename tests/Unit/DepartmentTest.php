@@ -188,4 +188,113 @@ class DepartmentTest extends TestCase
         $this->assertTrue($department->is_active);
         $this->assertIsBool($department->is_active);
     }
+
+    // ==================== isAccessibleBy Tests ====================
+
+    public function test_is_accessible_by_returns_true_for_member()
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $department = Department::factory()->create();
+        $department->users()->attach($user);
+
+        $this->assertTrue($department->isAccessibleBy($user));
+    }
+
+    public function test_is_accessible_by_returns_true_for_head_of_department()
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $department = Department::factory()->create([
+            'head_of_department' => $user->id,
+        ]);
+
+        $this->assertTrue($department->isAccessibleBy($user));
+    }
+
+    public function test_is_accessible_by_returns_true_for_first_deputy()
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $department = Department::factory()->create([
+            'first_deputy_id' => $user->id,
+        ]);
+
+        $this->assertTrue($department->isAccessibleBy($user));
+    }
+
+    public function test_is_accessible_by_returns_true_for_second_deputy()
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $department = Department::factory()->create([
+            'second_deputy_id' => $user->id,
+        ]);
+
+        $this->assertTrue($department->isAccessibleBy($user));
+    }
+
+    public function test_is_accessible_by_returns_true_for_user_with_manage_permission()
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $user->givePermissionTo('manage departments');
+        $department = Department::factory()->create();
+
+        $this->assertTrue($department->isAccessibleBy($user));
+    }
+
+    public function test_is_accessible_by_returns_false_for_non_member_without_permission()
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $department = Department::factory()->create();
+
+        $this->assertFalse($department->isAccessibleBy($user));
+    }
+
+    public function test_is_accessible_by_uses_eager_loaded_users_when_available()
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $department = Department::factory()->create();
+        $department->users()->attach($user);
+
+        // Eager load the users relationship
+        $department->load('users');
+
+        // This should use the eager-loaded relationship
+        $this->assertTrue($department->isAccessibleBy($user));
+    }
+
+    public function test_is_accessible_by_returns_true_for_user_with_access_all_departments_permission()
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $user->givePermissionTo('access all departments');
+        $department = Department::factory()->create();
+
+        // User is not a member but has the permission
+        $this->assertTrue($department->isAccessibleBy($user));
+    }
+
+    public function test_is_accessible_by_returns_false_for_user_with_only_view_departments_permission()
+    {
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $user = User::factory()->create();
+        $user->givePermissionTo('view departments');
+        $department = Department::factory()->create();
+
+        // User is not a member and only has view permission (not access all)
+        $this->assertFalse($department->isAccessibleBy($user));
+    }
 }
