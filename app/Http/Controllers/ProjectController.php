@@ -7,6 +7,7 @@ use App\Enums\Star\StarStatus;
 use App\Models\Employee;
 use App\Models\Project;
 use App\Models\Star;
+use App\Models\Status;
 use App\Models\User;
 use App\Services\ProjectStatisticsService;
 use Illuminate\Http\Request;
@@ -308,6 +309,9 @@ class ProjectController extends Controller
 
         $projectStatistics = (new ProjectStatisticsService)->getProjectStatistics($project);
 
+        // Get all statuses for task creation
+        $statuses = Status::active()->orderBy('name')->get();
+
         return Inertia::render('Projects/Show', [
             'project' => array_merge($project->toArray(), [
                 'progress' => $progress,
@@ -317,6 +321,7 @@ class ProjectController extends Controller
             'users' => $users,
             'activities' => $activities,
             'projectStatistics' => $projectStatistics,
+            'statuses' => $statuses,
         ]);
     }
 

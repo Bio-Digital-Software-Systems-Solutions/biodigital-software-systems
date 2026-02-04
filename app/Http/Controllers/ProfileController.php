@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Interest;
+use App\Models\ProfileSkill;
+use App\Models\SpokenLanguage;
 use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -16,18 +19,106 @@ class ProfileController extends Controller
 {
     /**
      * Display the public profile view (accessible to everyone).
+     * Respects user privacy settings.
      */
     public function publicShow(User $user): Response
     {
+        $user->load([
+            'departments',
+            'groups',
+            'trainings',
+            'roles',
+            'profileSkills',
+            'interests',
+            'spokenLanguages',
+        ]);
+
+        $privacySettings = $user->getPrivacySettings();
+
+        // Build user data respecting privacy settings
+        $userData = [
+            'id' => $user->id,
+            'uuid' => $user->uuid,
+            'name' => $user->name,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'avatar' => $user->avatar,
+            'is_calendar_public' => $user->is_calendar_public,
+            'created_at' => $user->created_at,
+            // Always show departments, groups, trainings, roles (public organizational data)
+            'departments' => $user->departments->map(fn ($dept) => [
+                'id' => $dept->id,
+                'uuid' => $dept->uuid,
+                'name' => $dept->name,
+            ]),
+            'groups' => $user->groups->map(fn ($group) => [
+                'id' => $group->id,
+                'uuid' => $group->uuid,
+                'name' => $group->name,
+            ]),
+            'trainings' => $user->trainings->map(fn ($training) => [
+                'id' => $training->id,
+                'uuid' => $training->uuid,
+                'title' => $training->title,
+            ]),
+            'roles' => $user->roles->pluck('name'),
+        ];
+
+        // Add conditional fields based on privacy settings
+        if ($privacySettings['email']) {
+            $userData['email'] = $user->email;
+        }
+        if ($privacySettings['phone_number']) {
+            $userData['phone_number'] = $user->phone_number;
+        }
+        if ($privacySettings['birth_date']) {
+            $userData['birth_date'] = $user->birth_date;
+        }
+        if ($privacySettings['address']) {
+            $userData['address'] = $user->address;
+        }
+        if ($privacySettings['bio']) {
+            $userData['bio'] = $user->bio;
+        }
+        if ($privacySettings['position']) {
+            $userData['position'] = $user->position;
+        }
+        if ($privacySettings['languages']) {
+            $userData['languages'] = $user->spokenLanguages->map(fn ($lang) => [
+                'id' => $lang->id,
+                'uuid' => $lang->uuid,
+                'name' => $lang->name,
+                'code' => $lang->code,
+                'native_name' => $lang->native_name,
+                'level' => $lang->pivot->level,
+            ]);
+        } else {
+            $userData['languages'] = collect();
+        }
+        if ($privacySettings['interests']) {
+            $userData['interests'] = $user->interests->map(fn ($interest) => [
+                'id' => $interest->id,
+                'uuid' => $interest->uuid,
+                'name' => $interest->name,
+                'icon' => $interest->icon,
+            ]);
+        } else {
+            $userData['interests'] = collect();
+        }
+        if ($privacySettings['skills']) {
+            $userData['skills'] = $user->profileSkills->map(fn ($skill) => [
+                'id' => $skill->id,
+                'uuid' => $skill->uuid,
+                'name' => $skill->name,
+                'category' => $skill->category,
+                'level' => $skill->pivot->level,
+            ]);
+        } else {
+            $userData['skills'] = collect();
+        }
+
         return Inertia::render('Profile/Public', [
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'avatar' => $user->avatar,
-                'created_at' => $user->created_at,
-            ],
+            'user' => $userData,
         ]);
     }
 
@@ -77,9 +168,42 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = $request->user();
+        $user->load(['spokenLanguages', 'interests', 'profileSkills']);
+
         return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
+            'availableLanguages' => SpokenLanguage::orderBy('name')->get()->map(fn ($lang) => [
+                'id' => $lang->id,
+                'uuid' => $lang->uuid,
+                'name' => $lang->name,
+                'code' => $lang->code,
+                'native_name' => $lang->native_name,
+            ]),
+            'availableInterests' => Interest::orderBy('name')->get()->map(fn ($interest) => [
+                'id' => $interest->id,
+                'uuid' => $interest->uuid,
+                'name' => $interest->name,
+                'icon' => $interest->icon,
+            ]),
+            'availableSkills' => ProfileSkill::orderBy('category')->orderBy('name')->get()->map(fn ($skill) => [
+                'id' => $skill->id,
+                'uuid' => $skill->uuid,
+                'name' => $skill->name,
+                'category' => $skill->category,
+            ]),
+            'userLanguages' => $user->spokenLanguages->map(fn ($lang) => [
+                'id' => $lang->id,
+                'level' => $lang->pivot->level,
+            ]),
+            'userInterests' => $user->interests->pluck('id'),
+            'userSkills' => $user->profileSkills->map(fn ($skill) => [
+                'id' => $skill->id,
+                'level' => $skill->pivot->level,
+            ]),
+            'privacySettings' => $user->getPrivacySettings(),
+            'defaultPrivacySettings' => User::DEFAULT_PRIVACY_SETTINGS,
         ]);
     }
 

@@ -176,6 +176,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'birth_date',
         'avatar',
+        'bio',
+        'position',
+        'address',
+        'is_calendar_public',
         'is_active',
         'is_blocked',
         'status_reason',
@@ -194,6 +198,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'telegram_chat_id',
         'telegram_username',
         'telegram_notifications',
+        'privacy_settings',
     ];
 
     /**
@@ -241,6 +246,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'birth_date' => 'date',
+            'is_calendar_public' => 'boolean',
             'last_login_at' => 'datetime',
             'email_notifications' => 'boolean',
             'sms_notifications' => 'boolean',
@@ -250,7 +256,87 @@ class User extends Authenticatable implements MustVerifyEmail
             'training_updates' => 'boolean',
             'message_notifications' => 'boolean',
             'telegram_notifications' => 'boolean',
+            'privacy_settings' => 'array',
         ];
+    }
+
+    /**
+     * Default privacy settings for user profile.
+     * All fields are public by default.
+     */
+    public const DEFAULT_PRIVACY_SETTINGS = [
+        'email' => true,
+        'phone_number' => true,
+        'birth_date' => true,
+        'address' => true,
+        'bio' => true,
+        'position' => true,
+        'languages' => true,
+        'interests' => true,
+        'skills' => true,
+    ];
+
+    /**
+     * Get the user's privacy settings merged with defaults.
+     *
+     * @return array<string, bool>
+     */
+    public function getPrivacySettings(): array
+    {
+        return array_merge(
+            self::DEFAULT_PRIVACY_SETTINGS,
+            $this->privacy_settings ?? []
+        );
+    }
+
+    /**
+     * Check if a specific field is public.
+     */
+    public function isFieldPublic(string $field): bool
+    {
+        $settings = $this->getPrivacySettings();
+
+        return $settings[$field] ?? true;
+    }
+
+    /**
+     * Get the public profile data respecting privacy settings.
+     *
+     * @return array<string, mixed>
+     */
+    public function getPublicProfileData(): array
+    {
+        $settings = $this->getPrivacySettings();
+        $data = [
+            'id' => $this->id,
+            'uuid' => $this->uuid,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+            'full_name' => $this->full_name,
+            'avatar' => $this->avatar,
+        ];
+
+        // Add conditional fields based on privacy settings
+        if ($settings['email']) {
+            $data['email'] = $this->email;
+        }
+        if ($settings['phone_number']) {
+            $data['phone_number'] = $this->phone_number;
+        }
+        if ($settings['birth_date']) {
+            $data['birth_date'] = $this->birth_date;
+        }
+        if ($settings['address']) {
+            $data['address'] = $this->address;
+        }
+        if ($settings['bio']) {
+            $data['bio'] = $this->bio;
+        }
+        if ($settings['position']) {
+            $data['position'] = $this->position;
+        }
+
+        return $data;
     }
 
     /**
@@ -625,5 +711,38 @@ class User extends Authenticatable implements MustVerifyEmail
     public function routeNotificationForTelegram(): ?string
     {
         return $this->telegram_chat_id;
+    }
+
+    // ==========================================
+    // Profile Relations (Skills, Interests, Languages)
+    // ==========================================
+
+    /**
+     * User's profile skills (soft, hard, technical).
+     */
+    public function profileSkills(): BelongsToMany
+    {
+        return $this->belongsToMany(ProfileSkill::class, 'profile_skill_user')
+            ->withPivot('level')
+            ->withTimestamps();
+    }
+
+    /**
+     * User's interests/hobbies.
+     */
+    public function interests(): BelongsToMany
+    {
+        return $this->belongsToMany(Interest::class, 'interest_user')
+            ->withTimestamps();
+    }
+
+    /**
+     * User's spoken languages.
+     */
+    public function spokenLanguages(): BelongsToMany
+    {
+        return $this->belongsToMany(SpokenLanguage::class, 'spoken_language_user')
+            ->withPivot('level')
+            ->withTimestamps();
     }
 }

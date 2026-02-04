@@ -5,9 +5,10 @@ namespace App\Models;
 use App\Traits\ClearsCache;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as BaseModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
@@ -90,7 +91,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  *
  * @mixin \Eloquent
  */
-class PastoralCare extends Model
+class PastoralCare extends BaseModel
 {
     use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
 
@@ -152,6 +153,9 @@ class PastoralCare extends Model
         'proposal_reviewed_at',
         'counter_proposal_sent_at',
         'client_responded_at',
+        // Polymorphic assigned agent
+        'assigned_agent_id',
+        'assigned_agent_type',
     ];
 
     protected $casts = [
@@ -200,7 +204,7 @@ class PastoralCare extends Model
      *
      * @var array<string>
      */
-    protected $with = ['user', 'pastor', 'transferredFrom', 'transferredTo', 'mlrAgent', 'themes'];
+    protected $with = ['user', 'pastor', 'transferredFrom', 'transferredTo', 'mlrAgent', 'themes', 'assignedAgent'];
 
     protected $appends = [
         'can_be_confirmed',
@@ -251,7 +255,37 @@ class PastoralCare extends Model
                 $model->proposal_submitted_at = now();
                 $model->proposal_response_status = 'pending';
             }
+            // Sync assigned_agent with pastor_id for backward compatibility
+            if ($model->pastor_id && empty($model->assigned_agent_id)) {
+                $model->assigned_agent_id = $model->pastor_id;
+                $model->assigned_agent_type = User::class;
+            }
         });
+
+        static::updating(function ($model) {
+            // Keep assigned_agent in sync when pastor_id changes
+            if ($model->isDirty('pastor_id') && $model->pastor_id) {
+                $model->assigned_agent_id = $model->pastor_id;
+                $model->assigned_agent_type = User::class;
+            }
+        });
+    }
+
+    /**
+     * Assign an agent to this appointment (polymorphic).
+     *
+     * @param  BaseModel  $agent  The agent model (User with pastor/mlr_agent role, or other type)
+     */
+    public function assignAgent(BaseModel $agent): self
+    {
+        $this->update([
+            'assigned_agent_id' => $agent->id,
+            'assigned_agent_type' => get_class($agent),
+            // Also update pastor_id for backward compatibility if agent is a User
+            'pastor_id' => $agent instanceof User ? $agent->id : $this->pastor_id,
+        ]);
+
+        return $this;
     }
 
     // Relationships
@@ -306,6 +340,15 @@ class PastoralCare extends Model
     }
 
     /**
+     * Get the assigned agent (polymorphic relationship).
+     * Can be a User with role pastor, mlr_agent, or any other assignable type.
+     */
+    public function assignedAgent(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
      * Get the themes for this pastoral care appointment.
      */
     public function themes(): BelongsToMany
@@ -344,6 +387,21 @@ class PastoralCare extends Model
     public function scopeForPastor($query, $pastorId)
     {
         return $query->where('pastor_id', $pastorId);
+    }
+
+    /**
+     * Scope to filter appointments by assigned agent (polymorphic).
+     * This is the preferred way to filter appointments by agent.
+     */
+    public function scopeForAssignedAgent($query, $agentId, ?string $agentType = null)
+    {
+        $query->where('assigned_agent_id', $agentId);
+
+        if ($agentType) {
+            $query->where('assigned_agent_type', $agentType);
+        }
+
+        return $query;
     }
 
     public function scopeOnDate($query, $date)

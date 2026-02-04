@@ -5,6 +5,8 @@ namespace App\Observers;
 use App\Enums\ProjectStatus;
 use App\Models\Status;
 use App\Models\Task;
+use App\Models\User;
+use App\Notifications\TaskAssigned;
 
 class TaskObserver
 {
@@ -14,6 +16,7 @@ class TaskObserver
     public function created(Task $task): void
     {
         $this->updateStepStatus($task);
+        $this->notifyAssignedUser($task);
     }
 
     /**
@@ -22,10 +25,41 @@ class TaskObserver
     public function updated(Task $task): void
     {
         // Only update step status if the task status was changed
-        if ($task->isDirty('status_id')) {
+        if ($task->wasChanged('status_id')) {
             $this->updateStepStatus($task);
             $this->updateProjectStatus($task);
         }
+
+        // Notify user if assignment changed
+        if ($task->wasChanged('assigned_to') && $task->assigned_to) {
+            $this->notifyAssignedUser($task);
+        }
+    }
+
+    /**
+     * Notify the assigned user about the task assignment.
+     */
+    protected function notifyAssignedUser(Task $task): void
+    {
+        if (! $task->assigned_to) {
+            return;
+        }
+
+        $assignee = $task->assignedUser;
+
+        if (! $assignee) {
+            return;
+        }
+
+        // Get the user who made the assignment (authenticated user)
+        $assignedBy = auth()->user();
+
+        // Don't notify if user assigned to themselves
+        if ($assignedBy && $assignedBy->id === $assignee->id) {
+            return;
+        }
+
+        $assignee->notify(new TaskAssigned($task, $assignedBy));
     }
 
     /**

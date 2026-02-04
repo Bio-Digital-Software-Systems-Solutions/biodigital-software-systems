@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreProjectTaskRequest;
 use App\Models\Project;
 use App\Models\ProjectAttachment;
 use App\Models\ProjectComment;
 use App\Models\ProjectParticipant;
+use App\Models\Task;
 use App\Models\User;
 use App\Notifications\ProjectCommentAdded;
 use App\Notifications\ProjectParticipantAdded;
@@ -240,6 +242,7 @@ class ProjectController extends Controller
 
         return response()->json($users->map(fn ($user) => [
             'id' => $user->id,
+            'uuid' => $user->uuid,
             'first_name' => $user->first_name,
             'last_name' => $user->last_name,
             'full_name' => $user->first_name.' '.$user->last_name,
@@ -349,5 +352,35 @@ class ProjectController extends Controller
         $attachment->delete();
 
         return response()->json(['message' => 'Attachment deleted successfully']);
+    }
+
+    /**
+     * Create a task associated with a project.
+     */
+    public function storeTask(StoreProjectTaskRequest $request, Project $project): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $task = Task::create([
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'due_date' => $validated['due_date'] ?? null,
+            'priority' => $validated['priority'],
+            'estimated_hours' => $validated['estimated_hours'] ?? null,
+            'status_id' => $validated['status_id'],
+            'assigned_to' => $validated['assigned_to'] ?? null,
+            'reporter_id' => $request->user()->id,
+            'project_id' => $project->id,
+            'taskable_type' => 'App\\Models\\Project',
+            'taskable_id' => $project->id,
+        ]);
+
+        $task->load(['status', 'assignee', 'reporter']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tâche créée avec succès',
+            'task' => $task,
+        ], 201);
     }
 }

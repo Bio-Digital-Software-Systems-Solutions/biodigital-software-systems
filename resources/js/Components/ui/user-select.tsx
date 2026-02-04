@@ -1,14 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/Components/ui/select';
-import { Input } from '@/Components/ui/input';
-import { Button } from '@/Components/ui/button';
-import { Search, User, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { AsyncSearchableSelect, AsyncSelectOption } from '@/Components/ui/searchable-select';
 
 interface User {
     id: number;
@@ -24,144 +15,112 @@ interface UserSelectProps {
     selectedUser?: User | null;
     placeholder?: string;
     className?: string;
+    excludeUserIds?: number[];
 }
 
-export function UserSelect({ onUserSelect, selectedUser, placeholder = "Sélectionner un utilisateur...", className }: UserSelectProps) {
-    const [users, setUsers] = useState<User[]>([]);
+export function UserSelect({
+    onUserSelect,
+    selectedUser,
+    placeholder = 'Rechercher un utilisateur...',
+    className,
+    excludeUserIds = [],
+}: UserSelectProps) {
     const [allUsers, setAllUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [search, setSearch] = useState('');
-    const [showSearch, setShowSearch] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const fetchUsers = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch('/api/users', {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setAllUsers(data);
-                setUsers(data);
-            } else {
-                console.error('Failed to fetch users');
-                setUsers([]);
-                setAllUsers([]);
-            }
-        } catch (error) {
-            console.error('Error fetching users:', error);
-            setUsers([]);
-            setAllUsers([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    // Fetch all users on mount
     useEffect(() => {
+        const fetchUsers = async () => {
+            setIsLoading(true);
+            try {
+                const response = await fetch('/api/users', {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setAllUsers(data);
+                } else {
+                    console.error('Failed to fetch users');
+                    setAllUsers([]);
+                }
+            } catch (error) {
+                console.error('Error fetching users:', error);
+                setAllUsers([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         fetchUsers();
     }, []);
 
-    useEffect(() => {
-        if (search) {
-            const filtered = allUsers.filter(user =>
-                user.name.toLowerCase().includes(search.toLowerCase()) ||
-                user.email.toLowerCase().includes(search.toLowerCase())
-            );
-            setUsers(filtered);
+    // Convert selected user to AsyncSelectOption format
+    const selectedOption: AsyncSelectOption | null = selectedUser
+        ? {
+              value: selectedUser.id,
+              label: selectedUser.name,
+              email: selectedUser.email,
+          }
+        : null;
+
+    // Load options based on search input
+    const loadOptions = useCallback(
+        async (inputValue: string): Promise<AsyncSelectOption[]> => {
+            const filteredUsers = allUsers.filter((user) => {
+                // Exclude specified user IDs
+                if (excludeUserIds.includes(user.id)) {
+                    return false;
+                }
+
+                // Filter by search term
+                if (inputValue) {
+                    const searchLower = inputValue.toLowerCase();
+                    return (
+                        user.name.toLowerCase().includes(searchLower) ||
+                        user.email.toLowerCase().includes(searchLower) ||
+                        user.first_name.toLowerCase().includes(searchLower) ||
+                        user.last_name.toLowerCase().includes(searchLower)
+                    );
+                }
+
+                return true;
+            });
+
+            return filteredUsers.map((user) => ({
+                value: user.id,
+                label: user.name,
+                email: user.email,
+            }));
+        },
+        [allUsers, excludeUserIds]
+    );
+
+    // Handle selection change
+    const handleChange = (option: AsyncSelectOption | null) => {
+        if (option) {
+            const user = allUsers.find((u) => u.id === option.value);
+            onUserSelect(user || null);
         } else {
-            setUsers(allUsers);
-        }
-    }, [search, allUsers]);
-
-    const handleSelect = (userId: string) => {
-        if (userId === 'clear') {
             onUserSelect(null);
-            setShowSearch(false);
-            setSearch('');
-            return;
-        }
-
-        const user = users.find(u => u.id.toString() === userId);
-        if (user) {
-            onUserSelect(user);
-            setShowSearch(false);
-            setSearch('');
         }
     };
 
     return (
-        <div className={`space-y-2 ${className}`}>
-            <div className="flex items-center space-x-2">
-                <div className="flex-1">
-                    <Select
-                        value={selectedUser ? selectedUser.id.toString() : ''}
-                        onValueChange={handleSelect}
-                    >
-                        <SelectTrigger className="w-full">
-                            <div className="flex items-center space-x-2">
-                                <User className="h-4 w-4" />
-                                {selectedUser ? (
-                                    <span>{selectedUser.name}</span>
-                                ) : (
-                                    <span className="text-gray-500">{placeholder}</span>
-                                )}
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                            {selectedUser && (
-                                <SelectItem value="clear">
-                                    <div className="flex items-center space-x-2 text-red-600">
-                                        <X className="h-4 w-4" />
-                                        <span>Effacer la sélection</span>
-                                    </div>
-                                </SelectItem>
-                            )}
-                            {loading ? (
-                                <SelectItem value="loading">
-                                    Chargement...
-                                </SelectItem>
-                            ) : users.length === 0 ? (
-                                <SelectItem value="empty">
-                                    Aucun utilisateur trouvé
-                                </SelectItem>
-                            ) : (
-                                users.map((user) => (
-                                    <SelectItem key={user.id} value={user.id.toString()}>
-                                        <div className="flex items-center space-x-2">
-                                            <User className="h-4 w-4" />
-                                            <div>
-                                                <div className="font-medium">{user.name}</div>
-                                                <div className="text-sm text-gray-500">{user.email}</div>
-                                            </div>
-                                        </div>
-                                    </SelectItem>
-                                ))
-                            )}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowSearch(!showSearch)}
-                    className="flex-shrink-0"
-                >
-                    <Search className="h-4 w-4" />
-                </Button>
-            </div>
-            {showSearch && (
-                <Input
-                    type="text"
-                    placeholder="Rechercher un utilisateur..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full"
-                />
-            )}
+        <div className={className}>
+            <AsyncSearchableSelect
+                value={selectedOption}
+                onChange={handleChange}
+                loadOptions={loadOptions}
+                placeholder={placeholder}
+                noOptionsMessage="Aucun utilisateur trouvé"
+                loadingMessage="Recherche..."
+                isClearable
+                defaultOptions={!isLoading}
+            />
         </div>
     );
 }

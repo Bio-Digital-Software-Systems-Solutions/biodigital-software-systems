@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Event\EventCheckInController;
 use App\Http\Controllers\Api\Event\EventRegistrationController;
 use App\Http\Controllers\Api\Event\EventTicketController;
 use App\Http\Controllers\Api\PastoralCareController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProjectAppointmentController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\SprintController;
@@ -105,6 +106,27 @@ Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Profile API - Manage user's languages, interests, skills, privacy
+    Route::prefix('profile')->name('api.profile.')->group(function () {
+        // Languages
+        Route::get('/languages', [ProfileController::class, 'getLanguages'])->name('languages.index');
+        Route::put('/languages', [ProfileController::class, 'updateLanguages'])->name('languages.update');
+
+        // Interests
+        Route::get('/interests', [ProfileController::class, 'getInterests'])->name('interests.index');
+        Route::put('/interests', [ProfileController::class, 'updateInterests'])->name('interests.update');
+        Route::post('/interests', [ProfileController::class, 'createInterest'])->name('interests.store');
+
+        // Skills
+        Route::get('/skills', [ProfileController::class, 'getSkills'])->name('skills.index');
+        Route::put('/skills', [ProfileController::class, 'updateSkills'])->name('skills.update');
+        Route::post('/skills', [ProfileController::class, 'createSkill'])->name('skills.store');
+
+        // Privacy Settings
+        Route::get('/privacy', [ProfileController::class, 'getPrivacySettings'])->name('privacy.index');
+        Route::put('/privacy', [ProfileController::class, 'updatePrivacySettings'])->name('privacy.update');
+    });
+
     // Projects API
     Route::apiResource('projects', ProjectController::class)->names([
         'index' => 'api.projects.index',
@@ -114,6 +136,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'destroy' => 'api.projects.destroy',
     ]);
     Route::get('projects/{project}/tasks', [ProjectController::class, 'tasks'])->name('api.projects.tasks');
+    Route::post('projects/{project}/tasks', [ProjectController::class, 'storeTask'])->name('api.projects.storeTask');
     Route::patch('projects/{project}/status', [ProjectController::class, 'updateStatus'])->name('api.projects.updateStatus');
 
     // Project participants
@@ -152,6 +175,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Task attachments
     Route::post('tasks/{task}/attachments', [TaskController::class, 'uploadAttachment'])->name('api.tasks.uploadAttachment');
     Route::delete('tasks/{task}/attachments/{attachment}', [TaskController::class, 'deleteAttachment'])->name('api.tasks.deleteAttachment');
+
+    // Task activities (history)
+    Route::get('tasks/{task}/activities', [TaskController::class, 'getActivities'])->name('api.tasks.activities');
 
     // Sprints API - Burn-down/Burn-up charts
     Route::get('sprints/{sprint}/burndown', [SprintController::class, 'burndownChart'])->name('api.sprints.burndown');

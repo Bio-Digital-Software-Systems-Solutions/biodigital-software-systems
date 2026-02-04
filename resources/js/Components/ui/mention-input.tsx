@@ -3,6 +3,7 @@ import axios from 'axios';
 
 interface MentionableUser {
     id: number;
+    uuid: string;
     first_name: string;
     last_name: string;
     full_name: string;
@@ -26,8 +27,8 @@ interface MentionInputProps {
 function renderOverlayContent(content: string): React.ReactNode {
     if (!content) return null;
 
-    // Pattern to match @[Name](id) format
-    const mentionPattern = /@\[([^\]]+)\]\((\d+)\)/g;
+    // Pattern to match @[Name](uuid) format - supports both numeric ids and UUIDs
+    const mentionPattern = /@\[([^\]]+)\]\(([a-zA-Z0-9-]+)\)/g;
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     let match;
@@ -206,8 +207,8 @@ export function MentionInput({
         const beforeMention = value.slice(0, mentionStartIndex);
         const afterMention = value.slice(cursorPosition);
 
-        // Insert mention in format @[Full Name](user_id)
-        const mentionText = `@[${user.full_name}](${user.id}) `;
+        // Insert mention in format @[Full Name](user_uuid)
+        const mentionText = `@[${user.full_name}](${user.uuid}) `;
         const newValue = beforeMention + mentionText + afterMention;
 
         // Add user to mentions list if not already there
@@ -248,7 +249,7 @@ export function MentionInput({
     }, []);
 
     // Check if content has any mentions (to determine if we need the overlay)
-    const hasMentions = /@\[[^\]]+\]\(\d+\)/.test(value);
+    const hasMentions = /@\[[^\]]+\]\([a-zA-Z0-9-]+\)/.test(value);
 
     return (
         <div className="relative">
@@ -345,8 +346,8 @@ export function MentionInput({
 
 // Helper function to render content with highlighted mentions as clickable links
 export function renderMentionedContent(content: string): React.ReactNode {
-    // Pattern to match @[Name](id) format
-    const mentionPattern = /@\[([^\]]+)\]\((\d+)\)/g;
+    // Pattern to match @[Name](uuid) format - supports both numeric ids and UUIDs
+    const mentionPattern = /@\[([^\]]+)\]\(([a-zA-Z0-9-]+)\)/g;
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     let match;
@@ -358,11 +359,11 @@ export function renderMentionedContent(content: string): React.ReactNode {
         }
 
         // Add the mention as a clickable link to user profile
-        const [fullMatch, name, userId] = match;
+        const [fullMatch, name, userIdentifier] = match;
         parts.push(
             <a
-                key={`${userId}-${match.index}`}
-                href={`/profile/${userId}`}
+                key={`${userIdentifier}-${match.index}`}
+                href={`/profile/${userIdentifier}`}
                 className="text-primary font-medium bg-primary/10 rounded px-1 hover:underline cursor-pointer"
                 onClick={(e) => {
                     e.stopPropagation();

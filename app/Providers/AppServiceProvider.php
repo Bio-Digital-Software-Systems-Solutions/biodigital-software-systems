@@ -2,8 +2,16 @@
 
 namespace App\Providers;
 
+use App\Models\Appointment;
+use App\Models\PastoralCare;
+use App\Models\Project;
 use App\Models\Quiz;
+use App\Models\Scheduling\DepartmentTodo;
 use App\Models\Task;
+use App\Observers\AppointmentObserver;
+use App\Observers\DepartmentTodoObserver;
+use App\Observers\PastoralCareObserver;
+use App\Observers\ProjectObserver;
 use App\Observers\QuizObserver;
 use App\Observers\TaskObserver;
 use Illuminate\Support\Facades\Gate;
@@ -45,6 +53,10 @@ class AppServiceProvider extends ServiceProvider
         // Register observers
         Task::observe(TaskObserver::class);
         Quiz::observe(QuizObserver::class);
+        Project::observe(ProjectObserver::class);
+        DepartmentTodo::observe(DepartmentTodoObserver::class);
+        Appointment::observe(AppointmentObserver::class);
+        PastoralCare::observe(PastoralCareObserver::class);
 
         // Register policies
         foreach ($this->policies as $model => $policy) {

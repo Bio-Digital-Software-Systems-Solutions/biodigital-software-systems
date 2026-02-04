@@ -5,11 +5,81 @@ import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 import TwoFactorAuthenticationForm from './Partials/TwoFactorAuthenticationForm';
+import ProfileLanguagesForm from './Partials/ProfileLanguagesForm';
+import ProfileInterestsForm from './Partials/ProfileInterestsForm';
+import ProfileSkillsForm from './Partials/ProfileSkillsForm';
+import ProfilePrivacyForm from './Partials/ProfilePrivacyForm';
+
+interface SpokenLanguage {
+    id: number;
+    uuid: string;
+    name: string;
+    code: string;
+    native_name: string | null;
+}
+
+interface Interest {
+    id: number;
+    uuid: string;
+    name: string;
+    icon: string | null;
+}
+
+interface ProfileSkill {
+    id: number;
+    uuid: string;
+    name: string;
+    category: 'soft' | 'hard' | 'technical';
+}
+
+interface UserLanguage {
+    id: number;
+    level: 'beginner' | 'intermediate' | 'advanced' | 'native';
+}
+
+interface UserSkill {
+    id: number;
+    level: 'beginner' | 'intermediate' | 'advanced' | 'expert' | null;
+}
+
+interface PrivacySettings {
+    email: boolean;
+    phone_number: boolean;
+    birth_date: boolean;
+    address: boolean;
+    bio: boolean;
+    position: boolean;
+    languages: boolean;
+    interests: boolean;
+    skills: boolean;
+}
+
+interface EditProps {
+    mustVerifyEmail: boolean;
+    status?: string;
+    availableLanguages: SpokenLanguage[];
+    availableInterests: Interest[];
+    availableSkills: ProfileSkill[];
+    userLanguages: UserLanguage[];
+    userInterests: number[];
+    userSkills: UserSkill[];
+    privacySettings: PrivacySettings;
+    defaultPrivacySettings: PrivacySettings;
+    [key: string]: unknown;
+}
 
 export default function Edit({
     mustVerifyEmail,
     status,
-}: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
+    availableLanguages = [],
+    availableInterests = [],
+    availableSkills = [],
+    userLanguages = [],
+    userInterests = [],
+    userSkills = [],
+    privacySettings,
+    defaultPrivacySettings,
+}: PageProps<EditProps>) {
     return (
         <DashboardLayout>
             <Head title="Profile" />
@@ -26,6 +96,7 @@ export default function Edit({
                 </div>
 
                 <div className="space-y-4 sm:space-y-6">
+                    {/* Basic Profile Information */}
                     <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
@@ -34,14 +105,53 @@ export default function Edit({
                         />
                     </div>
 
+                    {/* Languages */}
+                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+                        <ProfileLanguagesForm
+                            availableLanguages={availableLanguages}
+                            userLanguages={userLanguages}
+                            className=""
+                        />
+                    </div>
+
+                    {/* Interests */}
+                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+                        <ProfileInterestsForm
+                            availableInterests={availableInterests}
+                            userInterests={userInterests}
+                            className=""
+                        />
+                    </div>
+
+                    {/* Skills */}
+                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+                        <ProfileSkillsForm
+                            availableSkills={availableSkills}
+                            userSkills={userSkills}
+                            className=""
+                        />
+                    </div>
+
+                    {/* Privacy Settings */}
+                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+                        <ProfilePrivacyForm
+                            privacySettings={privacySettings}
+                            defaultPrivacySettings={defaultPrivacySettings}
+                            className=""
+                        />
+                    </div>
+
+                    {/* Password */}
                     <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
                         <UpdatePasswordForm className="" />
                     </div>
 
+                    {/* 2FA */}
                     <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
                         <TwoFactorAuthenticationForm className="" />
                     </div>
 
+                    {/* Delete Account */}
                     <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
                         <DeleteUserForm className="" />
                     </div>

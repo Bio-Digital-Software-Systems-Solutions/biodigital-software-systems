@@ -904,17 +904,17 @@ export default function Show({ task, users, activities }: Props) {
                                 {/* Assigned User (highlighted) */}
                                 {task.assigned_user && (
                                     <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
-                                        <div className="flex items-center gap-3">
+                                        <Link href={route('profile.public', task.assigned_user.uuid)} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                                             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
                                                 {task.assigned_user.first_name?.charAt(0)}{task.assigned_user.last_name?.charAt(0)}
                                             </div>
                                             <div>
-                                                <p className="font-medium dark:text-white">
+                                                <p className="font-medium dark:text-white hover:underline">
                                                     {task.assigned_user.first_name} {task.assigned_user.last_name}
                                                 </p>
                                                 <p className="text-xs text-gray-600 dark:text-gray-400">Assigné</p>
                                             </div>
-                                        </div>
+                                        </Link>
                                     </div>
                                 )}
 
@@ -925,19 +925,19 @@ export default function Show({ task, users, activities }: Props) {
                                             key={participant.id}
                                             className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded"
                                         >
-                                            <div className="flex items-center gap-3">
+                                            <Link href={route('profile.public', participant.user.uuid)} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                                                 <div className="w-10 h-10 rounded-full bg-gray-500 flex items-center justify-center text-white font-semibold">
                                                     {participant.user.first_name?.charAt(0)}{participant.user.last_name?.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <p className="font-medium dark:text-white">
+                                                    <p className="font-medium dark:text-white hover:underline">
                                                         {participant.user.first_name} {participant.user.last_name}
                                                     </p>
                                                     <p className="text-xs text-gray-600 dark:text-gray-400 capitalize">
                                                         {participant.role}
                                                     </p>
                                                 </div>
-                                            </div>
+                                            </Link>
                                             <button
                                                 onClick={() => handleRemoveParticipant(participant.id)}
                                                 className="text-red-600 hover:text-red-700"
@@ -1050,6 +1050,19 @@ export default function Show({ task, users, activities }: Props) {
                                                     const isCompleted = activity.new_status?.name?.toLowerCase() === 'completed';
                                                     const isInProgress = activity.new_status?.name?.toLowerCase() === 'in_progress';
 
+                                                    // Function to determine if a color is light and needs dark text
+                                                    const getContrastTextColor = (hexColor: string): string => {
+                                                        // Remove # if present
+                                                        const hex = hexColor.replace('#', '');
+                                                        const r = parseInt(hex.substring(0, 2), 16);
+                                                        const g = parseInt(hex.substring(2, 4), 16);
+                                                        const b = parseInt(hex.substring(4, 6), 16);
+                                                        // Calculate relative luminance
+                                                        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                                                        // For light colors like yellow, use dark text
+                                                        return luminance > 0.6 ? '#1f2937' : hexColor;
+                                                    };
+
                                                     return (
                                                         <div key={activity.id} className="relative flex items-start gap-4">
                                                             {/* Timeline dot */}
@@ -1092,7 +1105,7 @@ export default function Show({ task, users, activities }: Props) {
                                                                                         className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
                                                                                         style={{
                                                                                             backgroundColor: `${activity.old_status.color}20`,
-                                                                                            color: activity.old_status.color,
+                                                                                            color: getContrastTextColor(activity.old_status.color),
                                                                                         }}
                                                                                     >
                                                                                         {activity.old_status.name}
@@ -1104,7 +1117,7 @@ export default function Show({ task, users, activities }: Props) {
                                                                                 className="inline-flex px-2 py-0.5 text-xs font-medium rounded-full"
                                                                                 style={{
                                                                                     backgroundColor: `${activity.new_status.color}20`,
-                                                                                    color: activity.new_status.color,
+                                                                                    color: getContrastTextColor(activity.new_status.color),
                                                                                 }}
                                                                             >
                                                                                 {activity.new_status.name}

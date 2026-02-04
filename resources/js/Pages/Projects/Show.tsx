@@ -30,8 +30,16 @@ import ProjectCalendarWidget from '@/Components/Calendar/ProjectCalendarWidget';
 import CreateAppointmentModal from '@/Components/Calendar/CreateAppointmentModal';
 import AppointmentDetailModal from '@/Components/Calendar/AppointmentDetailModal';
 import ProjectStatisticsAnalytical, { ProjectAnalyticsData } from '@/Components/Project/ProjectStatisticsAnalytical';
+import CreateTaskModal from '@/Components/Project/CreateTaskModal';
 import { MentionInput, renderMentionedContent } from '@/Components/ui/mention-input';
 import axios from 'axios';
+
+interface Status {
+    id: number;
+    name: string;
+    label?: string;
+    color?: string;
+}
 
 interface Activity {
     id: number;
@@ -85,9 +93,10 @@ interface Props {
     users: User[];
     activities: Activity[];
     projectStatistics?: ProjectAnalyticsData;
+    statuses?: Status[];
 }
 
-export default function ShowProject({ project, users, activities, projectStatistics }: Props) {
+export default function ShowProject({ project, users, activities, projectStatistics, statuses = [] }: Props) {
     const [uploading, setUploading] = useState(false);
     const [commentContent, setCommentContent] = useState('');
     const [commentMentions, setCommentMentions] = useState<number[]>([]);
@@ -98,6 +107,7 @@ export default function ShowProject({ project, users, activities, projectStatist
     const [selectedUserId, setSelectedUserId] = useState('');
     const [selectedRole, setSelectedRole] = useState<'member' | 'contributor' | 'observer'>('member');
     const [statisticsExpanded, setStatisticsExpanded] = useState(true);
+    const [showCreateTask, setShowCreateTask] = useState(false);
     const [tasksExpanded, setTasksExpanded] = useState(true);
     const [historyExpanded, setHistoryExpanded] = useState(false);
     const [calendarExpanded, setCalendarExpanded] = useState(true);
@@ -151,6 +161,10 @@ export default function ShowProject({ project, users, activities, projectStatist
         fetchAppointments();
         setShowAppointmentDetail(false);
         setSelectedAppointment(null);
+    };
+
+    const handleTaskCreated = () => {
+        router.reload({ preserveState: true, preserveScroll: true } as Parameters<typeof router.reload>[0]);
     };
 
     const handleStatusChange = async (status: string) => {
@@ -486,22 +500,38 @@ export default function ShowProject({ project, users, activities, projectStatist
 
                         {/* Tasks Accordion */}
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                            <button
-                                onClick={() => setTasksExpanded(!tasksExpanded)}
-                                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                            >
+                            <div className="px-6 py-4 flex items-center justify-between">
                                 <h2 className="text-xl font-semibold dark:text-white flex items-center gap-2">
                                     Tâches associées
                                     <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
                                         ({project.tasks?.length || 0})
                                     </span>
                                 </h2>
-                                {tasksExpanded ? (
-                                    <MinusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                                ) : (
-                                    <PlusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                                )}
-                            </button>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setShowCreateTask(true)}
+                                        className="flex items-center gap-1"
+                                    >
+                                        <PlusIcon className="h-4 w-4" />
+                                        Ajouter une tâche
+                                    </Button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setTasksExpanded(!tasksExpanded)}
+                                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                        title={tasksExpanded ? 'Réduire' : 'Développer'}
+                                    >
+                                        {tasksExpanded ? (
+                                            <MinusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                        ) : (
+                                            <PlusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
 
                             {tasksExpanded && (
                                 <div className="px-6 pb-6">
@@ -640,34 +670,34 @@ export default function ShowProject({ project, users, activities, projectStatist
                                 {/* Manager */}
                                 {project.manager && (
                                     <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
-                                        <div className="flex items-center gap-3">
+                                        <Link href={route('profile.public', project.manager.uuid)} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                                             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-semibold">
                                                 {project.manager.first_name?.charAt(0)}{project.manager.last_name?.charAt(0)}
                                             </div>
                                             <div>
-                                                <p className="font-medium dark:text-white">
+                                                <p className="font-medium dark:text-white hover:underline">
                                                     {project.manager.first_name} {project.manager.last_name}
                                                 </p>
                                                 <p className="text-xs text-gray-600 dark:text-gray-400">Chef de projet</p>
                                             </div>
-                                        </div>
+                                        </Link>
                                     </div>
                                 )}
 
                                 {/* Reviewer */}
                                 {project.reviewer && (
                                     <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded border border-purple-200 dark:border-purple-800">
-                                        <div className="flex items-center gap-3">
+                                        <Link href={route('profile.public', project.reviewer.uuid)} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                                             <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-semibold">
                                                 {project.reviewer.first_name?.charAt(0)}{project.reviewer.last_name?.charAt(0)}
                                             </div>
                                             <div>
-                                                <p className="font-medium dark:text-white">
+                                                <p className="font-medium dark:text-white hover:underline">
                                                     {project.reviewer.first_name} {project.reviewer.last_name}
                                                 </p>
                                                 <p className="text-xs text-gray-600 dark:text-gray-400">Réviseur</p>
                                             </div>
-                                        </div>
+                                        </Link>
                                     </div>
                                 )}
 
@@ -678,19 +708,19 @@ export default function ShowProject({ project, users, activities, projectStatist
                                             key={participant.id}
                                             className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded"
                                         >
-                                            <div className="flex items-center gap-3">
+                                            <Link href={route('profile.public', participant.user.uuid)} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                                                 <div className="w-10 h-10 rounded-full bg-gray-500 flex items-center justify-center text-white font-semibold">
                                                     {participant.user.first_name?.charAt(0)}{participant.user.last_name?.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <p className="font-medium dark:text-white">
+                                                    <p className="font-medium dark:text-white hover:underline">
                                                         {participant.user.first_name} {participant.user.last_name}
                                                     </p>
                                                     <p className="text-xs text-gray-600 dark:text-gray-400 capitalize">
                                                         {participant.role}
                                                     </p>
                                                 </div>
-                                            </div>
+                                            </Link>
                                             <button
                                                 onClick={() => handleRemoveParticipant(participant.id)}
                                                 className="text-red-600 hover:text-red-700"
@@ -1216,6 +1246,17 @@ export default function ShowProject({ project, users, activities, projectStatist
                 tasks={project.tasks?.map(t => ({ id: t.id, uuid: t.uuid, title: t.title })) || []}
                 users={users}
                 canEdit={true}
+            />
+
+            {/* Create Task Modal */}
+            <CreateTaskModal
+                isOpen={showCreateTask}
+                onClose={() => setShowCreateTask(false)}
+                onSuccess={handleTaskCreated}
+                projectId={project.id}
+                projectUuid={project.uuid}
+                users={users}
+                statuses={statuses}
             />
         </DashboardLayout>
     );

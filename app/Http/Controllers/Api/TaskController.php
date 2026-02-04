@@ -12,6 +12,7 @@ use App\Notifications\TaskCommentAdded;
 use App\Notifications\TaskParticipantAdded;
 use App\Notifications\UserMentionedInComment;
 use App\Services\Comment\MentionService;
+use App\Services\TaskActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -110,13 +111,20 @@ class TaskController extends Controller
     /**
      * Update task status.
      */
-    public function updateStatus(Request $request, Task $task)
+    public function updateStatus(Request $request, Task $task, TaskActivityService $activityService)
     {
         $validated = $request->validate([
             'status_id' => 'required|exists:statuses,id',
         ]);
 
-        $task->update(['status_id' => $validated['status_id']]);
+        $oldStatusId = $task->status_id;
+        $newStatusId = (int) $validated['status_id'];
+
+        // Only log if status actually changed
+        if ($oldStatusId !== $newStatusId) {
+            $task->update(['status_id' => $newStatusId]);
+            $activityService->logStatusChange($task, $oldStatusId, $newStatusId);
+        }
 
         return response()->json($task->load('status'));
     }
@@ -124,13 +132,20 @@ class TaskController extends Controller
     /**
      * Update task progress.
      */
-    public function updateProgress(Request $request, Task $task)
+    public function updateProgress(Request $request, Task $task, TaskActivityService $activityService)
     {
         $validated = $request->validate([
             'progress' => 'required|integer|min:0|max:100',
         ]);
 
-        $task->update(['progress' => $validated['progress']]);
+        $oldProgress = $task->progress;
+        $newProgress = (int) $validated['progress'];
+
+        // Only log if progress actually changed
+        if ($oldProgress !== $newProgress) {
+            $task->update(['progress' => $newProgress]);
+            $activityService->logProgressChange($task, $oldProgress, $newProgress);
+        }
 
         return response()->json($task);
     }
@@ -260,6 +275,7 @@ class TaskController extends Controller
 
         return response()->json($users->map(fn ($user) => [
             'id' => $user->id,
+            'uuid' => $user->uuid,
             'first_name' => $user->first_name,
             'last_name' => $user->last_name,
             'full_name' => $user->first_name.' '.$user->last_name,
@@ -275,7 +291,7 @@ class TaskController extends Controller
     /**
      * Add a participant to a task.
      */
-    public function addParticipant(Request $request, Task $task)
+    public function addParticipant(Request $request, Task $task, TaskActivityService $activityService)
     {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
@@ -296,6 +312,9 @@ class TaskController extends Controller
             'role' => $validated['role'],
         ]);
 
+        // Log the activity
+        $activityService->logParticipantAdded($task, $participant);
+
         // Send notification to the new participant
         $user = User::find($validated['user_id']);
         $addedBy = Auth::user();
@@ -310,7 +329,7 @@ class TaskController extends Controller
     /**
      * Remove a participant from a task.
      */
-    public function removeParticipant(Task $task, $userId)
+    public function removeParticipant(Task $task, $userId, TaskActivityService $activityService)
     {
         $participant = TaskParticipant::where('task_id', $task->id)
             ->where('user_id', $userId)
@@ -320,7 +339,16 @@ class TaskController extends Controller
             return response()->json(['message' => 'Participant not found.'], 404);
         }
 
+        // Get the user info before deleting
+        $user = User::find($userId);
+        $role = $participant->role;
+
         $participant->delete();
+
+        // Log the activity
+        if ($user) {
+            $activityService->logParticipantRemoved($task, $user, $role);
+        }
 
         return response()->json(null, 204);
     }
@@ -332,7 +360,7 @@ class TaskController extends Controller
     /**
      * Upload an attachment to a task.
      */
-    public function uploadAttachment(Request $request, Task $task)
+    public function uploadAttachment(Request $request, Task $task, TaskActivityService $activityService)
     {
         $request->validate([
             'file' => 'required|file|max:51200', // Max 50MB
@@ -351,21 +379,51 @@ class TaskController extends Controller
             'file_size' => $file->getSize(),
         ]);
 
+        // Log the activity
+        $activityService->logAttachmentAdded($task, $attachment);
+
         return response()->json($attachment->load('user'), 201);
     }
 
     /**
      * Delete an attachment.
      */
-    public function deleteAttachment(Task $task, TaskAttachment $attachment)
+    public function deleteAttachment(Task $task, TaskAttachment $attachment, TaskActivityService $activityService)
     {
         if ($attachment->user_id !== auth()->id() && ! auth()->user()->can('delete attachments')) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $fileName = $attachment->file_name;
+
         Storage::disk('public')->delete($attachment->file_path);
         $attachment->delete();
 
+        // Log the activity
+        $activityService->logAttachmentRemoved($task, $fileName);
+
         return response()->json(null, 204);
+    }
+
+    /**
+     * Get all activities for a task.
+     */
+    public function getActivities(Task $task, TaskActivityService $activityService)
+    {
+        $activities = $activityService->getTaskActivities($task);
+
+        return response()->json($activities->map(function ($activity) {
+            return [
+                'id' => $activity->id,
+                'description' => $activity->description,
+                'event' => $activity->event,
+                'properties' => $activity->properties,
+                'causer' => $activity->causer ? [
+                    'id' => $activity->causer->id,
+                    'name' => $activity->causer->first_name.' '.$activity->causer->last_name,
+                ] : ['id' => null, 'name' => 'Système'],
+                'created_at' => $activity->created_at->toIso8601String(),
+            ];
+        }));
     }
 }

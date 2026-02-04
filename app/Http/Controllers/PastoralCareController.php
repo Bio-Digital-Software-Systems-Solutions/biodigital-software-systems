@@ -542,6 +542,21 @@ class PastoralCareController extends Controller
             abort(403, 'Accès non autorisé au tableau de bord MLR.');
         }
 
+        // Check who can view all appointments:
+        // - admin/SuperAdmin roles
+        // - Users with "view all pastoral care" or "manage pastoral care" permission
+        $canViewAllAppointments = $user->hasRole(['admin', 'SuperAdmin']) ||
+            $user->can('view all pastoral care') ||
+            $user->can('manage pastoral care');
+
+        // Check if user is a pastor or mlr_agent (they see only their own appointments)
+        $isPastorOrAgent = $user->hasRole(['pastor', 'Pastor', 'mlr_agent']);
+
+        // Users must either have full access OR be a pastor/agent to access the dashboard
+        if (! $canViewAllAppointments && ! $isPastorOrAgent) {
+            abort(403, 'Accès non autorisé au tableau de bord MLR.');
+        }
+
         $period = $request->get('period', 'month');
 
         // Get all pastors/agents for transfer functionality
@@ -552,11 +567,23 @@ class PastoralCareController extends Controller
             ->orderBy('first_name')
             ->get();
 
-        // Get comprehensive statistics
-        $stats = $statisticsService->getMlrDashboardStats($period);
+        // Determine if we need to filter by user
+        // Pastors and mlr_agents (who don't have full access) only see their own appointments
+        $filterByUserId = ! $canViewAllAppointments ? $user->id : null;
 
-        // Get all appointments for the MLR view (with pagination)
-        $appointments = PastoralCare::with(['user', 'pastor', 'transferredFrom', 'transferredTo', 'parent'])
+        // Get comprehensive statistics (filtered for pastors/agents)
+        $stats = $statisticsService->getMlrDashboardStats($period, $filterByUserId);
+
+        // Build appointments query with role-based filtering
+        $appointmentsQuery = PastoralCare::with(['user', 'pastor', 'transferredFrom', 'transferredTo', 'parent', 'assignedAgent']);
+
+        // Pastors and mlr_agents (who don't have full access) only see their own appointments
+        // Uses the polymorphic assigned_agent relationship
+        if ($filterByUserId) {
+            $appointmentsQuery->forAssignedAgent($user->id, User::class);
+        }
+
+        $appointments = $appointmentsQuery
             ->orderBy('appointment_date', 'desc')
             ->orderBy('appointment_time', 'desc')
             ->paginate(20);

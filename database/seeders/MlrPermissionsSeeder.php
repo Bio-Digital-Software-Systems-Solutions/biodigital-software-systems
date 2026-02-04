@@ -31,18 +31,17 @@ class MlrPermissionsSeeder extends Seeder
         // Create MLR Agent role
         $mlrAgentRole = Role::firstOrCreate(['name' => 'mlr_agent']);
 
-        // Assign all MLR permissions to mlr_agent role
+        // Assign MLR permissions to mlr_agent role
+        // Note: mlr_agent does NOT have "view all pastoral care" - they only see their own appointments
         $mlrAgentRole->syncPermissions([
-            // MLR-specific permissions
+            // MLR-specific permissions (excluding "view all pastoral care")
             'view mlr dashboard',
-            'view all pastoral care',
             'transfer pastoral care',
             'view pastoral care statistics',
             // Base pastoral care permissions
             'view pastoral care',
             'create pastoral care',
             'edit pastoral care',
-            'manage pastoral care',
             'select pastor for pastoral care',
         ]);
 

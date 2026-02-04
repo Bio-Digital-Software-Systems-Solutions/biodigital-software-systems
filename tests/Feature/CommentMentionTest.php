@@ -227,7 +227,7 @@ describe('MentionService - enrichContent', function () {
         $content = 'Hello @RichJohn!';
         $enriched = $this->mentionService->enrichContent($content, [$user->id]);
 
-        expect($enriched)->toContain("@[RichJohn Doe]({$user->id})");
+        expect($enriched)->toContain("@[RichJohn Doe]({$user->uuid})");
     });
 
     it('returns original content when no mentions', function () {

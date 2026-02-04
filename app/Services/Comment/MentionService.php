@@ -26,10 +26,21 @@ class MentionService
     {
         $mentionedUserIds = [];
 
-        // Pattern 1: Explicit format @[Name](id)
-        preg_match_all('/@\[([^\]]+)\]\((\d+)\)/', $content, $explicitMatches);
+        // Pattern 1: Explicit format @[Name](uuid) - matches UUIDs (alphanumeric with hyphens)
+        preg_match_all('/@\[([^\]]+)\]\(([a-zA-Z0-9-]+)\)/', $content, $explicitMatches);
         if (! empty($explicitMatches[2])) {
-            $mentionedUserIds = array_merge($mentionedUserIds, array_map('intval', $explicitMatches[2]));
+            // Convert UUIDs to user IDs by looking up each UUID
+            foreach ($explicitMatches[2] as $identifier) {
+                // Check if it's a numeric ID (for backward compatibility) or UUID
+                if (ctype_digit($identifier)) {
+                    $mentionedUserIds[] = (int) $identifier;
+                } else {
+                    $user = User::where('uuid', $identifier)->first();
+                    if ($user) {
+                        $mentionedUserIds[] = $user->id;
+                    }
+                }
+            }
         }
 
         // Pattern 2: Simple @mention format (find @word patterns not already matched)
@@ -181,7 +192,7 @@ class MentionService
 
     /**
      * Convert plain @mentions to rich format for display.
-     * Transforms @mention to @[Full Name](user_id)
+     * Transforms @mention to @[Full Name](user_uuid)
      *
      * @param  array<int>  $mentionedUserIds
      */
@@ -201,7 +212,7 @@ class MentionService
                 '/@'.preg_quote(($user->first_name ?? '').'.'.($user->last_name ?? ''), '/').'(?!\])/i',
             ];
 
-            $replacement = "@[{$fullName}]({$user->id})";
+            $replacement = "@[{$fullName}]({$user->uuid})";
 
             foreach ($patterns as $pattern) {
                 $content = preg_replace($pattern, $replacement, $content, 1);

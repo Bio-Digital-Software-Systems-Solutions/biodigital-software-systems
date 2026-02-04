@@ -44,11 +44,12 @@ class PastoralCareStatisticsService
     /**
      * Get average duration of appointments for a given period
      */
-    public function getAverageDuration(string $period = 'month'): array
+    public function getAverageDuration(string $period = 'month', ?int $agentId = null): array
     {
         $dates = $this->getPeriodDates($period);
 
         $stats = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->whereIn('status', ['completed', 'confirmed'])
             ->selectRaw('AVG(duration_minutes) as average, MIN(duration_minutes) as min, MAX(duration_minutes) as max, COUNT(*) as count')
@@ -68,11 +69,12 @@ class PastoralCareStatisticsService
      *
      * @return Collection<int, array{theme: string, theme_label: string, count: int, percentage: float}>
      */
-    public function getDistributionByTheme(string $period = 'month'): Collection
+    public function getDistributionByTheme(string $period = 'month', ?int $agentId = null): Collection
     {
         $dates = $this->getPeriodDates($period);
 
         $appointments = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->select('theme', DB::raw('COUNT(*) as count'))
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->whereNotNull('theme')
@@ -94,15 +96,17 @@ class PastoralCareStatisticsService
     /**
      * Get follow-up frequency statistics
      */
-    public function getFollowUpFrequency(string $period = 'month'): array
+    public function getFollowUpFrequency(string $period = 'month', ?int $agentId = null): array
     {
         $dates = $this->getPeriodDates($period);
 
         $totalAppointments = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->count();
 
         $followUpCount = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->isFollowUp()
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->count();
@@ -121,21 +125,24 @@ class PastoralCareStatisticsService
     /**
      * Get transfer statistics
      */
-    public function getTransferStatistics(string $period = 'month'): array
+    public function getTransferStatistics(string $period = 'month', ?int $agentId = null): array
     {
         $dates = $this->getPeriodDates($period);
 
         $totalAppointments = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->count();
 
         $transferredCount = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->transferred()
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->count();
 
         // Get transfers by destination
         $transfersByDestination = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->transferred()
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->select('transferred_to_id', DB::raw('COUNT(*) as count'))
@@ -164,15 +171,81 @@ class PastoralCareStatisticsService
     /**
      * Get incoming (new) appointments that need attention
      */
-    public function getIncomingAppointments(int $limit = 20): Collection
+    public function getIncomingAppointments(int $limit = 20, ?int $agentId = null): Collection
     {
         return PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->pending()
             ->where('appointment_date', '>=', now()->toDateString())
             ->orderBy('appointment_date')
             ->orderBy('appointment_time')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Get availabilities for a specific pastor
+     */
+    public function getPastorAvailabilities(int $pastorId): Collection
+    {
+        $availabilities = PastorAvailability::query()
+            ->where('pastor_id', $pastorId)
+            ->active()
+            ->with('pastor')
+            ->get();
+
+        if ($availabilities->isEmpty()) {
+            return collect([]);
+        }
+
+        $pastor = $availabilities->first()->pastor;
+
+        return collect([[
+            'pastor_id' => $pastorId,
+            'pastor_name' => $pastor ? "{$pastor->first_name} {$pastor->last_name}" : 'Inconnu',
+            'availabilities' => $availabilities->map(function ($availability) use ($pastorId) {
+                $slotsWithStatus = $this->getTimeSlotsWithStatus($availability, $pastorId);
+
+                return [
+                    'id' => $availability->id,
+                    'type' => $availability->type,
+                    'day_of_week' => $availability->day_of_week,
+                    'day_label' => $availability->day_name ?? null,
+                    'specific_date' => $availability->specific_date?->toDateString(),
+                    'start_time' => $availability->start_time,
+                    'end_time' => $availability->end_time,
+                    'slot_duration' => $availability->slot_duration,
+                    'consultation_mode' => $availability->consultation_mode,
+                    'location' => $availability->location,
+                    'room' => $availability->room,
+                    'meeting_link' => $availability->meeting_link,
+                    'notes' => $availability->notes,
+                    'time_slots' => $slotsWithStatus,
+                    'slots_count' => count($slotsWithStatus),
+                ];
+            })->values(),
+            'total_slots_per_week' => $this->calculateWeeklySlots($availabilities),
+        ]]);
+    }
+
+    /**
+     * Get availabilities for a specific agent (User with any role).
+     * This is a wrapper around getPastorAvailabilities that works for any agent type.
+     */
+    public function getAgentAvailabilities(int $agentId): Collection
+    {
+        // Check if the agent has availabilities defined (pastors/MLR agents)
+        $hasAvailabilities = PastorAvailability::query()
+            ->where('pastor_id', $agentId)
+            ->active()
+            ->exists();
+
+        if (! $hasAvailabilities) {
+            return collect([]);
+        }
+
+        // Reuse the pastor availabilities logic
+        return $this->getPastorAvailabilities($agentId);
     }
 
     /**
@@ -303,11 +376,12 @@ class PastoralCareStatisticsService
     /**
      * Get status distribution statistics
      */
-    public function getStatusDistribution(string $period = 'month'): array
+    public function getStatusDistribution(string $period = 'month', ?int $agentId = null): array
     {
         $dates = $this->getPeriodDates($period);
 
         $stats = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->select('status', DB::raw('COUNT(*) as count'))
             ->groupBy('status')
@@ -345,7 +419,7 @@ class PastoralCareStatisticsService
     /**
      * Get trend data for charts (appointments over time)
      */
-    public function getTrendData(string $period = 'month', string $groupBy = 'day'): Collection
+    public function getTrendData(string $period = 'month', string $groupBy = 'day', ?int $agentId = null): Collection
     {
         $dates = $this->getPeriodDates($period);
 
@@ -356,6 +430,7 @@ class PastoralCareStatisticsService
         };
 
         return PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->select(
                 DB::raw("DATE_FORMAT(appointment_date, '{$format}') as period"),
@@ -372,43 +447,54 @@ class PastoralCareStatisticsService
 
     /**
      * Get comprehensive MLR dashboard statistics
+     *
+     * @param  string  $period  The period to calculate stats for
+     * @param  int|null  $pastorId  Optional pastor ID to filter stats (for pastors viewing their own data)
      */
-    public function getMlrDashboardStats(string $period = 'month'): array
+    public function getMlrDashboardStats(string $period = 'month', ?int $agentId = null): array
     {
         $dates = $this->getPeriodDates($period);
 
+        // Build base query with optional pastor filter
+        $baseQuery = fn () => PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId));
+
         // Global counts
-        $total = PastoralCare::query()
+        $total = (clone $baseQuery())
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->count();
 
-        $pending = PastoralCare::pending()
+        $pending = (clone $baseQuery())
+            ->pending()
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->count();
 
-        $confirmed = PastoralCare::confirmed()
+        $confirmed = (clone $baseQuery())
+            ->confirmed()
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->count();
 
-        $completed = PastoralCare::completed()
+        $completed = (clone $baseQuery())
+            ->completed()
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->count();
 
-        $cancelled = PastoralCare::cancelled()
+        $cancelled = (clone $baseQuery())
+            ->cancelled()
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->count();
 
         // This week stats
         $thisWeekStart = now()->startOfWeek();
         $thisWeekEnd = now()->endOfWeek();
-        $thisWeekCount = PastoralCare::query()
+        $thisWeekCount = (clone $baseQuery())
             ->whereBetween('appointment_date', [$thisWeekStart, $thisWeekEnd])
             ->count();
 
         // Next week stats
         $nextWeekStart = now()->addWeek()->startOfWeek();
         $nextWeekEnd = now()->addWeek()->endOfWeek();
-        $nextWeekCount = PastoralCare::query()
+        $nextWeekCount = (clone $baseQuery())
             ->whereBetween('appointment_date', [$nextWeekStart, $nextWeekEnd])
             ->count();
 
@@ -433,23 +519,23 @@ class PastoralCareStatisticsService
                 'next_week' => $nextWeekCount,
                 'completion_rate' => $completionRate,
             ],
-            'average_duration' => $this->getAverageDuration($period),
-            'by_pastor' => $this->getAppointmentsByPastor($period),
-            'by_theme' => $this->getDistributionByTheme($period),
-            'by_status' => $this->getStatusDistribution($period),
-            'follow_ups' => $this->getFollowUpFrequency($period),
-            'transfers' => $this->getTransferStatistics($period),
-            'trend' => $this->getTrendData($period),
-            'incoming' => $this->getIncomingAppointments(10),
-            'availabilities' => $this->getAllAvailabilities(),
-            'analytics' => $this->getAnalyticsData($period),
+            'average_duration' => $this->getAverageDuration($period, $agentId),
+            'by_pastor' => $agentId ? [] : $this->getAppointmentsByPastor($period),
+            'by_theme' => $this->getDistributionByTheme($period, $agentId),
+            'by_status' => $this->getStatusDistribution($period, $agentId),
+            'follow_ups' => $this->getFollowUpFrequency($period, $agentId),
+            'transfers' => $this->getTransferStatistics($period, $agentId),
+            'trend' => $this->getTrendData($period, 'day', $agentId),
+            'incoming' => $this->getIncomingAppointments(10, $agentId),
+            'availabilities' => $agentId ? $this->getAgentAvailabilities($agentId) : $this->getAllAvailabilities(),
+            'analytics' => $this->getAnalyticsData($period, $agentId),
         ];
     }
 
     /**
      * Get analytics data for the dashboard charts
      */
-    public function getAnalyticsData(string $period = 'month'): array
+    public function getAnalyticsData(string $period = 'month', ?int $agentId = null): array
     {
         $dates = $this->getPeriodDates($period);
 
@@ -473,6 +559,7 @@ class PastoralCareStatisticsService
 
         // Appointments by status for donut chart
         $byStatus = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->select('status', DB::raw('COUNT(*) as count'))
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->groupBy('status')
@@ -490,6 +577,7 @@ class PastoralCareStatisticsService
 
         // Appointments by theme for donut chart
         $byTheme = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->select('theme', DB::raw('COUNT(*) as count'))
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->whereNotNull('theme')
@@ -506,8 +594,8 @@ class PastoralCareStatisticsService
         // Pastor colors
         $pastorColors = ['#3B82F6', '#10B981', '#F97316', '#8B5CF6', '#EF4444', '#F59E0B', '#06B6D4', '#EC4899'];
 
-        // Appointments by pastor for donut chart
-        $byPastor = PastoralCare::query()
+        // Appointments by pastor for donut chart (skip if filtering by pastor)
+        $byPastor = $agentId ? [] : PastoralCare::query()
             ->select('pastor_id', DB::raw('COUNT(*) as count'))
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->groupBy('pastor_id')
@@ -537,6 +625,7 @@ class PastoralCareStatisticsService
 
         // Appointments by mode for donut chart
         $byMode = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->select('location_type', DB::raw('COUNT(*) as count'))
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->groupBy('location_type')
@@ -551,10 +640,13 @@ class PastoralCareStatisticsService
 
         // Global progress
         $total = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->count();
 
-        $completed = PastoralCare::completed()
+        $completed = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
+            ->completed()
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->count();
 
@@ -565,21 +657,21 @@ class PastoralCareStatisticsService
         ];
 
         // Velocity data
-        $velocity = $this->calculateVelocity();
+        $velocity = $this->calculateVelocity($agentId);
 
         // Evolution data for different periods
         $appointmentEvolution = [
-            'weekly' => $this->getEvolutionData('weekly'),
-            'monthly' => $this->getEvolutionData('monthly'),
-            'quarterly' => $this->getEvolutionData('quarterly'),
+            'weekly' => $this->getEvolutionData('weekly', $agentId),
+            'monthly' => $this->getEvolutionData('monthly', $agentId),
+            'quarterly' => $this->getEvolutionData('quarterly', $agentId),
         ];
 
-        // Completion by pastor
-        $completionByPastor = $this->getCompletionByPastor($period);
+        // Completion by pastor (skip if filtering by pastor)
+        $completionByPastor = $agentId ? [] : $this->getCompletionByPastor($period);
 
         // Follow-up and transfer data
-        $followUps = $this->getFollowUpFrequency($period);
-        $transfers = $this->getTransferStatistics($period);
+        $followUps = $this->getFollowUpFrequency($period, $agentId);
+        $transfers = $this->getTransferStatistics($period, $agentId);
 
         return [
             'appointments_by_status' => $byStatus,
@@ -598,25 +690,31 @@ class PastoralCareStatisticsService
     /**
      * Calculate velocity metrics (completed appointments per period)
      */
-    protected function calculateVelocity(): array
+    protected function calculateVelocity(?int $agentId = null): array
     {
         // Daily velocity (last 30 days)
         $dailyStart = now()->subDays(30);
-        $dailyCompleted = PastoralCare::completed()
+        $dailyCompleted = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
+            ->completed()
             ->where('appointment_date', '>=', $dailyStart)
             ->count();
         $dailyValue = round($dailyCompleted / 30, 1);
 
         // Weekly velocity (last 8 weeks)
         $weeklyStart = now()->subWeeks(8);
-        $weeklyCompleted = PastoralCare::completed()
+        $weeklyCompleted = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
+            ->completed()
             ->where('appointment_date', '>=', $weeklyStart)
             ->count();
         $weeklyValue = round($weeklyCompleted / 8, 1);
 
         // Monthly velocity (last 12 months)
         $monthlyStart = now()->subMonths(12);
-        $monthlyCompleted = PastoralCare::completed()
+        $monthlyCompleted = PastoralCare::query()
+            ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
+            ->completed()
             ->where('appointment_date', '>=', $monthlyStart)
             ->count();
         $monthlyValue = round($monthlyCompleted / 12, 1);
@@ -649,7 +747,7 @@ class PastoralCareStatisticsService
     /**
      * Get evolution data for area chart
      */
-    protected function getEvolutionData(string $groupBy): array
+    protected function getEvolutionData(string $groupBy, ?int $agentId = null): array
     {
         $data = [];
 
@@ -661,10 +759,13 @@ class PastoralCareStatisticsService
                     $end = now()->subWeeks($i)->endOfWeek();
 
                     $created = PastoralCare::query()
+                        ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
                         ->whereBetween('created_at', [$start, $end])
                         ->count();
 
-                    $completed = PastoralCare::completed()
+                    $completed = PastoralCare::query()
+                        ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
+                        ->completed()
                         ->whereBetween('appointment_date', [$start, $end])
                         ->count();
 
@@ -683,10 +784,13 @@ class PastoralCareStatisticsService
                     $end = now()->subMonths($i)->endOfMonth();
 
                     $created = PastoralCare::query()
+                        ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
                         ->whereBetween('created_at', [$start, $end])
                         ->count();
 
-                    $completed = PastoralCare::completed()
+                    $completed = PastoralCare::query()
+                        ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
+                        ->completed()
                         ->whereBetween('appointment_date', [$start, $end])
                         ->count();
 
@@ -705,10 +809,13 @@ class PastoralCareStatisticsService
                     $end = now()->subQuarters($i)->endOfQuarter();
 
                     $created = PastoralCare::query()
+                        ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
                         ->whereBetween('created_at', [$start, $end])
                         ->count();
 
-                    $completed = PastoralCare::completed()
+                    $completed = PastoralCare::query()
+                        ->when($agentId, fn ($q) => $q->where('assigned_agent_id', $agentId))
+                        ->completed()
                         ->whereBetween('appointment_date', [$start, $end])
                         ->count();
 
