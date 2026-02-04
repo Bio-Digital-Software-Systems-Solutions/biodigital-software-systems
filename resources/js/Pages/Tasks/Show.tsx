@@ -9,6 +9,7 @@ import TaskCalendarWidget from '@/Components/Calendar/TaskCalendarWidget';
 import CreateTaskAppointmentModal from '@/Components/Calendar/CreateTaskAppointmentModal';
 import TaskAppointmentDetailModal from '@/Components/Calendar/TaskAppointmentDetailModal';
 import { MentionInput, renderMentionedContent } from '@/Components/ui/mention-input';
+import { SearchableSelect } from '@/Components/ui/searchable-select';
 import axios from 'axios';
 import {
     ArrowLeftIcon,
@@ -868,18 +869,16 @@ export default function Show({ task, users, activities }: Props) {
                             {showAddParticipant && (
                                 <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
                                     <div className="space-y-3 mb-3">
-                                        <select
-                                            value={selectedUserId}
-                                            onChange={(e) => setSelectedUserId(e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-800 dark:text-white"
-                                        >
-                                            <option value="">Sélectionner un utilisateur</option>
-                                            {users.map((user) => (
-                                                <option key={user.id} value={user.id}>
-                                                    {user.first_name} {user.last_name}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <SearchableSelect
+                                            options={users.map((user) => ({
+                                                value: user.id.toString(),
+                                                label: `${user.first_name} ${user.last_name}`,
+                                            }))}
+                                            value={selectedUserId || null}
+                                            onChange={(value) => setSelectedUserId(value?.toString() || '')}
+                                            placeholder="Sélectionner un utilisateur"
+                                            isClearable
+                                        />
                                         <select
                                             value={selectedRole}
                                             onChange={(e) => setSelectedRole(e.target.value)}
