@@ -276,7 +276,7 @@ export default function Register({ captcha: initialCaptcha }: RegisterProps) {
                                         <img
                                             src={captcha.image}
                                             alt="CAPTCHA"
-                                            className="h-12 rounded border border-input bg-white"
+                                            className="h-16 sm:h-20 rounded border border-input bg-white"
                                         />
                                         <button
                                             type="button"

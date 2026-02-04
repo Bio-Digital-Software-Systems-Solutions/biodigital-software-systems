@@ -12,9 +12,9 @@ class CaptchaService
 
     private const CAPTCHA_LENGTH = 5;
 
-    private const IMAGE_WIDTH = 150;
+    private const IMAGE_WIDTH = 280;
 
-    private const IMAGE_HEIGHT = 50;
+    private const IMAGE_HEIGHT = 80;
 
     /**
      * Generate a new CAPTCHA with image.
@@ -113,7 +113,7 @@ class CaptchaService
      */
     private function addNoiseDots(\GdImage $image): void
     {
-        for ($i = 0; $i < 100; $i++) {
+        for ($i = 0; $i < 200; $i++) {
             $color = imagecolorallocate(
                 $image,
                 random_int(150, 220),
@@ -144,7 +144,7 @@ class CaptchaService
             [20, 184, 166],  // Teal
         ];
 
-        $charWidth = (self::IMAGE_WIDTH - 20) / strlen($code);
+        $charWidth = (self::IMAGE_WIDTH - 40) / strlen($code);
         $fontSize = 5; // Built-in font size (1-5)
 
         for ($i = 0; $i < strlen($code); $i++) {
@@ -156,15 +156,19 @@ class CaptchaService
             $color = imagecolorallocate($image, $rgb[0], $rgb[1], $rgb[2]);
 
             // Calculate position with some randomness
-            $x = 10 + ($i * $charWidth) + random_int(-3, 3);
-            $y = random_int(10, 20);
+            $x = 20 + ($i * $charWidth) + random_int(-5, 5);
+            $y = random_int(20, 40);
 
-            // Draw character using built-in font
-            imagestring($image, $fontSize, (int) $x, (int) $y, $char, $color);
+            // Draw character multiple times at slightly different positions for a bolder effect
+            for ($dx = 0; $dx <= 2; $dx++) {
+                for ($dy = 0; $dy <= 2; $dy++) {
+                    imagestring($image, $fontSize, (int) $x + $dx, (int) $y + $dy, $char, $color);
+                }
+            }
 
-            // Add a slight shadow/duplicate for depth
+            // Add a slight shadow for depth
             $shadowColor = imagecolorallocatealpha($image, $rgb[0], $rgb[1], $rgb[2], 80);
-            imagestring($image, $fontSize, (int) $x + 1, (int) $y + 1, $char, $shadowColor);
+            imagestring($image, $fontSize, (int) $x + 3, (int) $y + 3, $char, $shadowColor);
         }
     }
 
