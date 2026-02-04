@@ -9,8 +9,10 @@ import { FormEventHandler, useRef, useState } from 'react';
 
 export default function DeleteUserForm({
     className = '',
+    hideHeader = false,
 }: {
     className?: string;
+    hideHeader?: boolean;
 }) {
     const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
     const passwordInput = useRef<HTMLInputElement>(null);
@@ -51,18 +53,19 @@ export default function DeleteUserForm({
 
     return (
         <section className={`space-y-6 ${className}`}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Supprimer le compte
-                </h2>
+            {!hideHeader && (
+                <header>
+                    <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                        Supprimer le compte
+                    </h2>
 
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Une fois votre compte supprimé, toutes ses ressources et données
-                    will be permanently deleted. Before deleting your account,
-                    please download any data or information that you wish to
-                    retain.
-                </p>
-            </header>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        Une fois votre compte supprimé, toutes ses ressources et données
+                        seront définitivement supprimées. Avant de supprimer votre compte,
+                        veuillez télécharger les données que vous souhaitez conserver.
+                    </p>
+                </header>
+            )}
 
             <DangerButton onClick={confirmUserDeletion}>
                 Delete Account

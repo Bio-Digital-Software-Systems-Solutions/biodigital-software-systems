@@ -83,6 +83,8 @@ class ProfileController extends Controller
         if ($privacySettings['position']) {
             $userData['position'] = $user->position;
         }
+        // Only include languages, interests, skills if privacy settings allow
+        // (not including the key at all when private, so frontend can check with 'key' in user)
         if ($privacySettings['languages']) {
             $userData['languages'] = $user->spokenLanguages->map(fn ($lang) => [
                 'id' => $lang->id,
@@ -92,8 +94,6 @@ class ProfileController extends Controller
                 'native_name' => $lang->native_name,
                 'level' => $lang->pivot->level,
             ]);
-        } else {
-            $userData['languages'] = collect();
         }
         if ($privacySettings['interests']) {
             $userData['interests'] = $user->interests->map(fn ($interest) => [
@@ -102,8 +102,6 @@ class ProfileController extends Controller
                 'name' => $interest->name,
                 'icon' => $interest->icon,
             ]);
-        } else {
-            $userData['interests'] = collect();
         }
         if ($privacySettings['skills']) {
             $userData['skills'] = $user->profileSkills->map(fn ($skill) => [
@@ -113,8 +111,6 @@ class ProfileController extends Controller
                 'category' => $skill->category,
                 'level' => $skill->pivot->level,
             ]);
-        } else {
-            $userData['skills'] = collect();
         }
 
         return Inertia::render('Profile/Public', [

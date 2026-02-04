@@ -5,16 +5,19 @@ namespace App\Enums;
 enum Role: string
 {
     case SUPER_ADMIN = 'SuperAdmin';
-    case ADMIN = 'Admin';
+    case ADMIN = 'admin';
     case EDITOR = 'Editor';
-    case PROJECT_MANAGER = 'ProjectManager';
-    case EVENT_MANAGER = 'EventManager';
-    case LIBRARY_MANAGER = 'LibraryManager';
-    case GROUP_LEADER = 'GroupLeader';
-    case DEPARTMENT_LEADER = 'DepartmentLeader';
-    case IMPACT_FAMILY_LEADER = 'ImpactFamilyLeader';
-    case MEMBER = 'Member';
-    case PASTOR = 'Pastor';
-    case STUDENT = 'Student';
-    case TEACHER = 'Teacher';
+    case PROJECT_MANAGER = 'project-manager';
+    case EVENT_MANAGER = 'event-manager';
+    case LIBRARY_MANAGER = 'library-manager';
+    case GROUP_LEADER = 'group-leader';
+    case DEPARTMENT_LEADER = 'department-leader';
+    case IMPACT_FAMILY_LEADER = 'impact-family-leader';
+    case MEMBER = 'member';
+    case PASTOR = 'pastor';
+    case STUDENT = 'student';
+    case TEACHER = 'teacher';
+    case WRITER = 'writer';
+    case EMPLOYEE = 'employee';
+    case STAR = 'star';
 }

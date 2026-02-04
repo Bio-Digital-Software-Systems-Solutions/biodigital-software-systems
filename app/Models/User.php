@@ -207,6 +207,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_two_factor_expires_at',
         'email_two_factor_enabled',
         'preferred_two_factor_method',
+        'terms_accepted_at',
     ];
 
     /**
@@ -268,6 +269,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'privacy_settings' => 'array',
             'email_two_factor_expires_at' => 'datetime',
             'email_two_factor_enabled' => 'boolean',
+            'terms_accepted_at' => 'datetime',
         ];
     }
 

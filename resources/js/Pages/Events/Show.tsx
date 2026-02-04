@@ -130,7 +130,6 @@ const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = 
 
     const canViewAnalytics = isSuperAdmin ||
         userHasPermission(auth.user, 'view analytics') ||
-        userHasPermission(auth.user, 'view events') ||
         auth.user?.id === event.creator?.id;
 
     const hasMedia = allGalleryMedia.length > 0 || banners.length > 0;

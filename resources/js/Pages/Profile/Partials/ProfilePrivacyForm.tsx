@@ -22,6 +22,7 @@ interface Props {
     privacySettings: PrivacySettings;
     defaultPrivacySettings: PrivacySettings;
     className?: string;
+    hideHeader?: boolean;
 }
 
 const fieldLabels: Record<keyof PrivacySettings, string> = {
@@ -52,6 +53,7 @@ export default function ProfilePrivacyForm({
     privacySettings: initialSettings,
     defaultPrivacySettings,
     className = '',
+    hideHeader = false,
 }: Props) {
     const [settings, setSettings] = useState<PrivacySettings>(initialSettings);
     const [processing, setProcessing] = useState(false);
@@ -104,17 +106,19 @@ export default function ProfilePrivacyForm({
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                    <ShieldCheckIcon className="w-5 h-5" />
-                    Confidentialité du profil
-                </h2>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Choisissez les informations qui seront visibles sur votre profil public.
-                </p>
-            </header>
+            {!hideHeader && (
+                <header>
+                    <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                        <ShieldCheckIcon className="w-5 h-5" />
+                        Confidentialité du profil
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        Choisissez les informations qui seront visibles sur votre profil public.
+                    </p>
+                </header>
+            )}
 
-            <div className="mt-6 space-y-6">
+            <div className={`${hideHeader ? '' : 'mt-6'} space-y-6`}>
                 {/* Quick Actions */}
                 <div className="flex flex-wrap gap-2">
                     <button

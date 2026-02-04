@@ -9,6 +9,16 @@ import ProfileLanguagesForm from './Partials/ProfileLanguagesForm';
 import ProfileInterestsForm from './Partials/ProfileInterestsForm';
 import ProfileSkillsForm from './Partials/ProfileSkillsForm';
 import ProfilePrivacyForm from './Partials/ProfilePrivacyForm';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/Components/ui/accordion';
+import {
+    GlobeAltIcon,
+    HeartIcon,
+    WrenchScrewdriverIcon,
+    ShieldCheckIcon,
+    KeyIcon,
+    DevicePhoneMobileIcon,
+    TrashIcon,
+} from '@heroicons/react/24/outline';
 
 interface SpokenLanguage {
     id: number;
@@ -105,56 +115,154 @@ export default function Edit({
                         />
                     </div>
 
-                    {/* Languages */}
-                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
-                        <ProfileLanguagesForm
-                            availableLanguages={availableLanguages}
-                            userLanguages={userLanguages}
-                            className=""
-                        />
-                    </div>
+                    {/* Accordion Sections */}
+                    <Accordion>
+                        {/* Languages */}
+                        <AccordionItem value="languages" className="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+                            <AccordionTrigger className="px-4 sm:px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                    <GlobeAltIcon className="h-5 w-5 text-blue-500" />
+                                    <div className="text-left">
+                                        <span className="font-semibold">Langues parlées</span>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-normal">
+                                            Indiquez les langues que vous parlez et votre niveau de maîtrise.
+                                        </p>
+                                    </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 sm:px-6 pb-4">
+                                <ProfileLanguagesForm
+                                    availableLanguages={availableLanguages}
+                                    userLanguages={userLanguages}
+                                    className=""
+                                    hideHeader
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
 
-                    {/* Interests */}
-                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
-                        <ProfileInterestsForm
-                            availableInterests={availableInterests}
-                            userInterests={userInterests}
-                            className=""
-                        />
-                    </div>
+                        {/* Interests */}
+                        <AccordionItem value="interests" className="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+                            <AccordionTrigger className="px-4 sm:px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                    <HeartIcon className="h-5 w-5 text-pink-500" />
+                                    <div className="text-left">
+                                        <span className="font-semibold">Centres d'intérêt</span>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-normal">
+                                            Sélectionnez vos centres d'intérêt pour aider les autres membres à mieux vous connaître.
+                                        </p>
+                                    </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 sm:px-6 pb-4">
+                                <ProfileInterestsForm
+                                    availableInterests={availableInterests}
+                                    userInterests={userInterests}
+                                    className=""
+                                    hideHeader
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
 
-                    {/* Skills */}
-                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
-                        <ProfileSkillsForm
-                            availableSkills={availableSkills}
-                            userSkills={userSkills}
-                            className=""
-                        />
-                    </div>
+                        {/* Skills */}
+                        <AccordionItem value="skills" className="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+                            <AccordionTrigger className="px-4 sm:px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                    <WrenchScrewdriverIcon className="h-5 w-5 text-orange-500" />
+                                    <div className="text-left">
+                                        <span className="font-semibold">Compétences</span>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-normal">
+                                            Ajoutez vos compétences professionnelles et personnelles.
+                                        </p>
+                                    </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 sm:px-6 pb-4">
+                                <ProfileSkillsForm
+                                    availableSkills={availableSkills}
+                                    userSkills={userSkills}
+                                    className=""
+                                    hideHeader
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
 
-                    {/* Privacy Settings */}
-                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
-                        <ProfilePrivacyForm
-                            privacySettings={privacySettings}
-                            defaultPrivacySettings={defaultPrivacySettings}
-                            className=""
-                        />
-                    </div>
+                        {/* Privacy Settings */}
+                        <AccordionItem value="privacy" className="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+                            <AccordionTrigger className="px-4 sm:px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                    <ShieldCheckIcon className="h-5 w-5 text-green-500" />
+                                    <div className="text-left">
+                                        <span className="font-semibold">Confidentialité du profil</span>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-normal">
+                                            Choisissez les informations qui seront visibles sur votre profil public.
+                                        </p>
+                                    </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 sm:px-6 pb-4">
+                                <ProfilePrivacyForm
+                                    privacySettings={privacySettings}
+                                    defaultPrivacySettings={defaultPrivacySettings}
+                                    className=""
+                                    hideHeader
+                                />
+                            </AccordionContent>
+                        </AccordionItem>
 
-                    {/* Password */}
-                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
-                        <UpdatePasswordForm className="" />
-                    </div>
+                        {/* Password */}
+                        <AccordionItem value="password" className="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+                            <AccordionTrigger className="px-4 sm:px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                    <KeyIcon className="h-5 w-5 text-yellow-500" />
+                                    <div className="text-left">
+                                        <span className="font-semibold">Mot de passe</span>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-normal">
+                                            Modifiez votre mot de passe pour sécuriser votre compte.
+                                        </p>
+                                    </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 sm:px-6 pb-4">
+                                <UpdatePasswordForm className="" hideHeader />
+                            </AccordionContent>
+                        </AccordionItem>
 
-                    {/* 2FA */}
-                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
-                        <TwoFactorAuthenticationForm className="" />
-                    </div>
+                        {/* 2FA */}
+                        <AccordionItem value="2fa" className="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+                            <AccordionTrigger className="px-4 sm:px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                    <DevicePhoneMobileIcon className="h-5 w-5 text-indigo-500" />
+                                    <div className="text-left">
+                                        <span className="font-semibold">Authentification à deux facteurs</span>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-normal">
+                                            Ajoutez une couche de sécurité supplémentaire à votre compte.
+                                        </p>
+                                    </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 sm:px-6 pb-4">
+                                <TwoFactorAuthenticationForm className="" hideHeader />
+                            </AccordionContent>
+                        </AccordionItem>
 
-                    {/* Delete Account */}
-                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 shadow rounded-lg border border-gray-200 dark:border-gray-700">
-                        <DeleteUserForm className="" />
-                    </div>
+                        {/* Delete Account */}
+                        <AccordionItem value="delete" className="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
+                            <AccordionTrigger className="px-4 sm:px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                    <TrashIcon className="h-5 w-5 text-red-500" />
+                                    <div className="text-left">
+                                        <span className="font-semibold text-red-600 dark:text-red-400">Supprimer le compte</span>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-normal">
+                                            Supprimez définitivement votre compte et toutes vos données.
+                                        </p>
+                                    </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4 sm:px-6 pb-4">
+                                <DeleteUserForm className="" hideHeader />
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 </div>
             </div>
         </DashboardLayout>

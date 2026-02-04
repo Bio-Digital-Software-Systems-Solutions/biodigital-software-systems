@@ -1,10 +1,25 @@
 import InputError from '@/Components/InputError';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 import { Button } from '@/Components/ui/button';
+import { Checkbox } from '@/Components/ui/checkbox';
+import { Label } from '@/Components/ui/label';
+import { RefreshCw } from 'lucide-react';
 
-export default function Register() {
+interface CaptchaData {
+    image: string;
+    token: string;
+}
+
+interface RegisterProps {
+    captcha: CaptchaData;
+}
+
+export default function Register({ captcha: initialCaptcha }: RegisterProps) {
+    const [captcha, setCaptcha] = useState<CaptchaData>(initialCaptcha);
+    const [isRefreshingCaptcha, setIsRefreshingCaptcha] = useState(false);
+
     const { data, setData, post, processing, errors, reset } = useForm<{
         first_name: string;
         last_name: string;
@@ -13,6 +28,10 @@ export default function Register() {
         avatar: File | null;
         password: string;
         password_confirmation: string;
+        terms_accepted: boolean;
+        newsletter: boolean;
+        captcha_answer: string;
+        captcha_token: string;
     }>({
         first_name: '',
         last_name: '',
@@ -21,7 +40,26 @@ export default function Register() {
         avatar: null,
         password: '',
         password_confirmation: '',
+        terms_accepted: false,
+        newsletter: false,
+        captcha_answer: '',
+        captcha_token: initialCaptcha.token,
     });
+
+    const refreshCaptcha = async () => {
+        setIsRefreshingCaptcha(true);
+        try {
+            const response = await fetch(route('captcha.generate'));
+            const newCaptcha = await response.json();
+            setCaptcha(newCaptcha);
+            setData('captcha_token', newCaptcha.token);
+            setData('captcha_answer', '');
+        } catch (error) {
+            console.error('Failed to refresh captcha:', error);
+        } finally {
+            setIsRefreshingCaptcha(false);
+        }
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -29,6 +67,10 @@ export default function Register() {
         post(route('register'), {
             forceFormData: true,
             onFinish: () => reset('password', 'password_confirmation'),
+            onError: () => {
+                // Refresh captcha on error
+                refreshCaptcha();
+            },
         });
     };
 
@@ -172,6 +214,92 @@ export default function Register() {
                                         />
                                         <InputError message={errors.password_confirmation} className="mt-1 sm:mt-2" />
                                     </div>
+                                </div>
+
+                                <div className="space-y-3 sm:space-y-4">
+                                    <div className="flex items-start space-x-3">
+                                        <Checkbox
+                                            id="terms_accepted"
+                                            checked={data.terms_accepted}
+                                            onCheckedChange={(checked) => setData('terms_accepted', checked === true)}
+                                            className="mt-0.5"
+                                        />
+                                        <div className="flex-1">
+                                            <Label
+                                                htmlFor="terms_accepted"
+                                                className="text-xs sm:text-sm text-foreground cursor-pointer leading-relaxed"
+                                            >
+                                                J'accepte les{' '}
+                                                <Link
+                                                    href={route('terms-of-service')}
+                                                    className="text-primary hover:underline font-medium"
+                                                    target="_blank"
+                                                >
+                                                    conditions générales d'utilisation
+                                                </Link>
+                                                {' '}et la{' '}
+                                                <Link
+                                                    href={route('privacy-policy')}
+                                                    className="text-primary hover:underline font-medium"
+                                                    target="_blank"
+                                                >
+                                                    politique de confidentialité
+                                                </Link>
+                                                {' '}<span className="text-destructive">*</span>
+                                            </Label>
+                                            <InputError message={errors.terms_accepted} className="mt-1" />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-start space-x-3">
+                                        <Checkbox
+                                            id="newsletter"
+                                            checked={data.newsletter}
+                                            onCheckedChange={(checked) => setData('newsletter', checked === true)}
+                                            className="mt-0.5"
+                                        />
+                                        <Label
+                                            htmlFor="newsletter"
+                                            className="text-xs sm:text-sm text-muted-foreground cursor-pointer leading-relaxed"
+                                        >
+                                            J'accepte de recevoir des emails et messages de la plateforme
+                                            (actualités, événements, newsletters)
+                                        </Label>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-lg border border-input bg-muted/50 p-4">
+                                    <label htmlFor="captcha_answer" className="block text-xs sm:text-sm font-medium text-foreground mb-2">
+                                        Code de vérification <span className="text-destructive">*</span>
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <img
+                                            src={captcha.image}
+                                            alt="CAPTCHA"
+                                            className="h-12 rounded border border-input bg-white"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={refreshCaptcha}
+                                            disabled={isRefreshingCaptcha}
+                                            className="p-2 rounded-lg border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
+                                            title="Nouveau code"
+                                        >
+                                            <RefreshCw className={`h-4 w-4 ${isRefreshingCaptcha ? 'animate-spin' : ''}`} />
+                                        </button>
+                                    </div>
+                                    <input
+                                        id="captcha_answer"
+                                        type="text"
+                                        autoComplete="off"
+                                        value={data.captcha_answer}
+                                        className="mt-2 w-full max-w-[200px] px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-input bg-background text-foreground uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-sm sm:text-base"
+                                        onChange={(e) => setData('captcha_answer', e.target.value.toUpperCase())}
+                                        placeholder="Entrez le code ci-dessus"
+                                        maxLength={5}
+                                        required
+                                    />
+                                    <InputError message={errors.captcha_answer} className="mt-1" />
                                 </div>
 
                                 <Button

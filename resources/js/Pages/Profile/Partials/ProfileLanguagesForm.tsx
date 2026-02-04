@@ -29,6 +29,7 @@ interface Props {
     availableLanguages: SpokenLanguage[];
     userLanguages: UserLanguage[];
     className?: string;
+    hideHeader?: boolean;
 }
 
 const levelLabels: Record<string, string> = {
@@ -49,6 +50,7 @@ export default function ProfileLanguagesForm({
     availableLanguages,
     userLanguages: initialUserLanguages,
     className = '',
+    hideHeader = false,
 }: Props) {
     const [userLanguages, setUserLanguages] = useState<UserLanguage[]>(initialUserLanguages);
     const [selectedLanguageId, setSelectedLanguageId] = useState<number | null>(null);
@@ -112,17 +114,19 @@ export default function ProfileLanguagesForm({
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                    <GlobeAltIcon className="w-5 h-5" />
-                    Langues parlées
-                </h2>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Indiquez les langues que vous parlez et votre niveau de maîtrise.
-                </p>
-            </header>
+            {!hideHeader && (
+                <header>
+                    <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                        <GlobeAltIcon className="w-5 h-5" />
+                        Langues parlées
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        Indiquez les langues que vous parlez et votre niveau de maîtrise.
+                    </p>
+                </header>
+            )}
 
-            <div className="mt-6 space-y-4">
+            <div className={`${hideHeader ? '' : 'mt-6'} space-y-4`}>
                 {/* Current Languages */}
                 {userLanguages.length > 0 && (
                     <div className="space-y-3">

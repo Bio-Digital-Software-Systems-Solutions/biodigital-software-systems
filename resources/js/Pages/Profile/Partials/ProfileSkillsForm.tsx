@@ -35,6 +35,7 @@ interface Props {
     availableSkills: ProfileSkill[];
     userSkills: UserSkill[];
     className?: string;
+    hideHeader?: boolean;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -66,6 +67,7 @@ export default function ProfileSkillsForm({
     availableSkills: initialAvailableSkills,
     userSkills: initialUserSkills,
     className = '',
+    hideHeader = false,
 }: Props) {
     const [availableSkills, setAvailableSkills] = useState<ProfileSkill[]>(initialAvailableSkills);
     const [userSkills, setUserSkills] = useState<UserSkill[]>(initialUserSkills);
@@ -153,73 +155,86 @@ export default function ProfileSkillsForm({
 
     return (
         <section className={className}>
-            <header className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                        <SparklesIcon className="w-5 h-5" />
-                        Compétences
-                    </h2>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        Ajoutez vos compétences professionnelles et personnelles.
-                    </p>
+            {!hideHeader ? (
+                <header className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                            <SparklesIcon className="w-5 h-5" />
+                            Compétences
+                        </h2>
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                            Ajoutez vos compétences professionnelles et personnelles.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setIsDialogOpen(true)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-md transition-colors"
+                    >
+                        <PlusIcon className="w-4 h-4" />
+                        Nouvelle
+                    </button>
+                </header>
+            ) : (
+                <div className="flex justify-end mb-4">
+                    <button
+                        type="button"
+                        onClick={() => setIsDialogOpen(true)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-md transition-colors"
+                    >
+                        <PlusIcon className="w-4 h-4" />
+                        Nouvelle
+                    </button>
                 </div>
+            )}
 
-                <button
-                    type="button"
-                    onClick={() => setIsDialogOpen(true)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-md transition-colors"
-                >
-                    <PlusIcon className="w-4 h-4" />
-                    Nouvelle
-                </button>
-
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Ajouter une compétence</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 px-6 py-4">
-                            <Input
-                                placeholder="Nom de la compétence"
-                                value={newSkillName}
-                                onChange={(e) => setNewSkillName(e.target.value)}
-                            />
-                            <Select
-                                value={newSkillCategory}
-                                onValueChange={(value) =>
-                                    setNewSkillCategory(value as 'soft' | 'hard' | 'technical')
-                                }
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Ajouter une compétence</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 px-6 py-4">
+                        <Input
+                            placeholder="Nom de la compétence"
+                            value={newSkillName}
+                            onChange={(e) => setNewSkillName(e.target.value)}
+                        />
+                        <Select
+                            value={newSkillCategory}
+                            onValueChange={(value) =>
+                                setNewSkillCategory(value as 'soft' | 'hard' | 'technical')
+                            }
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Catégorie" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="soft">Soft Skills</SelectItem>
+                                <SelectItem value="hard">Hard Skills</SelectItem>
+                                <SelectItem value="technical">Compétences Techniques</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <div className="flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsDialogOpen(false)}
+                                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Catégorie" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="soft">Soft Skills</SelectItem>
-                                    <SelectItem value="hard">Hard Skills</SelectItem>
-                                    <SelectItem value="technical">Compétences Techniques</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsDialogOpen(false)}
-                                    className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                >
-                                    Annuler
-                                </button>
-                                <PrimaryButton
-                                    onClick={createSkill}
-                                    disabled={!newSkillName.trim() || creatingSkill}
-                                >
-                                    {creatingSkill ? 'Création...' : 'Créer'}
-                                </PrimaryButton>
-                            </div>
+                                Annuler
+                            </button>
+                            <PrimaryButton
+                                onClick={createSkill}
+                                disabled={!newSkillName.trim() || creatingSkill}
+                            >
+                                {creatingSkill ? 'Création...' : 'Créer'}
+                            </PrimaryButton>
                         </div>
-                    </DialogContent>
-                </Dialog>
-            </header>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
-            <div className="mt-6 space-y-4">
+            <div className={`${hideHeader ? '' : 'mt-6'} space-y-4`}>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="soft">Soft Skills</TabsTrigger>

@@ -176,7 +176,7 @@ it('hides languages when privacy is set to private', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('Profile/Public')
-        ->has('user.languages', 0)
+        ->missing('user.languages')
     );
 });
 
@@ -196,7 +196,7 @@ it('hides interests when privacy is set to private', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('Profile/Public')
-        ->has('user.interests', 0)
+        ->missing('user.interests')
     );
 });
 
@@ -216,7 +216,7 @@ it('hides skills when privacy is set to private', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('Profile/Public')
-        ->has('user.skills', 0)
+        ->missing('user.skills')
     );
 });
 

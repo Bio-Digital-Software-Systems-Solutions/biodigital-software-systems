@@ -13,7 +13,6 @@ import {
     GlobeAltIcon,
     HeartIcon,
     BriefcaseIcon,
-    ShieldCheckIcon,
     CalendarDaysIcon,
     WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
@@ -65,20 +64,21 @@ interface User {
     name: string;
     first_name: string | null;
     last_name: string | null;
-    email: string;
-    phone_number: string | null;
+    // These fields are optional based on privacy settings
+    email?: string;
+    phone_number?: string | null;
     avatar: string | null;
-    bio: string | null;
-    position: string | null;
-    address: string | null;
-    languages: SpokenLanguage[];
-    interests: Interest[];
-    skills: Skill[];
+    bio?: string | null;
+    position?: string | null;
+    address?: string | null;
+    birth_date?: string | null;
+    languages?: SpokenLanguage[];
+    interests?: Interest[];
+    skills?: Skill[];
     is_calendar_public: boolean;
     departments: Department[];
     groups: Group[];
     trainings: Training[];
-    roles: string[];
 }
 
 interface Props {
@@ -93,18 +93,6 @@ export default function PublicProfile({ user }: Props) {
             return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
         }
         return name.charAt(0).toUpperCase();
-    };
-
-    const getRoleColor = (role: string) => {
-        const colors: Record<string, string> = {
-            admin: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-            'project-manager': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-            'event-manager': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-            writer: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-            pastor: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-            member: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-        };
-        return colors[role] || colors.member;
     };
 
     const getLanguageLevelLabel = (level: string) => {
@@ -146,8 +134,8 @@ export default function PublicProfile({ user }: Props) {
         return colors[category] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     };
 
-    // Group skills by category
-    const skillsByCategory = user.skills.reduce((acc, skill) => {
+    // Group skills by category (only if skills are provided based on privacy settings)
+    const skillsByCategory = (user.skills || []).reduce((acc, skill) => {
         if (!acc[skill.category]) {
             acc[skill.category] = [];
         }
@@ -196,28 +184,17 @@ export default function PublicProfile({ user }: Props) {
                                     </div>
                                 )}
 
-                                {/* Name, Position and Roles */}
+                                {/* Name and Position */}
                                 <div className="flex-1 pb-2">
                                     <h1 className="text-3xl md:text-4xl font-bold text-white mb-1 drop-shadow-lg">
                                         {user.name}
                                     </h1>
                                     {user.position && (
-                                        <p className="text-white/90 text-lg mb-2 flex items-center gap-2">
+                                        <p className="text-white/90 text-lg flex items-center gap-2">
                                             <BriefcaseIcon className="h-5 w-5" />
                                             {user.position}
                                         </p>
                                     )}
-                                    <div className="flex flex-wrap gap-2">
-                                        {user.roles.map((role) => (
-                                            <Badge
-                                                key={role}
-                                                className={`${getRoleColor(role)} border-0`}
-                                            >
-                                                <ShieldCheckIcon className="h-3 w-3 mr-1" />
-                                                {role}
-                                            </Badge>
-                                        ))}
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -228,90 +205,100 @@ export default function PublicProfile({ user }: Props) {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Column - Contact Info & Bio */}
                     <div className="lg:col-span-2 space-y-6">
-                        {/* Bio Section */}
-                        <Card className="bg-white dark:bg-gray-800 shadow-lg">
-                            <CardHeader>
-                                <CardTitle>À propos</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {user.bio ? (
-                                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                                        {user.bio}
-                                    </p>
-                                ) : (
-                                    <p className="text-gray-400 dark:text-gray-500 italic">
-                                        Aucune description renseignée
-                                    </p>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Contact Information */}
-                        <Card className="bg-white dark:bg-gray-800 shadow-lg">
-                            <CardHeader>
-                                <CardTitle>Coordonnées</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    {/* Email */}
-                                    <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                                        <div className="p-2 rounded-lg bg-icc-blue/10 dark:bg-icc-blue/20">
-                                            <EnvelopeIcon className="h-5 w-5 text-icc-blue" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">Email</p>
-                                            <a
-                                                href={`mailto:${user.email}`}
-                                                className="text-gray-900 dark:text-white hover:text-icc-blue dark:hover:text-icc-blue transition-colors"
-                                            >
-                                                {user.email}
-                                            </a>
-                                        </div>
-                                    </div>
-
-                                    {/* Phone */}
-                                    <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                                        <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                                            <PhoneIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">Téléphone</p>
-                                            {user.phone_number ? (
-                                                <a
-                                                    href={`tel:${user.phone_number}`}
-                                                    className="text-gray-900 dark:text-white hover:text-icc-blue dark:hover:text-icc-blue transition-colors"
-                                                >
-                                                    {user.phone_number}
-                                                </a>
-                                            ) : (
-                                                <span className="text-gray-400 dark:text-gray-500 italic text-sm">
-                                                    Non renseigné
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Address */}
-                                    {user.address && (
-                                        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                                            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                                                <MapPinIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">Adresse</p>
-                                                <p className="text-gray-900 dark:text-white">
-                                                    {user.address}
-                                                </p>
-                                            </div>
-                                        </div>
+                        {/* Bio Section - Only show if bio privacy is public */}
+                        {'bio' in user && (
+                            <Card className="bg-white dark:bg-gray-800 shadow-lg">
+                                <CardHeader>
+                                    <CardTitle>À propos</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {user.bio ? (
+                                        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                            {user.bio}
+                                        </p>
+                                    ) : (
+                                        <p className="text-gray-400 dark:text-gray-500 italic">
+                                            Aucune description renseignée
+                                        </p>
                                     )}
-                                </div>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        )}
 
-                        {/* Languages & Interests */}
+                        {/* Contact Information - Only show if at least one contact field is public */}
+                        {('email' in user || 'phone_number' in user || 'address' in user) && (
+                            <Card className="bg-white dark:bg-gray-800 shadow-lg">
+                                <CardHeader>
+                                    <CardTitle>Coordonnées</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid gap-4 md:grid-cols-2">
+                                        {/* Email - Only show if email privacy is public */}
+                                        {'email' in user && (
+                                            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                                                <div className="p-2 rounded-lg bg-icc-blue/10 dark:bg-icc-blue/20">
+                                                    <EnvelopeIcon className="h-5 w-5 text-icc-blue" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Email</p>
+                                                    <a
+                                                        href={`mailto:${user.email}`}
+                                                        className="text-gray-900 dark:text-white hover:text-icc-blue dark:hover:text-icc-blue transition-colors"
+                                                    >
+                                                        {user.email}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Phone - Only show if phone_number privacy is public */}
+                                        {'phone_number' in user && (
+                                            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                                                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                                                    <PhoneIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Téléphone</p>
+                                                    {user.phone_number ? (
+                                                        <a
+                                                            href={`tel:${user.phone_number}`}
+                                                            className="text-gray-900 dark:text-white hover:text-icc-blue dark:hover:text-icc-blue transition-colors"
+                                                        >
+                                                            {user.phone_number}
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-gray-400 dark:text-gray-500 italic text-sm">
+                                                            Non renseigné
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Address - Only show if address privacy is public and has value */}
+                                        {'address' in user && user.address && (
+                                            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                                                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                                                    <MapPinIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Adresse</p>
+                                                    <p className="text-gray-900 dark:text-white">
+                                                        {user.address}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Languages & Interests - Only show if at least one is public */}
+                        {('languages' in user || 'interests' in user) && (
                         <div className="grid gap-6 md:grid-cols-2">
-                            {/* Languages */}
+                            {/* Languages - Only show if languages privacy is public */}
+                            {'languages' in user && (
                             <Card className="bg-white dark:bg-gray-800 shadow-lg">
                                 <CardHeader className="pb-3">
                                     <div className="flex items-center gap-2">
@@ -353,8 +340,10 @@ export default function PublicProfile({ user }: Props) {
                                     )}
                                 </CardContent>
                             </Card>
+                            )}
 
-                            {/* Interests */}
+                            {/* Interests - Only show if interests privacy is public */}
+                            {'interests' in user && (
                             <Card className="bg-white dark:bg-gray-800 shadow-lg">
                                 <CardHeader className="pb-3">
                                     <div className="flex items-center gap-2">
@@ -382,9 +371,12 @@ export default function PublicProfile({ user }: Props) {
                                     )}
                                 </CardContent>
                             </Card>
+                            )}
                         </div>
+                        )}
 
-                        {/* Skills Section */}
+                        {/* Skills Section - Only show if skills privacy is public */}
+                        {'skills' in user && (
                         <Card className="bg-white dark:bg-gray-800 shadow-lg">
                             <CardHeader className="pb-3">
                                 <div className="flex items-center gap-2">
@@ -431,6 +423,7 @@ export default function PublicProfile({ user }: Props) {
                                 )}
                             </CardContent>
                         </Card>
+                        )}
                     </div>
 
                     {/* Right Column - Departments, Groups, Trainings */}

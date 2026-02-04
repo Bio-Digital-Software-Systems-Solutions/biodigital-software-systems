@@ -243,6 +243,7 @@ class UserSeeder extends Seeder
         // Members (Regular church members - 10 members)
         // ========================================
         $members = [
+            ['first_name' => 'Member', 'last_name' => 'Test', 'email' => 'member@icc-munich.de', 'birth_date' => '1990-01-01'],
             ['first_name' => 'Philippe', 'last_name' => 'Garnier', 'email' => 'philippe.garnier@icc-munich.de', 'birth_date' => '1970-03-08'],
             ['first_name' => 'Sandrine', 'last_name' => 'Faure', 'email' => 'sandrine.faure@icc-munich.de', 'birth_date' => '1985-07-21'],
             ['first_name' => 'Julien', 'last_name' => 'Lemoine', 'email' => 'julien.lemoine@icc-munich.de', 'birth_date' => '1994-10-30'],
@@ -353,11 +354,11 @@ class UserSeeder extends Seeder
         $this->command->info('   - 2 Event Managers');
         $this->command->info('   - 2 Project Managers');
         $this->command->info('   - 2 Writers');
-        $this->command->info('   - 10 Members');
+        $this->command->info('   - 11 Members');
         $this->command->info('   - 2 Department Leaders');
         $this->command->info('   - 2 Group Leaders');
         $this->command->info('   - 1 Library Manager');
-        $this->command->info('   Total: 43 users');
+        $this->command->info('   Total: 44 users');
         $this->command->newLine();
         $this->command->info('🔐 Default password for all users: password');
     }

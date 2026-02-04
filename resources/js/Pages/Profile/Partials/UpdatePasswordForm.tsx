@@ -8,8 +8,10 @@ import { FormEventHandler, useRef } from 'react';
 
 export default function UpdatePasswordForm({
     className = '',
+    hideHeader = false,
 }: {
     className?: string;
+    hideHeader?: boolean;
 }) {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
@@ -50,17 +52,19 @@ export default function UpdatePasswordForm({
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Mettre à jour le mot de passe
-                </h2>
+            {!hideHeader && (
+                <header>
+                    <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+                        Mettre à jour le mot de passe
+                    </h2>
 
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Assurez-vous que votre compte utilise un mot de passe long et aléatoire pour rester sécurisé.
-                </p>
-            </header>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        Assurez-vous que votre compte utilise un mot de passe long et aléatoire pour rester sécurisé.
+                    </p>
+                </header>
+            )}
 
-            <form onSubmit={updatePassword} className="mt-6 space-y-6">
+            <form onSubmit={updatePassword} className={`${hideHeader ? '' : 'mt-6'} space-y-6`}>
                 <div>
                     <InputLabel
                         htmlFor="current_password"

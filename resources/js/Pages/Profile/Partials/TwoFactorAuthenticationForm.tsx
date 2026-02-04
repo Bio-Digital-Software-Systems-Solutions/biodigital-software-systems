@@ -9,9 +9,10 @@ import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-di
 
 interface Props {
     className?: string;
+    hideHeader?: boolean;
 }
 
-export default function TwoFactorAuthenticationForm({ className = '' }: Props) {
+export default function TwoFactorAuthenticationForm({ className = '', hideHeader = false }: Props) {
     const user = usePage().props.auth.user as any;
     const [enabling, setEnabling] = useState(false);
     const [confirmingPassword, setConfirmingPassword] = useState(false);
@@ -173,19 +174,21 @@ export default function TwoFactorAuthenticationForm({ className = '' }: Props) {
 
     return (
         <section className={className}>
-            <header>
-                <div className="flex items-center gap-3 mb-2">
-                    <Shield className="h-6 w-6 text-primary" />
-                    <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                        Authentification à deux facteurs (2FA)
-                    </h2>
-                </div>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Ajoutez une couche de sécurité supplémentaire à votre compte en utilisant l'authentification à deux facteurs.
-                </p>
-            </header>
+            {!hideHeader && (
+                <header>
+                    <div className="flex items-center gap-3 mb-2">
+                        <Shield className="h-6 w-6 text-primary" />
+                        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                            Authentification à deux facteurs (2FA)
+                        </h2>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        Ajoutez une couche de sécurité supplémentaire à votre compte en utilisant l'authentification à deux facteurs.
+                    </p>
+                </header>
+            )}
 
-            <div className="mt-6 space-y-6">
+            <div className={`${hideHeader ? '' : 'mt-6'} space-y-6`}>
                 {/* Overall Status */}
                 <div className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
                     {hasAny2FA ? (

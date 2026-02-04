@@ -28,6 +28,9 @@ Route::get('/terms-of-service', function () {
     return Inertia::render('Legal/TermsOfService');
 })->name('terms-of-service');
 
+// CAPTCHA generation (public access for registration)
+Route::get('/captcha', [App\Http\Controllers\CaptchaController::class, 'generate'])->name('captcha.generate');
+
 Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'restrict.member'])
     ->name('dashboard');

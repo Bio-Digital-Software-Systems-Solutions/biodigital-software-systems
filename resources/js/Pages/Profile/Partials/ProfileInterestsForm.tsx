@@ -23,12 +23,14 @@ interface Props {
     availableInterests: Interest[];
     userInterests: number[];
     className?: string;
+    hideHeader?: boolean;
 }
 
 export default function ProfileInterestsForm({
     availableInterests: initialAvailableInterests,
     userInterests: initialUserInterests,
     className = '',
+    hideHeader = false,
 }: Props) {
     const [availableInterests, setAvailableInterests] = useState<Interest[]>(initialAvailableInterests);
     const [selectedInterests, setSelectedInterests] = useState<number[]>(initialUserInterests);
@@ -87,64 +89,77 @@ export default function ProfileInterestsForm({
 
     return (
         <section className={className}>
-            <header className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                        <HeartIcon className="w-5 h-5" />
-                        Centres d'intérêt
-                    </h2>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                        Sélectionnez vos centres d'intérêt pour aider les autres membres à mieux vous connaître.
-                    </p>
+            {!hideHeader ? (
+                <header className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                            <HeartIcon className="w-5 h-5" />
+                            Centres d'intérêt
+                        </h2>
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                            Sélectionnez vos centres d'intérêt pour aider les autres membres à mieux vous connaître.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setIsDialogOpen(true)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-md transition-colors"
+                    >
+                        <PlusIcon className="w-4 h-4" />
+                        Nouveau
+                    </button>
+                </header>
+            ) : (
+                <div className="flex justify-end mb-4">
+                    <button
+                        type="button"
+                        onClick={() => setIsDialogOpen(true)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-md transition-colors"
+                    >
+                        <PlusIcon className="w-4 h-4" />
+                        Nouveau
+                    </button>
                 </div>
+            )}
 
-                <button
-                    type="button"
-                    onClick={() => setIsDialogOpen(true)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-md transition-colors"
-                >
-                    <PlusIcon className="w-4 h-4" />
-                    Nouveau
-                </button>
-
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Ajouter un centre d'intérêt</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 px-6 py-4">
-                            <Input
-                                placeholder="Nom du centre d'intérêt"
-                                value={newInterestName}
-                                onChange={(e) => setNewInterestName(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        createInterest();
-                                    }
-                                }}
-                            />
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsDialogOpen(false)}
-                                    className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
-                                >
-                                    Annuler
-                                </button>
-                                <PrimaryButton
-                                    onClick={createInterest}
-                                    disabled={!newInterestName.trim() || creatingInterest}
-                                >
-                                    {creatingInterest ? 'Création...' : 'Créer'}
-                                </PrimaryButton>
-                            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Ajouter un centre d'intérêt</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 px-6 py-4">
+                        <Input
+                            placeholder="Nom du centre d'intérêt"
+                            value={newInterestName}
+                            onChange={(e) => setNewInterestName(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    createInterest();
+                                }
+                            }}
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsDialogOpen(false)}
+                                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                            >
+                                Annuler
+                            </button>
+                            <PrimaryButton
+                                onClick={createInterest}
+                                disabled={!newInterestName.trim() || creatingInterest}
+                            >
+                                {creatingInterest ? 'Création...' : 'Créer'}
+                            </PrimaryButton>
                         </div>
-                    </DialogContent>
-                </Dialog>
-            </header>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
-            <div className="mt-6 space-y-4">
+            <div className={`${hideHeader ? '' : 'mt-6'} space-y-4`}>
                 {/* Interest Selection Grid */}
                 <div className="flex flex-wrap gap-2">
                     {availableInterests.map((interest) => {
