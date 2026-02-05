@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role as RoleEnum;
+use App\Models\BlockedLoginAttempt;
 use App\Models\User;
 use App\Services\CacheService;
 use Illuminate\Http\JsonResponse;
@@ -83,6 +84,9 @@ class UserManagementController extends Controller
         // Fetch employees with user relation (no cache to avoid N+1 from serialization)
         $employees = \App\Models\Employee::with('user')->get();
 
+        // Get count of unacknowledged blocked login attempts
+        $unacknowledgedBlockedAttempts = BlockedLoginAttempt::unacknowledged()->count();
+
         return Inertia::render('UserManagement/Index', [
             'users' => $users,
             'roles' => $roles,
@@ -90,6 +94,7 @@ class UserManagementController extends Controller
             'teachers' => $teachers,
             'stars' => $stars,
             'employees' => $employees,
+            'unacknowledgedBlockedAttempts' => $unacknowledgedBlockedAttempts,
             'filters' => [
                 'search' => $search,
                 'role' => $roleFilter,
@@ -398,9 +403,20 @@ class UserManagementController extends Controller
             ];
         }
 
+        // Get blocked login attempts for this user
+        $blockedAttempts = BlockedLoginAttempt::where('user_id', $user->id)
+            ->with('acknowledgedByUser')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
+        $blockedAttemptsCount = BlockedLoginAttempt::where('user_id', $user->id)->count();
+
         return Inertia::render('UserManagement/Show', [
             'user' => $user,
             'loginInfo' => $loginInfo,
+            'blockedAttempts' => $blockedAttempts,
+            'blockedAttemptsCount' => $blockedAttemptsCount,
         ]);
     }
 
@@ -597,6 +613,103 @@ class UserManagementController extends Controller
 
         return response()->json([
             'message' => 'Employee removed successfully',
+        ]);
+    }
+
+    /**
+     * Get blocked login attempts with pagination and filtering
+     */
+    public function blockedLoginAttempts(Request $request): JsonResponse
+    {
+        $perPage = $request->get('per_page', 20);
+        $acknowledged = $request->get('acknowledged');
+        $userId = $request->get('user_id');
+
+        $query = BlockedLoginAttempt::with(['user', 'acknowledgedByUser'])
+            ->orderByDesc('created_at');
+
+        // Filter by acknowledged status
+        if ($acknowledged !== null) {
+            $query->where('acknowledged', filter_var($acknowledged, FILTER_VALIDATE_BOOLEAN));
+        }
+
+        // Filter by user
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+
+        $attempts = $query->paginate($perPage);
+
+        // Get count of unacknowledged attempts
+        $unacknowledgedCount = BlockedLoginAttempt::unacknowledged()->count();
+
+        return response()->json([
+            'attempts' => $attempts,
+            'unacknowledged_count' => $unacknowledgedCount,
+        ]);
+    }
+
+    /**
+     * Acknowledge a blocked login attempt
+     */
+    public function acknowledgeBlockedAttempt(Request $request, BlockedLoginAttempt $attempt): JsonResponse
+    {
+        if ($attempt->acknowledged) {
+            return response()->json([
+                'message' => 'This attempt has already been acknowledged',
+            ], 422);
+        }
+
+        $attempt->acknowledge($request->user());
+
+        return response()->json([
+            'message' => 'Attempt acknowledged successfully',
+            'attempt' => $attempt->load(['user', 'acknowledgedByUser']),
+        ]);
+    }
+
+    /**
+     * Acknowledge multiple blocked login attempts at once
+     */
+    public function acknowledgeMultipleBlockedAttempts(Request $request): JsonResponse
+    {
+        $request->validate([
+            'attempt_ids' => 'required|array',
+            'attempt_ids.*' => 'exists:blocked_login_attempts,id',
+        ]);
+
+        $acknowledgedCount = 0;
+        $admin = $request->user();
+
+        foreach ($request->attempt_ids as $attemptId) {
+            $attempt = BlockedLoginAttempt::find($attemptId);
+            if ($attempt && ! $attempt->acknowledged) {
+                $attempt->acknowledge($admin);
+                $acknowledgedCount++;
+            }
+        }
+
+        return response()->json([
+            'message' => "{$acknowledgedCount} attempts acknowledged successfully",
+            'acknowledged_count' => $acknowledgedCount,
+        ]);
+    }
+
+    /**
+     * Get blocked login attempts for a specific user
+     */
+    public function userBlockedAttempts(User $user): JsonResponse
+    {
+        $attempts = BlockedLoginAttempt::where('user_id', $user->id)
+            ->with('acknowledgedByUser')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get();
+
+        return response()->json([
+            'attempts' => $attempts,
+            'total_count' => BlockedLoginAttempt::where('user_id', $user->id)->count(),
+            'unacknowledged_count' => BlockedLoginAttempt::where('user_id', $user->id)->unacknowledged()->count(),
         ]);
     }
 }

@@ -2,13 +2,29 @@ import React from 'react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, Link } from '@inertiajs/react';
 import { User, Role, Permission } from '@/Types';
-import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, CheckIcon } from '@heroicons/react/24/outline';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { Button } from '@/Components/ui/button';
 
 interface LoginInfo {
     last_login_at: string;
     last_login_ip: string;
     browser: string;
     platform: string;
+}
+
+interface BlockedLoginAttempt {
+    id: number;
+    email: string;
+    ip_address: string | null;
+    user_agent: string | null;
+    acknowledged: boolean;
+    acknowledged_at: string | null;
+    created_at: string;
+    acknowledged_by_user?: {
+        full_name: string;
+    };
 }
 
 interface Props {
@@ -22,9 +38,38 @@ interface Props {
         status_changed_by?: number;
     };
     loginInfo?: LoginInfo | null;
+    blockedAttempts?: BlockedLoginAttempt[];
+    blockedAttemptsCount?: number;
 }
 
-export default function Show({ user, loginInfo }: Props) {
+export default function Show({ user, loginInfo, blockedAttempts = [], blockedAttemptsCount = 0 }: Props) {
+    const [attempts, setAttempts] = React.useState(blockedAttempts);
+    const [acknowledging, setAcknowledging] = React.useState<number | null>(null);
+
+    const handleAcknowledge = async (attemptId: number) => {
+        setAcknowledging(attemptId);
+        try {
+            await axios.post(route('user-management.acknowledge-blocked-attempt', { attempt: attemptId }));
+            toast.success('Tentative marquée comme vue');
+            setAttempts(prev => prev.map(a =>
+                a.id === attemptId ? { ...a, acknowledged: true, acknowledged_at: new Date().toISOString() } : a
+            ));
+        } catch (error) {
+            toast.error('Erreur lors du marquage de la tentative');
+        } finally {
+            setAcknowledging(null);
+        }
+    };
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
     const allPermissions = new Set<string>();
 
     // Collect all permissions from roles
@@ -270,6 +315,85 @@ export default function Show({ user, loginInfo }: Props) {
                                     </div>
                                 ))}
                             </div>
+                        </div>
+                    )}
+
+                    {/* Blocked Login Attempts */}
+                    {blockedAttemptsCount > 0 && (
+                        <div className="mt-8">
+                            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+                                <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+                                Tentatives de connexion bloquées ({blockedAttemptsCount})
+                            </h2>
+                            <div className="overflow-x-auto border rounded-lg dark:border-gray-700">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                    <thead className="bg-gray-50 dark:bg-gray-900">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                                Date
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                                IP
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                                Statut
+                                            </th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                        {attempts.map((attempt) => (
+                                            <tr key={attempt.id} className={attempt.acknowledged ? 'opacity-60' : ''}>
+                                                <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                                                    {formatDate(attempt.created_at)}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm font-mono text-gray-500 dark:text-gray-400">
+                                                    {attempt.ip_address || '-'}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    {attempt.acknowledged ? (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                            <CheckIcon className="w-3 h-3 mr-1" />
+                                                            Vue
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                                            <ExclamationTriangleIcon className="w-3 h-3 mr-1" />
+                                                            Non vue
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    {!attempt.acknowledged && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => handleAcknowledge(attempt.id)}
+                                                            disabled={acknowledging === attempt.id}
+                                                        >
+                                                            {acknowledging === attempt.id ? (
+                                                                <div className="animate-spin h-4 w-4 border-2 border-green-500 border-t-transparent rounded-full"></div>
+                                                            ) : (
+                                                                <>
+                                                                    <CheckIcon className="w-4 h-4 mr-1" />
+                                                                    Marquer vue
+                                                                </>
+                                                            )}
+                                                        </Button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {blockedAttemptsCount > 10 && (
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                    Affichage des 10 dernières tentatives. Total: {blockedAttemptsCount}
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>

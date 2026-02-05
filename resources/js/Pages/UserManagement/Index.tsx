@@ -9,6 +9,7 @@ import axios from 'axios';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import { Pagination, PaginationData } from '@/Components/ui/pagination';
 import { useDebouncedCallback } from 'use-debounce';
+import BlockedLoginAttemptsTab from '@/Components/UserManagement/BlockedLoginAttemptsTab';
 
 interface Teacher {
     id: number;
@@ -65,6 +66,7 @@ interface Props {
     teachers: Teacher[];
     stars: Star[];
     employees: Employee[];
+    unacknowledgedBlockedAttempts: number;
     filters: Filters;
 }
 
@@ -79,10 +81,10 @@ interface RoleWithPermissions extends Role {
     permissions: Permission[];
 }
 
-export default function Index({ users, roles, permissions, teachers, stars, employees, filters }: Props) {
+export default function Index({ users, roles, permissions, teachers, stars, employees, unacknowledgedBlockedAttempts, filters }: Props) {
     const [selectedUser, setSelectedUser] = useState<UserWithRelations | null>(null);
     const [selectedRole, setSelectedRole] = useState<RoleWithPermissions | null>(null);
-    const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'permissions' | 'matrix' | 'teachers' | 'stars' | 'employees'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'permissions' | 'matrix' | 'teachers' | 'stars' | 'employees' | 'blocked-attempts'>('users');
     const [showUserRoleDialog, setShowUserRoleDialog] = useState(false);
     const [showUserPermissionDialog, setShowUserPermissionDialog] = useState(false);
     const [showRoleDialog, setShowRoleDialog] = useState(false);
@@ -907,6 +909,20 @@ export default function Index({ users, roles, permissions, teachers, stars, empl
                                     } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                             >
                                 Employés ({employees.length})
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('blocked-attempts')}
+                                className={`${activeTab === 'blocked-attempts'
+                                    ? 'border-red-500 text-red-600 dark:text-red-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-1`}
+                            >
+                                Connexions bloquées
+                                {unacknowledgedBlockedAttempts > 0 && (
+                                    <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                                        {unacknowledgedBlockedAttempts}
+                                    </span>
+                                )}
                             </button>
                         </nav>
                     </div>
@@ -2143,6 +2159,11 @@ export default function Index({ users, roles, permissions, teachers, stars, empl
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* Blocked Login Attempts Tab */}
+                    {activeTab === 'blocked-attempts' && (
+                        <BlockedLoginAttemptsTab initialUnacknowledgedCount={unacknowledgedBlockedAttempts} />
                     )}
                 </div>
             </div>

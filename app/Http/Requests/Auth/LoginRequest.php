@@ -2,9 +2,15 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Enums\Role;
+use App\Models\BlockedLoginAttempt;
+use App\Models\User;
+use App\Notifications\BlockedLoginAttemptNotification;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -40,6 +46,32 @@ class LoginRequest extends FormRequest
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
+
+        // Check if user exists and is blocked before attempting authentication
+        $user = User::where('email', $this->input('email'))->first();
+
+        if ($user && $user->is_blocked) {
+            // Verify password to confirm it's a legitimate login attempt
+            if (Hash::check($this->input('password'), $user->password)) {
+                // Log the blocked login attempt
+                $attempt = BlockedLoginAttempt::create([
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'ip_address' => $this->ip(),
+                    'user_agent' => $this->userAgent(),
+                ]);
+
+                // Notify all super-admins about the blocked login attempt
+                $superAdmins = User::role(Role::SUPER_ADMIN->value)->get();
+                Notification::send($superAdmins, new BlockedLoginAttemptNotification($attempt, $user));
+
+                RateLimiter::hit($this->throttleKey());
+
+                throw ValidationException::withMessages([
+                    'email' => __('auth.blocked'),
+                ]);
+            }
+        }
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());

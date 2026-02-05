@@ -44,4 +44,27 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /**
+     * Indicate that the user account is blocked.
+     */
+    public function blocked(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_blocked' => true,
+            'status_reason' => fake()->sentence(),
+            'status_changed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Indicate that the user account is active.
+     */
+    public function active(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => true,
+            'is_blocked' => false,
+        ]);
+    }
 }

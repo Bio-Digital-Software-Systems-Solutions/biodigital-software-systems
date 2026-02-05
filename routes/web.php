@@ -759,10 +759,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // User Management routes (SuperAdmin only)
     Route::get('user-management', [App\Http\Controllers\UserManagementController::class, 'index'])
         ->name('user-management.index');
-    Route::get('user-management/{user}', [App\Http\Controllers\UserManagementController::class, 'show'])
-        ->name('user-management.show');
+    // Specific routes must come before the {user} parameter route
     Route::get('user-management/users', [App\Http\Controllers\UserManagementController::class, 'getUsers'])
         ->name('user-management.users');
+    Route::get('user-management/blocked-login-attempts', [App\Http\Controllers\UserManagementController::class, 'blockedLoginAttempts'])
+        ->name('user-management.blocked-login-attempts');
+    Route::post('user-management/blocked-login-attempts/{attempt}/acknowledge', [App\Http\Controllers\UserManagementController::class, 'acknowledgeBlockedAttempt'])
+        ->name('user-management.acknowledge-blocked-attempt');
+    Route::post('user-management/blocked-login-attempts/acknowledge-multiple', [App\Http\Controllers\UserManagementController::class, 'acknowledgeMultipleBlockedAttempts'])
+        ->name('user-management.acknowledge-multiple-blocked-attempts');
+    // User show route after specific routes
+    Route::get('user-management/{user}', [App\Http\Controllers\UserManagementController::class, 'show'])
+        ->name('user-management.show');
+    Route::get('user-management/users/{user}/blocked-attempts', [App\Http\Controllers\UserManagementController::class, 'userBlockedAttempts'])
+        ->name('user-management.user-blocked-attempts');
     Route::post('user-management/users/{user}/roles', [App\Http\Controllers\UserManagementController::class, 'assignRoles'])
         ->name('user-management.assign-roles');
     Route::post('user-management/users/{user}/permissions', [App\Http\Controllers\UserManagementController::class, 'assignPermissions'])
