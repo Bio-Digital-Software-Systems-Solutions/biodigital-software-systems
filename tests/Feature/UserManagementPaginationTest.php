@@ -7,14 +7,14 @@ uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 beforeEach(function () {
     // Create roles
-    Role::create(['name' => 'SuperAdmin']);
+    Role::create(['name' => 'super-admin']);
     Role::create(['name' => 'admin']);
     Role::create(['name' => 'pastor']);
     Role::create(['name' => 'member']);
 
-    // Create SuperAdmin user
+    // Create super-admin user
     $this->superAdmin = User::factory()->create();
-    $this->superAdmin->assignRole('SuperAdmin');
+    $this->superAdmin->assignRole('super-admin');
 });
 
 // ===== Pagination Tests =====
@@ -372,7 +372,7 @@ test('non_superadmin_cannot_access_user_management', function () {
 
     // Without exception handling, it throws HttpException
     $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
-    $this->expectExceptionMessage('Access denied. SuperAdmin role required.');
+    $this->expectExceptionMessage('Access denied. super-admin role required.');
 
     $this->actingAs($regularUser)
         ->withoutExceptionHandling()

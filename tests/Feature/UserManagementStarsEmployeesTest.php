@@ -19,19 +19,21 @@ class UserManagementStarsEmployeesTest extends TestCase
     use RefreshDatabase;
 
     protected User $superAdmin;
+
     protected User $regularUser;
+
     protected User $targetUser;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Create SuperAdmin role
-        Role::create(['name' => 'SuperAdmin']);
+        // Create super-admin role
+        Role::create(['name' => 'super-admin']);
 
-        // Create a SuperAdmin user
+        // Create a super-admin user
         $this->superAdmin = User::factory()->create();
-        $this->superAdmin->assignRole('SuperAdmin');
+        $this->superAdmin->assignRole('super-admin');
 
         // Create a regular user (non-admin)
         $this->regularUser = User::factory()->create();
@@ -54,7 +56,7 @@ class UserManagementStarsEmployeesTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn($page) => $page
+            fn ($page) => $page
                 ->component('UserManagement/Index')
                 ->has('stars')
                 ->has('employees')
@@ -291,7 +293,7 @@ class UserManagementStarsEmployeesTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(
-            fn($page) => $page
+            fn ($page) => $page
                 ->has('stars.0.user')
                 ->has('employees.0.user')
         );

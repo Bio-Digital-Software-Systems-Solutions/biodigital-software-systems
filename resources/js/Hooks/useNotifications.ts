@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { apiLogger } from '@/utils/logger';
 
 interface NotificationCount {
@@ -17,7 +17,11 @@ export function useNotifications() {
             const response = await axios.get<NotificationCount>(route('notifications.unread-count'));
             setNotificationCount(response.data.count);
         } catch (error) {
-            apiLogger.error('Error fetching notification count', error);
+            // Silently ignore 401/403 errors (user not authenticated)
+            const axiosError = error as AxiosError;
+            if (axiosError.response?.status !== 401 && axiosError.response?.status !== 403) {
+                apiLogger.error('Error fetching notification count', error);
+            }
         } finally {
             setIsLoading(false);
         }

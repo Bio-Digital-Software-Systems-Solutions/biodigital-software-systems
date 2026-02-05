@@ -31,7 +31,7 @@ class TrainingClassFilterTest extends TestCase
 
         // Create admin user
         $this->admin = User::factory()->create();
-        $this->admin->assignRole('Admin');
+        $this->admin->assignRole('admin');
 
         // Create teachers
         $this->teacher1 = Teacher::create([

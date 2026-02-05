@@ -19,13 +19,13 @@ beforeEach(function () {
     \Spatie\Permission\Models\Permission::create(['name' => 'manage programs']);
 
     // Create role
-    $role = \Spatie\Permission\Models\Role::create(['name' => 'ProjectManager']);
+    $role = \Spatie\Permission\Models\Role::create(['name' => 'project-manager']);
     $role->givePermissionTo('view programs');
     $role->givePermissionTo('manage programs');
 
     // Create test user
     $this->user = User::factory()->create();
-    $this->user->assignRole('ProjectManager');
+    $this->user->assignRole('project-manager');
 
     $this->mentionService = new MentionService;
 });

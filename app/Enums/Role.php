@@ -4,9 +4,9 @@ namespace App\Enums;
 
 enum Role: string
 {
-    case SUPER_ADMIN = 'SuperAdmin';
+    case SUPER_ADMIN = 'super-admin';
     case ADMIN = 'admin';
-    case EDITOR = 'Editor';
+    case WRITER = 'writer';
     case PROJECT_MANAGER = 'project-manager';
     case EVENT_MANAGER = 'event-manager';
     case LIBRARY_MANAGER = 'library-manager';
@@ -17,7 +17,7 @@ enum Role: string
     case PASTOR = 'pastor';
     case STUDENT = 'student';
     case TEACHER = 'teacher';
-    case WRITER = 'writer';
     case EMPLOYEE = 'employee';
     case STAR = 'star';
+    case MLR_AGENT = 'mlr-agent';
 }

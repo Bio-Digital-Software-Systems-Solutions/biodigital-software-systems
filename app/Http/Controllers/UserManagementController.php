@@ -16,10 +16,10 @@ class UserManagementController extends Controller
 {
     public function __construct()
     {
-        // Only SuperAdmin can access
+        // Only super-admin can access
         $this->middleware(function ($request, $next) {
-            if (!$request->user()->hasRole(RoleEnum::SUPER_ADMIN)) {
-                abort(403, 'Access denied. SuperAdmin role required.');
+            if (! $request->user()->hasRole(RoleEnum::SUPER_ADMIN)) {
+                abort(403, 'Access denied. super-admin role required.');
             }
 
             return $next($request);
@@ -60,20 +60,20 @@ class UserManagementController extends Controller
         // Cache roles and permissions (1 hour cache)
         $roles = CacheService::remember(
             'user_management.roles',
-            fn() => Role::with('permissions')->get(),
+            fn () => Role::with('permissions')->get(),
             CacheService::MEDIUM_CACHE
         );
 
         $permissions = CacheService::remember(
             'user_management.permissions',
-            fn() => Permission::all(),
+            fn () => Permission::all(),
             CacheService::MEDIUM_CACHE
         );
 
         // Cache teachers list (5 minutes cache)
         $teachers = CacheService::remember(
             'user_management.teachers',
-            fn() => \App\Models\Teacher::with('user')->get(),
+            fn () => \App\Models\Teacher::with('user')->get(),
             CacheService::SHORT_CACHE
         );
 
@@ -97,7 +97,6 @@ class UserManagementController extends Controller
             ],
         ]);
     }
-
 
     /**
      * Assign roles to a user
@@ -180,7 +179,7 @@ class UserManagementController extends Controller
     public function updateRole(Request $request, Role $role): JsonResponse
     {
         $request->validate([
-            'name' => 'required|string|unique:roles,name,' . $role->id,
+            'name' => 'required|string|unique:roles,name,'.$role->id,
             'permissions' => 'array',
             'permissions.*' => 'exists:permissions,name',
         ]);
@@ -207,10 +206,10 @@ class UserManagementController extends Controller
      */
     public function deleteRole(Role $role): JsonResponse
     {
-        // Prevent deletion of SuperAdmin role
-        if ($role->name === 'SuperAdmin') {
+        // Prevent deletion of super-admin role
+        if ($role->name === 'super-admin') {
             return response()->json([
-                'message' => 'Cannot delete SuperAdmin role',
+                'message' => 'Cannot delete super-admin role',
             ], 403);
         }
 
@@ -319,10 +318,10 @@ class UserManagementController extends Controller
             'reason' => 'required|string|min:5|max:500',
         ]);
 
-        // Prevent modification of SuperAdmin users
+        // Prevent modification of super-admin users
         if ($user->hasRole(RoleEnum::SUPER_ADMIN)) {
             return response()->json([
-                'message' => 'Cannot modify SuperAdmin user status',
+                'message' => 'Cannot modify super-admin user status',
             ], 403);
         }
 
@@ -366,10 +365,10 @@ class UserManagementController extends Controller
      */
     public function deleteUser(User $user): JsonResponse
     {
-        // Prevent deletion of SuperAdmin users
+        // Prevent deletion of super-admin users
         if ($user->hasRole(RoleEnum::SUPER_ADMIN)) {
             return response()->json([
-                'message' => 'Cannot delete SuperAdmin user',
+                'message' => 'Cannot delete super-admin user',
             ], 403);
         }
 
@@ -601,4 +600,3 @@ class UserManagementController extends Controller
         ]);
     }
 }
-

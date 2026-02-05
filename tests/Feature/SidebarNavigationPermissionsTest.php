@@ -83,7 +83,7 @@ it('admin user has all navigation permissions', function () {
 
 it('super admin has all permissions including user management', function () {
     $user = User::factory()->create();
-    $user->assignRole('SuperAdmin');
+    $user->assignRole('super-admin');
 
     $response = $this->actingAs($user)->get('/dashboard');
     $response->assertStatus(200);
@@ -92,7 +92,7 @@ it('super admin has all permissions including user management', function () {
         ->where('auth.user.roles', function ($roles) {
             $rolesArray = $roles instanceof \Illuminate\Support\Collection ? $roles->toArray() : (array) $roles;
 
-            return in_array('SuperAdmin', $rolesArray);
+            return in_array('super-admin', $rolesArray);
         })
     );
 
@@ -586,7 +586,7 @@ it('member cannot access user management route', function () {
 
 it('super admin can access user management route', function () {
     $user = User::factory()->create();
-    $user->assignRole('SuperAdmin');
+    $user->assignRole('super-admin');
 
     $response = $this->actingAs($user)->get('/user-management');
     $response->assertStatus(200);

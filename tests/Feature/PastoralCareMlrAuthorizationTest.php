@@ -12,8 +12,8 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     // Create roles
     $adminRole = Role::create(['name' => 'admin']);
-    $superAdminRole = Role::create(['name' => 'SuperAdmin']);
-    $mlrAgentRole = Role::create(['name' => 'mlr_agent']);
+    $superAdminRole = Role::create(['name' => 'super-admin']);
+    $mlrAgentRole = Role::create(['name' => 'mlr-agent']);
     $pastorRole = Role::create(['name' => 'pastor']);
     $memberRole = Role::create(['name' => 'member']);
 
@@ -39,7 +39,7 @@ beforeEach(function () {
         'view all pastoral care',
         'view pastoral care statistics',
     ]);
-    // mlr_agent can access MLR dashboard but only sees their own appointments
+    // mlr-agent can access MLR dashboard but only sees their own appointments
     // They do NOT have "view all pastoral care" permission by default
     $mlrAgentRole->givePermissionTo([
         'view mlr dashboard',
@@ -91,9 +91,9 @@ it('allows admin to see all appointments in MLR dashboard', function () {
     );
 });
 
-it('allows SuperAdmin to see all appointments in MLR dashboard', function () {
+it('allows super-admin to see all appointments in MLR dashboard', function () {
     $superAdmin = User::factory()->create();
-    $superAdmin->assignRole('SuperAdmin');
+    $superAdmin->assignRole('super-admin');
 
     $pastor1 = User::factory()->create();
     $pastor1->assignRole('pastor');
@@ -127,7 +127,7 @@ it('allows SuperAdmin to see all appointments in MLR dashboard', function () {
 it('allows user with view all pastoral care permission to see all appointments', function () {
     // Create a user with special permission to view all
     $specialUser = User::factory()->create();
-    $specialUser->assignRole('mlr_agent');
+    $specialUser->assignRole('mlr-agent');
     $specialUser->givePermissionTo('view all pastoral care');
 
     $pastor1 = User::factory()->create();
@@ -160,14 +160,14 @@ it('allows user with view all pastoral care permission to see all appointments',
     );
 });
 
-it('allows mlr_agent to only see their own appointments in MLR dashboard', function () {
+it('allows mlr-agent to only see their own appointments in MLR dashboard', function () {
     $mlrAgent = User::factory()->create();
-    $mlrAgent->assignRole('mlr_agent');
+    $mlrAgent->assignRole('mlr-agent');
 
     $pastor = User::factory()->create();
     $pastor->assignRole('pastor');
 
-    // Create appointments assigned to the mlr_agent using polymorphic relationship
+    // Create appointments assigned to the mlr-agent using polymorphic relationship
     PastoralCare::factory()->count(3)->create([
         'pastor_id' => null, // MLR agents don't use pastor_id
         'assigned_agent_id' => $mlrAgent->id,
@@ -175,7 +175,7 @@ it('allows mlr_agent to only see their own appointments in MLR dashboard', funct
         'appointment_date' => Carbon::now()->format('Y-m-d'),
     ]);
 
-    // Create appointments for a pastor (mlr_agent should NOT see these)
+    // Create appointments for a pastor (mlr-agent should NOT see these)
     PastoralCare::factory()->count(5)->create([
         'pastor_id' => $pastor->id,
         'assigned_agent_id' => $pastor->id,
@@ -186,7 +186,7 @@ it('allows mlr_agent to only see their own appointments in MLR dashboard', funct
     $response = $this->actingAs($mlrAgent)->get(route('pastoral-care.mlr'));
 
     $response->assertStatus(200);
-    // mlr_agent should only see their own 3 appointments, not all 8
+    // mlr-agent should only see their own 3 appointments, not all 8
     $response->assertInertia(fn ($page) => $page
         ->component('PastoralCare/Mlr')
         ->has('appointments.data', 3)
@@ -282,14 +282,14 @@ it('filters statistics for pastor viewing MLR dashboard', function () {
     );
 });
 
-it('mlr_agent sees filtered statistics for their own appointments', function () {
+it('mlr-agent sees filtered statistics for their own appointments', function () {
     $mlrAgent = User::factory()->create();
-    $mlrAgent->assignRole('mlr_agent');
+    $mlrAgent->assignRole('mlr-agent');
 
     $pastor = User::factory()->create();
     $pastor->assignRole('pastor');
 
-    // Create completed appointments for the mlr_agent
+    // Create completed appointments for the mlr-agent
     PastoralCare::factory()->count(4)->create([
         'pastor_id' => null,
         'assigned_agent_id' => $mlrAgent->id,
@@ -298,7 +298,7 @@ it('mlr_agent sees filtered statistics for their own appointments', function () 
         'status' => 'completed',
     ]);
 
-    // Create completed appointments for a pastor (mlr_agent should NOT see these in stats)
+    // Create completed appointments for a pastor (mlr-agent should NOT see these in stats)
     PastoralCare::factory()->count(10)->create([
         'pastor_id' => $pastor->id,
         'assigned_agent_id' => $pastor->id,
@@ -340,7 +340,7 @@ it('assignAgent method properly assigns polymorphic agent', function () {
     $pastor->assignRole('pastor');
 
     $mlrAgent = User::factory()->create();
-    $mlrAgent->assignRole('mlr_agent');
+    $mlrAgent->assignRole('mlr-agent');
 
     // Create appointment with pastor
     $appointment = PastoralCare::factory()->create([
@@ -360,12 +360,12 @@ it('assignAgent method properly assigns polymorphic agent', function () {
 
 it('forAssignedAgent scope filters appointments correctly', function () {
     $mlrAgent = User::factory()->create();
-    $mlrAgent->assignRole('mlr_agent');
+    $mlrAgent->assignRole('mlr-agent');
 
     $pastor = User::factory()->create();
     $pastor->assignRole('pastor');
 
-    // Create appointments for mlr_agent
+    // Create appointments for mlr-agent
     PastoralCare::factory()->count(3)->create([
         'pastor_id' => null,
         'assigned_agent_id' => $mlrAgent->id,
@@ -381,7 +381,7 @@ it('forAssignedAgent scope filters appointments correctly', function () {
         'appointment_date' => Carbon::now()->format('Y-m-d'),
     ]);
 
-    // Use scope to filter by mlr_agent
+    // Use scope to filter by mlr-agent
     $mlrAgentAppointments = PastoralCare::forAssignedAgent($mlrAgent->id, User::class)->get();
     $pastorAppointments = PastoralCare::forAssignedAgent($pastor->id)->get();
 

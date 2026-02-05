@@ -16,8 +16,8 @@ class UserManagementTeacherTest extends TestCase
     {
         parent::setUp();
 
-        // Create SuperAdmin role
-        Role::create(['name' => 'SuperAdmin']);
+        // Create super-admin role
+        Role::create(['name' => 'super-admin']);
     }
 
     public function test_only_superadmin_can_access_user_management_teacher_features()
@@ -26,7 +26,7 @@ class UserManagementTeacherTest extends TestCase
         $targetUser = User::factory()->create();
 
         $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
-        $this->expectExceptionMessage('Access denied. SuperAdmin role required.');
+        $this->expectExceptionMessage('Access denied. super-admin role required.');
 
         $this->actingAs($regularUser)
             ->withoutExceptionHandling()
@@ -38,7 +38,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_superadmin_can_access_user_management_index_with_teachers()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         Teacher::factory(3)->create();
 
@@ -54,7 +54,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_superadmin_can_add_user_as_teacher()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $targetUser = User::factory()->create([
             'first_name' => 'John',
@@ -92,7 +92,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_superadmin_can_add_teacher_with_minimal_data()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $targetUser = User::factory()->create();
 
@@ -111,7 +111,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_cannot_add_user_as_teacher_if_already_teacher()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $targetUser = User::factory()->create();
         Teacher::factory()->create(['user_id' => $targetUser->id]);
@@ -130,7 +130,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_add_teacher_validates_specialization_max_length()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $targetUser = User::factory()->create();
 
@@ -145,7 +145,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_add_teacher_validates_experience_years_minimum()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $targetUser = User::factory()->create();
 
@@ -160,7 +160,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_add_teacher_validates_qualifications_is_array()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $targetUser = User::factory()->create();
 
@@ -175,7 +175,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_superadmin_can_remove_teacher()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $teacher = Teacher::factory()->create();
 
@@ -199,7 +199,7 @@ class UserManagementTeacherTest extends TestCase
         $teacher = Teacher::factory()->create();
 
         $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
-        $this->expectExceptionMessage('Access denied. SuperAdmin role required.');
+        $this->expectExceptionMessage('Access denied. super-admin role required.');
 
         $this->actingAs($regularUser)
             ->withoutExceptionHandling()
@@ -211,7 +211,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_superadmin_can_update_teacher_information()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $teacher = Teacher::factory()->create([
             'specialization' => 'Mathematics',
@@ -255,7 +255,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_update_teacher_validates_experience_years_minimum()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $teacher = Teacher::factory()->create();
 
@@ -270,7 +270,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_update_teacher_validates_is_active_is_boolean()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $teacher = Teacher::factory()->create();
 
@@ -288,7 +288,7 @@ class UserManagementTeacherTest extends TestCase
         $teacher = Teacher::factory()->create();
 
         $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
-        $this->expectExceptionMessage('Access denied. SuperAdmin role required.');
+        $this->expectExceptionMessage('Access denied. super-admin role required.');
 
         $this->actingAs($regularUser)
             ->withoutExceptionHandling()
@@ -301,7 +301,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_teacher_user_relationship_is_loaded_when_adding()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $targetUser = User::factory()->create([
             'first_name' => 'Jane',
@@ -332,7 +332,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_teacher_user_relationship_is_loaded_when_updating()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $teacher = Teacher::factory()->create();
 
@@ -355,7 +355,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_qualifications_are_stored_as_json_array()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $targetUser = User::factory()->create();
 
@@ -379,7 +379,7 @@ class UserManagementTeacherTest extends TestCase
     public function test_phone_number_validation_respects_max_length()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $targetUser = User::factory()->create();
 

@@ -31,11 +31,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete events',
             'attend events',
             'manage event participants',
+            // Event Tabs Permissions
+            'view event gallery',
             'manage tickets',
             'view registrations',
             'manage registrations',
             'checkin events',
-            'view analytics',
+            'view event analytics',
             // Appointments
             'view appointments',
             'create appointments',
@@ -184,6 +186,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage availabilities',
             // Pastor Availability (specific for pastoral care scheduling)
             'manage pastor availability',
+            // MLR permissions
+            'view mlr dashboard',
+            'view all pastoral care',
+            'transfer pastoral care',
+            'view pastoral care statistics',
+            'select pastor for pastoral care',
         ];
 
         foreach ($permissions as $permission) {
@@ -206,6 +214,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete events',
             'attend events',
             'manage event participants',
+            // Event Tabs
+            'view event gallery',
+            'manage tickets',
+            'view registrations',
+            'manage registrations',
+            'checkin events',
+            'view event analytics',
             // Appointments
             'view appointments',
             'create appointments',
@@ -487,11 +502,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete events',
             'attend events',
             'manage event participants',
+            // Event Tabs
+            'view event gallery',
             'manage tickets',
             'view registrations',
             'manage registrations',
             'checkin events',
-            'view analytics',
+            'view event analytics',
             // Appointments
             'view appointments',
             'create appointments',
@@ -942,35 +959,20 @@ class RolesAndPermissionsSeeder extends Seeder
             'view reports',
         ]);
 
-        // Backward compatibility aliases for PascalCase role names
-        $superAdmin = Role::firstOrCreate(['name' => 'SuperAdmin']);
+        // Super Admin - All permissions (kebab-case standardized)
+        $superAdmin = Role::firstOrCreate(['name' => 'super-admin']);
         $superAdmin->syncPermissions(Permission::all());
 
-        $adminAlias = Role::firstOrCreate(['name' => 'Admin']);
-        $adminAlias->syncPermissions($admin->permissions);
-
-        $memberAlias = Role::firstOrCreate(['name' => 'Member']);
-        $memberAlias->syncPermissions($member->permissions);
-
-        $studentAlias = Role::firstOrCreate(['name' => 'Student']);
-        $studentAlias->syncPermissions($student->permissions);
-
-        $teacherAlias = Role::firstOrCreate(['name' => 'Teacher']);
-        $teacherAlias->syncPermissions($teacher->permissions);
-
-        $projectManagerAlias = Role::firstOrCreate(['name' => 'ProjectManager']);
-        $projectManagerAlias->syncPermissions($projectManager->permissions);
-
-        $eventManagerAlias = Role::firstOrCreate(['name' => 'EventManager']);
-        $eventManagerAlias->syncPermissions($eventManager->permissions);
-
-        $editorAlias = Role::firstOrCreate(['name' => 'Editor']);
-        $editorAlias->syncPermissions($writer->permissions);
-
-        $employeeAlias = Role::firstOrCreate(['name' => 'Employee']);
-        $employeeAlias->syncPermissions($employee->permissions);
-
-        $starAlias = Role::firstOrCreate(['name' => 'Star']);
-        $starAlias->syncPermissions($star->permissions);
+        // MLR Agent - Pastoral care focused role
+        $mlrAgent = Role::firstOrCreate(['name' => 'mlr-agent']);
+        $mlrAgent->syncPermissions([
+            'view pastoral care',
+            'create pastoral care',
+            'edit pastoral care',
+            'select pastor for pastoral care',
+            'view mlr dashboard',
+            'view appointments',
+            'create appointments',
+        ]);
     }
 }

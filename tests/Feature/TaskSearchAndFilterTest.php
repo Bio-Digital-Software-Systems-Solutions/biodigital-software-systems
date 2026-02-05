@@ -27,11 +27,11 @@ class TaskSearchAndFilterTest extends TestCase
         Permission::create(['name' => 'manage programs']);
 
         // Create role with permissions
-        $role = Role::create(['name' => 'ProjectManager']);
+        $role = Role::create(['name' => 'project-manager']);
         $role->givePermissionTo('view programs');
 
         $this->user = User::factory()->create();
-        $this->user->assignRole('ProjectManager');
+        $this->user->assignRole('project-manager');
 
         $this->project = Project::factory()->create(['name' => 'Test Project']);
     }

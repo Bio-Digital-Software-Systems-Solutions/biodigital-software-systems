@@ -15,13 +15,14 @@ class UpdateRolesAndPermissions extends Command
      * php artisan permissions:sync --dry-run
      * Appliquer les changements
      * php artisan permissions:sync --force
+     * php artisan permissions:update --reset-super-admin
      *
      * @var string
      */
     protected $signature = 'permissions:update
                             {--force : Force update without confirmation}
                             {--dry-run : Show what would be updated without making changes}
-                            {--reset-super-admin : Reset SuperAdmin to have all permissions}';
+                            {--reset-super-admin : Reset super-admin to have all permissions}';
 
     /**
      * The console command description.
@@ -100,7 +101,8 @@ class UpdateRolesAndPermissions extends Command
             'view articles', 'create articles', 'edit articles', 'delete articles', 'publish articles',
             // Events
             'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
-            'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
+            // Event Tabs
+            'view event gallery', 'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
             // Appointments
             'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
             // Pastoral Care
@@ -173,9 +175,9 @@ class UpdateRolesAndPermissions extends Command
         $roles = [
             'admin', 'writer', 'project-manager', 'event-manager', 'library-manager',
             'group-leader', 'department-leader', 'impact-family-leader', 'member',
-            'student', 'teacher', 'pastor',
-            // PascalCase aliases
-            'SuperAdmin', 'Admin', 'Member', 'Student', 'Teacher', 'ProjectManager', 'EventManager', 'Editor',
+            'student', 'teacher', 'pastor', 'employee', 'star',
+            // Standardized kebab-case roles
+            'super-admin', 'mlr-agent',
         ];
 
         $created = 0;
@@ -212,7 +214,7 @@ class UpdateRolesAndPermissions extends Command
             'admin' => [
                 'view articles', 'create articles', 'edit articles', 'delete articles', 'publish articles',
                 'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
-                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
+                'view event gallery', 'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
                 'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
                 'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
                 'view pastoral care client notes',
@@ -245,12 +247,12 @@ class UpdateRolesAndPermissions extends Command
             ],
             'event-manager' => [
                 'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
-                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
+                'view event gallery', 'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
                 'view users', 'view departments', 'use chat',
             ],
             'project-manager' => [
                 'view events', 'create events', 'edit events', 'attend events', 'manage event participants',
-                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
+                'view event gallery', 'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
                 'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
                 'view programs', 'create programs', 'edit programs', 'delete programs',
                 'view users', 'view departments', 'use chat',
@@ -285,20 +287,20 @@ class UpdateRolesAndPermissions extends Command
     }
 
     /**
-     * Reset SuperAdmin to have all permissions
+     * Reset super-admin to have all permissions
      */
     private function resetSuperAdminPermissions($dryRun = false)
     {
-        $this->info('🔒 Resetting SuperAdmin permissions...');
+        $this->info('🔒 Resetting super-admin permissions...');
 
-        $superAdmin = Role::where('name', 'SuperAdmin')->first();
+        $superAdmin = Role::where('name', 'super-admin')->first();
 
         if (! $superAdmin) {
             if ($dryRun) {
-                $this->line('  Would create SuperAdmin role');
+                $this->line('  Would create super-admin role');
             } else {
-                $superAdmin = Role::create(['name' => 'SuperAdmin']);
-                $this->line('  ✅ Created SuperAdmin role');
+                $superAdmin = Role::create(['name' => 'super-admin']);
+                $this->line('  ✅ Created super-admin role');
             }
         }
 
@@ -307,13 +309,13 @@ class UpdateRolesAndPermissions extends Command
             $totalPermissions = $allPermissions->count();
 
             if ($dryRun) {
-                $this->line("  Would assign all {$totalPermissions} permissions to SuperAdmin");
+                $this->line("  Would assign all {$totalPermissions} permissions to super-admin");
             } else {
                 if (! $superAdmin) {
-                    $superAdmin = Role::where('name', 'SuperAdmin')->first();
+                    $superAdmin = Role::where('name', 'super-admin')->first();
                 }
                 $superAdmin->syncPermissions($allPermissions);
-                $this->line("  ✅ SuperAdmin now has all {$totalPermissions} permissions");
+                $this->line("  ✅ super-admin now has all {$totalPermissions} permissions");
             }
         }
     }
@@ -348,15 +350,15 @@ class UpdateRolesAndPermissions extends Command
 
         $totalPermissions = Permission::count();
         $totalRoles = Role::count();
-        $superAdmin = Role::where('name', 'SuperAdmin')->with('permissions')->first();
+        $superAdmin = Role::where('name', 'super-admin')->with('permissions')->first();
 
         $this->table([
             'Metric', 'Count',
         ], [
             ['Total Permissions', $totalPermissions],
             ['Total Roles', $totalRoles],
-            ['SuperAdmin Permissions', $superAdmin ? $superAdmin->permissions->count() : 0],
-            ['SuperAdmin Complete?', ($superAdmin && $superAdmin->permissions->count() === $totalPermissions) ? '✅ Yes' : '❌ No'],
+            ['super-admin Permissions', $superAdmin ? $superAdmin->permissions->count() : 0],
+            ['super-admin Complete?', ($superAdmin && $superAdmin->permissions->count() === $totalPermissions) ? '✅ Yes' : '❌ No'],
         ]);
     }
 }

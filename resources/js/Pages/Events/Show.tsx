@@ -74,16 +74,25 @@ interface Event {
     media?: EventMedia[];
 }
 
+interface TabPermissions {
+    canViewGallery: boolean;
+    canManageTickets: boolean;
+    canViewRegistrations: boolean;
+    canCheckIn: boolean;
+    canViewAnalytics: boolean;
+}
+
 interface ShowProps extends PageProps {
     event: Event;
     banners?: EventMedia[];
     galleryImages?: EventMedia[];
     galleryVideos?: EventMedia[];
+    tabPermissions: TabPermissions;
 }
 
 type TabType = 'details' | 'gallery' | 'tickets' | 'registrations' | 'checkin' | 'analytics';
 
-const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = [], galleryVideos = [] }) => {
+const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = [], galleryVideos = [], tabPermissions }) => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('details');
     const eventColor = event.color || '#3b82f6';
@@ -101,7 +110,7 @@ const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = 
     const isEventPast = isPast(endDate);
     const isSuperAdmin = auth.user?.roles?.some(role => role.name === 'SuperAdmin') || false;
 
-    // Permission checks
+    // Permission checks for edit/delete (these remain on frontend for UI state)
     const canEditEvent = (auth.user?.id === event.creator?.id ||
                         userHasPermission(auth.user, 'edit events')) &&
                         (!isEventPast || isSuperAdmin);
@@ -112,31 +121,14 @@ const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = 
 
     const canParticipate = !isEventPast || isSuperAdmin;
 
-    // Specific permission checks for each tab
-    const canManageTickets = isSuperAdmin ||
-        userHasPermission(auth.user, 'manage tickets') ||
-        userHasPermission(auth.user, 'edit events') ||
-        auth.user?.id === event.creator?.id;
-
-    const canViewRegistrations = isSuperAdmin ||
-        userHasPermission(auth.user, 'view registrations') ||
-        userHasPermission(auth.user, 'manage registrations') ||
-        auth.user?.id === event.creator?.id;
-
-    const canCheckIn = isSuperAdmin ||
-        userHasPermission(auth.user, 'checkin events') ||
-        userHasPermission(auth.user, 'manage registrations') ||
-        auth.user?.id === event.creator?.id;
-
-    const canViewAnalytics = isSuperAdmin ||
-        userHasPermission(auth.user, 'view analytics') ||
-        auth.user?.id === event.creator?.id;
+    // Tab permissions from server (authoritative source)
+    const { canViewGallery, canManageTickets, canViewRegistrations, canCheckIn, canViewAnalytics } = tabPermissions;
 
     const hasMedia = allGalleryMedia.length > 0 || banners.length > 0;
 
     const tabs = [
         { id: 'details' as TabType, label: 'Détails', icon: CalendarIcon, show: true },
-        { id: 'gallery' as TabType, label: `Galerie${hasMedia ? ` (${allGalleryMedia.length})` : ''}`, icon: PhotoIcon, show: hasMedia },
+        { id: 'gallery' as TabType, label: `Galerie${hasMedia ? ` (${allGalleryMedia.length})` : ''}`, icon: PhotoIcon, show: hasMedia && canViewGallery },
         { id: 'tickets' as TabType, label: 'Billets', icon: TicketIcon, show: canManageTickets },
         { id: 'registrations' as TabType, label: 'Inscriptions', icon: ClipboardDocumentListIcon, show: canViewRegistrations },
         { id: 'checkin' as TabType, label: 'Check-in', icon: QrCodeIcon, show: canCheckIn },

@@ -30,8 +30,8 @@ class UserSeeder extends Seeder
                 'birth_date' => '1980-01-15',
             ]
         );
-        if (! $superAdmin->hasRole('SuperAdmin')) {
-            $superAdmin->assignRole('SuperAdmin');
+        if (! $superAdmin->hasRole('super-admin')) {
+            $superAdmin->assignRole('super-admin');
         }
 
         // ========================================

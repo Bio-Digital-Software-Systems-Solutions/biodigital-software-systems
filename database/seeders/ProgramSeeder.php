@@ -15,11 +15,11 @@ class ProgramSeeder extends Seeder
     public function run(): void
     {
         $users = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['Admin', 'ProjectManager', 'SuperAdmin']);
+            $query->whereIn('name', ['admin', 'project-manager', 'super-admin']);
         })->get();
 
         if ($users->isEmpty()) {
-            throw new \Exception('Users with Admin or ProjectManager roles must be seeded before programs');
+            throw new \Exception('Users with admin or project-manager roles must be seeded before programs');
         }
 
         $programs = [

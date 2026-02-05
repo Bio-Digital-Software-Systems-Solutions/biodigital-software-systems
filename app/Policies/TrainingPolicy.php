@@ -26,7 +26,7 @@ class TrainingPolicy
         }
 
         // Les formations inactives sont visibles par les admins et enseignants
-        return $user->hasAnyRole(['Admin', 'SuperAdmin', 'Teacher'])
+        return $user->hasAnyRole(['admin', 'super-admin', 'teacher'])
             || $training->teacher_id === $user->id;
     }
 
@@ -35,7 +35,7 @@ class TrainingPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['Admin', 'SuperAdmin', 'Teacher']);
+        return $user->hasAnyRole(['admin', 'super-admin', 'teacher']);
     }
 
     /**
@@ -44,7 +44,7 @@ class TrainingPolicy
     public function update(User $user, Training $training): bool
     {
         // Seul le professeur assigné ou un admin peut modifier
-        return $user->hasAnyRole(['Admin', 'SuperAdmin'])
+        return $user->hasAnyRole(['admin', 'super-admin'])
             || $training->teacher_id === $user->id;
     }
 
@@ -54,7 +54,7 @@ class TrainingPolicy
     public function delete(User $user, Training $training): bool
     {
         // Seuls les admins peuvent supprimer
-        return $user->hasAnyRole(['Admin', 'SuperAdmin']);
+        return $user->hasAnyRole(['admin', 'super-admin']);
     }
 
     /**
@@ -73,7 +73,7 @@ class TrainingPolicy
      */
     public function restore(User $user, Training $training): bool
     {
-        return $user->hasAnyRole(['Admin', 'SuperAdmin']);
+        return $user->hasAnyRole(['admin', 'super-admin']);
     }
 
     /**
@@ -81,6 +81,6 @@ class TrainingPolicy
      */
     public function forceDelete(User $user, Training $training): bool
     {
-        return $user->hasAnyRole(['Admin', 'SuperAdmin']);
+        return $user->hasAnyRole(['admin', 'super-admin']);
     }
 }

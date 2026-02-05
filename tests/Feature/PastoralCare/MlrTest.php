@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     // Create roles
     Role::create(['name' => 'pastor']);
-    $mlrAgentRole = Role::create(['name' => 'mlr_agent']);
+    $mlrAgentRole = Role::create(['name' => 'mlr-agent']);
     Role::create(['name' => 'admin']);
 
     // Create permissions
@@ -32,7 +32,7 @@ beforeEach(function () {
         Permission::findOrCreate($permission);
     }
 
-    // Assign permissions to mlr_agent role
+    // Assign permissions to mlr-agent role
     $mlrAgentRole->syncPermissions([
         'view mlr dashboard',
         'view all pastoral care',
@@ -46,7 +46,7 @@ beforeEach(function () {
 function mlr_createMlrAgent(): User
 {
     $user = User::factory()->create();
-    $user->assignRole('mlr_agent');
+    $user->assignRole('mlr-agent');
 
     return $user;
 }

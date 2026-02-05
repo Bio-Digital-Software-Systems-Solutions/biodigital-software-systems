@@ -15,9 +15,13 @@ class PastEventRestrictionsTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $superAdmin;
+
     protected User $regularUser;
+
     protected Event $pastEvent;
+
     protected Event $futureEvent;
 
     protected function setUp(): void
@@ -35,7 +39,7 @@ class PastEventRestrictionsTest extends TestCase
         $adminRole = Role::create(['name' => 'admin']);
         $adminRole->givePermissionTo(['view events', 'create events', 'edit events', 'delete events', 'attend events']);
 
-        $superAdminRole = Role::create(['name' => 'SuperAdmin']);
+        $superAdminRole = Role::create(['name' => 'super-admin']);
         $superAdminRole->givePermissionTo(Permission::all());
 
         $memberRole = Role::create(['name' => 'member']);
@@ -46,7 +50,7 @@ class PastEventRestrictionsTest extends TestCase
         $this->admin->assignRole('admin');
 
         $this->superAdmin = User::factory()->create();
-        $this->superAdmin->assignRole('SuperAdmin');
+        $this->superAdmin->assignRole('super-admin');
 
         $this->regularUser = User::factory()->create();
         $this->regularUser->assignRole('member');

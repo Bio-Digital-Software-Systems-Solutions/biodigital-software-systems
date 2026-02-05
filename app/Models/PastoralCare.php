@@ -274,7 +274,7 @@ class PastoralCare extends BaseModel
     /**
      * Assign an agent to this appointment (polymorphic).
      *
-     * @param  BaseModel  $agent  The agent model (User with pastor/mlr_agent role, or other type)
+     * @param  BaseModel  $agent  The agent model (User with pastor/mlr-agent role, or other type)
      */
     public function assignAgent(BaseModel $agent): self
     {
@@ -341,7 +341,7 @@ class PastoralCare extends BaseModel
 
     /**
      * Get the assigned agent (polymorphic relationship).
-     * Can be a User with role pastor, mlr_agent, or any other assignable type.
+     * Can be a User with role pastor, mlr-agent, or any other assignable type.
      */
     public function assignedAgent(): MorphTo
     {

@@ -39,16 +39,16 @@ class PastoralCareController extends Controller
     {
         $user = $request->user();
 
-        // Check if user can manage all appointments (admin/SuperAdmin)
+        // Check if user can manage all appointments (admin/super-admin)
         $canManageAll = $user->can('manage pastoral care') ||
-            $user->hasRole(['admin', 'SuperAdmin']);
+            $user->hasRole(['admin', 'super-admin']);
 
         $query = PastoralCare::with(['user', 'pastor']);
 
         // If not admin, filter appointments based on user role
         if (! $canManageAll) {
             // Check if user has pastor role or pastor permissions
-            $isPastor = $user->hasRole(['pastor', 'Pastor']) || $user->can('manage pastoral appointments');
+            $isPastor = $user->hasRole('pastor') || $user->can('manage pastoral appointments');
 
             if ($isPastor) {
                 // Pastor sees appointments where they are the pastor
@@ -84,7 +84,7 @@ class PastoralCareController extends Controller
 
         // Apply same permission filtering as main query
         if (! $canManageAll) {
-            $isPastor = $user->hasRole(['pastor', 'Pastor']) || $user->can('manage pastoral appointments');
+            $isPastor = $user->hasRole('pastor') || $user->can('manage pastoral appointments');
             if ($isPastor) {
                 $statsQuery->forPastor($user->id);
             } else {
@@ -335,11 +335,11 @@ class PastoralCareController extends Controller
         // User can view client notes if they are:
         // - The assigned pastor (always has access to their client's notes)
         // - The client themselves (user_id matches)
-        // - An admin/SuperAdmin with the permission
+        // - An admin/super-admin with the permission
         $canViewClientNotes =
             $user->id === $pastoralCare->pastor_id ||
             $user->id === $pastoralCare->user_id ||
-            ($user->hasRole(['admin', 'SuperAdmin']) && $user->can('view pastoral care client notes'));
+            ($user->hasRole(['admin', 'super-admin']) && $user->can('view pastoral care client notes'));
 
         return Inertia::render('PastoralCare/Show', [
             'appointment' => $pastoralCare,
@@ -543,14 +543,14 @@ class PastoralCareController extends Controller
         }
 
         // Check who can view all appointments:
-        // - admin/SuperAdmin roles
+        // - admin/super-admin roles
         // - Users with "view all pastoral care" or "manage pastoral care" permission
-        $canViewAllAppointments = $user->hasRole(['admin', 'SuperAdmin']) ||
+        $canViewAllAppointments = $user->hasRole(['admin', 'super-admin']) ||
             $user->can('view all pastoral care') ||
             $user->can('manage pastoral care');
 
-        // Check if user is a pastor or mlr_agent (they see only their own appointments)
-        $isPastorOrAgent = $user->hasRole(['pastor', 'Pastor', 'mlr_agent']);
+        // Check if user is a pastor or mlr-agent (they see only their own appointments)
+        $isPastorOrAgent = $user->hasRole(['pastor', 'mlr-agent']);
 
         // Users must either have full access OR be a pastor/agent to access the dashboard
         if (! $canViewAllAppointments && ! $isPastorOrAgent) {
@@ -561,14 +561,14 @@ class PastoralCareController extends Controller
 
         // Get all pastors/agents for transfer functionality
         $pastors = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['admin', 'pastor', 'mlr_agent']);
+            $query->whereIn('name', ['admin', 'pastor', 'mlr-agent']);
         })
             ->select('id', 'first_name', 'last_name', 'email')
             ->orderBy('first_name')
             ->get();
 
         // Determine if we need to filter by user
-        // Pastors and mlr_agents (who don't have full access) only see their own appointments
+        // Pastors and mlr-agents (who don't have full access) only see their own appointments
         $filterByUserId = ! $canViewAllAppointments ? $user->id : null;
 
         // Get comprehensive statistics (filtered for pastors/agents)
@@ -577,7 +577,7 @@ class PastoralCareController extends Controller
         // Build appointments query with role-based filtering
         $appointmentsQuery = PastoralCare::with(['user', 'pastor', 'transferredFrom', 'transferredTo', 'parent', 'assignedAgent']);
 
-        // Pastors and mlr_agents (who don't have full access) only see their own appointments
+        // Pastors and mlr-agents (who don't have full access) only see their own appointments
         // Uses the polymorphic assigned_agent relationship
         if ($filterByUserId) {
             $appointmentsQuery->forAssignedAgent($user->id, User::class);

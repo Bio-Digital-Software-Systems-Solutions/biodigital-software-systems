@@ -149,11 +149,25 @@ class EventController extends Controller
         $mediaWithFiles = $event->media->filter(fn ($m) => $m->fileExists());
         $event->setRelation('media', $mediaWithFiles);
 
+        $user = Auth::user();
+        $isCreator = $user && $event->user_id === $user->id;
+        $isSuperAdmin = $user && $user->hasRole('super-admin');
+
+        // Calculate tab permissions
+        $tabPermissions = [
+            'canViewGallery' => $isSuperAdmin || $isCreator || ($user && $user->can('view event gallery')),
+            'canManageTickets' => $isSuperAdmin || $isCreator || ($user && $user->can('manage tickets')),
+            'canViewRegistrations' => $isSuperAdmin || $isCreator || ($user && ($user->can('view registrations') || $user->can('manage registrations'))),
+            'canCheckIn' => $isSuperAdmin || $isCreator || ($user && ($user->can('checkin events') || $user->can('manage registrations'))),
+            'canViewAnalytics' => $isSuperAdmin || $isCreator || ($user && $user->can('view event analytics')),
+        ];
+
         return Inertia::render('Events/Show', [
             'event' => $event,
             'banners' => $event->banners()->get()->filter(fn ($m) => $m->fileExists())->values(),
             'galleryImages' => $event->images()->gallery()->get()->filter(fn ($m) => $m->fileExists())->values(),
             'galleryVideos' => $event->videos()->gallery()->get()->filter(fn ($m) => $m->fileExists())->values(),
+            'tabPermissions' => $tabPermissions,
         ]);
     }
 
@@ -185,7 +199,7 @@ class EventController extends Controller
 
         // Additional check with user-friendly message
         if (! $event->canBeModifiedBy(Auth::user())) {
-            return back()->with('error', 'Cet événement est terminé et ne peut plus être modifié. Seuls les SuperAdmins peuvent modifier les événements passés.');
+            return back()->with('error', 'Cet événement est terminé et ne peut plus être modifié. Seuls les super-admins peuvent modifier les événements passés.');
         }
 
         $validated = $request->validate([
@@ -257,7 +271,7 @@ class EventController extends Controller
 
         // Additional check with user-friendly message
         if (! $event->canBeModifiedBy(Auth::user())) {
-            return back()->with('error', 'Cet événement est terminé et ne peut plus être supprimé. Seuls les SuperAdmins peuvent supprimer les événements passés.');
+            return back()->with('error', 'Cet événement est terminé et ne peut plus être supprimé. Seuls les super-admins peuvent supprimer les événements passés.');
         }
 
         // Delete avatar if it exists
@@ -285,7 +299,7 @@ class EventController extends Controller
 
         // Additional check with user-friendly message
         if (! $event->canAcceptParticipationChanges($user)) {
-            return back()->with('error', 'Cet événement est terminé et la participation ne peut plus être modifiée. Seuls les SuperAdmins peuvent gérer la participation aux événements passés.');
+            return back()->with('error', 'Cet événement est terminé et la participation ne peut plus être modifiée. Seuls les super-admins peuvent gérer la participation aux événements passés.');
         }
 
         if ($event->participants->contains($user)) {
@@ -324,7 +338,7 @@ class EventController extends Controller
 
         // Additional check with user-friendly message
         if (! $event->canAcceptParticipationChanges($user)) {
-            return back()->with('error', 'Cet événement est terminé et vous ne pouvez plus vous y inscrire. Seuls les SuperAdmins peuvent gérer la participation aux événements passés.');
+            return back()->with('error', 'Cet événement est terminé et vous ne pouvez plus vous y inscrire. Seuls les super-admins peuvent gérer la participation aux événements passés.');
         }
 
         // Check if user is already a participant
@@ -360,7 +374,7 @@ class EventController extends Controller
 
         // Additional check with user-friendly message
         if (! $event->canAcceptParticipationChanges($user)) {
-            return back()->with('error', 'Cet événement est terminé et vous ne pouvez plus vous en désinscrire. Seuls les SuperAdmins peuvent gérer la participation aux événements passés.');
+            return back()->with('error', 'Cet événement est terminé et vous ne pouvez plus vous en désinscrire. Seuls les super-admins peuvent gérer la participation aux événements passés.');
         }
 
         // Check if user is a participant

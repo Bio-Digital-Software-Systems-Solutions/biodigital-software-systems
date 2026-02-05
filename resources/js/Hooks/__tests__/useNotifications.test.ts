@@ -322,4 +322,60 @@ describe('useNotifications Hook', () => {
             expect(result.current).not.toHaveProperty('malicious');
         });
     });
+
+    describe('Auth Error Handling', () => {
+        it('silently ignores 401 errors', async () => {
+            const { apiLogger } = await import('@/utils/logger');
+            const error = {
+                response: { status: 401 },
+                isAxiosError: true,
+            };
+            mockedAxios.get.mockRejectedValue(error);
+
+            const { result } = renderHook(() => useNotifications());
+
+            await waitFor(() => {
+                expect(result.current.isLoading).toBe(false);
+            });
+
+            // Should not log 401 errors
+            expect(apiLogger.error).not.toHaveBeenCalled();
+        });
+
+        it('silently ignores 403 errors', async () => {
+            const { apiLogger } = await import('@/utils/logger');
+            const error = {
+                response: { status: 403 },
+                isAxiosError: true,
+            };
+            mockedAxios.get.mockRejectedValue(error);
+
+            const { result } = renderHook(() => useNotifications());
+
+            await waitFor(() => {
+                expect(result.current.isLoading).toBe(false);
+            });
+
+            // Should not log 403 errors
+            expect(apiLogger.error).not.toHaveBeenCalled();
+        });
+
+        it('logs other errors', async () => {
+            const { apiLogger } = await import('@/utils/logger');
+            const error = {
+                response: { status: 500 },
+                isAxiosError: true,
+            };
+            mockedAxios.get.mockRejectedValue(error);
+
+            const { result } = renderHook(() => useNotifications());
+
+            await waitFor(() => {
+                expect(result.current.isLoading).toBe(false);
+            });
+
+            // Should log 500 errors
+            expect(apiLogger.error).toHaveBeenCalledWith('Error fetching notification count', error);
+        });
+    });
 });

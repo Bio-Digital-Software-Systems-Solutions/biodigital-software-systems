@@ -33,13 +33,13 @@ class ProjectTaskTest extends TestCase
         \Spatie\Permission\Models\Permission::create(['name' => 'manage programs']);
 
         // Create roles and permissions
-        Role::create(['name' => 'Admin']);
-        $role = Role::create(['name' => 'ProjectManager']);
+        Role::create(['name' => 'admin']);
+        $role = Role::create(['name' => 'project-manager']);
         $role->givePermissionTo('view programs');
         $role->givePermissionTo('manage programs');
 
         $this->user = User::factory()->create();
-        $this->user->assignRole('ProjectManager');
+        $this->user->assignRole('project-manager');
 
         $this->project = Project::factory()->create();
         $this->task = ProjectTask::factory()->create([
@@ -158,7 +158,7 @@ class ProjectTaskTest extends TestCase
         $regularUser->assignRole('RegularUser');
 
         $otherUser = User::factory()->create();
-        $otherUser->assignRole('ProjectManager');
+        $otherUser->assignRole('project-manager');
 
         $comment = TaskComment::factory()->create([
             'task_id' => $this->task->id,
@@ -213,7 +213,7 @@ class ProjectTaskTest extends TestCase
     public function reviewer_can_approve_task()
     {
         $reviewer = User::factory()->create();
-        $reviewer->assignRole('ProjectManager');
+        $reviewer->assignRole('project-manager');
 
         $this->task->update(['reviewer_id' => $reviewer->id]);
 
@@ -250,7 +250,7 @@ class ProjectTaskTest extends TestCase
     public function task_can_have_multiple_comments()
     {
         $users = User::factory()->count(3)->create();
-        $users->each(fn ($user) => $user->assignRole('ProjectManager'));
+        $users->each(fn ($user) => $user->assignRole('project-manager'));
 
         foreach ($users as $user) {
             TaskComment::create([
@@ -395,7 +395,7 @@ class ProjectTaskTest extends TestCase
         $regularUser->assignRole('RegularUser');
 
         $otherUser = User::factory()->create();
-        $otherUser->assignRole('ProjectManager');
+        $otherUser->assignRole('project-manager');
 
         $file = UploadedFile::fake()->image('test.jpg');
         $filePath = $file->store('task-attachments', 'public');

@@ -16,10 +16,15 @@ class TrainingClassMaterialControllerTest extends TestCase
     use RefreshDatabase;
 
     protected User $teacher;
+
     protected User $otherTeacher;
+
     protected User $student;
+
     protected Training $training;
+
     protected TrainingClass $trainingClass;
+
     protected TrainingClass $otherClass;
 
     protected function setUp(): void
@@ -108,7 +113,7 @@ class TrainingClassMaterialControllerTest extends TestCase
             'type' => 'pdf',
         ]);
 
-        Storage::disk('public')->assertExists('class-materials/' . $this->trainingClass->id . '/' . $file->hashName());
+        Storage::disk('public')->assertExists('class-materials/'.$this->trainingClass->id.'/'.$file->hashName());
     }
 
     /** @test */
@@ -418,7 +423,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     public function admin_can_add_material_to_any_class()
     {
         $admin = User::factory()->create();
-        $admin->assignRole('Admin');
+        $admin->assignRole('admin');
 
         Storage::fake('public');
         $file = UploadedFile::fake()->create('document.pdf', 1024);
@@ -443,7 +448,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     public function super_admin_can_add_material_to_any_class()
     {
         $superAdmin = User::factory()->create();
-        $superAdmin->assignRole('SuperAdmin');
+        $superAdmin->assignRole('super-admin');
 
         $response = $this->actingAs($superAdmin)
             ->post(route('training-classes.materials.store', $this->trainingClass), [
@@ -492,7 +497,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     public function admin_can_delete_any_material()
     {
         $admin = User::factory()->create();
-        $admin->assignRole('Admin');
+        $admin->assignRole('admin');
 
         $material = TrainingClassMaterial::factory()->create([
             'training_class_id' => $this->trainingClass->id,
@@ -512,7 +517,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     public function admin_can_view_all_materials()
     {
         $admin = User::factory()->create();
-        $admin->assignRole('SuperAdmin');
+        $admin->assignRole('super-admin');
 
         TrainingClassMaterial::factory()->count(3)->create([
             'training_class_id' => $this->trainingClass->id,

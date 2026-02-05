@@ -18,11 +18,11 @@ class ArticleSeeder extends Seeder
     public function run(): void
     {
         $users = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['Admin', 'Editor', 'SuperAdmin']);
+            $query->whereIn('name', ['admin', 'writer', 'super-admin']);
         })->get();
 
         if ($users->isEmpty()) {
-            throw new \Exception('Users with Editor or Admin roles must be seeded before articles');
+            throw new \Exception('Users with writer or admin roles must be seeded before articles');
         }
 
         $categories = Category::all();

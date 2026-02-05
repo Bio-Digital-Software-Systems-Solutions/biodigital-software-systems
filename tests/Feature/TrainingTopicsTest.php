@@ -23,11 +23,11 @@ class TrainingTopicsTest extends TestCase
         Permission::create(['name' => 'manage trainings']);
         Permission::create(['name' => 'view trainings']);
 
-        $adminRole = Role::create(['name' => 'Admin']);
+        $adminRole = Role::create(['name' => 'admin']);
         $adminRole->givePermissionTo(['manage trainings', 'view trainings']);
 
         $this->user = User::factory()->create();
-        $this->user->assignRole('Admin');
+        $this->user->assignRole('admin');
     }
 
     public function test_can_create_training_with_topics(): void

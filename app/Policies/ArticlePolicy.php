@@ -45,7 +45,7 @@ class ArticlePolicy
         // Seul l'auteur ou quelqu'un avec la permission d'éditer peut modifier
         return $user->id === $article->user_id
             || $user->can('edit articles')
-            || $user->hasRole(['admin', 'SuperAdmin', 'Admin']);
+            || $user->hasRole(['admin', 'super-admin']);
     }
 
     /**
@@ -56,7 +56,7 @@ class ArticlePolicy
         // Seul l'auteur ou quelqu'un avec la permission de supprimer peut supprimer
         return $user->id === $article->user_id
             || $user->can('delete articles')
-            || $user->hasRole(['admin', 'SuperAdmin', 'Admin']);
+            || $user->hasRole(['admin', 'super-admin']);
     }
 
     /**

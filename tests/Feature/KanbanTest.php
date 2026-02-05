@@ -29,8 +29,8 @@ class KanbanTest extends TestCase
         Permission::create(['name' => 'view programs']);
 
         // Create roles
-        $memberRole = Role::create(['name' => 'Member']);
-        $adminRole = Role::create(['name' => 'Admin']);
+        $memberRole = Role::create(['name' => 'member']);
+        $adminRole = Role::create(['name' => 'admin']);
 
         // Assign permissions
         $memberRole->givePermissionTo('view programs');
@@ -38,10 +38,10 @@ class KanbanTest extends TestCase
 
         // Create users
         $this->user = User::factory()->create();
-        $this->user->assignRole('Member');
+        $this->user->assignRole('member');
 
         $this->admin = User::factory()->create();
-        $this->admin->assignRole('Admin');
+        $this->admin->assignRole('admin');
 
         // Create a project
         $this->project = Project::factory()->create([

@@ -168,15 +168,72 @@ export default function Index({ users, roles, permissions, teachers, stars, empl
     const [roleDetailPermissions, setRoleDetailPermissions] = useState<string[]>([]);
     const [userViewMode, setUserViewMode] = useState<'table' | 'list' | 'grid'>('table');
 
-    // Group permissions by model
+    // Group permissions by model with normalization
     const groupedPermissions = useMemo(() => {
+        // Map permission names to their correct model category
+        const getModelName = (permissionName: string): string => {
+            // Special cases mapping
+            const specialMappings: Record<string, string> = {
+                'manage pastor availability': 'Availabilities',
+                'manage pastoral appointments': 'Appointments',
+                'view pastoral care': 'Pastoral Care',
+                'create pastoral care': 'Pastoral Care',
+                'edit pastoral care': 'Pastoral Care',
+                'delete pastoral care': 'Pastoral Care',
+                'manage pastoral care': 'Pastoral Care',
+                'view pastoral care client notes': 'Pastoral Care',
+                'view event analytics': 'Events',
+                'view event gallery': 'Events',
+                'manage event participants': 'Events',
+                'manage tickets': 'Events',
+                'view registrations': 'Events',
+                'manage registrations': 'Events',
+                'checkin events': 'Events',
+                'manage appointment participants': 'Appointments',
+                'manage group members': 'Groups',
+                'manage library': 'Books',
+                'approve rentals': 'Books',
+                'use chat': 'Chat',
+                'moderate chat': 'Chat',
+                'view hero slides': 'Hero Slides',
+                'manage hero slides': 'Hero Slides',
+                'assign department members': 'Departments',
+                'access all departments': 'Departments',
+                'view department statistics': 'Departments',
+                'view system settings': 'System',
+                'manage system settings': 'System',
+                'approve stock requests': 'Stocks',
+                'access student dashboard': 'Dashboard',
+                'access teacher dashboard': 'Dashboard',
+                'submit forms': 'Forms',
+                'process form submissions': 'Forms',
+                'create program steps': 'Programs',
+                'execute workflows': 'Workflows',
+                'assign tasks': 'Tasks',
+                'take quizzes': 'Quizzes',
+                'grade quizzes': 'Quizzes',
+                'approve needs': 'Needs',
+                'upload videos': 'Videos',
+                'rent books': 'Books',
+                'attend events': 'Events',
+                'publish articles': 'Articles',
+                'generate reports': 'Reports',
+            };
+
+            if (specialMappings[permissionName]) {
+                return specialMappings[permissionName];
+            }
+
+            // Default: extract last word and capitalize
+            const parts = permissionName.split(' ');
+            const model = parts.length > 1 ? parts[parts.length - 1] : 'Other';
+            return model.charAt(0).toUpperCase() + model.slice(1);
+        };
+
         const groups: Record<string, Permission[]> = {};
 
         permissions.forEach(permission => {
-            // Extract the model name from permission (e.g., "view articles" -> "Articles")
-            const parts = permission.name.split(' ');
-            const model = parts.length > 1 ? parts[parts.length - 1] : 'Other';
-            const modelName = model.charAt(0).toUpperCase() + model.slice(1);
+            const modelName = getModelName(permission.name);
 
             if (!groups[modelName]) {
                 groups[modelName] = [];
@@ -184,7 +241,18 @@ export default function Index({ users, roles, permissions, teachers, stars, empl
             groups[modelName].push(permission);
         });
 
-        return groups;
+        // Sort permissions within each group alphabetically
+        Object.keys(groups).forEach(key => {
+            groups[key].sort((a, b) => a.name.localeCompare(b.name));
+        });
+
+        // Return sorted groups
+        const sortedGroups: Record<string, Permission[]> = {};
+        Object.keys(groups).sort((a, b) => a.localeCompare(b)).forEach(key => {
+            sortedGroups[key] = groups[key];
+        });
+
+        return sortedGroups;
     }, [permissions]);
 
     // Users are now server-side filtered and paginated

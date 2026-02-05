@@ -485,7 +485,7 @@ class Event extends Model
 
     /**
      * Check if the event can be modified.
-     * Past events can only be modified by SuperAdmin.
+     * Past events can only be modified by super-admin.
      */
     public function canBeModifiedBy(?User $user = null): bool
     {
@@ -493,12 +493,12 @@ class Event extends Model
             return false;
         }
 
-        // SuperAdmin can modify any event, even past ones
-        if ($user->hasRole('SuperAdmin')) {
+        // super-admin can modify any event, even past ones
+        if ($user->hasRole('super-admin')) {
             return true;
         }
 
-        // Past events cannot be modified by non-SuperAdmin users
+        // Past events cannot be modified by non-super-admin users
         if ($this->isPast()) {
             return false;
         }
@@ -512,8 +512,8 @@ class Event extends Model
      */
     public function canAcceptParticipationChanges(?User $user = null): bool
     {
-        // SuperAdmin can always manage participation
-        if ($user && $user->hasRole('SuperAdmin')) {
+        // super-admin can always manage participation
+        if ($user && $user->hasRole('super-admin')) {
             return true;
         }
 

@@ -5,7 +5,6 @@ namespace App\Policies;
 use App\Models\TrainingClass;
 use App\Models\TrainingClassMaterial;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class TrainingClassMaterialPolicy
 {
@@ -15,8 +14,8 @@ class TrainingClassMaterialPolicy
      */
     public function viewAny(User $user, TrainingClass $trainingClass): bool
     {
-        // Admins and SuperAdmins can view all materials
-        if ($user->hasRole(['admin', 'SuperAdmin', 'Admin'])) {
+        // Admins and super-admins can view all materials
+        if ($user->hasRole(['admin', 'super-admin'])) {
             return true;
         }
 
@@ -41,8 +40,8 @@ class TrainingClassMaterialPolicy
     {
         $trainingClass = $trainingClassMaterial->trainingClass;
 
-        // Admins and SuperAdmins can view all materials (even inactive ones)
-        if ($user->hasRole(['admin', 'SuperAdmin', 'Admin'])) {
+        // Admins and super-admins can view all materials (even inactive ones)
+        if ($user->hasRole(['admin', 'super-admin'])) {
             return true;
         }
 
@@ -52,7 +51,7 @@ class TrainingClassMaterialPolicy
         }
 
         // Check if material is active for students
-        if (!$trainingClassMaterial->is_active) {
+        if (! $trainingClassMaterial->is_active) {
             return false;
         }
 
@@ -70,8 +69,8 @@ class TrainingClassMaterialPolicy
      */
     public function create(User $user, TrainingClass $trainingClass): bool
     {
-        // Admins and SuperAdmins can create materials for any class
-        if ($user->hasRole(['admin', 'SuperAdmin', 'Admin'])) {
+        // Admins and super-admins can create materials for any class
+        if ($user->hasRole(['admin', 'super-admin'])) {
             return true;
         }
 
@@ -84,8 +83,8 @@ class TrainingClassMaterialPolicy
      */
     public function update(User $user, TrainingClassMaterial $trainingClassMaterial): bool
     {
-        // Admins and SuperAdmins can update any material
-        if ($user->hasRole(['admin', 'SuperAdmin', 'Admin'])) {
+        // Admins and super-admins can update any material
+        if ($user->hasRole(['admin', 'super-admin'])) {
             return true;
         }
 
@@ -98,8 +97,8 @@ class TrainingClassMaterialPolicy
      */
     public function delete(User $user, TrainingClassMaterial $trainingClassMaterial): bool
     {
-        // Admins and SuperAdmins can delete any material
-        if ($user->hasRole(['admin', 'SuperAdmin', 'Admin'])) {
+        // Admins and super-admins can delete any material
+        if ($user->hasRole(['admin', 'super-admin'])) {
             return true;
         }
 
@@ -121,8 +120,8 @@ class TrainingClassMaterialPolicy
      */
     public function restore(User $user, TrainingClassMaterial $trainingClassMaterial): bool
     {
-        // Admins and SuperAdmins can restore any material
-        if ($user->hasRole(['admin', 'SuperAdmin', 'Admin'])) {
+        // Admins and super-admins can restore any material
+        if ($user->hasRole(['admin', 'super-admin'])) {
             return true;
         }
 
@@ -135,8 +134,8 @@ class TrainingClassMaterialPolicy
      */
     public function forceDelete(User $user, TrainingClassMaterial $trainingClassMaterial): bool
     {
-        // Admins and SuperAdmins can force delete any material
-        if ($user->hasRole(['admin', 'SuperAdmin', 'Admin'])) {
+        // Admins and super-admins can force delete any material
+        if ($user->hasRole(['admin', 'super-admin'])) {
             return true;
         }
 

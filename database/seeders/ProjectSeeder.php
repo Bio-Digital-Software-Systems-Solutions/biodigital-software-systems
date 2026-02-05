@@ -14,7 +14,7 @@ class ProjectSeeder extends Seeder
     public function run(): void
     {
         $managers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['Admin', 'ProjectManager', 'SuperAdmin']);
+            $query->whereIn('name', ['admin', 'project-manager', 'super-admin']);
         })->get();
 
         if ($managers->isEmpty()) {

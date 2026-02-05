@@ -34,7 +34,7 @@ class TrainingEnrollmentEmailTest extends TestCase
             'last_name' => 'User',
             'email' => 'admin@test.com',
         ]);
-        $this->admin->assignRole('Admin');
+        $this->admin->assignRole('admin');
 
         // Create student user
         $this->student = User::factory()->create([

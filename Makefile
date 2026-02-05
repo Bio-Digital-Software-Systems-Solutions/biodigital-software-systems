@@ -1,4 +1,4 @@
-.PHONY: phpstan phpcs phpmd pint pest test clear db quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean clean-event-media clean-event-media-preview
+.PHONY: phpstan phpcs phpmd pint pest test clear db quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e frontend-test backend-test docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean clean-event-media clean-event-media-preview
 
 # PHPStan static analysis (level 10)
 phpstan:
@@ -56,8 +56,21 @@ test-wcag:
 	@npm test -- WCAG.test
 
 # Run all tests (backend + frontend)
-test-all: test test-front
-	@echo "All tests completed!"
+test-all: backend-test frontend-test
+	@echo ""
+	@echo "✅ All tests completed!"
+
+# Frontend tests - Alias for test-front
+frontend-test:
+	@echo "🎨 Running frontend tests..."
+	@npm test
+	@echo "✅ Frontend tests completed!"
+
+# Backend tests - Runs Pest tests
+backend-test:
+	@echo "🔧 Running backend tests..."
+	@php artisan test
+	@echo "✅ Backend tests completed!"
 
 # Fix code style automatically
 fix:
@@ -252,13 +265,15 @@ help:
 	@echo "  make quality-fix        - Fix code style + run all checks"
 	@echo ""
 	@echo "🧪 Backend Tests:"
+	@echo "  make backend-test       - Run all backend tests (Pest/PHPUnit)"
 	@echo "  make pest               - Run Pest tests"
 	@echo "  make test               - Run PHPUnit tests"
 	@echo "  make test-coverage-back - Run backend tests with coverage"
 	@echo "  make test-e2e           - Run E2E tests only"
 	@echo ""
 	@echo "🎨 Frontend Tests:"
-	@echo "  make test-front         - Run all frontend tests"
+	@echo "  make frontend-test      - Run all frontend tests"
+	@echo "  make test-front         - Run all frontend tests (alias)"
 	@echo "  make test-coverage      - Run frontend tests with coverage"
 	@echo "  make test-wcag          - Run accessibility tests (WCAG 2.1 AA)"
 	@echo ""

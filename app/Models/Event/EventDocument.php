@@ -15,7 +15,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class EventDocument extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache, SoftDeletes;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'event_id',
@@ -54,14 +54,21 @@ class EventDocument extends Model
 
     // Constants
     public const TYPE_GENERAL = 'general';
+
     public const TYPE_SCHEDULE = 'schedule';
+
     public const TYPE_BROCHURE = 'brochure';
+
     public const TYPE_PRESENTATION = 'presentation';
+
     public const TYPE_HANDOUT = 'handout';
+
     public const TYPE_CERTIFICATE = 'certificate';
 
     public const VISIBILITY_PUBLIC = 'public';
+
     public const VISIBILITY_REGISTERED = 'registered';
+
     public const VISIBILITY_PRIVATE = 'private';
 
     // Relationships
@@ -112,7 +119,7 @@ class EventDocument extends Model
 
     public function getFileUrlAttribute(): string
     {
-        return asset('storage/' . $this->file_path);
+        return asset('storage/'.$this->file_path);
     }
 
     public function getFileSizeForHumansAttribute(): string
@@ -120,18 +127,18 @@ class EventDocument extends Model
         $bytes = $this->file_size;
 
         if ($bytes < 1024) {
-            return $bytes . ' B';
+            return $bytes.' B';
         }
 
         if ($bytes < 1048576) {
-            return round($bytes / 1024, 1) . ' KB';
+            return round($bytes / 1024, 1).' KB';
         }
 
         if ($bytes < 1073741824) {
-            return round($bytes / 1048576, 1) . ' MB';
+            return round($bytes / 1048576, 1).' MB';
         }
 
-        return round($bytes / 1073741824, 1) . ' GB';
+        return round($bytes / 1073741824, 1).' GB';
     }
 
     public function getIconAttribute(): string
@@ -194,7 +201,7 @@ class EventDocument extends Model
         }
 
         // Private - only event organizers
-        if ($user && ($user->hasRole('SuperAdmin') || $this->event->user_id === $user->id)) {
+        if ($user && ($user->hasRole('super-admin') || $this->event->user_id === $user->id)) {
             return true;
         }
 

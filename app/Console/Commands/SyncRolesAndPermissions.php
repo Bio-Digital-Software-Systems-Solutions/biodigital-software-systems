@@ -360,7 +360,7 @@ class SyncRolesAndPermissions extends Command
                 'view availabilities', 'create availabilities', 'edit availabilities', 'delete availabilities',
             ],
 
-            'mlr_agent' => [
+            'mlr-agent' => [
                 // MLR-specific permissions
                 'view mlr dashboard', 'view all pastoral care', 'transfer pastoral care', 'view pastoral care statistics',
                 // Base pastoral care permissions
@@ -373,26 +373,18 @@ class SyncRolesAndPermissions extends Command
                 // Appointments
                 'view appointments', 'create appointments', 'edit appointments',
             ],
+
+            'super-admin' => '*', // All permissions (standardized from SuperAdmin)
         ];
     }
 
     /**
-     * Backward compatibility aliases for PascalCase role names.
+     * Role aliases have been removed in favor of standardized kebab-case names.
+     * Run `php artisan roles:unify` to migrate existing roles.
      */
     protected function getRoleAliases(): array
     {
-        return [
-            'SuperAdmin' => '*', // All permissions
-            'Admin' => 'admin',
-            'Member' => 'member',
-            'Student' => 'student',
-            'Teacher' => 'teacher',
-            'ProjectManager' => 'project-manager',
-            'EventManager' => 'event-manager',
-            'Editor' => 'writer',
-            'Employee' => 'employee',
-            'Star' => 'star',
-        ];
+        return [];
     }
 
     /**
@@ -549,6 +541,21 @@ class SyncRolesAndPermissions extends Command
                 continue;
             }
 
+            // Handle special case: '*' means all permissions (for super-admin)
+            if ($permissions === '*') {
+                $allPermissions = Permission::all();
+                $currentCount = $role->permissions->count();
+                if ($currentCount !== $allPermissions->count()) {
+                    $updated++;
+                    if (! $isDryRun) {
+                        $role->syncPermissions($allPermissions);
+                    }
+                    $this->line("   ↳ <info>{$roleName}</info>: Synced all ".$allPermissions->count().' permissions');
+                }
+
+                continue;
+            }
+
             $currentPermissions = $role->permissions->pluck('name')->toArray();
             $missingPermissions = array_diff($permissions, $currentPermissions);
 
@@ -605,7 +612,7 @@ class SyncRolesAndPermissions extends Command
 
             // Sync permissions
             if ($sourceRoleName === '*') {
-                // SuperAdmin gets all permissions
+                // super-admin gets all permissions
                 $allPermissions = Permission::all();
                 if (! $isDryRun && $aliasRole) {
                     $currentCount = $aliasRole->permissions->count();

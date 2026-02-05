@@ -73,8 +73,9 @@ class SyncRolesAndPermissionsTest extends TestCase
 
         Artisan::call('permissions:sync', ['--force' => true]);
 
-        // Check expected roles exist
+        // Check expected roles exist (standardized kebab-case names)
         $expectedRoles = [
+            'super-admin',
             'admin',
             'writer',
             'project-manager',
@@ -87,15 +88,9 @@ class SyncRolesAndPermissionsTest extends TestCase
             'student',
             'teacher',
             'pastor',
-            // Aliases
-            'SuperAdmin',
-            'Admin',
-            'Member',
-            'Student',
-            'Teacher',
-            'ProjectManager',
-            'EventManager',
-            'Editor',
+            'employee',
+            'star',
+            'mlr-agent',
         ];
 
         foreach ($expectedRoles as $role) {
@@ -211,41 +206,25 @@ class SyncRolesAndPermissionsTest extends TestCase
     {
         Artisan::call('permissions:sync', ['--force' => true]);
 
-        $superAdmin = Role::findByName('SuperAdmin');
+        $superAdmin = Role::findByName('super-admin');
         $allPermissions = Permission::all();
 
-        // SuperAdmin should have all permissions
+        // super-admin should have all permissions
         $this->assertEquals($allPermissions->count(), $superAdmin->permissions->count());
     }
 
     /** @test */
-    public function it_syncs_alias_roles_with_source_roles(): void
+    public function it_creates_standardized_roles_only(): void
     {
         Artisan::call('permissions:sync', ['--force' => true]);
 
-        // Admin alias should have same permissions as admin
-        $admin = Role::findByName('admin');
-        $adminAlias = Role::findByName('Admin');
-        $this->assertEquals(
-            $admin->permissions->pluck('name')->sort()->values()->toArray(),
-            $adminAlias->permissions->pluck('name')->sort()->values()->toArray()
-        );
-
-        // Member alias should have same permissions as member
-        $member = Role::findByName('member');
-        $memberAlias = Role::findByName('Member');
-        $this->assertEquals(
-            $member->permissions->pluck('name')->sort()->values()->toArray(),
-            $memberAlias->permissions->pluck('name')->sort()->values()->toArray()
-        );
-
-        // Editor alias should have same permissions as writer
-        $writer = Role::findByName('writer');
-        $editor = Role::findByName('Editor');
-        $this->assertEquals(
-            $writer->permissions->pluck('name')->sort()->values()->toArray(),
-            $editor->permissions->pluck('name')->sort()->values()->toArray()
-        );
+        // Verify standardized roles exist
+        $this->assertTrue(Role::where('name', 'super-admin')->exists(), 'super-admin should exist');
+        $this->assertTrue(Role::where('name', 'admin')->exists(), 'admin should exist');
+        $this->assertTrue(Role::where('name', 'member')->exists(), 'member should exist');
+        $this->assertTrue(Role::where('name', 'project-manager')->exists(), 'project-manager should exist');
+        $this->assertTrue(Role::where('name', 'event-manager')->exists(), 'event-manager should exist');
+        $this->assertTrue(Role::where('name', 'mlr-agent')->exists(), 'mlr-agent should exist');
     }
 
     /** @test */
@@ -475,41 +454,29 @@ class SyncRolesAndPermissionsTest extends TestCase
     {
         Artisan::call('permissions:sync', ['--force' => true]);
 
-        // We expect approximately 116 permissions based on the defined list
+        // We expect many permissions based on the defined list
         $count = Permission::count();
         $this->assertGreaterThanOrEqual(110, $count);
-        $this->assertLessThanOrEqual(130, $count);
+        $this->assertLessThanOrEqual(160, $count);
     }
 
     /** @test */
-    public function it_creates_all_base_and_alias_roles(): void
+    public function it_creates_all_standardized_roles(): void
     {
         Artisan::call('permissions:sync', ['--force' => true]);
 
-        // Base roles
-        $baseRoles = [
-            'admin', 'writer', 'project-manager', 'event-manager',
+        // Standardized roles (all kebab-case/lowercase)
+        $standardizedRoles = [
+            'super-admin', 'admin', 'writer', 'project-manager', 'event-manager',
             'library-manager', 'group-leader', 'department-leader',
             'impact-family-leader', 'member', 'student', 'teacher', 'pastor',
+            'employee', 'star', 'mlr-agent',
         ];
 
-        // Alias roles
-        $aliasRoles = [
-            'SuperAdmin', 'Admin', 'Member', 'Student',
-            'Teacher', 'ProjectManager', 'EventManager', 'Editor',
-        ];
-
-        foreach ($baseRoles as $role) {
+        foreach ($standardizedRoles as $role) {
             $this->assertTrue(
                 Role::where('name', $role)->exists(),
-                "Base role '{$role}' should exist"
-            );
-        }
-
-        foreach ($aliasRoles as $role) {
-            $this->assertTrue(
-                Role::where('name', $role)->exists(),
-                "Alias role '{$role}' should exist"
+                "Standardized role '{$role}' should exist"
             );
         }
     }

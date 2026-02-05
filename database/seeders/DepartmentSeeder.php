@@ -104,7 +104,7 @@ class DepartmentSeeder extends Seeder
         // Assign department heads from existing users
         $allDepartments = Department::all();
         $adminUsers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['Admin', 'ProjectManager', 'SuperAdmin']);
+            $query->whereIn('name', ['admin', 'project-manager', 'super-admin']);
         })->get();
 
         if ($adminUsers->count() > 0) {

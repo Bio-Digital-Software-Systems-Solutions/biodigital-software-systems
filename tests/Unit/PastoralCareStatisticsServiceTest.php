@@ -12,7 +12,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     Role::create(['name' => 'pastor']);
-    Role::create(['name' => 'mlr_agent']);
+    Role::create(['name' => 'mlr-agent']);
     $this->service = new PastoralCareStatisticsService;
 });
 

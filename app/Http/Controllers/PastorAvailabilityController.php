@@ -19,7 +19,7 @@ class PastorAvailabilityController extends Controller
         $user = Auth::user();
 
         // Check if user has pastor role or is admin
-        if (!$user->hasRole(['pastor', 'SuperAdmin', 'admin'])) {
+        if (! $user->hasRole(['pastor', 'super-admin', 'admin'])) {
             abort(403, 'Seuls les pasteurs peuvent gérer leurs créneaux de disponibilité.');
         }
 
@@ -43,7 +43,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole(['pastor', 'SuperAdmin', 'admin'])) {
+        if (! $user->hasRole(['pastor', 'super-admin', 'admin'])) {
             abort(403, 'Seuls les pasteurs peuvent gérer leurs créneaux de disponibilité.');
         }
 
@@ -59,7 +59,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole(['pastor', 'SuperAdmin', 'admin'])) {
+        if (! $user->hasRole(['pastor', 'super-admin', 'admin'])) {
             abort(403, 'Seuls les pasteurs peuvent gérer leurs créneaux de disponibilité.');
         }
 
@@ -133,7 +133,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole(['pastor', 'SuperAdmin', 'admin']) || ($availability->pastor_id !== $user->id && !$user->hasRole(['SuperAdmin', 'admin']))) {
+        if (! $user->hasRole(['pastor', 'super-admin', 'admin']) || ($availability->pastor_id !== $user->id && ! $user->hasRole(['super-admin', 'admin']))) {
             abort(403);
         }
 
@@ -180,7 +180,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole(['pastor', 'SuperAdmin', 'admin']) || ($availability->pastor_id !== $user->id && !$user->hasRole(['SuperAdmin', 'admin']))) {
+        if (! $user->hasRole(['pastor', 'super-admin', 'admin']) || ($availability->pastor_id !== $user->id && ! $user->hasRole(['super-admin', 'admin']))) {
             abort(403);
         }
 
@@ -196,7 +196,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole(['pastor', 'SuperAdmin', 'admin']) || ($availability->pastor_id !== $user->id && !$user->hasRole(['SuperAdmin', 'admin']))) {
+        if (! $user->hasRole(['pastor', 'super-admin', 'admin']) || ($availability->pastor_id !== $user->id && ! $user->hasRole(['super-admin', 'admin']))) {
             abort(403);
         }
 
@@ -289,7 +289,7 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole(['pastor', 'SuperAdmin', 'admin']) || ($availability->pastor_id !== $user->id && !$user->hasRole(['SuperAdmin', 'admin']))) {
+        if (! $user->hasRole(['pastor', 'super-admin', 'admin']) || ($availability->pastor_id !== $user->id && ! $user->hasRole(['super-admin', 'admin']))) {
             abort(403);
         }
 
@@ -306,12 +306,12 @@ class PastorAvailabilityController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->hasRole(['pastor', 'SuperAdmin', 'admin']) || ($availability->pastor_id !== $user->id && !$user->hasRole(['SuperAdmin', 'admin']))) {
+        if (! $user->hasRole(['pastor', 'super-admin', 'admin']) || ($availability->pastor_id !== $user->id && ! $user->hasRole(['super-admin', 'admin']))) {
             abort(403);
         }
 
         $availability->update([
-            'is_active' => !$availability->is_active,
+            'is_active' => ! $availability->is_active,
         ]);
 
         $status = $availability->is_active ? 'activés' : 'désactivés';
@@ -328,7 +328,7 @@ class PastorAvailabilityController extends Controller
             $user = Auth::user();
 
             // Check if user has pastor role
-            if (!$user->hasRole(['pastor', 'SuperAdmin', 'admin'])) {
+            if (! $user->hasRole(['pastor', 'super-admin', 'admin'])) {
                 return response()->json([
                     'error' => 'Seuls les pasteurs peuvent prévisualiser leurs créneaux de disponibilité.',
                 ], 403);
@@ -367,14 +367,14 @@ class PastorAvailabilityController extends Controller
                 'count' => count($slots),
             ]);
         } catch (\Exception $e) {
-            \Log::error('Preview slots error: ' . $e->getMessage(), [
+            \Log::error('Preview slots error: '.$e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
-                'error' => 'Error generating preview slots: ' . $e->getMessage(),
+                'error' => 'Error generating preview slots: '.$e->getMessage(),
             ], 500);
         }
     }
