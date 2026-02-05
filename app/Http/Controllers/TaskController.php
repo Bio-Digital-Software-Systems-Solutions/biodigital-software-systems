@@ -13,10 +13,12 @@ use App\Models\TaskAttachment;
 use App\Models\TaskComment;
 use App\Models\TaskParticipant;
 use App\Models\User;
+use App\Notifications\TaskCreated;
 use App\Notifications\UserMentionedInComment;
 use App\Services\Comment\MentionService;
 use App\Services\ProjectStatisticsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -200,6 +202,9 @@ class TaskController extends Controller
         }
 
         $task = Task::create($validated);
+
+        // Send notifications to project members if task is associated with a project
+        $this->notifyProjectMembersOfNewTask($task, $validated);
 
         // Redirect to project if task was created from a project page
         if (isset($validated['taskable_type']) && $validated['taskable_type'] === 'App\\Models\\Project' && $request->has('from_project')) {
@@ -549,6 +554,39 @@ class TaskController extends Controller
         foreach ($users as $user) {
             $user->notify(new UserMentionedInComment('task', $task, $comment, $mentionedBy));
         }
+    }
+
+    /**
+     * Notify all project members when a new task is created.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function notifyProjectMembersOfNewTask(Task $task, array $validated): void
+    {
+        // Only notify if task is associated with a project
+        if (! isset($validated['taskable_type']) || $validated['taskable_type'] !== 'App\\Models\\Project') {
+            return;
+        }
+
+        $project = \App\Models\Project::find($validated['taskable_id']);
+        if (! $project) {
+            return;
+        }
+
+        $currentUser = auth()->user();
+
+        // Get all users to notify (excluding the creator)
+        $usersToNotify = $project->getAllNotifiableUsers($currentUser?->id);
+
+        if ($usersToNotify->isEmpty()) {
+            return;
+        }
+
+        // Load task with assignee for the notification
+        $task->load('assignee');
+
+        // Send notification to all project members
+        Notification::send($usersToNotify, new TaskCreated($task, $project, $currentUser));
     }
 
     /**

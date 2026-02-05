@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Traits\ClearsCache;
 use App\Enums\Priority;
 use App\Enums\ProjectStatus;
+use App\Traits\ClearsCache;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,8 +13,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -49,6 +49,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read int|null $sprints_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $tasks
  * @property-read int|null $tasks_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project active()
  * @method static \Database\Factories\ProjectFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project forUser(\App\Models\User $user)
@@ -75,17 +76,20 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project withoutTrashed()
+ *
  * @property string $uuid
  * @property string|null $image
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
  * @property-read int|null $activities_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 class Project extends Model
 {
-    use HasFactory, HasUuid, SoftDeletes, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity, SoftDeletes;
 
     /**
      * Configure activity log options.
@@ -97,6 +101,7 @@ class Project extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     protected $fillable = [
         'name',
         'slug',
@@ -229,5 +234,49 @@ class Project extends Model
         return $this->end_date &&
                $this->end_date->isPast() &&
                $this->status !== ProjectStatus::COMPLETED;
+    }
+
+    /**
+     * Get all users that should be notified about project activities.
+     * This includes: project manager, reviewer, participants, and members.
+     *
+     * @param  int|null  $excludeUserId  User ID to exclude (e.g., the user who triggered the notification)
+     * @return \Illuminate\Support\Collection<int, User>
+     */
+    public function getAllNotifiableUsers(?int $excludeUserId = null): \Illuminate\Support\Collection
+    {
+        $users = collect();
+
+        // Add project manager
+        if ($this->manager) {
+            $users->push($this->manager);
+        }
+
+        // Add reviewer
+        if ($this->reviewer) {
+            $users->push($this->reviewer);
+        }
+
+        // Add all participants
+        $this->load('participants.user');
+        foreach ($this->participants as $participant) {
+            if ($participant->user) {
+                $users->push($participant->user);
+            }
+        }
+
+        // Add all members
+        $this->load('members');
+        foreach ($this->members as $member) {
+            $users->push($member);
+        }
+
+        // Remove duplicates by user ID and optionally exclude a specific user
+        return $users
+            ->unique('id')
+            ->when($excludeUserId, function ($collection, $excludeUserId) {
+                return $collection->filter(fn (User $user) => $user->id !== $excludeUserId);
+            })
+            ->values();
     }
 }
