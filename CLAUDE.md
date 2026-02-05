@@ -93,11 +93,22 @@ php artisan optimize
 ## Permissions System
 
 ### Roles
-- **admin**: Full access to all features
-- **project-manager**: Event and project management
-- **event-manager**: Event management only
-- **writer**: Article creation and management
-- **member**: Basic access (view, participate, rent)
+- **super-admin**: Accès complet à toutes les fonctionnalités + gestion utilisateurs
+- **admin**: Accès complet à toutes les fonctionnalités
+- **writer**: Création et gestion d'articles
+- **project-manager**: Gestion des événements et projets
+- **event-manager**: Gestion des événements uniquement
+- **library-manager**: Gestion de la bibliothèque
+- **group-leader**: Chef de groupe
+- **department-leader**: Chef de département
+- **impact-family-leader**: Chef de famille d'impact
+- **pastor**: Accès aux soins pastoraux
+- **teacher**: Espace enseignant
+- **student**: Espace étudiant
+- **member**: Accès de base (voir, participer, louer)
+- **employee**: Employé
+- **star**: Membre star
+- **mlr-agent**: Agent MLR
 
 ### Key Permissions
 - **Events**: view, create, edit, delete events
@@ -105,6 +116,48 @@ php artisan optimize
 - **Articles**: view, create, edit, delete articles
 - **Chat**: use chat functionality
 - **General**: view departments, programs, stocks
+
+### Role Enum Synchronization (PHP ↔ TypeScript)
+
+**IMPORTANT**: Les enums de rôles doivent être synchronisés entre PHP et TypeScript.
+
+| Fichier PHP | Fichier TypeScript |
+|-------------|-------------------|
+| `app/Enums/Role.php` | `resources/js/Enums/Role.ts` |
+
+**Format des valeurs** : kebab-case (ex: `super-admin`, `project-manager`)
+
+```php
+// PHP - app/Enums/Role.php
+enum Role: string
+{
+    case SUPER_ADMIN = 'super-admin';
+    case ADMIN = 'admin';
+    case WRITER = 'writer';
+    // ...
+}
+```
+
+```typescript
+// TypeScript - resources/js/Enums/Role.ts
+export enum Role {
+    SUPER_ADMIN = 'super-admin',
+    ADMIN = 'admin',
+    WRITER = 'writer',
+    // ...
+}
+```
+
+**⚠️ Si vous ajoutez un nouveau rôle** :
+1. Ajouter dans `app/Enums/Role.php`
+2. Ajouter dans `resources/js/Enums/Role.ts` avec la **même valeur**
+3. Ajouter dans le seeder `database/seeders/RoleSeeder.php`
+4. Exécuter `npm run build` pour recompiler le frontend
+
+**Fonctions helper disponibles** (TypeScript) :
+- `hasRole(userRoles, Role.SUPER_ADMIN)` - vérifie un rôle spécifique
+- `hasAnyRole(userRoles, [Role.ADMIN, Role.SUPER_ADMIN])` - vérifie plusieurs rôles
+- `isAdmin(userRoles)` - vérifie si admin ou super-admin
 
 ## Frontend Structure
 

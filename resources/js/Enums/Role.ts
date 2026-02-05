@@ -3,19 +3,22 @@
  * Keep this in sync with the PHP enum
  */
 export enum Role {
-    SUPER_ADMIN = 'SuperAdmin',
-    ADMIN = 'Admin',
-    EDITOR = 'Editor',
-    PROJECT_MANAGER = 'ProjectManager',
-    EVENT_MANAGER = 'EventManager',
-    LIBRARY_MANAGER = 'LibraryManager',
-    GROUP_LEADER = 'GroupLeader',
-    DEPARTMENT_LEADER = 'DepartmentLeader',
-    IMPACT_FAMILY_LEADER = 'ImpactFamilyLeader',
-    MEMBER = 'Member',
-    PASTOR = 'Pastor',
-    STUDENT = 'Student',
-    TEACHER = 'Teacher',
+    SUPER_ADMIN = 'super-admin',
+    ADMIN = 'admin',
+    WRITER = 'writer',
+    PROJECT_MANAGER = 'project-manager',
+    EVENT_MANAGER = 'event-manager',
+    LIBRARY_MANAGER = 'library-manager',
+    GROUP_LEADER = 'group-leader',
+    DEPARTMENT_LEADER = 'department-leader',
+    IMPACT_FAMILY_LEADER = 'impact-family-leader',
+    MEMBER = 'member',
+    PASTOR = 'pastor',
+    STUDENT = 'student',
+    TEACHER = 'teacher',
+    EMPLOYEE = 'employee',
+    STAR = 'star',
+    MLR_AGENT = 'mlr-agent',
 }
 
 /**
