@@ -35,7 +35,7 @@ class SyncRolesAndPermissions extends Command
             'view articles', 'create articles', 'edit articles', 'delete articles', 'publish articles',
             // Events
             'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
-            'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
+            'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
             // Appointments
             'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
             // Pastoral Care
@@ -106,7 +106,7 @@ class SyncRolesAndPermissions extends Command
                 'view articles', 'create articles', 'edit articles', 'delete articles', 'publish articles',
                 // Events
                 'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
-                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
+                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
                 // Appointments
                 'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
                 // Pastoral Care
@@ -182,7 +182,7 @@ class SyncRolesAndPermissions extends Command
                 'view stocks', 'manage stocks',
                 'view users', 'view departments', 'view department statistics',
                 'view events', 'create events', 'edit events', 'attend events', 'manage event participants',
-                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
+                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
                 'view appointments', 'create appointments', 'edit appointments', 'manage appointment participants',
                 'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
                 'select pastor for pastoral care',
@@ -198,7 +198,7 @@ class SyncRolesAndPermissions extends Command
 
             'event-manager' => [
                 'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
-                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view analytics',
+                'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
                 'view appointments', 'create appointments', 'edit appointments', 'manage appointment participants',
                 'view groups', 'manage group members',
                 'view users', 'view departments',

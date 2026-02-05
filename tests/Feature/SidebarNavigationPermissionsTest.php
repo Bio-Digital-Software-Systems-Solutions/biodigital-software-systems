@@ -329,7 +329,7 @@ it('event manager has event management access but not projects', function () {
         'edit events',
         'delete events',
         'manage event participants',
-        'view analytics',
+        'view event analytics',
         'view appointments',
         'view stocks',
     ];
