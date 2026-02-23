@@ -7,6 +7,7 @@ use App\Models\Training;
 use App\Models\TrainingClass;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class TrainingClassFilterTest extends TestCase
@@ -180,22 +181,28 @@ class TrainingClassFilterTest extends TestCase
             'max_students' => 30,
         ]);
 
-        // Enroll some students
+        // Enroll some students in the class
         $students = User::factory()->count(5)->create();
         foreach ($students as $student) {
-            $this->training1->students()->attach($student->id, [
+            DB::table('training_enrollments')->insert([
+                'user_id' => $student->id,
+                'training_id' => $this->training1->id,
+                'training_class_id' => $class->id,
                 'status' => 'approved',
                 'enrolled_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
 
         $response = $this->actingAs($this->admin)->get(route('training-classes.index'));
 
         $classes = $response->viewData('page')['props']['classes']['data'];
-        $firstClass = collect($classes)->first();
+        $targetClass = collect($classes)->firstWhere('id', $class->id);
 
-        $this->assertEquals(5, $firstClass['students_count']);
-        $this->assertEquals(30, $firstClass['max_students']);
+        $this->assertNotNull($targetClass);
+        $this->assertEquals(5, $targetClass['students_count']);
+        $this->assertEquals(30, $targetClass['max_students']);
     }
 
     public function test_non_authenticated_users_cannot_access_classes()

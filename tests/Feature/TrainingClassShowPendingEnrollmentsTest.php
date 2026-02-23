@@ -36,6 +36,7 @@ it('includes pending enrollments in show page', function () {
     DB::table('training_enrollments')->insert([
         'user_id' => $student->id,
         'training_id' => $this->training->id,
+        'training_class_id' => $this->trainingClass->id,
         'status' => 'pending',
         'progress' => 0,
         'attendance_rate' => 0,
@@ -60,6 +61,7 @@ it('does not include approved enrollments in pending list', function () {
     DB::table('training_enrollments')->insert([
         'user_id' => $student->id,
         'training_id' => $this->training->id,
+        'training_class_id' => $this->trainingClass->id,
         'status' => 'approved',
         'progress' => 0,
         'attendance_rate' => 0,

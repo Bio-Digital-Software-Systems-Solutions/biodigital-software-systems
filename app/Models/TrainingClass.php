@@ -158,7 +158,6 @@ class TrainingClass extends Model
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'training_enrollments', 'training_class_id', 'user_id')
-            ->where('training_id', $this->training_id)
             ->withPivot(['status', 'progress', 'grade', 'attendance_rate', 'enrolled_at', 'completed_at'])
             ->withTimestamps();
     }

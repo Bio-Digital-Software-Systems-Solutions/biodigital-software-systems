@@ -24,8 +24,9 @@ class TrainingClassController extends Controller
     public function index(Request $request): Response
     {
         $query = TrainingClass::with([
-            'training.students' => function ($query) {
-                $query->where('status', 'approved');
+            'training',
+            'students' => function ($query) {
+                $query->wherePivot('status', 'approved');
             },
             'teacher',
             'attendances',
@@ -101,8 +102,9 @@ class TrainingClassController extends Controller
     public function show(TrainingClass $trainingClass): Response
     {
         $trainingClass->load([
-            'training.students' => function ($query) {
-                $query->where('status', 'approved');
+            'training',
+            'students' => function ($query) {
+                $query->wherePivot('status', 'approved');
             },
             'teacher',
             'attendances.student',
@@ -110,7 +112,7 @@ class TrainingClassController extends Controller
             'quizzes',
         ]);
 
-        $students = $trainingClass->training->students
+        $students = $trainingClass->students
             ->map(function ($student) use ($trainingClass) {
                 $attendance = $trainingClass->attendances->firstWhere('student_id', $student->id);
 
@@ -128,7 +130,7 @@ class TrainingClassController extends Controller
 
         $pendingEnrollments = DB::table('training_enrollments')
             ->join('users', 'training_enrollments.user_id', '=', 'users.id')
-            ->where('training_enrollments.training_id', $trainingClass->training_id)
+            ->where('training_enrollments.training_class_id', $trainingClass->id)
             ->where('training_enrollments.status', 'pending')
             ->select(
                 'training_enrollments.id',
@@ -226,8 +228,9 @@ class TrainingClassController extends Controller
         }
 
         $class->load([
-            'training.students' => function ($query) {
-                $query->where('status', 'approved');
+            'training',
+            'students' => function ($query) {
+                $query->wherePivot('status', 'approved');
             },
             'teacher',
         ]);
@@ -327,8 +330,9 @@ class TrainingClassController extends Controller
         ]);
 
         $trainingClass->load([
-            'training.students' => function ($query) {
-                $query->where('status', 'approved');
+            'training',
+            'students' => function ($query) {
+                $query->wherePivot('status', 'approved');
             },
             'teacher',
             'schedules',
@@ -783,8 +787,9 @@ class TrainingClassController extends Controller
         $copy = $trainingClass->duplicate($validated['name'] ?? null);
 
         $copy->load([
-            'training.students' => function ($query) {
-                $query->where('status', 'approved');
+            'training',
+            'students' => function ($query) {
+                $query->wherePivot('status', 'approved');
             },
             'teacher',
             'schedules',
@@ -821,8 +826,8 @@ class TrainingClassController extends Controller
         }
 
         $studentsCount = 0;
-        if ($class->relationLoaded('training') && $class->training->relationLoaded('students')) {
-            $studentsCount = $class->training->students->count();
+        if ($class->relationLoaded('students')) {
+            $studentsCount = $class->students->count();
         }
 
         return [
