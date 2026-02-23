@@ -137,6 +137,7 @@ export default function Dashboard({ classes: initialClasses, trainings, teachers
                             classes={classes}
                             trainings={trainings}
                             teachers={teachers}
+                            filters={filters}
                             onClassUpdated={handleClassUpdated}
                             onClassDeleted={handleClassDeleted}
                             onClassAdded={handleClassAdded}

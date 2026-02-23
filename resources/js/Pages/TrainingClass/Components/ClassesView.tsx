@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Edit, Trash2, Grid3x3, List, Table, Search, X, FileText, Archive, ArchiveRestore, Copy } from 'lucide-react';
@@ -14,6 +14,7 @@ interface Props {
     classes: TrainingClass[];
     trainings: Training[];
     teachers: Teacher[];
+    filters?: Record<string, string>;
     onClassUpdated: (updatedClass: TrainingClass) => void;
     onClassDeleted: (classUuid: string) => void;
     onClassAdded?: (newClass: TrainingClass) => void;
@@ -21,17 +22,47 @@ interface Props {
 
 type ViewMode = 'grid' | 'list' | 'table';
 
-export default function ClassesView({ classes, trainings, teachers, onClassUpdated, onClassDeleted, onClassAdded }: Props) {
+export default function ClassesView({ classes, trainings, teachers, filters = {}, onClassUpdated, onClassDeleted, onClassAdded }: Props) {
     const [editingClass, setEditingClass] = useState<TrainingClass | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [classToDelete, setClassToDelete] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [filterTeacher, setFilterTeacher] = useState('');
     const [filterTraining, setFilterTraining] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
+    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const performServerSearch = useCallback((search: string) => {
+        const params: Record<string, string> = {};
+        if (search) {
+            params.search = search;
+        }
+        router.get(route('training-classes.index'), params, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    }, []);
+
+    const handleSearchChange = useCallback((value: string) => {
+        setSearchTerm(value);
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+        searchTimeoutRef.current = setTimeout(() => {
+            performServerSearch(value);
+        }, 400);
+    }, [performServerSearch]);
+
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, []);
     const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
     const [classToArchive, setClassToArchive] = useState<TrainingClass | null>(null);
     const [archiveDuration, setArchiveDuration] = useState(6);
@@ -204,15 +235,9 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
         return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     };
 
-    // Filter and search classes
+    // Filter classes (search is handled server-side, other filters remain client-side)
     const filteredClasses = useMemo(() => {
         return classes.filter((cls) => {
-            // Search term filter
-            const matchesSearch = searchTerm === '' ||
-                cls.training_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                cls.teacher_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                cls.room?.toLowerCase().includes(searchTerm.toLowerCase());
-
             // Teacher filter
             const matchesTeacher = filterTeacher === '' || cls.teacher_name === filterTeacher;
 
@@ -222,9 +247,9 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
             // Status filter
             const matchesStatus = filterStatus === '' || cls.status === filterStatus;
 
-            return matchesSearch && matchesTeacher && matchesTraining && matchesStatus;
+            return matchesTeacher && matchesTraining && matchesStatus;
         });
-    }, [classes, searchTerm, filterTeacher, filterTraining, filterStatus]);
+    }, [classes, filterTeacher, filterTraining, filterStatus]);
 
     // Get unique values for filters
     const uniqueTeachers = useMemo(() =>
@@ -247,6 +272,9 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
         setFilterTeacher('');
         setFilterTraining('');
         setFilterStatus('');
+        if (filters.search) {
+            performServerSearch('');
+        }
     };
 
     const hasActiveFilters = searchTerm || filterTeacher || filterTraining || filterStatus;
@@ -299,9 +327,9 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                                 type="text"
-                                placeholder="Rechercher par formation, enseignant, salle..."
+                                placeholder="Rechercher par nom, formation, enseignant, salle..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => handleSearchChange(e.target.value)}
                                 className="pl-10"
                             />
                         </div>
@@ -398,12 +426,20 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                     className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border dark:border-gray-700 hover:shadow-lg transition-shadow"
                                 >
                                     <div className="flex justify-between items-start mb-4">
-                                        <Link
-                                            href={route('training-classes.show', { trainingClass: trainingClass.uuid })}
-                                            className="text-lg font-semibold text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300"
-                                        >
-                                            {trainingClass.training_name}
-                                        </Link>
+                                        <div>
+                                            <Link
+                                                href={route('training-classes.show', { trainingClass: trainingClass.uuid })}
+                                                className="text-lg font-semibold text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300"
+                                            >
+                                                {trainingClass.name}
+                                            </Link>
+                                            <Link
+                                                href={route('trainings.show', { training: trainingClass.training_uuid })}
+                                                className="text-sm font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mt-0.5 block"
+                                            >
+                                                {trainingClass.training_name}
+                                            </Link>
+                                        </div>
                                         <span
                                             className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
                                                 trainingClass.status
@@ -515,12 +551,12 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
+                                            <div className="flex items-center gap-3 mb-1">
                                                 <Link
                                                     href={route('training-classes.show', { trainingClass: trainingClass.uuid })}
                                                     className="text-lg font-semibold text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300"
                                                 >
-                                                    {trainingClass.training_name}
+                                                    {trainingClass.name}
                                                 </Link>
                                                 <span
                                                     className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
@@ -530,6 +566,12 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                                     {trainingClass.status}
                                                 </span>
                                             </div>
+                                            <Link
+                                                href={route('trainings.show', { training: trainingClass.training_uuid })}
+                                                className="text-sm font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mb-2 block"
+                                            >
+                                                {trainingClass.training_name}
+                                            </Link>
                                             <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
                                                 <span>
                                                     <strong className="text-gray-900 dark:text-white">Enseignant:</strong>{' '}
@@ -634,7 +676,7 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                     <thead className="bg-gray-50 dark:bg-gray-900">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                                Formation
+                                                Classe
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                                 Enseignant
@@ -662,10 +704,16 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                         {filteredClasses.map((trainingClass) => (
                                             <tr key={trainingClass.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                <td className="px-6 py-4">
                                                     <Link
                                                         href={route('training-classes.show', { trainingClass: trainingClass.uuid })}
                                                         className="text-sm font-medium text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300"
+                                                    >
+                                                        {trainingClass.name}
+                                                    </Link>
+                                                    <Link
+                                                        href={route('trainings.show', { training: trainingClass.training_uuid })}
+                                                        className="text-sm font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                                                     >
                                                         {trainingClass.training_name}
                                                     </Link>

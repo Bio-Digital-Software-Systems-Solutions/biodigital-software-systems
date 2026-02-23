@@ -1,0 +1,38 @@
+import{R as x,j as e,H as g,L as s,a as i}from"./app-yML-8DzH.js";import{D as h}from"./DashboardLayout-tcAZu1jF.js";import{t}from"./index-BRShwN4i.js";import{D as f}from"./delete-confirmation-dialog-DZHVvG3U.js";import{F as l}from"./PlusIcon-BwDIlWc9.js";import{F as b}from"./PlayIcon-B8R09htQ.js";import{F as y}from"./EyeIcon-DddVCgpU.js";import{F as v}from"./PencilIcon-CU8SVRhw.js";import{F as j}from"./DocumentDuplicateIcon-BcPMniQS.js";import{F as k}from"./TrashIcon-Di4al-LN.js";import"./transition-CmWFV3rb.js";import"./ChevronDownIcon-BzCHW_UP.js";import"./UserGroupIcon-Cmn4EZp1.js";import"./PencilSquareIcon-hp0XZ1pt.js";import"./toaster-_KOt3st-.js";import"./logger-BM3S30lt.js";import"./dialog-CipEJbtX.js";import"./button-DELXzVn7.js";import"./index-oPDuauzT.js";import"./index-XZ90kV9u.js";import"./utils-BAOgSzd2.js";import"./badge-DfotbzzL.js";import"./shield-alert-BGdzacWX.js";import"./createLucideIcon-BR2tNZyJ.js";import"./triangle-alert-CzQ2258i.js";import"./arrow-left-C_tqEPTf.js";import"./index-1WSI8Nm_.js";import"./index-BITB1R2N.js";import"./index-C-d8uNHm.js";import"./index-DRq-AsFR.js";import"./HomeIcon-Ca1Q0v6j.js";import"./CalendarDaysIcon-D84rkPoy.js";import"./HeartIcon-BMsDuyV4.js";import"./ClockIcon-BDJE56O6.js";import"./ChatBubbleLeftRightIcon-C43mg_II.js";import"./DocumentTextIcon-DpBk2rPB.js";import"./EnvelopeIcon-C0QJohsK.js";import"./ShieldCheckIcon-D0Z7JTH9.js";import"./ClipboardDocumentCheckIcon-BwQR74AG.js";import"./Bars3Icon-DmkwfvbG.js";const w={draft:{label:"Brouillon",color:"bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"},active:{label:"Actif",color:"bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"},deprecated:{label:"Obsolète",color:"bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}};function me({workflows:m}){const n=m?.data||[],[a,o]=x.useState(null),c=()=>{a&&i.delete(route("workflows.destroy",a.uuid),{onSuccess:()=>{t.success("Workflow supprimé avec succès"),o(null)},onError:()=>{t.error("Erreur lors de la suppression")}})},p=r=>{i.post(route("workflows.duplicate",r.uuid),{},{onSuccess:()=>{t.success("Workflow dupliqué avec succès")},onError:()=>{t.error("Erreur lors de la duplication")}})},u=r=>{i.post(route("workflows.activate",r.uuid),{},{onSuccess:()=>{t.success("Workflow activé avec succès")},onError:()=>{t.error("Erreur lors de l'activation")}})};return e.jsxs(h,{children:[e.jsx(g,{title:"Workflows"}),e.jsx("div",{className:"py-6",children:e.jsxs("div",{className:"mx-auto px-4 sm:px-6 lg:px-8",children:[e.jsxs("div",{className:"flex items-center justify-between mb-6",children:[e.jsxs("div",{children:[e.jsx("h1",{className:"text-2xl font-bold text-gray-900 dark:text-white",children:"Workflows"}),e.jsx("p",{className:"text-sm text-gray-500 dark:text-gray-400 mt-1",children:"Gérez vos workflows et automatisations"})]}),e.jsxs(s,{href:route("workflows.create"),className:`
+                                inline-flex items-center gap-2 px-4 py-2 rounded-md
+                                bg-primary text-white font-medium
+                                hover:bg-primary/90 transition-colors
+                            `,children:[e.jsx(l,{className:"h-5 w-5"}),"Nouveau workflow"]})]}),n.length===0?e.jsxs("div",{className:`
+                            bg-white dark:bg-gray-800 rounded-lg
+                            border border-gray-200 dark:border-gray-700
+                            p-12 text-center
+                        `,children:[e.jsx("p",{className:"text-gray-500 dark:text-gray-400 mb-4",children:"Aucun workflow créé"}),e.jsxs(s,{href:route("workflows.create"),className:`
+                                    inline-flex items-center gap-2 px-4 py-2 rounded-md
+                                    bg-primary text-white font-medium
+                                    hover:bg-primary/90 transition-colors
+                                `,children:[e.jsx(l,{className:"h-5 w-5"}),"Créer votre premier workflow"]})]}):e.jsx("div",{className:"grid gap-4",children:n.map(r=>{const d=w[r.status];return e.jsxs("div",{className:`
+                                            bg-white dark:bg-gray-800 rounded-lg
+                                            border border-gray-200 dark:border-gray-700
+                                            p-4 flex items-center justify-between
+                                            hover:shadow-md transition-shadow
+                                        `,children:[e.jsxs("div",{className:"flex-1 min-w-0",children:[e.jsxs("div",{className:"flex items-center gap-3 mb-1",children:[e.jsx(s,{href:route("workflows.show",r.uuid),className:"text-lg font-medium text-gray-900 dark:text-white truncate hover:text-primary dark:hover:text-primary transition-colors",children:r.name}),e.jsx("span",{className:`px-2 py-0.5 rounded text-xs font-medium ${d.color}`,children:d.label})]}),r.description&&e.jsx("p",{className:"text-sm text-gray-500 dark:text-gray-400 truncate",children:r.description}),e.jsxs("div",{className:"flex items-center gap-4 mt-2 text-xs text-gray-400",children:[e.jsxs("span",{children:[r.steps_count||0," étapes"]}),e.jsxs("span",{children:["Version ",r.version]}),r.department&&e.jsx("span",{children:r.department.name})]})]}),e.jsxs("div",{className:"flex items-center gap-2 ml-4",children:[r.status==="draft"&&e.jsx("button",{type:"button",onClick:()=>u(r),className:`
+                                                        p-2 rounded-md
+                                                        text-green-600 hover:bg-green-50
+                                                        dark:text-green-400 dark:hover:bg-green-900/20
+                                                    `,title:"Activer",children:e.jsx(b,{className:"h-5 w-5"})}),e.jsx(s,{href:route("workflows.show",r.uuid),className:`
+                                                    p-2 rounded-md
+                                                    text-gray-600 hover:bg-gray-100
+                                                    dark:text-gray-400 dark:hover:bg-gray-700
+                                                `,title:"Voir",children:e.jsx(y,{className:"h-5 w-5"})}),e.jsx(s,{href:route("workflows.edit",r.uuid),className:`
+                                                    p-2 rounded-md
+                                                    text-gray-600 hover:bg-gray-100
+                                                    dark:text-gray-400 dark:hover:bg-gray-700
+                                                `,title:"Modifier",children:e.jsx(v,{className:"h-5 w-5"})}),e.jsx("button",{type:"button",onClick:()=>p(r),className:`
+                                                    p-2 rounded-md
+                                                    text-gray-600 hover:bg-gray-100
+                                                    dark:text-gray-400 dark:hover:bg-gray-700
+                                                `,title:"Dupliquer",children:e.jsx(j,{className:"h-5 w-5"})}),e.jsx("button",{type:"button",onClick:()=>o(r),className:`
+                                                    p-2 rounded-md
+                                                    text-red-600 hover:bg-red-50
+                                                    dark:text-red-400 dark:hover:bg-red-900/20
+                                                `,title:"Supprimer",children:e.jsx(k,{className:"h-5 w-5"})})]})]},r.uuid)})})]})}),e.jsx(f,{open:!!a,onOpenChange:r=>!r&&o(null),onConfirm:c,title:"Supprimer le workflow",description:`Êtes-vous sûr de vouloir supprimer le workflow "${a?.name}" ? Cette action est irréversible.`})]})}export{me as default};

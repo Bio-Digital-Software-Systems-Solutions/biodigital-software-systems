@@ -32,6 +32,18 @@ class TrainingClassController extends Controller
             'schedules',
         ]);
 
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('room', 'like', "%{$search}%")
+                    ->orWhereHas('training', fn ($q) => $q->where('title', 'like', "%{$search}%"))
+                    ->orWhereHas('teacher', fn ($q) => $q->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%"));
+            });
+        }
+
         // Add filters
         if ($request->filled('training_id')) {
             $query->where('training_id', $request->training_id);
@@ -79,7 +91,7 @@ class TrainingClassController extends Controller
             ],
             'trainings' => $trainings,
             'teachers' => $teachers,
-            'filters' => $request->only(['training_id', 'teacher_id', 'status']),
+            'filters' => $request->only(['search', 'training_id', 'teacher_id', 'status']),
         ]);
     }
 
@@ -817,6 +829,7 @@ class TrainingClassController extends Controller
             'id' => $class->id,
             'uuid' => $class->uuid,
             'training_id' => $class->training_id,
+            'training_uuid' => $class->training->uuid,
             'training_name' => $class->training->title,
             'teacher_id' => $class->teacher_id,
             'teacher_name' => $class->teacher ? $class->teacher->first_name.' '.$class->teacher->last_name : 'N/A',

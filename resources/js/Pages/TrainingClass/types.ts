@@ -10,6 +10,7 @@ export interface TrainingClass {
     id: number;
     uuid: string;
     training_id: number;
+    training_uuid: string;
     training_name: string;
     teacher_id: number | null;
     teacher_name: string;
