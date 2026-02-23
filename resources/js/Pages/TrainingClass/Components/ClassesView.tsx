@@ -781,7 +781,7 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                 isDeleting={isArchiving}
                 variant="default"
             >
-                <div className="mt-4">
+                <div className="my-4 px-6">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Durée d'accès pour les étudiants
                     </label>
