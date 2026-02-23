@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\TrainingEnrollmentSubmitted;
 use App\Models\Training;
 use App\Services\CacheService;
 use App\Services\FileUploadService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -163,7 +165,7 @@ class TrainingController extends Controller
         // Cache teachers list (5 minutes cache)
         $teachers = CacheService::remember(
             'trainings.teachers',
-            fn() => \App\Models\User::select('id', 'first_name', 'last_name', 'email')
+            fn () => \App\Models\User::select('id', 'first_name', 'last_name', 'email')
                 ->whereHas('teacher')
                 ->get(),
             CacheService::SHORT_CACHE
@@ -206,7 +208,7 @@ class TrainingController extends Controller
                 }
             }
             // Case 2: TUS upload (image is a string filename)
-            elseif (is_string($image) && !empty($image)) {
+            elseif (is_string($image) && ! empty($image)) {
                 // Image is already uploaded via TUS, just store the filename
                 $validated['image'] = basename($image);
             }
@@ -242,7 +244,7 @@ class TrainingController extends Controller
         // Cache teachers list (5 minutes cache)
         $teachers = CacheService::remember(
             'trainings.teachers',
-            fn() => \App\Models\User::select('id', 'first_name', 'last_name', 'email')
+            fn () => \App\Models\User::select('id', 'first_name', 'last_name', 'email')
                 ->whereHas('teacher')
                 ->get(),
             CacheService::SHORT_CACHE
@@ -297,7 +299,7 @@ class TrainingController extends Controller
                 }
             }
             // Case 2: TUS upload (image is a string filename)
-            elseif (is_string($image) && !empty($image)) {
+            elseif (is_string($image) && ! empty($image)) {
                 $newImageFilename = basename($image);
 
                 // Only delete old image if the new one is different
@@ -333,6 +335,7 @@ class TrainingController extends Controller
                         // Delete existing topic
                         $training->topics()->where('id', $topicData['id'])->delete();
                     }
+
                     continue;
                 }
 
@@ -359,7 +362,7 @@ class TrainingController extends Controller
             }
 
             // Delete topics that were not in the request (removed from the UI)
-            if (!empty($topicsToKeep)) {
+            if (! empty($topicsToKeep)) {
                 $training->topics()->whereNotIn('id', $topicsToKeep)->delete();
             } else {
                 // If no topics to keep, delete all
@@ -407,7 +410,7 @@ class TrainingController extends Controller
         $validated = $request->validate([
             'selectedClassId' => [
                 'required',
-                \Illuminate\Validation\Rule::exists('training_classes', 'id')->where('training_id', $training->id)
+                \Illuminate\Validation\Rule::exists('training_classes', 'id')->where('training_id', $training->id),
             ],
             'firstName' => ['nullable', 'string', 'max:255', 'regex:/^[\p{L}\s\-\']+$/u'],
             'lastName' => ['nullable', 'string', 'max:255', 'regex:/^[\p{L}\s\-\']+$/u'],
@@ -436,6 +439,13 @@ class TrainingController extends Controller
 
         $training->increment('students_count');
 
+        // Send enrollment submission confirmation email
+        Mail::to($user->email)->send(new TrainingEnrollmentSubmitted(
+            userName: $user->first_name.' '.$user->last_name,
+            trainingName: $training->title,
+            paymentMethod: $validated['paymentMethod'],
+        ));
+
         // Invalidate trainings cache
         CacheService::forgetPattern('trainings');
 
@@ -452,30 +462,30 @@ class TrainingController extends Controller
         }
 
         $trainings = Training::with([
-                'topics',
-                'quizzes' => function ($query) {
-                    $query->where('is_active', true)
-                          ->where('status', 'published');
-                },
-                'quizzes.attempts' => function ($query) use ($user) {
-                    $query->where('student_id', $user->id)
-                          ->where('status', 'completed')
-                          ->orderBy('completed_at', 'desc');
-                },
-                'teacher',
-                'classes.materials' => function ($query) {
-                    $query->active()->ordered();
-                },
-                'students' => function ($query) use ($user) {
-                    $query->where('user_id', $user->id);
-                }
-            ])
+            'topics',
+            'quizzes' => function ($query) {
+                $query->where('is_active', true)
+                    ->where('status', 'published');
+            },
+            'quizzes.attempts' => function ($query) use ($user) {
+                $query->where('student_id', $user->id)
+                    ->where('status', 'completed')
+                    ->orderBy('completed_at', 'desc');
+            },
+            'teacher',
+            'classes.materials' => function ($query) {
+                $query->active()->ordered();
+            },
+            'students' => function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            },
+        ])
             ->whereHas('students', function ($query) use ($user) {
                 $query->where('user_id', $user->id)
                     ->where('status', 'approved');
             })
             ->get()
-            ->map(function ($training) use ($user) {
+            ->map(function ($training) {
                 $enrollment = $training->students->first();
 
                 // Get the class for this student (from already loaded collection)
@@ -490,7 +500,7 @@ class TrainingController extends Controller
                     ->first();
 
                 // Récupérer les quizzes avec leurs tentatives (eager loaded to prevent N+1)
-                $quizzes = $training->quizzes->map(function ($quiz) use ($user) {
+                $quizzes = $training->quizzes->map(function ($quiz) {
                     // Compter toutes les tentatives complétées
                     $attemptsCount = $quiz->attempts->count();
 
@@ -529,7 +539,7 @@ class TrainingController extends Controller
                     'price' => $training->price,
                     'teacher' => $training->teacher ? [
                         'id' => $training->teacher->id,
-                        'name' => $training->teacher->first_name . ' ' . $training->teacher->last_name,
+                        'name' => $training->teacher->first_name.' '.$training->teacher->last_name,
                         'email' => $training->teacher->email,
                     ] : null,
                     'topics' => $training->topics,
@@ -572,7 +582,7 @@ class TrainingController extends Controller
             'students' => function ($query) {
                 $query->where('status', 'approved');
             },
-            'teacher'
+            'teacher',
         ])
             ->where('teacher_id', $user->id)
             ->orWhereHas('classes', function ($query) use ($user) {
@@ -619,34 +629,34 @@ class TrainingController extends Controller
                     ->where('teacher_id', $user->id);
             })->where('status', 'approved');
         })
-        ->with(['trainings' => function ($query) use ($user) {
-            $query->whereIn('training_id', function ($subQuery) use ($user) {
-                $subQuery->select('id')
-                    ->from('trainings')
-                    ->where('teacher_id', $user->id);
-            });
-        }])
-        ->get()
-        ->map(function ($student) {
-            $enrollment = $student->trainings->first();
+            ->with(['trainings' => function ($query) use ($user) {
+                $query->whereIn('training_id', function ($subQuery) use ($user) {
+                    $subQuery->select('id')
+                        ->from('trainings')
+                        ->where('teacher_id', $user->id);
+                });
+            }])
+            ->get()
+            ->map(function ($student) {
+                $enrollment = $student->trainings->first();
 
-            return [
-                'id' => $student->id,
-                'name' => $student->first_name . ' ' . $student->last_name,
-                'email' => $student->email,
-                'phone' => $student->phone ?? null,
-                'avatar' => $student->avatar ?? null,
-                'training_id' => $enrollment ? $enrollment->id : null,
-                'training_title' => $enrollment ? $enrollment->title : null,
-                'training_class_id' => $enrollment ? $enrollment->pivot->training_class_id : null,
-                'enrollment' => [
-                    'progress' => $enrollment ? $enrollment->pivot->progress : 0,
-                    'grade' => $enrollment ? $enrollment->pivot->grade : 0,
-                    'attendance_rate' => $enrollment ? $enrollment->pivot->attendance_rate : 0,
-                    'status' => $enrollment && $enrollment->pivot->grade < 10 ? 'at-risk' : 'active',
-                ],
-            ];
-        });
+                return [
+                    'id' => $student->id,
+                    'name' => $student->first_name.' '.$student->last_name,
+                    'email' => $student->email,
+                    'phone' => $student->phone ?? null,
+                    'avatar' => $student->avatar ?? null,
+                    'training_id' => $enrollment ? $enrollment->id : null,
+                    'training_title' => $enrollment ? $enrollment->title : null,
+                    'training_class_id' => $enrollment ? $enrollment->pivot->training_class_id : null,
+                    'enrollment' => [
+                        'progress' => $enrollment ? $enrollment->pivot->progress : 0,
+                        'grade' => $enrollment ? $enrollment->pivot->grade : 0,
+                        'attendance_rate' => $enrollment ? $enrollment->pivot->attendance_rate : 0,
+                        'status' => $enrollment && $enrollment->pivot->grade < 10 ? 'at-risk' : 'active',
+                    ],
+                ];
+            });
 
         // Get recent activities (latest quiz attempts, enrollments, etc.)
         $recentActivities = [];
@@ -655,10 +665,10 @@ class TrainingController extends Controller
         $recentAttempts = \App\Models\QuizAttempt::whereHas('quiz.training', function ($query) use ($user) {
             $query->where('teacher_id', $user->id);
         })
-        ->with(['student', 'quiz'])
-        ->latest()
-        ->take(5)
-        ->get();
+            ->with(['student', 'quiz'])
+            ->latest()
+            ->take(5)
+            ->get();
 
         foreach ($recentAttempts as $attempt) {
             $type = 'success';
@@ -672,7 +682,7 @@ class TrainingController extends Controller
             $recentActivities[] = [
                 'id' => $attempt->id,
                 'action' => $action,
-                'student' => $attempt->student->first_name . ' ' . $attempt->student->last_name,
+                'student' => $attempt->student->first_name.' '.$attempt->student->last_name,
                 'studentId' => $attempt->student->id,
                 'time' => $attempt->completed_at ? $attempt->completed_at->diffForHumans() : $attempt->created_at->diffForHumans(),
                 'type' => $type,
@@ -688,15 +698,15 @@ class TrainingController extends Controller
             })->where('status', 'approved')
                 ->where('enrolled_at', '>=', now()->subDays(7));
         })
-        ->latest('created_at')
-        ->take(3)
-        ->get();
+            ->latest('created_at')
+            ->take(3)
+            ->get();
 
         foreach ($recentEnrollments as $enrollment) {
             $recentActivities[] = [
-                'id' => 'enrollment_' . $enrollment->id,
+                'id' => 'enrollment_'.$enrollment->id,
                 'action' => 'Nouvel étudiant',
-                'student' => $enrollment->first_name . ' ' . $enrollment->last_name,
+                'student' => $enrollment->first_name.' '.$enrollment->last_name,
                 'studentId' => $enrollment->id,
                 'time' => $enrollment->created_at->diffForHumans(),
                 'type' => 'info',
@@ -718,7 +728,7 @@ class TrainingController extends Controller
             'students' => function ($query) {
                 $query->where('status', 'approved');
             },
-            'teacher'
+            'teacher',
         ])
             ->where('teacher_id', $user->id)
             ->orWhereHas('classes', function ($query) use ($user) {
@@ -744,65 +754,65 @@ class TrainingController extends Controller
         $evaluations = \App\Models\Quiz::whereHas('training', function ($query) use ($user) {
             $query->where('teacher_id', $user->id);
         })
-        ->with(['attempts' => function ($query) {
-            $query->where('status', 'completed');
-        }])
-        ->get()
-        ->map(function ($quiz) {
-            $attempts = $quiz->attempts;
-            $totalAttempts = $attempts->count();
+            ->with(['attempts' => function ($query) {
+                $query->where('status', 'completed');
+            }])
+            ->get()
+            ->map(function ($quiz) {
+                $attempts = $quiz->attempts;
+                $totalAttempts = $attempts->count();
 
-            return [
-                'id' => $quiz->id,
-                'uuid' => $quiz->uuid,
-                'title' => $quiz->title,
-                'training_title' => $quiz->training->title ?? 'N/A',
-                'max_score' => $quiz->max_score,
-                'passing_score' => $quiz->passing_score,
-                'total_attempts' => $totalAttempts,
-                'average_score' => $totalAttempts > 0 ? round($attempts->avg('score'), 2) : 0,
-                'passed_count' => $attempts->where('score', '>=', $quiz->passing_score)->count(),
-                'failed_count' => $attempts->where('score', '<', $quiz->passing_score)->count(),
-                'pass_rate' => $totalAttempts > 0 ? round(($attempts->where('score', '>=', $quiz->passing_score)->count() / $totalAttempts) * 100, 2) : 0,
-            ];
-        });
+                return [
+                    'id' => $quiz->id,
+                    'uuid' => $quiz->uuid,
+                    'title' => $quiz->title,
+                    'training_title' => $quiz->training->title ?? 'N/A',
+                    'max_score' => $quiz->max_score,
+                    'passing_score' => $quiz->passing_score,
+                    'total_attempts' => $totalAttempts,
+                    'average_score' => $totalAttempts > 0 ? round($attempts->avg('score'), 2) : 0,
+                    'passed_count' => $attempts->where('score', '>=', $quiz->passing_score)->count(),
+                    'failed_count' => $attempts->where('score', '<', $quiz->passing_score)->count(),
+                    'pass_rate' => $totalAttempts > 0 ? round(($attempts->where('score', '>=', $quiz->passing_score)->count() / $totalAttempts) * 100, 2) : 0,
+                ];
+            });
 
         // Get attendance data for teacher's classes
         $attendanceData = \App\Models\TrainingClass::whereHas('training', function ($query) use ($user) {
             $query->where('teacher_id', $user->id);
         })
-        ->orWhere('teacher_id', $user->id)
-        ->with(['attendances.student', 'training'])
-        ->get()
-        ->map(function ($class) {
-            // Count students enrolled in this specific class
-            $totalStudents = \DB::table('training_enrollments')
-                ->where('training_class_id', $class->id)
-                ->where('status', 'approved')
-                ->count();
+            ->orWhere('teacher_id', $user->id)
+            ->with(['attendances.student', 'training'])
+            ->get()
+            ->map(function ($class) {
+                // Count students enrolled in this specific class
+                $totalStudents = \DB::table('training_enrollments')
+                    ->where('training_class_id', $class->id)
+                    ->where('status', 'approved')
+                    ->count();
 
-            $attendances = $class->attendances;
+                $attendances = $class->attendances;
 
-            $presentCount = $attendances->where('status', 'present')->count();
-            $absentCount = $attendances->where('status', 'absent')->count();
-            $excusedCount = $attendances->where('status', 'excused')->count();
+                $presentCount = $attendances->where('status', 'present')->count();
+                $absentCount = $attendances->where('status', 'absent')->count();
+                $excusedCount = $attendances->where('status', 'excused')->count();
 
-            return [
-                'id' => $class->id,
-                'uuid' => $class->uuid,
-                'name' => $class->name,
-                'training_title' => $class->training->title ?? 'N/A',
-                'date' => $class->date,
-                'start_time' => $class->start_time,
-                'end_time' => $class->end_time,
-                'room' => $class->room,
-                'total_students' => $totalStudents,
-                'present_count' => $presentCount,
-                'absent_count' => $absentCount,
-                'excused_count' => $excusedCount,
-                'attendance_rate' => $totalStudents > 0 ? round(($presentCount / $totalStudents) * 100, 2) : 0,
-            ];
-        });
+                return [
+                    'id' => $class->id,
+                    'uuid' => $class->uuid,
+                    'name' => $class->name,
+                    'training_title' => $class->training->title ?? 'N/A',
+                    'date' => $class->date,
+                    'start_time' => $class->start_time,
+                    'end_time' => $class->end_time,
+                    'room' => $class->room,
+                    'total_students' => $totalStudents,
+                    'present_count' => $presentCount,
+                    'absent_count' => $absentCount,
+                    'excused_count' => $excusedCount,
+                    'attendance_rate' => $totalStudents > 0 ? round(($presentCount / $totalStudents) * 100, 2) : 0,
+                ];
+            });
 
         return Inertia::render('TeacherDashboard', [
             'totalStudents' => $totalStudents,
@@ -935,7 +945,7 @@ class TrainingController extends Controller
         $evaluations = \App\Models\Evaluation::with(['student', 'training', 'training_topic'])
             ->whereHas('training.classes', function ($query) use ($user) {
                 // If user can't manage all trainings, filter by their trainings
-                if (!$user->can('manage system settings')) {
+                if (! $user->can('manage system settings')) {
                     $query->where('teacher_id', $user->id);
                 }
             })

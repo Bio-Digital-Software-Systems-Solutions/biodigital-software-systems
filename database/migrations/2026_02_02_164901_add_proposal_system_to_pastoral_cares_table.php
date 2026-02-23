@@ -13,7 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         // First, modify the status ENUM to include 'proposed'
-        DB::statement("ALTER TABLE pastoral_cares MODIFY COLUMN status ENUM('pending', 'confirmed', 'completed', 'cancelled', 'no_show', 'proposed') DEFAULT 'pending'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE pastoral_cares MODIFY COLUMN status ENUM('pending', 'confirmed', 'completed', 'cancelled', 'no_show', 'proposed') DEFAULT 'pending'");
+        }
 
         Schema::table('pastoral_cares', function (Blueprint $table) {
             // Proposal tracking columns
@@ -74,6 +76,8 @@ return new class extends Migration
         });
 
         // Revert status ENUM
-        DB::statement("ALTER TABLE pastoral_cares MODIFY COLUMN status ENUM('pending', 'confirmed', 'completed', 'cancelled', 'no_show') DEFAULT 'pending'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE pastoral_cares MODIFY COLUMN status ENUM('pending', 'confirmed', 'completed', 'cancelled', 'no_show') DEFAULT 'pending'");
+        }
     }
 };
