@@ -798,12 +798,14 @@ export default function Show({ class: trainingClass, students: initialStudents, 
                             Veuillez indiquer la raison du refus. L'étudiant sera notifié par email.
                         </DialogDescription>
                     </DialogHeader>
-                    <Textarea
-                        value={rejectionReason}
-                        onChange={(e) => setRejectionReason(e.target.value)}
-                        placeholder="Raison du refus (minimum 10 caractères)..."
-                        rows={3}
-                    />
+                    <div className="px-6 py-2">
+                        <Textarea
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                            placeholder="Raison du refus (minimum 10 caractères)..."
+                            rows={3}
+                        />
+                    </div>
                     <DialogFooter>
                         <Button
                             variant="outline"
