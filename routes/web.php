@@ -637,6 +637,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('training-classes/{trainingClass}', [App\Http\Controllers\TrainingClassController::class, 'destroy'])
         ->middleware('restrict.member')
         ->name('training-classes.destroy');
+    Route::post('training-classes/{trainingClass}/archive', [App\Http\Controllers\TrainingClassController::class, 'archive'])
+        ->middleware('restrict.member')
+        ->name('training-classes.archive');
+    Route::post('training-classes/{trainingClass}/unarchive', [App\Http\Controllers\TrainingClassController::class, 'unarchive'])
+        ->middleware('restrict.member')
+        ->name('training-classes.unarchive');
+    Route::post('training-classes/{trainingClass}/duplicate', [App\Http\Controllers\TrainingClassController::class, 'duplicate'])
+        ->middleware('restrict.member')
+        ->name('training-classes.duplicate');
     Route::get('training-classes/{trainingClass}/students', [App\Http\Controllers\TrainingClassController::class, 'students'])
         ->middleware('restrict.member')
         ->name('training-classes.students');

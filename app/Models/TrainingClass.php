@@ -4,13 +4,14 @@ namespace App\Models;
 
 use App\Traits\ClearsCache;
 use App\Traits\HasUuid;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -31,6 +32,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read int|null $schedules_count
  * @property-read \App\Models\User|null $teacher
  * @property-read \App\Models\Training $training
+ *
  * @method static \Database\Factories\TrainingClassFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass newQuery()
@@ -46,6 +48,7 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereTeacherId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereTrainingId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereUpdatedAt($value)
+ *
  * @property string $uuid
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
  * @property-read int|null $activities_count
@@ -57,13 +60,15 @@ use Spatie\Activitylog\LogOptions;
  * @property-read int|null $quizzes_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $students
  * @property-read int|null $students_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 class TrainingClass extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -75,6 +80,7 @@ class TrainingClass extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     protected $fillable = [
         'uuid',
         'training_id',
@@ -86,11 +92,19 @@ class TrainingClass extends Model
         'room',
         'notes',
         'max_students',
+        'status',
+        'archived_at',
+        'archive_access_until',
     ];
 
-    protected $casts = [
-        'date' => 'date',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'date' => 'date',
+            'archived_at' => 'datetime',
+            'archive_access_until' => 'datetime',
+        ];
+    }
 
     public function training(): BelongsTo
     {
@@ -159,11 +173,11 @@ class TrainingClass extends Model
         return $this->quizzes()
             ->where(function ($query) use ($now) {
                 $query->whereNull('quiz_training_class.available_from')
-                      ->orWhere('quiz_training_class.available_from', '<=', $now);
+                    ->orWhere('quiz_training_class.available_from', '<=', $now);
             })
             ->where(function ($query) use ($now) {
                 $query->whereNull('quiz_training_class.available_until')
-                      ->orWhere('quiz_training_class.available_until', '>=', $now);
+                    ->orWhere('quiz_training_class.available_until', '>=', $now);
             });
     }
 
@@ -196,6 +210,100 @@ class TrainingClass extends Model
             'total_quizzes' => $quizzes->count(),
             'quiz_stats' => $stats,
         ];
+    }
+
+    /**
+     * Scope to only active (non-archived) classes.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope to only archived classes.
+     */
+    public function scopeArchived(Builder $query): Builder
+    {
+        return $query->where('status', 'archived');
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->status === 'archived';
+    }
+
+    public function isArchiveAccessExpired(): bool
+    {
+        return $this->isArchived()
+            && $this->archive_access_until !== null
+            && $this->archive_access_until->isPast();
+    }
+
+    /**
+     * Archive this class, setting access duration in months.
+     */
+    public function archive(int $months = 6): self
+    {
+        $this->update([
+            'status' => 'archived',
+            'archived_at' => now(),
+            'archive_access_until' => now()->addMonths($months),
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * Restore this class from archived status.
+     */
+    public function unarchive(): self
+    {
+        $this->update([
+            'status' => 'active',
+            'archived_at' => null,
+            'archive_access_until' => null,
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * Duplicate this class with its schedules, materials, and quiz associations.
+     * Students are NOT duplicated.
+     */
+    public function duplicate(): self
+    {
+        $copy = $this->replicate(['uuid', 'status', 'archived_at', 'archive_access_until']);
+        $copy->name = $this->name.' (Copie)';
+        $copy->status = 'active';
+        $copy->save();
+
+        // Duplicate schedules
+        foreach ($this->schedules as $schedule) {
+            $newSchedule = $schedule->replicate(['uuid']);
+            $newSchedule->training_class_id = $copy->id;
+            $newSchedule->save();
+        }
+
+        // Duplicate materials
+        foreach ($this->materials as $material) {
+            $newMaterial = $material->replicate(['uuid']);
+            $newMaterial->training_class_id = $copy->id;
+            $newMaterial->save();
+        }
+
+        // Duplicate quiz associations (pivot data only, not quiz content)
+        foreach ($this->allQuizzes as $quiz) {
+            $copy->allQuizzes()->attach($quiz->id, [
+                'assigned_at' => $quiz->pivot->assigned_at,
+                'available_from' => $quiz->pivot->available_from,
+                'available_until' => $quiz->pivot->available_until,
+                'is_active' => $quiz->pivot->is_active,
+            ]);
+        }
+
+        return $copy;
     }
 
     /**

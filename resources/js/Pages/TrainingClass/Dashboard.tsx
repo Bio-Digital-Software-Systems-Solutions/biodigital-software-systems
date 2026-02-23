@@ -134,6 +134,7 @@ export default function Dashboard({ classes: initialClasses, trainings, teachers
                             teachers={teachers}
                             onClassUpdated={handleClassUpdated}
                             onClassDeleted={handleClassDeleted}
+                            onClassAdded={handleClassAdded}
                         />
 
                         {/* Pagination */}

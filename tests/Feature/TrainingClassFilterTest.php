@@ -82,7 +82,7 @@ class TrainingClassFilterTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
             ->component('TrainingClass/Dashboard')
-            ->has('classes', 2)
+            ->has('classes.data', 2)
         );
     }
 
@@ -105,7 +105,7 @@ class TrainingClassFilterTest extends TestCase
         $response->assertStatus(200);
 
         // Get classes from response
-        $classes = $response->viewData('page')['props']['classes'];
+        $classes = $response->viewData('page')['props']['classes']['data'];
 
         // Test that both classes exist
         $this->assertCount(2, $classes);
@@ -125,7 +125,7 @@ class TrainingClassFilterTest extends TestCase
 
         $response = $this->actingAs($this->admin)->get(route('training-classes.index'));
 
-        $classes = $response->viewData('page')['props']['classes'];
+        $classes = $response->viewData('page')['props']['classes']['data'];
 
         // Verify at least one class has teacher information
         $this->assertNotEmpty($classes);
@@ -149,7 +149,7 @@ class TrainingClassFilterTest extends TestCase
 
         $response = $this->actingAs($this->admin)->get(route('training-classes.index'));
 
-        $classes = $response->viewData('page')['props']['classes'];
+        $classes = $response->viewData('page')['props']['classes']['data'];
 
         $rooms = collect($classes)->pluck('room')->toArray();
         $this->assertContains('Physics Lab', $rooms);
@@ -166,7 +166,7 @@ class TrainingClassFilterTest extends TestCase
 
         $response = $this->actingAs($this->admin)->get(route('training-classes.index'));
 
-        $classes = $response->viewData('page')['props']['classes'];
+        $classes = $response->viewData('page')['props']['classes']['data'];
 
         $statuses = collect($classes)->pluck('status')->toArray();
         $this->assertContains('À venir', $statuses);
@@ -191,7 +191,7 @@ class TrainingClassFilterTest extends TestCase
 
         $response = $this->actingAs($this->admin)->get(route('training-classes.index'));
 
-        $classes = $response->viewData('page')['props']['classes'];
+        $classes = $response->viewData('page')['props']['classes']['data'];
         $firstClass = collect($classes)->first();
 
         $this->assertEquals(5, $firstClass['students_count']);
@@ -224,7 +224,7 @@ class TrainingClassFilterTest extends TestCase
 
         $response = $this->actingAs($this->admin)->get(route('training-classes.index'));
 
-        $classes = $response->viewData('page')['props']['classes'];
+        $classes = $response->viewData('page')['props']['classes']['data'];
 
         // Verify all classes are returned
         $this->assertCount(2, $classes);

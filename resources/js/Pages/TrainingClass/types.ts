@@ -22,6 +22,8 @@ export interface TrainingClass {
     notes: string | null;
     students_count: number;
     status: string;
+    archived_at: string | null;
+    archive_access_until: string | null;
     schedules?: ClassSchedule[];
 }
 

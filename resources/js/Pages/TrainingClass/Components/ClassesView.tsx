@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
-import { Eye, Edit, Trash2, Grid3x3, List, Table, Search, X, FileText } from 'lucide-react';
+import { Edit, Trash2, Grid3x3, List, Table, Search, X, FileText, Archive, ArchiveRestore, Copy } from 'lucide-react';
 import { TrainingClass, Training, Teacher } from '../types';
 import EditClassModal from './EditClassModal';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
@@ -16,11 +16,12 @@ interface Props {
     teachers: Teacher[];
     onClassUpdated: (updatedClass: TrainingClass) => void;
     onClassDeleted: (classUuid: string) => void;
+    onClassAdded?: (newClass: TrainingClass) => void;
 }
 
 type ViewMode = 'grid' | 'list' | 'table';
 
-export default function ClassesView({ classes, trainings, teachers, onClassUpdated, onClassDeleted }: Props) {
+export default function ClassesView({ classes, trainings, teachers, onClassUpdated, onClassDeleted, onClassAdded }: Props) {
     const [editingClass, setEditingClass] = useState<TrainingClass | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -31,6 +32,11 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
     const [filterTeacher, setFilterTeacher] = useState('');
     const [filterTraining, setFilterTraining] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
+    const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+    const [classToArchive, setClassToArchive] = useState<TrainingClass | null>(null);
+    const [archiveDuration, setArchiveDuration] = useState(6);
+    const [isArchiving, setIsArchiving] = useState(false);
+    const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
 
     // Format schedule display
     const formatScheduleDisplay = (trainingClass: TrainingClass): string => {
@@ -110,10 +116,77 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
         }
     };
 
+    const handleArchiveClick = (trainingClass: TrainingClass) => {
+        setClassToArchive(trainingClass);
+        setArchiveDuration(6);
+        setArchiveDialogOpen(true);
+    };
+
+    const handleArchiveConfirm = async () => {
+        if (!classToArchive) return;
+
+        setIsArchiving(true);
+        try {
+            const response = await axios.post(route('training-classes.archive', classToArchive.uuid), {
+                access_duration_months: archiveDuration,
+            });
+            onClassUpdated(response.data.class);
+            setArchiveDialogOpen(false);
+            setClassToArchive(null);
+            toast.success('Classe archivée avec succès', {
+                description: `Les étudiants pourront accéder au contenu pendant ${archiveDuration} mois.`,
+            });
+        } catch (error) {
+            apiLogger.error('Error archiving class:', error);
+            toast.error('Erreur lors de l\'archivage', {
+                description: 'Une erreur est survenue lors de l\'archivage de la classe.',
+            });
+        } finally {
+            setIsArchiving(false);
+        }
+    };
+
+    const handleUnarchive = async (trainingClass: TrainingClass) => {
+        try {
+            const response = await axios.post(route('training-classes.unarchive', trainingClass.uuid));
+            onClassUpdated(response.data.class);
+            toast.success('Classe restaurée avec succès', {
+                description: 'La classe est de nouveau active.',
+            });
+        } catch (error) {
+            apiLogger.error('Error unarchiving class:', error);
+            toast.error('Erreur lors de la restauration', {
+                description: 'Une erreur est survenue lors de la restauration de la classe.',
+            });
+        }
+    };
+
+    const handleDuplicate = async (trainingClass: TrainingClass) => {
+        setIsDuplicating(trainingClass.uuid);
+        try {
+            const response = await axios.post(route('training-classes.duplicate', trainingClass.uuid));
+            onClassAdded?.(response.data.class);
+            toast.success('Classe dupliquée avec succès', {
+                description: `La copie "${response.data.class.name}" a été créée.`,
+            });
+        } catch (error) {
+            apiLogger.error('Error duplicating class:', error);
+            toast.error('Erreur lors de la duplication', {
+                description: 'Une erreur est survenue lors de la duplication de la classe.',
+            });
+        } finally {
+            setIsDuplicating(null);
+        }
+    };
+
     const getStatusColor = (status: string) => {
-        return status === 'À venir'
-            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        if (status === 'À venir') {
+            return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        }
+        if (status === 'Archivée') {
+            return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
+        }
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     };
 
     // Filter and search classes
@@ -368,17 +441,49 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => handleEdit(trainingClass)}
+                                            onClick={() => handleDuplicate(trainingClass)}
+                                            disabled={isDuplicating === trainingClass.uuid}
+                                            title="Dupliquer la classe"
                                         >
-                                            <Edit size={16} />
+                                            <Copy size={16} />
                                         </Button>
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            onClick={() => handleDeleteClick(trainingClass.uuid)}
-                                        >
-                                            <Trash2 size={16} />
-                                        </Button>
+                                        {trainingClass.status === 'Archivée' ? (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleUnarchive(trainingClass)}
+                                                title="Restaurer la classe"
+                                            >
+                                                <ArchiveRestore size={16} />
+                                            </Button>
+                                        ) : (
+                                            <>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleEdit(trainingClass)}
+                                                    title="Modifier la classe"
+                                                >
+                                                    <Edit size={16} />
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleArchiveClick(trainingClass)}
+                                                    title="Archiver la classe"
+                                                >
+                                                    <Archive size={16} />
+                                                </Button>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() => handleDeleteClick(trainingClass.uuid)}
+                                                    title="Supprimer la classe"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </Button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -455,18 +560,50 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => handleEdit(trainingClass)}
+                                                onClick={() => handleDuplicate(trainingClass)}
+                                                disabled={isDuplicating === trainingClass.uuid}
+                                                title="Dupliquer"
                                             >
-                                                <Edit size={16} className="mr-1" />
-                                                Modifier
+                                                <Copy size={16} className="mr-1" />
+                                                Dupliquer
                                             </Button>
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                onClick={() => handleDeleteClick(trainingClass.uuid)}
-                                            >
-                                                <Trash2 size={16} />
-                                            </Button>
+                                            {trainingClass.status === 'Archivée' ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleUnarchive(trainingClass)}
+                                                    title="Restaurer"
+                                                >
+                                                    <ArchiveRestore size={16} className="mr-1" />
+                                                    Restaurer
+                                                </Button>
+                                            ) : (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleEdit(trainingClass)}
+                                                    >
+                                                        <Edit size={16} className="mr-1" />
+                                                        Modifier
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleArchiveClick(trainingClass)}
+                                                        title="Archiver"
+                                                    >
+                                                        <Archive size={16} />
+                                                    </Button>
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        onClick={() => handleDeleteClick(trainingClass.uuid)}
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </Button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -557,19 +694,49 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={() => handleEdit(trainingClass)}
-                                                            title="Modifier la classe"
+                                                            onClick={() => handleDuplicate(trainingClass)}
+                                                            disabled={isDuplicating === trainingClass.uuid}
+                                                            title="Dupliquer la classe"
                                                         >
-                                                            <Edit size={16} />
+                                                            <Copy size={16} />
                                                         </Button>
-                                                        <Button
-                                                            variant="destructive"
-                                                            size="sm"
-                                                            onClick={() => handleDeleteClick(trainingClass.uuid)}
-                                                            title="Supprimer la classe"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </Button>
+                                                        {trainingClass.status === 'Archivée' ? (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleUnarchive(trainingClass)}
+                                                                title="Restaurer la classe"
+                                                            >
+                                                                <ArchiveRestore size={16} />
+                                                            </Button>
+                                                        ) : (
+                                                            <>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => handleEdit(trainingClass)}
+                                                                    title="Modifier la classe"
+                                                                >
+                                                                    <Edit size={16} />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    onClick={() => handleArchiveClick(trainingClass)}
+                                                                    title="Archiver la classe"
+                                                                >
+                                                                    <Archive size={16} />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="destructive"
+                                                                    size="sm"
+                                                                    onClick={() => handleDeleteClick(trainingClass.uuid)}
+                                                                    title="Supprimer la classe"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </Button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -603,6 +770,34 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                 description="Cette action est irréversible. La classe et toutes ses données de présence seront définitivement supprimées."
                 isDeleting={isDeleting}
             />
+
+            <DeleteConfirmationDialog
+                open={archiveDialogOpen}
+                onOpenChange={setArchiveDialogOpen}
+                onConfirm={handleArchiveConfirm}
+                title="Archiver cette classe ?"
+                description="La classe sera archivée et ne sera plus modifiable. Les étudiants pourront accéder au contenu pendant la durée configurée."
+                confirmText="Archiver"
+                isDeleting={isArchiving}
+                variant="default"
+            >
+                <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Durée d'accès pour les étudiants
+                    </label>
+                    <select
+                        value={archiveDuration}
+                        onChange={(e) => setArchiveDuration(Number(e.target.value))}
+                        className="w-full h-10 px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    >
+                        {[1, 3, 6, 12, 18, 24].map((months) => (
+                            <option key={months} value={months}>
+                                {months} mois
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </DeleteConfirmationDialog>
         </div>
     );
 }

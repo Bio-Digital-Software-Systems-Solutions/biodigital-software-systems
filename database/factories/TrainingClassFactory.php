@@ -29,6 +29,19 @@ class TrainingClassFactory extends Factory
             'room' => 'Salle '.fake()->numberBetween(1, 10),
             'max_students' => fake()->numberBetween(15, 30),
             'notes' => fake()->optional()->paragraph(1),
+            'status' => 'active',
         ];
+    }
+
+    /**
+     * Indicate that the class is archived.
+     */
+    public function archived(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'archived',
+            'archived_at' => now()->subMonth(),
+            'archive_access_until' => now()->addMonths(5),
+        ]);
     }
 }

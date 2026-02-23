@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ArchiveTrainingClassRequest;
 use App\Http\Requests\StoreTrainingClassScheduleRequest;
 use App\Http\Requests\UpdateTrainingClassScheduleRequest;
 use App\Models\Attendance;
@@ -9,6 +10,7 @@ use App\Models\Training;
 use App\Models\TrainingClass;
 use App\Models\TrainingClassSchedule;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,7 +28,7 @@ class TrainingClassController extends Controller
             },
             'teacher',
             'attendances',
-            'schedules'
+            'schedules',
         ]);
 
         // Add filters
@@ -39,48 +41,24 @@ class TrainingClassController extends Controller
         }
 
         if ($request->filled('status')) {
-            if ($request->status === 'upcoming') {
-                $query->where('date', '>=', now()->toDateString());
+            if ($request->status === 'archived') {
+                $query->archived();
+            } elseif ($request->status === 'upcoming') {
+                $query->active()->where('date', '>=', now()->toDateString());
             } elseif ($request->status === 'past') {
-                $query->where('date', '<', now()->toDateString());
+                $query->active()->where('date', '<', now()->toDateString());
+            } else {
+                $query->active();
             }
+        } else {
+            $query->active();
         }
 
         $classes = $query->orderBy('date', 'desc')
             ->paginate(12)
             ->appends($request->query());
 
-        $classesData = $classes->getCollection()->map(function ($class) {
-                // Get schedules information
-                $schedules = $class->schedules->map(function ($schedule) {
-                    return [
-                        'id' => $schedule->id,
-                        'day_of_week' => $schedule->day_of_week,
-                        'start_time' => $schedule->start_time,
-                        'end_time' => $schedule->end_time,
-                        'room' => $schedule->room,
-                    ];
-                });
-
-                return [
-                    'id' => $class->id,
-                    'uuid' => $class->uuid,
-                    'training_id' => $class->training_id,
-                    'training_name' => $class->training->title,
-                    'teacher_id' => $class->teacher_id,
-                    'teacher_name' => $class->teacher ? $class->teacher->first_name.' '.$class->teacher->last_name : 'N/A',
-                    'name' => $class->name,
-                    'date' => $class->date,
-                    'start_time' => $class->start_time,
-                    'end_time' => $class->end_time,
-                    'room' => $class->room,
-                    'max_students' => $class->max_students,
-                    'notes' => $class->notes,
-                    'students_count' => $class->training->students->count(),
-                    'status' => $class->date >= now()->toDateString() ? 'À venir' : 'Passée',
-                    'schedules' => $schedules,
-                ];
-            });
+        $classesData = $classes->getCollection()->map(fn ($class) => $this->formatClassData($class));
 
         $trainings = Training::select('id', 'title')->get();
         $teachers = User::whereHas('teacher')->select('id', 'first_name', 'last_name')->get();
@@ -114,7 +92,7 @@ class TrainingClassController extends Controller
                 $query->where('status', 'approved');
             },
             'teacher',
-            'attendances.student'
+            'attendances.student',
         ]);
 
         $students = $trainingClass->training->students
@@ -134,23 +112,7 @@ class TrainingClassController extends Controller
             });
 
         return Inertia::render('TrainingClass/Show', [
-            'class' => [
-                'id' => $trainingClass->id,
-                'uuid' => $trainingClass->uuid,
-                'training_id' => $trainingClass->training_id,
-                'training_name' => $trainingClass->training->title,
-                'teacher_id' => $trainingClass->teacher_id,
-                'teacher_name' => $trainingClass->teacher ? $trainingClass->teacher->first_name.' '.$trainingClass->teacher->last_name : 'N/A',
-                'name' => $trainingClass->name,
-                'date' => $trainingClass->date,
-                'start_time' => $trainingClass->start_time,
-                'end_time' => $trainingClass->end_time,
-                'room' => $trainingClass->room,
-                'max_students' => $trainingClass->max_students,
-                'notes' => $trainingClass->notes,
-                'students_count' => $students->count(),
-                'status' => $trainingClass->date >= now()->toDateString() ? 'À venir' : 'Passée',
-            ],
+            'class' => $this->formatClassData($trainingClass),
             'students' => $students,
         ]);
     }
@@ -210,29 +172,13 @@ class TrainingClassController extends Controller
             'training.students' => function ($query) {
                 $query->where('status', 'approved');
             },
-            'teacher'
+            'teacher',
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Classe créée avec succès',
-            'class' => [
-                'id' => $class->id,
-                'uuid' => $class->uuid,
-                'training_id' => $class->training_id,
-                'training_name' => $class->training->title,
-                'teacher_id' => $class->teacher_id,
-                'teacher_name' => $class->teacher ? $class->teacher->first_name.' '.$class->teacher->last_name : 'N/A',
-                'name' => $class->name,
-                'date' => $class->date,
-                'start_time' => $class->start_time,
-                'end_time' => $class->end_time,
-                'room' => $class->room,
-                'max_students' => $class->max_students,
-                'notes' => $class->notes,
-                'students_count' => $class->training->students->count(),
-                'status' => $class->date >= now()->toDateString() ? 'À venir' : 'Passée',
-            ],
+            'class' => $this->formatClassData($class),
         ]);
     }
 
@@ -241,6 +187,13 @@ class TrainingClassController extends Controller
      */
     public function update(Request $request, TrainingClass $trainingClass)
     {
+        if ($trainingClass->isArchived()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de modifier une classe archivée.',
+            ], 422);
+        }
+
         $validated = $request->validate([
             'training_id' => 'required|exists:trainings,id',
             'teacher_id' => 'nullable|exists:users,id',
@@ -266,7 +219,7 @@ class TrainingClassController extends Controller
         if (isset($validated['schedules']) && count($validated['schedules']) > 0) {
             // Delete existing schedules not in the new list
             $newScheduleUuids = array_filter(array_column($validated['schedules'], 'uuid'));
-            if (!empty($newScheduleUuids)) {
+            if (! empty($newScheduleUuids)) {
                 $trainingClass->schedules()->whereNotIn('uuid', $newScheduleUuids)->delete();
             } else {
                 $trainingClass->schedules()->delete();
@@ -321,41 +274,13 @@ class TrainingClassController extends Controller
                 $query->where('status', 'approved');
             },
             'teacher',
-            'schedules'
+            'schedules',
         ]);
-
-        // Get schedules information
-        $schedules = $trainingClass->schedules->map(function ($schedule) {
-            return [
-                'id' => $schedule->id,
-                'day_of_week' => $schedule->day_of_week,
-                'start_time' => $schedule->start_time,
-                'end_time' => $schedule->end_time,
-                'room' => $schedule->room,
-            ];
-        });
 
         return response()->json([
             'success' => true,
             'message' => 'Classe mise à jour avec succès',
-            'class' => [
-                'id' => $trainingClass->id,
-                'uuid' => $trainingClass->uuid,
-                'training_id' => $trainingClass->training_id,
-                'training_name' => $trainingClass->training->title,
-                'teacher_id' => $trainingClass->teacher_id,
-                'teacher_name' => $trainingClass->teacher ? $trainingClass->teacher->first_name.' '.$trainingClass->teacher->last_name : 'N/A',
-                'name' => $trainingClass->name,
-                'date' => $trainingClass->date,
-                'start_time' => $trainingClass->start_time,
-                'end_time' => $trainingClass->end_time,
-                'room' => $trainingClass->room,
-                'max_students' => $trainingClass->max_students,
-                'notes' => $trainingClass->notes,
-                'students_count' => $trainingClass->training->students->count(),
-                'status' => $trainingClass->date >= now()->toDateString() ? 'À venir' : 'Passée',
-                'schedules' => $schedules,
-            ],
+            'class' => $this->formatClassData($trainingClass),
         ]);
     }
 
@@ -364,6 +289,13 @@ class TrainingClassController extends Controller
      */
     public function destroy(TrainingClass $trainingClass)
     {
+        if ($trainingClass->isArchived()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible de supprimer une classe archivée. Désarchivez-la d\'abord.',
+            ], 422);
+        }
+
         $trainingClass->delete();
 
         return response()->json([
@@ -735,6 +667,123 @@ class TrainingClassController extends Controller
             'top_students' => $topStudents,
             'grade_distribution' => $gradeDistribution,
         ]);
+    }
+
+    /**
+     * Archive a training class.
+     */
+    public function archive(ArchiveTrainingClassRequest $request, TrainingClass $trainingClass): JsonResponse
+    {
+        if ($trainingClass->isArchived()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette classe est déjà archivée.',
+            ], 422);
+        }
+
+        $months = $request->validated('access_duration_months') ?? 6;
+        $trainingClass->archive($months);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Classe archivée avec succès.',
+            'class' => $this->formatClassData($trainingClass->fresh()),
+        ]);
+    }
+
+    /**
+     * Restore a training class from archive.
+     */
+    public function unarchive(TrainingClass $trainingClass): JsonResponse
+    {
+        if (! $trainingClass->isArchived()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette classe n\'est pas archivée.',
+            ], 422);
+        }
+
+        $trainingClass->unarchive();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Classe restaurée avec succès.',
+            'class' => $this->formatClassData($trainingClass->fresh()),
+        ]);
+    }
+
+    /**
+     * Duplicate a training class with its content.
+     */
+    public function duplicate(TrainingClass $trainingClass): JsonResponse
+    {
+        $trainingClass->load(['schedules', 'materials', 'allQuizzes']);
+
+        $copy = $trainingClass->duplicate();
+
+        $copy->load([
+            'training.students' => function ($query) {
+                $query->where('status', 'approved');
+            },
+            'teacher',
+            'schedules',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Classe dupliquée avec succès.',
+            'class' => $this->formatClassData($copy),
+        ]);
+    }
+
+    /**
+     * Format a TrainingClass model into an array for API/Inertia responses.
+     *
+     * @return array<string, mixed>
+     */
+    private function formatClassData(TrainingClass $class): array
+    {
+        $schedules = $class->relationLoaded('schedules')
+            ? $class->schedules->map(fn ($schedule) => [
+                'id' => $schedule->id,
+                'day_of_week' => $schedule->day_of_week,
+                'start_time' => $schedule->start_time,
+                'end_time' => $schedule->end_time,
+                'room' => $schedule->room,
+            ])
+            : [];
+
+        if ($class->isArchived()) {
+            $status = 'Archivée';
+        } else {
+            $status = $class->date >= now()->toDateString() ? 'À venir' : 'Passée';
+        }
+
+        $studentsCount = 0;
+        if ($class->relationLoaded('training') && $class->training->relationLoaded('students')) {
+            $studentsCount = $class->training->students->count();
+        }
+
+        return [
+            'id' => $class->id,
+            'uuid' => $class->uuid,
+            'training_id' => $class->training_id,
+            'training_name' => $class->training->title,
+            'teacher_id' => $class->teacher_id,
+            'teacher_name' => $class->teacher ? $class->teacher->first_name.' '.$class->teacher->last_name : 'N/A',
+            'name' => $class->name,
+            'date' => $class->date,
+            'start_time' => $class->start_time,
+            'end_time' => $class->end_time,
+            'room' => $class->room,
+            'max_students' => $class->max_students,
+            'notes' => $class->notes,
+            'students_count' => $studentsCount,
+            'status' => $status,
+            'archived_at' => $class->archived_at?->toISOString(),
+            'archive_access_until' => $class->archive_access_until?->toISOString(),
+            'schedules' => $schedules,
+        ];
     }
 
     /**
