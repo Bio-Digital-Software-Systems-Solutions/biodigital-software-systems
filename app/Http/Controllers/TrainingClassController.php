@@ -717,9 +717,13 @@ class TrainingClassController extends Controller
      */
     public function duplicate(TrainingClass $trainingClass): JsonResponse
     {
+        $validated = request()->validate([
+            'name' => ['nullable', 'string', 'max:255'],
+        ]);
+
         $trainingClass->load(['schedules', 'materials', 'allQuizzes']);
 
-        $copy = $trainingClass->duplicate();
+        $copy = $trainingClass->duplicate($validated['name'] ?? null);
 
         $copy->load([
             'training.students' => function ($query) {

@@ -37,6 +37,9 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
     const [archiveDuration, setArchiveDuration] = useState(6);
     const [isArchiving, setIsArchiving] = useState(false);
     const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
+    const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+    const [classToDuplicate, setClassToDuplicate] = useState<TrainingClass | null>(null);
+    const [duplicateName, setDuplicateName] = useState('');
 
     // Format schedule display
     const formatScheduleDisplay = (trainingClass: TrainingClass): string => {
@@ -161,11 +164,23 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
         }
     };
 
-    const handleDuplicate = async (trainingClass: TrainingClass) => {
-        setIsDuplicating(trainingClass.uuid);
+    const handleDuplicateClick = (trainingClass: TrainingClass) => {
+        setClassToDuplicate(trainingClass);
+        setDuplicateName(trainingClass.name + ' (Copie)');
+        setDuplicateDialogOpen(true);
+    };
+
+    const handleDuplicateConfirm = async () => {
+        if (!classToDuplicate) return;
+
+        setIsDuplicating(classToDuplicate.uuid);
         try {
-            const response = await axios.post(route('training-classes.duplicate', trainingClass.uuid));
+            const response = await axios.post(route('training-classes.duplicate', classToDuplicate.uuid), {
+                name: duplicateName.trim(),
+            });
             onClassAdded?.(response.data.class);
+            setDuplicateDialogOpen(false);
+            setClassToDuplicate(null);
             toast.success('Classe dupliquée avec succès', {
                 description: `La copie "${response.data.class.name}" a été créée.`,
             });
@@ -441,7 +456,7 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => handleDuplicate(trainingClass)}
+                                            onClick={() => handleDuplicateClick(trainingClass)}
                                             disabled={isDuplicating === trainingClass.uuid}
                                             title="Dupliquer la classe"
                                         >
@@ -560,7 +575,7 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => handleDuplicate(trainingClass)}
+                                                onClick={() => handleDuplicateClick(trainingClass)}
                                                 disabled={isDuplicating === trainingClass.uuid}
                                                 title="Dupliquer"
                                             >
@@ -694,7 +709,7 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            onClick={() => handleDuplicate(trainingClass)}
+                                                            onClick={() => handleDuplicateClick(trainingClass)}
                                                             disabled={isDuplicating === trainingClass.uuid}
                                                             title="Dupliquer la classe"
                                                         >
@@ -796,6 +811,28 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
                             </option>
                         ))}
                     </select>
+                </div>
+            </DeleteConfirmationDialog>
+
+            <DeleteConfirmationDialog
+                open={duplicateDialogOpen}
+                onOpenChange={setDuplicateDialogOpen}
+                onConfirm={handleDuplicateConfirm}
+                title="Dupliquer cette classe ?"
+                description="Une copie de la classe sera créée avec ses horaires, supports et quiz. Les inscriptions d'étudiants ne seront pas copiées."
+                confirmText="Dupliquer"
+                isDeleting={isDuplicating !== null}
+                variant="default"
+            >
+                <div className="my-4 px-6">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Nom de la nouvelle classe
+                    </label>
+                    <Input
+                        value={duplicateName}
+                        onChange={(e) => setDuplicateName(e.target.value)}
+                        placeholder="Nom de la classe"
+                    />
                 </div>
             </DeleteConfirmationDialog>
         </div>

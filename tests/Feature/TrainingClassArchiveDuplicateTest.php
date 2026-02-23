@@ -227,6 +227,22 @@ it('appends (Copie) to the duplicated class name', function () {
     expect($data['name'])->toBe('Classe Originale (Copie)');
 });
 
+it('uses custom name when provided during duplication', function () {
+    $class = TrainingClass::factory()->create([
+        'training_id' => $this->training->id,
+        'name' => 'Classe Originale',
+    ]);
+
+    $response = $this->actingAs($this->admin)
+        ->postJson(route('training-classes.duplicate', $class->uuid), [
+            'name' => 'Ma Nouvelle Classe',
+        ]);
+
+    $response->assertSuccessful();
+    $data = $response->json('class');
+    expect($data['name'])->toBe('Ma Nouvelle Classe');
+});
+
 it('duplicates schedules', function () {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,

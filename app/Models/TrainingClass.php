@@ -272,10 +272,10 @@ class TrainingClass extends Model
      * Duplicate this class with its schedules, materials, and quiz associations.
      * Students are NOT duplicated.
      */
-    public function duplicate(): self
+    public function duplicate(?string $name = null): self
     {
         $copy = $this->replicate(['uuid', 'status', 'archived_at', 'archive_access_until']);
-        $copy->name = $this->name.' (Copie)';
+        $copy->name = $name ?? $this->name.' (Copie)';
         $copy->status = 'active';
         $copy->save();
 
