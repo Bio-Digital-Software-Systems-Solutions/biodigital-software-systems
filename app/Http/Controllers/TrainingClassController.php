@@ -94,6 +94,8 @@ class TrainingClassController extends Controller
             },
             'teacher',
             'attendances.student',
+            'materials.uploadedBy',
+            'quizzes',
         ]);
 
         $students = $trainingClass->training->students
@@ -126,10 +128,37 @@ class TrainingClassController extends Controller
             ->orderBy('training_enrollments.created_at', 'desc')
             ->get();
 
+        $materials = $trainingClass->materials->map(fn ($material) => [
+            'id' => $material->id,
+            'uuid' => $material->uuid,
+            'title' => $material->title,
+            'type' => $material->type,
+            'file_url' => $material->file_url,
+            'duration' => $material->duration,
+            'description' => $material->description,
+            'is_active' => $material->is_active,
+            'uploaded_by_name' => $material->uploadedBy?->first_name.' '.$material->uploadedBy?->last_name,
+        ]);
+
+        $quizzes = $trainingClass->quizzes->map(fn ($quiz) => [
+            'id' => $quiz->id,
+            'uuid' => $quiz->uuid,
+            'title' => $quiz->title,
+            'description' => $quiz->description,
+            'duration_minutes' => $quiz->duration_minutes,
+            'max_score' => $quiz->max_score,
+            'passing_score' => $quiz->passing_score,
+            'status' => $quiz->status,
+            'available_from' => $quiz->pivot->available_from,
+            'available_until' => $quiz->pivot->available_until,
+        ]);
+
         return Inertia::render('TrainingClass/Show', [
             'class' => $this->formatClassData($trainingClass),
             'students' => $students,
             'pendingEnrollments' => $pendingEnrollments,
+            'materials' => $materials,
+            'quizzes' => $quizzes,
         ]);
     }
 

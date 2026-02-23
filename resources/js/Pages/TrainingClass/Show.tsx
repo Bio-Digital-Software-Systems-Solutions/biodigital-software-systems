@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Button } from '@/Components/ui/button';
-import { ArrowLeft, Edit, Calendar, Clock, MapPin, Users, UserCheck, UserX, ChevronLeft, ChevronRight, UserPlus, Check, X } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, Clock, MapPin, Users, UserCheck, UserX, ChevronLeft, ChevronRight, UserPlus, Check, X, BookOpen, ClipboardList, FileText, Video, Headphones, Presentation, Download, File } from 'lucide-react';
 import { Link, router } from '@inertiajs/react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/Components/ui/accordion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/Components/ui/dialog';
@@ -46,13 +46,40 @@ interface PendingEnrollment {
     created_at: string;
 }
 
+interface Material {
+    id: number;
+    uuid: string;
+    title: string;
+    type: string;
+    file_url: string | null;
+    duration: string | null;
+    description: string | null;
+    is_active: boolean;
+    uploaded_by_name: string | null;
+}
+
+interface Quiz {
+    id: number;
+    uuid: string;
+    title: string;
+    description: string | null;
+    duration_minutes: number | null;
+    max_score: number | null;
+    passing_score: number | null;
+    status: string;
+    available_from: string | null;
+    available_until: string | null;
+}
+
 interface Props {
     class: TrainingClass;
     students: Student[];
     pendingEnrollments: PendingEnrollment[];
+    materials: Material[];
+    quizzes: Quiz[];
 }
 
-export default function Show({ class: trainingClass, students: initialStudents, pendingEnrollments: initialPendingEnrollments }: Props) {
+export default function Show({ class: trainingClass, students: initialStudents, pendingEnrollments: initialPendingEnrollments, materials, quizzes }: Props) {
     const [students, setStudents] = useState<Student[]>(initialStudents);
     const [attendance, setAttendance] = useState<Record<number, { student_id: number; status: 'present' | 'absent' | 'excused'; reason?: string }>>(() => {
         const initial: Record<number, { student_id: number; status: 'present' | 'absent' | 'excused'; reason?: string }> = {};
@@ -461,6 +488,175 @@ export default function Show({ class: trainingClass, students: initialStudents, 
                         </Accordion>
                     </div>
                 )}
+
+                {/* Course Materials Accordion */}
+                <div className="mb-6">
+                    <Accordion>
+                        <AccordionItem value="course-materials" className="bg-white dark:bg-gray-800 rounded-lg shadow border border-blue-200 dark:border-blue-800">
+                            <AccordionTrigger>
+                                <div className="flex items-center gap-3">
+                                    <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                    <span>Supports de cours</span>
+                                    <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-500 rounded-full">
+                                        {materials.length}
+                                    </span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                {materials.length === 0 ? (
+                                    <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                                        <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                        <p className="text-sm">Aucun support de cours pour cette classe.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {materials.map((material) => {
+                                            const TypeIcon = material.type === 'pdf' ? FileText
+                                                : material.type === 'video' ? Video
+                                                : material.type === 'audio' ? Headphones
+                                                : material.type === 'powerpoint' ? Presentation
+                                                : File;
+
+                                            return (
+                                                <div
+                                                    key={material.id}
+                                                    className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                                                >
+                                                    <div className="flex-shrink-0 mt-0.5">
+                                                        <TypeIcon className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {material.title}
+                                                        </p>
+                                                        {material.description && (
+                                                            <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                                                                {material.description}
+                                                            </p>
+                                                        )}
+                                                        <div className="flex items-center gap-3 mt-1">
+                                                            <span className="text-xs text-gray-400 dark:text-gray-500 uppercase">
+                                                                {material.type}
+                                                            </span>
+                                                            {material.duration && (
+                                                                <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                                                                    <Clock className="w-3 h-3" />
+                                                                    {material.duration}
+                                                                </span>
+                                                            )}
+                                                            {material.uploaded_by_name && (
+                                                                <span className="text-xs text-gray-400 dark:text-gray-500">
+                                                                    Par {material.uploaded_by_name}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    {material.file_url && (
+                                                        <a
+                                                            href={material.file_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="flex-shrink-0 p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                                            title="Télécharger"
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </div>
+
+                {/* Quizzes & Evaluations Accordion */}
+                <div className="mb-6">
+                    <Accordion>
+                        <AccordionItem value="quizzes-evaluations" className="bg-white dark:bg-gray-800 rounded-lg shadow border border-purple-200 dark:border-purple-800">
+                            <AccordionTrigger>
+                                <div className="flex items-center gap-3">
+                                    <ClipboardList className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                    <span>Quiz et évaluations</span>
+                                    <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-purple-500 rounded-full">
+                                        {quizzes.length}
+                                    </span>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                {quizzes.length === 0 ? (
+                                    <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                                        <ClipboardList className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                        <p className="text-sm">Aucun quiz ou évaluation pour cette classe.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {quizzes.map((quiz) => (
+                                            <div
+                                                key={quiz.id}
+                                                className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {quiz.title}
+                                                        </p>
+                                                        {quiz.description && (
+                                                            <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                                                                {quiz.description}
+                                                            </p>
+                                                        )}
+                                                        <div className="flex flex-wrap items-center gap-3 mt-2">
+                                                            {quiz.duration_minutes && (
+                                                                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                                                    <Clock className="w-3 h-3" />
+                                                                    {quiz.duration_minutes} min
+                                                                </span>
+                                                            )}
+                                                            {quiz.max_score !== null && (
+                                                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                                    Max : {quiz.max_score} pts
+                                                                </span>
+                                                            )}
+                                                            {quiz.passing_score !== null && (
+                                                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                                    Seuil : {quiz.passing_score} pts
+                                                                </span>
+                                                            )}
+                                                            {quiz.available_from && (
+                                                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                                    Du {new Date(quiz.available_from).toLocaleDateString('fr-FR')}
+                                                                </span>
+                                                            )}
+                                                            {quiz.available_until && (
+                                                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                                    au {new Date(quiz.available_until).toLocaleDateString('fr-FR')}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <span className={`flex-shrink-0 ml-3 px-2 py-1 text-xs font-medium rounded-full ${
+                                                        quiz.status === 'published'
+                                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                            : quiz.status === 'draft'
+                                                            ? 'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300'
+                                                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                                    }`}>
+                                                        {quiz.status === 'published' ? 'Publié'
+                                                            : quiz.status === 'draft' ? 'Brouillon'
+                                                            : quiz.status}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </div>
 
                 {/* Notes */}
                 {trainingClass.notes && (
