@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Button } from '@/Components/ui/button';
-import { ArrowLeft, Edit, Calendar, Clock, MapPin, Users, UserCheck, UserX, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, Clock, MapPin, Users, UserCheck, UserX, ChevronLeft, ChevronRight, UserPlus, Check, X } from 'lucide-react';
 import { Link, router } from '@inertiajs/react';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/Components/ui/accordion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/Components/ui/dialog';
+import { Textarea } from '@/Components/ui/textarea';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { apiLogger } from '@/utils/logger';
@@ -35,12 +38,21 @@ interface TrainingClass {
     status: string;
 }
 
+interface PendingEnrollment {
+    id: number;
+    user_name: string;
+    user_email: string;
+    motivation: string | null;
+    created_at: string;
+}
+
 interface Props {
     class: TrainingClass;
     students: Student[];
+    pendingEnrollments: PendingEnrollment[];
 }
 
-export default function Show({ class: trainingClass, students: initialStudents }: Props) {
+export default function Show({ class: trainingClass, students: initialStudents, pendingEnrollments: initialPendingEnrollments }: Props) {
     const [students, setStudents] = useState<Student[]>(initialStudents);
     const [attendance, setAttendance] = useState<Record<number, { student_id: number; status: 'present' | 'absent' | 'excused'; reason?: string }>>(() => {
         const initial: Record<number, { student_id: number; status: 'present' | 'absent' | 'excused'; reason?: string }> = {};
@@ -69,6 +81,11 @@ export default function Show({ class: trainingClass, students: initialStudents }
     const [scheduleStudents, setScheduleStudents] = useState<any[]>([]);
     const [loadingScheduleStudents, setLoadingScheduleStudents] = useState(false);
     const previousScheduleIdRef = useRef<string | null>(null);
+    const [pendingEnrollments, setPendingEnrollments] = useState<PendingEnrollment[]>(initialPendingEnrollments);
+    const [processingIds, setProcessingIds] = useState<number[]>([]);
+    const [showRejectDialog, setShowRejectDialog] = useState(false);
+    const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<number | null>(null);
+    const [rejectionReason, setRejectionReason] = useState('');
 
     // Fetch week days schedule on mount
     useEffect(() => {
@@ -176,6 +193,51 @@ export default function Show({ class: trainingClass, students: initialStudents }
             setLoadingScheduleStudents(false);
         }
     }, []);
+
+    const handleApproveEnrollment = async (enrollmentId: number) => {
+        setProcessingIds(prev => [...prev, enrollmentId]);
+        try {
+            await axios.post(route('training-enrollments.approve', enrollmentId));
+            setPendingEnrollments(prev => prev.filter(e => e.id !== enrollmentId));
+            toast.success('Inscription approuvée', {
+                description: 'L\'étudiant a été inscrit à la formation.',
+            });
+            router.reload({ only: ['students'] });
+        } catch (error) {
+            apiLogger.error('Error approving enrollment:', error);
+            toast.error('Erreur lors de l\'approbation');
+        } finally {
+            setProcessingIds(prev => prev.filter(id => id !== enrollmentId));
+        }
+    };
+
+    const handleRejectClick = (enrollmentId: number) => {
+        setSelectedEnrollmentId(enrollmentId);
+        setRejectionReason('');
+        setShowRejectDialog(true);
+    };
+
+    const handleRejectConfirm = async () => {
+        if (!selectedEnrollmentId) return;
+
+        setProcessingIds(prev => [...prev, selectedEnrollmentId]);
+        try {
+            await axios.post(route('training-enrollments.reject', selectedEnrollmentId), {
+                rejection_reason: rejectionReason,
+            });
+            setPendingEnrollments(prev => prev.filter(e => e.id !== selectedEnrollmentId));
+            setShowRejectDialog(false);
+            setSelectedEnrollmentId(null);
+            toast.success('Inscription refusée', {
+                description: 'L\'étudiant a été notifié du refus.',
+            });
+        } catch (error) {
+            apiLogger.error('Error rejecting enrollment:', error);
+            toast.error('Erreur lors du refus');
+        } finally {
+            setProcessingIds(prev => prev.filter(id => id !== selectedEnrollmentId));
+        }
+    };
 
     const getStatusColor = (status: string) => {
         return status === 'À venir'
@@ -331,6 +393,74 @@ export default function Show({ class: trainingClass, students: initialStudents }
                 </div>
                     </div>
                 </div>
+
+                {/* Pending Enrollments Accordion */}
+                {pendingEnrollments.length > 0 && (
+                    <div className="mb-6">
+                        <Accordion>
+                            <AccordionItem value="pending-enrollments" className="bg-white dark:bg-gray-800 rounded-lg shadow border border-amber-200 dark:border-amber-800">
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-3">
+                                        <UserPlus className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                                        <span>Inscriptions en attente</span>
+                                        <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-amber-500 rounded-full">
+                                            {pendingEnrollments.length}
+                                        </span>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <div className="space-y-3">
+                                        {pendingEnrollments.map((enrollment) => (
+                                            <div
+                                                key={enrollment.id}
+                                                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                                            >
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                        {enrollment.user_name}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                                        {enrollment.user_email}
+                                                    </p>
+                                                    {enrollment.motivation && (
+                                                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 italic">
+                                                            {enrollment.motivation}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                                        {new Date(enrollment.created_at).toLocaleDateString('fr-FR')}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-2 ml-4">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="text-green-600 border-green-300 hover:bg-green-50 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/20"
+                                                        onClick={() => handleApproveEnrollment(enrollment.id)}
+                                                        disabled={processingIds.includes(enrollment.id)}
+                                                        title="Approuver"
+                                                    >
+                                                        <Check className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="text-red-600 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/20"
+                                                        onClick={() => handleRejectClick(enrollment.id)}
+                                                        disabled={processingIds.includes(enrollment.id)}
+                                                        title="Refuser"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </div>
+                )}
 
                 {/* Notes */}
                 {trainingClass.notes && (
@@ -658,6 +788,39 @@ export default function Show({ class: trainingClass, students: initialStudents }
                     )}
                 </div>
             </div>
+
+            {/* Reject Enrollment Dialog */}
+            <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Refuser l'inscription</DialogTitle>
+                        <DialogDescription>
+                            Veuillez indiquer la raison du refus. L'étudiant sera notifié par email.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        placeholder="Raison du refus (minimum 10 caractères)..."
+                        rows={3}
+                    />
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowRejectDialog(false)}
+                        >
+                            Annuler
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleRejectConfirm}
+                            disabled={rejectionReason.length < 10 || processingIds.includes(selectedEnrollmentId ?? 0)}
+                        >
+                            Refuser
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </DashboardLayout>
     );
 }

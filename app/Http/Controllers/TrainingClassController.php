@@ -12,6 +12,7 @@ use App\Models\TrainingClassSchedule;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -111,9 +112,24 @@ class TrainingClassController extends Controller
                 ];
             });
 
+        $pendingEnrollments = DB::table('training_enrollments')
+            ->join('users', 'training_enrollments.user_id', '=', 'users.id')
+            ->where('training_enrollments.training_id', $trainingClass->training_id)
+            ->where('training_enrollments.status', 'pending')
+            ->select(
+                'training_enrollments.id',
+                DB::raw("CONCAT(users.first_name, ' ', users.last_name) as user_name"),
+                'users.email as user_email',
+                'training_enrollments.motivation',
+                'training_enrollments.created_at',
+            )
+            ->orderBy('training_enrollments.created_at', 'desc')
+            ->get();
+
         return Inertia::render('TrainingClass/Show', [
             'class' => $this->formatClassData($trainingClass),
             'students' => $students,
+            'pendingEnrollments' => $pendingEnrollments,
         ]);
     }
 
