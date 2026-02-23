@@ -48,6 +48,11 @@ export default function Dashboard({ classes: initialClasses, trainings, teachers
     const [showAddClassModal, setShowAddClassModal] = useState(false);
     const [statistics, setStatistics] = useState<Statistics | null>(null);
 
+    // Sync local state when server data changes (e.g. after router.reload)
+    useEffect(() => {
+        setClasses(initialClasses.data);
+    }, [initialClasses.data]);
+
     // Fetch statistics on mount
     useEffect(() => {
         fetchStatistics();

@@ -178,12 +178,12 @@ export default function ClassesView({ classes, trainings, teachers, onClassUpdat
             const response = await axios.post(route('training-classes.duplicate', classToDuplicate.uuid), {
                 name: duplicateName.trim(),
             });
-            onClassAdded?.(response.data.class);
             setDuplicateDialogOpen(false);
             setClassToDuplicate(null);
             toast.success('Classe dupliquée avec succès', {
                 description: `La copie "${response.data.class.name}" a été créée.`,
             });
+            router.reload({ only: ['classes'] });
         } catch (error) {
             apiLogger.error('Error duplicating class:', error);
             toast.error('Erreur lors de la duplication', {
