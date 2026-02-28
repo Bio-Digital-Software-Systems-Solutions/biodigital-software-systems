@@ -85,6 +85,7 @@ class EventTabPermissionsTest extends TestCase
             ->where('tabPermissions.canViewRegistrations', true)
             ->where('tabPermissions.canCheckIn', true)
             ->where('tabPermissions.canViewAnalytics', true)
+            ->where('tabPermissions.canViewProgramme', false) // no programme uploaded
         );
     }
 
@@ -148,6 +149,7 @@ class EventTabPermissionsTest extends TestCase
             ->where('tabPermissions.canViewRegistrations', false)
             ->where('tabPermissions.canCheckIn', false)
             ->where('tabPermissions.canViewAnalytics', false)
+            ->where('tabPermissions.canViewProgramme', false)
         );
     }
 
@@ -395,6 +397,7 @@ class EventTabPermissionsTest extends TestCase
             ->where('tabPermissions.canViewRegistrations', $expectedAccess['registrations'])
             ->where('tabPermissions.canCheckIn', $expectedAccess['checkin'])
             ->where('tabPermissions.canViewAnalytics', $expectedAccess['analytics'])
+            ->where('tabPermissions.canViewProgramme', false) // no programme in test fixture
         );
     }
 

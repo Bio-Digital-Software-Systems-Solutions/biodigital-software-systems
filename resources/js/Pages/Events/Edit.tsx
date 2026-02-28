@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps, User } from '@/Types';
-import { ArrowLeftIcon, MapPinIcon, PhotoIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, MapPinIcon, PhotoIcon, VideoCameraIcon, DocumentTextIcon, ArrowUpTrayIcon, TrashIcon } from '@heroicons/react/24/outline';
 import UserMultiSelect from '@/Components/UserMultiSelect';
 import { EventMediaUploader, EventMediaGallery, EventBanner } from '@/Components/Events';
-import { EventMedia } from '@/Types/event.d';
+import { EventMedia, EventProgramme } from '@/Types/event.d';
+import { toast } from 'sonner';
+import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 
 interface Event {
     id: number;
@@ -33,13 +35,16 @@ interface Props extends PageProps {
     banners?: EventMedia[];
     galleryImages?: EventMedia[];
     galleryVideos?: EventMedia[];
+    programme?: EventProgramme;
 }
 
-export default function Edit({ event, banners = [], galleryImages = [], galleryVideos = [] }: Props) {
+export default function Edit({ event, banners = [], galleryImages = [], galleryVideos = [], programme }: Props) {
     const [showAddress, setShowAddress] = useState(!!event.address && Object.values(event.address).some(value => value));
     const [showMediaSection, setShowMediaSection] = useState(false);
     const [currentMedia, setCurrentMedia] = useState<EventMedia[]>(event.media || []);
     const [currentBanners, setCurrentBanners] = useState<EventMedia[]>(banners);
+    const [programmeUploading, setProgrammeUploading] = useState(false);
+    const [deleteProgrammeDialogOpen, setDeleteProgrammeDialogOpen] = useState(false);
 
     const handleMediaUploadComplete = (uploadedMedia: EventMedia[]) => {
         setCurrentMedia((prev) => [...prev, ...uploadedMedia]);
@@ -63,6 +68,60 @@ export default function Edit({ event, banners = [], galleryImages = [], galleryV
             });
         } else {
             setCurrentBanners((prev) => prev.filter((m) => m.id !== updatedMedia.id));
+        }
+    };
+
+    const handleProgrammeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setProgrammeUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch(route('events.programme.store', event.uuid), {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Erreur lors de l\'upload.');
+            }
+
+            toast.success('Programme uploadé avec succès.');
+            router.reload({ only: ['programme'] });
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Erreur lors de l\'upload du programme.');
+        } finally {
+            setProgrammeUploading(false);
+            e.target.value = '';
+        }
+    };
+
+    const handleProgrammeDelete = async () => {
+        try {
+            const response = await fetch(route('events.programme.destroy', event.uuid), {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Erreur lors de la suppression.');
+            }
+
+            toast.success('Programme supprimé.');
+            router.reload({ only: ['programme'] });
+        } catch (error) {
+            toast.error('Erreur lors de la suppression du programme.');
         }
     };
 
@@ -357,6 +416,66 @@ export default function Edit({ event, banners = [], galleryImages = [], galleryV
                                 )}
                             </div>
 
+                            {/* Programme Section */}
+                            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                                    <DocumentTextIcon className="h-5 w-5" />
+                                    Programme
+                                </h3>
+
+                                {programme ? (
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                            <div className="p-2 bg-white dark:bg-gray-700 rounded-lg">
+                                                <DocumentTextIcon className="h-5 w-5 text-indigo-500" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                    {programme.file_name}
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {programme.file_size_for_humans} &middot; {programme.is_pdf ? 'PDF' : 'Image'}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <label className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer">
+                                                    <ArrowUpTrayIcon className="h-4 w-4" />
+                                                    Remplacer
+                                                    <input
+                                                        type="file"
+                                                        className="hidden"
+                                                        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                                                        onChange={handleProgrammeUpload}
+                                                        disabled={programmeUploading}
+                                                    />
+                                                </label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDeleteProgrammeDialogOpen(true)}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                                >
+                                                    <TrashIcon className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors">
+                                        <ArrowUpTrayIcon className="h-5 w-5 text-gray-400" />
+                                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                                            {programmeUploading ? 'Upload en cours...' : 'Uploader un programme (PDF, image)'}
+                                        </span>
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                                            onChange={handleProgrammeUpload}
+                                            disabled={programmeUploading}
+                                        />
+                                    </label>
+                                )}
+                            </div>
+
                             {/* Participants Selection */}
                             <div>
                                 <UserMultiSelect
@@ -456,6 +575,13 @@ export default function Edit({ event, banners = [], galleryImages = [], galleryV
                     </div>
                 </div>
             </div>
+            <DeleteConfirmationDialog
+                open={deleteProgrammeDialogOpen}
+                onOpenChange={setDeleteProgrammeDialogOpen}
+                onConfirm={handleProgrammeDelete}
+                title="Supprimer le programme"
+                description="Êtes-vous sûr de vouloir supprimer le programme de cet événement ?"
+            />
         </DashboardLayout>
     );
 }

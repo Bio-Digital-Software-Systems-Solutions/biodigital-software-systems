@@ -10,6 +10,7 @@ use App\Models\Event\EventDocument;
 use App\Models\Event\EventFeedback;
 use App\Models\Event\EventMedia;
 use App\Models\Event\EventNotification;
+use App\Models\Event\EventProgramme;
 use App\Models\Event\EventPromoCode;
 use App\Models\Event\EventRegistration;
 use App\Models\Event\EventSession;
@@ -23,6 +24,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -226,6 +228,14 @@ class Event extends Model
     public function sessions(): HasMany
     {
         return $this->hasMany(EventSession::class);
+    }
+
+    /**
+     * Get the programme for the event.
+     */
+    public function programme(): HasOne
+    {
+        return $this->hasOne(EventProgramme::class);
     }
 
     /**

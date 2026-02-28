@@ -25,9 +25,10 @@ import { isAdmin } from '@/Enums/Role';
 import { userHasPermission } from '@/Enums/Permission';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/Components/ui/accordion';
-import { TicketManager, RegistrationList, CheckInScanner, EventAnalyticsDashboard } from '@/Components/Event';
+import { TicketManager, RegistrationList, CheckInScanner, EventAnalyticsDashboard, EventProgrammeTab } from '@/Components/Event';
 import { EventMediaGallery, EventBanner } from '@/Components/Events';
-import { EventMedia } from '@/Types/event.d';
+import { EventMedia, EventProgramme } from '@/Types/event.d';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 
 interface Address {
     id: number;
@@ -80,6 +81,7 @@ interface TabPermissions {
     canViewRegistrations: boolean;
     canCheckIn: boolean;
     canViewAnalytics: boolean;
+    canViewProgramme: boolean;
 }
 
 interface ShowProps extends PageProps {
@@ -88,11 +90,12 @@ interface ShowProps extends PageProps {
     galleryImages?: EventMedia[];
     galleryVideos?: EventMedia[];
     tabPermissions: TabPermissions;
+    programme?: EventProgramme;
 }
 
-type TabType = 'details' | 'gallery' | 'tickets' | 'registrations' | 'checkin' | 'analytics';
+type TabType = 'details' | 'gallery' | 'programme' | 'tickets' | 'registrations' | 'checkin' | 'analytics';
 
-const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = [], galleryVideos = [], tabPermissions }) => {
+const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = [], galleryVideos = [], tabPermissions, programme }) => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('details');
     const eventColor = event.color || '#3b82f6';
@@ -122,13 +125,14 @@ const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = 
     const canParticipate = !isEventPast || isSuperAdmin;
 
     // Tab permissions from server (authoritative source)
-    const { canViewGallery, canManageTickets, canViewRegistrations, canCheckIn, canViewAnalytics } = tabPermissions;
+    const { canViewGallery, canManageTickets, canViewRegistrations, canCheckIn, canViewAnalytics, canViewProgramme } = tabPermissions;
 
     const hasMedia = allGalleryMedia.length > 0 || banners.length > 0;
 
     const tabs = [
         { id: 'details' as TabType, label: 'Détails', icon: CalendarIcon, show: true },
         { id: 'gallery' as TabType, label: `Galerie${hasMedia ? ` (${allGalleryMedia.length})` : ''}`, icon: PhotoIcon, show: hasMedia && canViewGallery },
+        { id: 'programme' as TabType, label: 'Programme', icon: DocumentTextIcon, show: canViewProgramme },
         { id: 'tickets' as TabType, label: 'Billets', icon: TicketIcon, show: canManageTickets },
         { id: 'registrations' as TabType, label: 'Inscriptions', icon: ClipboardDocumentListIcon, show: canViewRegistrations },
         { id: 'checkin' as TabType, label: 'Check-in', icon: QrCodeIcon, show: canCheckIn },
@@ -492,6 +496,15 @@ const Show: React.FC<ShowProps> = ({ auth, event, banners = [], galleryImages = 
                         )}
                     </div>
                 </div>
+                )}
+
+                {/* Programme Tab */}
+                {activeTab === 'programme' && (
+                    <EventProgrammeTab
+                        eventId={event.uuid}
+                        programme={programme || null}
+                        canEdit={canEditEvent}
+                    />
                 )}
 
                 {/* Tickets Tab */}

@@ -494,6 +494,32 @@ export interface EventMedia {
     uploader?: User;
 }
 
+// ===== Event Programme =====
+
+export interface EventProgramme {
+    id: number;
+    uuid: string;
+    event_id: number;
+    uploaded_by?: number;
+    file_path: string;
+    file_name: string;
+    file_type: string;
+    file_size: number;
+    share_token?: string;
+    share_token_expires_at?: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+
+    // Computed
+    file_url?: string;
+    file_size_for_humans?: string;
+    is_pdf?: boolean;
+    is_image?: boolean;
+    can_preview?: boolean;
+    share_url?: string;
+}
+
 // ===== API Response Types =====
 
 export interface TicketStats {

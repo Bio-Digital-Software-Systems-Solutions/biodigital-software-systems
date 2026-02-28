@@ -143,7 +143,7 @@ class EventController extends Controller
      */
     public function show(Event $event): Response
     {
-        $event->load(['creator', 'address', 'participants', 'media' => fn ($q) => $q->ordered()]);
+        $event->load(['creator', 'address', 'participants', 'programme', 'media' => fn ($q) => $q->ordered()]);
 
         // Filter out media without existing files
         $mediaWithFiles = $event->media->filter(fn ($m) => $m->fileExists());
@@ -160,7 +160,10 @@ class EventController extends Controller
             'canViewRegistrations' => $isSuperAdmin || $isCreator || ($user && ($user->can('view registrations') || $user->can('manage registrations'))),
             'canCheckIn' => $isSuperAdmin || $isCreator || ($user && ($user->can('checkin events') || $user->can('manage registrations'))),
             'canViewAnalytics' => $isSuperAdmin || $isCreator || ($user && $user->can('view event analytics')),
+            'canViewProgramme' => $event->programme !== null,
         ];
+
+        $programme = $event->programme;
 
         return Inertia::render('Events/Show', [
             'event' => $event,
@@ -168,6 +171,7 @@ class EventController extends Controller
             'galleryImages' => $event->images()->gallery()->get()->filter(fn ($m) => $m->fileExists())->values(),
             'galleryVideos' => $event->videos()->gallery()->get()->filter(fn ($m) => $m->fileExists())->values(),
             'tabPermissions' => $tabPermissions,
+            'programme' => $programme?->append(['file_url', 'file_size_for_humans', 'is_pdf', 'is_image', 'can_preview', 'share_url']),
         ]);
     }
 
@@ -176,17 +180,20 @@ class EventController extends Controller
      */
     public function edit(Event $event): Response
     {
-        $event->load(['address', 'participants', 'media' => fn ($q) => $q->ordered()]);
+        $event->load(['address', 'participants', 'programme', 'media' => fn ($q) => $q->ordered()]);
 
         // Filter out media without existing files
         $mediaWithFiles = $event->media->filter(fn ($m) => $m->fileExists());
         $event->setRelation('media', $mediaWithFiles);
+
+        $programme = $event->programme;
 
         return Inertia::render('Events/Edit', [
             'event' => $event,
             'banners' => $event->banners()->get()->filter(fn ($m) => $m->fileExists())->values(),
             'galleryImages' => $event->images()->gallery()->get()->filter(fn ($m) => $m->fileExists())->values(),
             'galleryVideos' => $event->videos()->gallery()->get()->filter(fn ($m) => $m->fileExists())->values(),
+            'programme' => $programme?->append(['file_url', 'file_size_for_humans', 'is_pdf', 'is_image', 'can_preview']),
         ]);
     }
 

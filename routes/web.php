@@ -82,6 +82,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('events/{event}/media/{media}/set-featured', [App\Http\Controllers\EventMediaController::class, 'setFeatured'])
         ->name('events.media.set-featured');
 
+    // Event Programme routes
+    Route::post('events/{event}/programme', [App\Http\Controllers\EventProgrammeController::class, 'store'])
+        ->name('events.programme.store');
+    Route::delete('events/{event}/programme', [App\Http\Controllers\EventProgrammeController::class, 'destroy'])
+        ->name('events.programme.destroy');
+    Route::post('events/{event}/programme/share-link', [App\Http\Controllers\EventProgrammeController::class, 'generateShareLink'])
+        ->name('events.programme.generate-share-link');
+    Route::post('events/{event}/programme/renew-link', [App\Http\Controllers\EventProgrammeController::class, 'renewShareLink'])
+        ->name('events.programme.renew-share-link');
+    Route::post('events/{event}/programme/revoke-link', [App\Http\Controllers\EventProgrammeController::class, 'revokeShareLink'])
+        ->name('events.programme.revoke-share-link');
+
     // Book routes
     Route::resource('books', App\Http\Controllers\BookController::class);
     Route::post('books/{book}/rent', [App\Http\Controllers\BookController::class, 'rent'])
@@ -1006,6 +1018,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Public shared form routes (no auth required)
     Route::get('/f/{token}', [App\Http\Controllers\FormController::class, 'renderSharedForm'])->name('forms.shared')->withoutMiddleware(['auth', 'verified']);
     Route::post('/f/{token}/submit', [App\Http\Controllers\FormController::class, 'submitSharedForm'])->name('forms.shared.submit')->withoutMiddleware(['auth', 'verified']);
+
+    // Public shared programme routes (no auth required)
+    Route::get('/p/{token}', [App\Http\Controllers\EventProgrammeController::class, 'showShared'])->name('events.programme.shared')->withoutMiddleware(['auth', 'verified']);
+    Route::get('/p/{token}/download', [App\Http\Controllers\EventProgrammeController::class, 'downloadShared'])->name('events.programme.shared.download')->withoutMiddleware(['auth', 'verified']);
 
     // Form Submission Routes
     Route::prefix('form-submissions')->name('form-submissions.')->group(function () {
