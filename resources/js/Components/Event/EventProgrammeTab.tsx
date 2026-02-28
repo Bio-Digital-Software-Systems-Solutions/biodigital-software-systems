@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { EventProgramme } from '@/Types/event.d';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import PdfViewer from '@/Components/ui/pdf-viewer';
 
 interface EventProgrammeTabProps {
     eventId: string;
@@ -307,23 +308,11 @@ export const EventProgrammeTab: React.FC<EventProgrammeTabProps> = ({ eventId, p
                 {programme.can_preview && programme.file_url && (
                     <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                         {programme.is_pdf ? (
-                            <object
-                                data={programme.file_url}
-                                type="application/pdf"
-                                className="w-full h-[600px]"
-                            >
-                                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                                    <p>Impossible d'afficher le PDF dans le navigateur.</p>
-                                    <a
-                                        href={programme.file_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-indigo-600 dark:text-indigo-400 hover:underline mt-2 inline-block"
-                                    >
-                                        Ouvrir dans un nouvel onglet
-                                    </a>
-                                </div>
-                            </object>
+                            <PdfViewer
+                                fileUrl={programme.file_url!}
+                                height="600px"
+                                downloadUrl={programme.file_url}
+                            />
                         ) : (
                             <img
                                 src={programme.file_url}

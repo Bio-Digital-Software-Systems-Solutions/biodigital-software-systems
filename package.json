@@ -112,6 +112,7 @@
         "react-dropzone": "^14.3.8",
         "react-google-maps-api": "^1.0.8",
         "react-i18next": "^15.7.1",
+        "react-pdf": "^10.4.1",
         "react-player": "^3.3.3",
         "react-select": "^5.10.2",
         "recharts": "^3.6.0",

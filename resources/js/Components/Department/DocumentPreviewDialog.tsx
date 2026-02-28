@@ -6,6 +6,7 @@ import {
     DialogTitle,
 } from '@/Components/ui/dialog';
 import { Button } from '@/Components/ui/button';
+import PdfViewer from '@/Components/ui/pdf-viewer';
 import {
     ArrowDownTrayIcon,
     XMarkIcon,
@@ -158,17 +159,12 @@ export default function DocumentPreviewDialog({
             case 'pdf':
                 return (
                     <div className="w-full h-full rounded-lg overflow-hidden">
-                        {isLoading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                                <div className="animate-pulse text-muted-foreground">Chargement du PDF...</div>
-                            </div>
-                        )}
-                        <iframe
-                            src={`${fileUrl}#toolbar=1&navpanes=0&scrollbar=1`}
-                            className="w-full h-full border-0"
-                            title={document.title}
-                            onLoad={handleMediaLoad}
-                            onError={handleMediaError}
+                        <PdfViewer
+                            fileUrl={fileUrl}
+                            height="100%"
+                            downloadUrl={fileUrl}
+                            onLoadSuccess={() => handleMediaLoad()}
+                            onError={() => handleMediaError()}
                         />
                     </div>
                 );

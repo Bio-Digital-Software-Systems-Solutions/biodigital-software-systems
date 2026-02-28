@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { DocumentTextIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { EventProgramme } from '@/Types/event.d';
+import PdfViewer from '@/Components/ui/pdf-viewer';
 
 interface Props {
     programme: EventProgramme;
@@ -52,23 +53,11 @@ export default function SharedView({ programme, eventTitle, downloadUrl }: Props
             {programme.can_preview && programme.file_url ? (
                 <div className="flex-1 min-h-0">
                     {programme.is_pdf ? (
-                        <object
-                            data={programme.file_url}
-                            type="application/pdf"
-                            className="w-full h-full"
-                        >
-                            <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-                                <div className="text-center">
-                                    <p>Impossible d'afficher le PDF dans le navigateur.</p>
-                                    <a
-                                        href={downloadUrl}
-                                        className="text-indigo-600 dark:text-indigo-400 hover:underline mt-2 inline-block"
-                                    >
-                                        Télécharger le fichier
-                                    </a>
-                                </div>
-                            </div>
-                        </object>
+                        <PdfViewer
+                            fileUrl={programme.file_url!}
+                            height="100%"
+                            downloadUrl={downloadUrl}
+                        />
                     ) : (
                         <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-900 p-4">
                             <img
