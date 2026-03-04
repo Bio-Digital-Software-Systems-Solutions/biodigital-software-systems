@@ -19,6 +19,14 @@ Artisan::command('inspire', function () {
 |
 */
 
+// Process queued jobs every minute (for shared hosting without Supervisor)
+// The worker starts, processes all pending jobs, then exits
+Schedule::command('queue:work --stop-when-empty --tries=3 --max-time=55')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/queue-worker.log'))
+    ->description('Process queued jobs (shared hosting fallback)');
+
 // Send appointment reminders daily at 9:00 AM
 // This will notify participants and organizers 24 hours before their appointments
 Schedule::command('appointments:send-reminders')
