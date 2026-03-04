@@ -47,7 +47,7 @@ RUN composer dump-autoload --optimize --no-dev
 # ==========================================
 # Stage 3: Production PHP image
 # ==========================================
-FROM php:8.3-fpm-alpine AS production
+FROM php:8.4-fpm-alpine AS production
 
 # Set working directory
 WORKDIR /var/www/html
@@ -126,7 +126,7 @@ CMD ["php-fpm"]
 # ==========================================
 # Stage 4: Development PHP image
 # ==========================================
-FROM php:8.3-fpm-alpine AS development
+FROM php:8.4-fpm-alpine AS development
 
 # Set working directory
 WORKDIR /var/www/html
