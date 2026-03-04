@@ -66,6 +66,7 @@ RUN apk add --no-cache \
     icu-dev \
     libxml2-dev \
     linux-headers \
+    supervisor \
     $PHPIZE_DEPS
 
 # Install PHP extensions
@@ -95,6 +96,11 @@ COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-custom.ini
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 
+# Copy Supervisor configuration
+COPY docker/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
+COPY docker/supervisor/queue-worker.conf /etc/supervisor/conf.d/queue-worker.conf
+COPY docker/supervisor/scheduler.conf /etc/supervisor/conf.d/scheduler.conf
+
 # Copy application from composer stage
 COPY --from=composer-builder /app /var/www/html
 
@@ -108,14 +114,12 @@ RUN mkdir -p \
     storage/framework/sessions \
     storage/framework/views \
     storage/logs \
-    bootstrap/cache
+    bootstrap/cache \
+    /var/log/supervisor
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
-
-# Switch to non-root user
-USER www-data
 
 # Expose port 9000
 EXPOSE 9000

@@ -13,6 +13,7 @@ services:
     container_name: icc-app
     restart: always
     working_dir: /var/www/html
+    env_file: .env
     volumes:
       - storage-data:/var/www/html/storage
       - php-logs:/var/log/php
@@ -124,6 +125,7 @@ services:
     container_name: icc-queue
     restart: always
     working_dir: /var/www/html
+    env_file: .env
     volumes:
       - storage-data:/var/www/html/storage
       - php-logs:/var/log/php
@@ -152,6 +154,7 @@ services:
     container_name: icc-scheduler
     restart: always
     working_dir: /var/www/html
+    env_file: .env
     volumes:
       - storage-data:/var/www/html/storage
       - php-logs:/var/log/php
