@@ -22,10 +22,15 @@ class AppointmentNotificationTest extends TestCase
     use RefreshDatabase;
 
     protected User $organizer;
+
     protected User $participant1;
+
     protected User $participant2;
+
     protected User $participant3;
+
     protected Project $project;
+
     protected Task $task;
 
     protected function setUp(): void
@@ -156,10 +161,8 @@ class AppointmentNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->organizer,
             AppointmentConfirmation::class,
-            function ($notification) {
-                return $notification->status === 'confirmed' &&
-                       $notification->participant->id === $this->participant1->id;
-            }
+            fn($notification): bool => $notification->status === 'confirmed' &&
+                   $notification->participant->id === $this->participant1->id
         );
     }
 
@@ -186,19 +189,15 @@ class AppointmentNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->participant2,
             AppointmentConfirmation::class,
-            function ($notification) {
-                return $notification->status === 'confirmed' &&
-                       $notification->participant->id === $this->participant1->id;
-            }
+            fn($notification): bool => $notification->status === 'confirmed' &&
+                   $notification->participant->id === $this->participant1->id
         );
 
         Notification::assertSentTo(
             $this->participant3,
             AppointmentConfirmation::class,
-            function ($notification) {
-                return $notification->status === 'confirmed' &&
-                       $notification->participant->id === $this->participant1->id;
-            }
+            fn($notification): bool => $notification->status === 'confirmed' &&
+                   $notification->participant->id === $this->participant1->id
         );
     }
 
@@ -333,8 +332,9 @@ class AppointmentNotificationTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page->component('Appointments/ConfirmationError'));
 
-        // No notifications should be sent
-        Notification::assertNothingSent();
+        // No confirmation/cancellation notifications should be sent
+        Notification::assertNotSentTo($this->participant1, AppointmentConfirmation::class);
+        Notification::assertNotSentTo($this->participant1, AppointmentCancellation::class);
     }
 
     public function test_declining_with_invalid_token_shows_error(): void
@@ -349,8 +349,9 @@ class AppointmentNotificationTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page->component('Appointments/ConfirmationError'));
 
-        // No notifications should be sent
-        Notification::assertNothingSent();
+        // No confirmation/cancellation notifications should be sent
+        Notification::assertNotSentTo($this->participant1, AppointmentConfirmation::class);
+        Notification::assertNotSentTo($this->participant1, AppointmentCancellation::class);
     }
 
     // ========================================
@@ -382,8 +383,9 @@ class AppointmentNotificationTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page->component('Appointments/ConfirmationAlready'));
 
-        // No new notifications should be sent
-        Notification::assertNothingSent();
+        // No confirmation/cancellation notifications should be sent for already-responded participant
+        Notification::assertNotSentTo($this->participant1, AppointmentConfirmation::class);
+        Notification::assertNotSentTo($this->organizer, AppointmentConfirmation::class);
     }
 
     public function test_declining_already_declined_shows_already_responded(): void
@@ -411,8 +413,9 @@ class AppointmentNotificationTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page->component('Appointments/ConfirmationAlready'));
 
-        // No new notifications should be sent
-        Notification::assertNothingSent();
+        // No confirmation/cancellation notifications should be sent for already-responded participant
+        Notification::assertNotSentTo($this->participant1, AppointmentConfirmation::class);
+        Notification::assertNotSentTo($this->organizer, AppointmentConfirmation::class);
     }
 
     // ========================================

@@ -42,19 +42,19 @@ class SeedProfileDataCommand extends Command
         $this->newLine();
 
         if ($seedAll || $seedInterests) {
-            $this->components->task('Seeding interests', function () {
+            $this->components->task('Seeding interests', function (): void {
                 $this->callSilent('db:seed', ['--class' => InterestSeeder::class]);
             });
         }
 
         if ($seedAll || $seedLanguages) {
-            $this->components->task('Seeding languages', function () {
+            $this->components->task('Seeding languages', function (): void {
                 $this->callSilent('db:seed', ['--class' => SpokenLanguageSeeder::class]);
             });
         }
 
         if ($seedAll || $seedSkills) {
-            $this->components->task('Seeding skills', function () {
+            $this->components->task('Seeding skills', function (): void {
                 $this->callSilent('db:seed', ['--class' => ProfileSkillSeeder::class]);
             });
         }

@@ -10,6 +10,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property-read User|null $createdBy
+ * @property-read Department|null $department
+ * @property-read int $shifts_count
+ * @method static Builder<static>|ScheduleTemplate active()
+ * @method static Builder<static>|ScheduleTemplate forDepartment(int $departmentId)
+ * @method static Builder<static>|ScheduleTemplate newModelQuery()
+ * @method static Builder<static>|ScheduleTemplate newQuery()
+ * @method static Builder<static>|ScheduleTemplate query()
+ * @mixin \Eloquent
+ */
 class ScheduleTemplate extends Model
 {
     use HasFactory;
@@ -35,7 +46,7 @@ class ScheduleTemplate extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
@@ -147,7 +158,8 @@ class ScheduleTemplate extends Model
     public function getRequirementsForDay(int $dayOfWeek): array
     {
         $requirements = $this->staff_requirements ?? [];
-        return $requirements[$dayOfWeek] ?? [];
+
+        return (array) ($requirements[$dayOfWeek] ?? []);
     }
 
     /**

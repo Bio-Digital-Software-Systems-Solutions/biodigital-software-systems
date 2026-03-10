@@ -16,6 +16,21 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string|null $icon
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
+ * @property-read int|null $users_count
+ * @method static \Database\Factories\InterestFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Interest newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Interest newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Interest query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Interest whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Interest whereIcon($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Interest whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Interest whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Interest whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Interest whereUuid($value)
+ * @mixin \Eloquent
  */
 class Interest extends Model
 {
@@ -37,7 +52,7 @@ class Interest extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }

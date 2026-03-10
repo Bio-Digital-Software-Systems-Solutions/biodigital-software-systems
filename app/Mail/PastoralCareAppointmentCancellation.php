@@ -29,9 +29,9 @@ class PastoralCareAppointmentCancellation extends Mailable implements ShouldQueu
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Annulation de votre rendez-vous de soin pastoral - ICC Munich',
             from: config('mail.from.address', 'noreply@icc-munich.de'),
             replyTo: $this->appointment->pastor->email,
+            subject: 'Annulation de votre rendez-vous de soin pastoral - ICC Munich',
         );
     }
 

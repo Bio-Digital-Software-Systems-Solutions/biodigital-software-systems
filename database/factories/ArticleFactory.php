@@ -43,7 +43,7 @@ class ArticleFactory extends Factory
      */
     public function configure(): static
     {
-        return $this->afterMaking(function (Article $article) {
+        return $this->afterMaking(function (Article $article): void {
             // Always generate slug from title if not explicitly provided
             if (!isset($article->getAttributes()['slug'])) {
                 $article->slug = Str::slug($article->title);
@@ -66,7 +66,7 @@ class ArticleFactory extends Factory
      */
     public function published(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'published_at' => now(),
         ]);
     }
@@ -76,7 +76,7 @@ class ArticleFactory extends Factory
      */
     public function unpublished(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'published_at' => null,
         ]);
     }
@@ -86,7 +86,7 @@ class ArticleFactory extends Factory
      */
     public function featured(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_featured' => true,
         ]);
     }
@@ -96,7 +96,7 @@ class ArticleFactory extends Factory
      */
     public function draft(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'draft',
             'published_at' => null,
         ]);
@@ -107,7 +107,7 @@ class ArticleFactory extends Factory
      */
     public function pending(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'pending',
             'published_at' => null,
         ]);
@@ -118,7 +118,7 @@ class ArticleFactory extends Factory
      */
     public function scheduled(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'scheduled',
             'published_at' => fake()->dateTimeBetween('now', '+1 month'),
         ]);

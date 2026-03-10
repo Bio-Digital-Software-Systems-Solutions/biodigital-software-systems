@@ -5,11 +5,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->user = User::factory()->create();
 });
 
-test('authenticated user can access settings page', function () {
+test('authenticated user can access settings page', function (): void {
     $response = $this->actingAs($this->user)
         ->get(route('settings.index'));
 
@@ -20,13 +20,13 @@ test('authenticated user can access settings page', function () {
     );
 });
 
-test('unauthenticated user cannot access settings page', function () {
+test('unauthenticated user cannot access settings page', function (): void {
     $response = $this->get(route('settings.index'));
 
     $response->assertRedirect(route('login'));
 });
 
-test('settings page displays user settings', function () {
+test('settings page displays user settings', function (): void {
     $response = $this->actingAs($this->user)
         ->get(route('settings.index'));
 
@@ -44,7 +44,7 @@ test('settings page displays user settings', function () {
     );
 });
 
-test('user can update settings', function () {
+test('user can update settings', function (): void {
     $response = $this->actingAs($this->user)
         ->post(route('settings.update'), [
             'email_notifications' => false,
@@ -71,7 +71,7 @@ test('user can update settings', function () {
     ]);
 });
 
-test('user can update individual settings', function () {
+test('user can update individual settings', function (): void {
     $response = $this->actingAs($this->user)
         ->post(route('settings.update'), [
             'email_notifications' => false,
@@ -83,7 +83,7 @@ test('user can update individual settings', function () {
     expect($this->user->email_notifications)->toBeFalse();
 });
 
-test('settings update validates boolean fields', function () {
+test('settings update validates boolean fields', function (): void {
     $response = $this->actingAs($this->user)
         ->post(route('settings.update'), [
             'email_notifications' => 'invalid',
@@ -92,7 +92,7 @@ test('settings update validates boolean fields', function () {
     $response->assertSessionHasErrors('email_notifications');
 });
 
-test('unauthenticated user cannot update settings', function () {
+test('unauthenticated user cannot update settings', function (): void {
     $response = $this->post(route('settings.update'), [
         'email_notifications' => false,
     ]);
@@ -100,7 +100,7 @@ test('unauthenticated user cannot update settings', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('settings page includes auth user data', function () {
+test('settings page includes auth user data', function (): void {
     $response = $this->actingAs($this->user)
         ->get(route('settings.index'));
 
@@ -113,7 +113,7 @@ test('settings page includes auth user data', function () {
     );
 });
 
-test('user can toggle email notifications on', function () {
+test('user can toggle email notifications on', function (): void {
     $this->user->update(['email_notifications' => false]);
 
     $response = $this->actingAs($this->user)
@@ -126,7 +126,7 @@ test('user can toggle email notifications on', function () {
     expect($this->user->email_notifications)->toBeTrue();
 });
 
-test('user can toggle sms notifications on', function () {
+test('user can toggle sms notifications on', function (): void {
     $this->user->update(['sms_notifications' => false]);
 
     $response = $this->actingAs($this->user)
@@ -139,7 +139,7 @@ test('user can toggle sms notifications on', function () {
     expect($this->user->sms_notifications)->toBeTrue();
 });
 
-test('user can toggle push notifications off', function () {
+test('user can toggle push notifications off', function (): void {
     $this->user->update(['push_notifications' => true]);
 
     $response = $this->actingAs($this->user)
@@ -152,7 +152,7 @@ test('user can toggle push notifications off', function () {
     expect($this->user->push_notifications)->toBeFalse();
 });
 
-test('user can subscribe to newsletter', function () {
+test('user can subscribe to newsletter', function (): void {
     $this->user->update(['newsletter' => false]);
 
     $response = $this->actingAs($this->user)
@@ -165,7 +165,7 @@ test('user can subscribe to newsletter', function () {
     expect($this->user->newsletter)->toBeTrue();
 });
 
-test('user can unsubscribe from newsletter', function () {
+test('user can unsubscribe from newsletter', function (): void {
     $this->user->update(['newsletter' => true]);
 
     $response = $this->actingAs($this->user)
@@ -178,7 +178,7 @@ test('user can unsubscribe from newsletter', function () {
     expect($this->user->newsletter)->toBeFalse();
 });
 
-test('user can toggle event reminders', function () {
+test('user can toggle event reminders', function (): void {
     $this->user->update(['event_reminders' => true]);
 
     $response = $this->actingAs($this->user)
@@ -191,7 +191,7 @@ test('user can toggle event reminders', function () {
     expect($this->user->event_reminders)->toBeFalse();
 });
 
-test('user can toggle training updates', function () {
+test('user can toggle training updates', function (): void {
     $this->user->update(['training_updates' => true]);
 
     $response = $this->actingAs($this->user)
@@ -204,7 +204,7 @@ test('user can toggle training updates', function () {
     expect($this->user->training_updates)->toBeFalse();
 });
 
-test('user can toggle message notifications', function () {
+test('user can toggle message notifications', function (): void {
     $this->user->update(['message_notifications' => true]);
 
     $response = $this->actingAs($this->user)
@@ -217,7 +217,7 @@ test('user can toggle message notifications', function () {
     expect($this->user->message_notifications)->toBeFalse();
 });
 
-test('settings are persisted across page reloads', function () {
+test('settings are persisted across page reloads', function (): void {
     $this->actingAs($this->user)
         ->post(route('settings.update'), [
             'email_notifications' => false,
@@ -233,7 +233,7 @@ test('settings are persisted across page reloads', function () {
     );
 });
 
-test('multiple users can have different settings', function () {
+test('multiple users can have different settings', function (): void {
     $user2 = User::factory()->create();
 
     $this->actingAs($this->user)
@@ -249,7 +249,7 @@ test('multiple users can have different settings', function () {
     expect($user2->email_notifications)->toBeTrue();
 });
 
-test('all settings default to sensible values for new users', function () {
+test('all settings default to sensible values for new users', function (): void {
     $newUser = User::factory()->create();
 
     $response = $this->actingAs($newUser)

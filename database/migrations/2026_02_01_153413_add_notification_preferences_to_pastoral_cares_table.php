@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             // Notification preferences - which channels to use for reminders
             $table->json('notification_channels')->nullable()->after('reminder_sent_at')
                 ->comment('JSON array of notification channels: email, sms, whatsapp');
@@ -27,7 +27,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->dropColumn([
                 'notification_channels',
                 'sms_reminder_sent_at',

@@ -20,7 +20,7 @@ class QuizPermissionsTest extends TestCase
     }
 
     /** @test */
-    public function admin_has_all_quiz_permissions()
+    public function admin_has_all_quiz_permissions(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -35,7 +35,7 @@ class QuizPermissionsTest extends TestCase
     }
 
     /** @test */
-    public function teacher_has_management_permissions()
+    public function teacher_has_management_permissions(): void
     {
         $teacher = User::factory()->create();
         $teacher->assignRole('teacher');
@@ -48,7 +48,7 @@ class QuizPermissionsTest extends TestCase
     }
 
     /** @test */
-    public function student_can_only_take_and_view_quizzes()
+    public function student_can_only_take_and_view_quizzes(): void
     {
         $student = User::factory()->create();
         $student->assignRole('student');
@@ -64,7 +64,7 @@ class QuizPermissionsTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_access_quiz_management_pages()
+    public function student_cannot_access_quiz_management_pages(): void
     {
         $student = User::factory()->create();
         $student->assignRole('student');
@@ -83,7 +83,7 @@ class QuizPermissionsTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_create_or_modify_quizzes()
+    public function student_cannot_create_or_modify_quizzes(): void
     {
         $student = User::factory()->create();
         $student->assignRole('student');
@@ -108,7 +108,7 @@ class QuizPermissionsTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_view_other_students_results()
+    public function student_cannot_view_other_students_results(): void
     {
         $student1 = User::factory()->create();
         $student1->assignRole('student');
@@ -131,7 +131,7 @@ class QuizPermissionsTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_view_all_student_results()
+    public function teacher_can_view_all_student_results(): void
     {
         $teacher = User::factory()->create();
         $teacher->assignRole('teacher');
@@ -156,7 +156,7 @@ class QuizPermissionsTest extends TestCase
     }
 
     /** @test */
-    public function only_authorized_users_can_export_quiz_results()
+    public function only_authorized_users_can_export_quiz_results(): void
     {
         $student = User::factory()->create();
         $student->assignRole('student');
@@ -179,7 +179,7 @@ class QuizPermissionsTest extends TestCase
     }
 
     /** @test */
-    public function unauthenticated_user_cannot_access_quiz_features()
+    public function unauthenticated_user_cannot_access_quiz_features(): void
     {
         $training = Training::factory()->create();
         $quiz = Quiz::factory()->create(['training_id' => $training->id]);
@@ -194,7 +194,7 @@ class QuizPermissionsTest extends TestCase
     }
 
     /** @test */
-    public function class_coordinator_has_management_permissions()
+    public function class_coordinator_has_management_permissions(): void
     {
         $coordinator = User::factory()->create();
         $coordinator->assignRole('class_coordinator');

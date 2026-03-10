@@ -13,14 +13,11 @@ class AppointmentCreated extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public Appointment $appointment;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(Appointment $appointment)
+    public function __construct(public Appointment $appointment)
     {
-        $this->appointment = $appointment;
     }
 
     /**

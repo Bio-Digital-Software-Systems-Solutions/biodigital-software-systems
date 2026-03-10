@@ -12,7 +12,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
-it('displays public profile page with all user info', function () {
+it('displays public profile page with all user info', function (): void {
     $viewer = User::factory()->create();
     $user = User::factory()->create([
         'bio' => 'This is my bio',
@@ -56,9 +56,9 @@ it('displays public profile page with all user info', function () {
     $response = $this->actingAs($viewer)->get(route('profile.public', $user->uuid));
 
     $response->assertOk();
-    $response->assertInertia(fn (Assert $page) => $page
+    $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
         ->component('Profile/Public')
-        ->has('user', fn (Assert $userProp) => $userProp
+        ->has('user', fn (Assert $userProp): \Inertia\Testing\AssertableInertia => $userProp
             ->where('id', $user->id)
             ->where('name', $user->name)
             ->where('email', $user->email)
@@ -68,7 +68,7 @@ it('displays public profile page with all user info', function () {
             ->where('address', '123 Main St')
             ->where('is_calendar_public', true)
             ->has('languages', 2)
-            ->has('languages.0', fn (Assert $lang) => $lang
+            ->has('languages.0', fn (Assert $lang): \Inertia\Testing\AssertableInertia => $lang
                 ->where('name', 'French')
                 ->where('code', 'fr')
                 ->where('level', 'native')
@@ -85,16 +85,16 @@ it('displays public profile page with all user info', function () {
     );
 });
 
-it('displays public profile page for user with no relationships', function () {
+it('displays public profile page for user with no relationships', function (): void {
     $viewer = User::factory()->create();
     $user = User::factory()->create();
 
     $response = $this->actingAs($viewer)->get(route('profile.public', $user->uuid));
 
     $response->assertOk();
-    $response->assertInertia(fn (Assert $page) => $page
+    $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
         ->component('Profile/Public')
-        ->has('user', fn (Assert $userProp) => $userProp
+        ->has('user', fn (Assert $userProp): \Inertia\Testing\AssertableInertia => $userProp
             ->has('languages', 0)
             ->has('interests', 0)
             ->has('skills', 0)
@@ -106,7 +106,7 @@ it('displays public profile page for user with no relationships', function () {
     );
 });
 
-it('displays skills grouped by category', function () {
+it('displays skills grouped by category', function (): void {
     $viewer = User::factory()->create();
     $user = User::factory()->create();
 
@@ -124,11 +124,11 @@ it('displays skills grouped by category', function () {
     $response = $this->actingAs($viewer)->get(route('profile.public', $user->uuid));
 
     $response->assertOk();
-    $response->assertInertia(fn (Assert $page) => $page
+    $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
         ->component('Profile/Public')
-        ->has('user', fn (Assert $userProp) => $userProp
+        ->has('user', fn (Assert $userProp): \Inertia\Testing\AssertableInertia => $userProp
             ->has('skills', 3)
-            ->has('skills.0', fn (Assert $skill) => $skill
+            ->has('skills.0', fn (Assert $skill): \Inertia\Testing\AssertableInertia => $skill
                 ->has('category')
                 ->has('level')
                 ->has('name')
@@ -139,7 +139,7 @@ it('displays skills grouped by category', function () {
     );
 });
 
-it('displays language levels correctly', function () {
+it('displays language levels correctly', function (): void {
     $viewer = User::factory()->create();
     $user = User::factory()->create();
 
@@ -149,11 +149,11 @@ it('displays language levels correctly', function () {
     $response = $this->actingAs($viewer)->get(route('profile.public', $user->uuid));
 
     $response->assertOk();
-    $response->assertInertia(fn (Assert $page) => $page
+    $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
         ->component('Profile/Public')
-        ->has('user', fn (Assert $userProp) => $userProp
+        ->has('user', fn (Assert $userProp): \Inertia\Testing\AssertableInertia => $userProp
             ->has('languages', 1)
-            ->has('languages.0', fn (Assert $lang) => $lang
+            ->has('languages.0', fn (Assert $lang): \Inertia\Testing\AssertableInertia => $lang
                 ->where('name', 'German')
                 ->where('code', 'de')
                 ->where('native_name', 'Deutsch')
@@ -165,7 +165,7 @@ it('displays language levels correctly', function () {
     );
 });
 
-it('requires authentication to view public profile', function () {
+it('requires authentication to view public profile', function (): void {
     $user = User::factory()->create();
 
     $response = $this->get(route('profile.public', $user->uuid));

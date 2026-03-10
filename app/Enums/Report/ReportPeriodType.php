@@ -76,7 +76,7 @@ enum ReportPeriodType: string
 
     public static function toSelectOptions(): array
     {
-        return array_map(fn($case) => [
+        return array_map(fn(\App\Enums\Report\ReportPeriodType $case): array => [
             'value' => $case->value,
             'label' => $case->label(),
         ], self::cases());

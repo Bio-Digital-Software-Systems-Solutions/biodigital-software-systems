@@ -32,7 +32,7 @@ class BookController extends Controller
         $query = Book::with(['category', 'libraries']);
 
         if ($request->search) {
-            $query->where(function ($q) use ($request) {
+            $query->where(function ($q) use ($request): void {
                 $q->where('title', 'like', "%{$request->search}%")
                     ->orWhere('author', 'like', "%{$request->search}%")
                     ->orWhere('isbn', 'like', "%{$request->search}%");
@@ -144,7 +144,7 @@ class BookController extends Controller
             }
         }
 
-        $book = Book::create($validated);
+        Book::create($validated);
 
         // Invalidate books cache
         CacheService::forgetPattern('books');
@@ -224,7 +224,7 @@ class BookController extends Controller
         // Handle cover_image upload
         if ($request->hasFile('cover_image')) {
             // Delete old cover_image if it exists and it's not a URL
-            if ($book->cover_image && !str_starts_with($book->cover_image, 'http://') && !str_starts_with($book->cover_image, 'https://')) {
+            if ($book->cover_image && !str_starts_with((string) $book->cover_image, 'http://') && !str_starts_with((string) $book->cover_image, 'https://')) {
                 Storage::disk('public')->delete($book->cover_image);
             }
             $validated['cover_image'] = $request->file('cover_image')->store('books/covers', 'public');
@@ -234,7 +234,7 @@ class BookController extends Controller
             // If it's a URL (starts with http:// or https://), store it as-is
             if (str_starts_with($request->cover_image, 'http://') || str_starts_with($request->cover_image, 'https://')) {
                 // Delete old cover_image if it exists and it's not a URL
-                if ($book->cover_image && !str_starts_with($book->cover_image, 'http://') && !str_starts_with($book->cover_image, 'https://')) {
+                if ($book->cover_image && !str_starts_with((string) $book->cover_image, 'http://') && !str_starts_with((string) $book->cover_image, 'https://')) {
                     Storage::disk('public')->delete($book->cover_image);
                 }
                 $validated['cover_image'] = $request->cover_image;
@@ -242,7 +242,7 @@ class BookController extends Controller
             // Otherwise, it's a TUS upload (just filename)
             else {
                 // Delete old cover_image if it exists and it's not a URL
-                if ($book->cover_image && !str_starts_with($book->cover_image, 'http://') && !str_starts_with($book->cover_image, 'https://')) {
+                if ($book->cover_image && !str_starts_with((string) $book->cover_image, 'http://') && !str_starts_with((string) $book->cover_image, 'https://')) {
                     Storage::disk('public')->delete($book->cover_image);
                 }
                 // Cover image has already been uploaded via TUS to books/covers directory
@@ -267,7 +267,7 @@ class BookController extends Controller
         $this->authorize('delete', $book);
 
         // Delete cover_image if it exists and it's not a URL
-        if ($book->cover_image && !str_starts_with($book->cover_image, 'http://') && !str_starts_with($book->cover_image, 'https://')) {
+        if ($book->cover_image && !str_starts_with((string) $book->cover_image, 'http://') && !str_starts_with((string) $book->cover_image, 'https://')) {
             Storage::disk('public')->delete($book->cover_image);
         }
 
@@ -342,7 +342,7 @@ class BookController extends Controller
 
             return redirect()->route('books.show', $book->uuid)
                 ->with('success', 'Livre loué avec succès jusqu\'au '.$dueDate->format('d/m/Y').'.');
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             return back()->with('error', 'Une erreur est survenue lors de la location. Veuillez réessayer.');
         }
     }

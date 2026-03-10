@@ -22,7 +22,7 @@ class PastoralCareAvailabilityTest extends TestCase
         Role::create(['name' => 'pastor']);
     }
 
-    public function test_get_available_time_slots_returns_pastor_defined_slots()
+    public function test_get_available_time_slots_returns_pastor_defined_slots(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -45,7 +45,7 @@ class PastoralCareAvailabilityTest extends TestCase
         $this->assertEquals($expectedSlots, $slots);
     }
 
-    public function test_get_available_time_slots_returns_empty_when_no_availability()
+    public function test_get_available_time_slots_returns_empty_when_no_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -57,7 +57,7 @@ class PastoralCareAvailabilityTest extends TestCase
         $this->assertEmpty($slots);
     }
 
-    public function test_get_available_time_slots_respects_inactive_availability()
+    public function test_get_available_time_slots_respects_inactive_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -79,7 +79,7 @@ class PastoralCareAvailabilityTest extends TestCase
         $this->assertEmpty($slots);
     }
 
-    public function test_get_available_time_slots_excludes_booked_slots()
+    public function test_get_available_time_slots_excludes_booked_slots(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -112,7 +112,7 @@ class PastoralCareAvailabilityTest extends TestCase
         $this->assertEquals($expectedSlots, $slots);
     }
 
-    public function test_get_available_time_slots_excludes_past_slots()
+    public function test_get_available_time_slots_excludes_past_slots(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -141,7 +141,7 @@ class PastoralCareAvailabilityTest extends TestCase
         }
     }
 
-    public function test_get_available_time_slots_works_with_specific_date_availability()
+    public function test_get_available_time_slots_works_with_specific_date_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -167,7 +167,7 @@ class PastoralCareAvailabilityTest extends TestCase
         $this->assertEmpty($otherDateSlots);
     }
 
-    public function test_get_available_time_slots_handles_different_slot_durations()
+    public function test_get_available_time_slots_handles_different_slot_durations(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -196,7 +196,7 @@ class PastoralCareAvailabilityTest extends TestCase
         $this->assertEquals($expectedSlots60, $slots60);
     }
 
-    public function test_get_available_time_slots_handles_multiple_availability_periods()
+    public function test_get_available_time_slots_handles_multiple_availability_periods(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -231,13 +231,13 @@ class PastoralCareAvailabilityTest extends TestCase
         $this->assertEquals($expectedSlots, $slots);
     }
 
-    public function test_is_time_slot_available_detects_conflicts()
+    public function test_is_time_slot_available_detects_conflicts(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
 
         // Create existing appointment
-        $existingAppointment = PastoralCare::factory()->create([
+        PastoralCare::factory()->create([
             'pastor_id' => $pastor->id,
             'appointment_date' => '2025-12-15',
             'appointment_time' => '2025-12-15 10:00:00',
@@ -262,7 +262,7 @@ class PastoralCareAvailabilityTest extends TestCase
         $this->assertTrue($isAvailable);
     }
 
-    public function test_is_time_slot_available_ignores_cancelled_appointments()
+    public function test_is_time_slot_available_ignores_cancelled_appointments(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -285,7 +285,7 @@ class PastoralCareAvailabilityTest extends TestCase
         $this->assertTrue($isAvailable);
     }
 
-    public function test_is_time_slot_available_can_exclude_specific_appointment()
+    public function test_is_time_slot_available_can_exclude_specific_appointment(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -316,7 +316,7 @@ class PastoralCareAvailabilityTest extends TestCase
         $this->assertTrue($isAvailable);
     }
 
-    public function test_get_available_time_slots_removes_duplicates_and_sorts()
+    public function test_get_available_time_slots_removes_duplicates_and_sorts(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');

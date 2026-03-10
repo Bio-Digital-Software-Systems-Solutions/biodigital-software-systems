@@ -25,7 +25,7 @@ class TrainingClassSeeder extends Seeder
 
         foreach ($trainings as $training) {
             // Create 8-15 classes for each training
-            $numberOfClasses = rand(8, 15);
+            $numberOfClasses = random_int(8, 15);
 
             for ($i = 0; $i < $numberOfClasses; $i++) {
                 // Distribute classes over the next 6 months
@@ -44,8 +44,8 @@ class TrainingClassSeeder extends Seeder
                     'date' => $date,
                     'start_time' => $startTime,
                     'end_time' => $endTime,
-                    'room' => 'Salle '.rand(1, 10),
-                    'max_students' => rand(15, 30),
+                    'room' => 'Salle '.random_int(1, 10),
+                    'max_students' => random_int(15, 30),
                     'notes' => fake()->optional(0.3)->sentence(),
                 ]);
             }

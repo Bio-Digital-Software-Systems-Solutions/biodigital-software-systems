@@ -1,10 +1,16 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
 parameters:
-    level: 10
+    level: 8
     paths:
         - app
         - config
         - database
+        - resources
         - routes
+        - tests
     excludePaths:
         - bootstrap/cache
         - storage

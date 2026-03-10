@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             // Add polymorphic columns for assigned_agent
             $table->nullableMorphs('assigned_agent');
         });
@@ -32,7 +32,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->dropMorphs('assigned_agent');
         });
     }

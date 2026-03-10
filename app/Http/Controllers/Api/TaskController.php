@@ -181,7 +181,7 @@ class TaskController extends Controller
             'task_id' => $task->id,
             'user_id' => $currentUser->id,
             'content' => $validated['content'],
-            'mentions' => ! empty($validMentions) ? $validMentions : null,
+            'mentions' => $validMentions === [] ? null : $validMentions,
         ]);
 
         // Send notifications to all participants and assignee
@@ -200,14 +200,14 @@ class TaskController extends Controller
      */
     private function notifyMentionedUsers(Task $task, TaskComment $comment, User $mentionedBy, array $mentionedUserIds): void
     {
-        if (empty($mentionedUserIds)) {
+        if ($mentionedUserIds === []) {
             return;
         }
 
         // Don't notify the user who wrote the comment
-        $mentionedUserIds = array_filter($mentionedUserIds, fn ($id) => $id !== $mentionedBy->id);
+        $mentionedUserIds = array_filter($mentionedUserIds, fn ($id): bool => $id !== $mentionedBy->id);
 
-        if (empty($mentionedUserIds)) {
+        if ($mentionedUserIds === []) {
             return;
         }
 
@@ -243,7 +243,7 @@ class TaskController extends Controller
         // Remove duplicates and the user who commented
         $usersToNotify = $usersToNotify
             ->unique('id')
-            ->filter(fn ($user) => $user->id !== $commentedBy->id);
+            ->filter(fn ($user): bool => $user->id !== $commentedBy->id);
 
         // Send notifications
         foreach ($usersToNotify as $user) {
@@ -273,7 +273,7 @@ class TaskController extends Controller
         $mentionService = new MentionService;
         $users = $mentionService->getMentionableUsersForTask($task->id, $task->project_id);
 
-        return response()->json($users->map(fn ($user) => [
+        return response()->json($users->map(fn ($user): array => [
             'id' => $user->id,
             'uuid' => $user->uuid,
             'first_name' => $user->first_name,
@@ -412,18 +412,16 @@ class TaskController extends Controller
     {
         $activities = $activityService->getTaskActivities($task);
 
-        return response()->json($activities->map(function ($activity) {
-            return [
-                'id' => $activity->id,
-                'description' => $activity->description,
-                'event' => $activity->event,
-                'properties' => $activity->properties,
-                'causer' => $activity->causer ? [
-                    'id' => $activity->causer->id,
-                    'name' => $activity->causer->first_name.' '.$activity->causer->last_name,
-                ] : ['id' => null, 'name' => 'Système'],
-                'created_at' => $activity->created_at->toIso8601String(),
-            ];
-        }));
+        return response()->json($activities->map(fn($activity): array => [
+            'id' => $activity->id,
+            'description' => $activity->description,
+            'event' => $activity->event,
+            'properties' => $activity->properties,
+            'causer' => $activity->causer ? [
+                'id' => $activity->causer->id,
+                'name' => $activity->causer->first_name.' '.$activity->causer->last_name,
+            ] : ['id' => null, 'name' => 'Système'],
+            'created_at' => $activity->created_at->toIso8601String(),
+        ]));
     }
 }

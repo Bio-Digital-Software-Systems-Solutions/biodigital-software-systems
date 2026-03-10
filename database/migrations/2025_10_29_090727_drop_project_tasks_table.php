@@ -37,7 +37,7 @@ return new class extends Migration
             foreach ($foreignKeys as $fk) {
                 try {
                     DB::statement("ALTER TABLE `{$fk->TABLE_NAME}` DROP FOREIGN KEY `{$fk->CONSTRAINT_NAME}`");
-                } catch (\Exception $e) {
+                } catch (\Exception) {
                     // Constraint might already be dropped, continue
                 }
             }

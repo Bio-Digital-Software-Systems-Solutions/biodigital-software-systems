@@ -5,16 +5,16 @@ use App\Models\Star;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Enable query logging
     DB::enableQueryLog();
 });
 
-afterEach(function () {
+afterEach(function (): void {
     DB::disableQueryLog();
 });
 
-it('eager loads user relation when fetching stars', function () {
+it('eager loads user relation when fetching stars', function (): void {
     // Create 5 stars with users
     $users = User::factory()->count(5)->create();
     foreach ($users as $user) {
@@ -36,7 +36,7 @@ it('eager loads user relation when fetching stars', function () {
     expect(count($queries))->toBeLessThanOrEqual(2);
 });
 
-it('eager loads user relation when fetching employees', function () {
+it('eager loads user relation when fetching employees', function (): void {
     // Create 5 employees with users
     $users = User::factory()->count(5)->create();
     foreach ($users as $user) {
@@ -58,7 +58,7 @@ it('eager loads user relation when fetching employees', function () {
     expect(count($queries))->toBeLessThanOrEqual(2);
 });
 
-it('includes user data when serializing star to array', function () {
+it('includes user data when serializing star to array', function (): void {
     $user = User::factory()->create([
         'first_name' => 'John',
         'last_name' => 'Doe',
@@ -72,7 +72,7 @@ it('includes user data when serializing star to array', function () {
     expect($star->relationLoaded('user'))->toBeTrue();
 });
 
-it('includes user data when serializing employee to array', function () {
+it('includes user data when serializing employee to array', function (): void {
     $user = User::factory()->create([
         'first_name' => 'Jane',
         'last_name' => 'Smith',

@@ -153,9 +153,8 @@ class AppointmentSmsNotificationService
         }
 
         $message .= "\nEn cas d'empêchement, veuillez prévenir l'organisateur.\n\n";
-        $message .= 'À bientôt !';
 
-        return $message;
+        return $message . 'À bientôt !';
     }
 
     /**
@@ -274,9 +273,9 @@ class AppointmentSmsNotificationService
         $phone = preg_replace('/[^\d+]/', '', $phone);
 
         // If doesn't start with +, assume German number
-        if (! str_starts_with($phone, '+')) {
+        if (! str_starts_with((string) $phone, '+')) {
             // Remove leading 0 if present
-            $phone = ltrim($phone, '0');
+            $phone = ltrim((string) $phone, '0');
             // Add German country code
             $phone = '+49'.$phone;
         }
@@ -342,9 +341,8 @@ class AppointmentSmsNotificationService
         $message .= "Heure: {$time}\n";
         $message .= "Organisateur: {$organizer}\n\n";
         $message .= "Vous recevrez un rappel 24h avant le rendez-vous.\n\n";
-        $message .= 'À bientôt !';
 
-        return $message;
+        return $message . 'À bientôt !';
     }
 
     /**
@@ -401,9 +399,8 @@ class AppointmentSmsNotificationService
         $message .= "Nous vous informons que le rendez-vous suivant a été annulé :\n\n";
         $message .= "*{$appointment->title}*\n";
         $message .= "Date prévue: {$date} à {$time}\n\n";
-        $message .= 'Nous vous prions de nous excuser pour ce désagrément.';
 
-        return $message;
+        return $message . 'Nous vous prions de nous excuser pour ce désagrément.';
     }
 
     /**

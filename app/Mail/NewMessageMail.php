@@ -15,8 +15,17 @@ class NewMessageMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
+    /**
+     * @var \App\Models\Message
+     */
     public $message;
+    /**
+     * @var \App\Models\User
+     */
     public $recipient;
+    /**
+     * @var \App\Models\User
+     */
     public $sender;
 
     /**
@@ -34,9 +43,7 @@ class NewMessageMail extends Mailable implements ShouldQueue
      */
     public function envelope(): Envelope
     {
-        $subject = $this->message->subject
-            ? $this->message->subject
-            : 'Nouveau message de ' . $this->sender->first_name . ' ' . $this->sender->last_name;
+        $subject = $this->message->subject ?: 'Nouveau message de ' . $this->sender->first_name . ' ' . $this->sender->last_name;
 
         return new Envelope(
             subject: $subject,

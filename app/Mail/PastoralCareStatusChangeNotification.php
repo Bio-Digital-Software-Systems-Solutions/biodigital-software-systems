@@ -52,8 +52,8 @@ class PastoralCareStatusChangeNotification extends Mailable implements ShouldQue
             : "Votre rendez-vous de soin pastoral a été {$statusLabel}";
 
         return new Envelope(
-            subject: $subject.' - ICC Munich',
             from: config('mail.from.address', 'noreply@icc-munich.de'),
+            subject: $subject.' - ICC Munich',
         );
     }
 

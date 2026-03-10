@@ -12,7 +12,13 @@ class AppointmentCancellation extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * @var \App\Models\Appointment
+     */
     public $appointment;
+    /**
+     * @var string|null
+     */
     public $reason;
 
     /**
@@ -49,12 +55,8 @@ class AppointmentCancellation extends Notification implements ShouldQueue
             ->line("**{$this->appointment->title}**")
             ->line("📅 **Date :** {$startDate->format('d/m/Y')}")
             ->line("🕐 **Heure :** {$startDate->format('H:i')} - {$endDate->format('H:i')}")
-            ->when($this->appointment->location, function ($message) {
-                return $message->line("📍 **Lieu :** {$this->appointment->location}");
-            })
-            ->when($this->reason, function ($message) {
-                return $message->line("**Motif :** {$this->reason}");
-            })
+            ->when($this->appointment->location, fn($message) => $message->line("📍 **Lieu :** {$this->appointment->location}"))
+            ->when($this->reason, fn($message) => $message->line("**Motif :** {$this->reason}"))
             ->line('Nous nous excusons pour tout désagrément causé.')
             ->line('Si vous avez des questions, n\'hésitez pas à nous contacter.')
             ->action('Voir mes rendez-vous', url('/appointments'))

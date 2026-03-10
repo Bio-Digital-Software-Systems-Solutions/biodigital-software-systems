@@ -16,8 +16,8 @@ class AbsenceFactory extends Factory
 
     public function definition(): array
     {
-        $startDate = Carbon::now()->addDays(rand(1, 30));
-        $endDate = (clone $startDate)->addDays(rand(0, 5));
+        $startDate = Carbon::now()->addDays(random_int(1, 30));
+        $endDate = (clone $startDate)->addDays(random_int(0, 5));
 
         return [
             'user_id' => User::factory(),
@@ -35,28 +35,28 @@ class AbsenceFactory extends Factory
 
     public function vacation(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => AbsenceType::VACATION,
         ]);
     }
 
     public function sick(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => AbsenceType::SICK,
         ]);
     }
 
     public function pending(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => AbsenceStatus::PENDING,
         ]);
     }
 
     public function approved(User $approver = null): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => AbsenceStatus::APPROVED,
             'approved_by' => $approver?->id ?? User::factory(),
             'approved_at' => now(),
@@ -65,7 +65,7 @@ class AbsenceFactory extends Factory
 
     public function rejected(User $approver = null, ?string $reason = null): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => AbsenceStatus::REJECTED,
             'approved_by' => $approver?->id ?? User::factory(),
             'rejection_reason' => $reason ?? $this->faker->sentence(),
@@ -75,14 +75,14 @@ class AbsenceFactory extends Factory
 
     public function cancelled(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => AbsenceStatus::CANCELLED,
         ]);
     }
 
     public function forDates(Carbon $start, Carbon $end): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'start_date' => $start,
             'end_date' => $end,
         ]);
@@ -90,7 +90,7 @@ class AbsenceFactory extends Factory
 
     public function halfDayStart(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_full_day' => false,
             'is_half_day_start' => true,
             'is_half_day_end' => false,
@@ -99,7 +99,7 @@ class AbsenceFactory extends Factory
 
     public function halfDayEnd(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_full_day' => false,
             'is_half_day_start' => false,
             'is_half_day_end' => true,
@@ -108,7 +108,7 @@ class AbsenceFactory extends Factory
 
     public function current(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'start_date' => Carbon::now()->subDays(1),
             'end_date' => Carbon::now()->addDays(1),
             'status' => AbsenceStatus::APPROVED,
@@ -117,10 +117,10 @@ class AbsenceFactory extends Factory
 
     public function past(): static
     {
-        $start = Carbon::now()->subDays(rand(10, 30));
-        $end = (clone $start)->addDays(rand(1, 3));
+        $start = Carbon::now()->subDays(random_int(10, 30));
+        $end = (clone $start)->addDays(random_int(1, 3));
 
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'start_date' => $start,
             'end_date' => $end,
             'status' => AbsenceStatus::APPROVED,
@@ -129,10 +129,10 @@ class AbsenceFactory extends Factory
 
     public function future(): static
     {
-        $start = Carbon::now()->addDays(rand(10, 30));
-        $end = (clone $start)->addDays(rand(1, 3));
+        $start = Carbon::now()->addDays(random_int(10, 30));
+        $end = (clone $start)->addDays(random_int(1, 3));
 
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'start_date' => $start,
             'end_date' => $end,
         ]);

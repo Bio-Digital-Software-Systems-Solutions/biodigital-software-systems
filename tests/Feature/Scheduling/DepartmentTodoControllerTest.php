@@ -18,7 +18,7 @@ use function Pest\Laravel\get;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create permissions and roles
     Permission::firstOrCreate(['name' => 'view departments']);
     Permission::firstOrCreate(['name' => 'manage departments']);
@@ -46,9 +46,9 @@ beforeEach(function () {
     ]);
 });
 
-describe('DepartmentTodoController', function () {
-    describe('index', function () {
-        it('lists all todos for a department', function () {
+describe('DepartmentTodoController', function (): void {
+    describe('index', function (): void {
+        it('lists all todos for a department', function (): void {
             DepartmentTodo::factory()->count(3)->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -60,7 +60,7 @@ describe('DepartmentTodoController', function () {
                 ->assertJsonCount(3, 'todos');
         });
 
-        it('filters todos by status', function () {
+        it('filters todos by status', function (): void {
             DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -79,7 +79,7 @@ describe('DepartmentTodoController', function () {
                 ->assertJsonCount(1, 'todos');
         });
 
-        it('filters todos by priority', function () {
+        it('filters todos by priority', function (): void {
             DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -98,14 +98,14 @@ describe('DepartmentTodoController', function () {
                 ->assertJsonCount(1, 'todos');
         });
 
-        it('requires authentication', function () {
+        it('requires authentication', function (): void {
             get("/departments/{$this->department->uuid}/todos")
                 ->assertRedirect('/login');
         });
     });
 
-    describe('store', function () {
-        it('creates a new todo', function () {
+    describe('store', function (): void {
+        it('creates a new todo', function (): void {
             actingAs($this->admin)
                 ->postJson("/departments/{$this->department->uuid}/todos", [
                     'title' => 'Test Todo',
@@ -124,7 +124,7 @@ describe('DepartmentTodoController', function () {
             ]);
         });
 
-        it('creates a todo linked to a shift', function () {
+        it('creates a todo linked to a shift', function (): void {
             actingAs($this->admin)
                 ->postJson("/departments/{$this->department->uuid}/todos", [
                     'title' => 'Shift Todo',
@@ -141,7 +141,7 @@ describe('DepartmentTodoController', function () {
             ]);
         });
 
-        it('creates a todo with assignee', function () {
+        it('creates a todo with assignee', function (): void {
             $assignee = User::factory()->create();
             $this->department->members()->attach($assignee);
 
@@ -161,7 +161,7 @@ describe('DepartmentTodoController', function () {
             ]);
         });
 
-        it('creates a todo with due date', function () {
+        it('creates a todo with due date', function (): void {
             $dueDate = now()->addDays(3)->format('Y-m-d');
 
             actingAs($this->admin)
@@ -179,7 +179,7 @@ describe('DepartmentTodoController', function () {
             ]);
         });
 
-        it('validates required title', function () {
+        it('validates required title', function (): void {
             actingAs($this->admin)
                 ->postJson("/departments/{$this->department->uuid}/todos", [
                     'description' => 'No title',
@@ -188,7 +188,7 @@ describe('DepartmentTodoController', function () {
                 ->assertJsonValidationErrors(['title']);
         });
 
-        it('validates priority enum', function () {
+        it('validates priority enum', function (): void {
             actingAs($this->admin)
                 ->postJson("/departments/{$this->department->uuid}/todos", [
                     'title' => 'Test',
@@ -199,8 +199,8 @@ describe('DepartmentTodoController', function () {
         });
     });
 
-    describe('show', function () {
-        it('shows a todo', function () {
+    describe('show', function (): void {
+        it('shows a todo', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -214,8 +214,8 @@ describe('DepartmentTodoController', function () {
         });
     });
 
-    describe('update', function () {
-        it('updates a todo', function () {
+    describe('update', function (): void {
+        it('updates a todo', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -238,8 +238,8 @@ describe('DepartmentTodoController', function () {
         });
     });
 
-    describe('destroy', function () {
-        it('deletes a todo', function () {
+    describe('destroy', function (): void {
+        it('deletes a todo', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -256,8 +256,8 @@ describe('DepartmentTodoController', function () {
         });
     });
 
-    describe('toggleComplete', function () {
-        it('marks a todo as completed', function () {
+    describe('toggleComplete', function (): void {
+        it('marks a todo as completed', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -274,7 +274,7 @@ describe('DepartmentTodoController', function () {
             expect($todo->fresh()->completed_at)->not->toBeNull();
         });
 
-        it('reopens a completed todo', function () {
+        it('reopens a completed todo', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -294,8 +294,8 @@ describe('DepartmentTodoController', function () {
         });
     });
 
-    describe('updateStatus', function () {
-        it('updates todo status to in_progress', function () {
+    describe('updateStatus', function (): void {
+        it('updates todo status to in_progress', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -312,7 +312,7 @@ describe('DepartmentTodoController', function () {
             expect($todo->fresh()->status)->toBe(ShiftTaskStatus::IN_PROGRESS);
         });
 
-        it('updates todo status to blocked', function () {
+        it('updates todo status to blocked', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -329,7 +329,7 @@ describe('DepartmentTodoController', function () {
             expect($todo->fresh()->status)->toBe(ShiftTaskStatus::BLOCKED);
         });
 
-        it('pauses an in_progress todo back to todo status', function () {
+        it('pauses an in_progress todo back to todo status', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -346,7 +346,7 @@ describe('DepartmentTodoController', function () {
             expect($todo->fresh()->status)->toBe(ShiftTaskStatus::TODO);
         });
 
-        it('reopens a completed todo back to todo status', function () {
+        it('reopens a completed todo back to todo status', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -367,7 +367,7 @@ describe('DepartmentTodoController', function () {
             expect($todo->fresh()->completed_at)->toBeNull();
         });
 
-        it('validates status enum', function () {
+        it('validates status enum', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -382,8 +382,8 @@ describe('DepartmentTodoController', function () {
         });
     });
 
-    describe('assign', function () {
-        it('assigns a todo to a user', function () {
+    describe('assign', function (): void {
+        it('assigns a todo to a user', function (): void {
             $assignee = User::factory()->create();
             $this->department->members()->attach($assignee);
 
@@ -403,7 +403,7 @@ describe('DepartmentTodoController', function () {
             expect($todo->fresh()->assigned_to)->toBe($assignee->id);
         });
 
-        it('unassigns a todo', function () {
+        it('unassigns a todo', function (): void {
             $assignee = User::factory()->create();
 
             $todo = DepartmentTodo::factory()->create([
@@ -423,8 +423,8 @@ describe('DepartmentTodoController', function () {
         });
     });
 
-    describe('forShift', function () {
-        it('lists todos for a specific shift', function () {
+    describe('forShift', function (): void {
+        it('lists todos for a specific shift', function (): void {
             // Create todos for the shift
             DepartmentTodo::factory()->count(2)->create([
                 'department_id' => $this->department->id,
@@ -446,8 +446,8 @@ describe('DepartmentTodoController', function () {
         });
     });
 
-    describe('bulkUpdate', function () {
-        it('bulk updates multiple todos', function () {
+    describe('bulkUpdate', function (): void {
+        it('bulk updates multiple todos', function (): void {
             $todos = DepartmentTodo::factory()->count(3)->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -467,7 +467,7 @@ describe('DepartmentTodoController', function () {
             }
         });
 
-        it('bulk deletes multiple todos', function () {
+        it('bulk deletes multiple todos', function (): void {
             $todos = DepartmentTodo::factory()->count(3)->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -488,8 +488,8 @@ describe('DepartmentTodoController', function () {
     });
 });
 
-describe('DepartmentTodo Model', function () {
-    it('generates uuid on creation', function () {
+describe('DepartmentTodo Model', function (): void {
+    it('generates uuid on creation', function (): void {
         $todo = DepartmentTodo::factory()->create([
             'department_id' => $this->department->id,
             'created_by' => $this->admin->id,
@@ -499,7 +499,7 @@ describe('DepartmentTodo Model', function () {
         expect(strlen($todo->uuid))->toBe(36);
     });
 
-    it('has department relationship', function () {
+    it('has department relationship', function (): void {
         $todo = DepartmentTodo::factory()->create([
             'department_id' => $this->department->id,
             'created_by' => $this->admin->id,
@@ -509,7 +509,7 @@ describe('DepartmentTodo Model', function () {
         expect($todo->department->id)->toBe($this->department->id);
     });
 
-    it('has shift relationship', function () {
+    it('has shift relationship', function (): void {
         $todo = DepartmentTodo::factory()->create([
             'department_id' => $this->department->id,
             'shift_id' => $this->shift->id,
@@ -520,7 +520,7 @@ describe('DepartmentTodo Model', function () {
         expect($todo->shift->id)->toBe($this->shift->id);
     });
 
-    it('has assignee relationship', function () {
+    it('has assignee relationship', function (): void {
         $assignee = User::factory()->create();
 
         $todo = DepartmentTodo::factory()->create([
@@ -533,7 +533,7 @@ describe('DepartmentTodo Model', function () {
         expect($todo->assignee->id)->toBe($assignee->id);
     });
 
-    it('has creator relationship', function () {
+    it('has creator relationship', function (): void {
         $todo = DepartmentTodo::factory()->create([
             'department_id' => $this->department->id,
             'created_by' => $this->admin->id,
@@ -543,7 +543,7 @@ describe('DepartmentTodo Model', function () {
         expect($todo->creator->id)->toBe($this->admin->id);
     });
 
-    it('calculates is_overdue correctly', function () {
+    it('calculates is_overdue correctly', function (): void {
         $overdueTodo = DepartmentTodo::factory()->create([
             'department_id' => $this->department->id,
             'created_by' => $this->admin->id,
@@ -570,7 +570,7 @@ describe('DepartmentTodo Model', function () {
         expect($completedTodo->is_overdue)->toBeFalse();
     });
 
-    it('calculates is_due_today correctly', function () {
+    it('calculates is_due_today correctly', function (): void {
         $dueTodayTodo = DepartmentTodo::factory()->create([
             'department_id' => $this->department->id,
             'created_by' => $this->admin->id,
@@ -589,8 +589,8 @@ describe('DepartmentTodo Model', function () {
         expect($notDueTodayTodo->is_due_today)->toBeFalse();
     });
 
-    describe('scopes', function () {
-        it('filters by department', function () {
+    describe('scopes', function (): void {
+        it('filters by department', function (): void {
             $otherDepartment = Department::factory()->create();
 
             DepartmentTodo::factory()->count(2)->create([
@@ -608,7 +608,7 @@ describe('DepartmentTodo Model', function () {
             expect($todos)->toHaveCount(2);
         });
 
-        it('filters by shift', function () {
+        it('filters by shift', function (): void {
             DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'shift_id' => $this->shift->id,
@@ -628,7 +628,7 @@ describe('DepartmentTodo Model', function () {
             expect($noShiftTodos)->toHaveCount(1);
         });
 
-        it('filters pending todos', function () {
+        it('filters pending todos', function (): void {
             DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -652,7 +652,7 @@ describe('DepartmentTodo Model', function () {
             expect($pendingTodos)->toHaveCount(2);
         });
 
-        it('filters overdue todos', function () {
+        it('filters overdue todos', function (): void {
             DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -673,8 +673,8 @@ describe('DepartmentTodo Model', function () {
         });
     });
 
-    describe('status methods', function () {
-        it('completes a todo', function () {
+    describe('status methods', function (): void {
+        it('completes a todo', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -688,7 +688,7 @@ describe('DepartmentTodo Model', function () {
             expect($todo->completed_by)->toBe($this->admin->id);
         });
 
-        it('starts a todo', function () {
+        it('starts a todo', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -701,7 +701,7 @@ describe('DepartmentTodo Model', function () {
             expect($todo->status)->toBe(ShiftTaskStatus::IN_PROGRESS);
         });
 
-        it('blocks a todo', function () {
+        it('blocks a todo', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -714,7 +714,7 @@ describe('DepartmentTodo Model', function () {
             expect($todo->status)->toBe(ShiftTaskStatus::BLOCKED);
         });
 
-        it('reopens a completed todo', function () {
+        it('reopens a completed todo', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,
@@ -733,9 +733,9 @@ describe('DepartmentTodo Model', function () {
     });
 });
 
-describe('DepartmentTodoController Authorization', function () {
-    describe('department member access', function () {
-        it('allows department members to view todos', function () {
+describe('DepartmentTodoController Authorization', function (): void {
+    describe('department member access', function (): void {
+        it('allows department members to view todos', function (): void {
             $member = User::factory()->create();
             $this->department->members()->attach($member);
 
@@ -749,7 +749,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertOk();
         });
 
-        it('allows department members to create todos', function () {
+        it('allows department members to create todos', function (): void {
             $member = User::factory()->create();
             $this->department->members()->attach($member);
 
@@ -761,7 +761,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertJson(['success' => true]);
         });
 
-        it('allows department members to update todos', function () {
+        it('allows department members to update todos', function (): void {
             $member = User::factory()->create();
             $this->department->members()->attach($member);
 
@@ -778,7 +778,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertJson(['success' => true]);
         });
 
-        it('allows department members to delete todos', function () {
+        it('allows department members to delete todos', function (): void {
             $member = User::factory()->create();
             $this->department->members()->attach($member);
 
@@ -794,8 +794,8 @@ describe('DepartmentTodoController Authorization', function () {
         });
     });
 
-    describe('head of department access', function () {
-        it('allows head of department to view todos even if not a member', function () {
+    describe('head of department access', function (): void {
+        it('allows head of department to view todos even if not a member', function (): void {
             $head = User::factory()->create();
             $this->department->update(['head_of_department' => $head->id]);
 
@@ -809,7 +809,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertOk();
         });
 
-        it('allows head of department to create todos', function () {
+        it('allows head of department to create todos', function (): void {
             $head = User::factory()->create();
             $this->department->update(['head_of_department' => $head->id]);
 
@@ -821,7 +821,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertJson(['success' => true]);
         });
 
-        it('allows head of department to update and delete todos', function () {
+        it('allows head of department to update and delete todos', function (): void {
             $head = User::factory()->create();
             $this->department->update(['head_of_department' => $head->id]);
 
@@ -842,8 +842,8 @@ describe('DepartmentTodoController Authorization', function () {
         });
     });
 
-    describe('admin permission access', function () {
-        it('allows users with manage departments permission to view any department todos', function () {
+    describe('admin permission access', function (): void {
+        it('allows users with manage departments permission to view any department todos', function (): void {
             $adminUser = User::factory()->create();
             $adminUser->givePermissionTo('manage departments');
 
@@ -860,7 +860,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertOk();
         });
 
-        it('allows users with manage departments permission to create todos in any department', function () {
+        it('allows users with manage departments permission to create todos in any department', function (): void {
             $adminUser = User::factory()->create();
             $adminUser->givePermissionTo('manage departments');
 
@@ -874,7 +874,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertJson(['success' => true]);
         });
 
-        it('allows users with manage departments permission to update todos in any department', function () {
+        it('allows users with manage departments permission to update todos in any department', function (): void {
             $adminUser = User::factory()->create();
             $adminUser->givePermissionTo('manage departments');
 
@@ -893,8 +893,8 @@ describe('DepartmentTodoController Authorization', function () {
         });
     });
 
-    describe('external user denial', function () {
-        it('denies non-member users from viewing department todos', function () {
+    describe('external user denial', function (): void {
+        it('denies non-member users from viewing department todos', function (): void {
             $outsider = User::factory()->create();
 
             actingAs($outsider)
@@ -902,7 +902,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertForbidden();
         });
 
-        it('denies non-member users from creating todos', function () {
+        it('denies non-member users from creating todos', function (): void {
             $outsider = User::factory()->create();
 
             actingAs($outsider)
@@ -912,7 +912,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertForbidden();
         });
 
-        it('denies non-member users from updating todos', function () {
+        it('denies non-member users from updating todos', function (): void {
             $outsider = User::factory()->create();
 
             $todo = DepartmentTodo::factory()->create([
@@ -927,7 +927,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertForbidden();
         });
 
-        it('denies non-member users from deleting todos', function () {
+        it('denies non-member users from deleting todos', function (): void {
             $outsider = User::factory()->create();
 
             $todo = DepartmentTodo::factory()->create([
@@ -940,7 +940,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertForbidden();
         });
 
-        it('denies non-member users from toggling todo completion', function () {
+        it('denies non-member users from toggling todo completion', function (): void {
             $outsider = User::factory()->create();
 
             $todo = DepartmentTodo::factory()->create([
@@ -953,7 +953,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertForbidden();
         });
 
-        it('denies non-member users from updating todo status', function () {
+        it('denies non-member users from updating todo status', function (): void {
             $outsider = User::factory()->create();
 
             $todo = DepartmentTodo::factory()->create([
@@ -968,7 +968,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertForbidden();
         });
 
-        it('denies non-member users from bulk updating todos', function () {
+        it('denies non-member users from bulk updating todos', function (): void {
             $outsider = User::factory()->create();
 
             $todo = DepartmentTodo::factory()->create([
@@ -985,8 +985,8 @@ describe('DepartmentTodoController Authorization', function () {
         });
     });
 
-    describe('view departments permission only', function () {
-        it('denies users with only view departments permission from accessing todos', function () {
+    describe('view departments permission only', function (): void {
+        it('denies users with only view departments permission from accessing todos', function (): void {
             $viewOnlyUser = User::factory()->create();
             $viewOnlyUser->givePermissionTo('view departments');
 
@@ -996,8 +996,8 @@ describe('DepartmentTodoController Authorization', function () {
         });
     });
 
-    describe('cross-department authorization', function () {
-        it('prevents members of one department from accessing another department todos', function () {
+    describe('cross-department authorization', function (): void {
+        it('prevents members of one department from accessing another department todos', function (): void {
             $memberOfOtherDept = User::factory()->create();
             $otherDepartment = Department::factory()->create();
             $otherDepartment->members()->attach($memberOfOtherDept);
@@ -1013,7 +1013,7 @@ describe('DepartmentTodoController Authorization', function () {
                 ->assertForbidden();
         });
 
-        it('prevents members from modifying todos in other departments', function () {
+        it('prevents members from modifying todos in other departments', function (): void {
             $memberOfOtherDept = User::factory()->create();
             $otherDepartment = Department::factory()->create();
             $otherDepartment->members()->attach($memberOfOtherDept);
@@ -1031,8 +1031,8 @@ describe('DepartmentTodoController Authorization', function () {
         });
     });
 
-    describe('unauthenticated access', function () {
-        it('requires authentication for all todo endpoints', function () {
+    describe('unauthenticated access', function (): void {
+        it('requires authentication for all todo endpoints', function (): void {
             $todo = DepartmentTodo::factory()->create([
                 'department_id' => $this->department->id,
                 'created_by' => $this->admin->id,

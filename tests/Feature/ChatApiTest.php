@@ -27,7 +27,7 @@ class ChatApiTest extends TestCase
         $memberRole->givePermissionTo(['use chat']);
     }
 
-    public function test_returns_json_response_for_ajax_requests()
+    public function test_returns_json_response_for_ajax_requests(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -39,7 +39,7 @@ class ChatApiTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_message_length_validation()
+    public function test_message_length_validation(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -60,7 +60,7 @@ class ChatApiTest extends TestCase
         $response->assertJsonValidationErrors(['content']);
     }
 
-    public function test_cannot_create_room_with_nonexistent_user()
+    public function test_cannot_create_room_with_nonexistent_user(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -74,7 +74,7 @@ class ChatApiTest extends TestCase
         $response->assertJsonValidationErrors(['participant_ids.0']);
     }
 
-    public function test_duplicate_participants_are_handled()
+    public function test_duplicate_participants_are_handled(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -91,7 +91,7 @@ class ChatApiTest extends TestCase
         $this->assertEquals(2, $room->participants->count()); // Should have unique participants
     }
 
-    public function test_room_name_generation_for_group_chat()
+    public function test_room_name_generation_for_group_chat(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -109,7 +109,7 @@ class ChatApiTest extends TestCase
         $this->assertEquals('Groupe de discussion', $data['room']['name']);
     }
 
-    public function test_can_create_room_with_explicit_name()
+    public function test_can_create_room_with_explicit_name(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -127,7 +127,7 @@ class ChatApiTest extends TestCase
         $this->assertEquals('Custom Group Name', $data['room']['name']);
     }
 
-    public function test_messages_are_marked_as_read_when_retrieved()
+    public function test_messages_are_marked_as_read_when_retrieved(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -156,7 +156,7 @@ class ChatApiTest extends TestCase
         $this->assertTrue($message->is_read);
     }
 
-    public function test_own_messages_are_not_marked_as_read()
+    public function test_own_messages_are_not_marked_as_read(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -185,7 +185,7 @@ class ChatApiTest extends TestCase
         $this->assertFalse($message->is_read);
     }
 
-    public function test_unread_count_only_includes_others_messages()
+    public function test_unread_count_only_includes_others_messages(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -220,7 +220,7 @@ class ChatApiTest extends TestCase
         $response->assertJson(['unread_count' => 1]); // Only user2's message
     }
 
-    public function test_room_updated_at_changes_when_message_sent()
+    public function test_room_updated_at_changes_when_message_sent(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -248,7 +248,7 @@ class ChatApiTest extends TestCase
         $this->assertNotEquals($originalTime, $room->updated_at);
     }
 
-    public function test_cannot_access_room_without_participation()
+    public function test_cannot_access_room_without_participation(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -271,7 +271,7 @@ class ChatApiTest extends TestCase
         );
     }
 
-    public function test_cannot_leave_room_not_participating_in()
+    public function test_cannot_leave_room_not_participating_in(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -294,7 +294,7 @@ class ChatApiTest extends TestCase
         );
     }
 
-    public function test_messages_are_returned_in_chronological_order()
+    public function test_messages_are_returned_in_chronological_order(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -307,13 +307,13 @@ class ChatApiTest extends TestCase
         ]);
         $room->participants()->attach([$user1->id, $user2->id]);
 
-        $message1 = ChatMessage::create([
+        ChatMessage::create([
             'room_id' => $room->id,
             'sender_id' => $user1->id,
             'content' => 'First message',
         ]);
 
-        $message2 = ChatMessage::create([
+        ChatMessage::create([
             'room_id' => $room->id,
             'sender_id' => $user2->id,
             'content' => 'Second message',
@@ -328,7 +328,7 @@ class ChatApiTest extends TestCase
         $this->assertEquals('Second message', $messages[1]['content']);
     }
 
-    public function test_message_limit_is_respected()
+    public function test_message_limit_is_respected(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();

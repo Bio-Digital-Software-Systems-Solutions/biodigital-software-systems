@@ -14,6 +14,7 @@ use Spatie\Activitylog\LogOptions;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property int $training_id
  * @property string $title
  * @property string|null $description
@@ -23,11 +24,24 @@ use Spatie\Activitylog\LogOptions;
  * @property \Illuminate\Support\Carbon|null $available_from
  * @property \Illuminate\Support\Carbon|null $available_until
  * @property bool $is_active
+ * @property int $max_attempts
+ * @property string $score_display
+ * @property string $status
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClass> $allTrainingClasses
+ * @property-read int|null $all_training_classes_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\QuizAttempt> $attempts
  * @property-read int|null $attempts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\QuizQuestion> $questions
+ * @property-read int|null $questions_count
  * @property-read \App\Models\Training $training
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClassMaterial> $trainingClassMaterials
+ * @property-read int|null $training_class_materials_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClass> $trainingClasses
+ * @property-read int|null $training_classes_count
  * @method static \Database\Factories\QuizFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz newQuery()
@@ -39,28 +53,14 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereDurationMinutes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereMaxAttempts($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereMaxScore($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz wherePassingScore($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereScoreDisplay($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereTrainingId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereUpdatedAt($value)
- * @property string $uuid
- * @property int $max_attempts
- * @property string $score_display
- * @property string $status
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClass> $allTrainingClasses
- * @property-read int|null $all_training_classes_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\QuizQuestion> $questions
- * @property-read int|null $questions_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClassMaterial> $trainingClassMaterials
- * @property-read int|null $training_class_materials_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClass> $trainingClasses
- * @property-read int|null $training_classes_count
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereMaxAttempts($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereScoreDisplay($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereUuid($value)
  * @mixin \Eloquent
  */
@@ -169,7 +169,7 @@ class Quiz extends Model
     public function getAttemptsByClass(TrainingClass $trainingClass)
     {
         return $this->attempts()
-            ->whereHas('student.trainings', function ($query) use ($trainingClass) {
+            ->whereHas('student.trainings', function ($query) use ($trainingClass): void {
                 $query->wherePivot('training_class_id', $trainingClass->id);
             })
             ->with('student');

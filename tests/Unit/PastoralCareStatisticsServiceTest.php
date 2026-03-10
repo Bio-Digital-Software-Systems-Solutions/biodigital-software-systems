@@ -10,7 +10,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     Role::create(['name' => 'pastor']);
     Role::create(['name' => 'mlr-agent']);
     $this->service = new PastoralCareStatisticsService;
@@ -38,14 +38,14 @@ function createAppointment(array $attributes = []): PastoralCare
     return PastoralCare::factory()->create(array_merge($defaults, $attributes));
 }
 
-describe('getAppointmentsByPastor', function () {
-    test('returns empty collection when no appointments exist', function () {
+describe('getAppointmentsByPastor', function (): void {
+    test('returns empty collection when no appointments exist', function (): void {
         $result = $this->service->getAppointmentsByPastor('month');
 
         expect($result)->toBeEmpty();
     });
 
-    test('returns appointments distribution by pastor for current month', function () {
+    test('returns appointments distribution by pastor for current month', function (): void {
         $pastor1 = createPastor();
         $pastor2 = createPastor();
 
@@ -70,7 +70,7 @@ describe('getAppointmentsByPastor', function () {
         expect($result->last()['percentage'])->toBe(40.0);
     });
 
-    test('includes pastor name in result', function () {
+    test('includes pastor name in result', function (): void {
         $pastor = User::factory()->create([
             'first_name' => 'Jean',
             'last_name' => 'Dupont',
@@ -87,7 +87,7 @@ describe('getAppointmentsByPastor', function () {
         expect($result->first()['pastor_name'])->toBe('Jean Dupont');
     });
 
-    test('filters by week period correctly', function () {
+    test('filters by week period correctly', function (): void {
         $pastor = createPastor();
 
         // This week
@@ -108,8 +108,8 @@ describe('getAppointmentsByPastor', function () {
     });
 });
 
-describe('getAverageDuration', function () {
-    test('returns zero values when no appointments exist', function () {
+describe('getAverageDuration', function (): void {
+    test('returns zero values when no appointments exist', function (): void {
         $result = $this->service->getAverageDuration('month');
 
         expect($result['average'])->toBe(0.0);
@@ -118,7 +118,7 @@ describe('getAverageDuration', function () {
         expect($result['count'])->toBe(0);
     });
 
-    test('calculates correct average duration for completed appointments', function () {
+    test('calculates correct average duration for completed appointments', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->create([
@@ -150,7 +150,7 @@ describe('getAverageDuration', function () {
         expect($result['count'])->toBe(3);
     });
 
-    test('excludes pending and cancelled appointments from average', function () {
+    test('excludes pending and cancelled appointments from average', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->create([
@@ -180,7 +180,7 @@ describe('getAverageDuration', function () {
         expect($result['average'])->toBe(60.0);
     });
 
-    test('formats duration correctly', function () {
+    test('formats duration correctly', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->create([
@@ -196,14 +196,14 @@ describe('getAverageDuration', function () {
     });
 });
 
-describe('getDistributionByTheme', function () {
-    test('returns empty collection when no themed appointments exist', function () {
+describe('getDistributionByTheme', function (): void {
+    test('returns empty collection when no themed appointments exist', function (): void {
         $result = $this->service->getDistributionByTheme('month');
 
         expect($result)->toBeEmpty();
     });
 
-    test('groups appointments by theme correctly', function () {
+    test('groups appointments by theme correctly', function (): void {
         $pastor = createPastor();
 
         // Create 3 spiritual guidance appointments
@@ -229,7 +229,7 @@ describe('getDistributionByTheme', function () {
         expect($result->first()['percentage'])->toBe(60.0);
     });
 
-    test('excludes appointments without theme', function () {
+    test('excludes appointments without theme', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->create([
@@ -250,8 +250,8 @@ describe('getDistributionByTheme', function () {
     });
 });
 
-describe('getFollowUpFrequency', function () {
-    test('returns zero values when no appointments exist', function () {
+describe('getFollowUpFrequency', function (): void {
+    test('returns zero values when no appointments exist', function (): void {
         $result = $this->service->getFollowUpFrequency('month');
 
         expect($result['total'])->toBe(0);
@@ -260,7 +260,7 @@ describe('getFollowUpFrequency', function () {
         expect($result['follow_up_rate'])->toBe(0);
     });
 
-    test('calculates follow-up statistics correctly', function () {
+    test('calculates follow-up statistics correctly', function (): void {
         $pastor = createPastor();
 
         // Create 3 initial appointments
@@ -287,8 +287,8 @@ describe('getFollowUpFrequency', function () {
     });
 });
 
-describe('getTransferStatistics', function () {
-    test('returns zero values when no appointments exist', function () {
+describe('getTransferStatistics', function (): void {
+    test('returns zero values when no appointments exist', function (): void {
         $result = $this->service->getTransferStatistics('month');
 
         expect($result['total'])->toBe(0);
@@ -297,7 +297,7 @@ describe('getTransferStatistics', function () {
         expect($result['by_destination'])->toBeEmpty();
     });
 
-    test('calculates transfer statistics correctly', function () {
+    test('calculates transfer statistics correctly', function (): void {
         $pastor1 = createPastor();
         $pastor2 = createPastor();
 
@@ -325,7 +325,7 @@ describe('getTransferStatistics', function () {
         expect($result['by_destination'])->toHaveCount(1);
     });
 
-    test('groups transfers by destination user', function () {
+    test('groups transfers by destination user', function (): void {
         $pastor1 = createPastor();
         $pastor2 = User::factory()->create([
             'first_name' => 'Marie',
@@ -348,14 +348,14 @@ describe('getTransferStatistics', function () {
     });
 });
 
-describe('getIncomingAppointments', function () {
-    test('returns empty collection when no pending appointments', function () {
+describe('getIncomingAppointments', function (): void {
+    test('returns empty collection when no pending appointments', function (): void {
         $result = $this->service->getIncomingAppointments();
 
         expect($result)->toBeEmpty();
     });
 
-    test('returns only pending future appointments', function () {
+    test('returns only pending future appointments', function (): void {
         $pastor = createPastor();
 
         // Create 2 pending future appointments
@@ -384,7 +384,7 @@ describe('getIncomingAppointments', function () {
         expect($result)->toHaveCount(2);
     });
 
-    test('respects limit parameter', function () {
+    test('respects limit parameter', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->count(10)->create([
@@ -398,7 +398,7 @@ describe('getIncomingAppointments', function () {
         expect($result)->toHaveCount(5);
     });
 
-    test('orders by appointment date and time', function () {
+    test('orders by appointment date and time', function (): void {
         $pastor = createPastor();
 
         $later = PastoralCare::factory()->create([
@@ -421,14 +421,14 @@ describe('getIncomingAppointments', function () {
     });
 });
 
-describe('getAllAvailabilities', function () {
-    test('returns empty collection when no availabilities exist', function () {
+describe('getAllAvailabilities', function (): void {
+    test('returns empty collection when no availabilities exist', function (): void {
         $result = $this->service->getAllAvailabilities();
 
         expect($result)->toBeEmpty();
     });
 
-    test('returns active availabilities grouped by pastor', function () {
+    test('returns active availabilities grouped by pastor', function (): void {
         $pastor1 = createPastor();
         $pastor2 = createPastor();
 
@@ -456,7 +456,7 @@ describe('getAllAvailabilities', function () {
         expect($result->first()['availabilities'])->toHaveCount(2);
     });
 
-    test('calculates weekly slots correctly', function () {
+    test('calculates weekly slots correctly', function (): void {
         $pastor = createPastor();
 
         // Create weekly availability: 9:00-12:00, 60 min slots = 3 slots
@@ -477,15 +477,15 @@ describe('getAllAvailabilities', function () {
     });
 });
 
-describe('getStatusDistribution', function () {
-    test('returns all statuses with zero counts when no appointments', function () {
+describe('getStatusDistribution', function (): void {
+    test('returns all statuses with zero counts when no appointments', function (): void {
         $result = $this->service->getStatusDistribution('month');
 
         expect($result['total'])->toBe(0);
         expect($result['distribution'])->toHaveCount(5); // 5 status types
     });
 
-    test('calculates status distribution correctly', function () {
+    test('calculates status distribution correctly', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->count(3)->create([
@@ -521,14 +521,14 @@ describe('getStatusDistribution', function () {
     });
 });
 
-describe('getTrendData', function () {
-    test('returns empty collection when no appointments', function () {
+describe('getTrendData', function (): void {
+    test('returns empty collection when no appointments', function (): void {
         $result = $this->service->getTrendData('month', 'day');
 
         expect($result)->toBeEmpty();
     });
 
-    test('groups appointments by day correctly', function () {
+    test('groups appointments by day correctly', function (): void {
         $pastor = createPastor();
 
         // Create appointments on 2 different days
@@ -551,7 +551,7 @@ describe('getTrendData', function () {
         expect((int) $result->first()->completed)->toBe(2);
     });
 
-    test('groups by week when specified', function () {
+    test('groups by week when specified', function (): void {
         $pastor = createPastor();
 
         // Create appointments in same week
@@ -572,8 +572,8 @@ describe('getTrendData', function () {
     });
 });
 
-describe('getMlrDashboardStats', function () {
-    test('returns comprehensive dashboard statistics', function () {
+describe('getMlrDashboardStats', function (): void {
+    test('returns comprehensive dashboard statistics', function (): void {
         $pastor = createPastor();
 
         // Create various appointments
@@ -625,7 +625,7 @@ describe('getMlrDashboardStats', function () {
         expect($result['period']['label'])->toBe('Ce mois');
     });
 
-    test('handles different periods correctly', function () {
+    test('handles different periods correctly', function (): void {
         $result = $this->service->getMlrDashboardStats('week');
         expect($result['period']['label'])->toBe('Cette semaine');
 
@@ -637,8 +637,8 @@ describe('getMlrDashboardStats', function () {
     });
 });
 
-describe('getPeriodDates helper', function () {
-    test('returns correct dates for week period', function () {
+describe('getPeriodDates helper', function (): void {
+    test('returns correct dates for week period', function (): void {
         Carbon::setTestNow(Carbon::create(2026, 2, 4)); // A Wednesday
 
         $result = $this->service->getMlrDashboardStats('week');
@@ -649,7 +649,7 @@ describe('getPeriodDates helper', function () {
         Carbon::setTestNow();
     });
 
-    test('returns correct dates for month period', function () {
+    test('returns correct dates for month period', function (): void {
         Carbon::setTestNow(Carbon::create(2026, 2, 15));
 
         $result = $this->service->getMlrDashboardStats('month');
@@ -660,7 +660,7 @@ describe('getPeriodDates helper', function () {
         Carbon::setTestNow();
     });
 
-    test('returns correct dates for quarter period', function () {
+    test('returns correct dates for quarter period', function (): void {
         Carbon::setTestNow(Carbon::create(2026, 2, 15));
 
         $result = $this->service->getMlrDashboardStats('quarter');
@@ -671,7 +671,7 @@ describe('getPeriodDates helper', function () {
         Carbon::setTestNow();
     });
 
-    test('returns correct dates for year period', function () {
+    test('returns correct dates for year period', function (): void {
         Carbon::setTestNow(Carbon::create(2026, 6, 15));
 
         $result = $this->service->getMlrDashboardStats('year');
@@ -683,8 +683,8 @@ describe('getPeriodDates helper', function () {
     });
 });
 
-describe('formatDuration helper', function () {
-    test('formats minutes correctly', function () {
+describe('formatDuration helper', function (): void {
+    test('formats minutes correctly', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->create([
@@ -698,7 +698,7 @@ describe('formatDuration helper', function () {
         expect($result['formatted'])->toBe('30 min');
     });
 
-    test('formats hours correctly', function () {
+    test('formats hours correctly', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->create([
@@ -712,7 +712,7 @@ describe('formatDuration helper', function () {
         expect($result['formatted'])->toBe('1h');
     });
 
-    test('formats hours and minutes correctly', function () {
+    test('formats hours and minutes correctly', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->create([
@@ -727,8 +727,8 @@ describe('formatDuration helper', function () {
     });
 });
 
-describe('getAnalyticsData', function () {
-    test('returns analytics data structure', function () {
+describe('getAnalyticsData', function (): void {
+    test('returns analytics data structure', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->count(3)->create([
@@ -762,7 +762,7 @@ describe('getAnalyticsData', function () {
         ]);
     });
 
-    test('returns correct appointments by status', function () {
+    test('returns correct appointments by status', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->count(3)->create([
@@ -787,7 +787,7 @@ describe('getAnalyticsData', function () {
         expect($completedItem['value'])->toBe(2);
     });
 
-    test('returns correct global progress', function () {
+    test('returns correct global progress', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->count(4)->create([
@@ -809,7 +809,7 @@ describe('getAnalyticsData', function () {
         expect($result['global_progress']['percentage'])->toBe(80.0);
     });
 
-    test('returns velocity data structure', function () {
+    test('returns velocity data structure', function (): void {
         $result = $this->service->getAnalyticsData('month');
 
         expect($result['velocity'])->toHaveKeys(['daily', 'weekly', 'monthly']);
@@ -818,7 +818,7 @@ describe('getAnalyticsData', function () {
         expect($result['velocity']['monthly'])->toHaveKeys(['value', 'total', 'period_count', 'max', 'label']);
     });
 
-    test('returns appointment evolution data', function () {
+    test('returns appointment evolution data', function (): void {
         $result = $this->service->getAnalyticsData('month');
 
         expect($result['appointment_evolution'])->toHaveKeys(['weekly', 'monthly', 'quarterly']);
@@ -827,7 +827,7 @@ describe('getAnalyticsData', function () {
         expect($result['appointment_evolution']['quarterly'])->toBeArray();
     });
 
-    test('returns completion by pastor', function () {
+    test('returns completion by pastor', function (): void {
         $pastor1 = createPastor();
         $pastor2 = createPastor();
 
@@ -860,7 +860,7 @@ describe('getAnalyticsData', function () {
         expect($pastor2Data['value'])->toBe(100.0);
     });
 
-    test('includes analytics data in dashboard stats', function () {
+    test('includes analytics data in dashboard stats', function (): void {
         $pastor = createPastor();
 
         PastoralCare::factory()->count(3)->create([

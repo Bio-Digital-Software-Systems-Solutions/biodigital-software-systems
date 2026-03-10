@@ -43,7 +43,6 @@ class SprintController extends Controller
         $dates = collect($period)->map(fn ($date) => $date->format('Y-m-d'))->toArray();
 
         $chartData = [];
-        $cumulativeCompleted = 0;
 
         foreach ($dates as $index => $date) {
             $dateCarbon = Carbon::parse($date)->endOfDay();
@@ -150,7 +149,7 @@ class SprintController extends Controller
 
         // If no story points are set, fallback to counting tasks
         if ($totalPoints === 0) {
-            $totalPoints = $sprint->tasks->count();
+            return $sprint->tasks->count();
         }
 
         return $totalPoints;
@@ -208,7 +207,7 @@ class SprintController extends Controller
     {
         // Find the most recent actual data point
         $latestActual = collect($chartData)
-            ->filter(fn ($point) => $point['actual'] !== null)
+            ->filter(fn ($point): bool => $point['actual'] !== null)
             ->last();
 
         if (! $latestActual) {

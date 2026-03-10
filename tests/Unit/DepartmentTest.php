@@ -12,7 +12,7 @@ class DepartmentTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_department_has_uuid()
+    public function test_department_has_uuid(): void
     {
         $department = Department::factory()->create();
 
@@ -20,7 +20,7 @@ class DepartmentTest extends TestCase
         $this->assertIsString($department->uuid);
     }
 
-    public function test_department_can_have_appointments()
+    public function test_department_can_have_appointments(): void
     {
         $department = Department::factory()->create();
         $user = User::factory()->create();
@@ -35,7 +35,7 @@ class DepartmentTest extends TestCase
         $this->assertEquals(1, $department->appointments()->count());
     }
 
-    public function test_department_appointments_relation_is_morph_many()
+    public function test_department_appointments_relation_is_morph_many(): void
     {
         $department = Department::factory()->create();
 
@@ -45,7 +45,7 @@ class DepartmentTest extends TestCase
         );
     }
 
-    public function test_department_can_have_multiple_appointments()
+    public function test_department_can_have_multiple_appointments(): void
     {
         $department = Department::factory()->create();
         $user = User::factory()->create();
@@ -59,7 +59,7 @@ class DepartmentTest extends TestCase
         $this->assertEquals(5, $department->appointments()->count());
     }
 
-    public function test_department_upcoming_appointments_filters_past_appointments()
+    public function test_department_upcoming_appointments_filters_past_appointments(): void
     {
         $department = Department::factory()->create();
         $user = User::factory()->create();
@@ -82,12 +82,12 @@ class DepartmentTest extends TestCase
         $this->assertEquals(1, $department->upcomingAppointments()->count());
     }
 
-    public function test_department_upcoming_appointments_are_ordered_by_start_datetime()
+    public function test_department_upcoming_appointments_are_ordered_by_start_datetime(): void
     {
         $department = Department::factory()->create();
         $user = User::factory()->create();
 
-        $laterAppointment = Appointment::factory()->create([
+        Appointment::factory()->create([
             'appointmentable_type' => Department::class,
             'appointmentable_id' => $department->id,
             'user_id' => $user->id,
@@ -96,7 +96,7 @@ class DepartmentTest extends TestCase
             'title' => 'Later',
         ]);
 
-        $earlierAppointment = Appointment::factory()->create([
+        Appointment::factory()->create([
             'appointmentable_type' => Department::class,
             'appointmentable_id' => $department->id,
             'user_id' => $user->id,
@@ -111,7 +111,7 @@ class DepartmentTest extends TestCase
         $this->assertEquals('Later', $upcoming->last()->title);
     }
 
-    public function test_department_can_have_head_of_department()
+    public function test_department_can_have_head_of_department(): void
     {
         $headUser = User::factory()->create();
         $department = Department::factory()->create([
@@ -122,7 +122,7 @@ class DepartmentTest extends TestCase
         $this->assertEquals($headUser->id, $department->headOfDepartment->id);
     }
 
-    public function test_department_can_have_users()
+    public function test_department_can_have_users(): void
     {
         $department = Department::factory()->create();
         $users = User::factory()->count(3)->create();
@@ -132,7 +132,7 @@ class DepartmentTest extends TestCase
         $this->assertEquals(3, $department->users()->count());
     }
 
-    public function test_is_head_of_department_returns_true_for_head()
+    public function test_is_head_of_department_returns_true_for_head(): void
     {
         $headUser = User::factory()->create();
         $department = Department::factory()->create([
@@ -142,7 +142,7 @@ class DepartmentTest extends TestCase
         $this->assertTrue($department->isHeadOfDepartment($headUser));
     }
 
-    public function test_is_head_of_department_returns_false_for_regular_user()
+    public function test_is_head_of_department_returns_false_for_regular_user(): void
     {
         $headUser = User::factory()->create();
         $regularUser = User::factory()->create();
@@ -153,7 +153,7 @@ class DepartmentTest extends TestCase
         $this->assertFalse($department->isHeadOfDepartment($regularUser));
     }
 
-    public function test_department_scope_active_filters_inactive()
+    public function test_department_scope_active_filters_inactive(): void
     {
         Department::factory()->count(2)->create(['is_active' => true]);
         Department::factory()->create(['is_active' => false]);
@@ -163,14 +163,14 @@ class DepartmentTest extends TestCase
         $this->assertEquals(2, $activeDepartments->count());
     }
 
-    public function test_department_uses_uuid_for_route_key()
+    public function test_department_uses_uuid_for_route_key(): void
     {
         $department = Department::factory()->create();
 
         $this->assertEquals('uuid', $department->getRouteKeyName());
     }
 
-    public function test_department_budget_is_cast_to_decimal()
+    public function test_department_budget_is_cast_to_decimal(): void
     {
         $department = Department::factory()->create([
             'budget' => 50000.50,
@@ -179,7 +179,7 @@ class DepartmentTest extends TestCase
         $this->assertEquals('50000.50', $department->budget);
     }
 
-    public function test_department_is_active_is_cast_to_boolean()
+    public function test_department_is_active_is_cast_to_boolean(): void
     {
         $department = Department::factory()->create([
             'is_active' => 1,
@@ -191,7 +191,7 @@ class DepartmentTest extends TestCase
 
     // ==================== isAccessibleBy Tests ====================
 
-    public function test_is_accessible_by_returns_true_for_member()
+    public function test_is_accessible_by_returns_true_for_member(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 
@@ -202,7 +202,7 @@ class DepartmentTest extends TestCase
         $this->assertTrue($department->isAccessibleBy($user));
     }
 
-    public function test_is_accessible_by_returns_true_for_head_of_department()
+    public function test_is_accessible_by_returns_true_for_head_of_department(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 
@@ -214,7 +214,7 @@ class DepartmentTest extends TestCase
         $this->assertTrue($department->isAccessibleBy($user));
     }
 
-    public function test_is_accessible_by_returns_true_for_first_deputy()
+    public function test_is_accessible_by_returns_true_for_first_deputy(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 
@@ -226,7 +226,7 @@ class DepartmentTest extends TestCase
         $this->assertTrue($department->isAccessibleBy($user));
     }
 
-    public function test_is_accessible_by_returns_true_for_second_deputy()
+    public function test_is_accessible_by_returns_true_for_second_deputy(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 
@@ -238,7 +238,7 @@ class DepartmentTest extends TestCase
         $this->assertTrue($department->isAccessibleBy($user));
     }
 
-    public function test_is_accessible_by_returns_true_for_user_with_manage_permission()
+    public function test_is_accessible_by_returns_true_for_user_with_manage_permission(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 
@@ -249,7 +249,7 @@ class DepartmentTest extends TestCase
         $this->assertTrue($department->isAccessibleBy($user));
     }
 
-    public function test_is_accessible_by_returns_false_for_non_member_without_permission()
+    public function test_is_accessible_by_returns_false_for_non_member_without_permission(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 
@@ -259,7 +259,7 @@ class DepartmentTest extends TestCase
         $this->assertFalse($department->isAccessibleBy($user));
     }
 
-    public function test_is_accessible_by_uses_eager_loaded_users_when_available()
+    public function test_is_accessible_by_uses_eager_loaded_users_when_available(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 
@@ -274,7 +274,7 @@ class DepartmentTest extends TestCase
         $this->assertTrue($department->isAccessibleBy($user));
     }
 
-    public function test_is_accessible_by_returns_true_for_user_with_access_all_departments_permission()
+    public function test_is_accessible_by_returns_true_for_user_with_access_all_departments_permission(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 
@@ -286,7 +286,7 @@ class DepartmentTest extends TestCase
         $this->assertTrue($department->isAccessibleBy($user));
     }
 
-    public function test_is_accessible_by_returns_false_for_user_with_only_view_departments_permission()
+    public function test_is_accessible_by_returns_false_for_user_with_only_view_departments_permission(): void
     {
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 

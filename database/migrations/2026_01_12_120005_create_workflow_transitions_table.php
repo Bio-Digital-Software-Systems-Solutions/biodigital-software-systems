@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('workflow_transitions', function (Blueprint $table) {
+        Schema::create('workflow_transitions', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('workflow_id')->constrained('department_workflows')->onDelete('cascade');

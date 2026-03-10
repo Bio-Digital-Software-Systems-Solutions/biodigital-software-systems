@@ -11,6 +11,32 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read User|null $approvedBy
+ * @property-read Department|null $department
+ * @property-read bool $is_approved
+ * @property-read bool $is_complete
+ * @property-read float $working_hours
+ * @property-read \App\Models\Scheduling\Shift|null $shift
+ * @property-read User|null $user
+ * @method static Builder<static>|TimeEntry approved()
+ * @method static Builder<static>|TimeEntry forDate(\Carbon\Carbon $date)
+ * @method static Builder<static>|TimeEntry forDateRange(\Carbon\Carbon $start, \Carbon\Carbon $end)
+ * @method static Builder<static>|TimeEntry forDepartment(int $departmentId)
+ * @method static Builder<static>|TimeEntry forUser(int $userId)
+ * @method static Builder<static>|TimeEntry newModelQuery()
+ * @method static Builder<static>|TimeEntry newQuery()
+ * @method static Builder<static>|TimeEntry pendingApproval()
+ * @method static Builder<static>|TimeEntry query()
+ * @method static Builder<static>|TimeEntry whereCreatedAt($value)
+ * @method static Builder<static>|TimeEntry whereId($value)
+ * @method static Builder<static>|TimeEntry whereUpdatedAt($value)
+ * @method static Builder<static>|TimeEntry withOvertime()
+ * @mixin \Eloquent
+ */
 class TimeEntry extends Model
 {
     use HasFactory;
@@ -51,13 +77,13 @@ class TimeEntry extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
         });
 
-        static::saving(function ($model) {
+        static::saving(function ($model): void {
             if ($model->clock_in && $model->clock_out) {
                 $model->calculateHours();
             }
@@ -146,7 +172,7 @@ class TimeEntry extends Model
     // Methods
     protected function calculateHours(): void
     {
-        if (!$this->clock_in || !$this->clock_out) {
+        if (! $this->clock_in || ! $this->clock_out) {
             return;
         }
 
@@ -178,42 +204,46 @@ class TimeEntry extends Model
         }
 
         $this->update(['clock_in' => now()]);
+
         return true;
     }
 
     public function clockOut(): bool
     {
-        if (!$this->clock_in || $this->clock_out) {
+        if (! $this->clock_in || $this->clock_out) {
             return false;
         }
 
         $this->update(['clock_out' => now()]);
+
         return true;
     }
 
     public function startBreak(): bool
     {
-        if (!$this->clock_in || $this->break_start) {
+        if (! $this->clock_in || $this->break_start) {
             return false;
         }
 
         $this->update(['break_start' => now()]);
+
         return true;
     }
 
     public function endBreak(): bool
     {
-        if (!$this->break_start || $this->break_end) {
+        if (! $this->break_start || $this->break_end) {
             return false;
         }
 
         $this->update(['break_end' => now()]);
+
         return true;
     }
 
     public function approve(User $approver): bool
     {
-        if ($this->is_approved || !$this->is_complete) {
+        if ($this->is_approved || ! $this->is_complete) {
             return false;
         }
 
@@ -227,14 +257,14 @@ class TimeEntry extends Model
 
     public static function getTotalHoursForUser(int $userId, Carbon $start, Carbon $end): float
     {
-        return self::where('user_id', $userId)
+        return (float) self::where('user_id', $userId)
             ->whereBetween('date', [$start, $end])
             ->sum('total_hours');
     }
 
     public static function getTotalOvertimeForUser(int $userId, Carbon $start, Carbon $end): float
     {
-        return self::where('user_id', $userId)
+        return (float) self::where('user_id', $userId)
             ->whereBetween('date', [$start, $end])
             ->sum('overtime_hours');
     }

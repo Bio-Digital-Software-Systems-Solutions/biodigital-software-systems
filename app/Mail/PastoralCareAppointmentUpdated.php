@@ -31,8 +31,8 @@ class PastoralCareAppointmentUpdated extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Rendez-vous de soin pastoral modifie - ICC Munich',
             from: config('mail.from.address', 'noreply@icc-munich.de'),
+            subject: 'Rendez-vous de soin pastoral modifie - ICC Munich',
         );
     }
 

@@ -59,7 +59,7 @@ class MessageController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
+            $query->where(function ($q) use ($request): void {
                 $q->where('subject', 'like', '%'.$request->search.'%')
                     ->orWhere('content', 'like', '%'.$request->search.'%');
             });
@@ -78,14 +78,14 @@ class MessageController extends Controller
                     $message->is_sent = true;
 
                     // Find all messages with same subject, content, and timestamp (sent in the same batch)
-                    $relatedMessages = $allMessages->filter(function ($m) use ($message) {
+                    $relatedMessages = $allMessages->filter(function ($m) use ($message): bool {
                         return $m->subject === $message->subject
                             && $m->content === $message->content
-                            && abs(strtotime($m->created_at) - strtotime($message->created_at)) < 5; // Within 5 seconds
+                            && abs(strtotime((string) $m->created_at) - strtotime($message->created_at)) < 5; // Within 5 seconds
                     });
 
                     // Collect all recipients
-                    $recipients = $relatedMessages->map(function ($m) {
+                    $recipients = $relatedMessages->map(function ($m): array {
                         $receiver = $m->receiver; // Access the relationship only once
                         return [
                             'id' => $receiver->id,
@@ -298,10 +298,12 @@ class MessageController extends Controller
 
             // Also send to CC recipients (if not already in department)
             foreach ($ccRecipients as $ccUserId) {
-                if ($ccUserId === Auth::id() || $departmentUsers->contains('id', $ccUserId)) {
+                if ($ccUserId === Auth::id()) {
                     continue;
                 }
-
+                if ($departmentUsers->contains('id', $ccUserId)) {
+                    continue;
+                }
                 Message::create([
                     'subject' => $validated['subject'] ?? null,
                     'content' => $validated['content'],
@@ -317,10 +319,15 @@ class MessageController extends Controller
 
             // Send to BCC recipients (if not already in department or CC)
             foreach ($bccRecipients as $bccUserId) {
-                if ($bccUserId === Auth::id() || $departmentUsers->contains('id', $bccUserId) || in_array($bccUserId, $ccRecipients)) {
+                if ($bccUserId === Auth::id()) {
                     continue;
                 }
-
+                if ($departmentUsers->contains('id', $bccUserId)) {
+                    continue;
+                }
+                if (in_array($bccUserId, $ccRecipients)) {
+                    continue;
+                }
                 Message::create([
                     'subject' => $validated['subject'] ?? null,
                     'content' => $validated['content'],
@@ -480,7 +487,7 @@ class MessageController extends Controller
         // Search users (excluding current user)
         if ($search) {
             $users = User::where('id', '!=', Auth::id())
-                ->where(function ($query) use ($search) {
+                ->where(function ($query) use ($search): void {
                     $query->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
@@ -488,15 +495,13 @@ class MessageController extends Controller
                 ->select('id', 'first_name', 'last_name', 'email')
                 ->limit(10)
                 ->get()
-                ->map(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'type' => 'user',
-                        'name' => $user->first_name . ' ' . $user->last_name,
-                        'email' => $user->email,
-                        'label' => $user->first_name . ' ' . $user->last_name . ' (' . $user->email . ')',
-                    ];
-                });
+                ->map(fn($user): array => [
+                    'id' => $user->id,
+                    'type' => 'user',
+                    'name' => $user->first_name . ' ' . $user->last_name,
+                    'email' => $user->email,
+                    'label' => $user->first_name . ' ' . $user->last_name . ' (' . $user->email . ')',
+                ]);
 
             $results = array_merge($results, $users->toArray());
         } else {
@@ -505,15 +510,13 @@ class MessageController extends Controller
                 ->select('id', 'first_name', 'last_name', 'email')
                 ->limit(10)
                 ->get()
-                ->map(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'type' => 'user',
-                        'name' => $user->first_name . ' ' . $user->last_name,
-                        'email' => $user->email,
-                        'label' => $user->first_name . ' ' . $user->last_name . ' (' . $user->email . ')',
-                    ];
-                });
+                ->map(fn($user): array => [
+                    'id' => $user->id,
+                    'type' => 'user',
+                    'name' => $user->first_name . ' ' . $user->last_name,
+                    'email' => $user->email,
+                    'label' => $user->first_name . ' ' . $user->last_name . ' (' . $user->email . ')',
+                ]);
 
             $results = array_merge($results, $users->toArray());
         }
@@ -521,23 +524,21 @@ class MessageController extends Controller
         // Search departments
         if ($search) {
             $departments = Department::where('is_active', true)
-                ->where(function ($query) use ($search) {
+                ->where(function ($query) use ($search): void {
                     $query->where('name', 'like', "%{$search}%")
                         ->orWhere('code', 'like', "%{$search}%");
                 })
                 ->withCount('users')
                 ->limit(10)
                 ->get()
-                ->map(function ($dept) {
-                    return [
-                        'id' => $dept->id,
-                        'type' => 'department',
-                        'name' => $dept->name,
-                        'code' => $dept->code,
-                        'users_count' => $dept->users_count,
-                        'label' => $dept->name . ' (' . $dept->users_count . ' members)',
-                    ];
-                });
+                ->map(fn($dept): array => [
+                    'id' => $dept->id,
+                    'type' => 'department',
+                    'name' => $dept->name,
+                    'code' => $dept->code,
+                    'users_count' => $dept->users_count,
+                    'label' => $dept->name . ' (' . $dept->users_count . ' members)',
+                ]);
 
             $results = array_merge($results, $departments->toArray());
         } else {
@@ -546,16 +547,14 @@ class MessageController extends Controller
                 ->withCount('users')
                 ->limit(10)
                 ->get()
-                ->map(function ($dept) {
-                    return [
-                        'id' => $dept->id,
-                        'type' => 'department',
-                        'name' => $dept->name,
-                        'code' => $dept->code,
-                        'users_count' => $dept->users_count,
-                        'label' => $dept->name . ' (' . $dept->users_count . ' members)',
-                    ];
-                });
+                ->map(fn($dept): array => [
+                    'id' => $dept->id,
+                    'type' => 'department',
+                    'name' => $dept->name,
+                    'code' => $dept->code,
+                    'users_count' => $dept->users_count,
+                    'label' => $dept->name . ' (' . $dept->users_count . ' members)',
+                ]);
 
             $results = array_merge($results, $departments->toArray());
         }
@@ -568,10 +567,6 @@ class MessageController extends Controller
      */
     private function handleAttachments(Message $message, array $attachments): void
     {
-        if (empty($attachments)) {
-            return;
-        }
-
         foreach ($attachments as $file) {
             // Generate unique filename
             $originalName = $file->getClientOriginalName();

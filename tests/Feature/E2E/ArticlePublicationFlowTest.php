@@ -101,7 +101,7 @@ class ArticlePublicationFlowTest extends TestCase
         );
 
         // Step 6: Writer can unpublish article
-        $response = $this->actingAs($writer)->put("/articles/{$article->slug}", [
+        $this->actingAs($writer)->put("/articles/{$article->slug}", [
             'title' => 'Understanding Laravel Testing - Updated',
             'content' => '<p>Updated comprehensive guide to testing in Laravel applications.</p>',
             'excerpt' => 'Updated comprehensive guide',

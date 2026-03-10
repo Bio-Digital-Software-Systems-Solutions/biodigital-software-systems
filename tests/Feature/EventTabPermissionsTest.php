@@ -77,7 +77,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($superAdmin)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->has('tabPermissions')
             ->where('tabPermissions.canViewGallery', true)
@@ -97,7 +97,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($this->eventCreator)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->has('tabPermissions')
             ->where('tabPermissions.canViewGallery', true)
@@ -119,7 +119,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($admin)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->has('tabPermissions')
             ->where('tabPermissions.canViewGallery', true)
@@ -141,7 +141,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($member)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->has('tabPermissions')
             ->where('tabPermissions.canViewGallery', false)
@@ -165,7 +165,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($user)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->where('tabPermissions.canViewGallery', true)
             ->where('tabPermissions.canManageTickets', false)
@@ -184,7 +184,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($user)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->where('tabPermissions.canManageTickets', true)
             ->where('tabPermissions.canViewGallery', false)
@@ -203,7 +203,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($user)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->where('tabPermissions.canViewRegistrations', true)
             ->where('tabPermissions.canViewGallery', false)
@@ -222,7 +222,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($user)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->where('tabPermissions.canViewRegistrations', true)
             ->where('tabPermissions.canCheckIn', true) // manage registrations also grants check-in
@@ -241,7 +241,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($user)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->where('tabPermissions.canCheckIn', true)
             ->where('tabPermissions.canViewGallery', false)
@@ -260,7 +260,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($user)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->where('tabPermissions.canViewAnalytics', true)
             ->where('tabPermissions.canViewGallery', false)
@@ -278,7 +278,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($eventManager)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->has('tabPermissions')
             ->where('tabPermissions.canViewGallery', true)
@@ -301,7 +301,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($user)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->where('tabPermissions.canViewGallery', true)
             ->where('tabPermissions.canViewRegistrations', true)
@@ -330,7 +330,7 @@ class EventTabPermissionsTest extends TestCase
         $anotherCreator = User::factory()->create();
         $anotherCreator->assignRole('member');
 
-        $anotherEvent = Event::factory()->create([
+        Event::factory()->create([
             'user_id' => $anotherCreator->id,
         ]);
 
@@ -338,7 +338,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($anotherCreator)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->where('tabPermissions.canViewGallery', false)
             ->where('tabPermissions.canManageTickets', false)
@@ -364,7 +364,7 @@ class EventTabPermissionsTest extends TestCase
         $response = $this->actingAs($anotherCreator)->get("/events/{$anotherEvent->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->where('tabPermissions.canViewGallery', true)
             ->where('tabPermissions.canManageTickets', true)
@@ -383,14 +383,14 @@ class EventTabPermissionsTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole('member');
 
-        if (! empty($permissions)) {
+        if ($permissions !== []) {
             $user->givePermissionTo($permissions);
         }
 
         $response = $this->actingAs($user)->get("/events/{$this->event->uuid}");
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Events/Show')
             ->where('tabPermissions.canViewGallery', $expectedAccess['gallery'])
             ->where('tabPermissions.canManageTickets', $expectedAccess['tickets'])

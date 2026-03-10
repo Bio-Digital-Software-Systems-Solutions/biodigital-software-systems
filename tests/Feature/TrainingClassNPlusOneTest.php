@@ -37,9 +37,9 @@ class TrainingClassNPlusOneTest extends TestCase
             foreach ($students as $student) {
                 $training->students()->attach($student->id, [
                     'status' => 'approved',
-                    'grade' => rand(60, 100),
-                    'progress' => rand(0, 100),
-                    'attendance_rate' => rand(50, 100),
+                    'grade' => random_int(60, 100),
+                    'progress' => random_int(0, 100),
+                    'attendance_rate' => random_int(50, 100),
                 ]);
             }
 
@@ -69,7 +69,7 @@ class TrainingClassNPlusOneTest extends TestCase
 
         $this->assertLessThan(15, $queryCount,
             "Expected less than 15 queries, but got {$queryCount}. Possible N+1 query detected.\n" .
-            "Queries: " . json_encode(array_map(fn($q) => $q['query'], $queries), JSON_PRETTY_PRINT)
+            "Queries: " . json_encode(array_map(fn(array $q) => $q['query'], $queries), JSON_PRETTY_PRINT)
         );
 
         $response->assertStatus(200);
@@ -87,9 +87,9 @@ class TrainingClassNPlusOneTest extends TestCase
         foreach ($students as $student) {
             $training->students()->attach($student->id, [
                 'status' => 'approved',
-                'grade' => rand(60, 100),
-                'progress' => rand(0, 100),
-                'attendance_rate' => rand(50, 100),
+                'grade' => random_int(60, 100),
+                'progress' => random_int(0, 100),
+                'attendance_rate' => random_int(50, 100),
             ]);
         }
 
@@ -110,7 +110,7 @@ class TrainingClassNPlusOneTest extends TestCase
         // Should not have queries proportional to number of students
         $this->assertLessThan(15, $queryCount,
             "Expected less than 15 queries, but got {$queryCount}. Possible N+1 query detected.\n" .
-            "Queries: " . json_encode(array_map(fn($q) => $q['query'], $queries), JSON_PRETTY_PRINT)
+            "Queries: " . json_encode(array_map(fn(array $q) => $q['query'], $queries), JSON_PRETTY_PRINT)
         );
 
         $response->assertStatus(200);
@@ -163,7 +163,7 @@ class TrainingClassNPlusOneTest extends TestCase
         // Should not have queries proportional to number of students
         $this->assertLessThan(20, $queryCount,
             "Expected less than 20 queries, but got {$queryCount}. Possible N+1 query detected.\n" .
-            "Queries: " . json_encode(array_map(fn($q) => $q['query'], $queries), JSON_PRETTY_PRINT)
+            "Queries: " . json_encode(array_map(fn(array $q) => $q['query'], $queries), JSON_PRETTY_PRINT)
         );
 
         $response->assertStatus(200);
@@ -220,7 +220,7 @@ class TrainingClassNPlusOneTest extends TestCase
         // Should not have queries proportional to number of students
         $this->assertLessThan(25, $queryCount,
             "Expected less than 25 queries, but got {$queryCount}. Possible N+1 query detected.\n" .
-            "Queries: " . json_encode(array_map(fn($q) => $q['query'], $queries), JSON_PRETTY_PRINT)
+            "Queries: " . json_encode(array_map(fn(array $q) => $q['query'], $queries), JSON_PRETTY_PRINT)
         );
 
         $response->assertStatus(200);
@@ -241,7 +241,7 @@ class TrainingClassNPlusOneTest extends TestCase
                 TrainingClass::factory()->count(2)->create([
                     'training_id' => $training->id,
                     'teacher_id' => $teacher->id,
-                    'date' => now()->addDays(rand(1, 30))->format('Y-m-d'),
+                    'date' => now()->addDays(random_int(1, 30))->format('Y-m-d'),
                 ]);
             }
         }
@@ -258,7 +258,7 @@ class TrainingClassNPlusOneTest extends TestCase
         // Should not have 20+ teacher queries (N+1)
         $this->assertLessThan(10, $queryCount,
             "Expected less than 10 queries, but got {$queryCount}. Possible N+1 query detected.\n" .
-            "Queries: " . json_encode(array_map(fn($q) => $q['query'], $queries), JSON_PRETTY_PRINT)
+            "Queries: " . json_encode(array_map(fn(array $q) => $q['query'], $queries), JSON_PRETTY_PRINT)
         );
 
         $response->assertStatus(200);
@@ -278,9 +278,9 @@ class TrainingClassNPlusOneTest extends TestCase
             foreach ($students as $student) {
                 $training->students()->attach($student->id, [
                     'status' => 'approved',
-                    'grade' => rand(60, 100),
-                    'progress' => rand(0, 100),
-                    'attendance_rate' => rand(50, 100),
+                    'grade' => random_int(60, 100),
+                    'progress' => random_int(0, 100),
+                    'attendance_rate' => random_int(50, 100),
                 ]);
             }
 
@@ -310,7 +310,7 @@ class TrainingClassNPlusOneTest extends TestCase
         $this->assertLessThan(20, $queryCount,
             "Expected less than 20 queries with 50 training classes, but got {$queryCount}. " .
             "This suggests an N+1 query problem.\n" .
-            "Queries: " . json_encode(array_map(fn($q) => $q['query'], $queries), JSON_PRETTY_PRINT)
+            "Queries: " . json_encode(array_map(fn(array $q) => $q['query'], $queries), JSON_PRETTY_PRINT)
         );
 
         $response->assertStatus(200);

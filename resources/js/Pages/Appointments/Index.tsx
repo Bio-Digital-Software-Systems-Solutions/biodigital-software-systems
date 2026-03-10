@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Button } from '@/Components/ui/button';
@@ -30,6 +30,8 @@ import {
     XCircle,
     AlertCircle,
     User,
+    Download,
+    Upload,
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -40,6 +42,15 @@ import {
     DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/Components/ui/dialog';
+import { Label } from '@/Components/ui/label';
 import { UserSelect } from '@/Components/ui/user-select';
 import { PublicAgendaView } from '@/Components/ui/public-agenda-view';
 import { toast } from 'sonner';
@@ -68,6 +79,41 @@ export default function AppointmentIndex() {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [showUserAgenda, setShowUserAgenda] = useState(false);
     const [datePickerOpen, setDatePickerOpen] = useState(false);
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
+    const [importFile, setImportFile] = useState<File | null>(null);
+    const [importing, setImporting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleExportBulk = () => {
+        const params: Record<string, string> = {};
+        if (filters.status) params.status = filters.status;
+        if (filters.type) params.type = filters.type;
+        window.open(route('appointments.export-bulk-ics', params));
+    };
+
+    const handleImport = () => {
+        if (!importFile) return;
+
+        const formData = new FormData();
+        formData.append('file', importFile);
+
+        setImporting(true);
+        router.post(route('appointments.import-ics'), formData, {
+            forceFormData: true,
+            onSuccess: () => {
+                toast.success('Fichier importé avec succès');
+                setImportDialogOpen(false);
+                setImportFile(null);
+            },
+            onError: (errors) => {
+                const message = Object.values(errors)[0] || 'Erreur lors de l\'import';
+                toast.error(message as string);
+            },
+            onFinish: () => {
+                setImporting(false);
+            },
+        });
+    };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -461,6 +507,14 @@ export default function AppointmentIndex() {
                         </p>
                     </div>
                     <div className="flex space-x-3">
+                        <Button variant="outline" onClick={handleExportBulk}>
+                            <Download className="h-4 w-4 mr-2" />
+                            Exporter .ics
+                        </Button>
+                        <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Importer .ics
+                        </Button>
                         <Button asChild variant="outline">
                             <Link href={route('appointments.calendar')}>
                                 <Calendar className="h-4 w-4 mr-2" />
@@ -560,6 +614,38 @@ export default function AppointmentIndex() {
                 title="Supprimer le rendez-vous"
                 description={`Êtes-vous sûr de vouloir supprimer le rendez-vous "${appointmentToDelete?.title}" ? Cette action est irréversible.`}
             />
+
+            <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Importer un fichier iCalendar</DialogTitle>
+                        <DialogDescription>
+                            Sélectionnez un fichier .ics pour importer des rendez-vous.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div>
+                            <Label htmlFor="ics-file-index">Fichier iCalendar</Label>
+                            <Input
+                                id="ics-file-index"
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".ics,.ical"
+                                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                                className="mt-2"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setImportDialogOpen(false)}>
+                            Annuler
+                        </Button>
+                        <Button onClick={handleImport} disabled={!importFile || importing}>
+                            {importing ? 'Import en cours...' : 'Importer'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </DashboardLayout>
     );
 }

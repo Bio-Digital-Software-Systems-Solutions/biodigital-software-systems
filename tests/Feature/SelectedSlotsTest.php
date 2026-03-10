@@ -21,7 +21,7 @@ class SelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_only_selected_slots_when_available()
+    public function it_returns_only_selected_slots_when_available(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -48,7 +48,7 @@ class SelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_multiple_selected_slots_in_correct_order()
+    public function it_returns_multiple_selected_slots_in_correct_order(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -77,7 +77,7 @@ class SelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function it_generates_default_slots_when_no_specific_slots_selected()
+    public function it_generates_default_slots_when_no_specific_slots_selected(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -111,7 +111,7 @@ class SelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function it_handles_empty_selected_slots_array()
+    public function it_handles_empty_selected_slots_array(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -145,7 +145,7 @@ class SelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function selected_slots_are_sorted_chronologically_in_model()
+    public function selected_slots_are_sorted_chronologically_in_model(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');

@@ -12,79 +12,79 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Maize\Markable\Markable;
 use Maize\Markable\Models\Bookmark;
 use Maize\Markable\Models\Like;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $title
  * @property string $slug
  * @property string $content
+ * @property string|null $excerpt
+ * @property string $status
+ * @property string|null $featured_image
+ * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Image> $images
+ * @property string|null $documents
  * @property string|null $cover_image
  * @property string|null $video_file
  * @property \Illuminate\Support\Carbon|null $published_at
  * @property bool $is_featured
+ * @property int $views
+ * @property int $views_count
  * @property int $user_id
  * @property int $category_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property int $views_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\Category $category
+ * @property mixed $author_id
+ * @property mixed $featured
  * @property-read string $full_url
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Image> $images
+ * @property-read bool $is_published
+ * @property-read int $reading_time
  * @property-read int|null $images_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Tag> $tags
  * @property-read int|null $tags_count
  * @property-read \App\Models\User $user
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Video> $videos
  * @property-read int|null $videos_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article byAuthor($authorId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article draft()
  * @method static \Database\Factories\ArticleFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article featured()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article published()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article search($term)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereCategoryId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereContent($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereCoverImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereHasMark(\Maize\Markable\Mark $mark, \Illuminate\Database\Eloquent\Model $user, ?string $value = null)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereIsFeatured($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article wherePublishedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereSlug($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereTitle($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereUserId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereVideoFile($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereViewsCount($value)
- * @property string $uuid
- * @property string|null $excerpt
- * @property string $status
- * @property string|null $featured_image
- * @property string|null $documents
- * @property int $views
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- * @property mixed $author_id
- * @property mixed $featured
- * @property-read bool $is_published
- * @property-read int $reading_time
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article byAuthor($authorId)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article draft()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Article search($term)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereDocuments($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereExcerpt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereFeaturedImage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereHasMark(\Maize\Markable\Mark $mark, \Illuminate\Database\Eloquent\Model $user, ?string $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereImages($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereIsFeatured($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article wherePublishedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereSlug($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereVideoFile($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereViews($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Article whereViewsCount($value)
  * @mixin \Eloquent
  */
 class Article extends Model
 {
-    use HasFactory, HasUuid, Markable, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity, Markable;
 
     /**
      * Configure activity log options.
@@ -96,6 +96,7 @@ class Article extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     protected static $marks = [
         Like::class,
         Bookmark::class,
@@ -227,7 +228,7 @@ class Article extends Model
     /**
      * Mutator for author_id (maps to user_id for compatibility).
      */
-    public function setAuthorIdAttribute($value)
+    public function setAuthorIdAttribute($value): void
     {
         $this->attributes['user_id'] = $value;
     }
@@ -235,7 +236,7 @@ class Article extends Model
     /**
      * Get the author relationship (alias for user).
      */
-    public function author()
+    public function author(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->user();
     }
@@ -251,7 +252,7 @@ class Article extends Model
     /**
      * Mutator for featured (maps to is_featured).
      */
-    public function setFeaturedAttribute($value)
+    public function setFeaturedAttribute($value): void
     {
         $this->attributes['is_featured'] = $value;
     }
@@ -267,7 +268,7 @@ class Article extends Model
     /**
      * Mutator for views (maps to views_count for backward compatibility).
      */
-    public function setViewsAttribute($value)
+    public function setViewsAttribute($value): void
     {
         $this->attributes['views_count'] = $value;
     }
@@ -285,9 +286,9 @@ class Article extends Model
      */
     public function scopeSearch($query, $term)
     {
-        return $query->where(function ($q) use ($term) {
+        return $query->where(function ($q) use ($term): void {
             $q->where('title', 'like', "%{$term}%")
-              ->orWhere('content', 'like', "%{$term}%");
+                ->orWhere('content', 'like', "%{$term}%");
         });
     }
 
@@ -298,6 +299,7 @@ class Article extends Model
     {
         // Average reading speed: 200 words per minute
         $wordCount = str_word_count(strip_tags($this->content));
+
         return (int) ceil($wordCount / 200);
     }
 
@@ -308,7 +310,7 @@ class Article extends Model
     public function getExcerptAttribute($value): ?string
     {
         if ($value) {
-            return $value;
+            return (string) $value;
         }
 
         // Generate excerpt from content (first 150 characters)
@@ -317,7 +319,7 @@ class Article extends Model
             return $text;
         }
 
-        return substr($text, 0, 150) . '...';
+        return substr($text, 0, 150).'...';
     }
 
     /**

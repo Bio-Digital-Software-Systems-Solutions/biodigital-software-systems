@@ -51,7 +51,7 @@ class FormFieldFactory extends Factory
      */
     public function required(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_required' => true,
         ]);
     }
@@ -61,7 +61,7 @@ class FormFieldFactory extends Factory
      */
     public function readonly(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_readonly' => true,
         ]);
     }
@@ -71,7 +71,7 @@ class FormFieldFactory extends Factory
      */
     public function hidden(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_hidden' => true,
         ]);
     }
@@ -81,7 +81,7 @@ class FormFieldFactory extends Factory
      */
     public function type(FormFieldType $type): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => $type,
         ]);
     }
@@ -91,7 +91,7 @@ class FormFieldFactory extends Factory
      */
     public function withOptions(array $options): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'options' => $options,
         ]);
     }
@@ -101,7 +101,7 @@ class FormFieldFactory extends Factory
      */
     public function withValidation(array $validation): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'validation' => $validation,
         ]);
     }
@@ -111,7 +111,7 @@ class FormFieldFactory extends Factory
      */
     public function withConditionalLogic(array $logic): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'conditional_logic' => $logic,
         ]);
     }

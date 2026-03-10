@@ -192,8 +192,7 @@ class FormShareLinkTest extends TestCase
         $shareLink = FormShareLink::createForForm(
             $this->publishedForm,
             $this->user->id,
-            24,
-            null // Unlimited
+            24 // Unlimited
         );
 
         // Simulate many uses
@@ -953,8 +952,7 @@ class FormShareLinkTest extends TestCase
         $shareLink = FormShareLink::createForForm(
             $this->publishedForm,
             $this->user->id,
-            24,
-            null // Unlimited uses
+            24 // Unlimited uses
         );
 
         $this->assertGuest();

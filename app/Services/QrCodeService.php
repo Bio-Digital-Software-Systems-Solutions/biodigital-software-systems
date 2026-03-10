@@ -29,15 +29,15 @@ class QrCodeService
         // Log for debugging in production
         \Log::debug('QR Code generated', [
             'data_length' => strlen($data),
-            'result_length' => strlen($result),
-            'starts_with_data_image' => str_starts_with($result, 'data:image'),
-            'first_50_chars' => substr($result, 0, 50),
+            'result_length' => strlen((string) $result),
+            'starts_with_data_image' => str_starts_with((string) $result, 'data:image'),
+            'first_50_chars' => substr((string) $result, 0, 50),
         ]);
 
         // Validate the result is a proper data URL
-        if (! str_starts_with($result, 'data:image')) {
+        if (! str_starts_with((string) $result, 'data:image')) {
             \Log::error('QR Code generation returned invalid format', [
-                'result_preview' => substr($result, 0, 200),
+                'result_preview' => substr((string) $result, 0, 200),
             ]);
             throw new \RuntimeException('QR Code generation failed: invalid output format');
         }

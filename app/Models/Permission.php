@@ -54,8 +54,6 @@ class Permission extends SpatiePermission
 
     /**
      * Custom cache invalidation logic
-     *
-     * @return void
      */
     public function customCacheInvalidation(): void
     {

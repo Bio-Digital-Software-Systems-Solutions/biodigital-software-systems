@@ -5,7 +5,7 @@ use App\Models\User;
 use App\Services\TelegramNotificationService;
 use Illuminate\Support\Facades\Http;
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Set up Telegram config for tests
     config([
         'services.telegram.enabled' => true,
@@ -14,29 +14,29 @@ beforeEach(function () {
     ]);
 });
 
-describe('TelegramNotificationService', function () {
-    describe('isEnabled', function () {
-        it('returns true when properly configured', function () {
+describe('TelegramNotificationService', function (): void {
+    describe('isEnabled', function (): void {
+        it('returns true when properly configured', function (): void {
             $service = new TelegramNotificationService;
 
             expect($service->isEnabled())->toBeTrue();
         });
 
-        it('returns false when disabled', function () {
+        it('returns false when disabled', function (): void {
             config(['services.telegram.enabled' => false]);
             $service = new TelegramNotificationService;
 
             expect($service->isEnabled())->toBeFalse();
         });
 
-        it('returns false when bot token is missing', function () {
+        it('returns false when bot token is missing', function (): void {
             config(['services.telegram.bot_token' => null]);
             $service = new TelegramNotificationService;
 
             expect($service->isEnabled())->toBeFalse();
         });
 
-        it('returns false when bot token is empty', function () {
+        it('returns false when bot token is empty', function (): void {
             config(['services.telegram.bot_token' => '']);
             $service = new TelegramNotificationService;
 
@@ -44,22 +44,22 @@ describe('TelegramNotificationService', function () {
         });
     });
 
-    describe('getBotUsername', function () {
-        it('returns the configured bot username', function () {
+    describe('getBotUsername', function (): void {
+        it('returns the configured bot username', function (): void {
             $service = new TelegramNotificationService;
 
             expect($service->getBotUsername())->toBe('TestBot');
         });
     });
 
-    describe('getBotLink', function () {
-        it('returns the telegram bot link', function () {
+    describe('getBotLink', function (): void {
+        it('returns the telegram bot link', function (): void {
             $service = new TelegramNotificationService;
 
             expect($service->getBotLink())->toBe('https://t.me/TestBot');
         });
 
-        it('returns null when bot username is not configured', function () {
+        it('returns null when bot username is not configured', function (): void {
             config(['services.telegram.bot_username' => null]);
             $service = new TelegramNotificationService;
 
@@ -67,8 +67,8 @@ describe('TelegramNotificationService', function () {
         });
     });
 
-    describe('sendMessage', function () {
-        it('sends a message successfully', function () {
+    describe('sendMessage', function (): void {
+        it('sends a message successfully', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response([
                     'ok' => true,
@@ -84,15 +84,13 @@ describe('TelegramNotificationService', function () {
 
             expect($result)->toBeTrue();
 
-            Http::assertSent(function ($request) {
-                return str_contains($request->url(), '/sendMessage')
-                    && $request['chat_id'] === '12345'
-                    && $request['text'] === 'Test message'
-                    && $request['parse_mode'] === 'HTML';
-            });
+            Http::assertSent(fn($request): bool => str_contains((string) $request->url(), '/sendMessage')
+                && $request['chat_id'] === '12345'
+                && $request['text'] === 'Test message'
+                && $request['parse_mode'] === 'HTML');
         });
 
-        it('returns false when API returns error', function () {
+        it('returns false when API returns error', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response([
                     'ok' => false,
@@ -107,7 +105,7 @@ describe('TelegramNotificationService', function () {
             expect($result)->toBeFalse();
         });
 
-        it('returns false when service is disabled', function () {
+        it('returns false when service is disabled', function (): void {
             config(['services.telegram.enabled' => false]);
 
             $service = new TelegramNotificationService;
@@ -116,7 +114,7 @@ describe('TelegramNotificationService', function () {
             expect($result)->toBeFalse();
         });
 
-        it('handles exceptions gracefully', function () {
+        it('handles exceptions gracefully', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response(null, 500),
             ]);
@@ -128,8 +126,8 @@ describe('TelegramNotificationService', function () {
         });
     });
 
-    describe('sendReminder', function () {
-        it('sends reminder to participant with telegram configured', function () {
+    describe('sendReminder', function (): void {
+        it('sends reminder to participant with telegram configured', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 1]], 200),
             ]);
@@ -158,15 +156,13 @@ describe('TelegramNotificationService', function () {
 
             expect($result)->toBeTrue();
 
-            Http::assertSent(function ($request) {
-                return str_contains($request->url(), '/sendMessage')
-                    && $request['chat_id'] === '12345'
-                    && str_contains($request['text'], 'Test Appointment')
-                    && str_contains($request['text'], 'Jane');
-            });
+            Http::assertSent(fn($request): bool => str_contains((string) $request->url(), '/sendMessage')
+                && $request['chat_id'] === '12345'
+                && str_contains((string) $request['text'], 'Test Appointment')
+                && str_contains((string) $request['text'], 'Jane'));
         });
 
-        it('returns false when participant has no telegram_chat_id', function () {
+        it('returns false when participant has no telegram_chat_id', function (): void {
             $organizer = User::factory()->create();
             $participant = User::factory()->create([
                 'telegram_chat_id' => null,
@@ -183,7 +179,7 @@ describe('TelegramNotificationService', function () {
             expect($result)->toBeFalse();
         });
 
-        it('returns false when participant has telegram_notifications disabled', function () {
+        it('returns false when participant has telegram_notifications disabled', function (): void {
             $organizer = User::factory()->create();
             $participant = User::factory()->create([
                 'telegram_chat_id' => '12345',
@@ -201,8 +197,8 @@ describe('TelegramNotificationService', function () {
         });
     });
 
-    describe('sendOrganizerReminder', function () {
-        it('sends reminder to organizer with telegram configured', function () {
+    describe('sendOrganizerReminder', function (): void {
+        it('sends reminder to organizer with telegram configured', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 1]], 200),
             ]);
@@ -224,13 +220,11 @@ describe('TelegramNotificationService', function () {
 
             expect($result)->toBeTrue();
 
-            Http::assertSent(function ($request) {
-                return $request['chat_id'] === '67890'
-                    && str_contains($request['text'], 'Organizer Test');
-            });
+            Http::assertSent(fn($request): bool => $request['chat_id'] === '67890'
+                && str_contains((string) $request['text'], 'Organizer Test'));
         });
 
-        it('returns false when organizer has no telegram_chat_id', function () {
+        it('returns false when organizer has no telegram_chat_id', function (): void {
             $organizer = User::factory()->create([
                 'telegram_chat_id' => null,
             ]);
@@ -246,8 +240,8 @@ describe('TelegramNotificationService', function () {
         });
     });
 
-    describe('sendConfirmation', function () {
-        it('sends confirmation message', function () {
+    describe('sendConfirmation', function (): void {
+        it('sends confirmation message', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 1]], 200),
             ]);
@@ -273,15 +267,13 @@ describe('TelegramNotificationService', function () {
 
             expect($result)->toBeTrue();
 
-            Http::assertSent(function ($request) {
-                return str_contains($request['text'], 'Confirmation')
-                    && str_contains($request['text'], 'Confirmed Appointment');
-            });
+            Http::assertSent(fn($request): bool => str_contains((string) $request['text'], 'Confirmation')
+                && str_contains((string) $request['text'], 'Confirmed Appointment'));
         });
     });
 
-    describe('sendCancellation', function () {
-        it('sends cancellation message', function () {
+    describe('sendCancellation', function (): void {
+        it('sends cancellation message', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 1]], 200),
             ]);
@@ -303,15 +295,13 @@ describe('TelegramNotificationService', function () {
 
             expect($result)->toBeTrue();
 
-            Http::assertSent(function ($request) {
-                return str_contains($request['text'], 'Annulation')
-                    && str_contains($request['text'], 'Cancelled Appointment');
-            });
+            Http::assertSent(fn($request): bool => str_contains((string) $request['text'], 'Annulation')
+                && str_contains((string) $request['text'], 'Cancelled Appointment'));
         });
     });
 
-    describe('sendInvitation', function () {
-        it('sends invitation message with action links', function () {
+    describe('sendInvitation', function (): void {
+        it('sends invitation message with action links', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 1]], 200),
             ]);
@@ -344,17 +334,15 @@ describe('TelegramNotificationService', function () {
 
             expect($result)->toBeTrue();
 
-            Http::assertSent(function ($request) {
-                return str_contains($request['text'], 'Invitation')
-                    && str_contains($request['text'], 'Invitation Test')
-                    && str_contains($request['text'], 'https://example.com/confirm')
-                    && str_contains($request['text'], 'https://example.com/decline');
-            });
+            Http::assertSent(fn($request): bool => str_contains((string) $request['text'], 'Invitation')
+                && str_contains((string) $request['text'], 'Invitation Test')
+                && str_contains((string) $request['text'], 'https://example.com/confirm')
+                && str_contains((string) $request['text'], 'https://example.com/decline'));
         });
     });
 
-    describe('sendUpdate', function () {
-        it('sends update message with changes', function () {
+    describe('sendUpdate', function (): void {
+        it('sends update message with changes', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 1]], 200),
             ]);
@@ -381,16 +369,14 @@ describe('TelegramNotificationService', function () {
 
             expect($result)->toBeTrue();
 
-            Http::assertSent(function ($request) {
-                return str_contains($request['text'], 'Mise a jour')
-                    && str_contains($request['text'], 'Titre')
-                    && str_contains($request['text'], 'Lieu');
-            });
+            Http::assertSent(fn($request): bool => str_contains((string) $request['text'], 'Mise a jour')
+                && str_contains((string) $request['text'], 'Titre')
+                && str_contains((string) $request['text'], 'Lieu'));
         });
     });
 
-    describe('sendRemindersToAllParticipants', function () {
-        it('sends reminders to all participants with telegram enabled', function () {
+    describe('sendRemindersToAllParticipants', function (): void {
+        it('sends reminders to all participants with telegram enabled', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 1]], 200),
             ]);
@@ -430,8 +416,8 @@ describe('TelegramNotificationService', function () {
         });
     });
 
-    describe('getBotInfo', function () {
-        it('returns bot info when successful', function () {
+    describe('getBotInfo', function (): void {
+        it('returns bot info when successful', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response([
                     'ok' => true,
@@ -452,7 +438,7 @@ describe('TelegramNotificationService', function () {
             expect($info['username'])->toBe('test_bot');
         });
 
-        it('returns null when disabled', function () {
+        it('returns null when disabled', function (): void {
             config(['services.telegram.enabled' => false]);
 
             $service = new TelegramNotificationService;
@@ -461,7 +447,7 @@ describe('TelegramNotificationService', function () {
             expect($info)->toBeNull();
         });
 
-        it('returns null on API error', function () {
+        it('returns null on API error', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response(['ok' => false], 401),
             ]);
@@ -473,8 +459,8 @@ describe('TelegramNotificationService', function () {
         });
     });
 
-    describe('getUpdates', function () {
-        it('returns updates when successful', function () {
+    describe('getUpdates', function (): void {
+        it('returns updates when successful', function (): void {
             Http::fake([
                 'api.telegram.org/*' => Http::response([
                     'ok' => true,
@@ -492,7 +478,7 @@ describe('TelegramNotificationService', function () {
             expect($updates)->toHaveCount(2);
         });
 
-        it('returns empty array when disabled', function () {
+        it('returns empty array when disabled', function (): void {
             config(['services.telegram.enabled' => false]);
 
             $service = new TelegramNotificationService;

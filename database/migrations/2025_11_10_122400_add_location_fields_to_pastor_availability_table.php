@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pastor_availability', function (Blueprint $table) {
+        Schema::table('pastor_availability', function (Blueprint $table): void {
             $table->string('location')->nullable()->after('meeting_link');
             $table->string('room')->nullable()->after('location');
         });
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pastor_availability', function (Blueprint $table) {
+        Schema::table('pastor_availability', function (Blueprint $table): void {
             $table->dropColumn(['location', 'room']);
         });
     }

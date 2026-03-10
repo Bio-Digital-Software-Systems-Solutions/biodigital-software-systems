@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Templates de rapports
-        Schema::create('report_templates', function (Blueprint $table) {
+        Schema::create('report_templates', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('department_id')->nullable()->constrained()->nullOnDelete();
@@ -31,7 +31,7 @@ return new class extends Migration
         });
 
         // 2. Rapports départementaux
-        Schema::create('department_reports', function (Blueprint $table) {
+        Schema::create('department_reports', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('department_id')->constrained()->cascadeOnDelete();
@@ -63,7 +63,7 @@ return new class extends Migration
         });
 
         // 3. Sections de rapport
-        Schema::create('report_sections', function (Blueprint $table) {
+        Schema::create('report_sections', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('report_id')->constrained('department_reports')->cascadeOnDelete();
@@ -83,7 +83,7 @@ return new class extends Migration
         });
 
         // 4. Activités départementales
-        Schema::create('department_activities', function (Blueprint $table) {
+        Schema::create('department_activities', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('department_id')->constrained()->cascadeOnDelete();
@@ -107,7 +107,7 @@ return new class extends Migration
         });
 
         // 5. Objectifs départementaux
-        Schema::create('department_objectives', function (Blueprint $table) {
+        Schema::create('department_objectives', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('department_id')->constrained()->cascadeOnDelete();
@@ -136,7 +136,7 @@ return new class extends Migration
         });
 
         // 6. KPIs départementaux
-        Schema::create('department_kpis', function (Blueprint $table) {
+        Schema::create('department_kpis', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('department_id')->constrained()->cascadeOnDelete();
@@ -161,7 +161,7 @@ return new class extends Migration
         });
 
         // 7. Valeurs des KPIs
-        Schema::create('department_kpi_values', function (Blueprint $table) {
+        Schema::create('department_kpi_values', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('kpi_id')->constrained('department_kpis')->cascadeOnDelete();
             $table->foreignId('report_id')->nullable()->constrained('department_reports')->nullOnDelete();
@@ -177,7 +177,7 @@ return new class extends Migration
         });
 
         // 8. Approbations de rapport
-        Schema::create('report_approvals', function (Blueprint $table) {
+        Schema::create('report_approvals', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('report_id')->constrained('department_reports')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -194,7 +194,7 @@ return new class extends Migration
         });
 
         // 9. Commentaires de rapport
-        Schema::create('report_comments', function (Blueprint $table) {
+        Schema::create('report_comments', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('report_id')->constrained('department_reports')->cascadeOnDelete();
@@ -216,7 +216,7 @@ return new class extends Migration
         });
 
         // 10. Versions de rapport
-        Schema::create('report_versions', function (Blueprint $table) {
+        Schema::create('report_versions', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('report_id')->constrained('department_reports')->cascadeOnDelete();
             $table->unsignedInteger('version_number');
@@ -230,7 +230,7 @@ return new class extends Migration
         });
 
         // 11. Pièces jointes
-        Schema::create('report_attachments', function (Blueprint $table) {
+        Schema::create('report_attachments', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('report_id')->constrained('department_reports')->cascadeOnDelete();
@@ -250,7 +250,7 @@ return new class extends Migration
         });
 
         // 12. Rappels
-        Schema::create('report_reminders', function (Blueprint $table) {
+        Schema::create('report_reminders', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('department_id')->constrained()->cascadeOnDelete();
             $table->foreignId('template_id')->nullable()->constrained('report_templates')->nullOnDelete();
@@ -267,7 +267,7 @@ return new class extends Migration
         });
 
         // 13. Tags de rapport
-        Schema::create('report_tags', function (Blueprint $table) {
+        Schema::create('report_tags', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('report_id')->constrained('department_reports')->cascadeOnDelete();
             $table->string('tag', 50);

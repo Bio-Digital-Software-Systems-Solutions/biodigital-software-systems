@@ -195,7 +195,7 @@ class ProjectController extends Controller
             'user_id' => $currentUser->id,
             'content' => $validated['content'],
             'parent_id' => $validated['parent_id'] ?? null,
-            'mentions' => ! empty($validMentions) ? $validMentions : null,
+            'mentions' => $validMentions === [] ? null : $validMentions,
         ]);
 
         // Send notifications to all project participants
@@ -214,14 +214,14 @@ class ProjectController extends Controller
      */
     private function notifyMentionedUsersOnProject(Project $project, ProjectComment $comment, User $mentionedBy, array $mentionedUserIds): void
     {
-        if (empty($mentionedUserIds)) {
+        if ($mentionedUserIds === []) {
             return;
         }
 
         // Don't notify the user who wrote the comment
-        $mentionedUserIds = array_filter($mentionedUserIds, fn ($id) => $id !== $mentionedBy->id);
+        $mentionedUserIds = array_filter($mentionedUserIds, fn ($id): bool => $id !== $mentionedBy->id);
 
-        if (empty($mentionedUserIds)) {
+        if ($mentionedUserIds === []) {
             return;
         }
 
@@ -240,7 +240,7 @@ class ProjectController extends Controller
         $mentionService = new MentionService;
         $users = $mentionService->getMentionableUsersForProject($project->id);
 
-        return response()->json($users->map(fn ($user) => [
+        return response()->json($users->map(fn ($user): array => [
             'id' => $user->id,
             'uuid' => $user->uuid,
             'first_name' => $user->first_name,
@@ -281,7 +281,7 @@ class ProjectController extends Controller
         // Remove duplicates and the user who commented
         $usersToNotify = $usersToNotify
             ->unique('id')
-            ->filter(fn ($user) => $user->id !== $commentedBy->id);
+            ->filter(fn ($user): bool => $user->id !== $commentedBy->id);
 
         // Send notifications
         foreach ($usersToNotify as $user) {
@@ -306,7 +306,7 @@ class ProjectController extends Controller
 
     public function uploadAttachment(Request $request, Project $project): JsonResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'file' => 'required|file|max:51200', // Max 50MB
         ]);
 
@@ -317,9 +317,9 @@ class ProjectController extends Controller
 
         // Determine file type
         $fileType = 'document';
-        if (str_starts_with($mimeType, 'image/')) {
+        if (str_starts_with((string) $mimeType, 'image/')) {
             $fileType = 'image';
-        } elseif (str_starts_with($mimeType, 'video/')) {
+        } elseif (str_starts_with((string) $mimeType, 'video/')) {
             $fileType = 'video';
         }
 
@@ -371,7 +371,7 @@ class ProjectController extends Controller
             'assigned_to' => $validated['assigned_to'] ?? null,
             'reporter_id' => $request->user()->id,
             'project_id' => $project->id,
-            'taskable_type' => 'App\\Models\\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
         ]);
 

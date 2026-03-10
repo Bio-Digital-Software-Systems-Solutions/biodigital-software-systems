@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('department_todos', function (Blueprint $table) {
+        Schema::table('department_todos', function (Blueprint $table): void {
             $table->json('backup_assignees')->nullable()->after('assigned_to');
         });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('department_todos', function (Blueprint $table) {
+        Schema::table('department_todos', function (Blueprint $table): void {
             $table->dropColumn('backup_assignees');
         });
     }

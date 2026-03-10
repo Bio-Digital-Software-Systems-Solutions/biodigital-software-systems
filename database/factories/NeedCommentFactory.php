@@ -38,7 +38,7 @@ class NeedCommentFactory extends Factory
      */
     public function internal(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_internal' => true,
         ]);
     }
@@ -48,7 +48,7 @@ class NeedCommentFactory extends Factory
      */
     public function reply(NeedComment $parent): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'need_id' => $parent->need_id,
             'parent_id' => $parent->id,
         ]);
@@ -59,7 +59,7 @@ class NeedCommentFactory extends Factory
      */
     public function withMentions(array $userIds): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'mentions' => $userIds,
         ]);
     }

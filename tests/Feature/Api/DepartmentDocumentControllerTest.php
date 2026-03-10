@@ -629,7 +629,7 @@ class DepartmentDocumentControllerTest extends TestCase
 
         $response->assertCreated();
 
-        $filePath = $response->json('data.file_name');
+        $response->json('data.file_name');
         $expectedDir = 'department_documents/' . $this->department->id . '/2026/3';
 
         // Check that file was stored in correct directory
@@ -1018,7 +1018,7 @@ class DepartmentDocumentControllerTest extends TestCase
     /** @test */
     public function it_does_not_include_deleted_documents_in_search(): void
     {
-        $activeDoc = DepartmentDocument::factory()
+        DepartmentDocument::factory()
             ->forDepartment($this->department)
             ->uploadedBy($this->user)
             ->create(['title' => 'Active Budget Report']);

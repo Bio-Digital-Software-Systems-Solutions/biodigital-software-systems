@@ -100,7 +100,7 @@ class ReportGeneratorService
         ?Carbon $referenceDate = null,
         ?int $authorId = null
     ): DepartmentReport {
-        $referenceDate = $referenceDate ?? Carbon::now();
+        $referenceDate ??= Carbon::now();
         [$periodStart, $periodEnd] = $periodType->getDates($referenceDate);
 
         $report = $this->createReport([
@@ -303,14 +303,14 @@ class ReportGeneratorService
 
         return [
             'report' => $report->toExportArray(),
-            'sections' => $report->sections->map(fn($s) => [
+            'sections' => $report->sections->map(fn($s): array => [
                 'type' => $s->type->value,
                 'type_label' => $s->type_label,
                 'title' => $s->title,
                 'content' => $s->content,
                 'is_complete' => $s->is_complete,
             ])->toArray(),
-            'attachments' => $report->attachments->map(fn($a) => [
+            'attachments' => $report->attachments->map(fn($a): array => [
                 'filename' => $a->original_filename,
                 'url' => $a->url,
                 'size' => $a->size_formatted,
@@ -485,7 +485,7 @@ class ReportGeneratorService
 
         return [
             'headers' => ['Objectif', 'Statut', 'Progrès', 'Échéance', 'Responsable'],
-            'rows' => array_map(fn($o) => [
+            'rows' => array_map(fn(array $o): array => [
                 $o['title'],
                 $o['status_label'],
                 $o['progress'] . '%',
@@ -500,7 +500,7 @@ class ReportGeneratorService
         $objectives = $data['objectives']['list'] ?? [];
 
         return [
-            'items' => array_map(fn($o) => [
+            'items' => array_map(fn(array $o): array => [
                 'label' => $o['title'],
                 'completed' => $o['status'] === 'completed',
                 'progress' => $o['progress'],
@@ -513,7 +513,7 @@ class ReportGeneratorService
         $activities = $data['activities']['recent'] ?? [];
 
         return [
-            'items' => array_map(fn($a) => [
+            'items' => array_map(fn(array $a): array => [
                 'title' => $a['title'],
                 'subtitle' => $a['category_label'] . ' - ' . $a['date'],
                 'metadata' => $a['duration'] ? $a['duration'] . 'h' : null,
@@ -536,7 +536,7 @@ class ReportGeneratorService
         $activities = $data['activities']['timeline'] ?? [];
 
         return [
-            'events' => array_map(fn($a) => [
+            'events' => array_map(fn(array $a): array => [
                 'date' => $a['date'],
                 'title' => $a['count'] . ' activités',
                 'description' => $a['hours'] . ' heures',

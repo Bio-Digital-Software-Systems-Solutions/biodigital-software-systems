@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pastoral_care_pastoral_care_theme', function (Blueprint $table) {
+        Schema::create('pastoral_care_pastoral_care_theme', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('pastoral_care_id')->constrained()->onDelete('cascade');
             $table->foreignId('pastoral_care_theme_id')->constrained()->onDelete('cascade');

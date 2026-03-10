@@ -14,6 +14,55 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $department_id
+ * @property \Illuminate\Support\Carbon $week_start
+ * @property \Illuminate\Support\Carbon $week_end
+ * @property ScheduleStatus $status
+ * @property string|null $notes
+ * @property int|null $created_by
+ * @property int|null $published_by
+ * @property \Illuminate\Support\Carbon|null $published_at
+ * @property \Illuminate\Support\Carbon|null $locked_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read User|null $createdBy
+ * @property-read Department $department
+ * @property-read bool $is_current_week
+ * @property-read bool $is_editable
+ * @property-read bool $is_locked
+ * @property-read bool $is_past
+ * @property-read string $week_label
+ * @property-read int $week_number
+ * @property-read User|null $publishedBy
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Shift> $shifts
+ * @property-read int|null $shifts_count
+ * @method static Builder<static>|WeeklySchedule current()
+ * @method static \Database\Factories\Scheduling\WeeklyScheduleFactory factory($count = null, $state = [])
+ * @method static Builder<static>|WeeklySchedule forDepartment(int $departmentId)
+ * @method static Builder<static>|WeeklySchedule forWeek(\Carbon\Carbon $date)
+ * @method static Builder<static>|WeeklySchedule newModelQuery()
+ * @method static Builder<static>|WeeklySchedule newQuery()
+ * @method static Builder<static>|WeeklySchedule published()
+ * @method static Builder<static>|WeeklySchedule query()
+ * @method static Builder<static>|WeeklySchedule upcoming()
+ * @method static Builder<static>|WeeklySchedule whereCreatedAt($value)
+ * @method static Builder<static>|WeeklySchedule whereCreatedBy($value)
+ * @method static Builder<static>|WeeklySchedule whereDepartmentId($value)
+ * @method static Builder<static>|WeeklySchedule whereId($value)
+ * @method static Builder<static>|WeeklySchedule whereLockedAt($value)
+ * @method static Builder<static>|WeeklySchedule whereNotes($value)
+ * @method static Builder<static>|WeeklySchedule wherePublishedAt($value)
+ * @method static Builder<static>|WeeklySchedule wherePublishedBy($value)
+ * @method static Builder<static>|WeeklySchedule whereStatus($value)
+ * @method static Builder<static>|WeeklySchedule whereUpdatedAt($value)
+ * @method static Builder<static>|WeeklySchedule whereUuid($value)
+ * @method static Builder<static>|WeeklySchedule whereWeekEnd($value)
+ * @method static Builder<static>|WeeklySchedule whereWeekStart($value)
+ * @mixin \Eloquent
+ */
 class WeeklySchedule extends Model
 {
     use HasFactory;
@@ -43,7 +92,7 @@ class WeeklySchedule extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
@@ -85,6 +134,7 @@ class WeeklySchedule extends Model
     public function scopeForWeek(Builder $query, Carbon $date): Builder
     {
         $weekStart = $date->copy()->startOfWeek(Carbon::MONDAY);
+
         return $query->where('week_start', $weekStart);
     }
 
@@ -96,6 +146,7 @@ class WeeklySchedule extends Model
     public function scopeCurrent(Builder $query): Builder
     {
         $now = Carbon::now();
+
         return $query->where('week_start', '<=', $now)
             ->where('week_end', '>=', $now);
     }
@@ -108,14 +159,14 @@ class WeeklySchedule extends Model
     // Accessors
     public function getWeekLabelAttribute(): string
     {
-        return 'Semaine ' . $this->week_start->isoWeek() . ' (' .
-            $this->week_start->format('d/m') . ' - ' .
-            $this->week_end->format('d/m/Y') . ')';
+        return 'Semaine '.$this->week_start->isoWeek().' ('.
+            $this->week_start->format('d/m').' - '.
+            $this->week_end->format('d/m/Y').')';
     }
 
     public function getWeekNumberAttribute(): int
     {
-        return $this->week_start->isoWeek();
+        return (int) $this->week_start->isoWeek();
     }
 
     public function getIsEditableAttribute(): bool
@@ -131,6 +182,7 @@ class WeeklySchedule extends Model
     public function getIsCurrentWeekAttribute(): bool
     {
         $now = Carbon::now();
+
         return $this->week_start <= $now && $this->week_end >= $now;
     }
 
@@ -142,7 +194,7 @@ class WeeklySchedule extends Model
     // Methods
     public function publish(User $user): bool
     {
-        if (!$this->status->canTransitionTo(ScheduleStatus::PUBLISHED)) {
+        if (! $this->status->canTransitionTo(ScheduleStatus::PUBLISHED)) {
             return false;
         }
 
@@ -157,7 +209,7 @@ class WeeklySchedule extends Model
 
     public function lock(): bool
     {
-        if (!$this->status->canTransitionTo(ScheduleStatus::LOCKED)) {
+        if (! $this->status->canTransitionTo(ScheduleStatus::LOCKED)) {
             return false;
         }
 
@@ -224,7 +276,7 @@ class WeeklySchedule extends Model
 
     public function getTotalPlannedHours(): float
     {
-        return $this->shifts()->sum('planned_hours');
+        return (float) $this->shifts()->sum('planned_hours');
     }
 
     public function getCompletionRate(): float
@@ -234,6 +286,7 @@ class WeeklySchedule extends Model
             return 100;
         }
         $assigned = $this->shifts()->whereNotNull('assigned_to')->count();
+
         return round(($assigned / $total) * 100, 1);
     }
 }

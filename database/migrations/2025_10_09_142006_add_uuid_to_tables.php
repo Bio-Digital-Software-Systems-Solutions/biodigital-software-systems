@@ -40,19 +40,19 @@ return new class extends Migration
             }
 
             // Add uuid column
-            Schema::table($tableName, function (Blueprint $table) {
+            Schema::table($tableName, function (Blueprint $table): void {
                 $table->uuid('uuid')->nullable()->after('id');
             });
 
             // Generate UUIDs for existing records
-            DB::table($tableName)->whereNull('uuid')->cursor()->each(function ($record) use ($tableName) {
+            DB::table($tableName)->whereNull('uuid')->cursor()->each(function ($record) use ($tableName): void {
                 DB::table($tableName)
                     ->where('id', $record->id)
                     ->update(['uuid' => (string) Str::uuid()]);
             });
 
             // Make uuid unique and non-nullable
-            Schema::table($tableName, function (Blueprint $table) {
+            Schema::table($tableName, function (Blueprint $table): void {
                 $table->uuid('uuid')->unique()->nullable(false)->change();
             });
         }
@@ -76,7 +76,7 @@ return new class extends Migration
         ];
 
         foreach ($tables as $tableName) {
-            Schema::table($tableName, function (Blueprint $table) {
+            Schema::table($tableName, function (Blueprint $table): void {
                 $table->dropColumn('uuid');
             });
         }

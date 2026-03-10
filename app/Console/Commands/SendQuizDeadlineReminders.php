@@ -27,7 +27,7 @@ class SendQuizDeadlineReminders extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
         $this->info('Checking for quizzes with upcoming deadlines...');
 
@@ -40,7 +40,7 @@ class SendQuizDeadlineReminders extends Command
             ->where('status', 'published')
             ->whereNotNull('available_until')
             ->where('available_until', '>', $now)
-            ->where(function ($query) use ($threeDaysFromNow, $oneDayFromNow) {
+            ->where(function ($query) use ($threeDaysFromNow, $oneDayFromNow): void {
                 // Deadline is in approximately 3 days (within 1 hour window)
                 $query->whereBetween('available_until', [
                     $threeDaysFromNow->copy()->subHour(),
@@ -68,7 +68,7 @@ class SendQuizDeadlineReminders extends Command
 
             // Get all enrolled students for this training
             $enrolledStudents = $quiz->training->users()
-                ->whereHas('roles', function ($query) {
+                ->whereHas('roles', function ($query): void {
                     $query->whereIn('name', ['member', 'student']);
                 })
                 ->get();

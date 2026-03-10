@@ -53,7 +53,7 @@ class DepartmentFormFieldFactory extends Factory
      */
     public function required(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_required' => true,
         ]);
     }
@@ -63,7 +63,7 @@ class DepartmentFormFieldFactory extends Factory
      */
     public function text(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => FieldType::Text,
         ]);
     }
@@ -73,7 +73,7 @@ class DepartmentFormFieldFactory extends Factory
      */
     public function email(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => FieldType::Email,
             'name' => 'email',
             'label' => 'Email Address',
@@ -85,7 +85,7 @@ class DepartmentFormFieldFactory extends Factory
      */
     public function textarea(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => FieldType::Textarea,
         ]);
     }
@@ -95,7 +95,7 @@ class DepartmentFormFieldFactory extends Factory
      */
     public function number(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => FieldType::Number,
         ]);
     }
@@ -111,7 +111,7 @@ class DepartmentFormFieldFactory extends Factory
             ['label' => 'Option 3', 'value' => 'option_3'],
         ];
 
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => FieldType::Select,
             'options' => $options ?: $defaultOptions,
         ]);
@@ -122,7 +122,7 @@ class DepartmentFormFieldFactory extends Factory
      */
     public function checkbox(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => FieldType::Checkbox,
         ]);
     }
@@ -132,7 +132,7 @@ class DepartmentFormFieldFactory extends Factory
      */
     public function date(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => FieldType::Date,
         ]);
     }
@@ -142,7 +142,7 @@ class DepartmentFormFieldFactory extends Factory
      */
     public function file(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => FieldType::File,
         ]);
     }
@@ -152,7 +152,7 @@ class DepartmentFormFieldFactory extends Factory
      */
     public function halfWidth(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'width' => 'half',
         ]);
     }

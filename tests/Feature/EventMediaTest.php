@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
-beforeEach(function () {
+beforeEach(function (): void {
     Storage::fake('public');
 
     // Create permissions
@@ -26,8 +26,8 @@ beforeEach(function () {
     $memberRole->syncPermissions(['view events']);
 });
 
-describe('EventMedia Model', function () {
-    it('can be created with required fields', function () {
+describe('EventMedia Model', function (): void {
+    it('can be created with required fields', function (): void {
         $event = Event::factory()->create();
         $user = User::factory()->create();
 
@@ -49,7 +49,7 @@ describe('EventMedia Model', function () {
         expect($media->collection)->toBe('gallery');
     });
 
-    it('belongs to an event', function () {
+    it('belongs to an event', function (): void {
         $event = Event::factory()->create();
         $media = EventMedia::factory()->create(['event_id' => $event->id]);
 
@@ -57,7 +57,7 @@ describe('EventMedia Model', function () {
         expect($media->event->id)->toBe($event->id);
     });
 
-    it('belongs to an uploader', function () {
+    it('belongs to an uploader', function (): void {
         $user = User::factory()->create();
         $media = EventMedia::factory()->create(['uploaded_by' => $user->id]);
 
@@ -65,7 +65,7 @@ describe('EventMedia Model', function () {
         expect($media->uploader->id)->toBe($user->id);
     });
 
-    it('can filter by media type', function () {
+    it('can filter by media type', function (): void {
         $event = Event::factory()->create();
 
         EventMedia::factory()->image()->count(3)->create(['event_id' => $event->id]);
@@ -75,7 +75,7 @@ describe('EventMedia Model', function () {
         expect(EventMedia::where('event_id', $event->id)->videos()->count())->toBe(2);
     });
 
-    it('can filter by collection', function () {
+    it('can filter by collection', function (): void {
         $event = Event::factory()->create();
 
         EventMedia::factory()->banner()->count(1)->create(['event_id' => $event->id]);
@@ -85,7 +85,7 @@ describe('EventMedia Model', function () {
         expect(EventMedia::where('event_id', $event->id)->gallery()->count())->toBe(4);
     });
 
-    it('can determine if media is image', function () {
+    it('can determine if media is image', function (): void {
         $image = EventMedia::factory()->image()->create();
         $video = EventMedia::factory()->video()->create();
 
@@ -93,7 +93,7 @@ describe('EventMedia Model', function () {
         expect($video->isImage())->toBeFalse();
     });
 
-    it('can determine if media is video', function () {
+    it('can determine if media is video', function (): void {
         $image = EventMedia::factory()->image()->create();
         $video = EventMedia::factory()->video()->create();
 
@@ -101,7 +101,7 @@ describe('EventMedia Model', function () {
         expect($video->isVideo())->toBeTrue();
     });
 
-    it('can set media as featured', function () {
+    it('can set media as featured', function (): void {
         $event = Event::factory()->create();
         $media1 = EventMedia::factory()->featured()->create(['event_id' => $event->id]);
         $media2 = EventMedia::factory()->create(['event_id' => $event->id, 'is_featured' => false]);
@@ -118,7 +118,7 @@ describe('EventMedia Model', function () {
         expect($media2->is_featured)->toBeTrue();
     });
 
-    it('generates correct file url', function () {
+    it('generates correct file url', function (): void {
         $media = EventMedia::factory()->create([
             'file_path' => 'events/media/test.jpg',
         ]);
@@ -126,7 +126,7 @@ describe('EventMedia Model', function () {
         expect($media->file_url)->toContain('storage/events/media/test.jpg');
     });
 
-    it('formats file size for humans', function () {
+    it('formats file size for humans', function (): void {
         $media = EventMedia::factory()->create(['file_size' => 1536]);
         expect($media->file_size_for_humans)->toBe('1.5 KB');
 
@@ -134,7 +134,7 @@ describe('EventMedia Model', function () {
         expect($media->file_size_for_humans)->toBe('1.5 MB');
     });
 
-    it('formats duration for humans', function () {
+    it('formats duration for humans', function (): void {
         $media = EventMedia::factory()->video()->create(['duration' => 125]);
         expect($media->duration_for_humans)->toBe('2:05');
 
@@ -142,7 +142,7 @@ describe('EventMedia Model', function () {
         expect($media->duration_for_humans)->toBe('1:02:05');
     });
 
-    it('detects media type from mime', function () {
+    it('detects media type from mime', function (): void {
         expect(EventMedia::getMediaTypeFromMime('image/jpeg'))->toBe('image');
         expect(EventMedia::getMediaTypeFromMime('image/png'))->toBe('image');
         expect(EventMedia::getMediaTypeFromMime('video/mp4'))->toBe('video');
@@ -151,15 +151,15 @@ describe('EventMedia Model', function () {
     });
 });
 
-describe('Event Model Media Relationships', function () {
-    it('has many media', function () {
+describe('Event Model Media Relationships', function (): void {
+    it('has many media', function (): void {
         $event = Event::factory()->create();
         EventMedia::factory()->count(5)->create(['event_id' => $event->id]);
 
         expect($event->media)->toHaveCount(5);
     });
 
-    it('can get only images', function () {
+    it('can get only images', function (): void {
         $event = Event::factory()->create();
         EventMedia::factory()->image()->count(3)->create(['event_id' => $event->id]);
         EventMedia::factory()->video()->count(2)->create(['event_id' => $event->id]);
@@ -167,7 +167,7 @@ describe('Event Model Media Relationships', function () {
         expect($event->images()->get())->toHaveCount(3);
     });
 
-    it('can get only videos', function () {
+    it('can get only videos', function (): void {
         $event = Event::factory()->create();
         EventMedia::factory()->image()->count(3)->create(['event_id' => $event->id]);
         EventMedia::factory()->video()->count(2)->create(['event_id' => $event->id]);
@@ -175,7 +175,7 @@ describe('Event Model Media Relationships', function () {
         expect($event->videos()->get())->toHaveCount(2);
     });
 
-    it('can get banners', function () {
+    it('can get banners', function (): void {
         $event = Event::factory()->create();
         EventMedia::factory()->image()->banner()->create(['event_id' => $event->id]);
         EventMedia::factory()->image()->gallery()->count(3)->create(['event_id' => $event->id]);
@@ -183,7 +183,7 @@ describe('Event Model Media Relationships', function () {
         expect($event->banners()->get())->toHaveCount(1);
     });
 
-    it('can get gallery media', function () {
+    it('can get gallery media', function (): void {
         $event = Event::factory()->create();
         EventMedia::factory()->banner()->create(['event_id' => $event->id]);
         EventMedia::factory()->gallery()->count(4)->create(['event_id' => $event->id]);
@@ -192,8 +192,8 @@ describe('Event Model Media Relationships', function () {
     });
 });
 
-describe('EventMediaController', function () {
-    it('requires authentication to upload media', function () {
+describe('EventMediaController', function (): void {
+    it('requires authentication to upload media', function (): void {
         $event = Event::factory()->create();
 
         $response = $this->postJson(route('events.media.store', $event->uuid), [
@@ -203,7 +203,7 @@ describe('EventMediaController', function () {
         $response->assertUnauthorized();
     });
 
-    it('requires edit events permission to upload media', function () {
+    it('requires edit events permission to upload media', function (): void {
         $user = User::factory()->create();
         $user->assignRole('member');
         $event = Event::factory()->create();
@@ -215,7 +215,7 @@ describe('EventMediaController', function () {
         $response->assertForbidden();
     });
 
-    it('allows admin to upload image', function () {
+    it('allows admin to upload image', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -240,7 +240,7 @@ describe('EventMediaController', function () {
         ]);
     });
 
-    it('allows admin to upload video', function () {
+    it('allows admin to upload video', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -260,7 +260,7 @@ describe('EventMediaController', function () {
         ]);
     });
 
-    it('validates file type', function () {
+    it('validates file type', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -273,7 +273,7 @@ describe('EventMediaController', function () {
         $response->assertJsonValidationErrors(['file']);
     });
 
-    it('allows admin to update media', function () {
+    it('allows admin to update media', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -296,7 +296,7 @@ describe('EventMediaController', function () {
         ]);
     });
 
-    it('allows admin to delete media', function () {
+    it('allows admin to delete media', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -310,7 +310,7 @@ describe('EventMediaController', function () {
         $this->assertSoftDeleted('event_media', ['id' => $media->id]);
     });
 
-    it('allows admin to set media as banner', function () {
+    it('allows admin to set media as banner', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -326,7 +326,7 @@ describe('EventMediaController', function () {
         expect($media->collection)->toBe('banner');
     });
 
-    it('allows admin to set media as featured', function () {
+    it('allows admin to set media as featured', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -345,7 +345,7 @@ describe('EventMediaController', function () {
         expect($media->is_featured)->toBeTrue();
     });
 
-    it('allows admin to reorder media', function () {
+    it('allows admin to reorder media', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -372,7 +372,7 @@ describe('EventMediaController', function () {
         expect($media2->sort_order)->toBe(2);
     });
 
-    it('prevents updating media from different event', function () {
+    it('prevents updating media from different event', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event1 = Event::factory()->create();
@@ -387,7 +387,7 @@ describe('EventMediaController', function () {
         $response->assertNotFound();
     });
 
-    it('allows admin to upload banner image directly', function () {
+    it('allows admin to upload banner image directly', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -406,7 +406,7 @@ describe('EventMediaController', function () {
         ]);
     });
 
-    it('replaces previous banner when uploading new one', function () {
+    it('replaces previous banner when uploading new one', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -430,7 +430,7 @@ describe('EventMediaController', function () {
         expect($event->banners()->first()->id)->toBe($media->id);
     });
 
-    it('validates video MIME types correctly', function () {
+    it('validates video MIME types correctly', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -452,7 +452,7 @@ describe('EventMediaController', function () {
         }
     });
 
-    it('rejects invalid video types', function () {
+    it('rejects invalid video types', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -465,7 +465,7 @@ describe('EventMediaController', function () {
         $response->assertJsonValidationErrors(['file']);
     });
 
-    it('validates image MIME types correctly', function () {
+    it('validates image MIME types correctly', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -482,8 +482,8 @@ describe('EventMediaController', function () {
     });
 });
 
-describe('EventController with Media', function () {
-    it('includes media in event show page', function () {
+describe('EventController with Media', function (): void {
+    it('includes media in event show page', function (): void {
         $user = User::factory()->create();
         $user->assignRole('member');
         $event = Event::factory()->create();
@@ -506,7 +506,7 @@ describe('EventController with Media', function () {
         );
     });
 
-    it('includes media in event edit page', function () {
+    it('includes media in event edit page', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create(['user_id' => $user->id]);
@@ -527,7 +527,7 @@ describe('EventController with Media', function () {
         );
     });
 
-    it('filters out media without existing files', function () {
+    it('filters out media without existing files', function (): void {
         $user = User::factory()->create();
         $user->assignRole('member');
         $event = Event::factory()->create();
@@ -547,15 +547,13 @@ describe('EventController with Media', function () {
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('Events/Show')
-            ->where('galleryImages', function ($images) {
-                return count($images) === 1;
-            })
+            ->where('galleryImages', fn($images): bool => count($images) === 1)
         );
     });
 });
 
-describe('EventMedia File Validation', function () {
-    it('can check if file exists', function () {
+describe('EventMedia File Validation', function (): void {
+    it('can check if file exists', function (): void {
         $media = EventMedia::factory()->create();
 
         // File doesn't exist
@@ -570,7 +568,7 @@ describe('EventMedia File Validation', function () {
         expect($media->file_exists)->toBeTrue();
     });
 
-    it('returns correct file size for humans', function () {
+    it('returns correct file size for humans', function (): void {
         $media = EventMedia::factory()->create(['file_size' => 500]);
         expect($media->file_size_for_humans)->toBe('500 B');
 
@@ -585,8 +583,8 @@ describe('EventMedia File Validation', function () {
     });
 });
 
-describe('Video Thumbnail Generation', function () {
-    it('stores thumbnail_path when video is uploaded', function () {
+describe('Video Thumbnail Generation', function (): void {
+    it('stores thumbnail_path when video is uploaded', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -613,7 +611,7 @@ describe('Video Thumbnail Generation', function () {
         expect($media->duration)->toBe(121); // Rounded from 120.5
     });
 
-    it('stores video duration when video is uploaded', function () {
+    it('stores video duration when video is uploaded', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -634,7 +632,7 @@ describe('Video Thumbnail Generation', function () {
         expect($media->duration)->toBe(300);
     });
 
-    it('handles null duration gracefully', function () {
+    it('handles null duration gracefully', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -655,7 +653,7 @@ describe('Video Thumbnail Generation', function () {
         expect($media->duration)->toBeNull();
     });
 
-    it('does not generate thumbnail for images', function () {
+    it('does not generate thumbnail for images', function (): void {
         $user = User::factory()->create();
         $user->assignRole('admin');
         $event = Event::factory()->create();
@@ -678,7 +676,7 @@ describe('Video Thumbnail Generation', function () {
         expect($media->thumbnail_path)->toBeNull();
     });
 
-    it('returns thumbnail_url in API response', function () {
+    it('returns thumbnail_url in API response', function (): void {
         $media = EventMedia::factory()->video()->create([
             'thumbnail_path' => 'events/media/1/thumbnails/thumb.jpg',
         ]);
@@ -687,7 +685,7 @@ describe('Video Thumbnail Generation', function () {
         expect($media->thumbnail_url)->toEndWith('/storage/events/media/1/thumbnails/thumb.jpg');
     });
 
-    it('returns null thumbnail_url when no thumbnail exists', function () {
+    it('returns null thumbnail_url when no thumbnail exists', function (): void {
         $media = EventMedia::factory()->video()->create([
             'thumbnail_path' => null,
         ]);
@@ -695,7 +693,7 @@ describe('Video Thumbnail Generation', function () {
         expect($media->thumbnail_url)->toBeNull();
     });
 
-    it('formats duration for humans correctly', function () {
+    it('formats duration for humans correctly', function (): void {
         $media = EventMedia::factory()->video()->create(['duration' => 65]);
         expect($media->duration_for_humans)->toBe('1:05');
 

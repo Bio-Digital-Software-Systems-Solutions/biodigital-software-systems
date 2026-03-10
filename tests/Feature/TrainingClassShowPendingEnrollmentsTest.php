@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 
     $this->admin = User::factory()->create();
@@ -30,7 +30,7 @@ beforeEach(function () {
     ]);
 });
 
-it('includes pending enrollments in show page', function () {
+it('includes pending enrollments in show page', function (): void {
     $student = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Martin']);
 
     DB::table('training_enrollments')->insert([
@@ -55,7 +55,7 @@ it('includes pending enrollments in show page', function () {
     );
 });
 
-it('does not include approved enrollments in pending list', function () {
+it('does not include approved enrollments in pending list', function (): void {
     $student = User::factory()->create();
 
     DB::table('training_enrollments')->insert([
@@ -78,7 +78,7 @@ it('does not include approved enrollments in pending list', function () {
     );
 });
 
-it('returns empty pending enrollments when none exist', function () {
+it('returns empty pending enrollments when none exist', function (): void {
     $response = $this->actingAs($this->admin)
         ->get(route('training-classes.show', $this->trainingClass->uuid));
 

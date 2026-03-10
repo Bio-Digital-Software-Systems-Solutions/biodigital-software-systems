@@ -33,7 +33,7 @@ class ContactFactory extends Factory
      */
     public function unread(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'new',
             'read_at' => null,
         ]);
@@ -44,7 +44,7 @@ class ContactFactory extends Factory
      */
     public function read(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'read_at' => fake()->dateTimeBetween('-1 week', 'now'),
         ]);
     }

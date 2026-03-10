@@ -42,7 +42,7 @@ class StockFactory extends Factory
      */
     public function lowStock(): static
     {
-        return $this->state(function (array $attributes) {
+        return $this->state(function (array $attributes): array {
             $minQuantity = fake()->numberBetween(10, 20);
 
             return [
@@ -57,7 +57,7 @@ class StockFactory extends Factory
      */
     public function outOfStock(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'quantity' => 0,
         ]);
     }
@@ -67,7 +67,7 @@ class StockFactory extends Factory
      */
     public function expired(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'expiry_date' => fake()->dateTimeBetween('-1 year', '-1 day'),
         ]);
     }
@@ -77,7 +77,7 @@ class StockFactory extends Factory
      */
     public function nearExpiry(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'expiry_date' => fake()->dateTimeBetween('now', '+30 days'),
         ]);
     }
@@ -87,7 +87,7 @@ class StockFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_active' => false,
         ]);
     }

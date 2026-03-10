@@ -10,7 +10,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('stocks', function (Blueprint $table) {
+        Schema::table('stocks', function (Blueprint $table): void {
             $table->foreignId('department_id')->nullable()->after('category_id')->constrained()->nullOnDelete();
         });
     }
@@ -20,7 +20,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('stocks', function (Blueprint $table) {
+        Schema::table('stocks', function (Blueprint $table): void {
             $table->dropForeign(['department_id']);
             $table->dropColumn('department_id');
         });

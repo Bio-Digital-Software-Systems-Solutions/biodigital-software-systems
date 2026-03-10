@@ -27,15 +27,15 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property bool $is_active
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\TrainingClass $trainingClass
- * @property-read \App\Models\User $uploadedBy
- * @property-read string|null $file_url
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
  * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quiz> $allQuizzes
  * @property-read int|null $all_quizzes_count
+ * @property-read string|null $file_url
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quiz> $quizzes
  * @property-read int|null $quizzes_count
+ * @property-read \App\Models\TrainingClass $trainingClass
+ * @property-read \App\Models\User $uploadedBy
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial active()
  * @method static \Database\Factories\TrainingClassMaterialFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial newModelQuery()

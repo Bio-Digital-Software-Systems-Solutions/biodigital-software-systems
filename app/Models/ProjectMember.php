@@ -16,6 +16,8 @@ use Spatie\Activitylog\LogOptions;
  * @property string|null $ended_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectMember newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectMember newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectMember query()
@@ -27,8 +29,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectMember whereStartedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectMember whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectMember whereUserId($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class ProjectMember extends Model

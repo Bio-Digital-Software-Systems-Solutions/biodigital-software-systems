@@ -51,7 +51,7 @@ class KanbanTest extends TestCase
     }
 
     /** @test */
-    public function user_can_view_kanban_board()
+    public function user_can_view_kanban_board(): void
     {
         $this->actingAs($this->user)
             ->get(route('kanban.index'))
@@ -66,7 +66,7 @@ class KanbanTest extends TestCase
     }
 
     /** @test */
-    public function kanban_displays_tasks_grouped_by_status()
+    public function kanban_displays_tasks_grouped_by_status(): void
     {
         // Create tasks with different statuses
         $todoTask = ProjectTask::factory()->create([
@@ -76,14 +76,14 @@ class KanbanTest extends TestCase
             'reporter_id' => $this->admin->id,
         ]);
 
-        $inProgressTask = ProjectTask::factory()->create([
+        ProjectTask::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'in_progress',
             'assignee_id' => $this->user->id,
             'reporter_id' => $this->admin->id,
         ]);
 
-        $doneTask = ProjectTask::factory()->create([
+        ProjectTask::factory()->create([
             'project_id' => $this->project->id,
             'status' => 'done',
             'assignee_id' => $this->user->id,
@@ -103,7 +103,7 @@ class KanbanTest extends TestCase
     }
 
     /** @test */
-    public function kanban_can_filter_by_project()
+    public function kanban_can_filter_by_project(): void
     {
         $project2 = Project::factory()->create([
             'name' => 'Another Project',
@@ -136,7 +136,7 @@ class KanbanTest extends TestCase
     }
 
     /** @test */
-    public function kanban_can_filter_by_assignee()
+    public function kanban_can_filter_by_assignee(): void
     {
         $user2 = User::factory()->create();
 
@@ -166,7 +166,7 @@ class KanbanTest extends TestCase
     }
 
     /** @test */
-    public function kanban_can_filter_by_priority()
+    public function kanban_can_filter_by_priority(): void
     {
         ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -196,7 +196,7 @@ class KanbanTest extends TestCase
     }
 
     /** @test */
-    public function kanban_can_filter_by_type()
+    public function kanban_can_filter_by_type(): void
     {
         ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -226,7 +226,7 @@ class KanbanTest extends TestCase
     }
 
     /** @test */
-    public function kanban_can_search_tasks()
+    public function kanban_can_search_tasks(): void
     {
         ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -256,7 +256,7 @@ class KanbanTest extends TestCase
     }
 
     /** @test */
-    public function kanban_can_filter_by_sprint()
+    public function kanban_can_filter_by_sprint(): void
     {
         $sprint = Sprint::factory()->create([
             'project_id' => $this->project->id,
@@ -292,7 +292,7 @@ class KanbanTest extends TestCase
     }
 
     /** @test */
-    public function user_without_permission_cannot_view_kanban()
+    public function user_without_permission_cannot_view_kanban(): void
     {
         $userWithoutPermission = User::factory()->create();
 
@@ -303,7 +303,7 @@ class KanbanTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_view_kanban()
+    public function guest_cannot_view_kanban(): void
     {
         $this->get(route('kanban.index'))
             ->assertRedirect(route('login'));

@@ -20,25 +20,23 @@ class QuizController extends Controller
         $this->authorize('manage quizzes');
 
         // Récupérer TOUS les quiz pour les enseignants/admins (pas seulement les actifs)
-        $quizzes = Quiz::where('training_id', $training->id)->with('attempts')->get()->map(function ($quiz) {
-            return [
-                'id' => $quiz->id,
-                'uuid' => $quiz->uuid,
-                'title' => $quiz->title,
-                'description' => $quiz->description,
-                'duration_minutes' => $quiz->duration_minutes,
-                'max_score' => $quiz->max_score,
-                'passing_score' => $quiz->passing_score,
-                'available_from' => $quiz->available_from?->format('Y-m-d'),
-                'available_until' => $quiz->available_until?->format('Y-m-d'),
-                'is_active' => $quiz->is_active,
-                'max_attempts' => $quiz->max_attempts,
-                'score_display' => $quiz->score_display,
-                'status' => $quiz->status,
-                'attempts_count' => $quiz->attempts->count(),
-                'completed_attempts_count' => $quiz->attempts->where('status', 'completed')->count(),
-            ];
-        });
+        $quizzes = Quiz::where('training_id', $training->id)->with('attempts')->get()->map(fn($quiz): array => [
+            'id' => $quiz->id,
+            'uuid' => $quiz->uuid,
+            'title' => $quiz->title,
+            'description' => $quiz->description,
+            'duration_minutes' => $quiz->duration_minutes,
+            'max_score' => $quiz->max_score,
+            'passing_score' => $quiz->passing_score,
+            'available_from' => $quiz->available_from?->format('Y-m-d'),
+            'available_until' => $quiz->available_until?->format('Y-m-d'),
+            'is_active' => $quiz->is_active,
+            'max_attempts' => $quiz->max_attempts,
+            'score_display' => $quiz->score_display,
+            'status' => $quiz->status,
+            'attempts_count' => $quiz->attempts->count(),
+            'completed_attempts_count' => $quiz->attempts->where('status', 'completed')->count(),
+        ]);
 
         return Inertia::render('Quiz/Index', [
             'training' => $training,
@@ -56,27 +54,23 @@ class QuizController extends Controller
         // Load training classes with their materials and student counts
         $training->load(['classes.materials', 'classes.students']);
 
-        $trainingClasses = $training->classes->map(function ($class) {
-            return [
-                'id' => $class->id,
-                'uuid' => $class->uuid,
-                'name' => $class->name,
-                'date' => $class->date,
-                'start_time' => $class->start_time,
-                'end_time' => $class->end_time,
-                'room' => $class->room,
-                'students_count' => $class->students->count(),
-                'materials' => $class->materials->map(function ($material) {
-                    return [
-                        'id' => $material->id,
-                        'uuid' => $material->uuid,
-                        'title' => $material->title,
-                        'type' => $material->type,
-                        'order' => $material->order,
-                    ];
-                }),
-            ];
-        });
+        $trainingClasses = $training->classes->map(fn($class): array => [
+            'id' => $class->id,
+            'uuid' => $class->uuid,
+            'name' => $class->name,
+            'date' => $class->date,
+            'start_time' => $class->start_time,
+            'end_time' => $class->end_time,
+            'room' => $class->room,
+            'students_count' => $class->students->count(),
+            'materials' => $class->materials->map(fn($material): array => [
+                'id' => $material->id,
+                'uuid' => $material->uuid,
+                'title' => $material->title,
+                'type' => $material->type,
+                'order' => $material->order,
+            ]),
+        ]);
 
         return Inertia::render('Quiz/Create', [
             'training' => $training,
@@ -201,27 +195,23 @@ class QuizController extends Controller
         // Load training classes with their materials and student counts
         $training->load(['classes.materials', 'classes.students']);
 
-        $trainingClasses = $training->classes->map(function ($class) use ($quiz) {
-            return [
-                'id' => $class->id,
-                'uuid' => $class->uuid,
-                'name' => $class->name,
-                'date' => $class->date,
-                'start_time' => $class->start_time,
-                'end_time' => $class->end_time,
-                'room' => $class->room,
-                'students_count' => $class->students->count(),
-                'materials' => $class->materials->map(function ($material) {
-                    return [
-                        'id' => $material->id,
-                        'uuid' => $material->uuid,
-                        'title' => $material->title,
-                        'type' => $material->type,
-                        'order' => $material->order,
-                    ];
-                }),
-            ];
-        });
+        $trainingClasses = $training->classes->map(fn($class): array => [
+            'id' => $class->id,
+            'uuid' => $class->uuid,
+            'name' => $class->name,
+            'date' => $class->date,
+            'start_time' => $class->start_time,
+            'end_time' => $class->end_time,
+            'room' => $class->room,
+            'students_count' => $class->students->count(),
+            'materials' => $class->materials->map(fn($material): array => [
+                'id' => $material->id,
+                'uuid' => $material->uuid,
+                'title' => $material->title,
+                'type' => $material->type,
+                'order' => $material->order,
+            ]),
+        ]);
 
         // Get currently assigned classes and materials
         $assignedClasses = $quiz->trainingClasses->pluck('id')->toArray();
@@ -246,7 +236,7 @@ class QuizController extends Controller
                 'max_attempts' => $quiz->max_attempts,
                 'score_display' => $quiz->score_display,
                 'status' => $quiz->status,
-                'questions' => $quiz->questions->map(fn ($q) => [
+                'questions' => $quiz->questions->map(fn ($q): array => [
                     'id' => $q->id,
                     'question' => $q->question,
                     'type' => $q->type,
@@ -349,13 +339,13 @@ class QuizController extends Controller
 
         // Remove classes that are no longer assigned
         $classesToRemove = array_diff($currentAssignedClasses, $newAssignedClasses);
-        if (!empty($classesToRemove)) {
+        if ($classesToRemove !== []) {
             $quiz->trainingClasses()->detach($classesToRemove);
         }
 
         // Add new class assignments
         $classesToAdd = array_diff($newAssignedClasses, $currentAssignedClasses);
-        if (!empty($classesToAdd)) {
+        if ($classesToAdd !== []) {
             $classAssignments = [];
             foreach ($classesToAdd as $classId) {
                 $classAssignments[$classId] = [
@@ -374,13 +364,13 @@ class QuizController extends Controller
 
         // Remove materials that are no longer assigned
         $materialsToRemove = array_diff($currentAssignedMaterials, $newAssignedMaterials);
-        if (!empty($materialsToRemove)) {
+        if ($materialsToRemove !== []) {
             $quiz->trainingClassMaterials()->detach($materialsToRemove);
         }
 
         // Add new material assignments
         $materialsToAdd = array_diff($newAssignedMaterials, $currentAssignedMaterials);
-        if (!empty($materialsToAdd)) {
+        if ($materialsToAdd !== []) {
             $materialAssignments = [];
             foreach ($materialsToAdd as $index => $materialId) {
                 $materialAssignments[$materialId] = [
@@ -396,20 +386,20 @@ class QuizController extends Controller
         $successMessage = 'Quiz mis à jour avec succès';
         $assignmentChanges = [];
 
-        if (!empty($classesToAdd)) {
+        if ($classesToAdd !== []) {
             $assignmentChanges[] = count($classesToAdd) . ' classe(s) ajoutée(s)';
         }
-        if (!empty($classesToRemove)) {
+        if ($classesToRemove !== []) {
             $assignmentChanges[] = count($classesToRemove) . ' classe(s) retirée(s)';
         }
-        if (!empty($materialsToAdd)) {
+        if ($materialsToAdd !== []) {
             $assignmentChanges[] = count($materialsToAdd) . ' support(s) ajouté(s)';
         }
-        if (!empty($materialsToRemove)) {
+        if ($materialsToRemove !== []) {
             $assignmentChanges[] = count($materialsToRemove) . ' support(s) retiré(s)';
         }
 
-        if (!empty($assignmentChanges)) {
+        if ($assignmentChanges !== []) {
             $successMessage .= ' (' . implode(', ', $assignmentChanges) . ')';
         }
 
@@ -444,7 +434,7 @@ class QuizController extends Controller
             ->where('status', 'completed')
             ->orderBy('completed_at', 'desc')
             ->get()
-            ->map(fn ($attempt) => [
+            ->map(fn ($attempt): array => [
                 'id' => $attempt->id,
                 'student' => [
                     'id' => $attempt->student->id,
@@ -563,7 +553,7 @@ class QuizController extends Controller
                 'duration_minutes' => $quiz->duration_minutes,
                 'max_score' => $quiz->max_score,
                 'passing_score' => $quiz->passing_score,
-                'questions' => $quiz->questions->map(fn ($q) => [
+                'questions' => $quiz->questions->map(fn ($q): array => [
                     'id' => $q->id,
                     'question' => $q->question,
                     'type' => $q->type,
@@ -613,7 +603,9 @@ class QuizController extends Controller
 
         foreach ($validated['answers'] as $answerData) {
             $question = $quiz->questions->find($answerData['question_id']);
-            if (!$question) continue;
+            if (!$question) {
+                continue;
+            }
 
             $studentAnswer = $answerData['answer'];
             $isCorrect = $question->isCorrectAnswer($studentAnswer);
@@ -668,7 +660,7 @@ class QuizController extends Controller
         $passed = $attempt->score >= $attempt->quiz->passing_score;
 
         // Prepare questions with student answers and feedback
-        $questionsWithAnswers = collect($attempt->answers)->map(function ($answer) use ($attempt) {
+        $questionsWithAnswers = collect($attempt->answers)->map(function (array $answer) use ($attempt): array {
             $question = $attempt->quiz->questions->find($answer['question_id']);
 
             return [
@@ -736,7 +728,7 @@ class QuizController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function () use ($attempts, $quiz) {
+        $callback = function () use ($attempts, $quiz): void {
             $file = fopen('php://output', 'w');
 
             // UTF-8 BOM for Excel compatibility
@@ -791,10 +783,10 @@ class QuizController extends Controller
 
         // Get all quizzes accessible to this teacher
         $allQuizzes = Quiz::with(['training', 'attempts', 'questions'])
-            ->whereHas('training', function ($query) use ($user) {
+            ->whereHas('training', function ($query) use ($user): void {
                 // If user can't manage all trainings, filter by trainings they can access
                 if (!$user->can('manage system settings')) {
-                    $query->whereHas('students', function ($q) use ($user) {
+                    $query->whereHas('students', function ($q) use ($user): void {
                         $q->where('users.id', $user->id);
                     });
                 }
@@ -828,7 +820,7 @@ class QuizController extends Controller
         }
 
         if ($allAttempts->count() > 0) {
-            $stats['average_score'] = round($allAttempts->avg(fn($a) =>
+            $stats['average_score'] = round($allAttempts->avg(fn($a): int|float =>
                 $a['max_score'] > 0 ? ($a['score'] / $a['max_score']) * 100 : 0
             ), 2);
             $stats['pass_rate'] = round(($allAttempts->where('passed', true)->count() / $allAttempts->count()) * 100, 2);
@@ -836,10 +828,10 @@ class QuizController extends Controller
 
         // Recent attempts (last 10)
         $recentAttempts = QuizAttempt::with(['quiz.training', 'student'])
-            ->whereHas('quiz', function ($query) use ($user) {
-                $query->whereHas('training', function ($q) use ($user) {
+            ->whereHas('quiz', function ($query) use ($user): void {
+                $query->whereHas('training', function ($q) use ($user): void {
                     if (!$user->can('manage system settings')) {
-                        $q->whereHas('students', function ($u) use ($user) {
+                        $q->whereHas('students', function ($u) use ($user): void {
                             $u->where('users.id', $user->id);
                         });
                     }
@@ -849,7 +841,7 @@ class QuizController extends Controller
             ->orderBy('completed_at', 'desc')
             ->limit(10)
             ->get()
-            ->map(fn($attempt) => [
+            ->map(fn($attempt): array => [
                 'id' => $attempt->id,
                 'student_name' => $attempt->student->first_name . ' ' . $attempt->student->last_name,
                 'quiz_title' => $attempt->quiz->title,
@@ -862,9 +854,9 @@ class QuizController extends Controller
             ]);
 
         // Quiz performance breakdown
-        $quizPerformance = $allQuizzes->map(function ($quiz) {
+        $quizPerformance = $allQuizzes->map(function ($quiz): array {
             $completedAttempts = $quiz->attempts->where('status', 'completed');
-            $passedAttempts = $completedAttempts->where(fn($a) => $a->score >= $quiz->passing_score);
+            $passedAttempts = $completedAttempts->where(fn($a): bool => $a->score >= $quiz->passing_score);
 
             return [
                 'uuid' => $quiz->uuid,
@@ -877,7 +869,7 @@ class QuizController extends Controller
                     ? round(($passedAttempts->count() / $completedAttempts->count()) * 100, 2)
                     : 0,
                 'average_score' => $completedAttempts->count() > 0
-                    ? round($completedAttempts->avg(fn($a) =>
+                    ? round($completedAttempts->avg(fn($a): int|float =>
                         $quiz->max_score > 0 ? ($a->score / $quiz->max_score) * 100 : 0
                     ), 2)
                     : 0,

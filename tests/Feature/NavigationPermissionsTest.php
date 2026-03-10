@@ -64,7 +64,7 @@ class NavigationPermissionsTest extends TestCase
         $superAdminRole->givePermissionTo(Permission::all());
     }
 
-    public function test_member_receives_correct_permissions_in_inertia_props()
+    public function test_member_receives_correct_permissions_in_inertia_props(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::MEMBER->value);
@@ -74,19 +74,19 @@ class NavigationPermissionsTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
             ->has('auth.user.permissions', 2) // Member should have 2 permissions
-            ->where('auth.user.permissions', function ($permissions) {
+            ->where('auth.user.permissions', function ($permissions): bool {
                 $permissionsArray = $permissions instanceof \Illuminate\Support\Collection ? $permissions->toArray() : $permissions;
                 return in_array('view articles', $permissionsArray) &&
                        in_array('view trainings', $permissionsArray);
             })
-            ->where('auth.user.roles', function ($roles) {
+            ->where('auth.user.roles', function ($roles): bool {
                 $rolesArray = $roles instanceof \Illuminate\Support\Collection ? $roles->toArray() : $roles;
                 return in_array(RoleEnum::MEMBER->value, $rolesArray);
             })
         );
     }
 
-    public function test_student_receives_correct_permissions_in_inertia_props()
+    public function test_student_receives_correct_permissions_in_inertia_props(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::STUDENT->value);
@@ -95,7 +95,7 @@ class NavigationPermissionsTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->where('auth.user.permissions', function ($permissions) {
+            ->where('auth.user.permissions', function ($permissions): bool {
                 $permissionsArray = $permissions instanceof \Illuminate\Support\Collection ? $permissions->toArray() : $permissions;
                 return in_array('view articles', $permissionsArray) &&
                        in_array('view events', $permissionsArray) &&
@@ -103,14 +103,14 @@ class NavigationPermissionsTest extends TestCase
                        in_array('view trainings', $permissionsArray) &&
                        in_array('use chat', $permissionsArray);
             })
-            ->where('auth.user.roles', function ($roles) {
+            ->where('auth.user.roles', function ($roles): bool {
                 $rolesArray = $roles instanceof \Illuminate\Support\Collection ? $roles->toArray() : $roles;
                 return in_array(RoleEnum::STUDENT->value, $rolesArray);
             })
         );
     }
 
-    public function test_teacher_receives_correct_permissions_in_inertia_props()
+    public function test_teacher_receives_correct_permissions_in_inertia_props(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::TEACHER->value);
@@ -119,21 +119,21 @@ class NavigationPermissionsTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->where('auth.user.permissions', function ($permissions) {
+            ->where('auth.user.permissions', function ($permissions): bool {
                 $permissionsArray = $permissions instanceof \Illuminate\Support\Collection ? $permissions->toArray() : $permissions;
                 return in_array('view trainings', $permissionsArray) &&
                        in_array('create trainings', $permissionsArray) &&
                        in_array('edit trainings', $permissionsArray) &&
                        in_array('manage trainings', $permissionsArray);
             })
-            ->where('auth.user.roles', function ($roles) {
+            ->where('auth.user.roles', function ($roles): bool {
                 $rolesArray = $roles instanceof \Illuminate\Support\Collection ? $roles->toArray() : $roles;
                 return in_array(RoleEnum::TEACHER->value, $rolesArray);
             })
         );
     }
 
-    public function test_admin_receives_all_permissions_in_inertia_props()
+    public function test_admin_receives_all_permissions_in_inertia_props(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::ADMIN->value);
@@ -143,14 +143,14 @@ class NavigationPermissionsTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
             ->has('auth.user.permissions')
-            ->where('auth.user.roles', function ($roles) {
+            ->where('auth.user.roles', function ($roles): bool {
                 $rolesArray = $roles instanceof \Illuminate\Support\Collection ? $roles->toArray() : $roles;
                 return in_array(RoleEnum::ADMIN->value, $rolesArray);
             })
         );
     }
 
-    public function test_super_admin_receives_all_permissions_in_inertia_props()
+    public function test_super_admin_receives_all_permissions_in_inertia_props(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::SUPER_ADMIN->value);
@@ -160,14 +160,14 @@ class NavigationPermissionsTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
             ->has('auth.user.permissions')
-            ->where('auth.user.roles', function ($roles) {
+            ->where('auth.user.roles', function ($roles): bool {
                 $rolesArray = $roles instanceof \Illuminate\Support\Collection ? $roles->toArray() : $roles;
                 return in_array(RoleEnum::SUPER_ADMIN->value, $rolesArray);
             })
         );
     }
 
-    public function test_member_cannot_access_events_index()
+    public function test_member_cannot_access_events_index(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::MEMBER->value);
@@ -180,7 +180,7 @@ class NavigationPermissionsTest extends TestCase
         );
     }
 
-    public function test_member_can_access_articles_index()
+    public function test_member_can_access_articles_index(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::MEMBER->value);
@@ -190,7 +190,7 @@ class NavigationPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_member_is_redirected_from_trainings_index()
+    public function test_member_is_redirected_from_trainings_index(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::MEMBER->value);
@@ -202,7 +202,7 @@ class NavigationPermissionsTest extends TestCase
         $response->assertRedirect(route('user.dashboard'));
     }
 
-    public function test_student_can_access_events_index()
+    public function test_student_can_access_events_index(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::STUDENT->value);
@@ -212,7 +212,7 @@ class NavigationPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_teacher_can_create_trainings()
+    public function test_teacher_can_create_trainings(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::TEACHER->value);
@@ -222,7 +222,7 @@ class NavigationPermissionsTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_member_is_redirected_from_training_creation()
+    public function test_member_is_redirected_from_training_creation(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::MEMBER->value);
@@ -234,7 +234,7 @@ class NavigationPermissionsTest extends TestCase
         $response->assertRedirect(route('user.dashboard'));
     }
 
-    public function test_user_with_multiple_roles_receives_combined_permissions()
+    public function test_user_with_multiple_roles_receives_combined_permissions(): void
     {
         $user = User::factory()->create();
         $user->assignRole([RoleEnum::MEMBER->value, RoleEnum::STUDENT->value]);
@@ -243,7 +243,7 @@ class NavigationPermissionsTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
-            ->where('auth.user.permissions', function ($permissions) {
+            ->where('auth.user.permissions', function ($permissions): bool {
                 $permissionsArray = $permissions instanceof \Illuminate\Support\Collection ? $permissions->toArray() : $permissions;
                 // Should have permissions from both Member and Student roles
                 return in_array('view articles', $permissionsArray) &&
@@ -251,14 +251,14 @@ class NavigationPermissionsTest extends TestCase
                        in_array('view events', $permissionsArray) &&
                        in_array('view books', $permissionsArray);
             })
-            ->where('auth.user.roles', function ($roles) {
+            ->where('auth.user.roles', function ($roles): bool {
                 $rolesArray = $roles instanceof \Illuminate\Support\Collection ? $roles->toArray() : $roles;
                 return in_array(RoleEnum::MEMBER->value, $rolesArray) && in_array(RoleEnum::STUDENT->value, $rolesArray);
             })
         );
     }
 
-    public function test_permissions_are_cached_correctly()
+    public function test_permissions_are_cached_correctly(): void
     {
         $user = User::factory()->create();
         $user->assignRole(RoleEnum::MEMBER->value);
@@ -274,7 +274,7 @@ class NavigationPermissionsTest extends TestCase
         $response2 = $this->actingAs($user)->get('/events');
         $response2->assertStatus(200);
         $response2->assertInertia(fn ($page) => $page
-            ->where('auth.user.permissions', function ($permissions) {
+            ->where('auth.user.permissions', function ($permissions): bool {
                 $permissionsArray = $permissions instanceof \Illuminate\Support\Collection ? $permissions->toArray() : $permissions;
                 return in_array('view events', $permissionsArray);
             })

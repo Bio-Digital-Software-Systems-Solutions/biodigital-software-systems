@@ -12,7 +12,7 @@ class ChatModelTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_chat_room_has_fillable_attributes()
+    public function test_chat_room_has_fillable_attributes(): void
     {
         $room = new ChatRoom;
         $fillable = $room->getFillable();
@@ -22,7 +22,7 @@ class ChatModelTest extends TestCase
         $this->assertContains('created_by', $fillable);
     }
 
-    public function test_chat_message_has_fillable_attributes()
+    public function test_chat_message_has_fillable_attributes(): void
     {
         $message = new ChatMessage;
         $fillable = $message->getFillable();
@@ -33,7 +33,7 @@ class ChatModelTest extends TestCase
         $this->assertContains('is_read', $fillable);
     }
 
-    public function test_chat_room_creator_relationship()
+    public function test_chat_room_creator_relationship(): void
     {
         $user = User::factory()->create();
         $room = ChatRoom::create([
@@ -46,7 +46,7 @@ class ChatModelTest extends TestCase
         $this->assertEquals($user->id, $room->creator->id);
     }
 
-    public function test_chat_room_participants_relationship()
+    public function test_chat_room_participants_relationship(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -64,7 +64,7 @@ class ChatModelTest extends TestCase
         $this->assertTrue($room->participants->contains($user2));
     }
 
-    public function test_chat_room_messages_relationship()
+    public function test_chat_room_messages_relationship(): void
     {
         $user = User::factory()->create();
         $room = ChatRoom::create([
@@ -90,7 +90,7 @@ class ChatModelTest extends TestCase
         $this->assertTrue($room->messages->contains($message2));
     }
 
-    public function test_chat_room_last_message_relationship()
+    public function test_chat_room_last_message_relationship(): void
     {
         $user = User::factory()->create();
         $room = ChatRoom::create([
@@ -116,7 +116,7 @@ class ChatModelTest extends TestCase
         $this->assertEquals('Last message', $room->lastMessage->content);
     }
 
-    public function test_chat_message_room_relationship()
+    public function test_chat_message_room_relationship(): void
     {
         $user = User::factory()->create();
         $room = ChatRoom::create([
@@ -135,7 +135,7 @@ class ChatModelTest extends TestCase
         $this->assertEquals($room->id, $message->room->id);
     }
 
-    public function test_chat_message_sender_relationship()
+    public function test_chat_message_sender_relationship(): void
     {
         $user = User::factory()->create();
         $room = ChatRoom::create([
@@ -154,7 +154,7 @@ class ChatModelTest extends TestCase
         $this->assertEquals($user->id, $message->sender->id);
     }
 
-    public function test_user_chat_rooms_relationship()
+    public function test_user_chat_rooms_relationship(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -187,7 +187,7 @@ class ChatModelTest extends TestCase
         $this->assertFalse($user2ChatRooms->contains($room2));
     }
 
-    public function test_user_chat_messages_relationship()
+    public function test_user_chat_messages_relationship(): void
     {
         $user = User::factory()->create();
         $room = ChatRoom::create([
@@ -215,7 +215,7 @@ class ChatModelTest extends TestCase
         $this->assertTrue($userMessages->contains($message2));
     }
 
-    public function test_chat_message_is_read_cast_to_boolean()
+    public function test_chat_message_is_read_cast_to_boolean(): void
     {
         $user = User::factory()->create();
         $room = ChatRoom::create([
@@ -235,7 +235,7 @@ class ChatModelTest extends TestCase
         $this->assertTrue($message->is_read);
     }
 
-    public function test_chat_message_timestamps_are_cast_to_datetime()
+    public function test_chat_message_timestamps_are_cast_to_datetime(): void
     {
         $user = User::factory()->create();
         $room = ChatRoom::create([

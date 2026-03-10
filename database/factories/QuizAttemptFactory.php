@@ -39,7 +39,7 @@ class QuizAttemptFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'completed_at' => now(),
             'time_remaining_seconds' => 0,
             'score' => fake()->numberBetween(0, 100),
@@ -53,7 +53,7 @@ class QuizAttemptFactory extends Factory
      */
     public function inProgress(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'completed_at' => null,
             'time_remaining_seconds' => fake()->numberBetween(300, 1800),
             'score' => null,

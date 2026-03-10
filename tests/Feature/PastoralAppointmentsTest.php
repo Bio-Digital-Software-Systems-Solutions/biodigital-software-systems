@@ -21,7 +21,7 @@ class PastoralAppointmentsTest extends TestCase
     }
 
     /** @test */
-    public function pastor_can_view_their_appointments()
+    public function pastor_can_view_their_appointments(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -33,7 +33,7 @@ class PastoralAppointmentsTest extends TestCase
         $client->assignRole('member');
 
         // Create appointments for the pastor
-        $appointment1 = PastoralCare::create([
+        PastoralCare::create([
             'pastor_id' => $pastor->id,
             'user_id' => $client->id,
             'appointment_date' => Carbon::tomorrow(),
@@ -46,7 +46,7 @@ class PastoralAppointmentsTest extends TestCase
         ]);
 
         // Create appointment for another pastor (should not be visible)
-        $appointment2 = PastoralCare::create([
+        PastoralCare::create([
             'pastor_id' => $anotherPastor->id,
             'user_id' => $client->id,
             'appointment_date' => Carbon::tomorrow(),
@@ -69,7 +69,7 @@ class PastoralAppointmentsTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_view_all_appointments()
+    public function admin_can_view_all_appointments(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -81,7 +81,7 @@ class PastoralAppointmentsTest extends TestCase
         $pastor2->assignRole('pastor');
 
         // Create appointments for different pastors
-        $appointment1 = PastoralCare::create([
+        PastoralCare::create([
             'pastor_id' => $pastor1->id,
             'appointment_date' => Carbon::tomorrow(),
             'appointment_time' => Carbon::tomorrow()->setTime(10, 0),
@@ -92,7 +92,7 @@ class PastoralAppointmentsTest extends TestCase
             'location_type' => 'in_person'
         ]);
 
-        $appointment2 = PastoralCare::create([
+        PastoralCare::create([
             'pastor_id' => $pastor2->id,
             'appointment_date' => Carbon::tomorrow(),
             'appointment_time' => Carbon::tomorrow()->setTime(14, 0),
@@ -114,7 +114,7 @@ class PastoralAppointmentsTest extends TestCase
     }
 
     /** @test */
-    public function non_pastor_cannot_access_appointments_page()
+    public function non_pastor_cannot_access_appointments_page(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -130,7 +130,7 @@ class PastoralAppointmentsTest extends TestCase
     }
 
     /** @test */
-    public function pastor_can_confirm_appointment()
+    public function pastor_can_confirm_appointment(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -156,7 +156,7 @@ class PastoralAppointmentsTest extends TestCase
     }
 
     /** @test */
-    public function pastor_can_complete_appointment()
+    public function pastor_can_complete_appointment(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -185,7 +185,7 @@ class PastoralAppointmentsTest extends TestCase
     }
 
     /** @test */
-    public function pastor_can_mark_appointment_as_no_show()
+    public function pastor_can_mark_appointment_as_no_show(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -211,7 +211,7 @@ class PastoralAppointmentsTest extends TestCase
     }
 
     /** @test */
-    public function pastor_cannot_manage_other_pastor_appointments()
+    public function pastor_cannot_manage_other_pastor_appointments(): void
     {
         $pastor1 = User::factory()->create();
         $pastor1->assignRole('pastor');
@@ -240,7 +240,7 @@ class PastoralAppointmentsTest extends TestCase
     }
 
     /** @test */
-    public function appointment_api_filters_by_pastor()
+    public function appointment_api_filters_by_pastor(): void
     {
         $pastor1 = User::factory()->create();
         $pastor1->assignRole('pastor');
@@ -260,7 +260,7 @@ class PastoralAppointmentsTest extends TestCase
             'location_type' => 'in_person'
         ]);
 
-        $appointment2 = PastoralCare::create([
+        PastoralCare::create([
             'pastor_id' => $pastor2->id,
             'appointment_date' => Carbon::tomorrow(),
             'appointment_time' => Carbon::tomorrow()->setTime(14, 0),
@@ -289,7 +289,7 @@ class PastoralAppointmentsTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_appointment_time_is_in_future_for_booking()
+    public function it_validates_appointment_time_is_in_future_for_booking(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -313,14 +313,14 @@ class PastoralAppointmentsTest extends TestCase
     }
 
     /** @test */
-    public function it_handles_timezone_correctly_for_appointments()
+    public function it_handles_timezone_correctly_for_appointments(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
 
         $tomorrow = Carbon::tomorrow();
 
-        $appointment = PastoralCare::create([
+        PastoralCare::create([
             'pastor_id' => $pastor->id,
             'appointment_date' => $tomorrow->format('Y-m-d'),
             'appointment_time' => $tomorrow->setTime(15, 30), // 3:30 PM

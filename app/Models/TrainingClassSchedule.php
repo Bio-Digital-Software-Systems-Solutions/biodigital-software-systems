@@ -13,6 +13,7 @@ use Spatie\Activitylog\LogOptions;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property int $training_class_id
  * @property string $day_of_week
  * @property string $start_time
@@ -21,6 +22,8 @@ use Spatie\Activitylog\LogOptions;
  * @property bool $is_active
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Attendance> $attendances
  * @property-read int|null $attendances_count
  * @property-read \App\Models\TrainingClass $trainingClass
@@ -39,9 +42,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassSchedule whereStartTime($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassSchedule whereTrainingClassId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassSchedule whereUpdatedAt($value)
- * @property string $uuid
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassSchedule whereUuid($value)
  * @mixin \Eloquent
  */

@@ -55,7 +55,7 @@ class SendPastoralCareReminders extends Command
         // 3. Haven't already received a reminder
         $appointments = PastoralCare::whereIn('status', ['confirmed', 'pending'])
             ->whereNull('reminder_sent_at')
-            ->where(function ($query) use ($startTime, $endTime) {
+            ->where(function ($query) use ($startTime, $endTime): void {
                 $query->whereBetween('appointment_time', [$startTime, $endTime]);
             })
             ->with(['pastor', 'user'])

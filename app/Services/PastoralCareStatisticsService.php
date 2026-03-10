@@ -29,7 +29,7 @@ class PastoralCareStatisticsService
 
         $total = $appointments->sum('count');
 
-        return $appointments->map(function ($item) use ($total) {
+        return $appointments->map(function ($item) use ($total): array {
             $pastor = User::find($item->pastor_id);
 
             return [
@@ -83,14 +83,12 @@ class PastoralCareStatisticsService
 
         $total = $appointments->sum('count');
 
-        return $appointments->map(function ($item) use ($total) {
-            return [
-                'theme' => $item->theme,
-                'theme_label' => PastoralCare::THEMES[$item->theme] ?? $item->theme,
-                'count' => $item->count,
-                'percentage' => $total > 0 ? round(($item->count / $total) * 100, 1) : 0,
-            ];
-        })->sortByDesc('count')->values();
+        return $appointments->map(fn($item): array => [
+            'theme' => $item->theme,
+            'theme_label' => PastoralCare::THEMES[$item->theme] ?? $item->theme,
+            'count' => $item->count,
+            'percentage' => $total > 0 ? round(($item->count / $total) * 100, 1) : 0,
+        ])->sortByDesc('count')->values();
     }
 
     /**
@@ -148,7 +146,7 @@ class PastoralCareStatisticsService
             ->select('transferred_to_id', DB::raw('COUNT(*) as count'))
             ->groupBy('transferred_to_id')
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item): array {
                 $user = User::find($item->transferred_to_id);
 
                 return [
@@ -203,7 +201,7 @@ class PastoralCareStatisticsService
         return collect([[
             'pastor_id' => $pastorId,
             'pastor_name' => $pastor ? "{$pastor->first_name} {$pastor->last_name}" : 'Inconnu',
-            'availabilities' => $availabilities->map(function ($availability) use ($pastorId) {
+            'availabilities' => $availabilities->map(function (\App\Models\PastorAvailability $availability) use ($pastorId): array {
                 $slotsWithStatus = $this->getTimeSlotsWithStatus($availability, $pastorId);
 
                 return [
@@ -259,13 +257,13 @@ class PastoralCareStatisticsService
             ->get();
 
         // Group by pastor
-        return $availabilities->groupBy('pastor_id')->map(function ($items, $pastorId) {
+        return $availabilities->groupBy('pastor_id')->map(function (\Illuminate\Support\Collection $items, int $pastorId): array {
             $pastor = $items->first()->pastor;
 
             return [
                 'pastor_id' => $pastorId,
                 'pastor_name' => $pastor ? "{$pastor->first_name} {$pastor->last_name}" : 'Inconnu',
-                'availabilities' => $items->map(function ($availability) use ($pastorId) {
+                'availabilities' => $items->map(function (\App\Models\PastorAvailability $availability) use ($pastorId): array {
                     // Calculate time slots with status
                     $slotsWithStatus = $this->getTimeSlotsWithStatus($availability, $pastorId);
 
@@ -325,13 +323,12 @@ class PastoralCareStatisticsService
             ->where('appointment_date', $date->toDateString())
             ->whereIn('status', ['pending', 'confirmed'])
             ->pluck('appointment_time')
-            ->map(function ($time) {
+            ->map(fn(\DateTimeInterface|\Carbon\WeekDay|\Carbon\Month|string|int|float|null $time): string =>
                 // Normalize time format to H:i
-                return Carbon::parse($time)->format('H:i');
-            })
+                Carbon::parse($time)->format('H:i'))
             ->toArray();
 
-        $now = now();
+        now();
 
         foreach ($slots as $slot) {
             $slotDateTime = Carbon::parse($date->toDateString().' '.$slot);
@@ -564,13 +561,11 @@ class PastoralCareStatisticsService
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->groupBy('status')
             ->get()
-            ->map(function ($item) use ($statusColors, $statusLabels) {
-                return [
-                    'label' => $statusLabels[$item->status] ?? $item->status,
-                    'value' => (int) $item->count,
-                    'color' => $statusColors[$item->status] ?? '#6B7280',
-                ];
-            })->values()->toArray();
+            ->map(fn($item): array => [
+                'label' => $statusLabels[$item->status] ?? $item->status,
+                'value' => (int) $item->count,
+                'color' => $statusColors[$item->status] ?? '#6B7280',
+            ])->values()->toArray();
 
         // Theme colors
         $themeColors = ['#8B5CF6', '#EC4899', '#6366F1', '#14B8A6', '#F97316', '#84CC16', '#EF4444', '#06B6D4'];
@@ -583,13 +578,11 @@ class PastoralCareStatisticsService
             ->whereNotNull('theme')
             ->groupBy('theme')
             ->get()
-            ->map(function ($item, $index) use ($themeColors) {
-                return [
-                    'label' => PastoralCare::THEMES[$item->theme] ?? $item->theme,
-                    'value' => (int) $item->count,
-                    'color' => $themeColors[$index % count($themeColors)],
-                ];
-            })->values()->toArray();
+            ->map(fn($item, $index): array => [
+                'label' => PastoralCare::THEMES[$item->theme] ?? $item->theme,
+                'value' => (int) $item->count,
+                'color' => $themeColors[$index % count($themeColors)],
+            ])->values()->toArray();
 
         // Pastor colors
         $pastorColors = ['#3B82F6', '#10B981', '#F97316', '#8B5CF6', '#EF4444', '#F59E0B', '#06B6D4', '#EC4899'];
@@ -600,7 +593,7 @@ class PastoralCareStatisticsService
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->groupBy('pastor_id')
             ->get()
-            ->map(function ($item, $index) use ($pastorColors) {
+            ->map(function ($item, $index) use ($pastorColors): array {
                 $pastor = User::find($item->pastor_id);
 
                 return [
@@ -630,13 +623,11 @@ class PastoralCareStatisticsService
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->groupBy('location_type')
             ->get()
-            ->map(function ($item) use ($modeColors, $modeLabels) {
-                return [
-                    'label' => $modeLabels[$item->location_type] ?? $item->location_type,
-                    'value' => (int) $item->count,
-                    'color' => $modeColors[$item->location_type] ?? '#6B7280',
-                ];
-            })->values()->toArray();
+            ->map(fn($item): array => [
+                'label' => $modeLabels[$item->location_type] ?? $item->location_type,
+                'value' => (int) $item->count,
+                'color' => $modeColors[$item->location_type] ?? '#6B7280',
+            ])->values()->toArray();
 
         // Global progress
         $total = PastoralCare::query()
@@ -839,12 +830,12 @@ class PastoralCareStatisticsService
         $dates = $this->getPeriodDates($period);
         $colors = ['#8B5CF6', '#10B981', '#F97316', '#3B82F6', '#EF4444', '#F59E0B', '#06B6D4', '#EC4899'];
 
-        $pastors = PastoralCare::query()
+        return PastoralCare::query()
             ->select('pastor_id')
             ->whereBetween('appointment_date', [$dates['start'], $dates['end']])
             ->groupBy('pastor_id')
             ->get()
-            ->map(function ($item, $index) use ($dates, $colors) {
+            ->map(function ($item, $index) use ($dates, $colors): array {
                 $pastor = User::find($item->pastor_id);
 
                 $total = PastoralCare::query()
@@ -870,8 +861,6 @@ class PastoralCareStatisticsService
             ->sortByDesc('value')
             ->values()
             ->toArray();
-
-        return $pastors;
     }
 
     /**

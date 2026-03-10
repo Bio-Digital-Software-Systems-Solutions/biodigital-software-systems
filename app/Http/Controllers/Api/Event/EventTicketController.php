@@ -11,11 +11,8 @@ use Illuminate\Http\Request;
 
 class EventTicketController extends Controller
 {
-    protected TicketService $ticketService;
-
-    public function __construct(TicketService $ticketService)
+    public function __construct(protected TicketService $ticketService)
     {
-        $this->ticketService = $ticketService;
         $this->middleware('can:view events');
         $this->middleware('can:edit events')->except(['index', 'show', 'available', 'validatePromoCode']);
     }
@@ -55,7 +52,7 @@ class EventTicketController extends Controller
         }
 
         return response()->json([
-            'data' => $ticket->load(['registrations' => function ($q) {
+            'data' => $ticket->load(['registrations' => function ($q): void {
                 $q->whereIn('status', ['confirmed', 'checked_in'])->limit(10);
             }]),
         ]);
@@ -179,7 +176,7 @@ class EventTicketController extends Controller
 
         $promoCode = $this->ticketService->validatePromoCode($event, $code);
 
-        if (!$promoCode) {
+        if (!$promoCode instanceof \App\Models\Event\EventPromoCode) {
             return response()->json([
                 'valid' => false,
                 'message' => 'Code promo invalide ou expiré.',

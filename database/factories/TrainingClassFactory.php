@@ -38,7 +38,7 @@ class TrainingClassFactory extends Factory
      */
     public function archived(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'archived',
             'archived_at' => now()->subMonth(),
             'archive_access_until' => now()->addMonths(5),

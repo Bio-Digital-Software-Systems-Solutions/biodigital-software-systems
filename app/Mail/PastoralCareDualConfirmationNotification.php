@@ -32,8 +32,8 @@ class PastoralCareDualConfirmationNotification extends Mailable implements Shoul
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Rendez-vous confirmé - Les deux parties ont validé - ICC Munich',
             from: config('mail.from.address', 'noreply@icc-munich.de'),
+            subject: 'Rendez-vous confirmé - Les deux parties ont validé - ICC Munich',
         );
     }
 

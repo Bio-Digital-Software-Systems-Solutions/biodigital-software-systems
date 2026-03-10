@@ -68,7 +68,7 @@ class TrainingTopicSeeder extends Seeder
             $topics = $topicsByCategory[$category] ?? $genericTopics;
 
             // Limiter à 3-5 topics par formation
-            $numberOfTopics = rand(3, min(5, count($topics)));
+            $numberOfTopics = random_int(3, min(5, count($topics)));
             $selectedTopics = array_slice($topics, 0, $numberOfTopics);
 
             foreach ($selectedTopics as $index => $topicData) {

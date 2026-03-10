@@ -31,11 +31,9 @@ class RestrictMemberFromAdminDashboard
             ];
 
             foreach ($routePermissionMap as $routePrefix => $permission) {
-                if (str_starts_with($currentRoute, $routePrefix) || $currentRoute === $routePrefix) {
-                    // If user has the specific permission, allow access
-                    if ($user->can($permission)) {
-                        return $next($request);
-                    }
+                // If user has the specific permission, allow access
+                if ((str_starts_with((string) $currentRoute, $routePrefix) || $currentRoute === $routePrefix) && $user->can($permission)) {
+                    return $next($request);
                 }
             }
 

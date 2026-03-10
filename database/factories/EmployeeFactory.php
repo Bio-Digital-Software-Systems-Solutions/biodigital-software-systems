@@ -79,7 +79,7 @@ class EmployeeFactory extends Factory
             'skills' => $this->faker->randomElements([
                 'PHP', 'JavaScript', 'TypeScript', 'React', 'Vue', 'Laravel',
                 'Project Management', 'Communication', 'Leadership', 'Excel',
-            ], rand(2, 5)),
+            ], random_int(2, 5)),
             'certifications' => null,
             'languages' => ['German', 'English'],
             'avatar' => null,
@@ -95,7 +95,7 @@ class EmployeeFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => EmployeeStatus::ACTIVE,
         ]);
     }
@@ -105,7 +105,7 @@ class EmployeeFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => EmployeeStatus::INACTIVE,
         ]);
     }
@@ -115,7 +115,7 @@ class EmployeeFactory extends Factory
      */
     public function onLeave(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => EmployeeStatus::ON_LEAVE,
         ]);
     }
@@ -125,7 +125,7 @@ class EmployeeFactory extends Factory
      */
     public function terminated(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => EmployeeStatus::TERMINATED,
             'termination_date' => $this->faker->dateTimeBetween('-1 year', 'now'),
             'termination_reason' => $this->faker->randomElement([
@@ -142,7 +142,7 @@ class EmployeeFactory extends Factory
      */
     public function fullTime(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'employment_type' => EmploymentType::FULL_TIME,
             'weekly_hours' => 40.00,
         ]);
@@ -153,7 +153,7 @@ class EmployeeFactory extends Factory
      */
     public function partTime(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'employment_type' => EmploymentType::PART_TIME,
             'weekly_hours' => 20.00,
         ]);
@@ -164,7 +164,7 @@ class EmployeeFactory extends Factory
      */
     public function contractor(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'employment_type' => EmploymentType::CONTRACT,
             'contract_end_date' => $this->faker->dateTimeBetween('+1 month', '+1 year'),
         ]);
@@ -175,7 +175,7 @@ class EmployeeFactory extends Factory
      */
     public function intern(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'employment_type' => EmploymentType::INTERN,
             'weekly_hours' => 35.00,
             'contract_end_date' => $this->faker->dateTimeBetween('+1 month', '+6 months'),
@@ -188,7 +188,7 @@ class EmployeeFactory extends Factory
      */
     public function volunteer(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'employment_type' => EmploymentType::VOLUNTEER,
             'weekly_hours' => 10.00,
             'hourly_rate' => null,
@@ -201,7 +201,7 @@ class EmployeeFactory extends Factory
      */
     public function onProbation(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'hire_date' => now()->subMonths(2),
             'probation_end_date' => now()->addMonths(4),
         ]);
@@ -212,7 +212,7 @@ class EmployeeFactory extends Factory
      */
     public function probationCompleted(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'hire_date' => now()->subYear(),
             'probation_end_date' => now()->subMonths(6),
         ]);
@@ -223,7 +223,7 @@ class EmployeeFactory extends Factory
      */
     public function inDepartment(Department $department): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'department_id' => $department->id,
         ]);
     }
@@ -233,7 +233,7 @@ class EmployeeFactory extends Factory
      */
     public function withManager(Employee $manager): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'manager_id' => $manager->id,
             'department_id' => $manager->department_id,
         ]);
@@ -244,7 +244,7 @@ class EmployeeFactory extends Factory
      */
     public function contractEndingSoon(int $days = 30): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'employment_type' => EmploymentType::CONTRACT,
             'contract_end_date' => now()->addDays($days),
         ]);
@@ -255,7 +255,7 @@ class EmployeeFactory extends Factory
      */
     public function forUser(User $user): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'user_id' => $user->id,
         ]);
     }

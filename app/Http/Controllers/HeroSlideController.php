@@ -52,7 +52,7 @@ class HeroSlideController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $slide = HeroSlide::create($validated);
+        HeroSlide::create($validated);
 
         return redirect()->route('hero-slides.index')
             ->with('success', 'Slide créé avec succès.');

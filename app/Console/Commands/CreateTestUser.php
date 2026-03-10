@@ -12,7 +12,7 @@ class CreateTestUser extends Command
 
     protected $description = 'Create a test user with article permissions';
 
-    public function handle()
+    public function handle(): void
     {
         $user = User::updateOrCreate([
             'email' => 'test@test.com',

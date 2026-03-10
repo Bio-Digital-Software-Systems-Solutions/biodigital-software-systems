@@ -25,7 +25,7 @@ class EventProgrammeController extends Controller
      */
     public function store(Request $request, Event $event): JsonResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'file' => [
                 'required',
                 'file',
@@ -155,7 +155,7 @@ class EventProgrammeController extends Controller
     {
         $programme = EventProgramme::findByValidToken($token);
 
-        if (! $programme) {
+        if (!$programme instanceof \App\Models\Event\EventProgramme) {
             return Inertia::render('Events/Programme/SharedExpired', [
                 'message' => 'Ce lien de programme a expiré ou n\'est plus valide. Veuillez demander un nouveau lien à l\'organisateur.',
             ]);
@@ -177,7 +177,7 @@ class EventProgrammeController extends Controller
     {
         $programme = EventProgramme::findByValidToken($token);
 
-        if (! $programme) {
+        if (!$programme instanceof \App\Models\Event\EventProgramme) {
             return response()->json(['message' => 'Lien expiré ou invalide.'], 403);
         }
 

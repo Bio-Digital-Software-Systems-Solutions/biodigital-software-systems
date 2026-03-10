@@ -26,14 +26,14 @@ class ChatMessageFactory extends Factory
 
     public function unread(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_read' => false,
         ]);
     }
 
     public function read(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_read' => true,
         ]);
     }

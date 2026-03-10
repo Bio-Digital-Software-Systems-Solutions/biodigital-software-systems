@@ -104,7 +104,7 @@ class TrainingEnrollmentController extends Controller
                     ->where('training_class_id', $trainingClass->id)
                     ->select('day_of_week', 'start_time', 'end_time')
                     ->get()
-                    ->map(function ($schedule) {
+                    ->map(function ($schedule): \stdClass {
                         $days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
                         $schedule->day_name = $days[$schedule->day_of_week] ?? 'Jour inconnu';
 

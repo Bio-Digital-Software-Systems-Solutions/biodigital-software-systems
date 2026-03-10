@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
+use App\Enums\Form\FormFieldType;
+use App\Enums\Form\FormStatus;
 use App\Models\Department;
 use App\Models\DepartmentForm;
 use App\Models\FormField;
-use App\Enums\Form\FormStatus;
-use App\Enums\Form\FormFieldType;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,14 +16,24 @@ class FormControllerTest extends TestCase
     use RefreshDatabase;
 
     protected User $user;
+
     protected Department $department;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
         $this->department = Department::factory()->create();
         $this->user = User::factory()->create();
+        $this->user->givePermissionTo([
+            'view forms',
+            'create forms',
+            'edit forms',
+            'delete forms',
+            'manage forms',
+        ]);
     }
 
     public function test_user_can_view_forms_index(): void
@@ -255,13 +265,14 @@ class FormControllerTest extends TestCase
             ->get(route('forms.show', $form));
 
         $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Forms/Show')
+            ->has('form')
+        );
 
         // Verify the form and fields are loaded properly
         $form->refresh();
         $this->assertEquals(2, $form->fields()->count());
-
-        // If the response is HTML, it should contain the form data
-        $this->assertStringContainsString('Forms/Show', $response->content());
     }
 
     // ==========================================

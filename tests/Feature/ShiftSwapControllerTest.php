@@ -155,7 +155,7 @@ class ShiftSwapControllerTest extends TestCase
     public function test_my_swap_requests_shows_outgoing_requests(): void
     {
         // Create outgoing swap request
-        $swapRequest = $this->createSwapRequest(['status' => SwapRequestStatus::PENDING_COLLEAGUE]);
+        $this->createSwapRequest(['status' => SwapRequestStatus::PENDING_COLLEAGUE]);
 
         $response = $this->actingAs($this->requester)->get(
             "/departments/{$this->department->uuid}/swap-requests/my"
@@ -210,13 +210,13 @@ class ShiftSwapControllerTest extends TestCase
     public function test_create_form_shows_available_shifts(): void
     {
         // Create a shift assigned to another user (available for swap)
-        $availableShift = $this->createShift([
+        $this->createShift([
             'user_id' => $this->targetUser->id,
             'date' => now()->addDays(5),
         ]);
 
         // Create a shift assigned to requester (not available for swap)
-        $myShift = $this->createShift([
+        $this->createShift([
             'user_id' => $this->requester->id,
             'date' => now()->addDays(6),
         ]);
@@ -236,13 +236,13 @@ class ShiftSwapControllerTest extends TestCase
     public function test_create_form_excludes_past_shifts(): void
     {
         // Create a past shift (should not be available)
-        $pastShift = $this->createShift([
+        $this->createShift([
             'user_id' => $this->targetUser->id,
             'date' => now()->subDays(1),
         ]);
 
         // Create a future shift (should be available)
-        $futureShift = $this->createShift([
+        $this->createShift([
             'user_id' => $this->targetUser->id,
             'date' => now()->addDays(5),
         ]);

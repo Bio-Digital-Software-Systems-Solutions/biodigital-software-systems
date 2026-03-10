@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->string('email_two_factor_code', 8)->nullable()->after('two_factor_confirmed_at');
             $table->timestamp('email_two_factor_expires_at')->nullable()->after('email_two_factor_code');
             $table->boolean('email_two_factor_enabled')->default(false)->after('email_two_factor_expires_at');
@@ -24,7 +24,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->dropColumn([
                 'email_two_factor_code',
                 'email_two_factor_expires_at',

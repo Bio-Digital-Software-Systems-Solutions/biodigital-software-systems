@@ -153,7 +153,7 @@ class WorkflowControllerTest extends TestCase
             'description' => 'This should fail',
         ];
 
-        $response = $this->actingAs($this->user)
+        $this->actingAs($this->user)
             ->put(route('workflows.update', $workflow), $updateData);
 
         // Should either redirect with error or return 403
@@ -242,7 +242,7 @@ class WorkflowControllerTest extends TestCase
                 'status' => WorkflowStatus::ACTIVE,
             ]);
 
-        $response = $this->actingAs($this->user)
+        $this->actingAs($this->user)
             ->delete(route('workflows.destroy', $workflow));
 
         // Active workflows should not be deleted

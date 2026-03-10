@@ -21,7 +21,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function dashboard_displays_quick_actions_section()
+    public function dashboard_displays_quick_actions_section(): void
     {
         $response = $this->actingAs($this->user)->get('/dashboard');
 
@@ -33,7 +33,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function user_can_access_create_event_from_quick_actions()
+    public function user_can_access_create_event_from_quick_actions(): void
     {
         // Give user permission to create events
         Permission::create(['name' => 'create events']);
@@ -45,7 +45,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function user_without_permission_cannot_create_event()
+    public function user_without_permission_cannot_create_event(): void
     {
         $response = $this->actingAs($this->user)->get('/events/create');
 
@@ -56,7 +56,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function user_can_access_create_article_from_quick_actions()
+    public function user_can_access_create_article_from_quick_actions(): void
     {
         // Give user permission to create articles
         Permission::create(['name' => 'create articles']);
@@ -68,7 +68,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function user_without_permission_cannot_create_article()
+    public function user_without_permission_cannot_create_article(): void
     {
         $response = $this->actingAs($this->user)->get('/articles/create');
 
@@ -79,7 +79,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function user_can_access_books_index_from_quick_actions()
+    public function user_can_access_books_index_from_quick_actions(): void
     {
         // Give user permission to view books
         Permission::create(['name' => 'view books']);
@@ -91,7 +91,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function user_without_permission_cannot_view_books()
+    public function user_without_permission_cannot_view_books(): void
     {
         $response = $this->actingAs($this->user)->get('/books');
 
@@ -102,7 +102,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function user_can_access_departments_from_quick_actions()
+    public function user_can_access_departments_from_quick_actions(): void
     {
         // Give user permission to view departments
         Permission::create(['name' => 'view departments']);
@@ -114,7 +114,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function user_without_permission_cannot_view_departments()
+    public function user_without_permission_cannot_view_departments(): void
     {
         $response = $this->actingAs($this->user)->get('/departments');
 
@@ -125,7 +125,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_access_all_quick_actions()
+    public function admin_can_access_all_quick_actions(): void
     {
         // Create admin role with all permissions
         $adminRole = Role::create(['name' => 'admin']);
@@ -163,7 +163,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function quick_actions_respect_user_permissions()
+    public function quick_actions_respect_user_permissions(): void
     {
         // Create a role with limited permissions
         $writerRole = Role::create(['name' => 'writer']);
@@ -186,7 +186,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_access_any_quick_actions()
+    public function guest_cannot_access_any_quick_actions(): void
     {
         $routes = [
             '/dashboard',
@@ -205,7 +205,7 @@ class DashboardQuickActionsTest extends TestCase
     }
 
     /** @test */
-    public function quick_actions_are_clickable_links_not_buttons()
+    public function quick_actions_are_clickable_links_not_buttons(): void
     {
         $response = $this->actingAs($this->user)->get('/dashboard');
 

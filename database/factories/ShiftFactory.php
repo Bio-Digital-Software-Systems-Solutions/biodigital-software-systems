@@ -51,7 +51,7 @@ class ShiftFactory extends Factory
      */
     public function draft(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => ShiftStatus::DRAFT,
         ]);
     }
@@ -61,7 +61,7 @@ class ShiftFactory extends Factory
      */
     public function published(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => ShiftStatus::PUBLISHED,
         ]);
     }
@@ -71,7 +71,7 @@ class ShiftFactory extends Factory
      */
     public function confirmed(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => ShiftStatus::CONFIRMED,
         ]);
     }
@@ -81,7 +81,7 @@ class ShiftFactory extends Factory
      */
     public function inProgress(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => ShiftStatus::IN_PROGRESS,
         ]);
     }
@@ -91,7 +91,7 @@ class ShiftFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => ShiftStatus::COMPLETED,
         ]);
     }
@@ -101,7 +101,7 @@ class ShiftFactory extends Factory
      */
     public function cancelled(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => ShiftStatus::CANCELLED,
         ]);
     }
@@ -111,7 +111,7 @@ class ShiftFactory extends Factory
      */
     public function noShow(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => ShiftStatus::NO_SHOW,
         ]);
     }
@@ -121,7 +121,7 @@ class ShiftFactory extends Factory
      */
     public function assignedTo(User $user): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'user_id' => $user->id,
         ]);
     }
@@ -131,7 +131,7 @@ class ShiftFactory extends Factory
      */
     public function morning(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'type' => ShiftType::MORNING,
             'start_time' => '06:00',
             'end_time' => '14:00',
@@ -143,7 +143,7 @@ class ShiftFactory extends Factory
      */
     public function afternoon(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'type' => ShiftType::AFTERNOON,
             'start_time' => '14:00',
             'end_time' => '22:00',
@@ -155,7 +155,7 @@ class ShiftFactory extends Factory
      */
     public function evening(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'type' => ShiftType::EVENING,
             'start_time' => '18:00',
             'end_time' => '23:00',
@@ -167,7 +167,7 @@ class ShiftFactory extends Factory
      */
     public function night(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'type' => ShiftType::NIGHT,
             'start_time' => '22:00',
             'end_time' => '06:00',
@@ -200,7 +200,7 @@ class ShiftFactory extends Factory
      */
     public function onDate(Carbon $date): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'date' => $date,
         ]);
     }
@@ -210,7 +210,7 @@ class ShiftFactory extends Factory
      */
     public function overtime(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'is_overtime' => true,
         ]);
     }

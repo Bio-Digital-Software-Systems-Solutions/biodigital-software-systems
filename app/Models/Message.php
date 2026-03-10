@@ -13,17 +13,27 @@ use Spatie\Activitylog\LogOptions;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property int $sender_id
- * @property int $receiver_id
+ * @property int|null $receiver_id
+ * @property array<array-key, mixed>|null $cc_recipients
+ * @property array<array-key, mixed>|null $bcc_recipients
+ * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\MessageAttachment> $attachments
+ * @property string $recipient_type
+ * @property int|null $department_id
  * @property string|null $subject
  * @property string $content
  * @property string $type
  * @property \Illuminate\Support\Carbon|null $read_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read int|null $attachments_count
+ * @property-read \App\Models\Department|null $department
  * @property-read string $excerpt
  * @property-read string $type_label
- * @property-read \App\Models\User $receiver
+ * @property-read \App\Models\User|null $receiver
  * @property-read \App\Models\User $sender
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message betweenUsers($user1, $user2)
  * @method static \Database\Factories\MessageFactory factory($count = null, $state = [])
@@ -33,30 +43,20 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message read()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message type($type)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message unread()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereAttachments($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereBccRecipients($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereCcRecipients($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereContent($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereDepartmentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereReadAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereReceiverId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereRecipientType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereSenderId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereSubject($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereUpdatedAt($value)
- * @property string $uuid
- * @property array<array-key, mixed>|null $cc_recipients
- * @property array<array-key, mixed>|null $bcc_recipients
- * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\MessageAttachment> $attachments
- * @property string $recipient_type
- * @property int|null $department_id
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- * @property-read int|null $attachments_count
- * @property-read \App\Models\Department|null $department
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereAttachments($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereBccRecipients($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereCcRecipients($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereDepartmentId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereRecipientType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Message whereUuid($value)
  * @mixin \Eloquent
  */
@@ -208,9 +208,9 @@ class Message extends Model
      */
     public function scopeBetweenUsers($query, $user1, $user2)
     {
-        return $query->where(function ($q) use ($user1, $user2) {
+        return $query->where(function ($q) use ($user1, $user2): void {
             $q->where('sender_id', $user1)->where('receiver_id', $user2);
-        })->orWhere(function ($q) use ($user1, $user2) {
+        })->orWhere(function ($q) use ($user1, $user2): void {
             $q->where('sender_id', $user2)->where('receiver_id', $user1);
         });
     }

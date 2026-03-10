@@ -71,7 +71,7 @@ class GroupSeeder extends Seeder
 
         // Assign group leaders from existing users
         $groups = Group::all();
-        $users = User::whereHas('roles', function ($query) {
+        $users = User::whereHas('roles', function ($query): void {
             $query->whereIn('name', ['admin', 'project-manager', 'event-manager', 'super-admin']);
         })->get();
 

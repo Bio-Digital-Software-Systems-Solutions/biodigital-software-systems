@@ -11,6 +11,50 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $report_id
+ * @property ReportSectionType $type
+ * @property string $title
+ * @property string|null $description
+ * @property array<array-key, mixed>|null $content
+ * @property int $order
+ * @property bool $is_required
+ * @property bool $is_visible
+ * @property array<array-key, mixed>|null $config
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReportAttachment> $attachments
+ * @property-read int|null $attachments_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReportComment> $comments
+ * @property-read int|null $comments_count
+ * @property-read bool $is_complete
+ * @property-read string $type_icon
+ * @property-read string $type_label
+ * @property-read \App\Models\DepartmentReport $report
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereContent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereIsRequired($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereIsVisible($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereReportId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportSection whereUuid($value)
+ * @mixin \Eloquent
+ */
 class ReportSection extends Model
 {
     use HasFactory, LogsActivity;
@@ -55,7 +99,7 @@ class ReportSection extends Model
     protected static function boot(): void
     {
         parent::boot();
-        static::creating(fn($m) => $m->uuid = $m->uuid ?? (string) Str::uuid());
+        static::creating(fn($m) => $m->uuid ??= (string) Str::uuid());
     }
 
     public function getRouteKeyName(): string

@@ -41,7 +41,7 @@ class FormService
      */
     public function createNewVersion(DepartmentForm $form, array $data): DepartmentForm
     {
-        return DB::transaction(function () use ($form, $data) {
+        return DB::transaction(function () use ($form, $data): \App\Models\DepartmentForm {
             // Archive the current form
             $form->update(['status' => FormStatus::ARCHIVED]);
 
@@ -87,7 +87,7 @@ class FormService
      */
     public function removeField(FormField $field): void
     {
-        DB::transaction(function () use ($field) {
+        DB::transaction(function () use ($field): void {
             // Delete child fields first
             $field->children()->delete();
             $field->delete();
@@ -118,7 +118,7 @@ class FormService
      */
     public function moveField(FormField $field, int $newOrder, ?int $newParentId = null): void
     {
-        DB::transaction(function () use ($field, $newOrder, $newParentId) {
+        DB::transaction(function () use ($field, $newOrder, $newParentId): void {
             $oldOrder = $field->order;
             $oldParentId = $field->parent_field_id;
 
@@ -226,7 +226,7 @@ class FormService
         $richTextFieldNames = $this->getRichTextFieldNames($form);
 
         foreach ($data as $fieldName => $value) {
-            if (in_array($fieldName, $richTextFieldNames) && is_string($value) && ! empty($value)) {
+            if (in_array($fieldName, $richTextFieldNames) && is_string($value) && ($value !== '' && $value !== '0')) {
                 $data[$fieldName] = $this->sanitizeRichText($value);
             }
         }
@@ -261,7 +261,7 @@ class FormService
         // Validate the submission
         $errors = $this->validateSubmission($submission);
 
-        if (! empty($errors)) {
+        if ($errors !== []) {
             throw \Illuminate\Validation\ValidationException::withMessages($errors);
         }
 
@@ -307,7 +307,7 @@ class FormService
     public function getFormWithFields(DepartmentForm $form): array
     {
         // Eager load root fields with nested children to avoid N+1
-        $form->load(['rootFields' => function ($query) {
+        $form->load(['rootFields' => function ($query): void {
             $query->with('children.children.children') // Support 3 levels of nesting
                 ->orderBy('order');
         }]);
@@ -357,7 +357,7 @@ class FormService
      */
     protected function addValuesToFields(array $fields, array $data): array
     {
-        return array_map(function ($field) use ($data) {
+        return array_map(function (array $field) use ($data): array {
             $field['value'] = $data[$field['name']] ?? $field['default_value'] ?? null;
 
             if (! empty($field['children'])) {

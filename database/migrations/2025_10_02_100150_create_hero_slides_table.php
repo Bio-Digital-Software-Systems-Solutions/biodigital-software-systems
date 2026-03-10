@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('hero_slides', function (Blueprint $table) {
+        Schema::create('hero_slides', function (Blueprint $table): void {
             $table->id();
             $table->string('title');
             $table->text('description');

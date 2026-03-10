@@ -21,7 +21,7 @@ class AvailabilityService
     {
         // Check for approved absences first
         $absence = $this->getAbsenceForDate($employee, $date);
-        if ($absence) {
+        if ($absence instanceof \App\Models\Scheduling\Absence) {
             return [
                 'is_available' => false,
                 'status' => AvailabilityStatus::UNAVAILABLE,
@@ -35,7 +35,7 @@ class AvailabilityService
         // Check explicit availability entries
         $availability = $this->findAvailabilityEntry($employee, $date);
 
-        if ($availability) {
+        if ($availability instanceof \App\Models\Scheduling\EmployeeAvailability) {
             return [
                 'is_available' => $availability->status->isAvailable(),
                 'status' => $availability->status,
@@ -64,7 +64,7 @@ class AvailabilityService
     {
         // Check for approved absences first
         $absence = $this->getAbsenceForDate($employee, $date);
-        if ($absence) {
+        if ($absence instanceof \App\Models\Scheduling\Absence) {
             return [
                 'is_available' => false,
                 'status' => AvailabilityStatus::UNAVAILABLE,
@@ -78,7 +78,7 @@ class AvailabilityService
         // Check explicit availability entries for this department
         $availability = $this->findAvailabilityEntryForDepartment($employee, $date, $departmentId);
 
-        if ($availability) {
+        if ($availability instanceof \App\Models\Scheduling\EmployeeAvailability) {
             return [
                 'is_available' => $availability->status->isAvailable(),
                 'status' => $availability->status,
@@ -326,11 +326,11 @@ class AvailabilityService
 
         return EmployeeAvailability::where('user_id', $employee->id)
             ->where('day_of_week', $dayOfWeek)
-            ->where(function ($query) use ($date) {
+            ->where(function ($query) use ($date): void {
                 $query->whereNull('effective_from')
                     ->orWhere('effective_from', '<=', $date);
             })
-            ->where(function ($query) use ($date) {
+            ->where(function ($query) use ($date): void {
                 $query->whereNull('effective_until')
                     ->orWhere('effective_until', '>=', $date);
             })
@@ -348,11 +348,11 @@ class AvailabilityService
         return EmployeeAvailability::where('user_id', $employee->id)
             ->where('department_id', $departmentId)
             ->where('day_of_week', $dayOfWeek)
-            ->where(function ($query) use ($date) {
+            ->where(function ($query) use ($date): void {
                 $query->whereNull('effective_from')
                     ->orWhere('effective_from', '<=', $date);
             })
-            ->where(function ($query) use ($date) {
+            ->where(function ($query) use ($date): void {
                 $query->whereNull('effective_until')
                     ->orWhere('effective_until', '>=', $date);
             })
@@ -384,11 +384,11 @@ class AvailabilityService
         ?string $endTime = null
     ): Collection {
         // Get all department members
-        $employees = User::whereHas('departments', function ($query) use ($departmentId) {
+        $employees = User::whereHas('departments', function ($query) use ($departmentId): void {
             $query->where('department_id', $departmentId);
         })->get();
 
-        return $employees->filter(function ($employee) use ($date, $startTime, $endTime) {
+        return $employees->filter(function (\App\Models\User $employee) use ($date, $startTime, $endTime) {
             if ($startTime && $endTime) {
                 return $this->isAvailableDuring($employee, $date, $startTime, $endTime);
             }

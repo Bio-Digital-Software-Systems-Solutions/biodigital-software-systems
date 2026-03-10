@@ -52,14 +52,12 @@ class PastoralCareController extends Controller
             ->select('id', 'first_name', 'last_name', 'email', 'phone_number')
             ->with(['roles'])
             ->get()
-            ->map(function ($pastor) {
-                return [
-                    'id' => $pastor->id,
-                    'name' => $pastor->first_name.' '.$pastor->last_name,
-                    'email' => $pastor->email,
-                    'phone' => $pastor->phone_number,
-                ];
-            });
+            ->map(fn($pastor): array => [
+                'id' => $pastor->id,
+                'name' => $pastor->first_name.' '.$pastor->last_name,
+                'email' => $pastor->email,
+                'phone' => $pastor->phone_number,
+            ]);
 
         return response()->json([
             'success' => true,
@@ -75,16 +73,14 @@ class PastoralCareController extends Controller
         $themes = PastoralCareTheme::active()
             ->ordered()
             ->get()
-            ->map(function ($theme) {
-                return [
-                    'id' => $theme->id,
-                    'name' => $theme->name,
-                    'slug' => $theme->slug,
-                    'description' => $theme->description,
-                    'color' => $theme->color,
-                    'icon' => $theme->icon,
-                ];
-            });
+            ->map(fn($theme): array => [
+                'id' => $theme->id,
+                'name' => $theme->name,
+                'slug' => $theme->slug,
+                'description' => $theme->description,
+                'color' => $theme->color,
+                'icon' => $theme->icon,
+            ]);
 
         return response()->json([
             'success' => true,
@@ -308,9 +304,7 @@ class PastoralCareController extends Controller
         }
 
         // Sort by time
-        usort($allSlots, function ($a, $b) {
-            return strcmp($a['time'], $b['time']);
-        });
+        usort($allSlots, fn(array $a, array $b): int => strcmp((string) $a['time'], (string) $b['time']));
 
         return response()->json([
             'success' => true,
@@ -353,12 +347,12 @@ class PastoralCareController extends Controller
 
         $availability = \App\Models\PastorAvailability::where('pastor_id', $validated['pastor_id'])
             ->active()
-            ->where(function ($query) use ($currentDate, $dayOfWeek) {
-                $query->where(function ($q) use ($dayOfWeek) {
+            ->where(function ($query) use ($currentDate, $dayOfWeek): void {
+                $query->where(function ($q) use ($dayOfWeek): void {
                     $q->where('type', 'weekly')
                         ->where('day_of_week', $dayOfWeek);
                 })
-                    ->orWhere(function ($q) use ($currentDate) {
+                    ->orWhere(function ($q) use ($currentDate): void {
                         $q->where('type', 'specific')
                             ->where('specific_date', $currentDate->toDateString());
                     });
@@ -611,7 +605,7 @@ class PastoralCareController extends Controller
 
         $appointment = PastoralCare::findByClientToken($validated['token']);
 
-        if (! $appointment) {
+        if (!$appointment instanceof \App\Models\PastoralCare) {
             return response()->json([
                 'success' => false,
                 'message' => 'Rendez-vous introuvable ou token invalide',
@@ -661,7 +655,7 @@ class PastoralCareController extends Controller
 
         $appointment = PastoralCare::findByPastorToken($validated['token']);
 
-        if (! $appointment) {
+        if (!$appointment instanceof \App\Models\PastoralCare) {
             return response()->json([
                 'success' => false,
                 'message' => 'Rendez-vous introuvable ou token invalide',
@@ -958,7 +952,7 @@ class PastoralCareController extends Controller
                     "Cordialement,\nL'équipe ICC Munich";
 
                 // Simple email for client
-                Mail::raw($clientContent, function ($message) use ($appointment, $clientSubject) {
+                Mail::raw($clientContent, function ($message) use ($appointment, $clientSubject): void {
                     $message->to($appointment->client_email)
                         ->subject($clientSubject)
                         ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
@@ -1535,7 +1529,7 @@ class PastoralCareController extends Controller
 
         $proposal = PastoralCare::findByProposalToken($validated['token']);
 
-        if (! $proposal) {
+        if (!$proposal instanceof \App\Models\PastoralCare) {
             return response()->json([
                 'success' => false,
                 'message' => 'Proposition introuvable ou token invalide',
@@ -1752,7 +1746,7 @@ class PastoralCareController extends Controller
 
         $proposal = PastoralCare::findByProposalToken($validated['token']);
 
-        if (! $proposal) {
+        if (!$proposal instanceof \App\Models\PastoralCare) {
             return response()->json([
                 'success' => false,
                 'message' => 'Proposition introuvable ou token invalide',
@@ -1795,7 +1789,7 @@ class PastoralCareController extends Controller
 
         $proposal = PastoralCare::findByProposalToken($validated['token']);
 
-        if (! $proposal) {
+        if (!$proposal instanceof \App\Models\PastoralCare) {
             return response()->json([
                 'success' => false,
                 'message' => 'Proposition introuvable ou token invalide',
@@ -1855,7 +1849,7 @@ class PastoralCareController extends Controller
                 ]);
 
                 // Send email notification
-                Mail::raw($messageContent, function ($message) use ($mlrUser, $proposal) {
+                Mail::raw($messageContent, function ($message) use ($mlrUser, $proposal): void {
                     $message->to($mlrUser->email)
                         ->subject('Nouvelle proposition de rendez-vous - '.$proposal->client_name)
                         ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
@@ -1873,7 +1867,7 @@ class PastoralCareController extends Controller
                 "Notre équipe examinera votre proposition et vous répondra dans les plus brefs délais.\n\n".
                 "Cordialement,\nL'équipe ICC Munich";
 
-            Mail::raw($clientContent, function ($message) use ($proposal) {
+            Mail::raw($clientContent, function ($message) use ($proposal): void {
                 $message->to($proposal->client_email)
                     ->subject('Proposition de rendez-vous reçue - ICC Munich')
                     ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
@@ -1903,7 +1897,7 @@ class PastoralCareController extends Controller
                 "Vous recevrez un email de confirmation avec les détails complets.\n\n".
                 "Cordialement,\nL'équipe ICC Munich";
 
-            Mail::raw($clientContent, function ($message) use ($proposal) {
+            Mail::raw($clientContent, function ($message) use ($proposal): void {
                 $message->to($proposal->client_email)
                     ->subject('Votre proposition de rendez-vous a été acceptée - ICC Munich')
                     ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
@@ -1930,7 +1924,7 @@ class PastoralCareController extends Controller
                 "Nous vous invitons à soumettre une nouvelle proposition ou à choisir parmi les créneaux disponibles.\n\n".
                 "Cordialement,\nL'équipe ICC Munich";
 
-            Mail::raw($clientContent, function ($message) use ($proposal) {
+            Mail::raw($clientContent, function ($message) use ($proposal): void {
                 $message->to($proposal->client_email)
                     ->subject('Votre proposition de rendez-vous n\'a pas pu être acceptée - ICC Munich')
                     ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');
@@ -1966,7 +1960,7 @@ class PastoralCareController extends Controller
                 $confirmUrl."\n\n".
                 "Cordialement,\nL'équipe ICC Munich";
 
-            Mail::raw($clientContent, function ($message) use ($proposal) {
+            Mail::raw($clientContent, function ($message) use ($proposal): void {
                 $message->to($proposal->client_email)
                     ->subject('Contre-proposition pour votre rendez-vous - ICC Munich')
                     ->from(config('mail.from.address', 'noreply@icc-munich.de'), 'ICC Munich');

@@ -8,11 +8,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $name
  * @property string|null $description
  * @property string $status
@@ -25,6 +26,8 @@ use Spatie\Activitylog\LogOptions;
  * @property int $user_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read float $actual_progress
  * @property-read int $completed_tasks
  * @property-read int $duration_in_days
@@ -33,6 +36,8 @@ use Spatie\Activitylog\LogOptions;
  * @property-read string $priority_label
  * @property-read float $remaining_budget
  * @property-read int $total_tasks
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $morphTasks
+ * @property-read int|null $morph_tasks_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProgramStep> $steps
  * @property-read int|null $steps_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $tasks
@@ -59,17 +64,12 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Program whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Program whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Program whereUserId($value)
- * @property string $uuid
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $morphTasks
- * @property-read int|null $morph_tasks_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Program whereUuid($value)
  * @mixin \Eloquent
  */
 class Program extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -81,6 +81,7 @@ class Program extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -177,7 +178,7 @@ class Program extends Model
      */
     public function getCompletedTasksAttribute(): int
     {
-        return $this->tasks()->whereHas('status', function ($query) {
+        return $this->tasks()->whereHas('status', function ($query): void {
             $query->where('name', 'completed');
         })->count();
     }
@@ -187,7 +188,7 @@ class Program extends Model
      */
     public function getPendingTasksAttribute(): int
     {
-        return $this->tasks()->whereHas('status', function ($query) {
+        return $this->tasks()->whereHas('status', function ($query): void {
             $query->where('name', 'pending');
         })->count();
     }
@@ -197,7 +198,7 @@ class Program extends Model
      */
     public function getInProgressTasksAttribute(): int
     {
-        return $this->tasks()->whereHas('status', function ($query) {
+        return $this->tasks()->whereHas('status', function ($query): void {
             $query->where('name', 'in_progress');
         })->count();
     }
@@ -219,7 +220,7 @@ class Program extends Model
      */
     public function getDurationInDaysAttribute(): int
     {
-        return $this->start_date->diffInDays($this->end_date);
+        return (int) $this->start_date->diffInDays($this->end_date);
     }
 
     /**
@@ -245,7 +246,7 @@ class Program extends Model
     {
         // This would need to be calculated based on actual expenses
         // For now, we'll return the budget as placeholder
-        return $this->budget;
+        return (float) $this->budget;
     }
 
     /**

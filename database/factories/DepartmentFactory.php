@@ -46,7 +46,7 @@ class DepartmentFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_active' => true,
         ]);
     }
@@ -56,7 +56,7 @@ class DepartmentFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_active' => false,
         ]);
     }
@@ -66,7 +66,7 @@ class DepartmentFactory extends Factory
      */
     public function withHead(User $head): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'head_of_department' => $head->id,
         ]);
     }
@@ -76,7 +76,7 @@ class DepartmentFactory extends Factory
      */
     public function withBudget(float $budget): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'budget' => $budget,
         ]);
     }

@@ -40,7 +40,7 @@ class PastoralCareObserver
         // Check if any notifiable field was changed
         $changes = $this->getNotifiableChanges($pastoralCare);
 
-        if (empty($changes)) {
+        if ($changes === []) {
             return;
         }
 

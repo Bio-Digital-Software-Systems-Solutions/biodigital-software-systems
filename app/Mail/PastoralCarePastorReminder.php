@@ -29,8 +29,8 @@ class PastoralCarePastorReminder extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Rappel : Rendez-vous pastoral demain - '.$this->appointment->client_name,
             from: config('mail.from.address', 'noreply@icc-munich.de'),
+            subject: 'Rappel : Rendez-vous pastoral demain - '.$this->appointment->client_name,
         );
     }
 

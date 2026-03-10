@@ -69,7 +69,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_list_their_class_materials()
+    public function teacher_can_list_their_class_materials(): void
     {
         // Create materials for this class
         TrainingClassMaterial::factory()->count(3)->create([
@@ -91,7 +91,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_upload_pdf_material()
+    public function teacher_can_upload_pdf_material(): void
     {
         $file = UploadedFile::fake()->create('document.pdf', 1000, 'application/pdf');
 
@@ -117,7 +117,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_upload_video_material()
+    public function teacher_can_upload_video_material(): void
     {
         $file = UploadedFile::fake()->create('video.mp4', 5000, 'video/mp4');
 
@@ -140,7 +140,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_create_material_with_external_url()
+    public function teacher_can_create_material_with_external_url(): void
     {
         $response = $this->actingAs($this->teacher)
             ->postJson(route('training-classes.materials.store', $this->trainingClass), [
@@ -160,7 +160,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_update_material()
+    public function teacher_can_update_material(): void
     {
         $material = TrainingClassMaterial::factory()->create([
             'training_class_id' => $this->trainingClass->id,
@@ -184,7 +184,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_delete_material()
+    public function teacher_can_delete_material(): void
     {
         $material = TrainingClassMaterial::factory()->create([
             'training_class_id' => $this->trainingClass->id,
@@ -202,7 +202,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_cannot_add_material_to_other_teacher_class()
+    public function teacher_cannot_add_material_to_other_teacher_class(): void
     {
         $response = $this->actingAs($this->teacher)
             ->postJson(route('training-classes.materials.store', $this->otherClass), [
@@ -215,7 +215,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_cannot_update_other_teacher_material()
+    public function teacher_cannot_update_other_teacher_material(): void
     {
         $material = TrainingClassMaterial::factory()->create([
             'training_class_id' => $this->otherClass->id,
@@ -231,7 +231,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_can_view_their_class_materials()
+    public function student_can_view_their_class_materials(): void
     {
         TrainingClassMaterial::factory()->count(2)->create([
             'training_class_id' => $this->trainingClass->id,
@@ -254,7 +254,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_view_other_class_materials()
+    public function student_cannot_view_other_class_materials(): void
     {
         TrainingClassMaterial::factory()->count(2)->create([
             'training_class_id' => $this->otherClass->id,
@@ -268,7 +268,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_create_material()
+    public function student_cannot_create_material(): void
     {
         $response = $this->actingAs($this->student)
             ->postJson(route('training-classes.materials.store', $this->trainingClass), [
@@ -281,7 +281,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_update_material()
+    public function student_cannot_update_material(): void
     {
         $material = TrainingClassMaterial::factory()->create([
             'training_class_id' => $this->trainingClass->id,
@@ -297,7 +297,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_delete_material()
+    public function student_cannot_delete_material(): void
     {
         $material = TrainingClassMaterial::factory()->create([
             'training_class_id' => $this->trainingClass->id,
@@ -311,7 +311,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function materials_are_ordered_correctly()
+    public function materials_are_ordered_correctly(): void
     {
         TrainingClassMaterial::factory()->create([
             'training_class_id' => $this->trainingClass->id,
@@ -345,7 +345,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function creating_material_requires_either_file_or_url()
+    public function creating_material_requires_either_file_or_url(): void
     {
         $response = $this->actingAs($this->teacher)
             ->postJson(route('training-classes.materials.store', $this->trainingClass), [
@@ -358,7 +358,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function file_upload_validates_file_types()
+    public function file_upload_validates_file_types(): void
     {
         $invalidFile = UploadedFile::fake()->create('malware.exe', 1000);
 
@@ -373,7 +373,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_download_material()
+    public function teacher_can_download_material(): void
     {
         $material = TrainingClassMaterial::factory()->create([
             'training_class_id' => $this->trainingClass->id,
@@ -388,7 +388,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_can_download_active_material()
+    public function student_can_download_active_material(): void
     {
         $material = TrainingClassMaterial::factory()->create([
             'training_class_id' => $this->trainingClass->id,
@@ -404,7 +404,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_download_inactive_material()
+    public function student_cannot_download_inactive_material(): void
     {
         $material = TrainingClassMaterial::factory()->create([
             'training_class_id' => $this->trainingClass->id,
@@ -420,7 +420,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_add_material_to_any_class()
+    public function admin_can_add_material_to_any_class(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -445,7 +445,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function super_admin_can_add_material_to_any_class()
+    public function super_admin_can_add_material_to_any_class(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -468,7 +468,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_update_any_material()
+    public function admin_can_update_any_material(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -494,7 +494,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_delete_any_material()
+    public function admin_can_delete_any_material(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -514,7 +514,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_view_all_materials()
+    public function admin_can_view_all_materials(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('super-admin');
@@ -532,7 +532,7 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_view_inactive_materials()
+    public function admin_can_view_inactive_materials(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');

@@ -12,12 +12,15 @@ use Spatie\Activitylog\LogOptions;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property int $room_id
  * @property int $sender_id
  * @property string $content
  * @property bool $is_read
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\ChatRoom $room
  * @property-read \App\Models\User $sender
  * @method static \Database\Factories\ChatMessageFactory factory($count = null, $state = [])
@@ -31,9 +34,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatMessage whereRoomId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatMessage whereSenderId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatMessage whereUpdatedAt($value)
- * @property string $uuid
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatMessage whereUuid($value)
  * @mixin \Eloquent
  */

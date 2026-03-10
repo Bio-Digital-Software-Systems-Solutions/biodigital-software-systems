@@ -17,7 +17,7 @@ class TwoFactorAuthenticationIntegrationTest extends TestCase
         parent::setUp();
 
         // Seed roles and permissions
-        $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\RolesAndPermissionsSeeder']);
+        $this->artisan('db:seed', ['--class' => \Database\Seeders\RolesAndPermissionsSeeder::class]);
     }
 
     public function test_user_can_view_2fa_settings_page(): void
@@ -230,7 +230,7 @@ class TwoFactorAuthenticationIntegrationTest extends TestCase
         $user->save();
 
         // Get recovery codes
-        $recoveryCodes = json_decode(decrypt($user->two_factor_recovery_codes), true);
+        $recoveryCodes = json_decode((string) decrypt($user->two_factor_recovery_codes), true);
         $recoveryCode = $recoveryCodes[0];
 
         // Logout
@@ -253,7 +253,7 @@ class TwoFactorAuthenticationIntegrationTest extends TestCase
 
         // Recovery code should be marked as used
         $user = $user->fresh();
-        $newRecoveryCodes = json_decode(decrypt($user->two_factor_recovery_codes), true);
+        $newRecoveryCodes = json_decode((string) decrypt($user->two_factor_recovery_codes), true);
         $this->assertNotContains($recoveryCode, $newRecoveryCodes);
     }
 

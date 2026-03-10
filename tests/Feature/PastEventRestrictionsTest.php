@@ -73,7 +73,7 @@ class PastEventRestrictionsTest extends TestCase
         ]);
     }
 
-    public function test_admin_cannot_edit_past_event()
+    public function test_admin_cannot_edit_past_event(): void
     {
         $response = $this->actingAs($this->admin)
             ->put(route('events.update', $this->pastEvent->uuid), [
@@ -94,7 +94,7 @@ class PastEventRestrictionsTest extends TestCase
         $this->assertEquals('Past Event', $this->pastEvent->title);
     }
 
-    public function test_super_admin_can_edit_past_event()
+    public function test_super_admin_can_edit_past_event(): void
     {
         $response = $this->actingAs($this->superAdmin)
             ->put(route('events.update', $this->pastEvent->uuid), [
@@ -115,7 +115,7 @@ class PastEventRestrictionsTest extends TestCase
         $this->assertEquals('Updated Past Event by SuperAdmin', $this->pastEvent->title);
     }
 
-    public function test_admin_can_edit_future_event()
+    public function test_admin_can_edit_future_event(): void
     {
         $response = $this->actingAs($this->admin)
             ->put(route('events.update', $this->futureEvent->uuid), [
@@ -136,7 +136,7 @@ class PastEventRestrictionsTest extends TestCase
         $this->assertEquals('Updated Future Event', $this->futureEvent->title);
     }
 
-    public function test_admin_cannot_delete_past_event()
+    public function test_admin_cannot_delete_past_event(): void
     {
         $response = $this->actingAs($this->admin)
             ->delete(route('events.destroy', $this->pastEvent->uuid));
@@ -151,7 +151,7 @@ class PastEventRestrictionsTest extends TestCase
         ]);
     }
 
-    public function test_super_admin_can_delete_past_event()
+    public function test_super_admin_can_delete_past_event(): void
     {
         $response = $this->actingAs($this->superAdmin)
             ->delete(route('events.destroy', $this->pastEvent->uuid));
@@ -165,7 +165,7 @@ class PastEventRestrictionsTest extends TestCase
         ]);
     }
 
-    public function test_admin_can_delete_future_event()
+    public function test_admin_can_delete_future_event(): void
     {
         $response = $this->actingAs($this->admin)
             ->delete(route('events.destroy', $this->futureEvent->uuid));
@@ -179,7 +179,7 @@ class PastEventRestrictionsTest extends TestCase
         ]);
     }
 
-    public function test_regular_user_cannot_join_past_event()
+    public function test_regular_user_cannot_join_past_event(): void
     {
         $response = $this->actingAs($this->regularUser)
             ->post(route('events.join', $this->pastEvent->uuid));
@@ -191,7 +191,7 @@ class PastEventRestrictionsTest extends TestCase
         $this->assertFalse($this->pastEvent->participants->contains($this->regularUser));
     }
 
-    public function test_super_admin_can_join_past_event()
+    public function test_super_admin_can_join_past_event(): void
     {
         $response = $this->actingAs($this->superAdmin)
             ->post(route('events.join', $this->pastEvent->uuid));
@@ -204,7 +204,7 @@ class PastEventRestrictionsTest extends TestCase
         $this->assertTrue($this->pastEvent->participants->contains($this->superAdmin));
     }
 
-    public function test_regular_user_can_join_future_event()
+    public function test_regular_user_can_join_future_event(): void
     {
         $response = $this->actingAs($this->regularUser)
             ->post(route('events.join', $this->futureEvent->uuid));
@@ -217,7 +217,7 @@ class PastEventRestrictionsTest extends TestCase
         $this->assertTrue($this->futureEvent->participants->contains($this->regularUser));
     }
 
-    public function test_regular_user_cannot_leave_past_event()
+    public function test_regular_user_cannot_leave_past_event(): void
     {
         // First add user to past event directly in database
         $this->pastEvent->participants()->attach($this->regularUser);
@@ -233,7 +233,7 @@ class PastEventRestrictionsTest extends TestCase
         $this->assertTrue($this->pastEvent->participants->contains($this->regularUser));
     }
 
-    public function test_super_admin_can_leave_past_event()
+    public function test_super_admin_can_leave_past_event(): void
     {
         // First add super admin to past event
         $this->pastEvent->participants()->attach($this->superAdmin);
@@ -249,7 +249,7 @@ class PastEventRestrictionsTest extends TestCase
         $this->assertFalse($this->pastEvent->participants->contains($this->superAdmin));
     }
 
-    public function test_event_model_can_be_modified_by_method()
+    public function test_event_model_can_be_modified_by_method(): void
     {
         // Test regular admin with future event
         $this->assertTrue($this->futureEvent->canBeModifiedBy($this->admin));
@@ -264,10 +264,10 @@ class PastEventRestrictionsTest extends TestCase
         $this->assertTrue($this->futureEvent->canBeModifiedBy($this->superAdmin));
 
         // Test with null user
-        $this->assertFalse($this->pastEvent->canBeModifiedBy(null));
+        $this->assertFalse($this->pastEvent->canBeModifiedBy());
     }
 
-    public function test_event_model_can_accept_participation_changes_method()
+    public function test_event_model_can_accept_participation_changes_method(): void
     {
         // Test regular user with future event
         $this->assertTrue($this->futureEvent->canAcceptParticipationChanges($this->regularUser));
@@ -282,10 +282,10 @@ class PastEventRestrictionsTest extends TestCase
         $this->assertTrue($this->futureEvent->canAcceptParticipationChanges($this->superAdmin));
 
         // Test with null user
-        $this->assertFalse($this->pastEvent->canAcceptParticipationChanges(null));
+        $this->assertFalse($this->pastEvent->canAcceptParticipationChanges());
     }
 
-    public function test_toggle_participation_respects_past_event_restrictions()
+    public function test_toggle_participation_respects_past_event_restrictions(): void
     {
         // Test regular user cannot toggle participation on past event
         $response = $this->actingAs($this->regularUser)

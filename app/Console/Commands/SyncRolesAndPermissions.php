@@ -396,12 +396,9 @@ class SyncRolesAndPermissions extends Command
         $isForce = $this->option('force');
 
         // Safety check for production
-        if (app()->environment('production') && ! $isDryRun && ! $isForce) {
-            if (! $this->confirm('You are about to modify roles and permissions in PRODUCTION. Are you sure?')) {
-                $this->info('Operation cancelled.');
-
-                return self::SUCCESS;
-            }
+        if (app()->environment('production') && ! $isDryRun && !$isForce && ! $this->confirm('You are about to modify roles and permissions in PRODUCTION. Are you sure?')) {
+            $this->info('Operation cancelled.');
+            return self::SUCCESS;
         }
 
         if ($isDryRun) {
@@ -497,14 +494,14 @@ class SyncRolesAndPermissions extends Command
 
         // Get existing roles (lowercase for case-insensitive comparison)
         $existingRoles = Role::pluck('name')->toArray();
-        $existingRolesLower = array_map('strtolower', $existingRoles);
+        $existingRolesLower = array_map(strtolower(...), $existingRoles);
 
         $created = 0;
         $existed = 0;
 
         foreach ($allRoles as $roleName) {
             // Case-insensitive check (MySQL uses case-insensitive collation)
-            if (in_array(strtolower($roleName), $existingRolesLower)) {
+            if (in_array(strtolower((string) $roleName), $existingRolesLower)) {
                 $existed++;
             } else {
                 $created++;
@@ -587,7 +584,7 @@ class SyncRolesAndPermissions extends Command
 
         $aliases = $this->getRoleAliases();
         $existingRoles = Role::pluck('name')->toArray();
-        $existingRolesLower = array_map('strtolower', $existingRoles);
+        $existingRolesLower = array_map(strtolower(...), $existingRoles);
         $created = 0;
         $existed = 0;
         $updated = 0;
@@ -596,7 +593,7 @@ class SyncRolesAndPermissions extends Command
             $wasCreated = false;
 
             // Case-insensitive check (MySQL uses case-insensitive collation)
-            if (! in_array(strtolower($aliasName), $existingRolesLower)) {
+            if (! in_array(strtolower((string) $aliasName), $existingRolesLower)) {
                 $created++;
                 $wasCreated = true;
                 if (! $isDryRun) {
@@ -608,7 +605,7 @@ class SyncRolesAndPermissions extends Command
             }
 
             // Re-fetch the role to ensure we have it
-            $aliasRole = ! $isDryRun ? Role::where('name', $aliasName)->first() : null;
+            $aliasRole = $isDryRun ? null : Role::where('name', $aliasName)->first();
 
             // Sync permissions
             if ($sourceRoleName === '*') {
@@ -623,7 +620,7 @@ class SyncRolesAndPermissions extends Command
                     }
                 }
             } else {
-                $sourceRole = ! $isDryRun ? Role::where('name', $sourceRoleName)->first() : null;
+                $sourceRole = $isDryRun ? null : Role::where('name', $sourceRoleName)->first();
                 if ($sourceRole && $aliasRole) {
                     $sourcePermissions = $sourceRole->permissions->pluck('name')->toArray();
                     $currentPermissions = $aliasRole->permissions->pluck('name')->toArray();

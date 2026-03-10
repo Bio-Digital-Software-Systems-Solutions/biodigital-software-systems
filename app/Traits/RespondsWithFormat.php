@@ -24,7 +24,6 @@ trait RespondsWithFormat
      * @param string $message Success message
      * @param array<string, mixed> $routeParams Route parameters
      * @param array<string, mixed> $jsonData Additional JSON data
-     * @return JsonResponse|RedirectResponse
      */
     protected function respondSuccess(
         Request $request,
@@ -53,7 +52,6 @@ trait RespondsWithFormat
      * @param string $message Error message
      * @param int $statusCode HTTP status code
      * @param array<string, mixed> $errors Validation errors (optional)
-     * @return JsonResponse|RedirectResponse
      */
     protected function respondError(
         Request $request,
@@ -67,7 +65,7 @@ trait RespondsWithFormat
                 'message' => $message,
             ];
 
-            if (! empty($errors)) {
+            if ($errors !== []) {
                 $response['errors'] = $errors;
             }
 
@@ -87,7 +85,6 @@ trait RespondsWithFormat
      * @param string $message Success message
      * @param mixed $resource Created resource data (for JSON responses)
      * @param array<string, mixed> $routeParams Route parameters
-     * @return JsonResponse|RedirectResponse
      */
     protected function respondCreated(
         Request $request,
@@ -116,7 +113,6 @@ trait RespondsWithFormat
      * @param string $route Redirect route name (for HTML responses)
      * @param string $message Success message
      * @param array<string, mixed> $routeParams Route parameters
-     * @return JsonResponse|RedirectResponse
      */
     protected function respondDeleted(
         Request $request,
@@ -142,7 +138,6 @@ trait RespondsWithFormat
      * @param Request $request HTTP request
      * @param array<string, array<int, string>> $errors Validation errors
      * @param string $message Error message
-     * @return JsonResponse|RedirectResponse
      */
     protected function respondValidationError(
         Request $request,
@@ -168,7 +163,6 @@ trait RespondsWithFormat
      *
      * @param Request $request HTTP request
      * @param string $message Error message
-     * @return JsonResponse|RedirectResponse
      */
     protected function respondUnauthorized(
         Request $request,
@@ -189,7 +183,6 @@ trait RespondsWithFormat
      *
      * @param Request $request HTTP request
      * @param string $message Error message
-     * @return JsonResponse|RedirectResponse
      */
     protected function respondNotFound(
         Request $request,

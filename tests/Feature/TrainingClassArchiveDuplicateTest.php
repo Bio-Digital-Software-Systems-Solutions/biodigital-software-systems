@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 
     $this->admin = User::factory()->create();
@@ -32,7 +32,7 @@ beforeEach(function () {
 
 // ─── Archive Tests ───────────────────────────────────────────────
 
-it('can archive an active class', function () {
+it('can archive an active class', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
         'date' => now()->addDays(5),
@@ -50,7 +50,7 @@ it('can archive an active class', function () {
         ->and($class->archive_access_until)->not->toBeNull();
 });
 
-it('uses 6 months as default archive access duration', function () {
+it('uses 6 months as default archive access duration', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
     ]);
@@ -65,7 +65,7 @@ it('uses 6 months as default archive access duration', function () {
         ->toBe($expectedUntil->format('Y-m-d'));
 });
 
-it('cannot archive an already archived class', function () {
+it('cannot archive an already archived class', function (): void {
     $class = TrainingClass::factory()->archived()->create([
         'training_id' => $this->training->id,
     ]);
@@ -77,7 +77,7 @@ it('cannot archive an already archived class', function () {
     $response->assertJson(['success' => false]);
 });
 
-it('can unarchive an archived class', function () {
+it('can unarchive an archived class', function (): void {
     $class = TrainingClass::factory()->archived()->create([
         'training_id' => $this->training->id,
     ]);
@@ -93,7 +93,7 @@ it('can unarchive an archived class', function () {
         ->and($class->archive_access_until)->toBeNull();
 });
 
-it('cannot unarchive a non-archived class', function () {
+it('cannot unarchive a non-archived class', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
     ]);
@@ -105,7 +105,7 @@ it('cannot unarchive a non-archived class', function () {
     $response->assertJson(['success' => false]);
 });
 
-it('cannot update an archived class', function () {
+it('cannot update an archived class', function (): void {
     $class = TrainingClass::factory()->archived()->create([
         'training_id' => $this->training->id,
     ]);
@@ -121,7 +121,7 @@ it('cannot update an archived class', function () {
     $response->assertJson(['message' => 'Impossible de modifier une classe archivée.']);
 });
 
-it('cannot delete an archived class', function () {
+it('cannot delete an archived class', function (): void {
     $class = TrainingClass::factory()->archived()->create([
         'training_id' => $this->training->id,
     ]);
@@ -133,7 +133,7 @@ it('cannot delete an archived class', function () {
     expect($class->fresh())->not->toBeNull();
 });
 
-it('excludes archived classes from index by default', function () {
+it('excludes archived classes from index by default', function (): void {
     TrainingClass::factory()->create([
         'training_id' => $this->training->id,
         'date' => now()->addDay(),
@@ -153,7 +153,7 @@ it('excludes archived classes from index by default', function () {
     expect($classes)->toHaveCount(1);
 });
 
-it('shows archived classes when filtered by status=archived', function () {
+it('shows archived classes when filtered by status=archived', function (): void {
     TrainingClass::factory()->create([
         'training_id' => $this->training->id,
         'date' => now()->addDay(),
@@ -174,7 +174,7 @@ it('shows archived classes when filtered by status=archived', function () {
     expect($classes[0]['status'])->toBe('Archivée');
 });
 
-it('validates access_duration_months must be between 1 and 24', function (int $months, bool $shouldPass) {
+it('validates access_duration_months must be between 1 and 24', function (int $months, bool $shouldPass): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
     ]);
@@ -199,7 +199,7 @@ it('validates access_duration_months must be between 1 and 24', function (int $m
 
 // ─── Duplicate Tests ─────────────────────────────────────────────
 
-it('can duplicate a class', function () {
+it('can duplicate a class', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
         'name' => 'Classe Originale',
@@ -213,7 +213,7 @@ it('can duplicate a class', function () {
     expect(TrainingClass::count())->toBe(2);
 });
 
-it('appends (Copie) to the duplicated class name', function () {
+it('appends (Copie) to the duplicated class name', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
         'name' => 'Classe Originale',
@@ -227,7 +227,7 @@ it('appends (Copie) to the duplicated class name', function () {
     expect($data['name'])->toBe('Classe Originale (Copie)');
 });
 
-it('uses custom name when provided during duplication', function () {
+it('uses custom name when provided during duplication', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
         'name' => 'Classe Originale',
@@ -243,7 +243,7 @@ it('uses custom name when provided during duplication', function () {
     expect($data['name'])->toBe('Ma Nouvelle Classe');
 });
 
-it('duplicates schedules', function () {
+it('duplicates schedules', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
     ]);
@@ -266,7 +266,7 @@ it('duplicates schedules', function () {
     expect($copy->schedules)->toHaveCount(2);
 });
 
-it('duplicates materials', function () {
+it('duplicates materials', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
     ]);
@@ -284,7 +284,7 @@ it('duplicates materials', function () {
     expect($copy->materials)->toHaveCount(3);
 });
 
-it('duplicates quiz associations', function () {
+it('duplicates quiz associations', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
     ]);
@@ -304,7 +304,7 @@ it('duplicates quiz associations', function () {
     expect($copy->allQuizzes)->toHaveCount(1);
 });
 
-it('does not duplicate student enrollments', function () {
+it('does not duplicate student enrollments', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
     ]);
@@ -327,7 +327,7 @@ it('does not duplicate student enrollments', function () {
     expect($enrollmentCount)->toBe(3);
 });
 
-it('creates a copy with a different uuid', function () {
+it('creates a copy with a different uuid', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
     ]);
@@ -340,7 +340,7 @@ it('creates a copy with a different uuid', function () {
     expect($copy->uuid)->not->toBe($class->uuid);
 });
 
-it('creates an active class when duplicating an archived class', function () {
+it('creates an active class when duplicating an archived class', function (): void {
     $class = TrainingClass::factory()->archived()->create([
         'training_id' => $this->training->id,
     ]);
@@ -355,7 +355,7 @@ it('creates an active class when duplicating an archived class', function () {
         ->and($copy->archive_access_until)->toBeNull();
 });
 
-it('requires authentication for archive, unarchive, and duplicate', function () {
+it('requires authentication for archive, unarchive, and duplicate', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
     ]);

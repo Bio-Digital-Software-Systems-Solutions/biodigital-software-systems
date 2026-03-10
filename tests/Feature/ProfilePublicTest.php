@@ -3,7 +3,7 @@
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
-it('redirects unauthenticated users to login', function () {
+it('redirects unauthenticated users to login', function (): void {
     $user = User::factory()->create();
 
     $response = $this->get(route('profile.public', $user));
@@ -11,7 +11,7 @@ it('redirects unauthenticated users to login', function () {
     $response->assertRedirect(route('login'));
 });
 
-it('allows authenticated users to view public profile with default privacy settings', function () {
+it('allows authenticated users to view public profile with default privacy settings', function (): void {
     $viewer = User::factory()->create();
     $profileUser = User::factory()->create([
         'first_name' => 'John',
@@ -24,9 +24,9 @@ it('allows authenticated users to view public profile with default privacy setti
 
     // By default, privacy settings are all public, so fields should be present
     $response->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Profile/Public')
-            ->has('user', fn (Assert $user) => $user
+            ->has('user', fn (Assert $user): \Inertia\Testing\AssertableInertia => $user
                 ->has('id')
                 ->has('name')
                 ->has('first_name')
@@ -41,7 +41,7 @@ it('allows authenticated users to view public profile with default privacy setti
         );
 });
 
-it('hides fields when privacy settings are set to private', function () {
+it('hides fields when privacy settings are set to private', function (): void {
     $viewer = User::factory()->create();
     $profileUser = User::factory()->create([
         'first_name' => 'Jane',
@@ -59,9 +59,9 @@ it('hides fields when privacy settings are set to private', function () {
 
     // With private settings, these fields should not be present
     $response->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page
             ->component('Profile/Public')
-            ->has('user', fn (Assert $user) => $user
+            ->has('user', fn (Assert $user): \Inertia\Testing\AssertableInertia => $user
                 ->has('id')
                 ->has('name')
                 ->has('first_name')
@@ -76,7 +76,7 @@ it('hides fields when privacy settings are set to private', function () {
         );
 });
 
-it('returns 404 for non-existent user', function () {
+it('returns 404 for non-existent user', function (): void {
     $viewer = User::factory()->create();
 
     $response = $this->actingAs($viewer)->get('/profile/00000000-0000-0000-0000-000000000000');

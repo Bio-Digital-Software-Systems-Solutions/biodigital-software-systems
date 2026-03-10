@@ -29,8 +29,8 @@ class PastoralCareNewAppointmentNotification extends Mailable implements ShouldQ
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Nouveau rendez-vous de soin pastoral planifié - ICC Munich',
             from: config('mail.from.address', 'noreply@icc-munich.de'),
+            subject: 'Nouveau rendez-vous de soin pastoral planifié - ICC Munich',
         );
     }
 

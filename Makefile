@@ -1,9 +1,14 @@
-.PHONY: phpstan phpcs phpmd pint pest test clear db quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e frontend-test backend-test docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean clean-event-media clean-event-media-preview
+.PHONY: phpstan phpcs phpmd pint pest test clear db quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e frontend-test backend-test docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean clean-event-media clean-event-media-preview ide-helper ide-helper-generate ide-helper-models ide-helper-meta psalm lint lint-fix format format-check knip quality-full rector rector-fix
 
-# PHPStan static analysis (level 10)
+# PHPStan static analysis (level 8)
 phpstan:
 	@echo "Running PHPStan static analysis..."
 	@vendor/bin/phpstan analyse --memory-limit=2G
+
+# Psalm static analysis
+psalm:
+	@echo "Running Psalm static analysis..."
+	@vendor/bin/psalm
 
 # PHP_CodeSniffer - Check PSR-12 compliance
 phpcs:
@@ -243,9 +248,67 @@ convert-diagrams-png:
 		exit 1; \
 	fi
 
-# Run all code quality checks
+# IDE Helper - Generate all helpers (PHPDoc, models, meta)
+ide-helper: ide-helper-generate ide-helper-models ide-helper-meta
+	@echo "All IDE helpers generated!"
+
+# IDE Helper - PHPDoc generation for Laravel Facades
+ide-helper-generate:
+	@echo "Generating PHPDoc for Laravel Facades..."
+	@php artisan ide-helper:generate
+
+# IDE Helper - PHPDocs for models (write to model files)
+ide-helper-models:
+	@echo "Generating PHPDocs for models..."
+	@php artisan ide-helper:models -RW --no-interaction
+
+# IDE Helper - PhpStorm Meta file
+ide-helper-meta:
+	@echo "Generating PhpStorm Meta file..."
+	@php artisan ide-helper:meta
+
+# ESLint - Lint TypeScript/React code
+lint:
+	@echo "Running ESLint..."
+	@npx eslint resources/js
+
+# ESLint - Lint and auto-fix
+lint-fix:
+	@echo "Running ESLint with auto-fix..."
+	@npx eslint resources/js --fix
+
+# Prettier - Check code formatting
+format-check:
+	@echo "Checking code formatting with Prettier..."
+	@npx prettier --check resources/js
+
+# Prettier - Format code
+format:
+	@echo "Formatting code with Prettier..."
+	@npx prettier --write resources/js
+
+# Knip - Detect unused code and dependencies
+knip:
+	@echo "Running Knip (dead code detection)..."
+	@npx knip
+
+# Rector - Dry-run (show changes without applying)
+rector:
+	@echo "Running Rector (dry-run)..."
+	@vendor/bin/rector process --dry-run
+
+# Rector - Apply refactorings
+rector-fix:
+	@echo "Running Rector (applying refactorings)..."
+	@vendor/bin/rector process
+
+# Run all code quality checks (backend)
 quality: phpstan phpcs phpmd pint pest
 	@echo "All quality checks completed!"
+
+# Run full quality checks (backend + frontend)
+quality-full: phpstan psalm phpcs phpmd pint lint format-check pest
+	@echo "All backend + frontend quality checks completed!"
 
 # Run all checks and auto-fix what can be fixed
 quality-fix: fix phpstan phpcs phpmd pest
@@ -255,13 +318,26 @@ quality-fix: fix phpstan phpcs phpmd pest
 help:
 	@echo "Available commands:"
 	@echo ""
-	@echo "📊 Code Quality:"
-	@echo "  make phpstan            - Run PHPStan static analysis (level 10)"
+	@echo "📊 Code Quality (Backend):"
+	@echo "  make phpstan            - Run PHPStan static analysis (level 8)"
+	@echo "  make psalm              - Run Psalm static analysis"
 	@echo "  make phpcs              - Run PHP_CodeSniffer (PSR-12 compliance)"
 	@echo "  make phpmd              - Run PHP Mess Detector (complexity, design)"
 	@echo "  make pint               - Run Laravel Pint (check code style)"
 	@echo "  make fix                - Auto-fix code style with Pint"
-	@echo "  make quality            - Run all quality checks"
+	@echo "  make rector             - Run Rector dry-run (show changes)"
+	@echo "  make rector-fix         - Run Rector (apply refactorings)"
+	@echo ""
+	@echo "📊 Code Quality (Frontend):"
+	@echo "  make lint               - Run ESLint on TypeScript/React code"
+	@echo "  make lint-fix           - Run ESLint with auto-fix"
+	@echo "  make format-check       - Check formatting with Prettier"
+	@echo "  make format             - Auto-format code with Prettier"
+	@echo "  make knip               - Detect unused code and dependencies"
+	@echo ""
+	@echo "📊 Combined Quality:"
+	@echo "  make quality            - Run all backend quality checks"
+	@echo "  make quality-full       - Run all backend + frontend quality checks"
 	@echo "  make quality-fix        - Fix code style + run all checks"
 	@echo ""
 	@echo "🧪 Backend Tests:"
@@ -286,6 +362,10 @@ help:
 	@echo "  make clean-event-media  - Clean orphaned event media records"
 	@echo "  make clean-event-media-preview - Preview orphaned records (dry-run)"
 	@echo "  make composer-fix       - Fix Composer/Artisan bootstrap issues"
+	@echo "  make ide-helper         - Generate all IDE helpers (facades, models, meta)"
+	@echo "  make ide-helper-generate - Generate PHPDoc for Laravel Facades"
+	@echo "  make ide-helper-models  - Generate PHPDocs for models"
+	@echo "  make ide-helper-meta    - Generate PhpStorm Meta file"
 	@echo "  make docs               - Generate API documentation with PHPDocumentor"
 	@echo "  make schema-docs        - Generate database schema documentation with SchemaSpy"
 	@echo "  make er-diagram         - Generate Entity Relationship Diagram (SVG)"

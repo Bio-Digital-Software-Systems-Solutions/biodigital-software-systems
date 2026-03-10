@@ -144,10 +144,17 @@ export interface AppointmentPageProps extends PageProps {
     types: AppointmentType[];
 }
 
+export interface CalendarUrls {
+    google: string;
+    outlook: string;
+    ics: string;
+}
+
 export interface AppointmentShowProps extends PageProps {
     appointment: Appointment;
     canModify: boolean;
     canCancel: boolean;
+    calendarUrls: CalendarUrls;
 }
 
 export interface AppointmentCreateEditProps extends PageProps {

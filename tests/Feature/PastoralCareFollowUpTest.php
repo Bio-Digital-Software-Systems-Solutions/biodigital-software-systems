@@ -157,9 +157,7 @@ class PastoralCareFollowUpTest extends TestCase
             ]);
 
         // Verify email was sent to client
-        Mail::assertQueued(PastoralCareFollowUpNotification::class, function ($mail) {
-            return $mail->hasTo($this->appointment->client_email);
-        });
+        Mail::assertQueued(PastoralCareFollowUpNotification::class, fn($mail) => $mail->hasTo($this->appointment->client_email));
     }
 
     /** @test */

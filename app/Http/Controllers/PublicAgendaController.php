@@ -37,21 +37,19 @@ class PublicAgendaController extends Controller
             ->orderBy('start_datetime')
             ->get(['id', 'start_datetime', 'end_datetime', 'title', 'type', 'status', 'visibility', 'user_id']);
 
-        $calendarEvents = $allAppointments->map(function ($appointment) {
-            return [
-                'id' => $appointment->id,
-                'title' => $appointment->title,
-                'start' => $appointment->start_datetime->toISOString(),
-                'end' => $appointment->end_datetime->toISOString(),
-                'backgroundColor' => $this->getTypeColor($appointment->type),
-                'borderColor' => $this->getTypeColor($appointment->type),
-                'extendedProps' => [
-                    'type' => $appointment->type,
-                    'status' => $appointment->status,
-                    'formatted_time' => $appointment->start_datetime->format('H:i') . ' - ' . $appointment->end_datetime->format('H:i'),
-                ],
-            ];
-        });
+        $calendarEvents = $allAppointments->map(fn($appointment): array => [
+            'id' => $appointment->id,
+            'title' => $appointment->title,
+            'start' => $appointment->start_datetime->toISOString(),
+            'end' => $appointment->end_datetime->toISOString(),
+            'backgroundColor' => $this->getTypeColor($appointment->type),
+            'borderColor' => $this->getTypeColor($appointment->type),
+            'extendedProps' => [
+                'type' => $appointment->type,
+                'status' => $appointment->status,
+                'formatted_time' => $appointment->start_datetime->format('H:i') . ' - ' . $appointment->end_datetime->format('H:i'),
+            ],
+        ]);
 
         return Inertia::render('PublicAgenda/Show', [
             'user' => $userData,
@@ -102,27 +100,25 @@ class PublicAgendaController extends Controller
             // Get all appointments for the month (both public and private for complete agenda view)
             $appointments = Appointment::with(['organizer:id,first_name,last_name,email'])
                 ->forUser($user)
-                ->whereYear('start_datetime', substr($month, 0, 4))
-                ->whereMonth('start_datetime', substr($month, 5, 2))
+                ->whereYear('start_datetime', substr((string) $month, 0, 4))
+                ->whereMonth('start_datetime', substr((string) $month, 5, 2))
                 ->whereNotIn('status', ['cancelled'])
                 ->orderBy('start_datetime')
                 ->get(['id', 'start_datetime', 'end_datetime', 'title', 'type', 'status', 'visibility', 'user_id']);
 
-            $calendarEvents = $appointments->map(function ($appointment) {
-                return [
-                    'id' => $appointment->id,
-                    'title' => $appointment->title,
-                    'start' => $appointment->start_datetime->toISOString(),
-                    'end' => $appointment->end_datetime->toISOString(),
-                    'backgroundColor' => $this->getTypeColor($appointment->type),
-                    'borderColor' => $this->getTypeColor($appointment->type),
-                    'extendedProps' => [
-                        'type' => $appointment->type,
-                        'status' => $appointment->status,
-                        'formatted_time' => $appointment->start_datetime->format('H:i') . ' - ' . $appointment->end_datetime->format('H:i'),
-                    ],
-                ];
-            });
+            $calendarEvents = $appointments->map(fn($appointment): array => [
+                'id' => $appointment->id,
+                'title' => $appointment->title,
+                'start' => $appointment->start_datetime->toISOString(),
+                'end' => $appointment->end_datetime->toISOString(),
+                'backgroundColor' => $this->getTypeColor($appointment->type),
+                'borderColor' => $this->getTypeColor($appointment->type),
+                'extendedProps' => [
+                    'type' => $appointment->type,
+                    'status' => $appointment->status,
+                    'formatted_time' => $appointment->start_datetime->format('H:i') . ' - ' . $appointment->end_datetime->format('H:i'),
+                ],
+            ]);
 
             return response()->json([
                 'success' => true,

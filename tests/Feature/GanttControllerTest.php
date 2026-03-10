@@ -10,6 +10,8 @@ use Tests\TestCase;
 
 class GanttControllerTest extends TestCase
 {
+    public $user;
+    public $project;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -64,7 +66,7 @@ class GanttControllerTest extends TestCase
 
     public function test_gantt_uses_uuid_for_tasks(): void
     {
-        $task = ProjectTask::factory()->create([
+        ProjectTask::factory()->create([
             'project_id' => $this->project->id,
             'reporter_id' => $this->user->id,
             'due_date' => now()->addDays(7),
@@ -165,7 +167,7 @@ class GanttControllerTest extends TestCase
         ]);
 
         // Task without dates - might not be included based on the query
-        $taskWithoutDates = ProjectTask::factory()->create([
+        ProjectTask::factory()->create([
             'project_id' => $this->project->id,
             'reporter_id' => $this->user->id,
             'due_date' => null,
@@ -291,8 +293,8 @@ class GanttControllerTest extends TestCase
 
     public function test_gantt_displays_all_projects_for_filter_dropdown(): void
     {
-        $project2 = Project::factory()->create(['name' => 'Alpha Project']);
-        $project3 = Project::factory()->create(['name' => 'Beta Project']);
+        Project::factory()->create(['name' => 'Alpha Project']);
+        Project::factory()->create(['name' => 'Beta Project']);
 
         $response = $this->actingAs($this->user)
             ->get(route('gantt.index'));

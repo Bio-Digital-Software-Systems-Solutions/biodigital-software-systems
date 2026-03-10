@@ -11,6 +11,65 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $form_id
+ * @property int|null $parent_field_id
+ * @property string $name
+ * @property string $label
+ * @property string|null $description
+ * @property FormFieldType $type
+ * @property string|null $placeholder
+ * @property string|null $default_value
+ * @property array<array-key, mixed>|null $options
+ * @property array<array-key, mixed>|null $validation
+ * @property array<array-key, mixed>|null $conditional_logic
+ * @property array<array-key, mixed>|null $config
+ * @property int $order
+ * @property int $step
+ * @property int $column_span
+ * @property bool $is_required
+ * @property bool $is_readonly
+ * @property bool $is_hidden
+ * @property string|null $help_text
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, FormField> $children
+ * @property-read int|null $children_count
+ * @property-read \App\Models\DepartmentForm $form
+ * @property-read FormField|null $parent
+ * @method static \Database\Factories\FormFieldFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereColumnSpan($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereConditionalLogic($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereDefaultValue($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereFormId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereHelpText($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereIsHidden($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereIsReadonly($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereIsRequired($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereLabel($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereOptions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereParentFieldId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField wherePlaceholder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereStep($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormField whereValidation($value)
+ * @mixin \Eloquent
+ */
 class FormField extends Model
 {
     use HasFactory, LogsActivity;
@@ -53,7 +112,7 @@ class FormField extends Model
     {
         parent::boot();
 
-        static::creating(function (self $model) {
+        static::creating(function (self $model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
@@ -119,11 +178,7 @@ class FormField extends Model
     {
         $rules = [];
 
-        if ($this->is_required) {
-            $rules[] = 'required';
-        } else {
-            $rules[] = 'nullable';
-        }
+        $rules[] = $this->is_required ? 'required' : 'nullable';
 
         // Add type-specific default validation
         $defaultRules = $this->type->defaultValidation();

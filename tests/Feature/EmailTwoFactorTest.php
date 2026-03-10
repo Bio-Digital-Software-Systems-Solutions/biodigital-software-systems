@@ -4,9 +4,9 @@ use App\Models\User;
 use App\Notifications\TwoFactorCodeNotification;
 use Illuminate\Support\Facades\Notification;
 
-describe('Email Two Factor Authentication', function () {
-    describe('Enable/Disable Email 2FA', function () {
-        it('allows authenticated user to enable email 2FA', function () {
+describe('Email Two Factor Authentication', function (): void {
+    describe('Enable/Disable Email 2FA', function (): void {
+        it('allows authenticated user to enable email 2FA', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => false,
             ]);
@@ -24,7 +24,7 @@ describe('Email Two Factor Authentication', function () {
                 ->and($user->preferred_two_factor_method)->toBe('email');
         });
 
-        it('allows authenticated user to disable email 2FA', function () {
+        it('allows authenticated user to disable email 2FA', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => true,
                 'email_two_factor_code' => '12345678',
@@ -46,21 +46,21 @@ describe('Email Two Factor Authentication', function () {
                 ->and($user->email_two_factor_expires_at)->toBeNull();
         });
 
-        it('requires authentication to enable email 2FA', function () {
+        it('requires authentication to enable email 2FA', function (): void {
             $response = $this->postJson(route('email-two-factor.enable'));
 
             $response->assertUnauthorized();
         });
 
-        it('requires authentication to disable email 2FA', function () {
+        it('requires authentication to disable email 2FA', function (): void {
             $response = $this->deleteJson(route('email-two-factor.disable'));
 
             $response->assertUnauthorized();
         });
     });
 
-    describe('Get 2FA Status', function () {
-        it('returns correct 2FA status for user with email 2FA only', function () {
+    describe('Get 2FA Status', function (): void {
+        it('returns correct 2FA status for user with email 2FA only', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => true,
                 'two_factor_confirmed_at' => null,
@@ -79,7 +79,7 @@ describe('Email Two Factor Authentication', function () {
                 ]);
         });
 
-        it('returns correct 2FA status for user with TOTP only', function () {
+        it('returns correct 2FA status for user with TOTP only', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => false,
                 'two_factor_confirmed_at' => now(),
@@ -98,7 +98,7 @@ describe('Email Two Factor Authentication', function () {
                 ]);
         });
 
-        it('returns correct 2FA status for user with both methods', function () {
+        it('returns correct 2FA status for user with both methods', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => true,
                 'two_factor_confirmed_at' => now(),
@@ -117,7 +117,7 @@ describe('Email Two Factor Authentication', function () {
                 ]);
         });
 
-        it('returns correct 2FA status for user with no 2FA', function () {
+        it('returns correct 2FA status for user with no 2FA', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => false,
                 'two_factor_confirmed_at' => null,
@@ -137,8 +137,8 @@ describe('Email Two Factor Authentication', function () {
         });
     });
 
-    describe('Set Preferred Method', function () {
-        it('allows setting email as preferred method when enabled', function () {
+    describe('Set Preferred Method', function (): void {
+        it('allows setting email as preferred method when enabled', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => true,
                 'preferred_two_factor_method' => null,
@@ -158,7 +158,7 @@ describe('Email Two Factor Authentication', function () {
             expect($user->preferred_two_factor_method)->toBe('email');
         });
 
-        it('allows setting totp as preferred method when enabled', function () {
+        it('allows setting totp as preferred method when enabled', function (): void {
             $user = User::factory()->create([
                 'two_factor_confirmed_at' => now(),
                 'preferred_two_factor_method' => null,
@@ -178,7 +178,7 @@ describe('Email Two Factor Authentication', function () {
             expect($user->preferred_two_factor_method)->toBe('totp');
         });
 
-        it('rejects setting method that is not enabled', function () {
+        it('rejects setting method that is not enabled', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => false,
                 'two_factor_confirmed_at' => null,
@@ -192,7 +192,7 @@ describe('Email Two Factor Authentication', function () {
             $response->assertStatus(400);
         });
 
-        it('validates method parameter', function () {
+        it('validates method parameter', function (): void {
             $user = User::factory()->create();
 
             $response = $this->actingAs($user)
@@ -204,8 +204,8 @@ describe('Email Two Factor Authentication', function () {
         });
     });
 
-    describe('Send Email Code During 2FA Challenge', function () {
-        it('sends code when user has valid login session', function () {
+    describe('Send Email Code During 2FA Challenge', function (): void {
+        it('sends code when user has valid login session', function (): void {
             Notification::fake();
 
             $user = User::factory()->create([
@@ -230,16 +230,16 @@ describe('Email Two Factor Authentication', function () {
 
             $user->refresh();
             expect($user->email_two_factor_code)->not->toBeNull()
-                ->and(strlen($user->email_two_factor_code))->toBe(8);
+                ->and(strlen((string) $user->email_two_factor_code))->toBe(8);
         });
 
-        it('returns error when login session is invalid', function () {
+        it('returns error when login session is invalid', function (): void {
             $response = $this->postJson(route('two-factor.email.send'));
 
             $response->assertUnauthorized();
         });
 
-        it('returns error when user does not have email 2FA enabled', function () {
+        it('returns error when user does not have email 2FA enabled', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => false,
             ]);
@@ -253,7 +253,7 @@ describe('Email Two Factor Authentication', function () {
             $response->assertStatus(400);
         });
 
-        it('informs when code already sent and not expired', function () {
+        it('informs when code already sent and not expired', function (): void {
             Notification::fake();
 
             $user = User::factory()->create([
@@ -280,8 +280,8 @@ describe('Email Two Factor Authentication', function () {
         });
     });
 
-    describe('Resend Email Code', function () {
-        it('resends code even if previous code exists', function () {
+    describe('Resend Email Code', function (): void {
+        it('resends code even if previous code exists', function (): void {
             Notification::fake();
 
             $user = User::factory()->create([
@@ -305,8 +305,8 @@ describe('Email Two Factor Authentication', function () {
         });
     });
 
-    describe('Verify Email Code', function () {
-        it('logs in user with valid code', function () {
+    describe('Verify Email Code', function (): void {
+        it('logs in user with valid code', function (): void {
             Notification::fake();
 
             $user = User::factory()->create([
@@ -332,7 +332,7 @@ describe('Email Two Factor Authentication', function () {
             expect($user->email_two_factor_code)->toBeNull();
         });
 
-        it('rejects invalid code', function () {
+        it('rejects invalid code', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => true,
                 'email_two_factor_code' => '12345678',
@@ -351,7 +351,7 @@ describe('Email Two Factor Authentication', function () {
             $this->assertGuest();
         });
 
-        it('rejects expired code', function () {
+        it('rejects expired code', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => true,
                 'email_two_factor_code' => '12345678',
@@ -370,7 +370,7 @@ describe('Email Two Factor Authentication', function () {
             $this->assertGuest();
         });
 
-        it('validates code format', function () {
+        it('validates code format', function (): void {
             $user = User::factory()->create([
                 'email_two_factor_enabled' => true,
             ]);
@@ -386,7 +386,7 @@ describe('Email Two Factor Authentication', function () {
             $response->assertSessionHasErrors('email_code');
         });
 
-        it('rejects when no login session exists', function () {
+        it('rejects when no login session exists', function (): void {
             $response = $this->post(route('two-factor.email.verify'), [
                 'email_code' => '12345678',
             ]);
@@ -395,8 +395,8 @@ describe('Email Two Factor Authentication', function () {
         });
     });
 
-    describe('Two Factor Challenge View', function () {
-        it('shows 2FA challenge when user has TOTP enabled via login flow', function () {
+    describe('Two Factor Challenge View', function (): void {
+        it('shows 2FA challenge when user has TOTP enabled via login flow', function (): void {
             $password = 'password123';
             $user = User::factory()->create([
                 'password' => bcrypt($password),
@@ -425,8 +425,8 @@ describe('Email Two Factor Authentication', function () {
         });
     });
 
-    describe('Integration: Email 2FA Used in Challenge Phase', function () {
-        it('allows user to use email code after entering 2FA challenge', function () {
+    describe('Integration: Email 2FA Used in Challenge Phase', function (): void {
+        it('allows user to use email code after entering 2FA challenge', function (): void {
             Notification::fake();
 
             $user = User::factory()->create([
@@ -450,7 +450,7 @@ describe('Email Two Factor Authentication', function () {
             $this->assertAuthenticatedAs($user);
         });
 
-        it('can request and verify email code during 2FA challenge', function () {
+        it('can request and verify email code during 2FA challenge', function (): void {
             Notification::fake();
 
             $user = User::factory()->create([

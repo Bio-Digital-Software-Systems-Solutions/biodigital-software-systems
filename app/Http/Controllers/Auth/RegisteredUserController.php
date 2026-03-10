@@ -21,7 +21,7 @@ use Inertia\Response;
 class RegisteredUserController extends Controller
 {
     public function __construct(
-        private CaptchaService $captchaService
+        private readonly CaptchaService $captchaService
     ) {}
 
     /**
@@ -83,7 +83,7 @@ class RegisteredUserController extends Controller
         $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
             now()->addMinutes(60),
-            ['id' => $user->id, 'hash' => sha1($user->email)]
+            ['id' => $user->id, 'hash' => sha1((string) $user->email)]
         );
 
         // Send welcome email with verification link

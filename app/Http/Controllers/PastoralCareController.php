@@ -151,10 +151,10 @@ class PastoralCareController extends Controller
     public function create(): Response
     {
         // Get all users with pastoral care permissions
-        $pastors = User::whereHas('permissions', function ($query) {
+        $pastors = User::whereHas('permissions', function ($query): void {
             $query->where('name', 'view pastoral care');
         })
-            ->orWhereHas('roles', function ($query) {
+            ->orWhereHas('roles', function ($query): void {
                 $query->whereIn('name', ['admin', 'pastor', 'writer']);
             })
             ->select('id', 'first_name', 'last_name', 'email')
@@ -360,10 +360,10 @@ class PastoralCareController extends Controller
         $pastoralCare->load(['user', 'pastor']);
 
         // Get all users with pastoral care permissions
-        $pastors = User::whereHas('permissions', function ($query) {
+        $pastors = User::whereHas('permissions', function ($query): void {
             $query->where('name', 'view pastoral care');
         })
-            ->orWhereHas('roles', function ($query) {
+            ->orWhereHas('roles', function ($query): void {
                 $query->whereIn('name', ['admin', 'pastor', 'writer']);
             })
             ->select('id', 'first_name', 'last_name', 'email')
@@ -560,7 +560,7 @@ class PastoralCareController extends Controller
         $period = $request->get('period', 'month');
 
         // Get all pastors/agents for transfer functionality
-        $pastors = User::whereHas('roles', function ($query) {
+        $pastors = User::whereHas('roles', function ($query): void {
             $query->whereIn('name', ['admin', 'pastor', 'mlr-agent']);
         })
             ->select('id', 'first_name', 'last_name', 'email')
@@ -569,7 +569,7 @@ class PastoralCareController extends Controller
 
         // Determine if we need to filter by user
         // Pastors and mlr-agents (who don't have full access) only see their own appointments
-        $filterByUserId = ! $canViewAllAppointments ? $user->id : null;
+        $filterByUserId = $canViewAllAppointments ? null : $user->id;
 
         // Get comprehensive statistics (filtered for pastors/agents)
         $stats = $statisticsService->getMlrDashboardStats($period, $filterByUserId);

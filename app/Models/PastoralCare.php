@@ -15,80 +15,156 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
- * @property-read bool $can_be_confirmed
- * @property-read bool $can_be_cancelled
- * @property-read string $formatted_appointment_time
- * @property-read string $formatted_appointment_date
- * @property-read \Carbon\Carbon $appointment_end_time
- * @property-read bool $is_upcoming
- * @property-read bool $is_past
  * @property int $id
  * @property string $uuid
  * @property int|null $user_id
- * @property int $pastor_id
+ * @property int|null $parent_id
+ * @property int|null $pastor_id
+ * @property int|null $transferred_from_id
+ * @property int|null $transferred_to_id
+ * @property \Illuminate\Support\Carbon|null $transferred_at
+ * @property string|null $transfer_reason
  * @property \Illuminate\Support\Carbon $appointment_date
  * @property \Illuminate\Support\Carbon $appointment_time
  * @property int $duration_minutes
- * @property string $status
+ * @property string|null $status
+ * @property bool $is_proposal
+ * @property string|null $proposal_reason
+ * @property \Illuminate\Support\Carbon|null $counter_proposed_date
+ * @property string|null $counter_proposed_time
+ * @property string|null $counter_proposal_message
+ * @property string|null $proposal_response_status
+ * @property string|null $proposal_rejection_reason
+ * @property string|null $proposal_token
+ * @property int|null $mlr_agent_id
+ * @property \Illuminate\Support\Carbon|null $proposal_submitted_at
+ * @property \Illuminate\Support\Carbon|null $proposal_reviewed_at
+ * @property \Illuminate\Support\Carbon|null $counter_proposal_sent_at
+ * @property \Illuminate\Support\Carbon|null $client_responded_at
  * @property string $location_type
  * @property string|null $zoom_link
  * @property string|null $client_name
  * @property string|null $client_email
  * @property string|null $client_phone
  * @property string|null $notes
- * @property string|null $pastor_notes
+ * @property string|null $theme
+ * @property array<array-key, mixed>|null $pastor_notes
  * @property \Illuminate\Support\Carbon|null $confirmation_sent_at
+ * @property \Illuminate\Support\Carbon|null $client_confirmed_at
+ * @property \Illuminate\Support\Carbon|null $pastor_confirmed_at
+ * @property string|null $client_confirmation_token
+ * @property string|null $pastor_confirmation_token
  * @property \Illuminate\Support\Carbon|null $reminder_sent_at
- * @property \Illuminate\Support\Carbon|null $notification_email_sent_at
- * @property array|null $notification_channels
+ * @property array<array-key, mixed>|null $notification_channels JSON array of notification channels: email, sms, whatsapp
  * @property \Illuminate\Support\Carbon|null $sms_reminder_sent_at
  * @property \Illuminate\Support\Carbon|null $whatsapp_reminder_sent_at
+ * @property \Illuminate\Support\Carbon|null $notification_email_sent_at
  * @property \Illuminate\Support\Carbon|null $cancelled_at
  * @property string|null $cancellation_reason
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
- * @property-read \App\Models\User $pastor
+ * @property string|null $assigned_agent_type
+ * @property int|null $assigned_agent_id
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read BaseModel|\Eloquent|null $assignedAgent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PastoralCare> $followUps
+ * @property-read int|null $follow_ups_count
+ * @property-read mixed $appointment_end_time
+ * @property-read mixed $can_be_cancelled
+ * @property-read mixed $can_be_confirmed
+ * @property-read array $confirmation_status
+ * @property-read mixed $formatted_appointment_date
+ * @property-read mixed $formatted_appointment_time
+ * @property-read bool $is_fully_confirmed
+ * @property-read mixed $is_past
+ * @property-read mixed $is_upcoming
+ * @property-read string|null $proposal_status_label
+ * @property-read string|null $theme_label
+ * @property-read \App\Models\User|null $mlrAgent
+ * @property-read PastoralCare|null $parent
+ * @property-read \App\Models\User|null $pastor
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PastoralCareTheme> $themes
+ * @property-read int|null $themes_count
+ * @property-read \App\Models\User|null $transferredFrom
+ * @property-read \App\Models\User|null $transferredTo
  * @property-read \App\Models\User|null $user
- *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare betweenDates($startDate, $endDate)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare byTheme($theme)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare cancelled()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare completed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare confirmed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare counterProposed()
  * @method static \Database\Factories\PastoralCareFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare forAssignedAgent($agentId, ?string $agentType = null)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare forPastor($pastorId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare isFollowUp()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare isProposal()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare notTransferred()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare onDate($date)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare pendingProposals()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare proposed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare transferred()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare upcoming()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereAppointmentDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereAppointmentTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereAssignedAgentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereAssignedAgentType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereCancellationReason($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereCancelledAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereClientConfirmationToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereClientConfirmedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereClientEmail($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereClientName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereClientPhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereClientRespondedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereConfirmationSentAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereCounterProposalMessage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereCounterProposalSentAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereCounterProposedDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereCounterProposedTime($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereDurationMinutes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereIsProposal($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereLocationType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereMlrAgentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereNotificationChannels($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereNotificationEmailSentAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereParentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare wherePastorConfirmationToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare wherePastorConfirmedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare wherePastorId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare wherePastorNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereProposalReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereProposalRejectionReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereProposalResponseStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereProposalReviewedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereProposalSubmittedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereProposalToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereReminderSentAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereSmsReminderSentAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereTheme($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereTransferReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereTransferredAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereTransferredFromId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereTransferredToId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereWhatsappReminderSentAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare whereZoomLink($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCare withoutTrashed()
- *
  * @mixin \Eloquent
  */
 class PastoralCare extends BaseModel
@@ -238,7 +314,7 @@ class PastoralCare extends BaseModel
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid();
             }
@@ -262,7 +338,7 @@ class PastoralCare extends BaseModel
             }
         });
 
-        static::updating(function ($model) {
+        static::updating(function ($model): void {
             // Keep assigned_agent in sync when pastor_id changes
             if ($model->isDirty('pastor_id') && $model->pastor_id) {
                 $model->assigned_agent_id = $model->pastor_id;
@@ -280,7 +356,7 @@ class PastoralCare extends BaseModel
     {
         $this->update([
             'assigned_agent_id' => $agent->id,
-            'assigned_agent_type' => get_class($agent),
+            'assigned_agent_type' => $agent::class,
             // Also update pastor_id for backward compatibility if agent is a User
             'pastor_id' => $agent instanceof User ? $agent->id : $this->pastor_id,
         ]);
@@ -457,12 +533,12 @@ class PastoralCare extends BaseModel
     }
 
     // Accessors & Mutators
-    public function getFormattedAppointmentTimeAttribute()
+    public function getFormattedAppointmentTimeAttribute(): string
     {
         return $this->appointment_time->format('H:i');
     }
 
-    public function getFormattedAppointmentDateAttribute()
+    public function getFormattedAppointmentDateAttribute(): string
     {
         return $this->appointment_date->format('d/m/Y');
     }
@@ -472,25 +548,27 @@ class PastoralCare extends BaseModel
         return $this->appointment_time->addMinutes($this->duration_minutes);
     }
 
-    public function getIsUpcomingAttribute()
+    public function getIsUpcomingAttribute(): bool
     {
         return $this->appointment_date >= now()->toDateString() &&
             in_array($this->status, ['pending', 'confirmed']);
     }
 
-    public function getIsPastAttribute()
+    public function getIsPastAttribute(): bool
     {
-        return $this->appointment_date < now()->toDateString() ||
-            ($this->appointment_date == now()->toDateString() && $this->appointment_time < now());
+        if ($this->appointment_date < now()->toDateString()) {
+            return true;
+        }
+        return $this->appointment_date == now()->toDateString() && $this->appointment_time < now();
     }
 
-    public function getCanBeCancelledAttribute()
+    public function getCanBeCancelledAttribute(): bool
     {
         return in_array($this->status, ['pending', 'confirmed']) &&
             $this->appointment_time > now()->addHours(24);
     }
 
-    public function getCanBeConfirmedAttribute()
+    public function getCanBeConfirmedAttribute(): bool
     {
         return $this->status === 'pending' && $this->appointment_time > now();
     }
@@ -523,7 +601,7 @@ class PastoralCare extends BaseModel
      * Legacy confirm method - now confirms both parties at once
      * Kept for backward compatibility
      */
-    public function confirm()
+    public function confirm(): static
     {
         if (! $this->can_be_confirmed) {
             // Déterminer la raison spécifique de l'impossibilité de confirmer
@@ -546,7 +624,7 @@ class PastoralCare extends BaseModel
         return $this;
     }
 
-    public function cancel($reason = null)
+    public function cancel($reason = null): static
     {
         if (! $this->can_be_cancelled) {
             // Déterminer la raison spécifique de l'impossibilité d'annuler
@@ -718,7 +796,7 @@ class PastoralCare extends BaseModel
         return $this;
     }
 
-    public function complete()
+    public function complete(): static
     {
         if ($this->status !== 'confirmed') {
             throw new \Exception('Only confirmed appointments can be marked as completed.');
@@ -729,7 +807,7 @@ class PastoralCare extends BaseModel
         return $this;
     }
 
-    public function markAsNoShow()
+    public function markAsNoShow(): static
     {
         if ($this->status !== 'confirmed' || ! $this->is_past) {
             throw new \Exception('Only past confirmed appointments can be marked as no-show.');
@@ -740,7 +818,7 @@ class PastoralCare extends BaseModel
         return $this;
     }
 
-    public function sendReminderEmail()
+    public function sendReminderEmail(): bool
     {
         if ($this->status !== 'confirmed') {
             return false;
@@ -1040,7 +1118,7 @@ class PastoralCare extends BaseModel
     }
 
     // Static methods for availability checking
-    public static function isTimeSlotAvailable($pastorId, $appointmentTime, $durationMinutes = 60, $excludeId = null)
+    public static function isTimeSlotAvailable($pastorId, \DateTimeInterface|\Carbon\WeekDay|\Carbon\Month|string|int|float|null $appointmentTime, $durationMinutes = 60, $excludeId = null): bool
     {
         // Ensure durationMinutes is an integer
         $durationMinutes = (int) $durationMinutes;
@@ -1052,9 +1130,7 @@ class PastoralCare extends BaseModel
         $existingAppointments = static::where('pastor_id', $pastorId)
             ->whereIn('status', ['pending', 'confirmed'])
             ->whereDate('appointment_time', $appointmentStart->toDateString())
-            ->when($excludeId, function ($query, $excludeId) {
-                return $query->where('id', '!=', $excludeId);
-            })
+            ->when($excludeId, fn($query, $excludeId) => $query->where('id', '!=', $excludeId))
             ->select(['appointment_time', 'duration_minutes'])
             ->get();
 
@@ -1072,7 +1148,10 @@ class PastoralCare extends BaseModel
         return true; // No conflicts found
     }
 
-    public static function getAvailableTimeSlots($pastorId, $date, $durationMinutes = 60)
+    /**
+     * @return mixed[]
+     */
+    public static function getAvailableTimeSlots($pastorId, \DateTimeInterface|\Carbon\WeekDay|\Carbon\Month|string|int|float|null $date, $durationMinutes = 60): array
     {
         // Ensure durationMinutes is an integer
         $durationMinutes = (int) $durationMinutes;
@@ -1082,16 +1161,16 @@ class PastoralCare extends BaseModel
         // Get pastor's availability for this date
         $availabilities = \App\Models\PastorAvailability::where('pastor_id', $pastorId)
             ->active()
-            ->where(function ($query) use ($currentDate) {
+            ->where(function ($query) use ($currentDate): void {
                 // Check for weekly recurring availability
-                $query->where(function ($q) use ($currentDate) {
+                $query->where(function ($q) use ($currentDate): void {
                     // Use Carbon dayOfWeek format directly (0=Sunday, 1=Monday, etc.)
                     $dayOfWeek = $currentDate->dayOfWeek;
                     $q->where('type', 'weekly')
                         ->where('day_of_week', $dayOfWeek);
                 })
                     // Or specific date availability
-                    ->orWhere(function ($q) use ($currentDate) {
+                    ->orWhere(function ($q) use ($currentDate): void {
                         $q->where('type', 'specific_date')
                             ->where('specific_date', $currentDate->toDateString());
                     });

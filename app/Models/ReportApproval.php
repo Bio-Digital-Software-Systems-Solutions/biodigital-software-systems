@@ -9,6 +9,47 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+/**
+ * @property int $id
+ * @property int $report_id
+ * @property int $user_id
+ * @property int $step
+ * @property string $role
+ * @property ApprovalStatus $status
+ * @property string|null $comments
+ * @property \Illuminate\Support\Carbon|null $decided_at
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read bool $is_pending
+ * @property-read string $status_color
+ * @property-read string $status_label
+ * @property-read \App\Models\DepartmentReport $report
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval approved()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval byStep(int $step)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval forReport(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval forUser(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval rejected()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval whereComments($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval whereDecidedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval whereReportId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval whereRole($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval whereStep($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportApproval whereUserId($value)
+ * @mixin \Eloquent
+ */
 class ReportApproval extends Model
 {
     use HasFactory, LogsActivity;

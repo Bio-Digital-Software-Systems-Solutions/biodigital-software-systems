@@ -14,7 +14,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->unsignedBigInteger('pastor_id')->nullable()->change();
         });
     }
@@ -24,7 +24,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->unsignedBigInteger('pastor_id')->nullable(false)->change();
         });
     }

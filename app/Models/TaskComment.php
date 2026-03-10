@@ -15,11 +15,17 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $task_id
  * @property int $user_id
  * @property string $content
+ * @property array<array-key, mixed>|null $mentions
+ * @property int|null $parent_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read TaskComment|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, TaskComment> $replies
+ * @property-read int|null $replies_count
  * @property-read \App\Models\Task $task
  * @property-read \App\Models\User $user
- *
  * @method static \Database\Factories\TaskCommentFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskComment newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskComment newQuery()
@@ -27,13 +33,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskComment whereContent($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskComment whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskComment whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskComment whereMentions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskComment whereParentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskComment whereTaskId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskComment whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskComment whereUserId($value)
- *
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- *
  * @mixin \Eloquent
  */
 class TaskComment extends Model
@@ -120,7 +124,7 @@ class TaskComment extends Model
     public function removeMention(int $userId): self
     {
         $mentions = $this->mentions ?? [];
-        $mentions = array_filter($mentions, fn ($id) => $id !== $userId);
+        $mentions = array_filter($mentions, fn ($id): bool => $id !== $userId);
         $this->update(['mentions' => array_values($mentions)]);
 
         return $this;

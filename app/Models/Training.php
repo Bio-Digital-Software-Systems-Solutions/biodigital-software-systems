@@ -14,6 +14,7 @@ use Spatie\Activitylog\LogOptions;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $title
  * @property string $description
  * @property string $duration
@@ -21,12 +22,14 @@ use Spatie\Activitylog\LogOptions;
  * @property numeric $price
  * @property string|null $image
  * @property string|null $category
+ * @property int|null $teacher_id
  * @property numeric $rating
  * @property-read int|null $students_count
  * @property bool $is_active
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property int|null $teacher_id
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClass> $classes
  * @property-read int|null $classes_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingEnrollment> $enrollments
@@ -63,9 +66,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Training whereTeacherId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Training whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Training whereUpdatedAt($value)
- * @property string $uuid
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Training whereUuid($value)
  * @mixin \Eloquent
  */

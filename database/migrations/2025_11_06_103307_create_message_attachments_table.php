@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('message_attachments', function (Blueprint $table) {
+        Schema::create('message_attachments', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('message_id')->constrained('messages')->onDelete('cascade');

@@ -99,7 +99,7 @@ class PastorAvailabilityController extends Controller
         // Check for conflicts with existing availability
         $conflictQuery = PastorAvailability::where('pastor_id', $user->id)
             ->where('is_active', true)
-            ->where(function ($query) use ($validated) {
+            ->where(function ($query) use ($validated): void {
                 if ($validated['type'] === 'weekly') {
                     $query->where('type', 'weekly')
                         ->where('day_of_week', $validated['day_of_week']);
@@ -118,7 +118,7 @@ class PastorAvailabilityController extends Controller
         }
 
         $validated['pastor_id'] = $user->id;
-        $validated['is_active'] = $validated['is_active'] ?? true;
+        $validated['is_active'] ??= true;
 
         PastorAvailability::create($validated);
 
@@ -249,7 +249,7 @@ class PastorAvailabilityController extends Controller
             $conflictQuery = PastorAvailability::where('pastor_id', $user->id)
                 ->where('id', '!=', $availability->id)
                 ->where('is_active', true)
-                ->where(function ($query) use ($checkType, $checkDayOfWeek, $checkSpecificDate) {
+                ->where(function ($query) use ($checkType, $checkDayOfWeek, $checkSpecificDate): void {
                     if ($checkType === 'weekly') {
                         $query->where('type', 'weekly')
                             ->where('day_of_week', $checkDayOfWeek);

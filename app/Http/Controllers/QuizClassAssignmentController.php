@@ -27,10 +27,10 @@ class QuizClassAssignmentController extends Controller
     {
         $quiz->load([
             'training.classes.materials',
-            'trainingClasses' => function ($query) {
+            'trainingClasses' => function ($query): void {
                 $query->withPivot(['assigned_at', 'available_from', 'available_until', 'is_active']);
             },
-            'trainingClassMaterials' => function ($query) {
+            'trainingClassMaterials' => function ($query): void {
                 $query->withPivot(['assigned_at', 'is_active', 'order']);
             }
         ]);
@@ -39,7 +39,7 @@ class QuizClassAssignmentController extends Controller
         $availableClasses = $quiz->training->classes()
             ->with(['materials', 'students'])
             ->get()
-            ->map(function ($class) use ($quiz) {
+            ->map(function ($class) use ($quiz): array {
                 $isAssigned = $quiz->trainingClasses->contains('id', $class->id);
                 $assignmentData = null;
 

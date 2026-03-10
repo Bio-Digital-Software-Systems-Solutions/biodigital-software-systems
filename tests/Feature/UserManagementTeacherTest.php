@@ -20,7 +20,7 @@ class UserManagementTeacherTest extends TestCase
         Role::create(['name' => 'super-admin']);
     }
 
-    public function test_only_superadmin_can_access_user_management_teacher_features()
+    public function test_only_superadmin_can_access_user_management_teacher_features(): void
     {
         $regularUser = User::factory()->create();
         $targetUser = User::factory()->create();
@@ -35,7 +35,7 @@ class UserManagementTeacherTest extends TestCase
             ]);
     }
 
-    public function test_superadmin_can_access_user_management_index_with_teachers()
+    public function test_superadmin_can_access_user_management_index_with_teachers(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -51,7 +51,7 @@ class UserManagementTeacherTest extends TestCase
         );
     }
 
-    public function test_superadmin_can_add_user_as_teacher()
+    public function test_superadmin_can_add_user_as_teacher(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -89,7 +89,7 @@ class UserManagementTeacherTest extends TestCase
         ]);
     }
 
-    public function test_superadmin_can_add_teacher_with_minimal_data()
+    public function test_superadmin_can_add_teacher_with_minimal_data(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -108,7 +108,7 @@ class UserManagementTeacherTest extends TestCase
         ]);
     }
 
-    public function test_cannot_add_user_as_teacher_if_already_teacher()
+    public function test_cannot_add_user_as_teacher_if_already_teacher(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -127,7 +127,7 @@ class UserManagementTeacherTest extends TestCase
         ]);
     }
 
-    public function test_add_teacher_validates_specialization_max_length()
+    public function test_add_teacher_validates_specialization_max_length(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -142,7 +142,7 @@ class UserManagementTeacherTest extends TestCase
         $response->assertSessionHasErrors(['specialization']);
     }
 
-    public function test_add_teacher_validates_experience_years_minimum()
+    public function test_add_teacher_validates_experience_years_minimum(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -157,7 +157,7 @@ class UserManagementTeacherTest extends TestCase
         $response->assertSessionHasErrors(['experience_years']);
     }
 
-    public function test_add_teacher_validates_qualifications_is_array()
+    public function test_add_teacher_validates_qualifications_is_array(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -172,7 +172,7 @@ class UserManagementTeacherTest extends TestCase
         $response->assertSessionHasErrors(['qualifications']);
     }
 
-    public function test_superadmin_can_remove_teacher()
+    public function test_superadmin_can_remove_teacher(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -193,7 +193,7 @@ class UserManagementTeacherTest extends TestCase
         ]);
     }
 
-    public function test_regular_user_cannot_remove_teacher()
+    public function test_regular_user_cannot_remove_teacher(): void
     {
         $regularUser = User::factory()->create();
         $teacher = Teacher::factory()->create();
@@ -208,7 +208,7 @@ class UserManagementTeacherTest extends TestCase
             );
     }
 
-    public function test_superadmin_can_update_teacher_information()
+    public function test_superadmin_can_update_teacher_information(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -252,7 +252,7 @@ class UserManagementTeacherTest extends TestCase
         $this->assertEquals(['PhD in Physics', 'Master Degree'], $teacher->qualifications);
     }
 
-    public function test_update_teacher_validates_experience_years_minimum()
+    public function test_update_teacher_validates_experience_years_minimum(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -267,7 +267,7 @@ class UserManagementTeacherTest extends TestCase
         $response->assertSessionHasErrors(['experience_years']);
     }
 
-    public function test_update_teacher_validates_is_active_is_boolean()
+    public function test_update_teacher_validates_is_active_is_boolean(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -282,7 +282,7 @@ class UserManagementTeacherTest extends TestCase
         $response->assertSessionHasErrors(['is_active']);
     }
 
-    public function test_regular_user_cannot_update_teacher()
+    public function test_regular_user_cannot_update_teacher(): void
     {
         $regularUser = User::factory()->create();
         $teacher = Teacher::factory()->create();
@@ -298,7 +298,7 @@ class UserManagementTeacherTest extends TestCase
             );
     }
 
-    public function test_teacher_user_relationship_is_loaded_when_adding()
+    public function test_teacher_user_relationship_is_loaded_when_adding(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -329,7 +329,7 @@ class UserManagementTeacherTest extends TestCase
         ]);
     }
 
-    public function test_teacher_user_relationship_is_loaded_when_updating()
+    public function test_teacher_user_relationship_is_loaded_when_updating(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -352,7 +352,7 @@ class UserManagementTeacherTest extends TestCase
         ]);
     }
 
-    public function test_qualifications_are_stored_as_json_array()
+    public function test_qualifications_are_stored_as_json_array(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');
@@ -376,7 +376,7 @@ class UserManagementTeacherTest extends TestCase
         $this->assertEquals($qualifications, $teacher->qualifications);
     }
 
-    public function test_phone_number_validation_respects_max_length()
+    public function test_phone_number_validation_respects_max_length(): void
     {
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('super-admin');

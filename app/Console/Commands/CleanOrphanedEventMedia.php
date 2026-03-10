@@ -57,7 +57,7 @@ class CleanOrphanedEventMedia extends Command
 
         $this->table(
             ['ID', 'Event ID', 'File Name', 'Type', 'File Path'],
-            $orphaned->map(fn ($m) => [
+            $orphaned->map(fn ($m): array => [
                 $m->id,
                 $m->event_id,
                 $m->file_name,

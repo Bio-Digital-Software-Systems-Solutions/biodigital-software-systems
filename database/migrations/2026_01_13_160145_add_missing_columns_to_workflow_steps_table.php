@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('workflow_steps', function (Blueprint $table) {
+        Schema::table('workflow_steps', function (Blueprint $table): void {
             // Add timeout_hours column if not exists
             if (!Schema::hasColumn('workflow_steps', 'timeout_hours')) {
                 $table->integer('timeout_hours')->nullable()->after('timeout_minutes');
@@ -38,7 +38,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('workflow_steps', function (Blueprint $table) {
+        Schema::table('workflow_steps', function (Blueprint $table): void {
             $columns = ['timeout_hours', 'escalation_user_id', 'retry_count', 'retry_delay_minutes', 'conditions', 'metadata'];
             foreach ($columns as $column) {
                 if (Schema::hasColumn('workflow_steps', $column)) {

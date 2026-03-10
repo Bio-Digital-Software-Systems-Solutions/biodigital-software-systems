@@ -12,7 +12,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     Storage::fake('public');
 
     Permission::firstOrCreate(['name' => 'view events']);
@@ -29,8 +29,8 @@ beforeEach(function () {
 
 // ===== Model Tests =====
 
-describe('EventProgramme Model', function () {
-    it('can be created with required fields', function () {
+describe('EventProgramme Model', function (): void {
+    it('can be created with required fields', function (): void {
         $event = Event::factory()->create();
         $user = User::factory()->create();
 
@@ -48,7 +48,7 @@ describe('EventProgramme Model', function () {
         expect($programme->is_active)->toBeTrue();
     });
 
-    it('belongs to an event', function () {
+    it('belongs to an event', function (): void {
         $event = Event::factory()->create();
         $programme = EventProgramme::factory()->create(['event_id' => $event->id]);
 
@@ -56,7 +56,7 @@ describe('EventProgramme Model', function () {
         expect($programme->event->id)->toBe($event->id);
     });
 
-    it('belongs to an uploader', function () {
+    it('belongs to an uploader', function (): void {
         $user = User::factory()->create();
         $programme = EventProgramme::factory()->create(['uploaded_by' => $user->id]);
 
@@ -64,18 +64,18 @@ describe('EventProgramme Model', function () {
         expect($programme->uploader->id)->toBe($user->id);
     });
 
-    it('can generate a share token', function () {
+    it('can generate a share token', function (): void {
         $programme = EventProgramme::factory()->create();
 
         $programme->generateShareToken(24);
 
         expect($programme->share_token)->not->toBeNull();
-        expect(strlen($programme->share_token))->toBe(64);
+        expect(strlen((string) $programme->share_token))->toBe(64);
         expect($programme->share_token_expires_at)->not->toBeNull();
         expect($programme->share_token_expires_at->isFuture())->toBeTrue();
     });
 
-    it('can renew a share token', function () {
+    it('can renew a share token', function (): void {
         $programme = EventProgramme::factory()->withShareToken()->create();
         $originalToken = $programme->share_token;
 
@@ -85,16 +85,16 @@ describe('EventProgramme Model', function () {
         expect($programme->share_token_expires_at->isFuture())->toBeTrue();
     });
 
-    it('generates a new token when renewing without existing token', function () {
+    it('generates a new token when renewing without existing token', function (): void {
         $programme = EventProgramme::factory()->create();
 
         $programme->renewShareToken(24);
 
         expect($programme->share_token)->not->toBeNull();
-        expect(strlen($programme->share_token))->toBe(64);
+        expect(strlen((string) $programme->share_token))->toBe(64);
     });
 
-    it('can revoke a share token', function () {
+    it('can revoke a share token', function (): void {
         $programme = EventProgramme::factory()->withShareToken()->create();
 
         $programme->revokeShareToken();
@@ -103,7 +103,7 @@ describe('EventProgramme Model', function () {
         expect($programme->share_token_expires_at)->toBeNull();
     });
 
-    it('validates share token correctly', function () {
+    it('validates share token correctly', function (): void {
         $programme = EventProgramme::factory()->withShareToken()->create();
         expect($programme->isShareTokenValid())->toBeTrue();
 
@@ -117,7 +117,7 @@ describe('EventProgramme Model', function () {
         expect($inactive->isShareTokenValid())->toBeFalse();
     });
 
-    it('finds programme by valid token', function () {
+    it('finds programme by valid token', function (): void {
         $programme = EventProgramme::factory()->withShareToken()->create();
 
         $found = EventProgramme::findByValidToken($programme->share_token);
@@ -126,7 +126,7 @@ describe('EventProgramme Model', function () {
         expect($found->id)->toBe($programme->id);
     });
 
-    it('does not find programme with expired token', function () {
+    it('does not find programme with expired token', function (): void {
         $programme = EventProgramme::factory()->withExpiredToken()->create();
 
         $found = EventProgramme::findByValidToken($programme->share_token);
@@ -134,7 +134,7 @@ describe('EventProgramme Model', function () {
         expect($found)->toBeNull();
     });
 
-    it('does not find programme with inactive status', function () {
+    it('does not find programme with inactive status', function (): void {
         $programme = EventProgramme::factory()->withShareToken()->create(['is_active' => false]);
 
         $found = EventProgramme::findByValidToken($programme->share_token);
@@ -142,7 +142,7 @@ describe('EventProgramme Model', function () {
         expect($found)->toBeNull();
     });
 
-    it('detects PDF files correctly', function () {
+    it('detects PDF files correctly', function (): void {
         $pdf = EventProgramme::factory()->create(['file_type' => 'application/pdf']);
         expect($pdf->is_pdf)->toBeTrue();
         expect($pdf->is_image)->toBeFalse();
@@ -152,7 +152,7 @@ describe('EventProgramme Model', function () {
         expect($jpg->is_image)->toBeTrue();
     });
 
-    it('computes file size for humans', function () {
+    it('computes file size for humans', function (): void {
         $small = EventProgramme::factory()->create(['file_size' => 512]);
         expect($small->file_size_for_humans)->toBe('512 B');
 
@@ -166,8 +166,8 @@ describe('EventProgramme Model', function () {
 
 // ===== Upload Tests =====
 
-describe('Programme Upload', function () {
-    it('requires authentication to upload', function () {
+describe('Programme Upload', function (): void {
+    it('requires authentication to upload', function (): void {
         $event = Event::factory()->create();
 
         $this->postJson("/events/{$event->uuid}/programme", [
@@ -175,7 +175,7 @@ describe('Programme Upload', function () {
         ])->assertUnauthorized();
     });
 
-    it('requires edit events permission', function () {
+    it('requires edit events permission', function (): void {
         $user = User::factory()->create();
         $user->assignRole('member');
         $event = Event::factory()->create();
@@ -185,7 +185,7 @@ describe('Programme Upload', function () {
         ])->assertForbidden();
     });
 
-    it('allows admin to upload a PDF programme', function () {
+    it('allows admin to upload a PDF programme', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -204,7 +204,7 @@ describe('Programme Upload', function () {
         ]);
     });
 
-    it('allows admin to upload an image programme', function () {
+    it('allows admin to upload an image programme', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -221,7 +221,7 @@ describe('Programme Upload', function () {
         ]);
     });
 
-    it('rejects unsupported file types', function () {
+    it('rejects unsupported file types', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -231,7 +231,7 @@ describe('Programme Upload', function () {
         ])->assertUnprocessable();
     });
 
-    it('rejects files exceeding 50MB', function () {
+    it('rejects files exceeding 50MB', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -241,7 +241,7 @@ describe('Programme Upload', function () {
         ])->assertUnprocessable();
     });
 
-    it('replaces previous programme when uploading a new one', function () {
+    it('replaces previous programme when uploading a new one', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -263,7 +263,7 @@ describe('Programme Upload', function () {
         Storage::disk('public')->assertMissing('events/programmes/'.$event->id.'/old.pdf');
     });
 
-    it('allows event creator to upload programme', function () {
+    it('allows event creator to upload programme', function (): void {
         $creator = User::factory()->create();
         $creator->assignRole('admin');
         $event = Event::factory()->create(['user_id' => $creator->id]);
@@ -276,8 +276,8 @@ describe('Programme Upload', function () {
 
 // ===== Delete Tests =====
 
-describe('Programme Delete', function () {
-    it('allows admin to delete a programme', function () {
+describe('Programme Delete', function (): void {
+    it('allows admin to delete a programme', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -294,7 +294,7 @@ describe('Programme Delete', function () {
         Storage::disk('public')->assertMissing('events/programmes/test.pdf');
     });
 
-    it('returns 404 when no programme exists', function () {
+    it('returns 404 when no programme exists', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -303,7 +303,7 @@ describe('Programme Delete', function () {
             ->assertNotFound();
     });
 
-    it('soft deletes the programme record', function () {
+    it('soft deletes the programme record', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -320,14 +320,14 @@ describe('Programme Delete', function () {
 
 // ===== Share Link Tests =====
 
-describe('Share Link', function () {
-    it('generates a share link with token and QR code', function () {
+describe('Share Link', function (): void {
+    it('generates a share link with token and QR code', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
         EventProgramme::factory()->create(['event_id' => $event->id]);
 
-        $this->mock(QrCodeService::class, function ($mock) {
+        $this->mock(QrCodeService::class, function ($mock): void {
             $mock->shouldReceive('generateBase64')
                 ->once()
                 ->andReturn('data:image/svg+xml;base64,FAKE_QR');
@@ -340,7 +340,7 @@ describe('Share Link', function () {
         expect($response->json('qr_code'))->toBe('data:image/svg+xml;base64,FAKE_QR');
     });
 
-    it('returns 422 when no programme exists', function () {
+    it('returns 422 when no programme exists', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -349,7 +349,7 @@ describe('Share Link', function () {
             ->assertUnprocessable();
     });
 
-    it('renews existing share link for 24 hours', function () {
+    it('renews existing share link for 24 hours', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -367,7 +367,7 @@ describe('Share Link', function () {
         expect($response->json('token'))->toBe($originalToken);
     });
 
-    it('returns 422 when renewing without share link', function () {
+    it('returns 422 when renewing without share link', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -377,7 +377,7 @@ describe('Share Link', function () {
             ->assertUnprocessable();
     });
 
-    it('revokes share link', function () {
+    it('revokes share link', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         $event = Event::factory()->create();
@@ -394,8 +394,8 @@ describe('Share Link', function () {
 
 // ===== Public Access Tests =====
 
-describe('Public Programme Access', function () {
-    it('renders shared programme page for valid token', function () {
+describe('Public Programme Access', function (): void {
+    it('renders shared programme page for valid token', function (): void {
         $programme = EventProgramme::factory()->withShareToken()->create();
 
         $this->get("/p/{$programme->share_token}")
@@ -408,7 +408,7 @@ describe('Public Programme Access', function () {
             );
     });
 
-    it('renders expired page for invalid token', function () {
+    it('renders expired page for invalid token', function (): void {
         $this->get('/p/invalid_token_that_does_not_exist')
             ->assertSuccessful()
             ->assertInertia(fn ($page) => $page
@@ -417,7 +417,7 @@ describe('Public Programme Access', function () {
             );
     });
 
-    it('renders expired page for expired token', function () {
+    it('renders expired page for expired token', function (): void {
         $programme = EventProgramme::factory()->withExpiredToken()->create();
 
         $this->get("/p/{$programme->share_token}")
@@ -428,7 +428,7 @@ describe('Public Programme Access', function () {
             );
     });
 
-    it('allows download with valid token', function () {
+    it('allows download with valid token', function (): void {
         $programme = EventProgramme::factory()->withShareToken()->create();
         Storage::disk('public')->put($programme->file_path, 'fake content');
 
@@ -436,14 +436,14 @@ describe('Public Programme Access', function () {
             ->assertSuccessful();
     });
 
-    it('rejects download with expired token', function () {
+    it('rejects download with expired token', function (): void {
         $programme = EventProgramme::factory()->withExpiredToken()->create();
 
         $this->get("/p/{$programme->share_token}/download")
             ->assertForbidden();
     });
 
-    it('does not require authentication for public access', function () {
+    it('does not require authentication for public access', function (): void {
         $programme = EventProgramme::factory()->withShareToken()->create();
 
         // No actingAs — unauthenticated request
@@ -454,8 +454,8 @@ describe('Public Programme Access', function () {
 
 // ===== Tab Permission Tests =====
 
-describe('Programme Tab Permissions', function () {
-    it('shows canViewProgramme as true when programme exists', function () {
+describe('Programme Tab Permissions', function (): void {
+    it('shows canViewProgramme as true when programme exists', function (): void {
         Permission::firstOrCreate(['name' => 'view event gallery']);
         Permission::firstOrCreate(['name' => 'manage tickets']);
         Permission::firstOrCreate(['name' => 'view registrations']);
@@ -476,7 +476,7 @@ describe('Programme Tab Permissions', function () {
             );
     });
 
-    it('shows canViewProgramme as false when no programme', function () {
+    it('shows canViewProgramme as false when no programme', function (): void {
         Permission::firstOrCreate(['name' => 'view event gallery']);
         Permission::firstOrCreate(['name' => 'manage tickets']);
         Permission::firstOrCreate(['name' => 'view registrations']);
@@ -496,7 +496,7 @@ describe('Programme Tab Permissions', function () {
             );
     });
 
-    it('passes programme data to show page', function () {
+    it('passes programme data to show page', function (): void {
         Permission::firstOrCreate(['name' => 'view event gallery']);
         Permission::firstOrCreate(['name' => 'manage tickets']);
         Permission::firstOrCreate(['name' => 'view registrations']);

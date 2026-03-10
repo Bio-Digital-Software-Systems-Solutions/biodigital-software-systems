@@ -19,16 +19,16 @@ class StockController extends Controller
     public function index()
     {
         $stocks = Stock::with(['category', 'department'])
-            ->when(request('search'), function ($query, $search) {
+            ->when(request('search'), function ($query, string $search): void {
                 $query->where('name', 'like', '%'.$search.'%');
             })
-            ->when(request('category'), function ($query, $category) {
+            ->when(request('category'), function ($query, $category): void {
                 $query->where('category_id', $category);
             })
-            ->when(request('department'), function ($query, $department) {
+            ->when(request('department'), function ($query, $department): void {
                 $query->where('department_id', $department);
             })
-            ->when(request('status'), function ($query, $status) {
+            ->when(request('status'), function ($query, $status): void {
                 if ($status === 'low_stock') {
                     $query->lowStock();
                 } elseif ($status === 'out_of_stock') {
@@ -39,7 +39,7 @@ class StockController extends Controller
                     $query->nearExpiry();
                 }
             })
-            ->when(request('supplier'), function ($query, $supplier) {
+            ->when(request('supplier'), function ($query, $supplier): void {
                 $query->bySupplier($supplier);
             })
             ->orderBy('name')
@@ -99,7 +99,7 @@ class StockController extends Controller
             $validated['image'] = 'stocks/'.$request->image;
         }
 
-        $stock = Stock::create($validated);
+        Stock::create($validated);
 
         return redirect()->route('stocks.index')
             ->with('success', 'Stock item created successfully.');

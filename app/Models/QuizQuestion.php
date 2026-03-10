@@ -105,8 +105,8 @@ class QuizQuestion extends Model
 
         if ($this->type === 'short_answer') {
             // Case-insensitive comparison for short answers
-            $answer = strtolower(trim($answer));
-            $correctAnswers = array_map(fn($a) => strtolower(trim($a)), $this->correct_answers);
+            $answer = strtolower(trim((string) $answer));
+            $correctAnswers = array_map(fn($a) => strtolower(trim((string) $a)), $this->correct_answers);
             return in_array($answer, $correctAnswers);
         }
 

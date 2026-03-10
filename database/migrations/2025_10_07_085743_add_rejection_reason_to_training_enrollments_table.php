@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('training_enrollments', function (Blueprint $table) {
+        Schema::table('training_enrollments', function (Blueprint $table): void {
             $table->text('rejection_reason')->nullable()->after('status');
         });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('training_enrollments', function (Blueprint $table) {
+        Schema::table('training_enrollments', function (Blueprint $table): void {
             $table->dropColumn('rejection_reason');
         });
     }

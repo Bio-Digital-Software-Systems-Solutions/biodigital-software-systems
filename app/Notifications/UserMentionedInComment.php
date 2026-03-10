@@ -17,27 +17,11 @@ class UserMentionedInComment extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public string $contextType;
-
-    public Task|Project $context;
-
-    public TaskComment|ProjectComment $comment;
-
-    public User $mentionedBy;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(
-        string $contextType,
-        Task|Project $context,
-        TaskComment|ProjectComment $comment,
-        User $mentionedBy
-    ) {
-        $this->contextType = $contextType;
-        $this->context = $context;
-        $this->comment = $comment;
-        $this->mentionedBy = $mentionedBy;
+    public function __construct(public string $contextType, public Task|Project $context, public TaskComment|ProjectComment $comment, public User $mentionedBy)
+    {
     }
 
     /**

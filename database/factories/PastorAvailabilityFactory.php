@@ -36,7 +36,7 @@ class PastorAvailabilityFactory extends Factory
      */
     public function weekly(int $dayOfWeek = null): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'weekly',
             'day_of_week' => $dayOfWeek ?? $this->faker->numberBetween(1, 7),
             'specific_date' => null,
@@ -48,7 +48,7 @@ class PastorAvailabilityFactory extends Factory
      */
     public function specificDate(string $date = null): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'specific_date',
             'day_of_week' => null,
             'specific_date' => $date ?? $this->faker->dateTimeBetween('+1 week', '+1 month')->format('Y-m-d'),
@@ -60,7 +60,7 @@ class PastorAvailabilityFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_active' => true,
         ]);
     }
@@ -70,7 +70,7 @@ class PastorAvailabilityFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_active' => false,
         ]);
     }
@@ -80,7 +80,7 @@ class PastorAvailabilityFactory extends Factory
      */
     public function timeRange(string $startTime, string $endTime): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'start_time' => $startTime,
             'end_time' => $endTime,
         ]);
@@ -91,7 +91,7 @@ class PastorAvailabilityFactory extends Factory
      */
     public function slotDuration(int $minutes): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'slot_duration' => $minutes,
         ]);
     }
@@ -101,7 +101,7 @@ class PastorAvailabilityFactory extends Factory
      */
     public function morning(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'start_time' => '09:00:00',
             'end_time' => '12:00:00',
             'slot_duration' => 60,
@@ -113,7 +113,7 @@ class PastorAvailabilityFactory extends Factory
      */
     public function afternoon(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'start_time' => '14:00:00',
             'end_time' => '18:00:00',
             'slot_duration' => 60,

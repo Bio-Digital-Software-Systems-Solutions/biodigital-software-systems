@@ -23,7 +23,7 @@ class PastoralBookingApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_get_list_of_pastors()
+    public function it_can_get_list_of_pastors(): void
     {
         // Create some pastors
         $pastor1 = User::factory()->create([
@@ -63,7 +63,7 @@ class PastoralBookingApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_get_available_slots_for_pastor_with_weekly_availability()
+    public function it_can_get_available_slots_for_pastor_with_weekly_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -109,7 +109,7 @@ class PastoralBookingApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_get_available_slots_for_pastor_with_specific_date_availability()
+    public function it_can_get_available_slots_for_pastor_with_specific_date_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -145,7 +145,7 @@ class PastoralBookingApiTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_empty_slots_when_pastor_has_no_availability()
+    public function it_returns_empty_slots_when_pastor_has_no_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -168,7 +168,7 @@ class PastoralBookingApiTest extends TestCase
     }
 
     /** @test */
-    public function it_excludes_booked_slots_from_available_slots()
+    public function it_excludes_booked_slots_from_available_slots(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -216,7 +216,7 @@ class PastoralBookingApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_book_an_available_slot()
+    public function it_can_book_an_available_slot(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -269,7 +269,7 @@ class PastoralBookingApiTest extends TestCase
     }
 
     /** @test */
-    public function it_cannot_book_an_unavailable_slot()
+    public function it_cannot_book_an_unavailable_slot(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -304,7 +304,7 @@ class PastoralBookingApiTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_booking_request_data()
+    public function it_validates_booking_request_data(): void
     {
         $response = $this->postJson('/api/pastoral-care/appointments', []);
 
@@ -319,7 +319,7 @@ class PastoralBookingApiTest extends TestCase
     }
 
     /** @test */
-    public function it_handles_day_of_week_conversion_correctly()
+    public function it_handles_day_of_week_conversion_correctly(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');

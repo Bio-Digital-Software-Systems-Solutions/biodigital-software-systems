@@ -43,9 +43,13 @@ class ArticlePolicy
     public function update(User $user, Article $article): bool
     {
         // Seul l'auteur ou quelqu'un avec la permission d'éditer peut modifier
-        return $user->id === $article->user_id
-            || $user->can('edit articles')
-            || $user->hasRole(['admin', 'super-admin']);
+        if ($user->id === $article->user_id) {
+            return true;
+        }
+        if ($user->can('edit articles')) {
+            return true;
+        }
+        return $user->hasRole(['admin', 'super-admin']);
     }
 
     /**
@@ -54,9 +58,13 @@ class ArticlePolicy
     public function delete(User $user, Article $article): bool
     {
         // Seul l'auteur ou quelqu'un avec la permission de supprimer peut supprimer
-        return $user->id === $article->user_id
-            || $user->can('delete articles')
-            || $user->hasRole(['admin', 'super-admin']);
+        if ($user->id === $article->user_id) {
+            return true;
+        }
+        if ($user->can('delete articles')) {
+            return true;
+        }
+        return $user->hasRole(['admin', 'super-admin']);
     }
 
     /**
@@ -65,8 +73,10 @@ class ArticlePolicy
     public function publish(User $user, Article $article): bool
     {
         // Seul l'auteur avec permission ou quelqu'un qui peut publier
-        return ($user->id === $article->user_id && $user->can('publish articles'))
-            || $user->can('publish articles');
+        if ($user->id === $article->user_id && $user->can('publish articles')) {
+            return true;
+        }
+        return $user->can('publish articles');
     }
 
     /**

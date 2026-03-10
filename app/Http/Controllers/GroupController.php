@@ -22,7 +22,7 @@ class GroupController extends Controller
     {
         $groups = Group::with(['leader'])
             ->withCount('users')
-            ->when(request('status'), function ($query, $status) {
+            ->when(request('status'), function ($query, $status): void {
                 if ($status === 'active') {
                     $query->active();
                 } elseif ($status === 'with_space') {
@@ -102,14 +102,12 @@ class GroupController extends Controller
             ->whereNotIn('id', $group->users->pluck('id'))
             ->orderBy('first_name')
             ->get()
-            ->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'uuid' => $user->uuid,
-                    'name' => $user->name, // Uses the accessor
-                    'email' => $user->email,
-                ];
-            });
+            ->map(fn($user): array => [
+                'id' => $user->id,
+                'uuid' => $user->uuid,
+                'name' => $user->name, // Uses the accessor
+                'email' => $user->email,
+            ]);
 
         return Inertia::render('Groups/Show', [
             'group' => [
@@ -126,15 +124,13 @@ class GroupController extends Controller
                     'name' => $group->leader->name,
                     'email' => $group->leader->email,
                 ] : null,
-                'users' => $group->users->map(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'uuid' => $user->uuid,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'joined_at' => $user->pivot->joined_at,
-                    ];
-                }),
+                'users' => $group->users->map(fn($user): array => [
+                    'id' => $user->id,
+                    'uuid' => $user->uuid,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'joined_at' => $user->pivot->joined_at,
+                ]),
                 'members_count' => $group->users->count(),
                 'can_join' => $group->canJoin(),
                 'is_at_capacity' => $group->isAtCapacity(),

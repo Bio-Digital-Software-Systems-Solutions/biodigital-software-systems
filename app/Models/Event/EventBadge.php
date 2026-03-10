@@ -12,6 +12,62 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $registration_id
+ * @property string $badge_number
+ * @property BadgeStatus $status
+ * @property string $badge_type
+ * @property string|null $file_path
+ * @property array<array-key, mixed>|null $badge_data
+ * @property \Illuminate\Support\Carbon|null $generated_at
+ * @property \Illuminate\Support\Carbon|null $printed_at
+ * @property int|null $printed_by
+ * @property \Illuminate\Support\Carbon|null $collected_at
+ * @property int|null $collected_by
+ * @property string|null $notes
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read User|null $collectedByUser
+ * @property-read bool $can_collect
+ * @property-read bool $can_print
+ * @property-read string|null $file_url
+ * @property-read bool $is_collected
+ * @property-read bool $is_generated
+ * @property-read bool $is_pending
+ * @property-read bool $is_printed
+ * @property-read User|null $printedByUser
+ * @property-read \App\Models\Event\EventRegistration $registration
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge byType(string $type)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge collected()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge generated()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge needsPrinting()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge printed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereBadgeData($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereBadgeNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereBadgeType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereCollectedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereCollectedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereFilePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereGeneratedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge wherePrintedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge wherePrintedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereRegistrationId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventBadge whereUuid($value)
+ * @mixin \Eloquent
+ */
 class EventBadge extends Model
 {
     use HasFactory, HasUuid, LogsActivity;
@@ -54,7 +110,7 @@ class EventBadge extends Model
     {
         parent::boot();
 
-        static::creating(function ($badge) {
+        static::creating(function ($badge): void {
             if (empty($badge->badge_number)) {
                 $badge->badge_number = static::generateBadgeNumber();
             }
@@ -135,7 +191,7 @@ class EventBadge extends Model
     public function getFileUrlAttribute(): ?string
     {
         if ($this->file_path) {
-            return asset('storage/' . $this->file_path);
+            return asset('storage/'.$this->file_path);
         }
 
         return null;
@@ -143,12 +199,12 @@ class EventBadge extends Model
 
     public function getCanPrintAttribute(): bool
     {
-        return $this->status->canPrint();
+        return (bool) $this->status->canPrint();
     }
 
     public function getCanCollectAttribute(): bool
     {
-        return $this->status->canCollect();
+        return (bool) $this->status->canCollect();
     }
 
     // Methods
@@ -205,7 +261,7 @@ class EventBadge extends Model
         // Mark current badge as replaced
         $this->update([
             'status' => BadgeStatus::REPLACED,
-            'notes' => ($this->notes ? $this->notes . "\n" : '') . 'Replaced on ' . now()->format('Y-m-d H:i:s'),
+            'notes' => ($this->notes ? $this->notes."\n" : '').'Replaced on '.now()->format('Y-m-d H:i:s'),
         ]);
 
         // Create new badge
@@ -213,7 +269,7 @@ class EventBadge extends Model
             'registration_id' => $this->registration_id,
             'badge_type' => $this->badge_type,
             'status' => BadgeStatus::PENDING,
-            'notes' => 'Replacement for badge #' . $this->badge_number,
+            'notes' => 'Replacement for badge #'.$this->badge_number,
         ]);
 
         // Generate the new badge with the same data
@@ -227,7 +283,7 @@ class EventBadge extends Model
     public static function generateBadgeNumber(): string
     {
         do {
-            $number = 'BDG-' . strtoupper(Str::random(6));
+            $number = 'BDG-'.strtoupper(Str::random(6));
         } while (static::where('badge_number', $number)->exists());
 
         return $number;

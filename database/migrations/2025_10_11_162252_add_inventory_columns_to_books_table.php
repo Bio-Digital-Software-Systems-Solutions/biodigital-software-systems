@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('books', function (Blueprint $table) {
+        Schema::table('books', function (Blueprint $table): void {
             // Add inventory tracking columns
             $table->unsignedInteger('total_copies')->default(0)->after('stock_quantity');
             $table->unsignedInteger('available_copies')->default(0)->after('total_copies');
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('books', function (Blueprint $table) {
+        Schema::table('books', function (Blueprint $table): void {
             $table->dropColumn(['total_copies', 'available_copies']);
         });
     }

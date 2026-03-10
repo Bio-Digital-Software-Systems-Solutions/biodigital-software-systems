@@ -24,7 +24,7 @@ class DashboardStatisticsTest extends TestCase
     }
 
     /** @test */
-    public function it_calculates_upcoming_events_correctly()
+    public function it_calculates_upcoming_events_correctly(): void
     {
         // Create 5 future events and 3 past events
         Event::factory()->count(5)->create(['start_date' => Carbon::now()->addDays(10)]);
@@ -39,7 +39,7 @@ class DashboardStatisticsTest extends TestCase
     }
 
     /** @test */
-    public function it_calculates_published_articles_correctly()
+    public function it_calculates_published_articles_correctly(): void
     {
         // Create 8 published articles and 2 drafts
         Article::factory()->count(8)->create([
@@ -60,7 +60,7 @@ class DashboardStatisticsTest extends TestCase
     }
 
     /** @test */
-    public function it_shows_available_books_count()
+    public function it_shows_available_books_count(): void
     {
         $response = $this->actingAs($this->user)->get('/dashboard');
 
@@ -74,7 +74,7 @@ class DashboardStatisticsTest extends TestCase
     }
 
     /** @test */
-    public function it_calculates_participation_rate_correctly()
+    public function it_calculates_participation_rate_correctly(): void
     {
         // Create 10 events
         $events = Event::factory()->count(10)->create();
@@ -94,7 +94,7 @@ class DashboardStatisticsTest extends TestCase
     }
 
     /** @test */
-    public function it_shows_zero_participation_when_no_events_exist()
+    public function it_shows_zero_participation_when_no_events_exist(): void
     {
         $response = $this->actingAs($this->user)->get('/dashboard');
 
@@ -105,7 +105,7 @@ class DashboardStatisticsTest extends TestCase
     }
 
     /** @test */
-    public function it_calculates_total_published_articles()
+    public function it_calculates_total_published_articles(): void
     {
         // Create 10 articles published at different times
         Article::factory()->count(10)->create([
@@ -122,7 +122,7 @@ class DashboardStatisticsTest extends TestCase
     }
 
     /** @test */
-    public function it_calculates_total_books_borrowed_by_user()
+    public function it_calculates_total_books_borrowed_by_user(): void
     {
         // User borrowed 5 books (3 returned, 2 still out)
         BookRental::factory()->count(3)->create([
@@ -151,7 +151,7 @@ class DashboardStatisticsTest extends TestCase
     }
 
     /** @test */
-    public function it_calculates_percentage_change_correctly()
+    public function it_calculates_percentage_change_correctly(): void
     {
         // Create events for testing percentage change
         Event::factory()->count(5)->create([

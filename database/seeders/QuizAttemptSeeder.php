@@ -15,7 +15,7 @@ class QuizAttemptSeeder extends Seeder
     public function run(): void
     {
         $quizzes = Quiz::all();
-        $students = User::whereHas('trainings', function ($query) {
+        $students = User::whereHas('trainings', function ($query): void {
             $query->where('status', 'approved');
         })->get();
 
@@ -37,16 +37,16 @@ class QuizAttemptSeeder extends Seeder
 
             $studentQuizzes = Quiz::whereIn('training_id', $studentTrainings)->get();
 
-            foreach ($studentQuizzes->take(rand(1, 3)) as $quiz) {
+            foreach ($studentQuizzes->take(random_int(1, 3)) as $quiz) {
                 // 70% de chances de créer une tentative complétée
-                if (rand(1, 10) <= 7) {
-                    $score = rand(40, 100);
+                if (random_int(1, 10) <= 7) {
+                    $score = random_int(40, 100);
 
                     QuizAttempt::create([
                         'quiz_id' => $quiz->id,
                         'student_id' => $student->id,
-                        'started_at' => now()->subDays(rand(1, 14)),
-                        'completed_at' => now()->subDays(rand(0, 7)),
+                        'started_at' => now()->subDays(random_int(1, 14)),
+                        'completed_at' => now()->subDays(random_int(0, 7)),
                         'time_remaining_seconds' => 0,
                         'score' => $score,
                         'status' => 'completed',

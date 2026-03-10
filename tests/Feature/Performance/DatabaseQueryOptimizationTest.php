@@ -157,14 +157,12 @@ class DatabaseQueryOptimizationTest extends TestCase
         DB::disableQueryLog();
 
         // Find the main SELECT query
-        $selectQueries = array_filter($queries, function ($query) {
-            return strpos($query['query'], 'select') === 0;
-        });
+        $selectQueries = array_filter($queries, fn(array $query): bool => str_starts_with((string) $query['query'], 'select'));
 
         // Should have LIMIT clause in queries
         $hasLimit = false;
         foreach ($selectQueries as $query) {
-            if (stripos($query['query'], 'LIMIT') !== false) {
+            if (stripos((string) $query['query'], 'LIMIT') !== false) {
                 $hasLimit = true;
                 break;
             }
@@ -189,7 +187,7 @@ class DatabaseQueryOptimizationTest extends TestCase
 
         // Queries should not use SELECT *
         foreach ($queries as $query) {
-            if (strpos($query['query'], 'select * from') !== false) {
+            if (str_contains((string) $query['query'], 'select * from')) {
                 // Some queries might legitimately need all columns
                 // This is a guideline, not a strict rule
             }
@@ -203,7 +201,7 @@ class DatabaseQueryOptimizationTest extends TestCase
     {
         // Create many events
         Event::factory()->count(200)->create([
-            'start_date' => now()->addDays(rand(1, 30)),
+            'start_date' => now()->addDays(random_int(1, 30)),
         ]);
 
         $user = User::factory()->create();
@@ -296,7 +294,7 @@ class DatabaseQueryOptimizationTest extends TestCase
         // Should use EXISTS instead of COUNT for better performance
         $hasExistsClause = false;
         foreach ($queries as $query) {
-            if (stripos($query['query'], 'exists') !== false) {
+            if (stripos((string) $query['query'], 'exists') !== false) {
                 $hasExistsClause = true;
                 break;
             }

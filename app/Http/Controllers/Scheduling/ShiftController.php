@@ -46,12 +46,12 @@ class ShiftController extends Controller
             'department' => $department,
             'schedule' => $schedule,
             'shifts' => $shifts,
-            'shiftTypes' => collect(ShiftType::cases())->map(fn ($t) => [
+            'shiftTypes' => collect(ShiftType::cases())->map(fn ($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
             ]),
-            'shiftStatuses' => collect(ShiftStatus::cases())->map(fn ($s) => [
+            'shiftStatuses' => collect(ShiftStatus::cases())->map(fn ($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
@@ -71,7 +71,7 @@ class ShiftController extends Controller
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->get()
-            ->map(fn ($user) => [
+            ->map(fn ($user): array => [
                 'id' => $user->id,
                 'uuid' => $user->uuid ?? null,
                 'first_name' => $user->first_name,
@@ -85,7 +85,7 @@ class ShiftController extends Controller
             ->where('status', EmployeeStatus::ACTIVE)
             ->whereHas('user')
             ->get()
-            ->map(fn ($employee) => [
+            ->map(fn ($employee): array => [
                 'id' => $employee->user_id,
                 'uuid' => $employee->uuid,
                 'first_name' => $employee->user->first_name ?? '',
@@ -99,7 +99,7 @@ class ShiftController extends Controller
         $stars = Star::with('user')
             ->where('status', StarStatus::ACTIVE)
             ->get()
-            ->map(fn ($star) => [
+            ->map(fn ($star): array => [
                 'id' => $star->user_id ?? $star->id,
                 'uuid' => $star->uuid,
                 'first_name' => $star->user->first_name ?? $star->title ?? '',
@@ -109,7 +109,7 @@ class ShiftController extends Controller
                 'type' => 'star',
             ]);
 
-        $positions = $department->activePositions()->get()->map(fn ($p) => [
+        $positions = $department->activePositions()->get()->map(fn ($p): array => [
             'id' => $p->id,
             'uuid' => $p->uuid,
             'name' => $p->name,
@@ -125,7 +125,7 @@ class ShiftController extends Controller
             'employees' => $employees,
             'stars' => $stars,
             'positions' => $positions,
-            'shiftTypes' => collect(ShiftType::cases())->map(fn ($t) => [
+            'shiftTypes' => collect(ShiftType::cases())->map(fn ($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
@@ -218,13 +218,13 @@ class ShiftController extends Controller
             ->with(['assignee', 'creator', 'completedBy', 'shift.user'])
             ->ordered()
             ->get()
-            ->map(fn ($todo) => $todo->toArrayForApi());
+            ->map(fn ($todo): array => $todo->toArrayForApi());
 
         // Get department members for assignment
         $members = $department->members()
             ->select('users.uuid', 'users.first_name', 'users.last_name', 'users.email')
             ->get()
-            ->map(fn ($user) => [
+            ->map(fn ($user): array => [
                 'uuid' => $user->uuid,
                 'name' => $user->first_name && $user->last_name
                     ? "{$user->first_name} {$user->last_name}"
@@ -239,7 +239,7 @@ class ShiftController extends Controller
             'conflicts' => $conflicts,
             'shiftTodos' => $shiftTodos,
             'members' => $members,
-            'todoPriorities' => collect(TodoPriority::cases())->map(fn ($p) => [
+            'todoPriorities' => collect(TodoPriority::cases())->map(fn ($p): array => [
                 'value' => $p->value,
                 'label' => $p->label(),
                 'color' => $p->color(),
@@ -261,7 +261,7 @@ class ShiftController extends Controller
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->get()
-            ->map(fn ($user) => [
+            ->map(fn ($user): array => [
                 'id' => $user->id,
                 'uuid' => $user->uuid ?? null,
                 'first_name' => $user->first_name,
@@ -275,7 +275,7 @@ class ShiftController extends Controller
             ->where('status', EmployeeStatus::ACTIVE)
             ->whereHas('user')
             ->get()
-            ->map(fn ($employee) => [
+            ->map(fn ($employee): array => [
                 'id' => $employee->user_id,
                 'uuid' => $employee->uuid,
                 'first_name' => $employee->user->first_name ?? '',
@@ -289,7 +289,7 @@ class ShiftController extends Controller
         $stars = Star::with('user')
             ->where('status', StarStatus::ACTIVE)
             ->get()
-            ->map(fn ($star) => [
+            ->map(fn ($star): array => [
                 'id' => $star->user_id ?? $star->id,
                 'uuid' => $star->uuid,
                 'first_name' => $star->user->first_name ?? $star->title ?? '',
@@ -299,7 +299,7 @@ class ShiftController extends Controller
                 'type' => 'star',
             ]);
 
-        $positions = $department->activePositions()->get()->map(fn ($p) => [
+        $positions = $department->activePositions()->get()->map(fn ($p): array => [
             'id' => $p->id,
             'uuid' => $p->uuid,
             'name' => $p->name,
@@ -316,12 +316,12 @@ class ShiftController extends Controller
             'employees' => $employees,
             'stars' => $stars,
             'positions' => $positions,
-            'shiftTypes' => collect(ShiftType::cases())->map(fn ($t) => [
+            'shiftTypes' => collect(ShiftType::cases())->map(fn ($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
             ]),
-            'shiftStatuses' => collect(ShiftStatus::cases())->map(fn ($s) => [
+            'shiftStatuses' => collect(ShiftStatus::cases())->map(fn ($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),

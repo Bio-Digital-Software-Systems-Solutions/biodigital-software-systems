@@ -103,7 +103,7 @@ class ReportDataAggregatorService
             'total' => $activities->count(),
             'total_hours' => round($activities->sum('duration_hours'), 1),
             'by_category' => $categoryStats,
-            'recent' => $activities->take(10)->map(fn($a) => [
+            'recent' => $activities->take(10)->map(fn($a): array => [
                 'id' => $a->id,
                 'title' => $a->title,
                 'category' => $a->category->value,
@@ -142,7 +142,7 @@ class ReportDataAggregatorService
         }
 
         $overdue = $objectives->filter(fn($o) => $o->is_overdue);
-        $delayed = $objectives->filter(fn($o) => $o->status === ObjectiveStatus::DELAYED);
+        $delayed = $objectives->filter(fn($o): bool => $o->status === ObjectiveStatus::DELAYED);
 
         return [
             'total' => $objectives->count(),
@@ -150,7 +150,7 @@ class ReportDataAggregatorService
             'by_status' => $statusStats,
             'overdue_count' => $overdue->count(),
             'delayed_count' => $delayed->count(),
-            'list' => $objectives->map(fn($o) => [
+            'list' => $objectives->map(fn($o): array => [
                 'id' => $o->id,
                 'uuid' => $o->uuid,
                 'title' => $o->title,
@@ -178,13 +178,11 @@ class ReportDataAggregatorService
             ->with(['values' => fn($q) => $q->whereBetween('recorded_at', [$periodStart, $periodEnd])])
             ->get();
 
-        return $kpis->map(function ($kpi) use ($periodStart, $periodEnd) {
+        return $kpis->map(function ($kpi): array {
             $values = $kpi->values;
             $currentValue = $values->sortByDesc('recorded_at')->first()?->value;
             $previousValue = $values->sortByDesc('recorded_at')->skip(1)->first()?->value;
-
             $trend = $kpi->calculateTrend();
-
             return [
                 'id' => $kpi->id,
                 'uuid' => $kpi->uuid,
@@ -197,7 +195,7 @@ class ReportDataAggregatorService
                 'performance_status' => $kpi->performance_status,
                 'status_color' => $kpi->getStatusColor(),
                 'trend' => $trend,
-                'values' => $values->map(fn($v) => [
+                'values' => $values->map(fn($v): array => [
                     'value' => $v->value,
                     'date' => $v->recorded_at->format('Y-m-d'),
                 ])->toArray(),
@@ -251,7 +249,7 @@ class ReportDataAggregatorService
 
         $byUser = $activities->groupBy('user_id');
 
-        $membersStats = $byUser->map(function ($userActivities, $userId) {
+        $membersStats = $byUser->map(function ($userActivities, $userId): array {
             $user = $userActivities->first()->user;
             return [
                 'id' => $userId,
@@ -342,7 +340,7 @@ class ReportDataAggregatorService
     protected function getActivitiesTimeline(Collection $activities): array
     {
         return $activities->groupBy(fn($a) => $a->date->format('Y-m-d'))
-            ->map(fn($group, $date) => [
+            ->map(fn($group, $date): array => [
                 'date' => $date,
                 'count' => $group->count(),
                 'hours' => round($group->sum('duration_hours'), 1),

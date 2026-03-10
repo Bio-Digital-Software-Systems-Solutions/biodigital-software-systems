@@ -4,7 +4,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-test('privacy policy page can be accessed', function () {
+test('privacy policy page can be accessed', function (): void {
     $response = $this->get('/privacy-policy');
 
     $response->assertStatus(200);
@@ -13,7 +13,7 @@ test('privacy policy page can be accessed', function () {
     );
 });
 
-test('terms of service page can be accessed', function () {
+test('terms of service page can be accessed', function (): void {
     $response = $this->get('/terms-of-service');
 
     $response->assertStatus(200);
@@ -22,7 +22,7 @@ test('terms of service page can be accessed', function () {
     );
 });
 
-test('legal pages routes are registered', function () {
+test('legal pages routes are registered', function (): void {
     expect(route('privacy-policy'))->toBe(url('/privacy-policy'));
     expect(route('terms-of-service'))->toBe(url('/terms-of-service'));
 });

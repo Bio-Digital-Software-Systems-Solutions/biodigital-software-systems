@@ -15,7 +15,7 @@ class PastorAvailabilitySeeder extends Seeder
     public function run(): void
     {
         // Get all users with pastor role
-        $pastors = User::whereHas('roles', function ($query) {
+        $pastors = User::whereHas('roles', function ($query): void {
             $query->where('name', 'pastor');
         })->get();
 

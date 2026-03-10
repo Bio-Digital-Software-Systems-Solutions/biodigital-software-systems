@@ -40,7 +40,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function user_can_create_a_program_step()
+    public function user_can_create_a_program_step(): void
     {
         $stepData = [
             'name' => 'Phase de Planification',
@@ -64,7 +64,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function user_can_update_a_program_step()
+    public function user_can_update_a_program_step(): void
     {
         $step = ProgramStep::factory()->create([
             'program_id' => $this->program->id,
@@ -94,7 +94,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function user_can_delete_a_program_step()
+    public function user_can_delete_a_program_step(): void
     {
         $step = ProgramStep::factory()->create([
             'program_id' => $this->program->id,
@@ -110,7 +110,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function user_can_attach_participant_to_step()
+    public function user_can_attach_participant_to_step(): void
     {
         $step = ProgramStep::factory()->create([
             'program_id' => $this->program->id,
@@ -133,7 +133,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function user_can_detach_participant_from_step()
+    public function user_can_detach_participant_from_step(): void
     {
         $step = ProgramStep::factory()->create([
             'program_id' => $this->program->id,
@@ -157,7 +157,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function user_can_create_task_for_step()
+    public function user_can_create_task_for_step(): void
     {
         $step = ProgramStep::factory()->create([
             'program_id' => $this->program->id,
@@ -188,7 +188,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function user_can_update_task_in_step()
+    public function user_can_update_task_in_step(): void
     {
         $step = ProgramStep::factory()->create([
             'program_id' => $this->program->id,
@@ -229,7 +229,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function user_can_delete_task_from_step()
+    public function user_can_delete_task_from_step(): void
     {
         $step = ProgramStep::factory()->create([
             'program_id' => $this->program->id,
@@ -256,7 +256,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function user_can_update_task_status()
+    public function user_can_update_task_status(): void
     {
         $step = ProgramStep::factory()->create([
             'program_id' => $this->program->id,
@@ -288,7 +288,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function program_progress_updates_when_step_status_changes()
+    public function program_progress_updates_when_step_status_changes(): void
     {
         $step = ProgramStep::factory()->create([
             'program_id' => $this->program->id,
@@ -311,7 +311,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function validation_fails_when_creating_step_with_invalid_data()
+    public function validation_fails_when_creating_step_with_invalid_data(): void
     {
         $response = $this->actingAs($this->user)
             ->post(route('programs.steps.store', $this->program), [
@@ -323,7 +323,7 @@ class ProgramStepManagementTest extends TestCase
     }
 
     /** @test */
-    public function validation_fails_when_creating_task_with_invalid_priority()
+    public function validation_fails_when_creating_task_with_invalid_priority(): void
     {
         $step = ProgramStep::factory()->create([
             'program_id' => $this->program->id,

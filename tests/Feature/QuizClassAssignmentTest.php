@@ -100,7 +100,7 @@ class QuizClassAssignmentTest extends TestCase
         ]);
     }
 
-    public function test_quiz_can_be_assigned_to_training_class()
+    public function test_quiz_can_be_assigned_to_training_class(): void
     {
         $response = $this->actingAs($this->admin)
             ->post(route('trainings.quizzes.assign-to-class', [
@@ -126,7 +126,7 @@ class QuizClassAssignmentTest extends TestCase
         $this->assertTrue($this->trainingClass1->quizzes->contains($this->quiz));
     }
 
-    public function test_quiz_cannot_be_assigned_twice_to_same_class()
+    public function test_quiz_cannot_be_assigned_twice_to_same_class(): void
     {
         // First assignment
         $this->quiz->trainingClasses()->attach($this->trainingClass1->id, [
@@ -146,7 +146,7 @@ class QuizClassAssignmentTest extends TestCase
             ->assertJson(['success' => false]);
     }
 
-    public function test_quiz_can_be_removed_from_training_class()
+    public function test_quiz_can_be_removed_from_training_class(): void
     {
         // First assign
         $this->quiz->trainingClasses()->attach($this->trainingClass1->id, [
@@ -171,7 +171,7 @@ class QuizClassAssignmentTest extends TestCase
         ]);
     }
 
-    public function test_quiz_can_be_assigned_to_training_class_material()
+    public function test_quiz_can_be_assigned_to_training_class_material(): void
     {
         $response = $this->actingAs($this->admin)
             ->post(route('trainings.quizzes.assign-to-material', [
@@ -197,7 +197,7 @@ class QuizClassAssignmentTest extends TestCase
         $this->assertTrue($this->material1->quizzes->contains($this->quiz));
     }
 
-    public function test_quiz_assignment_assignment_dates_are_validated()
+    public function test_quiz_assignment_assignment_dates_are_validated(): void
     {
         $response = $this->actingAs($this->admin)
             ->post(route('trainings.quizzes.assign-to-class', [
@@ -212,7 +212,7 @@ class QuizClassAssignmentTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function test_bulk_assign_quiz_to_multiple_classes()
+    public function test_bulk_assign_quiz_to_multiple_classes(): void
     {
         $response = $this->actingAs($this->admin)
             ->post(route('trainings.quizzes.bulk-assign-classes', [
@@ -241,7 +241,7 @@ class QuizClassAssignmentTest extends TestCase
         ]);
     }
 
-    public function test_quiz_class_assignment_page_loads_correctly()
+    public function test_quiz_class_assignment_page_loads_correctly(): void
     {
         $response = $this->actingAs($this->admin)
             ->get(route('trainings.quizzes.class-assignments', [
@@ -257,7 +257,7 @@ class QuizClassAssignmentTest extends TestCase
             );
     }
 
-    public function test_quiz_model_helper_methods()
+    public function test_quiz_model_helper_methods(): void
     {
         // Test isAvailableForClass
         $this->assertFalse($this->quiz->isAvailableForClass($this->trainingClass1));
@@ -281,7 +281,7 @@ class QuizClassAssignmentTest extends TestCase
         $this->assertTrue($this->quiz->isAvailableForMaterial($this->material1));
     }
 
-    public function test_training_class_model_helper_methods()
+    public function test_training_class_model_helper_methods(): void
     {
         // Test hasQuiz
         $this->assertFalse($this->trainingClass1->hasQuiz($this->quiz));
@@ -294,7 +294,7 @@ class QuizClassAssignmentTest extends TestCase
         $this->assertTrue($this->trainingClass1->hasQuiz($this->quiz));
     }
 
-    public function test_quiz_creation_with_class_assignments()
+    public function test_quiz_creation_with_class_assignments(): void
     {
         $quizData = [
             'title' => 'New Test Quiz',
@@ -346,7 +346,7 @@ class QuizClassAssignmentTest extends TestCase
         ]);
     }
 
-    public function test_unauthorized_users_cannot_manage_quiz_assignments()
+    public function test_unauthorized_users_cannot_manage_quiz_assignments(): void
     {
         $response = $this->actingAs($this->student)
             ->post(route('trainings.quizzes.assign-to-class', [
@@ -358,7 +358,7 @@ class QuizClassAssignmentTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_quiz_stats_endpoint_returns_correct_data()
+    public function test_quiz_stats_endpoint_returns_correct_data(): void
     {
         // Assign quiz to classes
         $this->quiz->trainingClasses()->attach([
@@ -390,7 +390,7 @@ class QuizClassAssignmentTest extends TestCase
             ]);
     }
 
-    public function test_quiz_cannot_be_assigned_to_class_from_different_training()
+    public function test_quiz_cannot_be_assigned_to_class_from_different_training(): void
     {
         // Create another training and class
         $otherTraining = Training::factory()->create([
@@ -415,7 +415,7 @@ class QuizClassAssignmentTest extends TestCase
             ->assertJson(['success' => false]);
     }
 
-    public function test_assignment_settings_can_be_updated()
+    public function test_assignment_settings_can_be_updated(): void
     {
         // First assign
         $this->quiz->trainingClasses()->attach($this->trainingClass1->id, [

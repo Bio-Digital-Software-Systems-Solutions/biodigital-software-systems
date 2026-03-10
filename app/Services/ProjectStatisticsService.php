@@ -19,14 +19,14 @@ class ProjectStatisticsService
     {
         $projectIds = Project::pluck('id');
 
-        $tasks = Task::where('taskable_type', 'App\Models\Project')
+        $tasks = Task::where('taskable_type', \App\Models\Project::class)
             ->whereIn('taskable_id', $projectIds)
             ->with(['status', 'assignedUser'])
             ->get();
 
         $projects = Project::with('manager')->withCount([
             'tasks',
-            'tasks as completed_tasks_count' => function ($query) {
+            'tasks as completed_tasks_count' => function ($query): void {
                 $query->whereHas('status', fn ($q) => $q->where('name', 'completed'));
             },
         ])->get();
@@ -107,13 +107,11 @@ class ProjectStatisticsService
             'cancelled' => ['label' => 'Annulé', 'color' => '#EF4444'],
         ];
 
-        return collect($statusConfig)->map(function ($config, $status) use ($projects) {
-            return [
-                'label' => $config['label'],
-                'value' => $projects->where('status', $status)->count(),
-                'color' => $config['color'],
-            ];
-        })->values()->toArray();
+        return collect($statusConfig)->map(fn($config, $status): array => [
+            'label' => $config['label'],
+            'value' => $projects->where('status', $status)->count(),
+            'color' => $config['color'],
+        ])->values()->toArray();
     }
 
     /**
@@ -131,13 +129,11 @@ class ProjectStatisticsService
             'cancelled' => ['label' => 'Annulé', 'color' => '#6B7280'],
         ];
 
-        return collect($statusConfig)->map(function ($config, $statusName) use ($tasks) {
-            return [
-                'label' => $config['label'],
-                'value' => $tasks->filter(fn ($t) => $t->status?->name === $statusName)->count(),
-                'color' => $config['color'],
-            ];
-        })->values()->toArray();
+        return collect($statusConfig)->map(fn($config, $statusName): array => [
+            'label' => $config['label'],
+            'value' => $tasks->filter(fn ($t): bool => $t->status?->name === $statusName)->count(),
+            'color' => $config['color'],
+        ])->values()->toArray();
     }
 
     /**
@@ -153,13 +149,11 @@ class ProjectStatisticsService
             'lowest' => ['label' => 'Très basse', 'color' => '#6B7280'],
         ];
 
-        return collect($priorityConfig)->map(function ($config, $priority) use ($tasks) {
-            return [
-                'label' => $config['label'],
-                'value' => $tasks->where('priority', $priority)->count(),
-                'color' => $config['color'],
-            ];
-        })->values()->toArray();
+        return collect($priorityConfig)->map(fn($config, $priority): array => [
+            'label' => $config['label'],
+            'value' => $tasks->where('priority', $priority)->count(),
+            'color' => $config['color'],
+        ])->values()->toArray();
     }
 
     /**
@@ -174,13 +168,11 @@ class ProjectStatisticsService
             'cancelled' => ['label' => 'Annulé', 'color' => '#EF4444'],
         ];
 
-        return collect($statusConfig)->map(function ($config, $status) use ($sprints) {
-            return [
-                'label' => $config['label'],
-                'value' => $sprints->where('status', $status)->count(),
-                'color' => $config['color'],
-            ];
-        })->values()->toArray();
+        return collect($statusConfig)->map(fn($config, $status): array => [
+            'label' => $config['label'],
+            'value' => $sprints->where('status', $status)->count(),
+            'color' => $config['color'],
+        ])->values()->toArray();
     }
 
     /**
@@ -198,13 +190,11 @@ class ProjectStatisticsService
             'cancelled' => ['label' => 'Annulé', 'color' => '#6B7280'],
         ];
 
-        return collect($statusConfig)->map(function ($config, $statusName) use ($epics) {
-            return [
-                'label' => $config['label'],
-                'value' => $epics->filter(fn ($e) => $e->status?->name === $statusName)->count(),
-                'color' => $config['color'],
-            ];
-        })->values()->toArray();
+        return collect($statusConfig)->map(fn($config, $statusName): array => [
+            'label' => $config['label'],
+            'value' => $epics->filter(fn ($e): bool => $e->status?->name === $statusName)->count(),
+            'color' => $config['color'],
+        ])->values()->toArray();
     }
 
     /**
@@ -234,13 +224,13 @@ class ProjectStatisticsService
             $weekEnd = Carbon::now()->subWeeks($i)->endOfWeek();
             $weekLabel = 'S'.$weekStart->weekOfYear;
 
-            $created = $tasks->filter(function ($task) use ($weekStart, $weekEnd) {
+            $created = $tasks->filter(function ($task) use ($weekStart, $weekEnd): bool {
                 $createdAt = Carbon::parse($task->created_at);
 
                 return $createdAt->between($weekStart, $weekEnd);
             })->count();
 
-            $completed = $tasks->filter(function ($task) use ($weekStart, $weekEnd) {
+            $completed = $tasks->filter(function ($task) use ($weekStart, $weekEnd): bool {
                 if ($task->status?->name !== 'completed') {
                     return false;
                 }
@@ -272,13 +262,13 @@ class ProjectStatisticsService
             $monthEnd = Carbon::now()->subMonths($i)->endOfMonth();
             $monthLabel = $monthNames[$monthStart->month - 1];
 
-            $created = $tasks->filter(function ($task) use ($monthStart, $monthEnd) {
+            $created = $tasks->filter(function ($task) use ($monthStart, $monthEnd): bool {
                 $createdAt = Carbon::parse($task->created_at);
 
                 return $createdAt->between($monthStart, $monthEnd);
             })->count();
 
-            $completed = $tasks->filter(function ($task) use ($monthStart, $monthEnd) {
+            $completed = $tasks->filter(function ($task) use ($monthStart, $monthEnd): bool {
                 if ($task->status?->name !== 'completed') {
                     return false;
                 }
@@ -309,13 +299,13 @@ class ProjectStatisticsService
             $quarterEnd = Carbon::now()->subQuarters($i)->endOfQuarter();
             $quarterLabel = 'T'.$quarterStart->quarter.' '.$quarterStart->year;
 
-            $created = $tasks->filter(function ($task) use ($quarterStart, $quarterEnd) {
+            $created = $tasks->filter(function ($task) use ($quarterStart, $quarterEnd): bool {
                 $createdAt = Carbon::parse($task->created_at);
 
                 return $createdAt->between($quarterStart, $quarterEnd);
             })->count();
 
-            $completed = $tasks->filter(function ($task) use ($quarterStart, $quarterEnd) {
+            $completed = $tasks->filter(function ($task) use ($quarterStart, $quarterEnd): bool {
                 if ($task->status?->name !== 'completed') {
                     return false;
                 }
@@ -364,13 +354,13 @@ class ProjectStatisticsService
             $semesterEnd = Carbon::create($targetYear, $targetSemester === 1 ? 6 : 12, 1)->endOfMonth();
             $semesterLabel = 'S'.$targetSemester.' '.$targetYear;
 
-            $created = $tasks->filter(function ($task) use ($semesterStart, $semesterEnd) {
+            $created = $tasks->filter(function ($task) use ($semesterStart, $semesterEnd): bool {
                 $createdAt = Carbon::parse($task->created_at);
 
                 return $createdAt->between($semesterStart, $semesterEnd);
             })->count();
 
-            $completed = $tasks->filter(function ($task) use ($semesterStart, $semesterEnd) {
+            $completed = $tasks->filter(function ($task) use ($semesterStart, $semesterEnd): bool {
                 if ($task->status?->name !== 'completed') {
                     return false;
                 }
@@ -401,13 +391,13 @@ class ProjectStatisticsService
             $yearEnd = Carbon::now()->subYears($i)->endOfYear();
             $yearLabel = (string) $yearStart->year;
 
-            $created = $tasks->filter(function ($task) use ($yearStart, $yearEnd) {
+            $created = $tasks->filter(function ($task) use ($yearStart, $yearEnd): bool {
                 $createdAt = Carbon::parse($task->created_at);
 
                 return $createdAt->between($yearStart, $yearEnd);
             })->count();
 
-            $completed = $tasks->filter(function ($task) use ($yearStart, $yearEnd) {
+            $completed = $tasks->filter(function ($task) use ($yearStart, $yearEnd): bool {
                 if ($task->status?->name !== 'completed') {
                     return false;
                 }
@@ -436,11 +426,11 @@ class ProjectStatisticsService
         $colors = ['#3B82F6', '#10B981', '#F97316', '#8B5CF6', '#EF4444', '#F59E0B', '#06B6D4', '#EC4899'];
 
         return $projects
-            ->filter(fn ($p) => $p->tasks_count > 0)
+            ->filter(fn ($p): bool => $p->tasks_count > 0)
             ->sortByDesc('tasks_count')
             ->take(10)
             ->values()
-            ->map(function ($project, $i) use ($colors) {
+            ->map(function ($project, $i) use ($colors): array {
                 $rate = $project->tasks_count > 0
                     ? round(($project->completed_tasks_count / $project->tasks_count) * 100, 1)
                     : 0;
@@ -464,13 +454,13 @@ class ProjectStatisticsService
     {
         $colors = ['#3B82F6', '#10B981', '#F97316', '#8B5CF6', '#EF4444', '#F59E0B', '#06B6D4', '#EC4899'];
 
-        $grouped = $tasks->filter(fn ($t) => $t->assignedUser !== null)->groupBy('assigned_to');
+        $grouped = $tasks->filter(fn ($t): bool => $t->assignedUser !== null)->groupBy('assigned_to');
 
         return $grouped
-            ->map(function ($userTasks, $userId) {
+            ->map(function ($userTasks, $userId): array {
                 $user = $userTasks->first()->assignedUser;
                 $total = $userTasks->count();
-                $completed = $userTasks->filter(fn ($t) => $t->status?->name === 'completed')->count();
+                $completed = $userTasks->filter(fn ($t): bool => $t->status?->name === 'completed')->count();
                 $rate = $total > 0 ? round(($completed / $total) * 100, 1) : 0;
 
                 return [
@@ -483,7 +473,7 @@ class ProjectStatisticsService
             ->sortByDesc('total')
             ->take(10)
             ->values()
-            ->map(function ($item, $i) use ($colors) {
+            ->map(function (array $item, $i) use ($colors): array {
                 $item['color'] = $colors[$i % count($colors)];
 
                 return $item;
@@ -500,10 +490,10 @@ class ProjectStatisticsService
     {
         $colors = ['#3B82F6', '#10B981', '#F97316', '#8B5CF6', '#EF4444', '#F59E0B', '#06B6D4', '#EC4899'];
 
-        $grouped = $projects->filter(fn ($p) => $p->manager !== null)->groupBy('project_manager_id');
+        $grouped = $projects->filter(fn ($p): bool => $p->manager !== null)->groupBy('project_manager_id');
 
         return $grouped
-            ->map(function ($userProjects) {
+            ->map(function ($userProjects): array {
                 $user = $userProjects->first()->manager;
 
                 return [
@@ -514,7 +504,7 @@ class ProjectStatisticsService
             ->sortByDesc('value')
             ->take(10)
             ->values()
-            ->map(function ($item, $i) use ($colors) {
+            ->map(function (array $item, $i) use ($colors): array {
                 $item['color'] = $colors[$i % count($colors)];
 
                 return $item;
@@ -536,10 +526,10 @@ class ProjectStatisticsService
             '#D946EF', '#EAB308', '#64748B', '#FB923C', '#4ADE80',
         ];
 
-        $grouped = $tasks->filter(fn ($t) => $t->assignedUser !== null)->groupBy('assigned_to');
+        $grouped = $tasks->filter(fn ($t): bool => $t->assignedUser !== null)->groupBy('assigned_to');
 
         return $grouped
-            ->map(function ($userTasks) {
+            ->map(function ($userTasks): array {
                 $user = $userTasks->first()->assignedUser;
 
                 return [
@@ -550,7 +540,7 @@ class ProjectStatisticsService
             ->sortByDesc('value')
             ->take(100)
             ->values()
-            ->map(function ($item, $i) use ($colors) {
+            ->map(function (array $item, $i) use ($colors): array {
                 $item['color'] = $colors[$i % count($colors)];
 
                 return $item;
@@ -566,9 +556,7 @@ class ProjectStatisticsService
     private function getGlobalProgress(Collection $tasks): array
     {
         $total = $tasks->count();
-        $completed = $tasks->filter(function ($task) {
-            return $task->status && $task->status->name === 'completed';
-        })->count();
+        $completed = $tasks->filter(fn($task): bool => $task->status && $task->status->name === 'completed')->count();
 
         $percentage = $total > 0 ? round(($completed / $total) * 100) : 0;
 
@@ -586,9 +574,7 @@ class ProjectStatisticsService
      */
     private function getVelocity(Collection $tasks): array
     {
-        $completedTasks = $tasks->filter(function ($task) {
-            return $task->status && $task->status->name === 'completed';
-        });
+        $completedTasks = $tasks->filter(fn($task): bool => $task->status && $task->status->name === 'completed');
 
         // Daily velocity (last 30 days)
         $dailyData = $this->calculateDailyVelocity($completedTasks);
@@ -615,7 +601,7 @@ class ProjectStatisticsService
         $startDate = Carbon::now()->subDays($days)->startOfDay();
         $endDate = Carbon::now()->endOfDay();
 
-        $tasksInPeriod = $completedTasks->filter(function ($task) use ($startDate, $endDate) {
+        $tasksInPeriod = $completedTasks->filter(function ($task) use ($startDate, $endDate): bool {
             $updatedAt = Carbon::parse($task->updated_at);
 
             return $updatedAt->between($startDate, $endDate);
@@ -644,7 +630,7 @@ class ProjectStatisticsService
         $startDate = Carbon::now()->subWeeks($weeks)->startOfWeek();
         $endDate = Carbon::now()->endOfWeek();
 
-        $tasksInPeriod = $completedTasks->filter(function ($task) use ($startDate, $endDate) {
+        $tasksInPeriod = $completedTasks->filter(function ($task) use ($startDate, $endDate): bool {
             $updatedAt = Carbon::parse($task->updated_at);
 
             return $updatedAt->between($startDate, $endDate);
@@ -673,7 +659,7 @@ class ProjectStatisticsService
         $startDate = Carbon::now()->subMonths($months)->startOfMonth();
         $endDate = Carbon::now()->endOfMonth();
 
-        $tasksInPeriod = $completedTasks->filter(function ($task) use ($startDate, $endDate) {
+        $tasksInPeriod = $completedTasks->filter(function ($task) use ($startDate, $endDate): bool {
             $updatedAt = Carbon::parse($task->updated_at);
 
             return $updatedAt->between($startDate, $endDate);

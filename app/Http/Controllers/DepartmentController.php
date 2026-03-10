@@ -37,7 +37,7 @@ class DepartmentController extends Controller
 
         $departments = Department::with(['headOfDepartment', 'users:users.id'])
             ->withCount('users')
-            ->when(request('status'), function ($query, $status) {
+            ->when(request('status'), function ($query, $status): void {
                 if ($status === 'active') {
                     $query->active();
                 }
@@ -47,27 +47,25 @@ class DepartmentController extends Controller
             ->appends(request()->query());
 
         // Map departments to include head_of_department_user and is_accessible for frontend
-        $data = collect($departments->items())->map(function ($department) use ($user) {
-            return [
-                'id' => $department->id,
-                'uuid' => $department->uuid,
-                'name' => $department->name,
-                'code' => $department->code,
-                'description' => $department->description,
-                'budget' => $department->budget,
-                'is_active' => $department->is_active,
-                'head_of_department' => $department->head_of_department,
-                'head_of_department_user' => $department->relationLoaded('headOfDepartment') && $department->headOfDepartment ? [
-                    'id' => $department->headOfDepartment->id,
-                    'first_name' => $department->headOfDepartment->first_name,
-                    'last_name' => $department->headOfDepartment->last_name,
-                ] : null,
-                'users_count' => $department->users_count,
-                'is_accessible' => $department->isAccessibleBy($user),
-                'created_at' => $department->created_at,
-                'updated_at' => $department->updated_at,
-            ];
-        })->all();
+        $data = collect($departments->items())->map(fn($department): array => [
+            'id' => $department->id,
+            'uuid' => $department->uuid,
+            'name' => $department->name,
+            'code' => $department->code,
+            'description' => $department->description,
+            'budget' => $department->budget,
+            'is_active' => $department->is_active,
+            'head_of_department' => $department->head_of_department,
+            'head_of_department_user' => $department->relationLoaded('headOfDepartment') && $department->headOfDepartment ? [
+                'id' => $department->headOfDepartment->id,
+                'first_name' => $department->headOfDepartment->first_name,
+                'last_name' => $department->headOfDepartment->last_name,
+            ] : null,
+            'users_count' => $department->users_count,
+            'is_accessible' => $department->isAccessibleBy($user),
+            'created_at' => $department->created_at,
+            'updated_at' => $department->updated_at,
+        ])->all();
 
         return Inertia::render('Departments/Index', [
             'departments' => [
@@ -119,7 +117,7 @@ class DepartmentController extends Controller
             $validated['image'] = 'departments/'.$request->image;
         }
 
-        $department = Department::create($validated);
+        Department::create($validated);
 
         return redirect()->route('departments.index')
             ->with('success', 'Department created successfully.');
@@ -144,22 +142,20 @@ class DepartmentController extends Controller
             ->whereNotIn('id', $existingUserIds)
             ->orderBy('first_name')
             ->get()
-            ->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'uuid' => $user->uuid,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'type' => 'user',
-                ];
-            });
+            ->map(fn($user): array => [
+                'id' => $user->id,
+                'uuid' => $user->uuid,
+                'name' => $user->name,
+                'email' => $user->email,
+                'type' => 'user',
+            ]);
 
         // Get active employees not already in the department
         $employees = Employee::with('user')
             ->where('status', EmployeeStatus::ACTIVE)
             ->whereNotIn('user_id', $existingUserIds)
             ->get()
-            ->map(fn ($employee) => [
+            ->map(fn ($employee): array => [
                 'id' => $employee->user_id,
                 'uuid' => $employee->uuid,
                 'name' => $employee->user->name ?? '',
@@ -173,7 +169,7 @@ class DepartmentController extends Controller
             ->where('status', StarStatus::ACTIVE)
             ->whereNotIn('user_id', $existingUserIds)
             ->get()
-            ->map(fn ($star) => [
+            ->map(fn ($star): array => [
                 'id' => $star->user_id,
                 'uuid' => $star->uuid,
                 'name' => $star->user->name ?? '',
@@ -206,14 +202,12 @@ class DepartmentController extends Controller
                     'name' => $department->secondDeputy->name,
                     'email' => $department->secondDeputy->email,
                 ] : null,
-                'users' => $department->users->map(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'uuid' => $user->uuid,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                    ];
-                }),
+                'users' => $department->users->map(fn($user): array => [
+                    'id' => $user->id,
+                    'uuid' => $user->uuid,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ]),
                 'users_count' => $department->users->count(),
             ],
             'availableUsers' => $allUsers,
@@ -239,28 +233,26 @@ class DepartmentController extends Controller
                 ->withCount('participants')
                 ->orderBy('start_datetime')
                 ->get()
-                ->map(function ($appointment) {
-                    return [
-                        'uuid' => $appointment->uuid,
-                        'title' => $appointment->title,
-                        'description' => $appointment->description,
-                        'type' => $appointment->type,
-                        'status' => $appointment->status,
-                        'start_datetime' => $appointment->start_datetime->toISOString(),
-                        'end_datetime' => $appointment->end_datetime->toISOString(),
-                        'location' => $appointment->location,
-                        'formatted_time_range' => $appointment->formatted_time_range,
-                        'participants_count' => $appointment->participants_count,
-                        'organizer' => $appointment->organizer ? [
-                            'id' => $appointment->organizer->id,
-                            'uuid' => $appointment->organizer->uuid,
-                            'name' => $appointment->organizer->name,
-                        ] : null,
-                    ];
-                }),
+                ->map(fn($appointment): array => [
+                    'uuid' => $appointment->uuid,
+                    'title' => $appointment->title,
+                    'description' => $appointment->description,
+                    'type' => $appointment->type,
+                    'status' => $appointment->status,
+                    'start_datetime' => $appointment->start_datetime->toISOString(),
+                    'end_datetime' => $appointment->end_datetime->toISOString(),
+                    'location' => $appointment->location,
+                    'formatted_time_range' => $appointment->formatted_time_range,
+                    'participants_count' => $appointment->participants_count,
+                    'organizer' => $appointment->organizer ? [
+                        'id' => $appointment->organizer->id,
+                        'uuid' => $appointment->organizer->uuid,
+                        'name' => $appointment->organizer->name,
+                    ] : null,
+                ]),
             'meetings' => $department->meetings()
                 ->with([
-                    'appointment' => function ($query) {
+                    'appointment' => function ($query): void {
                         $query->with(['organizer:id,uuid,first_name,last_name,email', 'participants:id,uuid,first_name,last_name,email'])
                             ->withCount('participants');
                     },
@@ -268,7 +260,7 @@ class DepartmentController extends Controller
                 ])
                 ->orderBy('created_at', 'desc')
                 ->get()
-                ->map(function ($meeting) {
+                ->map(function ($meeting): array {
                     $appointment = $meeting->appointment;
 
                     return [
@@ -302,7 +294,7 @@ class DepartmentController extends Controller
                         ] : null,
                     ];
                 }),
-            'positions' => $department->positions()->ordered()->get()->map(fn ($p) => [
+            'positions' => $department->positions()->ordered()->get()->map(fn ($p): array => [
                 'id' => $p->id,
                 'uuid' => $p->uuid,
                 'name' => $p->name,
@@ -317,7 +309,7 @@ class DepartmentController extends Controller
                 ->active()
                 ->orderBy('created_at', 'desc')
                 ->get()
-                ->map(fn ($n) => [
+                ->map(fn ($n): array => [
                     'uuid' => $n->uuid,
                     'position' => [
                         'id' => $n->position->id,
@@ -482,7 +474,7 @@ class DepartmentController extends Controller
                 ->where('status', AbsenceStatus::APPROVED)
                 ->where('end_date', '>=', now()->toDateString())
                 ->count(),
-            'pending_swap_requests' => ShiftSwapRequest::whereHas('requestedShift', function ($query) use ($departmentId) {
+            'pending_swap_requests' => ShiftSwapRequest::whereHas('requestedShift', function ($query) use ($departmentId): void {
                 $query->where('department_id', $departmentId);
             })
                 ->whereIn('status', [SwapRequestStatus::PENDING_COLLEAGUE, SwapRequestStatus::PENDING_MANAGER])
@@ -501,10 +493,10 @@ class DepartmentController extends Controller
             'pending' => $todos->where('status', ShiftTaskStatus::TODO)->count(),
             'overdue' => $todos->filter(fn ($todo) => $todo->is_overdue)->count(),
             'by_priority' => [
-                'critical' => $todos->filter(fn ($t) => $t->priority?->value === 'critical')->count(),
-                'high' => $todos->filter(fn ($t) => $t->priority?->value === 'high')->count(),
-                'medium' => $todos->filter(fn ($t) => $t->priority?->value === 'medium')->count(),
-                'low' => $todos->filter(fn ($t) => $t->priority?->value === 'low')->count(),
+                'critical' => $todos->filter(fn ($t): bool => $t->priority?->value === 'critical')->count(),
+                'high' => $todos->filter(fn ($t): bool => $t->priority?->value === 'high')->count(),
+                'medium' => $todos->filter(fn ($t): bool => $t->priority?->value === 'medium')->count(),
+                'low' => $todos->filter(fn ($t): bool => $t->priority?->value === 'low')->count(),
             ],
         ];
 
@@ -677,7 +669,7 @@ class DepartmentController extends Controller
         }
 
         // Sort by total tasks descending
-        usort($tasksByMember, fn ($a, $b) => $b['total'] - $a['total']);
+        usort($tasksByMember, fn (array $a, array $b): int|float => $b['total'] - $a['total']);
 
         // Add unassigned tasks
         $unassignedTodos = $todos->whereNull('assigned_to');
@@ -714,7 +706,7 @@ class DepartmentController extends Controller
         $thisMonthStart = $now->copy()->startOfMonth();
         $completedThisMonth = $todos
             ->where('status', ShiftTaskStatus::COMPLETED)
-            ->filter(fn ($t) => $t->completed_at && $t->completed_at->gte($thisMonthStart))
+            ->filter(fn ($t): bool => $t->completed_at && $t->completed_at->gte($thisMonthStart))
             ->count();
 
         // Last month's velocity for comparison
@@ -732,13 +724,11 @@ class DepartmentController extends Controller
         // Average completion time (for completed tasks with both created_at and completed_at)
         $completedWithTimes = $todos
             ->where('status', ShiftTaskStatus::COMPLETED)
-            ->filter(fn ($t) => $t->completed_at !== null);
+            ->filter(fn ($t): bool => $t->completed_at !== null);
 
         $avgCompletionDays = 0;
         if ($completedWithTimes->count() > 0) {
-            $totalDays = $completedWithTimes->sum(function ($todo) {
-                return $todo->created_at->diffInDays($todo->completed_at);
-            });
+            $totalDays = $completedWithTimes->sum(fn($todo) => $todo->created_at->diffInDays($todo->completed_at));
             $avgCompletionDays = round($totalDays / $completedWithTimes->count(), 1);
         }
 
@@ -753,20 +743,18 @@ class DepartmentController extends Controller
             // Member's completion time
             $memberCompletedWithTimes = $memberTodos
                 ->where('status', ShiftTaskStatus::COMPLETED)
-                ->filter(fn ($t) => $t->completed_at !== null);
+                ->filter(fn ($t): bool => $t->completed_at !== null);
 
             $memberAvgDays = 0;
             if ($memberCompletedWithTimes->count() > 0) {
-                $memberTotalDays = $memberCompletedWithTimes->sum(function ($todo) {
-                    return $todo->created_at->diffInDays($todo->completed_at);
-                });
+                $memberTotalDays = $memberCompletedWithTimes->sum(fn($todo) => $todo->created_at->diffInDays($todo->completed_at));
                 $memberAvgDays = round($memberTotalDays / $memberCompletedWithTimes->count(), 1);
             }
 
             // Tasks completed this month by member
             $memberCompletedThisMonth = $memberTodos
                 ->where('status', ShiftTaskStatus::COMPLETED)
-                ->filter(fn ($t) => $t->completed_at && $t->completed_at->gte($thisMonthStart))
+                ->filter(fn ($t): bool => $t->completed_at && $t->completed_at->gte($thisMonthStart))
                 ->count();
 
             $individualPerformance[] = [
@@ -783,7 +771,7 @@ class DepartmentController extends Controller
         }
 
         // Sort by completion rate descending
-        usort($individualPerformance, fn ($a, $b) => $b['completion_rate'] <=> $a['completion_rate']);
+        usort($individualPerformance, fn (array $a, array $b): int => $b['completion_rate'] <=> $a['completion_rate']);
 
         return [
             'collective' => [
@@ -812,7 +800,7 @@ class DepartmentController extends Controller
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
 
-        $bytes /= pow(1024, $pow);
+        $bytes /= 1024 ** $pow;
 
         return round($bytes, $precision).' '.$units[$pow];
     }
@@ -836,12 +824,7 @@ class DepartmentController extends Controller
         if ($department->head_of_department === $user->id) {
             return true;
         }
-
         // Member of the department can view
-        if ($department->users->contains('id', $user->id)) {
-            return true;
-        }
-
-        return false;
+        return $department->users->contains('id', $user->id);
     }
 }

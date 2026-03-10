@@ -21,12 +21,12 @@ class PastorAvailabilityTest extends TestCase
         Role::create(['name' => 'pastor']);
     }
 
-    public function test_pastor_availability_can_be_created()
+    public function test_pastor_availability_can_be_created(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
 
-        $availability = PastorAvailability::create([
+        PastorAvailability::create([
             'pastor_id' => $pastor->id,
             'type' => 'weekly',
             'day_of_week' => 1, // Monday
@@ -48,7 +48,7 @@ class PastorAvailabilityTest extends TestCase
         ]);
     }
 
-    public function test_pastor_availability_belongs_to_pastor()
+    public function test_pastor_availability_belongs_to_pastor(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -61,18 +61,18 @@ class PastorAvailabilityTest extends TestCase
         $this->assertEquals($pastor->id, $availability->pastor->id);
     }
 
-    public function test_pastor_has_many_availabilities()
+    public function test_pastor_has_many_availabilities(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
 
-        $availability1 = PastorAvailability::factory()->create([
+        PastorAvailability::factory()->create([
             'pastor_id' => $pastor->id,
             'type' => 'weekly',
             'day_of_week' => 1,
         ]);
 
-        $availability2 = PastorAvailability::factory()->create([
+        PastorAvailability::factory()->create([
             'pastor_id' => $pastor->id,
             'type' => 'weekly',
             'day_of_week' => 2,
@@ -81,27 +81,27 @@ class PastorAvailabilityTest extends TestCase
         $this->assertCount(2, $pastor->availability);
     }
 
-    public function test_scopes_work_correctly()
+    public function test_scopes_work_correctly(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
 
         // Create active and inactive availabilities
-        $activeWeekly = PastorAvailability::factory()->create([
+        PastorAvailability::factory()->create([
             'pastor_id' => $pastor->id,
             'type' => 'weekly',
             'day_of_week' => 1,
             'is_active' => true,
         ]);
 
-        $inactiveWeekly = PastorAvailability::factory()->create([
+        PastorAvailability::factory()->create([
             'pastor_id' => $pastor->id,
             'type' => 'weekly',
             'day_of_week' => 2,
             'is_active' => false,
         ]);
 
-        $specificDate = PastorAvailability::factory()->create([
+        PastorAvailability::factory()->create([
             'pastor_id' => $pastor->id,
             'type' => 'specific_date',
             'specific_date' => '2025-12-25',
@@ -115,7 +115,7 @@ class PastorAvailabilityTest extends TestCase
         $this->assertCount(3, PastorAvailability::forPastor($pastor->id)->get());
     }
 
-    public function test_get_time_slots_for_date_generates_correct_slots()
+    public function test_get_time_slots_for_date_generates_correct_slots(): void
     {
         $availability = new PastorAvailability([
             'start_time' => '09:00',
@@ -129,7 +129,7 @@ class PastorAvailabilityTest extends TestCase
         $this->assertEquals($expected, $slots);
     }
 
-    public function test_get_time_slots_for_date_with_different_durations()
+    public function test_get_time_slots_for_date_with_different_durations(): void
     {
         // Test 60-minute slots
         $availability = new PastorAvailability([
@@ -156,7 +156,7 @@ class PastorAvailabilityTest extends TestCase
         $this->assertEquals($expected, $slots);
     }
 
-    public function test_applies_to_method_for_weekly_availability()
+    public function test_applies_to_method_for_weekly_availability(): void
     {
         $availability = new PastorAvailability([
             'type' => 'weekly',
@@ -172,7 +172,7 @@ class PastorAvailabilityTest extends TestCase
         $this->assertFalse($availability->appliesTo($tuesdayDate));
     }
 
-    public function test_applies_to_method_for_specific_date_availability()
+    public function test_applies_to_method_for_specific_date_availability(): void
     {
         $availability = new PastorAvailability([
             'type' => 'specific_date',
@@ -183,7 +183,7 @@ class PastorAvailabilityTest extends TestCase
         $this->assertFalse($availability->appliesTo('2025-12-24'));
     }
 
-    public function test_get_day_name_attribute()
+    public function test_get_day_name_attribute(): void
     {
         $availability = new PastorAvailability([
             'type' => 'weekly',
@@ -203,7 +203,7 @@ class PastorAvailabilityTest extends TestCase
         $this->assertEquals('', $availability->day_name);
     }
 
-    public function test_get_time_range_attribute()
+    public function test_get_time_range_attribute(): void
     {
         $availability = new PastorAvailability([
             'start_time' => '09:00',
@@ -213,7 +213,7 @@ class PastorAvailabilityTest extends TestCase
         $this->assertEquals('09:00 - 17:00', $availability->time_range);
     }
 
-    public function test_casts_work_correctly()
+    public function test_casts_work_correctly(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -259,7 +259,7 @@ class PastorAvailabilityTest extends TestCase
         $this->assertIsBool($weeklyAvailability->is_active);
     }
 
-    public function test_fillable_fields()
+    public function test_fillable_fields(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');

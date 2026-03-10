@@ -547,7 +547,7 @@ class StarControllerTest extends TestCase
         $this->assertTrue($star->is_featured);
 
         // Toggle back
-        $response = $this->actingAs($admin)->post("/stars/{$star->uuid}/toggle-featured");
+        $this->actingAs($admin)->post("/stars/{$star->uuid}/toggle-featured");
         $star->refresh();
         $this->assertFalse($star->is_featured);
     }

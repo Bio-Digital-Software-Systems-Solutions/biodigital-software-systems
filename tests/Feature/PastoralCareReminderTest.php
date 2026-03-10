@@ -13,7 +13,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create necessary roles
     Role::create(['name' => 'pastor']);
     Role::create(['name' => 'member']);
@@ -33,7 +33,7 @@ beforeEach(function () {
 |--------------------------------------------------------------------------
 */
 
-it('finds appointments within the 24-hour reminder window', function () {
+it('finds appointments within the 24-hour reminder window', function (): void {
     Mail::fake();
 
     // Create an appointment exactly 24 hours from now
@@ -52,19 +52,15 @@ it('finds appointments within the 24-hour reminder window', function () {
     $this->artisan('pastoral-care:send-reminders')
         ->assertSuccessful();
 
-    Mail::assertQueued(PastoralCareAppointmentReminder::class, function ($mail) use ($appointment) {
-        return $mail->hasTo($appointment->client_email);
-    });
+    Mail::assertQueued(PastoralCareAppointmentReminder::class, fn($mail) => $mail->hasTo($appointment->client_email));
 
-    Mail::assertQueued(PastoralCarePastorReminder::class, function ($mail) {
-        return $mail->hasTo($this->pastor->email);
-    });
+    Mail::assertQueued(PastoralCarePastorReminder::class, fn($mail) => $mail->hasTo($this->pastor->email));
 
     $appointment->refresh();
     expect($appointment->reminder_sent_at)->not->toBeNull();
 });
 
-it('does not send reminders for appointments already reminded', function () {
+it('does not send reminders for appointments already reminded', function (): void {
     Mail::fake();
 
     // Create an appointment that already has a reminder sent
@@ -87,7 +83,7 @@ it('does not send reminders for appointments already reminded', function () {
     Mail::assertNotQueued(PastoralCarePastorReminder::class);
 });
 
-it('does not send reminders for cancelled appointments', function () {
+it('does not send reminders for cancelled appointments', function (): void {
     Mail::fake();
 
     PastoralCare::create([
@@ -109,7 +105,7 @@ it('does not send reminders for cancelled appointments', function () {
     Mail::assertNotQueued(PastoralCarePastorReminder::class);
 });
 
-it('does not send reminders for completed appointments', function () {
+it('does not send reminders for completed appointments', function (): void {
     Mail::fake();
 
     PastoralCare::create([
@@ -130,7 +126,7 @@ it('does not send reminders for completed appointments', function () {
     Mail::assertNotQueued(PastoralCarePastorReminder::class);
 });
 
-it('sends reminders for pending appointments', function () {
+it('sends reminders for pending appointments', function (): void {
     Mail::fake();
 
     $appointment = PastoralCare::create([
@@ -155,7 +151,7 @@ it('sends reminders for pending appointments', function () {
     expect($appointment->reminder_sent_at)->not->toBeNull();
 });
 
-it('does not send reminders for appointments too far in the future', function () {
+it('does not send reminders for appointments too far in the future', function (): void {
     Mail::fake();
 
     PastoralCare::create([
@@ -176,7 +172,7 @@ it('does not send reminders for appointments too far in the future', function ()
     Mail::assertNotQueued(PastoralCarePastorReminder::class);
 });
 
-it('does not send reminders for appointments too close', function () {
+it('does not send reminders for appointments too close', function (): void {
     Mail::fake();
 
     PastoralCare::create([
@@ -203,7 +199,7 @@ it('does not send reminders for appointments too close', function () {
 |--------------------------------------------------------------------------
 */
 
-it('does not send reminders in dry run mode', function () {
+it('does not send reminders in dry run mode', function (): void {
     Mail::fake();
 
     $appointment = PastoralCare::create([
@@ -233,7 +229,7 @@ it('does not send reminders in dry run mode', function () {
 |--------------------------------------------------------------------------
 */
 
-it('respects custom hours option for reminder window', function () {
+it('respects custom hours option for reminder window', function (): void {
     Mail::fake();
 
     // Create appointment 48 hours from now
@@ -267,7 +263,7 @@ it('respects custom hours option for reminder window', function () {
 |--------------------------------------------------------------------------
 */
 
-it('handles multiple appointments in the reminder window', function () {
+it('handles multiple appointments in the reminder window', function (): void {
     Mail::fake();
 
     // Create 3 appointments within the 2-hour window (23-25 hours from now)
@@ -300,7 +296,7 @@ it('handles multiple appointments in the reminder window', function () {
 |--------------------------------------------------------------------------
 */
 
-it('sends SMS reminder when SMS is enabled', function () {
+it('sends SMS reminder when SMS is enabled', function (): void {
     // Fake HTTP for Twilio
     Http::fake([
         'api.twilio.com/*' => Http::response([
@@ -334,13 +330,11 @@ it('sends SMS reminder when SMS is enabled', function () {
 
     expect($result)->toBeTrue();
 
-    Http::assertSent(function ($request) {
-        return str_contains($request->url(), 'api.twilio.com')
-            && $request['To'] === '+33612345678';
-    });
+    Http::assertSent(fn($request): bool => str_contains((string) $request->url(), 'api.twilio.com')
+        && $request['To'] === '+33612345678');
 });
 
-it('does not send SMS when SMS is disabled', function () {
+it('does not send SMS when SMS is disabled', function (): void {
     Http::fake();
 
     config([
@@ -366,7 +360,7 @@ it('does not send SMS when SMS is disabled', function () {
     Http::assertNothingSent();
 });
 
-it('does not send SMS when client has no phone number', function () {
+it('does not send SMS when client has no phone number', function (): void {
     Http::fake();
 
     config([
@@ -401,7 +395,7 @@ it('does not send SMS when client has no phone number', function () {
 |--------------------------------------------------------------------------
 */
 
-it('sends WhatsApp reminder when WhatsApp is enabled', function () {
+it('sends WhatsApp reminder when WhatsApp is enabled', function (): void {
     Http::fake([
         'api.twilio.com/*' => Http::response([
             'sid' => 'WA123456',
@@ -434,13 +428,11 @@ it('sends WhatsApp reminder when WhatsApp is enabled', function () {
 
     expect($result)->toBeTrue();
 
-    Http::assertSent(function ($request) {
-        return str_contains($request->url(), 'api.twilio.com')
-            && str_contains($request['To'], 'whatsapp:');
-    });
+    Http::assertSent(fn($request): bool => str_contains((string) $request->url(), 'api.twilio.com')
+        && str_contains((string) $request['To'], 'whatsapp:'));
 });
 
-it('does not send WhatsApp when WhatsApp is disabled', function () {
+it('does not send WhatsApp when WhatsApp is disabled', function (): void {
     Http::fake();
 
     config([
@@ -472,7 +464,7 @@ it('does not send WhatsApp when WhatsApp is disabled', function () {
 |--------------------------------------------------------------------------
 */
 
-it('normalizes phone numbers without country code', function () {
+it('normalizes phone numbers without country code', function (): void {
     Http::fake([
         'api.twilio.com/*' => Http::response(['sid' => 'SM123'], 200),
     ]);
@@ -499,10 +491,9 @@ it('normalizes phone numbers without country code', function () {
     $service = new PastoralCareNotificationService;
     $service->sendSmsReminder($appointment);
 
-    Http::assertSent(function ($request) {
+    Http::assertSent(fn($request): bool =>
         // Should be normalized to +49612345678
-        return $request['To'] === '+49612345678';
-    });
+        $request['To'] === '+49612345678');
 });
 
 /*
@@ -511,7 +502,7 @@ it('normalizes phone numbers without country code', function () {
 |--------------------------------------------------------------------------
 */
 
-it('client reminder email contains appointment details', function () {
+it('client reminder email contains appointment details', function (): void {
     $appointment = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Test Client',
@@ -531,7 +522,7 @@ it('client reminder email contains appointment details', function () {
     expect($rendered)->toContain('60 minutes');
 });
 
-it('pastor reminder email contains client information', function () {
+it('pastor reminder email contains client information', function (): void {
     $appointment = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Marie Client',
@@ -561,7 +552,7 @@ it('pastor reminder email contains client information', function () {
 |--------------------------------------------------------------------------
 */
 
-it('handles Twilio API errors gracefully', function () {
+it('handles Twilio API errors gracefully', function (): void {
     Http::fake([
         'api.twilio.com/*' => Http::response([
             'code' => 21211,
@@ -594,7 +585,7 @@ it('handles Twilio API errors gracefully', function () {
     expect($result)->toBeFalse();
 });
 
-it('command continues after individual email failure', function () {
+it('command continues after individual email failure', function (): void {
     Mail::fake();
 
     // Make the first email fail
@@ -625,7 +616,7 @@ it('command continues after individual email failure', function () {
 |--------------------------------------------------------------------------
 */
 
-it('respects disabled reminders configuration', function () {
+it('respects disabled reminders configuration', function (): void {
     Mail::fake();
 
     config(['pastoral_care.notifications.reminders.enabled' => false]);
@@ -648,7 +639,7 @@ it('respects disabled reminders configuration', function () {
     Mail::assertNothingQueued();
 });
 
-it('respects disabled client reminder configuration', function () {
+it('respects disabled client reminder configuration', function (): void {
     Mail::fake();
 
     config(['pastoral_care.notifications.reminders.send_client_reminder' => false]);
@@ -671,7 +662,7 @@ it('respects disabled client reminder configuration', function () {
     Mail::assertQueued(PastoralCarePastorReminder::class);
 });
 
-it('respects disabled pastor reminder configuration', function () {
+it('respects disabled pastor reminder configuration', function (): void {
     Mail::fake();
 
     config(['pastoral_care.notifications.reminders.send_pastor_reminder' => false]);

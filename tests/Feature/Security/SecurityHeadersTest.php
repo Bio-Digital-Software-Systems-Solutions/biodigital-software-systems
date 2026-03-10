@@ -53,7 +53,7 @@ class SecurityHeadersTest extends TestCase
         $user = User::factory()->create();
 
         // Attempt POST without CSRF token
-        $response = $this->actingAs($user)
+        $this->actingAs($user)
             ->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class)
             ->post('/events', [
                 'title' => 'Test Event',

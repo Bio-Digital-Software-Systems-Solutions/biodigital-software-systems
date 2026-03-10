@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('workflow_steps', function (Blueprint $table) {
+        Schema::table('workflow_steps', function (Blueprint $table): void {
             $table->boolean('is_start')->default(false)->after('position_y');
             $table->boolean('is_end')->default(false)->after('is_start');
         });
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('workflow_steps', function (Blueprint $table) {
+        Schema::table('workflow_steps', function (Blueprint $table): void {
             $table->dropColumn(['is_start', 'is_end']);
         });
     }

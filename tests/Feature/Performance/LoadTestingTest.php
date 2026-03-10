@@ -177,7 +177,7 @@ class LoadTestingTest extends TestCase
         // Last page should also load efficiently
         $startTime = microtime(true);
 
-        $response = $this->actingAs($user)->get('/articles?page=67'); // Assuming 15 per page
+        $this->actingAs($user)->get('/articles?page=67'); // Assuming 15 per page
 
         $endTime = microtime(true);
         $loadTime = ($endTime - $startTime) * 1000;
@@ -273,11 +273,11 @@ class LoadTestingTest extends TestCase
         $content = $response->getContent();
 
         // Check for lazy loading attributes
-        if (strpos($content, '<img') !== false) {
+        if (str_contains($content, '<img')) {
             // Images should have loading="lazy" attribute
             $this->assertTrue(
-                strpos($content, 'loading="lazy"') !== false ||
-                strpos($content, 'data-src') !== false
+                str_contains($content, 'loading="lazy"') ||
+                str_contains($content, 'data-src')
             );
         }
     }
@@ -347,7 +347,7 @@ class LoadTestingTest extends TestCase
 
         // Should use indexed query (fast execution)
         foreach ($queries as $query) {
-            if (strpos($query['query'], 'status') !== false) {
+            if (str_contains((string) $query['query'], 'status')) {
                 // Query execution time should be minimal (under 100ms)
                 $this->assertLessThan(100, $query['time']);
             }
@@ -421,7 +421,7 @@ class LoadTestingTest extends TestCase
         $user = User::factory()->create();
 
         // Login to create session
-        $response = $this->post('/login', [
+        $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
@@ -454,25 +454,23 @@ class LoadTestingTest extends TestCase
 
         DB::enableQueryLog();
 
-        $response = $this->actingAs($user)->get('/events');
+        $this->actingAs($user)->get('/events');
 
         $queries = DB::getQueryLog();
         DB::disableQueryLog();
 
         // Analyze queries for optimization opportunities
-        $selectQueries = array_filter($queries, function ($query) {
-            return stripos($query['query'], 'select') === 0;
-        });
+        $selectQueries = array_filter($queries, fn(array $query): bool => stripos((string) $query['query'], 'select') === 0);
 
         // Should not have excessive SELECT queries (N+1 problem)
         $this->assertLessThan(15, count($selectQueries), 'Found ' . count($selectQueries) . ' SELECT queries');
 
         // Check for queries without WHERE clause on large tables
         foreach ($queries as $query) {
-            if (stripos($query['query'], 'select') === 0) {
+            if (stripos((string) $query['query'], 'select') === 0) {
                 // Queries on large tables should have WHERE or LIMIT
-                $hasWhere = stripos($query['query'], 'where') !== false;
-                $hasLimit = stripos($query['query'], 'limit') !== false;
+                $hasWhere = stripos((string) $query['query'], 'where') !== false;
+                $hasLimit = stripos((string) $query['query'], 'limit') !== false;
 
                 $this->assertTrue($hasWhere || $hasLimit, 'Query might need optimization: ' . $query['query']);
             }

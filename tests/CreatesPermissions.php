@@ -58,11 +58,7 @@ trait CreatesPermissions
         foreach ($roles as $roleName => $rolePermissions) {
             $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
 
-            if ($rolePermissions instanceof \Illuminate\Support\Collection) {
-                $role->syncPermissions($rolePermissions);
-            } else {
-                $role->syncPermissions($rolePermissions);
-            }
+            $role->syncPermissions($rolePermissions);
         }
     }
 
@@ -81,7 +77,7 @@ trait CreatesPermissions
     {
         $role = Role::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
 
-        if (!empty($permissions)) {
+        if ($permissions !== []) {
             $permissionModels = [];
             foreach ($permissions as $permission) {
                 $permissionModels[] = Permission::firstOrCreate([

@@ -162,13 +162,13 @@ class CaptchaService
             // Draw character multiple times at slightly different positions for a bolder effect
             for ($dx = 0; $dx <= 2; $dx++) {
                 for ($dy = 0; $dy <= 2; $dy++) {
-                    imagestring($image, $fontSize, (int) $x + $dx, (int) $y + $dy, $char, $color);
+                    imagestring($image, $fontSize, (int) $x + $dx, $y + $dy, $char, $color);
                 }
             }
 
             // Add a slight shadow for depth
             $shadowColor = imagecolorallocatealpha($image, $rgb[0], $rgb[1], $rgb[2], 80);
-            imagestring($image, $fontSize, (int) $x + 3, (int) $y + 3, $char, $shadowColor);
+            imagestring($image, $fontSize, (int) $x + 3, $y + 3, $char, $shadowColor);
         }
     }
 
@@ -198,7 +198,7 @@ class CaptchaService
         }
 
         // Compare answer (case-insensitive)
-        return strtoupper(trim($answer ?? '')) === strtoupper($stored['code']);
+        return strtoupper(trim($answer ?? '')) === strtoupper((string) $stored['code']);
     }
 
     /**

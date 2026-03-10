@@ -35,9 +35,9 @@ class TrainingClassScheduleTest extends TestCase
         foreach ($students as $student) {
             $training->students()->attach($student->id, [
                 'status' => 'approved',
-                'grade' => rand(60, 100),
-                'progress' => rand(0, 100),
-                'attendance_rate' => rand(50, 100),
+                'grade' => random_int(60, 100),
+                'progress' => random_int(0, 100),
+                'attendance_rate' => random_int(50, 100),
             ]);
         }
 

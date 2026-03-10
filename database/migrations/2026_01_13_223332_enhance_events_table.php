@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('events', function (Blueprint $table) {
+        Schema::table('events', function (Blueprint $table): void {
             // Add new columns for enhanced event management
             // Note: uuid already exists via HasUuid trait migration
             $table->string('type')->default('other')->after('title');
@@ -44,7 +44,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('events', function (Blueprint $table) {
+        Schema::table('events', function (Blueprint $table): void {
             $table->dropIndex(['type']);
             $table->dropIndex(['visibility']);
             $table->dropIndex(['status']);

@@ -16,6 +16,25 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string $category
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
+ * @property-read int|null $users_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill category(string $category)
+ * @method static \Database\Factories\ProfileSkillFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill hard()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill soft()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill technical()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill whereCategory($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProfileSkill whereUuid($value)
+ * @mixin \Eloquent
  */
 class ProfileSkill extends Model
 {
@@ -44,7 +63,7 @@ class ProfileSkill extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }

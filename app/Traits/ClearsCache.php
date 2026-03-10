@@ -18,8 +18,6 @@ trait ClearsCache
 {
     /**
      * Clear cache for the current model and related models
-     *
-     * @return void
      */
     protected function clearModelCache(): void
     {
@@ -48,8 +46,6 @@ trait ClearsCache
      *     CacheService::forgetPattern('events.*');  // Clear events when user is updated
      *     CacheService::forgetPattern('books.*');   // Clear books when user is updated
      * }
-     *
-     * @return void
      */
     protected function clearRelatedCaches(): void
     {
@@ -81,9 +77,6 @@ trait ClearsCache
 
     /**
      * Simple pluralization for cache keys
-     *
-     * @param string $word
-     * @return string
      */
     protected function pluralize(string $word): string
     {
@@ -123,29 +116,27 @@ trait ClearsCache
      * Boot the trait
      *
      * Automatically clear cache on model events.
-     *
-     * @return void
      */
     protected static function bootClearsCache(): void
     {
         // Clear cache after creating
-        static::created(function ($model) {
+        static::created(function ($model): void {
             $model->clearModelCache();
         });
 
         // Clear cache after updating
-        static::updated(function ($model) {
+        static::updated(function ($model): void {
             $model->clearModelCache();
         });
 
         // Clear cache after deleting
-        static::deleted(function ($model) {
+        static::deleted(function ($model): void {
             $model->clearModelCache();
         });
 
         // Clear cache when restoring soft-deleted models (only if SoftDeletes trait is used)
         if (in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive(static::class))) {
-            static::restored(function ($model) {
+            static::restored(function ($model): void {
                 $model->clearModelCache();
             });
         }

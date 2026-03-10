@@ -101,7 +101,7 @@ class VideoThumbnailService
     {
         $result = Process::run('which ffmpeg 2>/dev/null || where ffmpeg 2>nul');
 
-        return $result->successful() && ! empty(trim($result->output()));
+        return $result->successful() && !in_array(trim($result->output()), ['', '0'], true);
     }
 
     /**
@@ -166,7 +166,7 @@ class VideoThumbnailService
         $centerX = $width / 2;
         $centerY = $height / 2;
         $radius = 40;
-        imagefilledellipse($image, (int) $centerX, (int) $centerY, $radius * 2, $radius * 2, $circleColor);
+        imagefilledellipse($image, $centerX, $centerY, $radius * 2, $radius * 2, $circleColor);
 
         // Draw play triangle
         $triangleColor = imagecolorallocate($image, 255, 255, 255);

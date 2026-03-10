@@ -11,6 +11,57 @@ use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $report_id
+ * @property int|null $section_id
+ * @property int $uploaded_by
+ * @property string $filename
+ * @property string $original_filename
+ * @property string $mime_type
+ * @property int $size
+ * @property string $path
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read string $extension
+ * @property-read bool $is_image
+ * @property-read bool $is_pdf
+ * @property-read string $size_formatted
+ * @property-read string $url
+ * @property-read \App\Models\DepartmentReport $report
+ * @property-read \App\Models\ReportSection|null $section
+ * @property-read \App\Models\User $uploader
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment forReport(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment forSection(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment images()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment pdfs()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereFilename($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereMimeType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereOriginalFilename($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment wherePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereReportId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereSectionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereSize($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereUploadedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportAttachment withoutTrashed()
+ * @mixin \Eloquent
+ */
 class ReportAttachment extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
@@ -51,8 +102,8 @@ class ReportAttachment extends Model
     protected static function boot(): void
     {
         parent::boot();
-        static::creating(fn($m) => $m->uuid = $m->uuid ?? (string) Str::uuid());
-        static::deleting(function ($attachment) {
+        static::creating(fn($m) => $m->uuid ??= (string) Str::uuid());
+        static::deleting(function ($attachment): void {
             if ($attachment->isForceDeleting()) {
                 Storage::disk('public')->delete($attachment->path);
             }

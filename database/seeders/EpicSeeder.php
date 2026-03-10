@@ -121,7 +121,7 @@ class EpicSeeder extends Seeder
                 continue;
             }
 
-            $projectKey = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
+            $projectKey = strtoupper(substr((string) preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
             $existingTaskCount = Task::where('taskable_type', Project::class)
                 ->where('taskable_id', $project->id)
                 ->count();
@@ -132,7 +132,7 @@ class EpicSeeder extends Seeder
             }
 
             // Select 2-3 random epic templates for this project
-            $selectedTemplates = collect($epicTemplates)->random(rand(2, 3));
+            $selectedTemplates = collect($epicTemplates)->random(random_int(2, 3));
             $taskNumber = $existingTaskCount + 1;
 
             foreach ($selectedTemplates as $template) {
@@ -164,7 +164,7 @@ class EpicSeeder extends Seeder
                     'labels' => ['epic', 'feature-set'],
                     'custom_fields' => [
                         'color' => $template['color'],
-                        'progress' => $epicStatus?->name === 'completed' ? 100 : rand(0, 80),
+                        'progress' => $epicStatus?->name === 'completed' ? 100 : random_int(0, 80),
                     ],
                 ]);
 
@@ -188,9 +188,9 @@ class EpicSeeder extends Seeder
                         'priority' => $taskPriorities[array_rand($taskPriorities)],
                         'assigned_to' => $members->random()->id,
                         'reporter_id' => $project->project_manager_id,
-                        'story_points' => rand(1, 8),
-                        'estimated_hours' => rand(4, 24),
-                        'actual_hours' => $storyStatus?->name === 'completed' ? rand(2, 30) : null,
+                        'story_points' => random_int(1, 8),
+                        'estimated_hours' => random_int(4, 24),
+                        'actual_hours' => $storyStatus?->name === 'completed' ? random_int(2, 30) : null,
                         'due_date' => $project->end_date
                             ? fake()->dateTimeBetween($project->start_date ?? 'now', $project->end_date)
                             : fake()->dateTimeBetween('now', '+2 months'),
@@ -214,21 +214,21 @@ class EpicSeeder extends Seeder
         ?Status $completedStatus,
         ?Status $underReviewStatus
     ): array {
-        $validStatuses = array_filter([$todoStatus, $inProgressStatus, $completedStatus, $underReviewStatus], fn ($s) => $s !== null);
+        $validStatuses = array_filter([$todoStatus, $inProgressStatus, $completedStatus, $underReviewStatus], fn (?\App\Models\Status $s): bool => $s instanceof \App\Models\Status);
 
-        if (empty($validStatuses)) {
+        if ($validStatuses === []) {
             return [$todoStatus];
         }
 
         if ($epicStatus?->name === 'completed') {
-            return array_filter([$completedStatus], fn ($s) => $s !== null);
+            return array_filter([$completedStatus], fn (?\App\Models\Status $s): bool => $s instanceof \App\Models\Status);
         }
 
         if ($epicStatus?->name === 'in_progress') {
-            return array_filter([$todoStatus, $inProgressStatus, $underReviewStatus, $completedStatus], fn ($s) => $s !== null);
+            return array_filter([$todoStatus, $inProgressStatus, $underReviewStatus, $completedStatus], fn (?\App\Models\Status $s): bool => $s instanceof \App\Models\Status);
         }
 
         // For todo/pending epics, stories are mostly todo
-        return array_filter([$todoStatus, $inProgressStatus], fn ($s) => $s !== null);
+        return array_filter([$todoStatus, $inProgressStatus], fn (?\App\Models\Status $s): bool => $s instanceof \App\Models\Status);
     }
 }

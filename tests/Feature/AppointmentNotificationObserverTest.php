@@ -11,7 +11,7 @@ use Spatie\Permission\Models\Permission;
 uses(RefreshDatabase::class);
 uses(Tests\CreatesPermissions::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->setupPermissions();
 
     // Create appointment-specific permissions
@@ -22,9 +22,9 @@ beforeEach(function () {
     Permission::firstOrCreate(['name' => 'manage appointment participants', 'guard_name' => 'web']);
 });
 
-describe('Appointment Creation Notifications', function () {
+describe('Appointment Creation Notifications', function (): void {
 
-    it('sends email notification to organizer when appointment is created', function () {
+    it('sends email notification to organizer when appointment is created', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();
@@ -37,13 +37,11 @@ describe('Appointment Creation Notifications', function () {
         Notification::assertSentTo(
             $organizer,
             AppointmentCreated::class,
-            function ($notification) use ($appointment) {
-                return $notification->appointment->id === $appointment->id;
-            }
+            fn($notification): bool => $notification->appointment->id === $appointment->id
         );
     });
 
-    it('includes correct appointment details in the notification', function () {
+    it('includes correct appointment details in the notification', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();
@@ -59,14 +57,12 @@ describe('Appointment Creation Notifications', function () {
         Notification::assertSentTo(
             $organizer,
             AppointmentCreated::class,
-            function ($notification) {
-                return $notification->appointment->title === 'Team Standup'
-                    && $notification->appointment->location === 'Conference Room A';
-            }
+            fn($notification): bool => $notification->appointment->title === 'Team Standup'
+                && $notification->appointment->location === 'Conference Room A'
         );
     });
 
-    it('notification uses mail and database channels', function () {
+    it('notification uses mail and database channels', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();
@@ -78,17 +74,15 @@ describe('Appointment Creation Notifications', function () {
         Notification::assertSentTo(
             $organizer,
             AppointmentCreated::class,
-            function ($notification, $channels) {
-                return in_array('mail', $channels) && in_array('database', $channels);
-            }
+            fn($notification, $channels): bool => in_array('mail', $channels) && in_array('database', $channels)
         );
     });
 
 });
 
-describe('Appointment Update Notifications', function () {
+describe('Appointment Update Notifications', function (): void {
 
-    it('sends email notification to participants when appointment is updated', function () {
+    it('sends email notification to participants when appointment is updated', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();
@@ -114,14 +108,12 @@ describe('Appointment Update Notifications', function () {
         Notification::assertSentTo(
             $participant,
             AppointmentUpdated::class,
-            function ($notification) use ($appointment) {
-                return $notification->appointment->id === $appointment->id
-                    && isset($notification->changes['title']);
-            }
+            fn($notification): bool => $notification->appointment->id === $appointment->id
+                && isset($notification->changes['title'])
         );
     });
 
-    it('sends notification to organizer when another user updates appointment', function () {
+    it('sends notification to organizer when another user updates appointment', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();
@@ -149,7 +141,7 @@ describe('Appointment Update Notifications', function () {
         );
     });
 
-    it('does not send notification to user making the change', function () {
+    it('does not send notification to user making the change', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();
@@ -173,7 +165,7 @@ describe('Appointment Update Notifications', function () {
         Notification::assertNotSentTo($organizer, AppointmentUpdated::class);
     });
 
-    it('includes changed fields in the notification', function () {
+    it('includes changed fields in the notification', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();
@@ -200,16 +192,14 @@ describe('Appointment Update Notifications', function () {
         Notification::assertSentTo(
             $participant,
             AppointmentUpdated::class,
-            function ($notification) {
-                return isset($notification->changes['title'])
-                    && isset($notification->changes['location'])
-                    && $notification->changes['title']['old'] === 'Original Title'
-                    && $notification->changes['title']['new'] === 'New Title';
-            }
+            fn($notification): bool => isset($notification->changes['title'])
+                && isset($notification->changes['location'])
+                && $notification->changes['title']['old'] === 'Original Title'
+                && $notification->changes['title']['new'] === 'New Title'
         );
     });
 
-    it('does not send notification when non-notifiable fields change', function () {
+    it('does not send notification when non-notifiable fields change', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();
@@ -234,7 +224,7 @@ describe('Appointment Update Notifications', function () {
         Notification::assertNotSentTo($participant, AppointmentUpdated::class);
     });
 
-    it('notifies all participants when appointment time changes', function () {
+    it('notifies all participants when appointment time changes', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();
@@ -261,7 +251,7 @@ describe('Appointment Update Notifications', function () {
         Notification::assertSentTo($participant2, AppointmentUpdated::class);
     });
 
-    it('notifies participants when status changes', function () {
+    it('notifies participants when status changes', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();
@@ -285,17 +275,15 @@ describe('Appointment Update Notifications', function () {
         Notification::assertSentTo(
             $participant,
             AppointmentUpdated::class,
-            function ($notification) {
-                return isset($notification->changes['status']);
-            }
+            fn($notification): bool => isset($notification->changes['status'])
         );
     });
 
 });
 
-describe('Notification Content', function () {
+describe('Notification Content', function (): void {
 
-    it('AppointmentCreated notification has correct mail subject', function () {
+    it('AppointmentCreated notification has correct mail subject', function (): void {
         $organizer = User::factory()->create();
 
         $appointment = Appointment::factory()->create([
@@ -309,7 +297,7 @@ describe('Notification Content', function () {
         expect($mailMessage->subject)->toContain('Important Meeting');
     });
 
-    it('AppointmentUpdated notification includes changes in mail', function () {
+    it('AppointmentUpdated notification includes changes in mail', function (): void {
         $organizer = User::factory()->create();
         $participant = User::factory()->create();
 
@@ -328,7 +316,7 @@ describe('Notification Content', function () {
         expect($mailMessage->subject)->toContain('Updated Meeting');
     });
 
-    it('AppointmentCreated notification stores correct database data', function () {
+    it('AppointmentCreated notification stores correct database data', function (): void {
         $organizer = User::factory()->create();
 
         $appointment = Appointment::factory()->create([
@@ -344,7 +332,7 @@ describe('Notification Content', function () {
         expect($databaseData['appointment_title'])->toBe('Database Test Meeting');
     });
 
-    it('AppointmentUpdated notification stores changes in database', function () {
+    it('AppointmentUpdated notification stores changes in database', function (): void {
         $organizer = User::factory()->create();
         $participant = User::factory()->create();
 
@@ -365,9 +353,9 @@ describe('Notification Content', function () {
 
 });
 
-describe('Edge Cases', function () {
+describe('Edge Cases', function (): void {
 
-    it('handles appointment without participants gracefully', function () {
+    it('handles appointment without participants gracefully', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();
@@ -388,7 +376,7 @@ describe('Edge Cases', function () {
         expect(true)->toBeTrue();
     });
 
-    it('handles multiple updates in sequence', function () {
+    it('handles multiple updates in sequence', function (): void {
         Notification::fake();
 
         $organizer = User::factory()->create();

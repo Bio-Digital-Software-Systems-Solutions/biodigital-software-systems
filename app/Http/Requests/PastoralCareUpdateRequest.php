@@ -48,7 +48,7 @@ class PastoralCareUpdateRequest extends FormRequest
                 'required',
                 'date',
                 'after_or_equal:today',
-                function ($attribute, $value, $fail) {
+                function ($attribute, $value, $fail): void {
                     // Don't allow booking too far in advance (6 months)
                     if (Carbon::parse($value) > now()->addMonths(6)) {
                         $fail('La date de rendez-vous ne peut pas être plus de 6 mois dans le futur.');
@@ -59,7 +59,7 @@ class PastoralCareUpdateRequest extends FormRequest
                 'sometimes',
                 'required',
                 'date_format:H:i',
-                function ($attribute, $value, $fail) {
+                function ($attribute, $value, $fail): void {
                     $time = Carbon::createFromFormat('H:i', $value);
                     // Check business hours (9 AM to 5 PM)
                     if ($time->hour < 9 || $time->hour >= 17) {
@@ -73,7 +73,7 @@ class PastoralCareUpdateRequest extends FormRequest
                 'integer',
                 'min:30',
                 'max:180',
-                function ($attribute, $value, $fail) {
+                function ($attribute, $value, $fail): void {
                     // Duration must be in 30-minute increments
                     if ($value % 30 !== 0) {
                         $fail('La durée doit être un multiple de 30 minutes.');
@@ -86,7 +86,7 @@ class PastoralCareUpdateRequest extends FormRequest
             'status' => [
                 'sometimes',
                 'in:pending,confirmed,completed,cancelled,no_show',
-                function ($attribute, $value, $fail) use ($pastoralCare) {
+                function ($attribute, $value, $fail) use ($pastoralCare): void {
                     if ($pastoralCare) {
                         // Validate status transitions
                         $currentStatus = $pastoralCare->status;
@@ -154,7 +154,7 @@ class PastoralCareUpdateRequest extends FormRequest
      */
     public function withValidator($validator): void
     {
-        $validator->after(function ($validator) {
+        $validator->after(function ($validator): void {
             if (!$validator->errors()->any()) {
                 $this->validateTimeSlotAvailability($validator);
                 $this->validateAppointmentIsEditable($validator);
@@ -208,14 +208,12 @@ class PastoralCareUpdateRequest extends FormRequest
         // Cannot edit completed, cancelled, or no-show appointments (except status changes by admin)
         $restrictedStatuses = ['completed', 'cancelled', 'no_show'];
 
-        if (in_array($pastoralCare->status, $restrictedStatuses)) {
-            // Allow only status updates by admins
-            if (!auth()->user()->can('pastoral_care.manage_all') || $this->except(['status', 'cancellation_reason'])) {
-                $validator->errors()->add(
-                    'status',
-                    'Les rendez-vous terminés, annulés ou avec absence ne peuvent plus être modifiés.'
-                );
-            }
+        // Allow only status updates by admins
+        if (in_array($pastoralCare->status, $restrictedStatuses) && (!auth()->user()->can('pastoral_care.manage_all') || $this->except(['status', 'cancellation_reason']))) {
+            $validator->errors()->add(
+                'status',
+                'Les rendez-vous terminés, annulés ou avec absence ne peuvent plus être modifiés.'
+            );
         }
 
         // Cannot edit appointments in the past (except marking as no-show or completed)

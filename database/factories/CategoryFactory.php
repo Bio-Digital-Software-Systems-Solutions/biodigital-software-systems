@@ -20,21 +20,21 @@ class CategoryFactory extends Factory
 
     public function book(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'book',
         ]);
     }
 
     public function article(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'article',
         ]);
     }
 
     public function event(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'event',
         ]);
     }

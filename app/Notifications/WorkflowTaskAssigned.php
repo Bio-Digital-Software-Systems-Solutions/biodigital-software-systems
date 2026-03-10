@@ -34,9 +34,7 @@ class WorkflowTaskAssigned extends Notification implements ShouldQueue
             ->greeting("Bonjour {$notifiable->name},")
             ->line("Une nouvelle tâche vous a été assignée dans le workflow \"{$workflow->name}\".")
             ->line("**Tâche:** {$step->name}")
-            ->when($step->description, function ($mail) use ($step) {
-                return $mail->line("**Description:** {$step->description}");
-            })
+            ->when($step->description, fn($mail) => $mail->line("**Description:** {$step->description}"))
             ->action('Voir la tâche', url("/workflow-instances/{$this->workflowInstance->uuid}/steps/{$this->stepInstance->uuid}"))
             ->line('Merci de traiter cette tâche dans les meilleurs délais.');
     }

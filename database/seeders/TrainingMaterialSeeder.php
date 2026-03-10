@@ -83,7 +83,7 @@ class TrainingMaterialSeeder extends Seeder
 
         foreach ($trainings as $training) {
             // Choisir 3-6 matériaux aléatoires pour chaque formation
-            $numberOfMaterials = rand(3, 6);
+            $numberOfMaterials = random_int(3, 6);
             $selectedMaterials = array_slice($materialTemplates, 0, $numberOfMaterials);
 
             // Mélanger pour plus de variété

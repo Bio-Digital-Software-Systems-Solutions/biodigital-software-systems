@@ -11,7 +11,7 @@ class QuizQuestionTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function it_correctly_validates_multiple_choice_answer_with_string()
+    public function it_correctly_validates_multiple_choice_answer_with_string(): void
     {
         $question = QuizQuestion::factory()->create([
             'type' => 'multiple_choice',
@@ -25,7 +25,7 @@ class QuizQuestionTest extends TestCase
     }
 
     /** @test */
-    public function it_correctly_validates_multiple_choice_answer_with_array()
+    public function it_correctly_validates_multiple_choice_answer_with_array(): void
     {
         $question = QuizQuestion::factory()->create([
             'type' => 'multiple_choice',
@@ -40,7 +40,7 @@ class QuizQuestionTest extends TestCase
     }
 
     /** @test */
-    public function it_correctly_validates_true_false_answer()
+    public function it_correctly_validates_true_false_answer(): void
     {
         $questionTrue = QuizQuestion::factory()->create([
             'type' => 'true_false',
@@ -60,7 +60,7 @@ class QuizQuestionTest extends TestCase
     }
 
     /** @test */
-    public function it_correctly_validates_short_answer_case_insensitive()
+    public function it_correctly_validates_short_answer_case_insensitive(): void
     {
         $question = QuizQuestion::factory()->create([
             'type' => 'short_answer',
@@ -81,7 +81,7 @@ class QuizQuestionTest extends TestCase
     }
 
     /** @test */
-    public function it_accepts_multiple_correct_answers_for_short_answer()
+    public function it_accepts_multiple_correct_answers_for_short_answer(): void
     {
         $question = QuizQuestion::factory()->create([
             'type' => 'short_answer',
@@ -96,7 +96,7 @@ class QuizQuestionTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_false_for_invalid_answer_types()
+    public function it_returns_false_for_invalid_answer_types(): void
     {
         $question = QuizQuestion::factory()->create([
             'type' => 'multiple_choice',
@@ -108,7 +108,7 @@ class QuizQuestionTest extends TestCase
     }
 
     /** @test */
-    public function it_handles_empty_arrays_for_multiple_choice()
+    public function it_handles_empty_arrays_for_multiple_choice(): void
     {
         $question = QuizQuestion::factory()->create([
             'type' => 'multiple_choice',

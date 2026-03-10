@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('quizzes', function (Blueprint $table) {
+        Schema::table('quizzes', function (Blueprint $table): void {
             $table->integer('max_attempts')->default(1)->after('is_active');
             $table->string('score_display')->default('best')->after('max_attempts');
         });
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('quizzes', function (Blueprint $table) {
+        Schema::table('quizzes', function (Blueprint $table): void {
             $table->dropColumn(['max_attempts', 'score_display']);
         });
     }

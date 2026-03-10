@@ -41,7 +41,7 @@ class AppointmentObserver
         // Check if any notifiable field was changed
         $changes = $this->getNotifiableChanges($appointment);
 
-        if (empty($changes)) {
+        if ($changes === []) {
             return;
         }
 

@@ -12,6 +12,7 @@ use Spatie\Activitylog\LogOptions;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property int $quiz_id
  * @property int $student_id
  * @property \Illuminate\Support\Carbon $started_at
@@ -22,6 +23,8 @@ use Spatie\Activitylog\LogOptions;
  * @property array<array-key, mixed>|null $answers
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\Quiz $quiz
  * @property-read \App\Models\User $student
  * @method static \Database\Factories\QuizAttemptFactory factory($count = null, $state = [])
@@ -39,9 +42,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttempt whereStudentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttempt whereTimeRemainingSeconds($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttempt whereUpdatedAt($value)
- * @property string $uuid
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizAttempt whereUuid($value)
  * @mixin \Eloquent
  */

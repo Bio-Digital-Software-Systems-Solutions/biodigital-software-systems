@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Button } from '@/Components/ui/button';
@@ -14,6 +14,8 @@ import {
     Users,
     Filter,
     List,
+    Download,
+    Upload,
 } from 'lucide-react';
 import {
     Select,
@@ -22,7 +24,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/Components/ui/select';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/Components/ui/dialog';
 import { Input } from '@/Components/ui/input';
+import { Label } from '@/Components/ui/label';
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, isSameDay, isSameMonth, isToday, getDay, isPast, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -63,6 +74,42 @@ export default function AppointmentCalendar() {
     const [currentMonth, setCurrentMonth] = useState(new Date(currentMonthStr));
     const [selectedStatus, setSelectedStatus] = useState<AppointmentStatus | 'all'>('all');
     const [selectedType, setSelectedType] = useState<AppointmentType | 'all'>('all');
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
+    const [importFile, setImportFile] = useState<File | null>(null);
+    const [importing, setImporting] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleExportBulk = () => {
+        const params: Record<string, string> = {};
+        if (selectedStatus !== 'all') params.status = selectedStatus;
+        if (selectedType !== 'all') params.type = selectedType;
+        params.month = format(currentMonth, 'yyyy-MM');
+        window.open(route('appointments.export-bulk-ics', params));
+    };
+
+    const handleImport = () => {
+        if (!importFile) return;
+
+        const formData = new FormData();
+        formData.append('file', importFile);
+
+        setImporting(true);
+        router.post(route('appointments.import-ics'), formData, {
+            forceFormData: true,
+            onSuccess: () => {
+                toast.success('Fichier importé avec succès');
+                setImportDialogOpen(false);
+                setImportFile(null);
+            },
+            onError: (errors) => {
+                const message = Object.values(errors)[0] || 'Erreur lors de l\'import';
+                toast.error(message as string);
+            },
+            onFinish: () => {
+                setImporting(false);
+            },
+        });
+    };
 
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
@@ -169,6 +216,14 @@ export default function AppointmentCalendar() {
                             </p>
                         </div>
                         <div className="flex items-center space-x-4">
+                            <Button variant="outline" onClick={handleExportBulk}>
+                                <Download className="h-4 w-4 mr-2" />
+                                Exporter .ics
+                            </Button>
+                            <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+                                <Upload className="h-4 w-4 mr-2" />
+                                Importer .ics
+                            </Button>
                             <Button variant="outline" asChild>
                                 <Link href={route('appointments.index')}>
                                     <List className="h-4 w-4 mr-2" />
@@ -369,6 +424,38 @@ export default function AppointmentCalendar() {
                     </Card>
                 </div>
             </div>
+
+            <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Importer un fichier iCalendar</DialogTitle>
+                        <DialogDescription>
+                            Sélectionnez un fichier .ics pour importer des rendez-vous.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div>
+                            <Label htmlFor="ics-file">Fichier iCalendar</Label>
+                            <Input
+                                id="ics-file"
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".ics,.ical"
+                                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                                className="mt-2"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setImportDialogOpen(false)}>
+                            Annuler
+                        </Button>
+                        <Button onClick={handleImport} disabled={!importFile || importing}>
+                            {importing ? 'Import en cours...' : 'Importer'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </DashboardLayout>
     );
 }

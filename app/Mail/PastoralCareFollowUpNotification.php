@@ -31,9 +31,9 @@ class PastoralCareFollowUpNotification extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Nouveau rendez-vous de suivi planifié - ICC Munich',
             from: config('mail.from.address', 'noreply@icc-munich.de'),
             replyTo: [$this->appointment->pastor->email],
+            subject: 'Nouveau rendez-vous de suivi planifié - ICC Munich',
         );
     }
 

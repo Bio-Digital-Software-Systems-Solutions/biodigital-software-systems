@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('department_forms', function (Blueprint $table) {
+        Schema::table('department_forms', function (Blueprint $table): void {
             $table->foreignId('parent_form_id')
                 ->nullable()
                 ->after('is_template')
@@ -25,7 +25,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('department_forms', function (Blueprint $table) {
+        Schema::table('department_forms', function (Blueprint $table): void {
             $table->dropForeign(['parent_form_id']);
             $table->dropColumn('parent_form_id');
         });

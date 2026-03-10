@@ -9,7 +9,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create roles
     $adminRole = Role::create(['name' => 'admin']);
     $superAdminRole = Role::create(['name' => 'super-admin']);
@@ -57,7 +57,7 @@ beforeEach(function () {
     ]);
 });
 
-it('allows admin to see all appointments in MLR dashboard', function () {
+it('allows admin to see all appointments in MLR dashboard', function (): void {
     $admin = User::factory()->create();
     $admin->assignRole('admin');
 
@@ -91,7 +91,7 @@ it('allows admin to see all appointments in MLR dashboard', function () {
     );
 });
 
-it('allows super-admin to see all appointments in MLR dashboard', function () {
+it('allows super-admin to see all appointments in MLR dashboard', function (): void {
     $superAdmin = User::factory()->create();
     $superAdmin->assignRole('super-admin');
 
@@ -124,7 +124,7 @@ it('allows super-admin to see all appointments in MLR dashboard', function () {
     );
 });
 
-it('allows user with view all pastoral care permission to see all appointments', function () {
+it('allows user with view all pastoral care permission to see all appointments', function (): void {
     // Create a user with special permission to view all
     $specialUser = User::factory()->create();
     $specialUser->assignRole('mlr-agent');
@@ -160,7 +160,7 @@ it('allows user with view all pastoral care permission to see all appointments',
     );
 });
 
-it('allows mlr-agent to only see their own appointments in MLR dashboard', function () {
+it('allows mlr-agent to only see their own appointments in MLR dashboard', function (): void {
     $mlrAgent = User::factory()->create();
     $mlrAgent->assignRole('mlr-agent');
 
@@ -193,7 +193,7 @@ it('allows mlr-agent to only see their own appointments in MLR dashboard', funct
     );
 });
 
-it('allows pastor to only see their own appointments in MLR dashboard', function () {
+it('allows pastor to only see their own appointments in MLR dashboard', function (): void {
     $pastor1 = User::factory()->create();
     $pastor1->assignRole('pastor');
 
@@ -226,7 +226,7 @@ it('allows pastor to only see their own appointments in MLR dashboard', function
     );
 });
 
-it('denies member access to MLR dashboard', function () {
+it('denies member access to MLR dashboard', function (): void {
     $member = User::factory()->create();
     $member->assignRole('member');
 
@@ -236,7 +236,7 @@ it('denies member access to MLR dashboard', function () {
     expect($response->getStatusCode())->toBeIn([302, 403]);
 });
 
-it('denies access to users without view mlr dashboard permission', function () {
+it('denies access to users without view mlr dashboard permission', function (): void {
     $user = User::factory()->create();
     // No role, no permissions
 
@@ -246,7 +246,7 @@ it('denies access to users without view mlr dashboard permission', function () {
     expect($response->getStatusCode())->toBeIn([302, 403]);
 });
 
-it('filters statistics for pastor viewing MLR dashboard', function () {
+it('filters statistics for pastor viewing MLR dashboard', function (): void {
     $pastor1 = User::factory()->create();
     $pastor1->assignRole('pastor');
 
@@ -282,7 +282,7 @@ it('filters statistics for pastor viewing MLR dashboard', function () {
     );
 });
 
-it('mlr-agent sees filtered statistics for their own appointments', function () {
+it('mlr-agent sees filtered statistics for their own appointments', function (): void {
     $mlrAgent = User::factory()->create();
     $mlrAgent->assignRole('mlr-agent');
 
@@ -318,7 +318,7 @@ it('mlr-agent sees filtered statistics for their own appointments', function () 
     );
 });
 
-it('polymorphic assigned_agent relationship is synced with pastor_id on creation', function () {
+it('polymorphic assigned_agent relationship is synced with pastor_id on creation', function (): void {
     $pastor = User::factory()->create();
     $pastor->assignRole('pastor');
 
@@ -335,7 +335,7 @@ it('polymorphic assigned_agent relationship is synced with pastor_id on creation
     expect($appointment->assignedAgent->id)->toBe($pastor->id);
 });
 
-it('assignAgent method properly assigns polymorphic agent', function () {
+it('assignAgent method properly assigns polymorphic agent', function (): void {
     $pastor = User::factory()->create();
     $pastor->assignRole('pastor');
 
@@ -358,7 +358,7 @@ it('assignAgent method properly assigns polymorphic agent', function () {
     expect($appointment->assignedAgent->id)->toBe($mlrAgent->id);
 });
 
-it('forAssignedAgent scope filters appointments correctly', function () {
+it('forAssignedAgent scope filters appointments correctly', function (): void {
     $mlrAgent = User::factory()->create();
     $mlrAgent->assignRole('mlr-agent');
 

@@ -28,17 +28,15 @@ class MentionService
 
         // Pattern 1: Explicit format @[Name](uuid) - matches UUIDs (alphanumeric with hyphens)
         preg_match_all('/@\[([^\]]+)\]\(([a-zA-Z0-9-]+)\)/', $content, $explicitMatches);
-        if (! empty($explicitMatches[2])) {
-            // Convert UUIDs to user IDs by looking up each UUID
-            foreach ($explicitMatches[2] as $identifier) {
-                // Check if it's a numeric ID (for backward compatibility) or UUID
-                if (ctype_digit($identifier)) {
-                    $mentionedUserIds[] = (int) $identifier;
-                } else {
-                    $user = User::where('uuid', $identifier)->first();
-                    if ($user) {
-                        $mentionedUserIds[] = $user->id;
-                    }
+        // Convert UUIDs to user IDs by looking up each UUID
+        foreach ($explicitMatches[2] as $identifier) {
+            // Check if it's a numeric ID (for backward compatibility) or UUID
+            if (ctype_digit($identifier)) {
+                $mentionedUserIds[] = (int) $identifier;
+            } else {
+                $user = User::where('uuid', $identifier)->first();
+                if ($user) {
+                    $mentionedUserIds[] = $user->id;
                 }
             }
         }
@@ -47,12 +45,10 @@ class MentionService
         // This matches @firstName, @lastName, @firstName.lastName, @email
         preg_match_all('/@([a-zA-Z0-9._]+)(?!\])/', $content, $simpleMatches);
 
-        if (! empty($simpleMatches[1])) {
-            foreach ($simpleMatches[1] as $mention) {
-                $user = $this->findUserByMention($mention, $validUsers);
-                if ($user) {
-                    $mentionedUserIds[] = $user->id;
-                }
+        foreach ($simpleMatches[1] as $mention) {
+            $user = $this->findUserByMention($mention, $validUsers);
+            if ($user instanceof \App\Models\User) {
+                $mentionedUserIds[] = $user->id;
             }
         }
 
@@ -70,15 +66,13 @@ class MentionService
         $mention = strtolower($mention);
 
         // If we have a valid users collection, search within it
-        if ($validUsers !== null) {
-            return $validUsers->first(function (User $user) use ($mention) {
-                return $this->matchesUser($user, $mention);
-            });
+        if ($validUsers instanceof \Illuminate\Support\Collection) {
+            return $validUsers->first(fn(User $user): bool => $this->matchesUser($user, $mention));
         }
 
         // Otherwise search the database
         return User::query()
-            ->where(function ($query) use ($mention) {
+            ->where(function ($query) use ($mention): void {
                 $query->whereRaw('LOWER(first_name) = ?', [$mention])
                     ->orWhereRaw('LOWER(last_name) = ?', [$mention])
                     ->orWhereRaw('LOWER(CONCAT(first_name, ".", last_name)) = ?', [$mention])
@@ -177,11 +171,11 @@ class MentionService
      */
     public function validateMentionedUsers(array $userIds, ?Collection $validUsers = null): array
     {
-        if (empty($userIds)) {
+        if ($userIds === []) {
             return [];
         }
 
-        if ($validUsers !== null) {
+        if ($validUsers instanceof \Illuminate\Support\Collection) {
             $validIds = $validUsers->pluck('id')->toArray();
 
             return array_values(array_intersect($userIds, $validIds));
@@ -198,7 +192,7 @@ class MentionService
      */
     public function enrichContent(string $content, array $mentionedUserIds): string
     {
-        if (empty($mentionedUserIds)) {
+        if ($mentionedUserIds === []) {
             return $content;
         }
 
@@ -215,7 +209,7 @@ class MentionService
             $replacement = "@[{$fullName}]({$user->uuid})";
 
             foreach ($patterns as $pattern) {
-                $content = preg_replace($pattern, $replacement, $content, 1);
+                $content = preg_replace($pattern, $replacement, (string) $content, 1);
             }
         }
 
@@ -229,13 +223,13 @@ class MentionService
      */
     public function extractUserIds(?array $mentions): array
     {
-        if (empty($mentions)) {
+        if ($mentions === null || $mentions === []) {
             return [];
         }
 
         return array_values(array_unique(array_filter(
-            array_map('intval', $mentions),
-            fn ($id) => $id > 0
+            array_map(intval(...), $mentions),
+            fn ($id): bool => $id > 0
         )));
     }
 }

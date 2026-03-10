@@ -39,7 +39,7 @@ class DepartmentWorkflowFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => WorkflowStatus::ACTIVE,
         ]);
     }
@@ -49,7 +49,7 @@ class DepartmentWorkflowFactory extends Factory
      */
     public function deprecated(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => WorkflowStatus::DEPRECATED,
         ]);
     }

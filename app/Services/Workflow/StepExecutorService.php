@@ -2,6 +2,7 @@
 
 namespace App\Services\Workflow;
 
+use App\Enums\Workflow\ApprovalDecision;
 use App\Enums\Workflow\ApprovalType;
 use App\Enums\Workflow\StepInstanceStatus;
 use App\Enums\Workflow\StepType;
@@ -26,15 +27,14 @@ class StepExecutorService
             match ($step->type) {
                 StepType::START => $this->executeStart($stepInstance),
                 StepType::END => $this->executeEnd($stepInstance),
-                StepType::TASK => $this->executeTask($stepInstance),
+                StepType::ACTION => $this->executeTask($stepInstance),
                 StepType::APPROVAL => $this->executeApproval($stepInstance),
                 StepType::FORM => $this->executeForm($stepInstance),
                 StepType::CONDITION => $this->executeCondition($stepInstance),
-                StepType::PARALLEL => $this->executeParallel($stepInstance),
+                StepType::PARALLEL_SPLIT, StepType::PARALLEL_JOIN => $this->executeParallel($stepInstance),
                 StepType::NOTIFICATION => $this->executeNotification($stepInstance),
-                StepType::DELAY => $this->executeDelay($stepInstance),
-                StepType::SCRIPT => $this->executeScript($stepInstance),
-                StepType::SUB_WORKFLOW => $this->executeSubWorkflow($stepInstance),
+                StepType::WAIT => $this->executeDelay($stepInstance),
+                StepType::SUBPROCESS => $this->executeSubWorkflow($stepInstance),
             };
         } catch (\Exception $e) {
             Log::error('Step execution failed', [
@@ -77,9 +77,9 @@ class StepExecutorService
         $config = $step->config ?? [];
 
         // Assign to user if specified
-        if (!empty($config['assignee_id'])) {
+        if (! empty($config['assignee_id'])) {
             $stepInstance->assign($config['assignee_id']);
-        } elseif (!empty($config['assignee_role'])) {
+        } elseif (! empty($config['assignee_role'])) {
             // Assign to first user with role
             $user = \App\Models\User::role($config['assignee_role'])->first();
             if ($user) {
@@ -103,6 +103,7 @@ class StepExecutorService
             // No approvers, auto-approve
             $stepInstance->updateContext(['approval_result' => 'approved']);
             $stepInstance->complete();
+
             return;
         }
 
@@ -129,7 +130,6 @@ class StepExecutorService
     public function processApproval(StepApproval $approval, string $decision, ?string $comments = null): void
     {
         $stepInstance = $approval->stepInstance;
-        $step = $stepInstance->step;
 
         // Record the decision
         match ($decision) {
@@ -152,12 +152,12 @@ class StepExecutorService
     {
         $step = $stepInstance->step;
         $approvalType = $step->approval_type ?? ApprovalType::ANY;
-        $approvals = $stepInstance->approvals;
+        $approvals = $stepInstance->approvals()->get();
 
         $totalApprovals = $approvals->count();
         $decidedApprovals = $approvals->whereNotNull('decision');
-        $approvedCount = $decidedApprovals->where('decision', 'approved')->count();
-        $rejectedCount = $decidedApprovals->where('decision', 'rejected')->count();
+        $approvedCount = $decidedApprovals->where('decision', ApprovalDecision::APPROVED)->count();
+        $rejectedCount = $decidedApprovals->where('decision', ApprovalDecision::REJECTED)->count();
 
         $isComplete = false;
         $result = null;
@@ -230,8 +230,9 @@ class StepExecutorService
     {
         $step = $stepInstance->step;
 
-        if (!$step->form_id) {
+        if (! $step->form_id) {
             $stepInstance->fail('No form configured for this step');
+
             return;
         }
 
@@ -272,6 +273,7 @@ class StepExecutorService
 
         if (empty($branches)) {
             $stepInstance->complete();
+
             return;
         }
 
@@ -311,6 +313,7 @@ class StepExecutorService
 
         if ($delayMinutes <= 0) {
             $stepInstance->complete();
+
             return;
         }
 
@@ -352,14 +355,16 @@ class StepExecutorService
         $config = $step->config ?? [];
         $subWorkflowId = $config['workflow_id'] ?? null;
 
-        if (!$subWorkflowId) {
+        if (! $subWorkflowId) {
             $stepInstance->fail('No sub-workflow configured');
+
             return;
         }
 
         $subWorkflow = \App\Models\DepartmentWorkflow::find($subWorkflowId);
-        if (!$subWorkflow || !$subWorkflow->isActive()) {
+        if (! $subWorkflow || ! $subWorkflow->isActive()) {
             $stepInstance->fail('Sub-workflow not found or inactive');
+
             return;
         }
 

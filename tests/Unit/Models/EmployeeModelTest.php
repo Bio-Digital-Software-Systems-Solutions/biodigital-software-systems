@@ -93,7 +93,7 @@ class EmployeeModelTest extends TestCase
     public function test_employee_can_have_subordinates(): void
     {
         $manager = Employee::factory()->create();
-        $subordinates = Employee::factory()->count(3)->withManager($manager)->create();
+        Employee::factory()->count(3)->withManager($manager)->create();
 
         $this->assertCount(3, $manager->subordinates);
         $this->assertInstanceOf(Employee::class, $manager->subordinates->first());

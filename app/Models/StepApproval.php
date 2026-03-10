@@ -10,6 +10,49 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $step_instance_id
+ * @property int $approver_id
+ * @property ApprovalDecision|null $decision
+ * @property string|null $comments
+ * @property array<array-key, mixed>|null $requested_changes
+ * @property int|null $delegated_to
+ * @property string|null $delegation_reason
+ * @property int $order
+ * @property bool $is_required
+ * @property \Illuminate\Support\Carbon|null $notified_at
+ * @property \Illuminate\Support\Carbon|null $decided_at
+ * @property \Illuminate\Support\Carbon|null $due_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\User $approver
+ * @property-read \App\Models\User|null $delegatedUser
+ * @property-read \App\Models\WorkflowStepInstance $stepInstance
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereApproverId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereComments($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereDecidedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereDecision($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereDelegatedTo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereDelegationReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereDueAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereIsRequired($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereNotifiedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereRequestedChanges($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereStepInstanceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|StepApproval whereUuid($value)
+ * @mixin \Eloquent
+ */
 class StepApproval extends Model
 {
     use HasFactory, LogsActivity;
@@ -43,7 +86,7 @@ class StepApproval extends Model
     {
         parent::boot();
 
-        static::creating(function (self $model) {
+        static::creating(function (self $model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }

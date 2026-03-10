@@ -50,7 +50,7 @@ class InvalidatePermissionCache
     /**
      * Invalidate all relevant caches
      */
-    private function invalidateCache($model): void
+    private function invalidateCache(\Illuminate\Database\Eloquent\Model $model): void
     {
         // Clear Spatie permission cache
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
@@ -69,7 +69,7 @@ class InvalidatePermissionCache
         }
 
         \Log::info('Permission cache invalidated via event listener', [
-            'model_type' => get_class($model),
+            'model_type' => $model::class,
             'model_id' => $model->id ?? null,
         ]);
     }

@@ -10,6 +10,8 @@ use Tests\TestCase;
 
 class DepartmentControllerTest extends TestCase
 {
+    public $user;
+    public $headUser;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -23,7 +25,7 @@ class DepartmentControllerTest extends TestCase
 
     public function test_index_displays_departments(): void
     {
-        $departments = Department::factory()->count(3)->create();
+        Department::factory()->count(3)->create();
 
         $this->user->givePermissionTo('view departments');
 
@@ -200,7 +202,7 @@ class DepartmentControllerTest extends TestCase
 
     public function test_update_validates_unique_code_excluding_current(): void
     {
-        $dept1 = Department::factory()->create(['code' => 'DEPT1']);
+        Department::factory()->create(['code' => 'DEPT1']);
         $dept2 = Department::factory()->create(['code' => 'DEPT2']);
 
         $this->user->givePermissionTo('manage departments');
@@ -297,7 +299,7 @@ class DepartmentControllerTest extends TestCase
 
     public function test_unauthorized_user_cannot_manage_departments(): void
     {
-        $department = Department::factory()->create();
+        Department::factory()->create();
 
         $response = $this->actingAs($this->user)
             ->get(route('departments.index'));
@@ -356,7 +358,7 @@ class DepartmentControllerTest extends TestCase
         $organizer = User::factory()->create();
 
         // Create appointments for this department
-        $appointments = Appointment::factory()->count(3)->create([
+        Appointment::factory()->count(3)->create([
             'appointmentable_type' => Department::class,
             'appointmentable_id' => $department->id,
             'user_id' => $organizer->id,
@@ -392,7 +394,7 @@ class DepartmentControllerTest extends TestCase
         $organizer = User::factory()->create();
 
         // Create appointments with specific dates
-        $laterAppointment = Appointment::factory()->create([
+        Appointment::factory()->create([
             'appointmentable_type' => Department::class,
             'appointmentable_id' => $department->id,
             'user_id' => $organizer->id,
@@ -401,7 +403,7 @@ class DepartmentControllerTest extends TestCase
             'title' => 'Later Appointment',
         ]);
 
-        $earlierAppointment = Appointment::factory()->create([
+        Appointment::factory()->create([
             'appointmentable_type' => Department::class,
             'appointmentable_id' => $department->id,
             'user_id' => $organizer->id,
@@ -627,7 +629,7 @@ class DepartmentControllerTest extends TestCase
         $department->users()->attach($this->user);
         $organizer = User::factory()->create();
 
-        $appointment = Appointment::factory()->create([
+        Appointment::factory()->create([
             'appointmentable_type' => Department::class,
             'appointmentable_id' => $department->id,
             'user_id' => $organizer->id,
@@ -645,9 +647,9 @@ class DepartmentControllerTest extends TestCase
             ->component('Departments/Show')
             ->has('appointments', 1)
             // ISO 8601 format check
-            ->where('appointments.0.start_datetime', fn ($value) => preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value) === 1
+            ->where('appointments.0.start_datetime', fn ($value): bool => preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', (string) $value) === 1
             )
-            ->where('appointments.0.end_datetime', fn ($value) => preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value) === 1
+            ->where('appointments.0.end_datetime', fn ($value): bool => preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', (string) $value) === 1
             )
         );
     }
@@ -1004,7 +1006,7 @@ class DepartmentControllerTest extends TestCase
 
     public function test_index_returns_is_accessible_for_each_department(): void
     {
-        $department = Department::factory()->create();
+        Department::factory()->create();
 
         $this->user->givePermissionTo('view departments');
 
@@ -1037,7 +1039,7 @@ class DepartmentControllerTest extends TestCase
 
     public function test_index_non_member_sees_department_as_not_accessible(): void
     {
-        $department = Department::factory()->create();
+        Department::factory()->create();
 
         $this->user->givePermissionTo('view departments');
 
@@ -1053,7 +1055,7 @@ class DepartmentControllerTest extends TestCase
 
     public function test_index_manager_sees_all_departments_as_accessible(): void
     {
-        $department = Department::factory()->create();
+        Department::factory()->create();
 
         $this->user->givePermissionTo(['view departments', 'manage departments']);
 
@@ -1069,7 +1071,7 @@ class DepartmentControllerTest extends TestCase
 
     public function test_index_head_of_department_sees_department_as_accessible(): void
     {
-        $department = Department::factory()->create([
+        Department::factory()->create([
             'head_of_department' => $this->user->id,
         ]);
 
@@ -1087,7 +1089,7 @@ class DepartmentControllerTest extends TestCase
 
     public function test_index_first_deputy_sees_department_as_accessible(): void
     {
-        $department = Department::factory()->create([
+        Department::factory()->create([
             'first_deputy_id' => $this->user->id,
         ]);
 
@@ -1105,7 +1107,7 @@ class DepartmentControllerTest extends TestCase
 
     public function test_index_second_deputy_sees_department_as_accessible(): void
     {
-        $department = Department::factory()->create([
+        Department::factory()->create([
             'second_deputy_id' => $this->user->id,
         ]);
 
@@ -1182,7 +1184,7 @@ class DepartmentControllerTest extends TestCase
         $memberDepartment->users()->attach($this->user);
 
         // Create department where user is not member
-        $nonMemberDepartment = Department::factory()->create(['name' => 'BBB Non-Member Dept']);
+        Department::factory()->create(['name' => 'BBB Non-Member Dept']);
 
         $this->user->givePermissionTo('view departments');
 

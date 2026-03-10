@@ -12,18 +12,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('departments', function (Blueprint $table) {
+        Schema::table('departments', function (Blueprint $table): void {
             $table->uuid('uuid')->nullable()->after('id');
         });
 
         // Generate UUIDs for existing records
-        \App\Models\Department::whereNull('uuid')->each(function ($department) {
+        \App\Models\Department::whereNull('uuid')->each(function ($department): void {
             $department->uuid = (string) Str::uuid();
             $department->save();
         });
 
         // Make uuid unique and not nullable
-        Schema::table('departments', function (Blueprint $table) {
+        Schema::table('departments', function (Blueprint $table): void {
             $table->uuid('uuid')->unique()->nullable(false)->change();
         });
     }
@@ -33,7 +33,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('departments', function (Blueprint $table) {
+        Schema::table('departments', function (Blueprint $table): void {
             $table->dropColumn('uuid');
         });
     }

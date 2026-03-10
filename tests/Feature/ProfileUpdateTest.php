@@ -12,7 +12,7 @@ class ProfileUpdateTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_profile_can_be_updated_with_tus_avatar_string()
+    public function test_profile_can_be_updated_with_tus_avatar_string(): void
     {
         Storage::fake('public');
         
@@ -41,7 +41,7 @@ class ProfileUpdateTest extends TestCase
         $this->assertEquals('avatars/test-image.png', $user->avatar);
     }
 
-    public function test_profile_can_be_updated_with_uploaded_file()
+    public function test_profile_can_be_updated_with_uploaded_file(): void
     {
         Storage::fake('public');
         
@@ -71,7 +71,7 @@ class ProfileUpdateTest extends TestCase
         Storage::disk('public')->assertExists($user->avatar);
     }
 
-    public function test_profile_update_validates_avatar_extension()
+    public function test_profile_update_validates_avatar_extension(): void
     {
         $user = User::factory()->create([
             'first_name' => 'John',
@@ -91,7 +91,7 @@ class ProfileUpdateTest extends TestCase
         $response->assertSessionHasErrors('avatar');
     }
 
-    public function test_profile_update_without_avatar()
+    public function test_profile_update_without_avatar(): void
     {
         $user = User::factory()->create([
             'first_name' => 'John',

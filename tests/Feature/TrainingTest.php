@@ -12,6 +12,7 @@ use Tests\TestCase;
 
 class TrainingTest extends TestCase
 {
+    public $user;
     use RefreshDatabase;
 
     protected function setUp(): void

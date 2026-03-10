@@ -27,7 +27,7 @@ class ChatControllerTest extends TestCase
         $memberRole->givePermissionTo(['use chat']);
     }
 
-    public function test_authenticated_user_with_permission_can_view_chat_index()
+    public function test_authenticated_user_with_permission_can_view_chat_index(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -38,7 +38,7 @@ class ChatControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Chat/Index'));
     }
 
-    public function test_user_without_permission_cannot_access_chat()
+    public function test_user_without_permission_cannot_access_chat(): void
     {
         $user = User::factory()->create();
 
@@ -50,7 +50,7 @@ class ChatControllerTest extends TestCase
         );
     }
 
-    public function test_user_can_create_direct_chat_room()
+    public function test_user_can_create_direct_chat_room(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -82,7 +82,7 @@ class ChatControllerTest extends TestCase
         $this->assertTrue($room->participants->contains($user2));
     }
 
-    public function test_user_can_create_group_chat_room()
+    public function test_user_can_create_group_chat_room(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -107,7 +107,7 @@ class ChatControllerTest extends TestCase
         $this->assertEquals(3, $room->participants->count());
     }
 
-    public function test_creating_duplicate_direct_room_returns_existing_room()
+    public function test_creating_duplicate_direct_room_returns_existing_room(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -133,7 +133,7 @@ class ChatControllerTest extends TestCase
         $this->assertEquals(1, ChatRoom::count());
     }
 
-    public function test_user_can_send_message_to_room()
+    public function test_user_can_send_message_to_room(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -167,7 +167,7 @@ class ChatControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_cannot_send_message_to_room_they_are_not_part_of()
+    public function test_user_cannot_send_message_to_room_they_are_not_part_of(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -191,7 +191,7 @@ class ChatControllerTest extends TestCase
         );
     }
 
-    public function test_user_can_get_messages_from_room()
+    public function test_user_can_get_messages_from_room(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -236,7 +236,7 @@ class ChatControllerTest extends TestCase
         $this->assertEquals('Second message', $messages[1]['content']);
     }
 
-    public function test_user_can_get_unread_message_count()
+    public function test_user_can_get_unread_message_count(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -269,7 +269,7 @@ class ChatControllerTest extends TestCase
         $response->assertJson(['unread_count' => 2]);
     }
 
-    public function test_user_can_leave_chat_room()
+    public function test_user_can_leave_chat_room(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -292,7 +292,7 @@ class ChatControllerTest extends TestCase
         $this->assertTrue($room->participants->contains($user2));
     }
 
-    public function test_room_is_deleted_when_last_participant_leaves()
+    public function test_room_is_deleted_when_last_participant_leaves(): void
     {
         $user1 = User::factory()->create();
         $user1->assignRole('member');
@@ -318,7 +318,7 @@ class ChatControllerTest extends TestCase
         $this->assertDatabaseMissing('chat_messages', ['room_id' => $room->id]);
     }
 
-    public function test_message_validation_requires_content()
+    public function test_message_validation_requires_content(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -339,7 +339,7 @@ class ChatControllerTest extends TestCase
         $response->assertJsonValidationErrors(['content']);
     }
 
-    public function test_room_creation_validation_requires_participant_ids()
+    public function test_room_creation_validation_requires_participant_ids(): void
     {
         $user1 = User::factory()->create();
         $user1->assignRole('member');

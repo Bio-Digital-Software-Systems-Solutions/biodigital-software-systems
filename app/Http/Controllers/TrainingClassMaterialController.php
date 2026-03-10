@@ -12,11 +12,8 @@ use Inertia\Response;
 
 class TrainingClassMaterialController extends Controller
 {
-    protected FileUploadService $fileUploadService;
-
-    public function __construct(FileUploadService $fileUploadService)
+    public function __construct(protected FileUploadService $fileUploadService)
     {
-        $this->fileUploadService = $fileUploadService;
     }
 
     /**
@@ -99,7 +96,7 @@ class TrainingClassMaterialController extends Controller
             $validated['order'] = $trainingClass->materials()->max('order') + 1;
         }
 
-        $material = $trainingClass->materials()->create([
+        $trainingClass->materials()->create([
             'teacher_id' => $request->user()->id,
             'title' => $validated['title'],
             'type' => $validated['type'],

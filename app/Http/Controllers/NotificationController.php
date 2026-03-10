@@ -23,7 +23,7 @@ class NotificationController extends Controller
         $user = $request->user();
 
         // Count unread chat messages from rooms the user is in
-        $unreadChatMessages = ChatMessage::whereHas('room.participants', function ($query) use ($user) {
+        $unreadChatMessages = ChatMessage::whereHas('room.participants', function ($query) use ($user): void {
             $query->where('users.id', $user->id);
         })
             ->where('sender_id', '!=', $user->id)

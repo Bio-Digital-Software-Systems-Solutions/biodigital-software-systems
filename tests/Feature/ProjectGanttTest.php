@@ -209,7 +209,7 @@ class ProjectGanttTest extends TestCase
         );
 
         // Create multiple tasks
-        $tasks = Task::factory()->count(5)->create([
+        Task::factory()->count(5)->create([
             'taskable_type' => Project::class,
             'taskable_id' => $this->project->id,
             'reporter_id' => $this->user->id,

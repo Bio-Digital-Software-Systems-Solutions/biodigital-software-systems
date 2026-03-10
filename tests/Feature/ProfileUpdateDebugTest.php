@@ -10,7 +10,7 @@ class ProfileUpdateDebugTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_debug_validation_with_tus_string()
+    public function test_debug_validation_with_tus_string(): void
     {
         $user = User::factory()->create([
             'first_name' => 'John',

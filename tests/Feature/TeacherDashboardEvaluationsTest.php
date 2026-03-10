@@ -52,7 +52,7 @@ class TeacherDashboardEvaluationsTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_view_evaluations_results()
+    public function teacher_can_view_evaluations_results(): void
     {
         // Create quiz attempts
         QuizAttempt::factory()->create([
@@ -82,7 +82,7 @@ class TeacherDashboardEvaluationsTest extends TestCase
     }
 
     /** @test */
-    public function evaluation_statistics_are_calculated_correctly()
+    public function evaluation_statistics_are_calculated_correctly(): void
     {
         // Create 3 passing attempts
         for ($i = 0; $i < 3; $i++) {
@@ -119,7 +119,7 @@ class TeacherDashboardEvaluationsTest extends TestCase
     }
 
     /** @test */
-    public function only_completed_attempts_are_counted_in_statistics()
+    public function only_completed_attempts_are_counted_in_statistics(): void
     {
         // Completed attempt
         QuizAttempt::factory()->create([
@@ -148,7 +148,7 @@ class TeacherDashboardEvaluationsTest extends TestCase
     }
 
     /** @test */
-    public function teacher_only_sees_their_own_quiz_evaluations()
+    public function teacher_only_sees_their_own_quiz_evaluations(): void
     {
         $otherTeacher = User::factory()->create();
         $otherTeacher->assignRole('teacher');
@@ -185,7 +185,7 @@ class TeacherDashboardEvaluationsTest extends TestCase
     }
 
     /** @test */
-    public function evaluation_with_no_attempts_shows_zero_statistics()
+    public function evaluation_with_no_attempts_shows_zero_statistics(): void
     {
         $response = $this->actingAs($this->teacher)
             ->get(route('teacher.dashboard'));

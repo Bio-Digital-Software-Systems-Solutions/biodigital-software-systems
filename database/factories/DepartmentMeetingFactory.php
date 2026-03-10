@@ -45,7 +45,7 @@ class DepartmentMeetingFactory extends Factory
      */
     public function notifyAll(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'notify_all_members' => true,
         ]);
     }
@@ -55,7 +55,7 @@ class DepartmentMeetingFactory extends Factory
      */
     public function notifyNone(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'notify_all_members' => false,
         ]);
     }
@@ -65,7 +65,7 @@ class DepartmentMeetingFactory extends Factory
      */
     public function mandatory(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_mandatory' => true,
         ]);
     }
@@ -75,7 +75,7 @@ class DepartmentMeetingFactory extends Factory
      */
     public function optional(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_mandatory' => false,
         ]);
     }
@@ -85,7 +85,7 @@ class DepartmentMeetingFactory extends Factory
      */
     public function notified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'notified_at' => now(),
         ]);
     }
@@ -95,7 +95,7 @@ class DepartmentMeetingFactory extends Factory
      */
     public function notNotified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'notified_at' => null,
         ]);
     }
@@ -105,7 +105,7 @@ class DepartmentMeetingFactory extends Factory
      */
     public function forDepartment(Department $department): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'department_id' => $department->id,
         ]);
     }
@@ -115,7 +115,7 @@ class DepartmentMeetingFactory extends Factory
      */
     public function createdBy(User $user): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'created_by' => $user->id,
         ]);
     }
@@ -125,7 +125,7 @@ class DepartmentMeetingFactory extends Factory
      */
     public function withAppointment(Appointment $appointment): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'appointment_id' => $appointment->id,
         ]);
     }

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('training_classes', function (Blueprint $table) {
+        Schema::table('training_classes', function (Blueprint $table): void {
             $table->string('status')->default('active')->after('notes');
             $table->timestamp('archived_at')->nullable()->after('status');
             $table->timestamp('archive_access_until')->nullable()->after('archived_at');
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('training_classes', function (Blueprint $table) {
+        Schema::table('training_classes', function (Blueprint $table): void {
             $table->dropColumn(['status', 'archived_at', 'archive_access_until']);
         });
     }

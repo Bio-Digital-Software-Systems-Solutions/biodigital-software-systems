@@ -37,7 +37,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_search_tasks_by_title()
+    public function it_can_search_tasks_by_title(): void
     {
         ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -62,7 +62,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_search_tasks_by_description()
+    public function it_can_search_tasks_by_description(): void
     {
         ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -86,7 +86,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_search_tasks_by_key()
+    public function it_can_search_tasks_by_key(): void
     {
         ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -110,7 +110,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_tasks_by_status()
+    public function it_can_filter_tasks_by_status(): void
     {
         ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -138,7 +138,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_tasks_by_priority()
+    public function it_can_filter_tasks_by_priority(): void
     {
         ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -166,7 +166,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_tasks_by_type()
+    public function it_can_filter_tasks_by_type(): void
     {
         ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -194,7 +194,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_tasks_by_project()
+    public function it_can_filter_tasks_by_project(): void
     {
         $project2 = Project::factory()->create(['name' => 'Another Project']);
 
@@ -216,7 +216,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_tasks_by_assignee()
+    public function it_can_filter_tasks_by_assignee(): void
     {
         $assignee1 = User::factory()->create();
         $assignee2 = User::factory()->create();
@@ -241,7 +241,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_combine_multiple_filters()
+    public function it_can_combine_multiple_filters(): void
     {
         $assignee = User::factory()->create();
 
@@ -277,7 +277,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_combine_search_with_filters()
+    public function it_can_combine_search_with_filters(): void
     {
         ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -308,7 +308,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function search_is_case_insensitive()
+    public function search_is_case_insensitive(): void
     {
         ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -324,7 +324,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_all_tasks_when_no_filters_applied()
+    public function it_returns_all_tasks_when_no_filters_applied(): void
     {
         ProjectTask::factory()->count(15)->create([
             'project_id' => $this->project->id,
@@ -339,7 +339,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_paginates_results_correctly()
+    public function it_paginates_results_correctly(): void
     {
         ProjectTask::factory()->count(25)->create([
             'project_id' => $this->project->id,
@@ -359,7 +359,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_preserves_filters_in_pagination()
+    public function it_preserves_filters_in_pagination(): void
     {
         ProjectTask::factory()->count(25)->create([
             'project_id' => $this->project->id,
@@ -375,7 +375,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_empty_results_when_no_matches_found()
+    public function it_returns_empty_results_when_no_matches_found(): void
     {
         ProjectTask::factory()->count(5)->create([
             'project_id' => $this->project->id,
@@ -390,7 +390,7 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function unauthorized_users_cannot_access_tasks_index()
+    public function unauthorized_users_cannot_access_tasks_index(): void
     {
         $response = $this->get('/tasks');
 
@@ -398,10 +398,10 @@ class TaskSearchAndFilterTest extends TestCase
     }
 
     /** @test */
-    public function users_without_permission_cannot_view_tasks()
+    public function users_without_permission_cannot_view_tasks(): void
     {
         $userWithoutPermission = User::factory()->create();
-        $roleWithoutPermission = Role::create(['name' => 'Guest']);
+        Role::create(['name' => 'Guest']);
         $userWithoutPermission->assignRole('Guest');
 
         $response = $this->actingAs($userWithoutPermission)

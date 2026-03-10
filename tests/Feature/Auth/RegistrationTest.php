@@ -352,7 +352,7 @@ class RegistrationTest extends TestCase
             'password' => 'password',
             'password_confirmation' => 'password',
             'terms_accepted' => true,
-            'captcha_answer' => strtolower($captcha['answer']),
+            'captcha_answer' => strtolower((string) $captcha['answer']),
             'captcha_token' => $captcha['token'],
         ]);
 

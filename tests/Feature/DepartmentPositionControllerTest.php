@@ -4,13 +4,13 @@ use App\Models\Department;
 use App\Models\DepartmentPosition;
 use App\Models\User;
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
     $this->admin = User::factory()->create();
     $this->admin->givePermissionTo('manage departments');
 });
 
-it('creates a position for a department', function () {
+it('creates a position for a department', function (): void {
     $department = Department::factory()->create();
 
     $response = $this->actingAs($this->admin)
@@ -35,7 +35,7 @@ it('creates a position for a department', function () {
     ]);
 });
 
-it('creates a position with minimal data', function () {
+it('creates a position with minimal data', function (): void {
     $department = Department::factory()->create();
 
     $response = $this->actingAs($this->admin)
@@ -53,7 +53,7 @@ it('creates a position with minimal data', function () {
     ]);
 });
 
-it('requires name when creating a position', function () {
+it('requires name when creating a position', function (): void {
     $department = Department::factory()->create();
 
     $response = $this->actingAs($this->admin)
@@ -64,7 +64,7 @@ it('requires name when creating a position', function () {
     $response->assertSessionHasErrors(['name']);
 });
 
-it('updates a position', function () {
+it('updates a position', function (): void {
     $department = Department::factory()->create();
     $position = DepartmentPosition::factory()->create([
         'department_id' => $department->id,
@@ -89,7 +89,7 @@ it('updates a position', function () {
     expect($position->is_active)->toBeFalse();
 });
 
-it('deletes a position', function () {
+it('deletes a position', function (): void {
     $department = Department::factory()->create();
     $position = DepartmentPosition::factory()->create([
         'department_id' => $department->id,
@@ -107,7 +107,7 @@ it('deletes a position', function () {
     ]);
 });
 
-it('requires manage departments permission to create position', function () {
+it('requires manage departments permission to create position', function (): void {
     $user = User::factory()->create();
     $department = Department::factory()->create();
 
@@ -119,7 +119,7 @@ it('requires manage departments permission to create position', function () {
     expect($response->status())->toBeIn([403, 302]);
 });
 
-it('requires manage departments permission to update position', function () {
+it('requires manage departments permission to update position', function (): void {
     $user = User::factory()->create();
     $department = Department::factory()->create();
     $position = DepartmentPosition::factory()->create([
@@ -134,7 +134,7 @@ it('requires manage departments permission to update position', function () {
     expect($response->status())->toBeIn([403, 302]);
 });
 
-it('requires manage departments permission to delete position', function () {
+it('requires manage departments permission to delete position', function (): void {
     $user = User::factory()->create();
     $department = Department::factory()->create();
     $position = DepartmentPosition::factory()->create([
@@ -147,7 +147,7 @@ it('requires manage departments permission to delete position', function () {
     expect($response->status())->toBeIn([403, 302]);
 });
 
-it('validates hourly rate is numeric', function () {
+it('validates hourly rate is numeric', function (): void {
     $department = Department::factory()->create();
 
     $response = $this->actingAs($this->admin)

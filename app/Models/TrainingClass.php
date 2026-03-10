@@ -15,55 +15,59 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property int $training_id
+ * @property int|null $teacher_id
  * @property string $name
  * @property \Illuminate\Support\Carbon $date
  * @property string $start_time
  * @property string $end_time
  * @property string|null $room
+ * @property int|null $max_students
  * @property string|null $notes
+ * @property string $status
+ * @property \Illuminate\Support\Carbon|null $archived_at
+ * @property \Illuminate\Support\Carbon|null $archive_access_until
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property int|null $teacher_id
- * @property int|null $max_students
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Attendance> $attendances
- * @property-read int|null $attendances_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClassSchedule> $schedules
- * @property-read int|null $schedules_count
- * @property-read \App\Models\User|null $teacher
- * @property-read \App\Models\Training $training
- *
- * @method static \Database\Factories\TrainingClassFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereDate($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereEndTime($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereMaxStudents($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereNotes($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereRoom($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereStartTime($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereTeacherId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereTrainingId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereUpdatedAt($value)
- *
- * @property string $uuid
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
  * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quiz> $allQuizzes
  * @property-read int|null $all_quizzes_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Attendance> $attendances
+ * @property-read int|null $attendances_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClassMaterial> $materials
  * @property-read int|null $materials_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quiz> $quizzes
  * @property-read int|null $quizzes_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClassSchedule> $schedules
+ * @property-read int|null $schedules_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $students
  * @property-read int|null $students_count
- *
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClass whereUuid($value)
- *
+ * @property-read \App\Models\User|null $teacher
+ * @property-read \App\Models\Training $training
+ * @method static Builder<static>|TrainingClass active()
+ * @method static Builder<static>|TrainingClass archived()
+ * @method static \Database\Factories\TrainingClassFactory factory($count = null, $state = [])
+ * @method static Builder<static>|TrainingClass newModelQuery()
+ * @method static Builder<static>|TrainingClass newQuery()
+ * @method static Builder<static>|TrainingClass query()
+ * @method static Builder<static>|TrainingClass whereArchiveAccessUntil($value)
+ * @method static Builder<static>|TrainingClass whereArchivedAt($value)
+ * @method static Builder<static>|TrainingClass whereCreatedAt($value)
+ * @method static Builder<static>|TrainingClass whereDate($value)
+ * @method static Builder<static>|TrainingClass whereEndTime($value)
+ * @method static Builder<static>|TrainingClass whereId($value)
+ * @method static Builder<static>|TrainingClass whereMaxStudents($value)
+ * @method static Builder<static>|TrainingClass whereName($value)
+ * @method static Builder<static>|TrainingClass whereNotes($value)
+ * @method static Builder<static>|TrainingClass whereRoom($value)
+ * @method static Builder<static>|TrainingClass whereStartTime($value)
+ * @method static Builder<static>|TrainingClass whereStatus($value)
+ * @method static Builder<static>|TrainingClass whereTeacherId($value)
+ * @method static Builder<static>|TrainingClass whereTrainingId($value)
+ * @method static Builder<static>|TrainingClass whereUpdatedAt($value)
+ * @method static Builder<static>|TrainingClass whereUuid($value)
  * @mixin \Eloquent
  */
 class TrainingClass extends Model
@@ -170,11 +174,11 @@ class TrainingClass extends Model
         $now = now();
 
         return $this->quizzes()
-            ->where(function ($query) use ($now) {
+            ->where(function ($query) use ($now): void {
                 $query->whereNull('quiz_training_class.available_from')
                     ->orWhere('quiz_training_class.available_from', '<=', $now);
             })
-            ->where(function ($query) use ($now) {
+            ->where(function ($query) use ($now): void {
                 $query->whereNull('quiz_training_class.available_until')
                     ->orWhere('quiz_training_class.available_until', '>=', $now);
             });

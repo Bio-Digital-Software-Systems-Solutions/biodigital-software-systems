@@ -12,7 +12,7 @@ use function Pest\Laravel\get;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create necessary roles
     Role::firstOrCreate(['name' => 'pastor', 'guard_name' => 'web']);
     Role::firstOrCreate(['name' => 'member', 'guard_name' => 'web']);
@@ -70,8 +70,8 @@ beforeEach(function () {
     ]);
 });
 
-describe('PastoralCareReportService', function () {
-    it('collects all related appointments including parent and follow-ups', function () {
+describe('PastoralCareReportService', function (): void {
+    it('collects all related appointments including parent and follow-ups', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
@@ -79,7 +79,7 @@ describe('PastoralCareReportService', function () {
         expect($data['summary']['total_appointments'])->toBe(2);
     });
 
-    it('calculates total duration correctly', function () {
+    it('calculates total duration correctly', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
@@ -88,7 +88,7 @@ describe('PastoralCareReportService', function () {
         expect($data['summary']['total_duration_formatted'])->toBe('1h 45min');
     });
 
-    it('includes pastor information', function () {
+    it('includes pastor information', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
@@ -96,7 +96,7 @@ describe('PastoralCareReportService', function () {
         expect($data['pastor']['email'])->toBe('pastor@example.com');
     });
 
-    it('includes client information', function () {
+    it('includes client information', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
@@ -105,7 +105,7 @@ describe('PastoralCareReportService', function () {
         expect($data['client']['phone'])->toBe('+49 123 456789');
     });
 
-    it('formats pastor notes correctly', function () {
+    it('formats pastor notes correctly', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
@@ -114,7 +114,7 @@ describe('PastoralCareReportService', function () {
         expect($firstAppointment['pastor_notes'][0]['content'])->toBe('Première note du pasteur');
     });
 
-    it('translates status correctly', function () {
+    it('translates status correctly', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
@@ -123,7 +123,7 @@ describe('PastoralCareReportService', function () {
         expect($firstAppointment['status_raw'])->toBe('completed');
     });
 
-    it('translates location type correctly', function () {
+    it('translates location type correctly', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
@@ -135,7 +135,7 @@ describe('PastoralCareReportService', function () {
         expect($secondAppointment['location_type'])->toBe('Visioconférence');
     });
 
-    it('marks current appointment correctly', function () {
+    it('marks current appointment correctly', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
@@ -146,7 +146,7 @@ describe('PastoralCareReportService', function () {
         expect($currentAppointment['id'])->toBe($this->appointment->id);
     });
 
-    it('marks follow-up appointments correctly', function () {
+    it('marks follow-up appointments correctly', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
@@ -157,13 +157,13 @@ describe('PastoralCareReportService', function () {
     });
 });
 
-describe('Report Generation API', function () {
-    it('requires authentication', function () {
+describe('Report Generation API', function (): void {
+    it('requires authentication', function (): void {
         $this->getJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/report")
             ->assertUnauthorized();
     });
 
-    it('requires pastor role', function () {
+    it('requires pastor role', function (): void {
         actingAs($this->member)
             ->get("/api/pastoral-care/appointments/{$this->appointment->uuid}/report")
             ->assertForbidden()
@@ -173,7 +173,7 @@ describe('Report Generation API', function () {
             ]);
     });
 
-    it('returns 404 for non-existent appointment', function () {
+    it('returns 404 for non-existent appointment', function (): void {
         actingAs($this->pastor)
             ->get('/api/pastoral-care/appointments/non-existent-uuid/report')
             ->assertNotFound()
@@ -183,7 +183,7 @@ describe('Report Generation API', function () {
             ]);
     });
 
-    it('returns 400 for unsupported format', function () {
+    it('returns 400 for unsupported format', function (): void {
         actingAs($this->pastor)
             ->get("/api/pastoral-care/appointments/{$this->appointment->uuid}/report?format=invalid")
             ->assertBadRequest()
@@ -193,7 +193,7 @@ describe('Report Generation API', function () {
             ]);
     });
 
-    it('generates PDF report successfully', function () {
+    it('generates PDF report successfully', function (): void {
         $response = actingAs($this->pastor)
             ->get("/api/pastoral-care/appointments/{$this->appointment->uuid}/report?format=pdf");
 
@@ -201,7 +201,7 @@ describe('Report Generation API', function () {
         expect($response->headers->get('Content-Type'))->toContain('application/pdf');
     });
 
-    it('generates Excel report successfully', function () {
+    it('generates Excel report successfully', function (): void {
         $response = actingAs($this->pastor)
             ->get("/api/pastoral-care/appointments/{$this->appointment->uuid}/report?format=excel");
 
@@ -209,7 +209,7 @@ describe('Report Generation API', function () {
         expect($response->headers->get('Content-Type'))->toContain('spreadsheet');
     });
 
-    it('generates Word report successfully', function () {
+    it('generates Word report successfully', function (): void {
         $response = actingAs($this->pastor)
             ->get("/api/pastoral-care/appointments/{$this->appointment->uuid}/report?format=word");
 
@@ -217,7 +217,7 @@ describe('Report Generation API', function () {
         expect($response->headers->get('Content-Type'))->toContain('wordprocessingml');
     });
 
-    it('defaults to PDF format when no format specified', function () {
+    it('defaults to PDF format when no format specified', function (): void {
         $response = actingAs($this->pastor)
             ->get("/api/pastoral-care/appointments/{$this->appointment->uuid}/report");
 
@@ -225,7 +225,7 @@ describe('Report Generation API', function () {
         expect($response->headers->get('Content-Type'))->toContain('application/pdf');
     });
 
-    it('only allows pastor to access their own appointments', function () {
+    it('only allows pastor to access their own appointments', function (): void {
         // Create another pastor
         $otherPastor = User::factory()->create();
         $otherPastor->assignRole('pastor');
@@ -236,15 +236,15 @@ describe('Report Generation API', function () {
     });
 });
 
-describe('Report Content Validation', function () {
-    it('includes church information in report data', function () {
+describe('Report Content Validation', function (): void {
+    it('includes church information in report data', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
         expect($data['church'])->toHaveKeys(['name', 'email', 'phone', 'website']);
     });
 
-    it('includes generation timestamp', function () {
+    it('includes generation timestamp', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
@@ -252,7 +252,7 @@ describe('Report Content Validation', function () {
         expect($data['generated_at'])->toMatch('/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/');
     });
 
-    it('includes summary statistics', function () {
+    it('includes summary statistics', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
@@ -266,14 +266,14 @@ describe('Report Content Validation', function () {
         ]);
     });
 
-    it('sorts appointments by date', function () {
+    it('sorts appointments by date', function (): void {
         $service = new PastoralCareReportService($this->appointment);
         $data = $service->getReportData();
 
         $dates = collect($data['appointments'])->pluck('date')->toArray();
 
         // Convert dates to comparable format
-        $parsedDates = array_map(fn ($d) => Carbon::createFromFormat('d/m/Y', $d), $dates);
+        $parsedDates = array_map(fn ($d): ?\Carbon\Carbon => Carbon::createFromFormat('d/m/Y', $d), $dates);
 
         for ($i = 0; $i < count($parsedDates) - 1; $i++) {
             expect($parsedDates[$i]->lte($parsedDates[$i + 1]))->toBeTrue();
@@ -281,8 +281,8 @@ describe('Report Content Validation', function () {
     });
 });
 
-describe('Edge Cases', function () {
-    it('handles appointment without parent', function () {
+describe('Edge Cases', function (): void {
+    it('handles appointment without parent', function (): void {
         $standaloneAppointment = PastoralCare::create([
             'pastor_id' => $this->pastor->id,
             'client_name' => 'Standalone Client',
@@ -300,7 +300,7 @@ describe('Edge Cases', function () {
         expect($data['appointments'])->toHaveCount(1);
     });
 
-    it('handles appointment without follow-ups', function () {
+    it('handles appointment without follow-ups', function (): void {
         $noFollowUpsAppointment = PastoralCare::create([
             'pastor_id' => $this->pastor->id,
             'client_name' => 'No Follow-ups Client',
@@ -318,7 +318,7 @@ describe('Edge Cases', function () {
         expect($data['appointments'])->toHaveCount(1);
     });
 
-    it('handles appointment without pastor notes', function () {
+    it('handles appointment without pastor notes', function (): void {
         $noNotesAppointment = PastoralCare::create([
             'pastor_id' => $this->pastor->id,
             'client_name' => 'No Notes Client',
@@ -338,7 +338,7 @@ describe('Edge Cases', function () {
         expect($appointment['pastor_notes'])->toBe([]);
     });
 
-    it('handles appointment without client notes', function () {
+    it('handles appointment without client notes', function (): void {
         $noClientNotesAppointment = PastoralCare::create([
             'pastor_id' => $this->pastor->id,
             'client_name' => 'No Client Notes',
@@ -358,7 +358,7 @@ describe('Edge Cases', function () {
         expect($appointment['client_notes'])->toBeNull();
     });
 
-    it('handles duration formatting for hours only', function () {
+    it('handles duration formatting for hours only', function (): void {
         $exactHourAppointment = PastoralCare::create([
             'pastor_id' => $this->pastor->id,
             'client_name' => 'Exact Hour Client',
@@ -376,7 +376,7 @@ describe('Edge Cases', function () {
         expect($data['summary']['total_duration_formatted'])->toBe('2h');
     });
 
-    it('handles duration formatting for minutes only', function () {
+    it('handles duration formatting for minutes only', function (): void {
         $minutesOnlyAppointment = PastoralCare::create([
             'pastor_id' => $this->pastor->id,
             'client_name' => 'Minutes Only Client',

@@ -11,7 +11,7 @@ trait HasSku
      */
     protected static function bootHasSku(): void
     {
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->sku)) {
                 $model->sku = static::generateUniqueSku($model->category_id ?? null);
             }
@@ -32,7 +32,7 @@ trait HasSku
             $category = Category::find($categoryId);
             if ($category) {
                 // Use first 3 letters of category name as prefix (uppercase, letters only)
-                $cleanName = preg_replace('/[^a-zA-Z]/', '', $category->name);
+                $cleanName = preg_replace('/[^a-zA-Z]/', '', (string) $category->name);
                 $prefix = strtoupper(substr($cleanName, 0, 3));
             }
         }
@@ -54,7 +54,7 @@ trait HasSku
 
         // If still not unique after max attempts, add timestamp milliseconds
         if (static::where('sku', $sku)->exists()) {
-            $sku = "STK-{$prefix}-{$date}-".now()->format('His');
+            return "STK-{$prefix}-{$date}-".now()->format('His');
         }
 
         return $sku;
@@ -66,7 +66,7 @@ trait HasSku
     public function getSkuPrefix(): string
     {
         if ($this->category_id && $this->category) {
-            $cleanName = preg_replace('/[^a-zA-Z]/', '', $this->category->name);
+            $cleanName = preg_replace('/[^a-zA-Z]/', '', (string) $this->category->name);
 
             return strtoupper(substr($cleanName, 0, 3));
         }

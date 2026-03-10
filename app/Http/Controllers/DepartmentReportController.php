@@ -56,7 +56,7 @@ class DepartmentReportController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('executive_summary', 'like', "%{$search}%");
             });
@@ -80,7 +80,7 @@ class DepartmentReportController extends Controller
     public function create(Request $request)
     {
         $templates = ReportTemplate::active()
-            ->when($request->filled('department_id'), fn($q) => $q->where(function ($q2) use ($request) {
+            ->when($request->filled('department_id'), fn($q) => $q->where(function ($q2) use ($request): void {
                 $q2->where('department_id', $request->department_id)
                     ->orWhereNull('department_id');
             }))
@@ -439,7 +439,7 @@ class DepartmentReportController extends Controller
     /**
      * Download PDF (without storing).
      */
-    public function downloadPdf(DepartmentReport $report)
+    public function downloadPdf(DepartmentReport $report): \Illuminate\Http\Response
     {
         return $this->pdfExportService->download($report);
     }
@@ -447,7 +447,7 @@ class DepartmentReportController extends Controller
     /**
      * Stream PDF for inline viewing.
      */
-    public function streamPdf(DepartmentReport $report)
+    public function streamPdf(DepartmentReport $report): \Illuminate\Http\Response
     {
         return $this->pdfExportService->stream($report);
     }

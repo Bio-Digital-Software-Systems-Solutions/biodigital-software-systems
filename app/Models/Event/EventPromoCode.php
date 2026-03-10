@@ -13,6 +13,64 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $event_id
+ * @property string $code
+ * @property string|null $description
+ * @property string $discount_type
+ * @property numeric $discount_value
+ * @property numeric|null $min_order_amount
+ * @property numeric|null $max_discount
+ * @property int|null $usage_limit
+ * @property int $usage_per_user
+ * @property int $usage_count
+ * @property \Illuminate\Support\Carbon|null $valid_from
+ * @property \Illuminate\Support\Carbon|null $valid_until
+ * @property array<array-key, mixed>|null $applicable_tickets
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read Event $event
+ * @property-read string $formatted_discount
+ * @property-read bool $is_expired
+ * @property-read bool $is_not_yet_valid
+ * @property-read int|null $usage_remaining
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event\EventRegistration> $registrations
+ * @property-read int|null $registrations_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode valid()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereApplicableTickets($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereDiscountType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereDiscountValue($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereEventId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereMaxDiscount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereMinOrderAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereUsageCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereUsageLimit($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereUsagePerUser($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereValidFrom($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode whereValidUntil($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventPromoCode withoutTrashed()
+ * @mixin \Eloquent
+ */
 class EventPromoCode extends Model
 {
     use HasFactory, HasUuid, LogsActivity, ClearsCache, SoftDeletes;
@@ -80,15 +138,15 @@ class EventPromoCode extends Model
     public function scopeValid($query)
     {
         return $query->active()
-            ->where(function ($q) {
+            ->where(function ($q): void {
                 $q->whereNull('valid_from')
                     ->orWhere('valid_from', '<=', now());
             })
-            ->where(function ($q) {
+            ->where(function ($q): void {
                 $q->whereNull('valid_until')
                     ->orWhere('valid_until', '>=', now());
             })
-            ->where(function ($q) {
+            ->where(function ($q): void {
                 $q->whereNull('usage_limit')
                     ->orWhereColumn('usage_count', '<', 'usage_limit');
             });
@@ -235,7 +293,7 @@ class EventPromoCode extends Model
             $errors[] = 'Vous avez déjà utilisé ce code promo.';
         }
 
-        if ($ticket !== null && !$this->isValidForTicket($ticket)) {
+        if ($ticket instanceof \App\Models\Event\EventTicket && !$this->isValidForTicket($ticket)) {
             $errors[] = 'Ce code promo n\'est pas applicable à ce type de billet.';
         }
 
@@ -244,9 +302,9 @@ class EventPromoCode extends Model
         }
 
         return [
-            'valid' => empty($errors),
+            'valid' => $errors === [],
             'errors' => $errors,
-            'discount' => empty($errors) && $amount !== null ? $this->calculateDiscount($amount) : 0,
+            'discount' => $errors === [] && $amount !== null ? $this->calculateDiscount($amount) : 0,
         ];
     }
 }

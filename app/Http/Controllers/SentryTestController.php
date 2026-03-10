@@ -14,7 +14,7 @@ class SentryTestController extends Controller
      *
      * WARNING: This endpoint should NEVER be available in production!
      */
-    public function testError()
+    public function testError(): void
     {
         // Only allow in local/development environments
         if (! app()->environment(['local', 'development'])) {

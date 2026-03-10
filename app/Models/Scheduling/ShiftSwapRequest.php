@@ -12,6 +12,59 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $requester_id
+ * @property int|null $target_user_id
+ * @property int $requested_shift_id
+ * @property int|null $offered_shift_id
+ * @property SwapRequestStatus $status
+ * @property string|null $reason
+ * @property int|null $approved_by
+ * @property \Illuminate\Support\Carbon|null $approved_at
+ * @property string|null $rejection_reason
+ * @property \Illuminate\Support\Carbon|null $expires_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read User|null $approvedBy
+ * @property-read User|null $approvedByUser
+ * @property-read bool $can_be_accepted_by_colleague
+ * @property-read bool $can_be_approved_by_manager
+ * @property-read bool $is_expired
+ * @property-read bool $is_pending
+ * @property-read \App\Models\Scheduling\Shift|null $offeredShift
+ * @property-read \App\Models\Scheduling\Shift $requestedShift
+ * @property-read User $requester
+ * @property-read User|null $targetUser
+ * @method static Builder<static>|ShiftSwapRequest expired()
+ * @method static \Database\Factories\Scheduling\ShiftSwapRequestFactory factory($count = null, $state = [])
+ * @method static Builder<static>|ShiftSwapRequest forRequester(int $userId)
+ * @method static Builder<static>|ShiftSwapRequest forTarget(int $userId)
+ * @method static Builder<static>|ShiftSwapRequest forUser(int $userId)
+ * @method static Builder<static>|ShiftSwapRequest newModelQuery()
+ * @method static Builder<static>|ShiftSwapRequest newQuery()
+ * @method static Builder<static>|ShiftSwapRequest notExpired()
+ * @method static Builder<static>|ShiftSwapRequest pending()
+ * @method static Builder<static>|ShiftSwapRequest pendingForColleague()
+ * @method static Builder<static>|ShiftSwapRequest pendingForManager()
+ * @method static Builder<static>|ShiftSwapRequest query()
+ * @method static Builder<static>|ShiftSwapRequest whereApprovedAt($value)
+ * @method static Builder<static>|ShiftSwapRequest whereApprovedBy($value)
+ * @method static Builder<static>|ShiftSwapRequest whereCreatedAt($value)
+ * @method static Builder<static>|ShiftSwapRequest whereExpiresAt($value)
+ * @method static Builder<static>|ShiftSwapRequest whereId($value)
+ * @method static Builder<static>|ShiftSwapRequest whereOfferedShiftId($value)
+ * @method static Builder<static>|ShiftSwapRequest whereReason($value)
+ * @method static Builder<static>|ShiftSwapRequest whereRejectionReason($value)
+ * @method static Builder<static>|ShiftSwapRequest whereRequestedShiftId($value)
+ * @method static Builder<static>|ShiftSwapRequest whereRequesterId($value)
+ * @method static Builder<static>|ShiftSwapRequest whereStatus($value)
+ * @method static Builder<static>|ShiftSwapRequest whereTargetUserId($value)
+ * @method static Builder<static>|ShiftSwapRequest whereUpdatedAt($value)
+ * @method static Builder<static>|ShiftSwapRequest whereUuid($value)
+ * @mixin \Eloquent
+ */
 class ShiftSwapRequest extends Model
 {
     use HasFactory;
@@ -40,7 +93,7 @@ class ShiftSwapRequest extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
@@ -102,7 +155,7 @@ class ShiftSwapRequest extends Model
 
     public function scopeForUser(Builder $query, int $userId): Builder
     {
-        return $query->where(function ($q) use ($userId) {
+        return $query->where(function ($q) use ($userId): void {
             $q->where('requester_id', $userId)
                 ->orWhere('target_user_id', $userId);
         });
@@ -192,7 +245,7 @@ class ShiftSwapRequest extends Model
             return false;
         }
 
-        return DB::transaction(function () use ($manager) {
+        return DB::transaction(function () use ($manager): bool {
             $this->update([
                 'status' => SwapRequestStatus::APPROVED,
                 'approved_by' => $manager->id,

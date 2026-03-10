@@ -7,7 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Seed roles and permissions
     $this->artisan('db:seed', ['--class' => 'RolesAndPermissionsSeeder']);
 
@@ -29,8 +29,8 @@ beforeEach(function () {
     ]);
 });
 
-describe('Themes API', function () {
-    it('returns all active themes', function () {
+describe('Themes API', function (): void {
+    it('returns all active themes', function (): void {
         $response = $this->getJson('/api/pastoral-care/themes');
 
         $response->assertOk()
@@ -51,7 +51,7 @@ describe('Themes API', function () {
         expect($response->json('data'))->toHaveCount(13); // 13 seeded themes
     });
 
-    it('only returns active themes', function () {
+    it('only returns active themes', function (): void {
         // Deactivate one theme
         $theme = PastoralCareTheme::first();
         $theme->update(['is_active' => false]);
@@ -65,7 +65,7 @@ describe('Themes API', function () {
         $theme->update(['is_active' => true]);
     });
 
-    it('returns themes in sort order', function () {
+    it('returns themes in sort order', function (): void {
         $response = $this->getJson('/api/pastoral-care/themes');
 
         $themes = $response->json('data');
@@ -77,8 +77,8 @@ describe('Themes API', function () {
     });
 });
 
-describe('Proposal with Themes', function () {
-    it('can create a proposal with themes', function () {
+describe('Proposal with Themes', function (): void {
+    it('can create a proposal with themes', function (): void {
         $themes = PastoralCareTheme::take(2)->pluck('id')->toArray();
 
         $response = $this->postJson('/api/pastoral-care/proposals', [
@@ -104,7 +104,7 @@ describe('Proposal with Themes', function () {
         expect($actualThemeIds)->toBe($expectedThemeIds);
     });
 
-    it('requires at least one theme for a proposal', function () {
+    it('requires at least one theme for a proposal', function (): void {
         $response = $this->postJson('/api/pastoral-care/proposals', [
             'client_name' => 'John Doe',
             'client_email' => 'john@example.com',
@@ -120,7 +120,7 @@ describe('Proposal with Themes', function () {
             ->assertJsonValidationErrors(['theme_ids']);
     });
 
-    it('validates that theme ids exist', function () {
+    it('validates that theme ids exist', function (): void {
         $response = $this->postJson('/api/pastoral-care/proposals', [
             'client_name' => 'John Doe',
             'client_email' => 'john@example.com',
@@ -137,8 +137,8 @@ describe('Proposal with Themes', function () {
     });
 });
 
-describe('PastoralCareTheme Model', function () {
-    it('has fillable attributes', function () {
+describe('PastoralCareTheme Model', function (): void {
+    it('has fillable attributes', function (): void {
         $theme = PastoralCareTheme::factory()->create([
             'name' => 'Test Theme',
             'description' => 'Test description',
@@ -156,7 +156,7 @@ describe('PastoralCareTheme Model', function () {
         expect($theme->sort_order)->toBe(50);
     });
 
-    it('auto-generates slug from name', function () {
+    it('auto-generates slug from name', function (): void {
         $theme = PastoralCareTheme::create([
             'name' => 'Test Theme Name',
             'color' => '#000000',
@@ -165,7 +165,7 @@ describe('PastoralCareTheme Model', function () {
         expect($theme->slug)->toBe('test-theme-name');
     });
 
-    it('has many-to-many relationship with PastoralCare', function () {
+    it('has many-to-many relationship with PastoralCare', function (): void {
         $theme = PastoralCareTheme::first();
         $pastoralCare = PastoralCare::factory()->create([
             'pastor_id' => $this->pastor->id,
@@ -177,7 +177,7 @@ describe('PastoralCareTheme Model', function () {
         expect($theme->pastoralCares->first()->id)->toBe($pastoralCare->id);
     });
 
-    it('scopes to active themes', function () {
+    it('scopes to active themes', function (): void {
         // Create inactive theme
         PastoralCareTheme::factory()->inactive()->create();
 
@@ -187,7 +187,7 @@ describe('PastoralCareTheme Model', function () {
         expect($activeCount)->toBeLessThan($totalCount);
     });
 
-    it('scopes to ordered themes', function () {
+    it('scopes to ordered themes', function (): void {
         // Get first and last theme by order
         $ordered = PastoralCareTheme::ordered()->get();
 
@@ -198,8 +198,8 @@ describe('PastoralCareTheme Model', function () {
     });
 });
 
-describe('PastoralCare with Themes Relationship', function () {
-    it('loads themes with pastoral care', function () {
+describe('PastoralCare with Themes Relationship', function (): void {
+    it('loads themes with pastoral care', function (): void {
         $themes = PastoralCareTheme::take(2)->get();
         $pastoralCare = PastoralCare::factory()->create([
             'pastor_id' => $this->pastor->id,
@@ -213,7 +213,7 @@ describe('PastoralCare with Themes Relationship', function () {
         expect($pastoralCare->themes)->toHaveCount(2);
     });
 
-    it('can sync themes on pastoral care', function () {
+    it('can sync themes on pastoral care', function (): void {
         $themes = PastoralCareTheme::take(3)->pluck('id')->toArray();
         $pastoralCare = PastoralCare::factory()->create([
             'pastor_id' => $this->pastor->id,

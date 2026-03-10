@@ -77,12 +77,9 @@ class UnifyRoleNames extends Command
         }
 
         // Step 3: Confirm changes
-        if (! $dryRun && ! $force) {
-            if (! $this->confirm('Do you want to proceed with these changes?')) {
-                $this->warn('Operation cancelled.');
-
-                return Command::FAILURE;
-            }
+        if (! $dryRun && !$force && ! $this->confirm('Do you want to proceed with these changes?')) {
+            $this->warn('Operation cancelled.');
+            return Command::FAILURE;
         }
 
         // Step 4: Execute migrations
@@ -105,7 +102,7 @@ class UnifyRoleNames extends Command
 
         $roles = Role::withCount('users')->orderBy('name')->get();
 
-        $tableData = $roles->map(function ($role) {
+        $tableData = $roles->map(function ($role): array {
             $naming = $this->detectNamingConvention($role->name);
             $status = $this->getRoleStatus($role->name);
 
@@ -235,7 +232,7 @@ class UnifyRoleNames extends Command
         DB::beginTransaction();
 
         try {
-            foreach ($changes['migrations'] as $oldName => $change) {
+            foreach ($changes['migrations'] as $change) {
                 $oldRole = Role::where('name', $change['from'])->first();
 
                 if (! $oldRole) {
@@ -302,7 +299,7 @@ class UnifyRoleNames extends Command
 
         $migratedUsers = array_sum(array_column($changes['migrations'], 'users'));
         $deletedRoles = count($changes['deletions']);
-        $renamedRoles = count(array_filter($changes['migrations'], fn ($c) => isset($c['rename']) && $c['rename']));
+        $renamedRoles = count(array_filter($changes['migrations'], fn (array $c): bool => isset($c['rename']) && $c['rename']));
 
         $prefix = $dryRun ? 'Would be ' : '';
 

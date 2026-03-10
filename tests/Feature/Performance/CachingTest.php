@@ -247,8 +247,8 @@ class CachingTest extends TestCase
     public function cache_warming_on_deploy(): void
     {
         // Simulate cache warming
-        $events = Event::factory()->count(10)->create();
-        $articles = Article::factory()->count(10)->create();
+        Event::factory()->count(10)->create();
+        Article::factory()->count(10)->create();
 
         // Warm critical caches
         Cache::put('stats.events', Event::count(), 3600);
@@ -274,7 +274,7 @@ class CachingTest extends TestCase
             'users_with_events' => User::has('events')->count(),
         ];
 
-        $firstQueryCount = count(DB::getQueryLog());
+        count(DB::getQueryLog());
 
         // Cache the result
         Cache::put('dashboard.stats', $stats1, 600);
@@ -300,9 +300,7 @@ class CachingTest extends TestCase
         // Clear cache
         Cache::forget("event.{$event->uuid}");
 
-        $cachedEvent = Cache::remember("event.{$event->uuid}", 3600, function () use ($event) {
-            return Event::find($event->id);
-        });
+        $cachedEvent = Cache::remember("event.{$event->uuid}", 3600, fn() => Event::find($event->id));
 
         $this->assertNotNull($cachedEvent);
         $this->assertEquals($event->id, $cachedEvent->id);
@@ -310,9 +308,7 @@ class CachingTest extends TestCase
         // Second call uses cache
         DB::enableQueryLog();
 
-        $cachedEvent2 = Cache::remember("event.{$event->uuid}", 3600, function () use ($event) {
-            return Event::find($event->id);
-        });
+        $cachedEvent2 = Cache::remember("event.{$event->uuid}", 3600, fn() => Event::find($event->id));
 
         $queries = DB::getQueryLog();
         DB::disableQueryLog();

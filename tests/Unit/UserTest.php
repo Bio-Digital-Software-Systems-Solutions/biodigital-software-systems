@@ -13,7 +13,7 @@ class UserTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_has_full_name_attribute()
+    public function test_user_has_full_name_attribute(): void
     {
         $user = new User([
             'first_name' => 'John',
@@ -23,7 +23,7 @@ class UserTest extends TestCase
         $this->assertEquals('John Doe', $user->full_name);
     }
 
-    public function test_user_can_have_events()
+    public function test_user_can_have_events(): void
     {
         $user = User::factory()->create();
         $event = Event::factory()->create(['user_id' => $user->id]);
@@ -31,7 +31,7 @@ class UserTest extends TestCase
         $this->assertTrue($user->events->contains($event));
     }
 
-    public function test_user_can_participate_in_events()
+    public function test_user_can_participate_in_events(): void
     {
         $user = User::factory()->create();
         $event = Event::factory()->create();
@@ -41,7 +41,7 @@ class UserTest extends TestCase
         $this->assertTrue($user->participatedEvents->contains($event));
     }
 
-    public function test_user_can_have_book_rentals()
+    public function test_user_can_have_book_rentals(): void
     {
         $user = User::factory()->create();
         $rental = BookRental::factory()->create(['user_id' => $user->id]);
@@ -49,7 +49,7 @@ class UserTest extends TestCase
         $this->assertTrue($user->bookRentals->contains($rental));
     }
 
-    public function test_user_can_have_chat_rooms()
+    public function test_user_can_have_chat_rooms(): void
     {
         $user = User::factory()->create();
         $chatRoom = ChatRoom::factory()->create();
@@ -59,7 +59,7 @@ class UserTest extends TestCase
         $this->assertTrue($user->chatRooms->contains($chatRoom));
     }
 
-    public function test_user_password_is_hidden()
+    public function test_user_password_is_hidden(): void
     {
         $user = User::factory()->create([
             'password' => bcrypt('secret'),
@@ -70,7 +70,7 @@ class UserTest extends TestCase
         $this->assertArrayNotHasKey('password', $userArray);
     }
 
-    public function test_user_remember_token_is_hidden()
+    public function test_user_remember_token_is_hidden(): void
     {
         $user = User::factory()->create([
             'remember_token' => 'test-token',

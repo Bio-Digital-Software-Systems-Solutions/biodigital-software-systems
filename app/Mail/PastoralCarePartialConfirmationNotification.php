@@ -38,8 +38,8 @@ class PastoralCarePartialConfirmationNotification extends Mailable implements Sh
             : $this->appointment->pastor->first_name.' '.$this->appointment->pastor->last_name;
 
         return new Envelope(
-            subject: "Confirmation reçue de {$confirmerName} - En attente de votre confirmation - ICC Munich",
             from: config('mail.from.address', 'noreply@icc-munich.de'),
+            subject: "Confirmation reçue de {$confirmerName} - En attente de votre confirmation - ICC Munich",
         );
     }
 

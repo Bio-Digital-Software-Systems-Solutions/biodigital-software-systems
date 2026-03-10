@@ -14,6 +14,69 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $department_id
+ * @property int $created_by
+ * @property string $name
+ * @property string|null $description
+ * @property WorkflowStatus $status
+ * @property WorkflowTriggerType $trigger_type
+ * @property WorkflowScope $scope
+ * @property array<array-key, mixed>|null $trigger_config
+ * @property array<array-key, mixed>|null $variables
+ * @property array<array-key, mixed>|null $settings
+ * @property int $version
+ * @property bool $is_template
+ * @property int|null $parent_workflow_id
+ * @property \Illuminate\Support\Carbon|null $activated_at
+ * @property \Illuminate\Support\Carbon|null $deprecated_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, DepartmentWorkflow> $childWorkflows
+ * @property-read int|null $child_workflows_count
+ * @property-read \App\Models\User $creator
+ * @property-read \App\Models\Department $department
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowInstance> $instances
+ * @property-read int|null $instances_count
+ * @property-read DepartmentWorkflow|null $parentWorkflow
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowStep> $steps
+ * @property-read int|null $steps_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowTransition> $transitions
+ * @property-read int|null $transitions_count
+ * @method static \Database\Factories\DepartmentWorkflowFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereActivatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereDeprecatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereIsTemplate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereParentWorkflowId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereScope($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereSettings($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereTriggerConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereTriggerType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereVariables($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow whereVersion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentWorkflow withoutTrashed()
+ * @mixin \Eloquent
+ */
 class DepartmentWorkflow extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
@@ -53,7 +116,7 @@ class DepartmentWorkflow extends Model
     {
         parent::boot();
 
-        static::creating(function (self $model) {
+        static::creating(function (self $model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }

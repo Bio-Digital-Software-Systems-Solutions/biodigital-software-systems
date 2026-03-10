@@ -27,7 +27,7 @@ class MessageFactory extends Factory
     {
         return [
             'subject' => $this->faker->optional(0.7)->sentence(4),
-            'content' => $this->faker->paragraphs(rand(1, 3), true),
+            'content' => $this->faker->paragraphs(random_int(1, 3), true),
             'sender_id' => User::factory(),
             'receiver_id' => User::factory(),
             'type' => $this->faker->randomElement(['direct', 'broadcast', 'system']),
@@ -40,7 +40,7 @@ class MessageFactory extends Factory
      */
     public function unread(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'read_at' => null,
         ]);
     }
@@ -50,7 +50,7 @@ class MessageFactory extends Factory
      */
     public function read(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'read_at' => $this->faker->dateTimeBetween('-1 week', 'now'),
         ]);
     }
@@ -60,7 +60,7 @@ class MessageFactory extends Factory
      */
     public function direct(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'direct',
         ]);
     }
@@ -70,7 +70,7 @@ class MessageFactory extends Factory
      */
     public function broadcast(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'broadcast',
         ]);
     }
@@ -80,7 +80,7 @@ class MessageFactory extends Factory
      */
     public function system(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'system',
             'subject' => 'System Notification',
         ]);
@@ -91,7 +91,7 @@ class MessageFactory extends Factory
      */
     public function noSubject(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'subject' => null,
         ]);
     }
@@ -101,7 +101,7 @@ class MessageFactory extends Factory
      */
     public function between(User $sender, User $receiver): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'sender_id' => $sender->id,
             'receiver_id' => $receiver->id,
         ]);
@@ -112,7 +112,7 @@ class MessageFactory extends Factory
      */
     public function longContent(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'content' => $this->faker->paragraphs(10, true),
         ]);
     }
@@ -122,7 +122,7 @@ class MessageFactory extends Factory
      */
     public function htmlContent(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'content' => '<p>This is a <strong>test</strong> message with <em>HTML</em> tags.</p><ul><li>Item 1</li><li>Item 2</li></ul>',
         ]);
     }

@@ -36,12 +36,8 @@ class WorkflowApprovalRequired extends Notification implements ShouldQueue
             ->line("Une demande d'approbation attend votre décision.")
             ->line("**Workflow:** {$workflow->name}")
             ->line("**Étape:** {$step->name}")
-            ->when($initiator, function ($mail) use ($initiator) {
-                return $mail->line("**Initié par:** {$initiator->name}");
-            })
-            ->when($step->description, function ($mail) use ($step) {
-                return $mail->line("**Description:** {$step->description}");
-            })
+            ->when($initiator, fn($mail) => $mail->line("**Initié par:** {$initiator->name}"))
+            ->when($step->description, fn($mail) => $mail->line("**Description:** {$step->description}"))
             ->action('Approuver / Rejeter', url("/workflow-instances/{$this->workflowInstance->uuid}/approve/{$this->stepInstance->uuid}"))
             ->line('Merci de prendre une décision rapidement.');
     }

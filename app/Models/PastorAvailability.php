@@ -144,7 +144,7 @@ class PastorAvailability extends Model
             $slots = $this->selected_slots;
 
             // Sort slots chronologically
-            usort($slots, function ($a, $b) {
+            usort($slots, function ($a, $b): int|float {
                 // Convert HH:MM to minutes for comparison
                 $timeA = sscanf($a, "%d:%d");
                 $timeB = sscanf($b, "%d:%d");
@@ -169,7 +169,7 @@ class PastorAvailability extends Model
                 $startTime = Carbon::createFromFormat('H:i', $this->start_time);
                 $endTime = Carbon::createFromFormat('H:i', $this->end_time);
             }
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             // If parsing fails, try to extract just the H:i part
             $startTimeStr = substr($this->start_time, 0, 5);
             $endTimeStr = substr($this->end_time, 0, 5);
@@ -189,7 +189,7 @@ class PastorAvailability extends Model
     }
 
     // Check if this availability applies to a specific date
-    public function appliesTo($date): bool
+    public function appliesTo(\DateTimeInterface|\Carbon\WeekDay|\Carbon\Month|string|int|float|null $date): bool
     {
         $carbonDate = Carbon::parse($date);
 

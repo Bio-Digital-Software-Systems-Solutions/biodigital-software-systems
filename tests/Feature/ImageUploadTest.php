@@ -29,7 +29,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function book_can_upload_cover_image_via_file()
+    public function book_can_upload_cover_image_via_file(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('manage library');
@@ -37,7 +37,7 @@ class ImageUploadTest extends TestCase
 
         $file = UploadedFile::fake()->image('cover.jpg');
 
-        $response = $this->post(route('books.store'), [
+        $this->post(route('books.store'), [
             'title' => 'Test Book',
             'author' => 'Test Author',
             'isbn' => '1234567890',
@@ -52,13 +52,13 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function book_can_upload_cover_image_via_tus()
+    public function book_can_upload_cover_image_via_tus(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('manage library');
         $this->actingAs($user);
 
-        $response = $this->post(route('books.store'), [
+        $this->post(route('books.store'), [
             'title' => 'Test Book',
             'author' => 'Test Author',
             'isbn' => '1234567890',
@@ -72,7 +72,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function book_deletes_old_cover_when_uploading_new_one()
+    public function book_deletes_old_cover_when_uploading_new_one(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('manage library');
@@ -87,7 +87,7 @@ class ImageUploadTest extends TestCase
 
         $newFile = UploadedFile::fake()->image('new-cover.jpg');
 
-        $response = $this->put(route('books.update', $book), [
+        $this->put(route('books.update', $book), [
             'title' => $book->title,
             'author' => $book->author,
             'isbn' => $book->isbn,
@@ -102,7 +102,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function event_can_upload_avatar_via_file()
+    public function event_can_upload_avatar_via_file(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create events');
@@ -110,7 +110,7 @@ class ImageUploadTest extends TestCase
 
         $file = UploadedFile::fake()->image('avatar.jpg');
 
-        $response = $this->post(route('events.store'), [
+        $this->post(route('events.store'), [
             'title' => 'Test Event',
             'description' => 'Test Description',
             'start_date' => now(),
@@ -124,13 +124,13 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function event_can_upload_avatar_via_tus()
+    public function event_can_upload_avatar_via_tus(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create events');
         $this->actingAs($user);
 
-        $response = $this->post(route('events.store'), [
+        $this->post(route('events.store'), [
             'title' => 'Test Event',
             'description' => 'Test Description',
             'start_date' => now(),
@@ -143,7 +143,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function training_can_upload_image_via_file()
+    public function training_can_upload_image_via_file(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create trainings');
@@ -151,7 +151,7 @@ class ImageUploadTest extends TestCase
 
         $file = UploadedFile::fake()->image('training.jpg');
 
-        $response = $this->post(route('trainings.store'), [
+        $this->post(route('trainings.store'), [
             'title' => 'Test Training',
             'description' => 'Test Description',
             'duration' => '10 hours',
@@ -166,13 +166,13 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function training_can_upload_image_via_tus()
+    public function training_can_upload_image_via_tus(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create trainings');
         $this->actingAs($user);
 
-        $response = $this->post(route('trainings.store'), [
+        $this->post(route('trainings.store'), [
             'title' => 'Test Training',
             'description' => 'Test Description',
             'duration' => '10 hours',
@@ -187,7 +187,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function task_can_upload_image_via_file()
+    public function task_can_upload_image_via_file(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create tasks');
@@ -198,7 +198,7 @@ class ImageUploadTest extends TestCase
 
         $file = UploadedFile::fake()->image('task.jpg');
 
-        $response = $this->post(route('tasks.store'), [
+        $this->post(route('tasks.store'), [
             'title' => 'Test Task',
             'description' => 'Test Description',
             'priority' => 'medium',
@@ -213,7 +213,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function project_can_upload_image_via_file()
+    public function project_can_upload_image_via_file(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create programs');
@@ -221,7 +221,7 @@ class ImageUploadTest extends TestCase
 
         $file = UploadedFile::fake()->image('project.jpg');
 
-        $response = $this->post(route('projects.store'), [
+        $this->post(route('projects.store'), [
             'name' => 'Test Project',
             'slug' => 'test-project',
             'description' => 'Test Description',
@@ -236,7 +236,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function department_can_upload_image_via_file()
+    public function department_can_upload_image_via_file(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('manage departments');
@@ -244,7 +244,7 @@ class ImageUploadTest extends TestCase
 
         $file = UploadedFile::fake()->image('department.jpg');
 
-        $response = $this->post(route('departments.store'), [
+        $this->post(route('departments.store'), [
             'name' => 'Test Department',
             'code' => 'TEST-DEPT',
             'description' => 'Test Description',
@@ -257,7 +257,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function group_can_upload_image_via_file()
+    public function group_can_upload_image_via_file(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create groups');
@@ -265,7 +265,7 @@ class ImageUploadTest extends TestCase
 
         $file = UploadedFile::fake()->image('group.jpg');
 
-        $response = $this->post(route('groups.store'), [
+        $this->post(route('groups.store'), [
             'name' => 'Test Group',
             'code' => 'TEST-GRP',
             'description' => 'Test Description',
@@ -278,7 +278,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function stock_can_upload_image_via_file()
+    public function stock_can_upload_image_via_file(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('manage stocks');
@@ -288,7 +288,7 @@ class ImageUploadTest extends TestCase
 
         $category = \App\Models\Category::factory()->create(['type' => 'stock']);
 
-        $response = $this->post(route('stocks.store'), [
+        $this->post(route('stocks.store'), [
             'name' => 'Test Stock',
             'sku' => 'TEST-SKU',
             'description' => 'Test Description',
@@ -305,7 +305,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function library_can_upload_image_via_file()
+    public function library_can_upload_image_via_file(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('manage library');
@@ -313,7 +313,7 @@ class ImageUploadTest extends TestCase
 
         $file = UploadedFile::fake()->image('library.jpg');
 
-        $response = $this->post(route('libraries.store'), [
+        $this->post(route('libraries.store'), [
             'name' => 'Test Library',
             'code' => 'TEST-LIB',
             'description' => 'Test Description',
@@ -326,7 +326,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function old_images_are_deleted_when_updating()
+    public function old_images_are_deleted_when_updating(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('manage departments');
@@ -342,7 +342,7 @@ class ImageUploadTest extends TestCase
 
         $newFile = UploadedFile::fake()->image('new-image.jpg');
 
-        $response = $this->put(route('departments.update', $department), [
+        $this->put(route('departments.update', $department), [
             'name' => $department->name,
             'code' => $department->code,
             'image' => $newFile,
@@ -354,7 +354,7 @@ class ImageUploadTest extends TestCase
     }
 
     /** @test */
-    public function tus_uploads_create_correct_file_paths()
+    public function tus_uploads_create_correct_file_paths(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user);

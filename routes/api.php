@@ -19,17 +19,13 @@ use App\Http\Controllers\TusUploadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+Route::get('/user', fn(Request $request) => $request->user())->middleware('auth:sanctum');
 
 // CSRF token refresh endpoint
-Route::get('/csrf-token', function () {
-    return response()->json(['csrf_token' => csrf_token()]);
-})->middleware('auth:sanctum');
+Route::get('/csrf-token', fn() => response()->json(['csrf_token' => csrf_token()]))->middleware('auth:sanctum');
 
 // TUS protocol file upload endpoints (authenticated)
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function (): void {
     Route::any('/files/{fileId?}', TusUploadController::class)->where('fileId', '.*');
     Route::get('/files/{fileId}/metadata', [TusUploadController::class, 'metadata']);
 });
@@ -39,7 +35,7 @@ Route::get('/trainings', [App\Http\Controllers\TrainingController::class, 'index
     ->name('api.trainings.index');
 
 // Public Pastoral Care API endpoints (for public booking interface)
-Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function () {
+Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function (): void {
     // Get list of available pastors
     Route::get('/pastors', [PastoralCareController::class, 'getPastors'])
         ->name('pastors');
@@ -105,9 +101,9 @@ Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function () {
         ->name('proposals.reject-counter');
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function (): void {
     // Profile API - Manage user's languages, interests, skills, privacy
-    Route::prefix('profile')->name('api.profile.')->group(function () {
+    Route::prefix('profile')->name('api.profile.')->group(function (): void {
         // Languages
         Route::get('/languages', [ProfileController::class, 'getLanguages'])->name('languages.index');
         Route::put('/languages', [ProfileController::class, 'updateLanguages'])->name('languages.update');
@@ -183,7 +179,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('sprints/{sprint}/burndown', [SprintController::class, 'burndownChart'])->name('api.sprints.burndown');
 
     // Project Appointments API
-    Route::prefix('projects/{project:uuid}/appointments')->name('api.projects.appointments.')->group(function () {
+    Route::prefix('projects/{project:uuid}/appointments')->name('api.projects.appointments.')->group(function (): void {
         Route::get('/', [ProjectAppointmentController::class, 'index'])->name('index');
         Route::get('/month', [ProjectAppointmentController::class, 'month'])->name('month');
         Route::post('/', [ProjectAppointmentController::class, 'store'])->name('store');
@@ -192,7 +188,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Task Appointments API
-    Route::prefix('tasks/{task:uuid}/appointments')->name('api.tasks.appointments.')->group(function () {
+    Route::prefix('tasks/{task:uuid}/appointments')->name('api.tasks.appointments.')->group(function (): void {
         Route::get('/', [TaskAppointmentController::class, 'index'])->name('index');
         Route::get('/month', [TaskAppointmentController::class, 'month'])->name('month');
         Route::post('/', [TaskAppointmentController::class, 'store'])->name('store');
@@ -201,7 +197,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Department Meetings API
-    Route::prefix('departments/{department:uuid}/meetings')->name('api.departments.meetings.')->group(function () {
+    Route::prefix('departments/{department:uuid}/meetings')->name('api.departments.meetings.')->group(function (): void {
         Route::get('/', [DepartmentMeetingController::class, 'index'])->name('index');
         Route::get('/month', [DepartmentMeetingController::class, 'byMonth'])->name('month');
         Route::post('/', [DepartmentMeetingController::class, 'store'])->name('store');
@@ -211,7 +207,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Department Documents API
-    Route::prefix('departments/{department:uuid}/documents')->name('api.departments.documents.')->group(function () {
+    Route::prefix('departments/{department:uuid}/documents')->name('api.departments.documents.')->group(function (): void {
         Route::get('/', [DepartmentDocumentController::class, 'index'])->name('index');
         Route::get('/search', [DepartmentDocumentController::class, 'search'])->name('search');
         Route::get('/year/{year}', [DepartmentDocumentController::class, 'byYear'])->name('year');
@@ -225,7 +221,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Department Document Categories API (subfolders)
-    Route::prefix('departments/{department:uuid}/document-categories')->name('api.departments.document-categories.')->group(function () {
+    Route::prefix('departments/{department:uuid}/document-categories')->name('api.departments.document-categories.')->group(function (): void {
         Route::get('/', [DepartmentDocumentCategoryController::class, 'index'])->name('index');
         Route::post('/', [DepartmentDocumentCategoryController::class, 'store'])->name('store');
         Route::patch('/{category:uuid}', [DepartmentDocumentCategoryController::class, 'update'])->name('update');
@@ -233,7 +229,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Authenticated Pastoral Care API endpoints (for pastors)
-    Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function () {
+    Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function (): void {
         // List appointments for authenticated pastor
         Route::get('/appointments', [PastoralCareController::class, 'index'])
             ->name('appointments.index');
@@ -281,9 +277,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // ========================================
 
     // Event Tickets
-    Route::prefix('events/{event}')->name('api.events.')->group(function () {
+    Route::prefix('events/{event}')->name('api.events.')->group(function (): void {
         // Tickets
-        Route::prefix('tickets')->name('tickets.')->group(function () {
+        Route::prefix('tickets')->name('tickets.')->group(function (): void {
             Route::get('/', [EventTicketController::class, 'index'])->name('index');
             Route::get('/available', [EventTicketController::class, 'available'])->name('available');
             Route::post('/', [EventTicketController::class, 'store'])->name('store');
@@ -298,7 +294,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/tickets/reorder', [EventTicketController::class, 'reorder'])->name('tickets.reorder');
 
         // Registrations
-        Route::prefix('registrations')->name('registrations.')->group(function () {
+        Route::prefix('registrations')->name('registrations.')->group(function (): void {
             Route::get('/', [EventRegistrationController::class, 'index'])->name('index');
             Route::post('/', [EventRegistrationController::class, 'register'])->name('store');
             Route::get('/stats', [EventRegistrationController::class, 'stats'])->name('stats');
@@ -315,7 +311,7 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // Check-in
-        Route::prefix('checkin')->name('checkin.')->group(function () {
+        Route::prefix('checkin')->name('checkin.')->group(function (): void {
             Route::get('/', [EventCheckInController::class, 'index'])->name('index');
             Route::get('/stats', [EventCheckInController::class, 'stats'])->name('stats');
             Route::get('/recent', [EventCheckInController::class, 'recent'])->name('recent');
@@ -332,7 +328,7 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // Badges
-        Route::prefix('badges')->name('badges.')->group(function () {
+        Route::prefix('badges')->name('badges.')->group(function (): void {
             Route::get('/', [EventBadgeController::class, 'index'])->name('index');
             Route::get('/stats', [EventBadgeController::class, 'stats'])->name('stats');
             Route::get('/templates', [EventBadgeController::class, 'templates'])->name('templates');
@@ -353,7 +349,7 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         // Analytics
-        Route::prefix('analytics')->name('analytics.')->group(function () {
+        Route::prefix('analytics')->name('analytics.')->group(function (): void {
             Route::get('/dashboard', [EventAnalyticsController::class, 'dashboard'])->name('dashboard');
             Route::get('/overview', [EventAnalyticsController::class, 'overview'])->name('overview');
             Route::get('/registrations', [EventAnalyticsController::class, 'registrations'])->name('registrations');

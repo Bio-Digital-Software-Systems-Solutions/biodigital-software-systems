@@ -14,7 +14,7 @@ class ProgramSeeder extends Seeder
      */
     public function run(): void
     {
-        $users = User::whereHas('roles', function ($query) {
+        $users = User::whereHas('roles', function ($query): void {
             $query->whereIn('name', ['admin', 'project-manager', 'super-admin']);
         })->get();
 

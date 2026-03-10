@@ -58,7 +58,7 @@ class DepartmentReportFactory extends Factory
      */
     public function forDepartment(Department $department): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'department_id' => $department->id,
         ]);
     }
@@ -68,7 +68,7 @@ class DepartmentReportFactory extends Factory
      */
     public function byAuthor(User $author): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'author_id' => $author->id,
         ]);
     }
@@ -78,9 +78,9 @@ class DepartmentReportFactory extends Factory
      */
     public function monthly(?Carbon $date = null): static
     {
-        $date = $date ?? Carbon::now();
+        $date ??= Carbon::now();
 
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'period_type' => ReportPeriodType::MONTHLY,
             'period_start' => $date->copy()->startOfMonth(),
             'period_end' => $date->copy()->endOfMonth(),
@@ -92,9 +92,9 @@ class DepartmentReportFactory extends Factory
      */
     public function quarterly(?Carbon $date = null): static
     {
-        $date = $date ?? Carbon::now();
+        $date ??= Carbon::now();
 
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'period_type' => ReportPeriodType::QUARTERLY,
             'period_start' => $date->copy()->startOfQuarter(),
             'period_end' => $date->copy()->endOfQuarter(),
@@ -106,9 +106,9 @@ class DepartmentReportFactory extends Factory
      */
     public function annual(?int $year = null): static
     {
-        $year = $year ?? Carbon::now()->year;
+        $year ??= Carbon::now()->year;
 
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'period_type' => ReportPeriodType::ANNUAL,
             'period_start' => Carbon::create($year)->startOfYear(),
             'period_end' => Carbon::create($year)->endOfYear(),
@@ -120,7 +120,7 @@ class DepartmentReportFactory extends Factory
      */
     public function draft(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ReportStatus::DRAFT,
         ]);
     }
@@ -130,7 +130,7 @@ class DepartmentReportFactory extends Factory
      */
     public function pendingReview(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ReportStatus::PENDING_REVIEW,
             'submitted_at' => now(),
         ]);
@@ -141,7 +141,7 @@ class DepartmentReportFactory extends Factory
      */
     public function approved(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ReportStatus::APPROVED,
             'submitted_at' => now()->subDay(),
             'approved_at' => now(),
@@ -154,7 +154,7 @@ class DepartmentReportFactory extends Factory
      */
     public function published(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ReportStatus::PUBLISHED,
             'submitted_at' => now()->subDays(2),
             'approved_at' => now()->subDay(),
@@ -168,7 +168,7 @@ class DepartmentReportFactory extends Factory
      */
     public function ofType(ReportType $type): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => $type,
         ]);
     }
@@ -178,7 +178,7 @@ class DepartmentReportFactory extends Factory
      */
     public function forPeriod(Carbon $start, Carbon $end): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'period_type' => ReportPeriodType::CUSTOM,
             'period_start' => $start,
             'period_end' => $end,
@@ -190,7 +190,7 @@ class DepartmentReportFactory extends Factory
      */
     public function withTemplate(ReportTemplate $template): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'template_id' => $template->id,
         ]);
     }
@@ -200,7 +200,7 @@ class DepartmentReportFactory extends Factory
      */
     public function withSummary(string $summary): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'executive_summary' => $summary,
         ]);
     }

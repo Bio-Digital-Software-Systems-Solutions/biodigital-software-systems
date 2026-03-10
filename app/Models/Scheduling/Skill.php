@@ -9,6 +9,34 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property string $name
+ * @property string|null $description
+ * @property string|null $category
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $employees
+ * @property-read int|null $employees_count
+ * @property-read int $employee_count
+ * @method static Builder<static>|Skill active()
+ * @method static Builder<static>|Skill byCategory(string $category)
+ * @method static Builder<static>|Skill newModelQuery()
+ * @method static Builder<static>|Skill newQuery()
+ * @method static Builder<static>|Skill query()
+ * @method static Builder<static>|Skill requiringCertification()
+ * @method static Builder<static>|Skill whereCategory($value)
+ * @method static Builder<static>|Skill whereCreatedAt($value)
+ * @method static Builder<static>|Skill whereDescription($value)
+ * @method static Builder<static>|Skill whereId($value)
+ * @method static Builder<static>|Skill whereIsActive($value)
+ * @method static Builder<static>|Skill whereName($value)
+ * @method static Builder<static>|Skill whereUpdatedAt($value)
+ * @method static Builder<static>|Skill whereUuid($value)
+ * @mixin \Eloquent
+ */
 class Skill extends Model
 {
     use HasFactory;
@@ -33,7 +61,7 @@ class Skill extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }

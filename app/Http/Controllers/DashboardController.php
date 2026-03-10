@@ -53,14 +53,14 @@ class DashboardController extends Controller
         $booksChange = $this->calculatePercentageChange($availableBooksLastMonth, $availableBooks);
 
         // Unread messages (from chat) - simplified count of recent messages in user's rooms
-        $unreadMessages = ChatMessage::whereHas('room.participants', function ($query) use ($user) {
+        $unreadMessages = ChatMessage::whereHas('room.participants', function ($query) use ($user): void {
             $query->where('users.id', $user->id);
         })
             ->where('sender_id', '!=', $user->id)
             ->where('created_at', '>', Carbon::now()->subDays(7))
             ->count();
 
-        $unreadMessagesLastMonth = ChatMessage::whereHas('room.participants', function ($query) use ($user) {
+        $unreadMessagesLastMonth = ChatMessage::whereHas('room.participants', function ($query) use ($user): void {
             $query->where('users.id', $user->id);
         })
             ->where('sender_id', '!=', $user->id)
@@ -181,7 +181,7 @@ class DashboardController extends Controller
         }
 
         // Recent messages
-        $recentMessages = ChatMessage::whereHas('room.participants', function ($query) use ($user) {
+        $recentMessages = ChatMessage::whereHas('room.participants', function ($query) use ($user): void {
             $query->where('users.id', $user->id);
         })
             ->with(['sender'])
@@ -194,7 +194,7 @@ class DashboardController extends Controller
                 'id' => 'message-'.$message->id,
                 'type' => 'message',
                 'title' => 'Message de '.($message->sender->name ?? 'Utilisateur inconnu'),
-                'description' => substr($message->content, 0, 50).(strlen($message->content) > 50 ? '...' : ''),
+                'description' => substr((string) $message->content, 0, 50).(strlen((string) $message->content) > 50 ? '...' : ''),
                 'time' => $message->created_at->diffForHumans(),
                 'icon' => 'ChatBubbleLeftRightIcon',
                 'url' => route('chat.index'),
@@ -214,7 +214,7 @@ class DashboardController extends Controller
         }
 
         // Count events where user is a participant
-        $participatedEvents = Event::whereHas('participants', function ($query) use ($user) {
+        $participatedEvents = Event::whereHas('participants', function ($query) use ($user): void {
             $query->where('users.id', $user->id);
         })
             ->count();
@@ -242,15 +242,15 @@ class DashboardController extends Controller
             // Get all active quizzes that are available and not yet taken by the user
             $quizzes = Quiz::with('training')
                 ->where('is_active', true)
-                ->where(function ($query) use ($now) {
+                ->where(function ($query) use ($now): void {
                     $query->where('available_from', '<=', $now)
                         ->orWhereNull('available_from');
                 })
-                ->where(function ($query) use ($now) {
+                ->where(function ($query) use ($now): void {
                     $query->where('available_until', '>=', $now)
                         ->orWhereNull('available_until');
                 })
-                ->whereDoesntHave('attempts', function ($query) use ($user) {
+                ->whereDoesntHave('attempts', function ($query) use ($user): void {
                     $query->where('student_id', $user->id)
                         ->where('status', 'completed');
                 })
@@ -258,7 +258,7 @@ class DashboardController extends Controller
                 ->limit(5)
                 ->get();
 
-            return $quizzes->map(function ($quiz) use ($now) {
+            return $quizzes->map(function ($quiz) use ($now): array {
                 $daysUntilDeadline = $quiz->available_until
                     ? $now->diffInDays($quiz->available_until, false)
                     : null;
@@ -282,7 +282,7 @@ class DashboardController extends Controller
                 ];
             })->toArray();
 
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             // Return empty array if there's any database/table issue
             return [];
         }
@@ -298,7 +298,7 @@ class DashboardController extends Controller
             // Count passed attempts (where score >= passing_score of the quiz)
             $passedAttempts = QuizAttempt::where('student_id', $user->id)
                 ->where('status', 'completed')
-                ->whereHas('quiz', function ($query) {
+                ->whereHas('quiz', function ($query): void {
                     $query->whereColumn('quiz_attempts.score', '>=', 'quizzes.passing_score');
                 })
                 ->count();
@@ -308,17 +308,17 @@ class DashboardController extends Controller
                 ->avg('score');
 
             $pendingQuizzes = Quiz::where('is_active', true)
-                ->where(function ($query) {
+                ->where(function ($query): void {
                     $now = Carbon::now();
                     $query->where('available_from', '<=', $now)
                         ->orWhereNull('available_from');
                 })
-                ->where(function ($query) {
+                ->where(function ($query): void {
                     $now = Carbon::now();
                     $query->where('available_until', '>=', $now)
                         ->orWhereNull('available_until');
                 })
-                ->whereDoesntHave('attempts', function ($query) use ($user) {
+                ->whereDoesntHave('attempts', function ($query) use ($user): void {
                     $query->where('student_id', $user->id)
                         ->where('status', 'completed');
                 })
@@ -331,7 +331,7 @@ class DashboardController extends Controller
                 'pending_quizzes' => $pendingQuizzes,
                 'pass_rate' => $totalAttempts > 0 ? round(($passedAttempts / $totalAttempts) * 100, 1) : 0,
             ];
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             // Return default stats if there's any database/table issue
             return [
                 'total_completed' => 0,

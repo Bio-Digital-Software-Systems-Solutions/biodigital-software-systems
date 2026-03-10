@@ -35,7 +35,7 @@ class PastoralCareStoreRequest extends FormRequest
             'pastor_id' => [
                 'required',
                 'exists:users,id',
-                function ($attribute, $value, $fail) {
+                function ($attribute, $value, $fail): void {
                     if ($value) {
                         $user = User::find($value);
                         if (! $user || ! $user->hasRole('pastor')) {
@@ -51,13 +51,13 @@ class PastoralCareStoreRequest extends FormRequest
                 'required',
                 'date',
                 'after_or_equal:today',
-                function ($attribute, $value, $fail) {
+                function ($attribute, $value, $fail): void {
                     try {
                         // Don't allow booking too far in advance (6 months)
                         if (Carbon::parse($value) > now()->addMonths(6)) {
                             $fail('La date de rendez-vous ne peut pas être plus de 6 mois dans le futur.');
                         }
-                    } catch (\Exception $e) {
+                    } catch (\Exception) {
                         // Skip validation if date parsing fails
                         // (Laravel's built-in date validation will catch invalid formats)
                         return;
@@ -67,14 +67,14 @@ class PastoralCareStoreRequest extends FormRequest
             'appointment_time' => [
                 'required',
                 'date_format:H:i',
-                function ($attribute, $value, $fail) {
+                function ($attribute, $value, $fail): void {
                     try {
                         $time = Carbon::createFromFormat('H:i', $value);
                         // Check business hours (9 AM to 5 PM)
                         if ($time->hour < 9 || $time->hour >= 17) {
                             $fail('L\'heure de rendez-vous doit être entre 09:00 et 17:00.');
                         }
-                    } catch (\Exception $e) {
+                    } catch (\Exception) {
                         // Skip validation if time parsing fails
                         // (Laravel's built-in date_format validation will catch invalid formats)
                         return;
@@ -86,7 +86,7 @@ class PastoralCareStoreRequest extends FormRequest
                 'integer',
                 'min:30',
                 'max:180',
-                function ($attribute, $value, $fail) {
+                function ($attribute, $value, $fail): void {
                     // Duration must be in 30-minute increments
                     if (is_numeric($value) && ($value % 30 !== 0)) {
                         $fail('La durée doit être un multiple de 30 minutes.');
@@ -101,7 +101,7 @@ class PastoralCareStoreRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:pastoral_care_themes,id',
-                function ($attribute, $value, $fail) {
+                function ($attribute, $value, $fail): void {
                     $theme = PastoralCareTheme::find($value);
                     if ($theme && ! $theme->is_active) {
                         $fail('Le thème sélectionné n\'est plus disponible.');
@@ -166,7 +166,7 @@ class PastoralCareStoreRequest extends FormRequest
      */
     public function withValidator($validator): void
     {
-        $validator->after(function ($validator) {
+        $validator->after(function ($validator): void {
             if (! $validator->errors()->any()) {
                 $this->validateTimeSlotAvailability($validator);
             }
@@ -198,7 +198,7 @@ class PastoralCareStoreRequest extends FormRequest
                         'Ce créneau horaire n\'est pas disponible.'
                     );
                 }
-            } catch (\Exception $e) {
+            } catch (\Exception) {
                 // Skip validation if date/time parsing fails
                 // (Laravel's built-in date validation will catch invalid formats)
                 return;

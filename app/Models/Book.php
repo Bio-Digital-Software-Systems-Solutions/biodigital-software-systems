@@ -9,21 +9,29 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $title
  * @property string $author
  * @property string|null $isbn
  * @property string|null $description
+ * @property string|null $cover_image
+ * @property string|null $images
  * @property string|null $rental_price
  * @property int $max_rental_days
  * @property int $stock_quantity
+ * @property int $total_copies
+ * @property int $available_copies
  * @property int|null $category_id
+ * @property int|null $library_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BookRental> $bookRentals
  * @property-read int|null $book_rentals_count
  * @property-read \App\Models\Category|null $category
@@ -31,6 +39,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read int $total_quantity
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Library> $libraries
  * @property-read int|null $libraries_count
+ * @property-read \App\Models\Library|null $library
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book available()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book byAuthor($author)
  * @method static \Database\Factories\BookFactory factory($count = null, $state = [])
@@ -38,36 +47,27 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereAuthor($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereAvailableCopies($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereCategoryId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereCoverImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereImages($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereIsbn($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereLibraryId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereMaxRentalDays($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereRentalPrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereStockQuantity($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereTitle($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereUpdatedAt($value)
- * @property string $uuid
- * @property string|null $cover_image
- * @property string|null $images
- * @property int $total_copies
- * @property int $available_copies
- * @property int|null $library_id
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- * @property-read \App\Models\Library|null $library
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereAvailableCopies($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereCoverImage($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereImages($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereLibraryId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereTotalCopies($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Book whereUuid($value)
  * @mixin \Eloquent
  */
 class Book extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -79,6 +79,7 @@ class Book extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -155,7 +156,7 @@ class Book extends Model
      */
     public function getTotalAvailableQuantityAttribute(): int
     {
-        return $this->libraries()->sum('library_book.available_quantity');
+        return (int) $this->libraries()->sum('library_book.available_quantity');
     }
 
     /**
@@ -163,7 +164,7 @@ class Book extends Model
      */
     public function getTotalQuantityAttribute(): int
     {
-        return $this->libraries()->sum('library_book.quantity');
+        return (int) $this->libraries()->sum('library_book.quantity');
     }
 
     /**
@@ -179,7 +180,7 @@ class Book extends Model
      */
     public function scopeAvailable($query)
     {
-        return $query->whereHas('libraries', function ($q) {
+        return $query->whereHas('libraries', function ($q): void {
             $q->where('library_book.available_quantity', '>', 0);
         });
     }

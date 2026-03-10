@@ -24,16 +24,16 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_automatically_invalidates_cache_when_user_is_created()
+    public function it_automatically_invalidates_cache_when_user_is_created(): void
     {
         // Set up cache
         $cacheKey = 'users.list';
-        CacheService::remember($cacheKey, fn() => ['test' => 'data'], 3600);
+        CacheService::remember($cacheKey, fn(): array => ['test' => 'data'], 3600);
 
         $this->assertTrue(Cache::has($cacheKey));
 
         // Create a user (should trigger cache invalidation)
-        $user = User::factory()->create([
+        User::factory()->create([
             'first_name' => 'John',
             'last_name' => 'Doe',
             'email' => 'john@example.com'
@@ -44,13 +44,13 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_automatically_invalidates_cache_when_user_is_updated()
+    public function it_automatically_invalidates_cache_when_user_is_updated(): void
     {
         $user = User::factory()->create();
 
         // Set up cache
         $cacheKey = 'users.profile.' . $user->id;
-        CacheService::remember($cacheKey, fn() => ['user' => $user->toArray()], 3600);
+        CacheService::remember($cacheKey, fn(): array => ['user' => $user->toArray()], 3600);
 
         $this->assertTrue(Cache::has($cacheKey));
 
@@ -62,13 +62,13 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_automatically_invalidates_cache_when_user_is_deleted()
+    public function it_automatically_invalidates_cache_when_user_is_deleted(): void
     {
         $user = User::factory()->create();
 
         // Set up cache
         $cacheKey = 'users.active';
-        CacheService::remember($cacheKey, fn() => ['active_users' => 10], 3600);
+        CacheService::remember($cacheKey, fn(): array => ['active_users' => 10], 3600);
 
         $this->assertTrue(Cache::has($cacheKey));
 
@@ -80,7 +80,7 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_invalidates_related_caches_when_user_is_modified()
+    public function it_invalidates_related_caches_when_user_is_modified(): void
     {
         $user = User::factory()->create();
 
@@ -89,9 +89,9 @@ class AutomaticCacheInvalidationTest extends TestCase
         $articlesCacheKey = 'articles.published';
         $dashboardCacheKey = 'dashboard.stats';
 
-        CacheService::remember($eventsCacheKey, fn() => ['events' => []], 3600);
-        CacheService::remember($articlesCacheKey, fn() => ['articles' => []], 3600);
-        CacheService::remember($dashboardCacheKey, fn() => ['stats' => []], 3600);
+        CacheService::remember($eventsCacheKey, fn(): array => ['events' => []], 3600);
+        CacheService::remember($articlesCacheKey, fn(): array => ['articles' => []], 3600);
+        CacheService::remember($dashboardCacheKey, fn(): array => ['stats' => []], 3600);
 
         $this->assertTrue(Cache::has($eventsCacheKey));
         $this->assertTrue(Cache::has($articlesCacheKey));
@@ -107,13 +107,13 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_automatically_invalidates_cache_when_event_is_created()
+    public function it_automatically_invalidates_cache_when_event_is_created(): void
     {
         $user = User::factory()->create();
 
         // Set up cache
         $cacheKey = 'events.upcoming';
-        CacheService::remember($cacheKey, fn() => ['events' => []], 3600);
+        CacheService::remember($cacheKey, fn(): array => ['events' => []], 3600);
 
         $this->assertTrue(Cache::has($cacheKey));
 
@@ -128,13 +128,13 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_automatically_invalidates_cache_when_article_is_created()
+    public function it_automatically_invalidates_cache_when_article_is_created(): void
     {
         $user = User::factory()->create();
 
         // Set up cache
         $cacheKey = 'articles.latest';
-        CacheService::remember($cacheKey, fn() => ['articles' => []], 3600);
+        CacheService::remember($cacheKey, fn(): array => ['articles' => []], 3600);
 
         $this->assertTrue(Cache::has($cacheKey));
 
@@ -149,15 +149,12 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_logs_cache_invalidation_events()
+    public function it_logs_cache_invalidation_events(): void
     {
-        Log::shouldReceive('info')
-            ->atLeast(2) // At least once for create, once for update, possibly more for cache operations
-            ->withArgs(function($message) {
-                return str_contains($message, 'Cache invalidated for model:') ||
-                       str_contains($message, 'Cache pattern') ||
-                       str_contains($message, 'cleared');
-            });
+        Log::shouldReceive('info')->atLeast() // At least once for create, once for update, possibly more for cache operations
+            ->withArgs(fn($message): bool => str_contains((string) $message, 'Cache invalidated for model:') ||
+                   str_contains((string) $message, 'Cache pattern') ||
+                   str_contains((string) $message, 'cleared'));
 
         Log::shouldReceive('error')->zeroOrMoreTimes();
 
@@ -166,7 +163,7 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_handles_cache_invalidation_errors_gracefully()
+    public function it_handles_cache_invalidation_errors_gracefully(): void
     {
         // Mock cache failure
         Cache::shouldReceive('forget')->andThrow(new \Exception('Cache error'));
@@ -180,14 +177,14 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_uses_custom_cache_key_when_defined()
+    public function it_uses_custom_cache_key_when_defined(): void
     {
         // Create a regular user and manually test custom cache key behavior
         $user = User::factory()->create();
 
         // Set up cache with custom key pattern
         $customCacheKey = 'custom_users.test';
-        CacheService::remember($customCacheKey, fn() => ['data' => 'test'], 3600);
+        CacheService::remember($customCacheKey, fn(): array => ['data' => 'test'], 3600);
 
         $this->assertTrue(Cache::has($customCacheKey));
 
@@ -203,7 +200,7 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_clears_pattern_based_cache_keys()
+    public function it_clears_pattern_based_cache_keys(): void
     {
         $user = User::factory()->create();
 
@@ -216,7 +213,7 @@ class AutomaticCacheInvalidationTest extends TestCase
         ];
 
         foreach ($keys as $key) {
-            CacheService::remember($key, fn() => ['data' => 'test'], 3600);
+            CacheService::remember($key, fn(): array => ['data' => 'test'], 3600);
             $this->assertTrue(Cache::has($key));
         }
 
@@ -230,7 +227,7 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_executes_custom_cache_invalidation_if_defined()
+    public function it_executes_custom_cache_invalidation_if_defined(): void
     {
         // Test that ClearsCache trait can execute custom invalidation
         // We'll test this by verifying the method exists and can be called
@@ -251,7 +248,7 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_handles_soft_delete_cache_invalidation()
+    public function it_handles_soft_delete_cache_invalidation(): void
     {
         // Skip if User model doesn't use soft deletes
         if (!in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive(User::class))) {
@@ -262,7 +259,7 @@ class AutomaticCacheInvalidationTest extends TestCase
 
         // Set up cache
         $cacheKey = 'users.active';
-        CacheService::remember($cacheKey, fn() => ['active_users' => 10], 3600);
+        CacheService::remember($cacheKey, fn(): array => ['active_users' => 10], 3600);
 
         $this->assertTrue(Cache::has($cacheKey));
 
@@ -273,7 +270,7 @@ class AutomaticCacheInvalidationTest extends TestCase
         $this->assertFalse(Cache::has($cacheKey));
 
         // Set up cache again
-        CacheService::remember($cacheKey, fn() => ['active_users' => 9], 3600);
+        CacheService::remember($cacheKey, fn(): array => ['active_users' => 9], 3600);
         $this->assertTrue(Cache::has($cacheKey));
 
         // Restore the user
@@ -284,7 +281,7 @@ class AutomaticCacheInvalidationTest extends TestCase
     }
 
     /** @test */
-    public function it_properly_pluralizes_model_names_for_cache_keys()
+    public function it_properly_pluralizes_model_names_for_cache_keys(): void
     {
         $testCases = [
             'User' => 'users',
@@ -299,14 +296,14 @@ class AutomaticCacheInvalidationTest extends TestCase
 
                 protected static $testModelName;
 
-                public static function setTestModelName($name)
+                public static function setTestModelName($name): void
                 {
                     static::$testModelName = $name;
                 }
 
                 protected function getCacheKey(): string
                 {
-                    return $this->pluralize(strtolower(static::$testModelName));
+                    return $this->pluralize(strtolower((string) static::$testModelName));
                 }
             };
 
@@ -315,7 +312,6 @@ class AutomaticCacheInvalidationTest extends TestCase
 
             $reflection = new \ReflectionClass($instance);
             $method = $reflection->getMethod('getCacheKey');
-            $method->setAccessible(true);
 
             $result = $method->invoke($instance);
             $this->assertEquals($expectedPlural, $result, "Failed to pluralize {$modelName} to {$expectedPlural}");

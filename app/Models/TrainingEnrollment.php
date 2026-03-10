@@ -12,7 +12,9 @@ use Spatie\Activitylog\LogOptions;
  * @property int $id
  * @property int $user_id
  * @property int $training_id
+ * @property int|null $training_class_id
  * @property string $status
+ * @property string|null $rejection_reason
  * @property string $progress
  * @property string|null $grade
  * @property string $attendance_rate
@@ -22,8 +24,8 @@ use Spatie\Activitylog\LogOptions;
  * @property string|null $completed_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property int|null $training_class_id
- * @property string|null $rejection_reason
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @method static \Database\Factories\TrainingEnrollmentFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingEnrollment newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingEnrollment newQuery()
@@ -43,8 +45,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingEnrollment whereTrainingId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingEnrollment whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingEnrollment whereUserId($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class TrainingEnrollment extends Model

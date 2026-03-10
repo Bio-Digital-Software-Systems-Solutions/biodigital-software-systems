@@ -69,7 +69,6 @@ class AnalyzePerformance extends Command
         $this->line('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
         $modelPath = app_path('Models');
-        $models = [];
 
         if (! File::isDirectory($modelPath)) {
             $this->error('Models directory not found!');
@@ -92,12 +91,12 @@ class AnalyzePerformance extends Command
                         if ($method->class === $className &&
                             ! $method->isStatic() &&
                             ! $method->isAbstract() &&
-                            strpos($method->name, '__') !== 0
+                            !str_starts_with($method->name, '__')
                         ) {
                             $returnType = $method->getReturnType();
                             if ($returnType) {
                                 $returnTypeName = $returnType->getName();
-                                if (str_contains($returnTypeName, 'Illuminate\\Database\\Eloquent\\Relations\\')) {
+                                if (str_contains((string) $returnTypeName, 'Illuminate\\Database\\Eloquent\\Relations\\')) {
                                     $relations[] = $method->name;
                                 }
                             }
@@ -119,7 +118,7 @@ class AnalyzePerformance extends Command
                             $this->warn('  ⚡ Consider adding eager loading: ' . implode(', ', $relations));
                         }
                     }
-                } catch (\Exception $e) {
+                } catch (\Exception) {
                     continue;
                 }
             }
@@ -161,12 +160,12 @@ class AnalyzePerformance extends Command
         $this->newLine();
 
         // Show slow queries
-        $slowQueries = array_filter($queries, fn($query) => $query['time'] > 100);
+        $slowQueries = array_filter($queries, fn(array $query): bool => $query['time'] > 100);
 
         if (count($slowQueries) > 0) {
             $this->warn('🐌 Slow Queries (>100ms):');
             foreach ($slowQueries as $query) {
-                $this->line(sprintf('  • %.2fms - %s', $query['time'], substr($query['query'], 0, 80)));
+                $this->line(sprintf('  • %.2fms - %s', $query['time'], substr((string) $query['query'], 0, 80)));
             }
         }
 

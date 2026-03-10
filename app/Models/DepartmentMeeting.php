@@ -22,9 +22,27 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property \Illuminate\Support\Carbon|null $notified_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Department $department
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\Appointment $appointment
  * @property-read \App\Models\User $creator
+ * @property-read \App\Models\Department $department
+ * @method static \Database\Factories\DepartmentMeetingFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting whereAppointmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting whereIsMandatory($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting whereNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting whereNotifiedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting whereNotifyAllMembers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentMeeting whereUuid($value)
+ * @mixin \Eloquent
  */
 class DepartmentMeeting extends Model
 {
@@ -78,7 +96,7 @@ class DepartmentMeeting extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }

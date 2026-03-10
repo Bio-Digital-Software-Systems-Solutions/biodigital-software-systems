@@ -55,14 +55,14 @@ class AbsenceController extends Controller
             'department' => $department,
             'absences' => $absences,
             'pendingCount' => $pendingCount,
-            'absenceTypes' => collect(AbsenceType::cases())->map(fn($t) => [
+            'absenceTypes' => collect(AbsenceType::cases())->map(fn($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
                 'requiresApproval' => $t->requiresApproval(),
                 'deductsFromBalance' => $t->deductsFromBalance(),
             ]),
-            'absenceStatuses' => collect(AbsenceStatus::cases())->map(fn($s) => [
+            'absenceStatuses' => collect(AbsenceStatus::cases())->map(fn($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
@@ -95,7 +95,7 @@ class AbsenceController extends Controller
             'department' => $department,
             'absences' => $absences,
             'balances' => $balances,
-            'absenceTypes' => collect(AbsenceType::cases())->map(fn($t) => [
+            'absenceTypes' => collect(AbsenceType::cases())->map(fn($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
@@ -119,7 +119,7 @@ class AbsenceController extends Controller
         return Inertia::render('Departments/Schedule/Absences/Create', [
             'department' => $department,
             'balances' => $balances,
-            'absenceTypes' => collect(AbsenceType::cases())->map(fn($t) => [
+            'absenceTypes' => collect(AbsenceType::cases())->map(fn($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
@@ -230,7 +230,7 @@ class AbsenceController extends Controller
             ->keyBy('leave_type');
 
         // Load interim user with needed fields
-        $absence->load(['interimUser' => function ($query) {
+        $absence->load(['interimUser' => function ($query): void {
             $query->select('id', 'first_name', 'last_name', 'email');
         }]);
 
@@ -250,7 +250,7 @@ class AbsenceController extends Controller
             'department' => $department,
             'absence' => $absenceData,
             'balances' => $balances,
-            'absenceTypes' => collect(AbsenceType::cases())->map(fn($t) => [
+            'absenceTypes' => collect(AbsenceType::cases())->map(fn($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
@@ -442,8 +442,8 @@ class AbsenceController extends Controller
         // Search users in the department (exclude current user)
         $departmentUsers = $department->users()
             ->where('users.id', '!=', $currentUserId)
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
+            ->when($search, function ($query) use ($search): void {
+                $query->where(function ($q) use ($search): void {
                     $q->where('users.first_name', 'like', "%{$search}%")
                         ->orWhere('users.last_name', 'like', "%{$search}%")
                         ->orWhere('users.email', 'like', "%{$search}%");
@@ -452,7 +452,7 @@ class AbsenceController extends Controller
             ->select('users.id', 'users.first_name', 'users.last_name', 'users.email')
             ->limit(15)
             ->get()
-            ->map(fn($user) => [
+            ->map(fn($user): array => [
                 'value' => $user->id,
                 'label' => $user->first_name . ' ' . $user->last_name,
                 'email' => $user->email,
@@ -467,11 +467,11 @@ class AbsenceController extends Controller
             ->where('department_id', $department->id)
             ->where('user_id', '!=', $currentUserId)
             ->active()
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
+            ->when($search, function ($query) use ($search): void {
+                $query->where(function ($q) use ($search): void {
                     $q->where('position', 'like', "%{$search}%")
                         ->orWhere('job_title', 'like', "%{$search}%")
-                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                        ->orWhereHas('user', function ($userQuery) use ($search): void {
                             $userQuery->where('first_name', 'like', "%{$search}%")
                                 ->orWhere('last_name', 'like', "%{$search}%")
                                 ->orWhere('email', 'like', "%{$search}%");
@@ -481,7 +481,7 @@ class AbsenceController extends Controller
             ->limit(15)
             ->get()
             ->filter(fn($emp) => $emp->user) // Ensure user exists
-            ->map(fn($emp) => [
+            ->map(fn($emp): array => [
                 'value' => $emp->user->id,
                 'label' => $emp->user->first_name . ' ' . $emp->user->last_name,
                 'email' => $emp->user->email,
@@ -498,7 +498,7 @@ class AbsenceController extends Controller
                 ->where('is_active', true)
                 ->whereNotIn('id', $departmentUsers->pluck('value'))
                 ->whereNotIn('id', $employees->pluck('value'))
-                ->where(function ($q) use ($search) {
+                ->where(function ($q) use ($search): void {
                     $q->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
@@ -506,7 +506,7 @@ class AbsenceController extends Controller
                 ->select('id', 'first_name', 'last_name', 'email')
                 ->limit(10)
                 ->get()
-                ->map(fn($user) => [
+                ->map(fn($user): array => [
                     'value' => $user->id,
                     'label' => $user->first_name . ' ' . $user->last_name,
                     'email' => $user->email,
@@ -555,7 +555,7 @@ class AbsenceController extends Controller
             ->where('start_date', '<=', $validated['end'])
             ->with('user')
             ->get()
-            ->map(fn($absence) => [
+            ->map(fn($absence): array => [
                 'id' => $absence->uuid,
                 'title' => $absence->user->full_name . ' - ' . $absence->type->label(),
                 'start' => $absence->start_date->toDateString(),

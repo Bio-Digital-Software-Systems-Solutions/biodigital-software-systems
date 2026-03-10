@@ -29,7 +29,7 @@ class BookRentalFlowTest extends TestCase
         $memberRole->givePermissionTo(['view books', 'rent books']);
     }
 
-    public function test_complete_rental_flow()
+    public function test_complete_rental_flow(): void
     {
         // Create a user with member role
         $user = User::factory()->create();
@@ -97,7 +97,7 @@ class BookRentalFlowTest extends TestCase
         $this->assertEquals(15.99 * 7, $rental->rental_fee);
     }
 
-    public function test_rental_appears_immediately_in_list()
+    public function test_rental_appears_immediately_in_list(): void
     {
         // Create test user and data
         $user = User::factory()->create();

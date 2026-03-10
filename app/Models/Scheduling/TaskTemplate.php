@@ -10,6 +10,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property ShiftTaskPriority $priority
+ * @property-read Department|null $department
+ * @method static Builder<static>|TaskTemplate active()
+ * @method static Builder<static>|TaskTemplate byPriority(\App\Enums\Scheduling\ShiftTaskPriority $priority)
+ * @method static Builder<static>|TaskTemplate forDepartment(int $departmentId)
+ * @method static Builder<static>|TaskTemplate newModelQuery()
+ * @method static Builder<static>|TaskTemplate newQuery()
+ * @method static Builder<static>|TaskTemplate query()
+ * @mixin \Eloquent
+ */
 class TaskTemplate extends Model
 {
     use HasFactory;
@@ -38,7 +49,7 @@ class TaskTemplate extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
@@ -99,7 +110,7 @@ class TaskTemplate extends Model
             return null;
         }
 
-        return array_map(fn($item) => [
+        return array_map(fn($item): array => [
             'text' => $item,
             'completed' => false,
             'completed_at' => null,

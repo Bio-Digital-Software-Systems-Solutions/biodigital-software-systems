@@ -25,7 +25,7 @@ class ShiftFactory extends Factory
             'weekly_schedule_id' => WeeklySchedule::factory(),
             'department_id' => Department::factory(),
             'user_id' => $this->faker->optional(0.7)->passthrough(User::factory()),
-            'date' => Carbon::now()->startOfWeek(Carbon::MONDAY)->addDays(rand(0, 6)),
+            'date' => Carbon::now()->startOfWeek(Carbon::MONDAY)->addDays(random_int(0, 6)),
             'start_time' => $times['start'],
             'end_time' => $times['end'],
             'break_duration' => $this->faker->randomElement([0, 30, 60]),
@@ -60,14 +60,14 @@ class ShiftFactory extends Factory
 
     public function unassigned(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'user_id' => null,
         ]);
     }
 
     public function assigned(User $user = null): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'user_id' => $user?->id ?? User::factory(),
             'assigned_at' => now(),
             'status' => ShiftStatus::CONFIRMED,
@@ -76,7 +76,7 @@ class ShiftFactory extends Factory
 
     public function morning(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => ShiftType::MORNING,
             'start_time' => '06:00',
             'end_time' => '14:00',
@@ -85,7 +85,7 @@ class ShiftFactory extends Factory
 
     public function afternoon(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => ShiftType::AFTERNOON,
             'start_time' => '14:00',
             'end_time' => '22:00',
@@ -94,7 +94,7 @@ class ShiftFactory extends Factory
 
     public function night(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => ShiftType::NIGHT,
             'start_time' => '22:00',
             'end_time' => '06:00',
@@ -103,7 +103,7 @@ class ShiftFactory extends Factory
 
     public function fullDay(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => ShiftType::FULL_DAY,
             'start_time' => '09:00',
             'end_time' => '17:00',
@@ -112,42 +112,42 @@ class ShiftFactory extends Factory
 
     public function overtime(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_overtime' => true,
         ]);
     }
 
     public function forDate(Carbon $date): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'date' => $date,
         ]);
     }
 
     public function draft(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ShiftStatus::DRAFT,
         ]);
     }
 
     public function published(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ShiftStatus::PUBLISHED,
         ]);
     }
 
     public function confirmed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ShiftStatus::CONFIRMED,
         ]);
     }
 
     public function inProgress(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ShiftStatus::IN_PROGRESS,
             'checked_in_at' => now(),
         ]);
@@ -155,7 +155,7 @@ class ShiftFactory extends Factory
 
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ShiftStatus::COMPLETED,
             'checked_in_at' => now()->subHours(8),
             'checked_out_at' => now(),

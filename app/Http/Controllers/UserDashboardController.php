@@ -18,24 +18,22 @@ class UserDashboardController extends Controller
 
         // Upcoming events (next 10) - Optimized with eager loading
         $upcomingEvents = Event::where('start_date', '>', Carbon::now())
-            ->withWhereHas('participants', function ($query) use ($user) {
+            ->withWhereHas('participants', function ($query) use ($user): void {
                 $query->where('users.id', $user->id);
             })
             ->orderBy('start_date', 'asc')
             ->take(10)
             ->get()
-            ->map(function ($event) {
-                return [
-                    'id' => $event->id,
-                    'uuid' => $event->uuid,
-                    'title' => $event->title,
-                    'description' => $event->description,
-                    'start_date' => $event->start_date,
-                    'end_date' => $event->end_date,
-                    'location' => $event->location,
-                    'is_participating' => $event->participants->isNotEmpty(),
-                ];
-            });
+            ->map(fn($event): array => [
+                'id' => $event->id,
+                'uuid' => $event->uuid,
+                'title' => $event->title,
+                'description' => $event->description,
+                'start_date' => $event->start_date,
+                'end_date' => $event->end_date,
+                'location' => $event->location,
+                'is_participating' => $event->participants->isNotEmpty(),
+            ]);
 
         // Recent published articles (last 10)
         $recentArticles = Article::whereNotNull('published_at')
@@ -43,53 +41,47 @@ class UserDashboardController extends Controller
             ->orderBy('published_at', 'desc')
             ->take(10)
             ->get()
-            ->map(function ($article) {
-                return [
-                    'id' => $article->id,
-                    'slug' => $article->slug,
-                    'title' => $article->title,
-                    'excerpt' => $article->excerpt,
-                    'published_at' => $article->published_at,
-                    'author' => $article->user ? $article->user->first_name.' '.$article->user->last_name : 'Auteur inconnu',
-                    'featured_image' => $article->featured_image,
-                ];
-            });
+            ->map(fn($article): array => [
+                'id' => $article->id,
+                'slug' => $article->slug,
+                'title' => $article->title,
+                'excerpt' => $article->excerpt,
+                'published_at' => $article->published_at,
+                'author' => $article->user ? $article->user->first_name.' '.$article->user->last_name : 'Auteur inconnu',
+                'featured_image' => $article->featured_image,
+            ]);
 
         // Available trainings (active ones) - Optimized with eager loading
         $availableTrainings = Training::active()
-            ->with(['enrollments' => function ($query) use ($user) {
+            ->with(['enrollments' => function ($query) use ($user): void {
                 $query->where('user_id', $user->id);
             }])
             ->orderBy('created_at', 'desc')
             ->take(10)
             ->get()
-            ->map(function ($training) {
-                return [
-                    'id' => $training->id,
-                    'uuid' => $training->uuid,
-                    'title' => $training->title,
-                    'description' => $training->description,
-                    'category' => $training->category ?? 'Non catégorisé',
-                    'duration' => $training->duration,
-                    'is_enrolled' => $training->enrollments->isNotEmpty(),
-                ];
-            });
+            ->map(fn($training): array => [
+                'id' => $training->id,
+                'uuid' => $training->uuid,
+                'title' => $training->title,
+                'description' => $training->description,
+                'category' => $training->category ?? 'Non catégorisé',
+                'duration' => $training->duration,
+                'is_enrolled' => $training->enrollments->isNotEmpty(),
+            ]);
 
         // User's enrolled trainings
         $myTrainings = $user->trainings()
             ->wherePivot('status', '!=', 'rejected')
             ->take(5)
             ->get()
-            ->map(function ($training) {
-                return [
-                    'id' => $training->id,
-                    'uuid' => $training->uuid,
-                    'title' => $training->title,
-                    'status' => $training->pivot->status,
-                    'progress' => $training->pivot->progress ?? 0,
-                    'category' => $training->category ?? 'Non catégorisé',
-                ];
-            });
+            ->map(fn($training): array => [
+                'id' => $training->id,
+                'uuid' => $training->uuid,
+                'title' => $training->title,
+                'status' => $training->pivot->status,
+                'progress' => $training->pivot->progress ?? 0,
+                'category' => $training->category ?? 'Non catégorisé',
+            ]);
 
         // User's participating events
         $myEvents = $user->participatingEvents()
@@ -97,15 +89,13 @@ class UserDashboardController extends Controller
             ->orderBy('start_date', 'asc')
             ->take(5)
             ->get()
-            ->map(function ($event) {
-                return [
-                    'id' => $event->id,
-                    'uuid' => $event->uuid,
-                    'title' => $event->title,
-                    'start_date' => $event->start_date,
-                    'location' => $event->location,
-                ];
-            });
+            ->map(fn($event): array => [
+                'id' => $event->id,
+                'uuid' => $event->uuid,
+                'title' => $event->title,
+                'start_date' => $event->start_date,
+                'location' => $event->location,
+            ]);
 
         // Quick stats
         $stats = [

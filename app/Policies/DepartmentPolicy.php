@@ -16,7 +16,10 @@ class DepartmentPolicy
     public function view(User $user, Department $department): bool
     {
         // Users with view or manage departments permission can view any department
-        return $user->can('view departments') || $user->can('manage departments');
+        if ($user->can('view departments')) {
+            return true;
+        }
+        return $user->can('manage departments');
     }
 
     /**
@@ -49,8 +52,10 @@ class DepartmentPolicy
     public function update(User $user, Department $department): bool
     {
         // User can update if they have manage permission or are head of department
-        return $user->can('manage departments') ||
-               $department->head_of_department === $user->id;
+        if ($user->can('manage departments')) {
+            return true;
+        }
+        return $department->head_of_department === $user->id;
     }
 
     /**

@@ -10,7 +10,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create permissions
     Permission::firstOrCreate(['name' => 'view projects']);
     Permission::firstOrCreate(['name' => 'create projects']);
@@ -36,7 +36,7 @@ beforeEach(function () {
     Status::factory()->completed()->create();
 });
 
-it('allows authenticated user with permission to create a task for a project', function () {
+it('allows authenticated user with permission to create a task for a project', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -79,13 +79,13 @@ it('allows authenticated user with permission to create a task for a project', f
         'description' => 'This is a detailed task description for the project.',
         'priority' => 'high',
         'project_id' => $project->id,
-        'taskable_type' => 'App\\Models\\Project',
+        'taskable_type' => \App\Models\Project::class,
         'taskable_id' => $project->id,
         'reporter_id' => $user->id,
     ]);
 });
 
-it('creates task with all optional fields', function () {
+it('creates task with all optional fields', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -125,7 +125,7 @@ it('creates task with all optional fields', function () {
     expect($task->assigned_to)->toBe($assignee->id);
 });
 
-it('validates required title field', function () {
+it('validates required title field', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -148,7 +148,7 @@ it('validates required title field', function () {
         ->assertJsonValidationErrors(['title']);
 });
 
-it('validates required description field', function () {
+it('validates required description field', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -171,7 +171,7 @@ it('validates required description field', function () {
         ->assertJsonValidationErrors(['description']);
 });
 
-it('validates description minimum length', function () {
+it('validates description minimum length', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -195,7 +195,7 @@ it('validates description minimum length', function () {
         ->assertJsonValidationErrors(['description']);
 });
 
-it('validates required priority field', function () {
+it('validates required priority field', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -218,7 +218,7 @@ it('validates required priority field', function () {
         ->assertJsonValidationErrors(['priority']);
 });
 
-it('validates priority values', function () {
+it('validates priority values', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -242,7 +242,7 @@ it('validates priority values', function () {
         ->assertJsonValidationErrors(['priority']);
 });
 
-it('validates required status_id field', function () {
+it('validates required status_id field', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -263,7 +263,7 @@ it('validates required status_id field', function () {
         ->assertJsonValidationErrors(['status_id']);
 });
 
-it('validates status exists', function () {
+it('validates status exists', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -285,7 +285,7 @@ it('validates status exists', function () {
         ->assertJsonValidationErrors(['status_id']);
 });
 
-it('validates due_date must be after today', function () {
+it('validates due_date must be after today', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -310,7 +310,7 @@ it('validates due_date must be after today', function () {
         ->assertJsonValidationErrors(['due_date']);
 });
 
-it('validates assigned_to user exists', function () {
+it('validates assigned_to user exists', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -335,7 +335,7 @@ it('validates assigned_to user exists', function () {
         ->assertJsonValidationErrors(['assigned_to']);
 });
 
-it('validates estimated_hours is not negative', function () {
+it('validates estimated_hours is not negative', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -360,7 +360,7 @@ it('validates estimated_hours is not negative', function () {
         ->assertJsonValidationErrors(['estimated_hours']);
 });
 
-it('denies access to user without create tasks permission', function () {
+it('denies access to user without create tasks permission', function (): void {
     $user = User::factory()->create();
     $user->assignRole('member'); // Member only has view permission
 
@@ -381,7 +381,7 @@ it('denies access to user without create tasks permission', function () {
     $response->assertStatus(403);
 });
 
-it('denies access to unauthenticated user', function () {
+it('denies access to unauthenticated user', function (): void {
     $project = Project::factory()->create();
 
     $taskData = [
@@ -396,7 +396,7 @@ it('denies access to unauthenticated user', function () {
     $response->assertStatus(401);
 });
 
-it('returns 404 for non-existent project', function () {
+it('returns 404 for non-existent project', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -415,7 +415,7 @@ it('returns 404 for non-existent project', function () {
     $response->assertStatus(404);
 });
 
-it('sets the current user as reporter_id', function () {
+it('sets the current user as reporter_id', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -443,7 +443,7 @@ it('sets the current user as reporter_id', function () {
     ]);
 });
 
-it('creates task with correct polymorphic relation', function () {
+it('creates task with correct polymorphic relation', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -467,14 +467,14 @@ it('creates task with correct polymorphic relation', function () {
 
     $task = Task::where('title', 'Polymorphic Test Task')->first();
 
-    expect($task->taskable_type)->toBe('App\\Models\\Project');
+    expect($task->taskable_type)->toBe(\App\Models\Project::class);
     expect($task->taskable_id)->toBe($project->id);
     expect($task->project_id)->toBe($project->id);
     expect($task->taskable)->toBeInstanceOf(Project::class);
     expect($task->taskable->id)->toBe($project->id);
 });
 
-it('accepts valid priority values', function (string $priority) {
+it('accepts valid priority values', function (string $priority): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -501,7 +501,7 @@ it('accepts valid priority values', function (string $priority) {
     ]);
 })->with(['low', 'medium', 'high']);
 
-it('loads task relations in response', function () {
+it('loads task relations in response', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -534,7 +534,7 @@ it('loads task relations in response', function () {
         ]);
 });
 
-it('project show page includes statuses for task creation', function () {
+it('project show page includes statuses for task creation', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 

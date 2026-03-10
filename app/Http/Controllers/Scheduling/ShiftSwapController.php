@@ -26,7 +26,7 @@ class ShiftSwapController extends Controller
     {
         $this->authorize('view', $department);
 
-        $query = ShiftSwapRequest::whereHas('requestedShift', function ($q) use ($department) {
+        $query = ShiftSwapRequest::whereHas('requestedShift', function ($q) use ($department): void {
             $q->where('department_id', $department->id);
         })->with([
             'requester',
@@ -43,11 +43,11 @@ class ShiftSwapController extends Controller
         $swapRequests = $query->orderBy('created_at', 'desc')->paginate(20);
 
         // Pending counts
-        $pendingColleague = ShiftSwapRequest::whereHas('requestedShift', function ($q) use ($department) {
+        $pendingColleague = ShiftSwapRequest::whereHas('requestedShift', function ($q) use ($department): void {
             $q->where('department_id', $department->id);
         })->where('status', SwapRequestStatus::PENDING_COLLEAGUE)->count();
 
-        $pendingManager = ShiftSwapRequest::whereHas('requestedShift', function ($q) use ($department) {
+        $pendingManager = ShiftSwapRequest::whereHas('requestedShift', function ($q) use ($department): void {
             $q->where('department_id', $department->id);
         })->where('status', SwapRequestStatus::PENDING_MANAGER)->count();
 
@@ -56,7 +56,7 @@ class ShiftSwapController extends Controller
             'swapRequests' => $swapRequests,
             'pendingColleague' => $pendingColleague,
             'pendingManager' => $pendingManager,
-            'swapStatuses' => collect(SwapRequestStatus::cases())->map(fn($s) => [
+            'swapStatuses' => collect(SwapRequestStatus::cases())->map(fn($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
@@ -74,7 +74,7 @@ class ShiftSwapController extends Controller
 
         // Requests I made
         $outgoing = ShiftSwapRequest::where('requester_id', $user->id)
-            ->whereHas('requestedShift', function ($q) use ($department) {
+            ->whereHas('requestedShift', function ($q) use ($department): void {
                 $q->where('department_id', $department->id);
             })
             ->with(['targetUser', 'requestedShift', 'offeredShift'])
@@ -83,7 +83,7 @@ class ShiftSwapController extends Controller
 
         // Requests where I'm the target
         $incoming = ShiftSwapRequest::where('target_user_id', $user->id)
-            ->whereHas('requestedShift', function ($q) use ($department) {
+            ->whereHas('requestedShift', function ($q) use ($department): void {
                 $q->where('department_id', $department->id);
             })
             ->where('status', SwapRequestStatus::PENDING_COLLEAGUE)
@@ -104,7 +104,7 @@ class ShiftSwapController extends Controller
             'outgoing' => $outgoing,
             'incoming' => $incoming,
             'myShifts' => $myShifts,
-            'swapStatuses' => collect(SwapRequestStatus::cases())->map(fn($s) => [
+            'swapStatuses' => collect(SwapRequestStatus::cases())->map(fn($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
@@ -344,7 +344,7 @@ class ShiftSwapController extends Controller
     /**
      * Execute the swap between shifts
      */
-    protected function executeSwap(ShiftSwapRequest $swapRequest, $approver): void
+    protected function executeSwap(ShiftSwapRequest $swapRequest, \App\Models\User $approver): void
     {
         $requestedShift = $swapRequest->requestedShift;
         $offeredShift = $swapRequest->offeredShift;
@@ -374,7 +374,7 @@ class ShiftSwapController extends Controller
 
         // Incoming requests pending my response
         $incoming = ShiftSwapRequest::where('target_user_id', $user->id)
-            ->whereHas('requestedShift', function ($q) use ($department) {
+            ->whereHas('requestedShift', function ($q) use ($department): void {
                 $q->where('department_id', $department->id);
             })
             ->where('status', SwapRequestStatus::PENDING_COLLEAGUE)

@@ -11,18 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class EventAnalyticsService
 {
-    protected TicketService $ticketService;
-    protected CheckInService $checkInService;
-    protected BadgeService $badgeService;
-
-    public function __construct(
-        TicketService $ticketService,
-        CheckInService $checkInService,
-        BadgeService $badgeService
-    ) {
-        $this->ticketService = $ticketService;
-        $this->checkInService = $checkInService;
-        $this->badgeService = $badgeService;
+    public function __construct(protected TicketService $ticketService, protected CheckInService $checkInService, protected BadgeService $badgeService)
+    {
     }
 
     /**
@@ -33,7 +23,7 @@ class EventAnalyticsService
         return Cache::remember(
             "event.{$event->id}.dashboard",
             now()->addMinutes(5),
-            fn () => [
+            fn (): array => [
                 'overview' => $this->getOverview($event),
                 'registrations' => $this->getRegistrationStats($event),
                 'tickets' => $this->ticketService->getTicketStats($event),
@@ -161,7 +151,7 @@ class EventAnalyticsService
             ],
             'by_ticket' => $confirmedRegistrations
                 ->groupBy('ticket_id')
-                ->map(function ($group) {
+                ->map(function ($group): array {
                     $ticket = $group->first()->ticket;
                     return [
                         'ticket_name' => $ticket?->name ?? 'Sans billet',
@@ -175,13 +165,11 @@ class EventAnalyticsService
             'by_promo_code' => $confirmedRegistrations
                 ->whereNotNull('promo_code_id')
                 ->groupBy('promo_code_id')
-                ->map(function ($group) {
-                    return [
-                        'code' => $group->first()->promoCode?->code,
-                        'uses' => $group->count(),
-                        'discount_total' => $group->sum('discount_amount'),
-                    ];
-                })
+                ->map(fn($group): array => [
+                    'code' => $group->first()->promoCode?->code,
+                    'uses' => $group->count(),
+                    'discount_total' => $group->sum('discount_amount'),
+                ])
                 ->values()
                 ->toArray(),
         ];
@@ -248,8 +236,8 @@ class EventAnalyticsService
             return null;
         }
 
-        $promoters = $npsScores->filter(fn ($f) => $f->nps_score >= 9)->count();
-        $detractors = $npsScores->filter(fn ($f) => $f->nps_score <= 6)->count();
+        $promoters = $npsScores->filter(fn ($f): bool => $f->nps_score >= 9)->count();
+        $detractors = $npsScores->filter(fn ($f): bool => $f->nps_score <= 6)->count();
         $total = $npsScores->count();
 
         return round((($promoters - $detractors) / $total) * 100, 1);
@@ -273,7 +261,7 @@ class EventAnalyticsService
             ->get();
 
         return [
-            'daily' => $registrations->map(fn ($r) => [
+            'daily' => $registrations->map(fn ($r): array => [
                 'date' => $r->date,
                 'registrations' => $r->count,
                 'attendees' => $r->attendees,
@@ -316,7 +304,7 @@ class EventAnalyticsService
     {
         $sessions = $event->sessions()->with(['speakers', 'attendees', 'checkins', 'feedback'])->get();
 
-        return $sessions->map(function ($session) {
+        return $sessions->map(function ($session): array {
             $feedback = $session->feedback;
 
             return [
@@ -347,13 +335,11 @@ class EventAnalyticsService
 
         return [
             'total' => $sponsors->count(),
-            'by_tier' => $sponsors->groupBy('tier')->map(function ($group) {
-                return [
-                    'count' => $group->count(),
-                    'total_amount' => $group->sum('amount'),
-                    'sponsors' => $group->pluck('name')->toArray(),
-                ];
-            })->toArray(),
+            'by_tier' => $sponsors->groupBy('tier')->map(fn($group): array => [
+                'count' => $group->count(),
+                'total_amount' => $group->sum('amount'),
+                'sponsors' => $group->pluck('name')->toArray(),
+            ])->toArray(),
             'total_sponsorship' => $sponsors->sum('amount'),
             'currency' => $sponsors->first()?->currency ?? 'EUR',
         ];
@@ -364,7 +350,7 @@ class EventAnalyticsService
      */
     public function exportAnalytics(Event $event, string $format = 'json'): array
     {
-        $data = [
+        return [
             'event' => [
                 'title' => $event->title,
                 'start_date' => $event->start_date->toISOString(),
@@ -378,8 +364,6 @@ class EventAnalyticsService
             'sessions' => $this->getSessionAnalytics($event),
             'sponsors' => $this->getSponsorAnalytics($event),
         ];
-
-        return $data;
     }
 
     /**

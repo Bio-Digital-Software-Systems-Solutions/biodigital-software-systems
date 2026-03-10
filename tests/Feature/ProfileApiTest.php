@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 // Languages API Tests
 // ============================================
 
-it('can get available languages', function () {
+it('can get available languages', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -31,7 +31,7 @@ it('can get available languages', function () {
         ]);
 });
 
-it('can update user languages', function () {
+it('can update user languages', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -53,7 +53,7 @@ it('can update user languages', function () {
     expect($user->spokenLanguages()->find($english->id)->pivot->level)->toBe('advanced');
 });
 
-it('validates language level', function () {
+it('validates language level', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -69,7 +69,7 @@ it('validates language level', function () {
         ->assertJsonValidationErrors(['languages.0.level']);
 });
 
-it('validates language exists', function () {
+it('validates language exists', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -83,7 +83,7 @@ it('validates language exists', function () {
         ->assertJsonValidationErrors(['languages.0.id']);
 });
 
-it('can clear all user languages', function () {
+it('can clear all user languages', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -102,7 +102,7 @@ it('can clear all user languages', function () {
 // Interests API Tests
 // ============================================
 
-it('can get available interests', function () {
+it('can get available interests', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -120,7 +120,7 @@ it('can get available interests', function () {
         ]);
 });
 
-it('can update user interests', function () {
+it('can update user interests', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -137,7 +137,7 @@ it('can update user interests', function () {
     expect($user->interests()->count())->toBe(2);
 });
 
-it('can create a new interest', function () {
+it('can create a new interest', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -151,7 +151,7 @@ it('can create a new interest', function () {
     expect(Interest::where('name', 'Photography')->exists())->toBeTrue();
 });
 
-it('validates interest name is unique', function () {
+it('validates interest name is unique', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -165,7 +165,7 @@ it('validates interest name is unique', function () {
         ->assertJsonValidationErrors(['name']);
 });
 
-it('validates interest exists when updating', function () {
+it('validates interest exists when updating', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -181,7 +181,7 @@ it('validates interest exists when updating', function () {
 // Skills API Tests
 // ============================================
 
-it('can get available skills', function () {
+it('can get available skills', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -199,7 +199,7 @@ it('can get available skills', function () {
         ]);
 });
 
-it('can update user skills with levels', function () {
+it('can update user skills with levels', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -221,7 +221,7 @@ it('can update user skills with levels', function () {
     expect($user->profileSkills()->find($leadership->id)->pivot->level)->toBe('advanced');
 });
 
-it('can create a new skill', function () {
+it('can create a new skill', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -237,7 +237,7 @@ it('can create a new skill', function () {
     expect(ProfileSkill::where('name', 'Laravel')->where('category', 'technical')->exists())->toBeTrue();
 });
 
-it('validates skill category', function () {
+it('validates skill category', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -250,7 +250,7 @@ it('validates skill category', function () {
         ->assertJsonValidationErrors(['category']);
 });
 
-it('prevents duplicate skill in same category', function () {
+it('prevents duplicate skill in same category', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -264,7 +264,7 @@ it('prevents duplicate skill in same category', function () {
     $response->assertUnprocessable();
 });
 
-it('allows same skill name in different category', function () {
+it('allows same skill name in different category', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -278,7 +278,7 @@ it('allows same skill name in different category', function () {
     $response->assertCreated();
 });
 
-it('validates skill level', function () {
+it('validates skill level', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -298,32 +298,32 @@ it('validates skill level', function () {
 // Authentication Tests
 // ============================================
 
-it('requires authentication to access profile languages api', function () {
+it('requires authentication to access profile languages api', function (): void {
     $response = $this->getJson('/api/profile/languages');
     $response->assertUnauthorized();
 });
 
-it('requires authentication to update profile languages', function () {
+it('requires authentication to update profile languages', function (): void {
     $response = $this->putJson('/api/profile/languages', ['languages' => []]);
     $response->assertUnauthorized();
 });
 
-it('requires authentication to access profile interests api', function () {
+it('requires authentication to access profile interests api', function (): void {
     $response = $this->getJson('/api/profile/interests');
     $response->assertUnauthorized();
 });
 
-it('requires authentication to update profile interests', function () {
+it('requires authentication to update profile interests', function (): void {
     $response = $this->putJson('/api/profile/interests', ['interests' => []]);
     $response->assertUnauthorized();
 });
 
-it('requires authentication to access profile skills api', function () {
+it('requires authentication to access profile skills api', function (): void {
     $response = $this->getJson('/api/profile/skills');
     $response->assertUnauthorized();
 });
 
-it('requires authentication to update profile skills', function () {
+it('requires authentication to update profile skills', function (): void {
     $response = $this->putJson('/api/profile/skills', ['skills' => []]);
     $response->assertUnauthorized();
 });
@@ -332,7 +332,7 @@ it('requires authentication to update profile skills', function () {
 // Privacy Settings API Tests
 // ============================================
 
-it('can get user privacy settings', function () {
+it('can get user privacy settings', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -355,7 +355,7 @@ it('can get user privacy settings', function () {
         ]);
 });
 
-it('returns default privacy settings for new user', function () {
+it('returns default privacy settings for new user', function (): void {
     $user = User::factory()->create(['privacy_settings' => null]);
     Sanctum::actingAs($user);
 
@@ -370,7 +370,7 @@ it('returns default privacy settings for new user', function () {
     }
 });
 
-it('can update user privacy settings', function () {
+it('can update user privacy settings', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -398,7 +398,7 @@ it('can update user privacy settings', function () {
     expect($user->privacy_settings['phone_number'])->toBeFalse();
 });
 
-it('can update partial privacy settings', function () {
+it('can update partial privacy settings', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -414,7 +414,7 @@ it('can update partial privacy settings', function () {
         ->assertJsonPath('privacy_settings.phone_number', true); // Default
 });
 
-it('validates privacy settings must be boolean', function () {
+it('validates privacy settings must be boolean', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -428,7 +428,7 @@ it('validates privacy settings must be boolean', function () {
         ->assertJsonValidationErrors(['privacy_settings.email']);
 });
 
-it('validates privacy settings must be an array', function () {
+it('validates privacy settings must be an array', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -440,7 +440,7 @@ it('validates privacy settings must be an array', function () {
         ->assertJsonValidationErrors(['privacy_settings']);
 });
 
-it('ignores invalid privacy setting fields', function () {
+it('ignores invalid privacy setting fields', function (): void {
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -457,12 +457,12 @@ it('ignores invalid privacy setting fields', function () {
     expect($user->privacy_settings)->not->toHaveKey('invalid_field');
 });
 
-it('requires authentication to access privacy settings', function () {
+it('requires authentication to access privacy settings', function (): void {
     $response = $this->getJson('/api/profile/privacy');
     $response->assertUnauthorized();
 });
 
-it('requires authentication to update privacy settings', function () {
+it('requires authentication to update privacy settings', function (): void {
     $response = $this->putJson('/api/profile/privacy', [
         'privacy_settings' => ['email' => false],
     ]);
@@ -473,7 +473,7 @@ it('requires authentication to update privacy settings', function () {
 // Privacy Settings - User Model Tests
 // ============================================
 
-it('user has default privacy settings constant', function () {
+it('user has default privacy settings constant', function (): void {
     expect(User::DEFAULT_PRIVACY_SETTINGS)->toBeArray();
     expect(User::DEFAULT_PRIVACY_SETTINGS)->toHaveKeys([
         'email',
@@ -488,7 +488,7 @@ it('user has default privacy settings constant', function () {
     ]);
 });
 
-it('user can get merged privacy settings', function () {
+it('user can get merged privacy settings', function (): void {
     $user = User::factory()->create([
         'privacy_settings' => ['email' => false],
     ]);
@@ -499,7 +499,7 @@ it('user can get merged privacy settings', function () {
     expect($settings['phone_number'])->toBeTrue(); // Default
 });
 
-it('user can check if field is public', function () {
+it('user can check if field is public', function (): void {
     $user = User::factory()->create([
         'privacy_settings' => ['email' => false, 'bio' => true],
     ]);
@@ -509,7 +509,7 @@ it('user can check if field is public', function () {
     expect($user->isFieldPublic('address'))->toBeTrue(); // Default
 });
 
-it('user can get public profile data respecting privacy', function () {
+it('user can get public profile data respecting privacy', function (): void {
     $user = User::factory()->create([
         'email' => 'test@example.com',
         'phone_number' => '1234567890',

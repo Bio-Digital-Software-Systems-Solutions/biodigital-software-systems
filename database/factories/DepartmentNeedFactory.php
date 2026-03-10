@@ -52,7 +52,7 @@ class DepartmentNeedFactory extends Factory
      */
     public function submitted(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => NeedStatus::SUBMITTED,
             'submitted_at' => now(),
         ]);
@@ -63,7 +63,7 @@ class DepartmentNeedFactory extends Factory
      */
     public function pendingApproval(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => NeedStatus::UNDER_REVIEW,
             'submitted_at' => now(),
         ]);
@@ -74,7 +74,7 @@ class DepartmentNeedFactory extends Factory
      */
     public function approved(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => NeedStatus::APPROVED,
             'submitted_at' => now()->subDays(2),
             'approved_at' => now(),
@@ -87,7 +87,7 @@ class DepartmentNeedFactory extends Factory
      */
     public function rejected(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => NeedStatus::REJECTED,
             'submitted_at' => now()->subDays(2),
             'rejected_at' => now(),
@@ -100,7 +100,7 @@ class DepartmentNeedFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => NeedStatus::COMPLETED,
             'submitted_at' => now()->subWeek(),
             'approved_at' => now()->subDays(5),
@@ -114,7 +114,7 @@ class DepartmentNeedFactory extends Factory
      */
     public function highPriority(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'priority' => NeedPriority::HIGH,
         ]);
     }
@@ -124,7 +124,7 @@ class DepartmentNeedFactory extends Factory
      */
     public function critical(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'priority' => NeedPriority::CRITICAL,
         ]);
     }
@@ -134,7 +134,7 @@ class DepartmentNeedFactory extends Factory
      */
     public function equipment(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'category' => NeedCategory::EQUIPMENT,
         ]);
     }
@@ -144,7 +144,7 @@ class DepartmentNeedFactory extends Factory
      */
     public function service(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'category' => NeedCategory::SERVICES,
         ]);
     }
@@ -154,7 +154,7 @@ class DepartmentNeedFactory extends Factory
      */
     public function supply(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'category' => NeedCategory::SUPPLIES,
         ]);
     }

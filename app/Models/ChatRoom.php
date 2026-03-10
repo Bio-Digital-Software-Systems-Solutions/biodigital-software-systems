@@ -15,11 +15,14 @@ use Spatie\Activitylog\LogOptions;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $name
  * @property string $type
  * @property int $created_by
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\User $creator
  * @property-read \App\Models\ChatMessage|null $lastMessage
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ChatMessage> $messages
@@ -36,9 +39,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatRoom whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatRoom whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatRoom whereUpdatedAt($value)
- * @property string $uuid
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ChatRoom whereUuid($value)
  * @mixin \Eloquent
  */

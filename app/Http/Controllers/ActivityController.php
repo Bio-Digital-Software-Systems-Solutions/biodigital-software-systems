@@ -24,7 +24,7 @@ class ActivityController extends Controller
         // Filter by causer (user who performed the action)
         if ($request->filled('causer_id')) {
             $query->where('causer_id', $request->causer_id)
-                ->where('causer_type', 'App\\Models\\User');
+                ->where('causer_type', \App\Models\User::class);
         }
 
         // Filter by date range
@@ -40,9 +40,7 @@ class ActivityController extends Controller
             $query->where('description', 'like', '%' . $request->search . '%');
         }
 
-        $activities = $query->paginate(20)->through(function ($activity) {
-            return $this->formatActivity($activity);
-        });
+        $activities = $query->paginate(20)->through($this->formatActivity(...));
 
         // Get unique log names for filter dropdown
         $logNames = Activity::distinct('log_name')
@@ -186,7 +184,7 @@ class ActivityController extends Controller
                 default:
                     return null;
             }
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             return null;
         }
     }

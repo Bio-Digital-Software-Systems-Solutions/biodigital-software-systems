@@ -103,7 +103,7 @@ class DepartmentSeeder extends Seeder
 
         // Assign department heads from existing users
         $allDepartments = Department::all();
-        $adminUsers = User::whereHas('roles', function ($query) {
+        $adminUsers = User::whereHas('roles', function ($query): void {
             $query->whereIn('name', ['admin', 'project-manager', 'super-admin']);
         })->get();
 
@@ -121,13 +121,13 @@ class DepartmentSeeder extends Seeder
 
         foreach ($allDepartments as $department) {
             $this->seedMembers($department, $allUsers);
-            $this->seedShifts($department, $allUsers);
+            $this->seedShifts($department);
             $this->seedTodos($department, $allUsers);
             $this->seedWorkflows($department, $allUsers);
             $this->seedForms($department, $allUsers);
             $this->seedDocuments($department, $allUsers);
             $this->seedAgenda($department, $allUsers);
-            $this->seedNeeds($department, $allUsers);
+            $this->seedNeeds($department);
         }
     }
 
@@ -136,7 +136,7 @@ class DepartmentSeeder extends Seeder
      */
     private function seedMembers(Department $department, $allUsers): void
     {
-        $memberCount = rand(3, min(6, $allUsers->count()));
+        $memberCount = random_int(3, min(6, $allUsers->count()));
         $members = $allUsers->random($memberCount);
 
         // Always include the head if set
@@ -152,7 +152,7 @@ class DepartmentSeeder extends Seeder
     /**
      * Seed shifts for the department.
      */
-    private function seedShifts(Department $department, $allUsers): void
+    private function seedShifts(Department $department): void
     {
         $departmentMembers = $department->users;
         if ($departmentMembers->isEmpty()) {
@@ -494,7 +494,7 @@ class DepartmentSeeder extends Seeder
                 'file_name' => Str::uuid().'.'.$doc['ext'],
                 'file_path' => 'departments/'.$department->id.'/documents/'.Str::uuid().'.'.$doc['ext'],
                 'mime_type' => $doc['mime'],
-                'file_size' => rand(10000, 500000),
+                'file_size' => random_int(10000, 500000),
                 'extension' => $doc['ext'],
                 'year' => $now->year,
                 'month' => $now->month,
@@ -585,7 +585,7 @@ class DepartmentSeeder extends Seeder
     /**
      * Seed needs/requests for the department.
      */
-    private function seedNeeds(Department $department, $allUsers): void
+    private function seedNeeds(Department $department): void
     {
         $departmentMembers = $department->users;
         if ($departmentMembers->isEmpty()) {
@@ -652,10 +652,10 @@ class DepartmentSeeder extends Seeder
                 'unit' => $needData['unit'],
                 'justification' => $needData['justification'],
                 'currency' => 'EUR',
-                'needed_by' => Carbon::now()->addDays(rand(7, 30)),
-                'submitted_at' => $needData['status'] !== NeedStatus::DRAFT ? now()->subDays(rand(1, 5)) : null,
+                'needed_by' => Carbon::now()->addDays(random_int(7, 30)),
+                'submitted_at' => $needData['status'] !== NeedStatus::DRAFT ? now()->subDays(random_int(1, 5)) : null,
                 'approved_at' => in_array($needData['status'], [NeedStatus::APPROVED, NeedStatus::ORDERED, NeedStatus::DELIVERED, NeedStatus::COMPLETED])
-                    ? now()->subDays(rand(1, 3))
+                    ? now()->subDays(random_int(1, 3))
                     : null,
                 'approved_by' => in_array($needData['status'], [NeedStatus::APPROVED, NeedStatus::ORDERED, NeedStatus::DELIVERED, NeedStatus::COMPLETED])
                     ? ($department->head_of_department ?? $departmentMembers->first()->id)

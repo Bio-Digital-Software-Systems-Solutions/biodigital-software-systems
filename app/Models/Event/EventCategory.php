@@ -13,6 +13,52 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property string $color
+ * @property string|null $icon
+ * @property bool $is_active
+ * @property int $sort_order
+ * @property int|null $parent_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventCategory> $children
+ * @property-read int|null $children_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $events
+ * @property-read int $events_count
+ * @property-read string $full_path
+ * @property-read EventCategory|null $parent
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory ordered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory rootCategories()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereColor($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereIcon($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereParentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereSlug($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCategory withoutTrashed()
+ * @mixin \Eloquent
+ */
 class EventCategory extends Model
 {
     use HasFactory, HasUuid, LogsActivity, ClearsCache, SoftDeletes;
@@ -48,7 +94,7 @@ class EventCategory extends Model
     {
         parent::boot();
 
-        static::creating(function ($category) {
+        static::creating(function ($category): void {
             if (empty($category->slug)) {
                 $category->slug = Str::slug($category->name);
             }

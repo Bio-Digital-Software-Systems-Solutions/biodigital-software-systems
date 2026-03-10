@@ -30,7 +30,7 @@ class StatusFactory extends Factory
      */
     public function pending(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'name' => 'pending',
             'color' => '#f59e0b',
         ]);
@@ -41,7 +41,7 @@ class StatusFactory extends Factory
      */
     public function inProgress(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'name' => 'in_progress',
             'color' => '#3b82f6',
         ]);
@@ -52,7 +52,7 @@ class StatusFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'name' => 'completed',
             'color' => '#10b981',
         ]);
@@ -63,7 +63,7 @@ class StatusFactory extends Factory
      */
     public function cancelled(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'name' => 'cancelled',
             'color' => '#ef4444',
         ]);

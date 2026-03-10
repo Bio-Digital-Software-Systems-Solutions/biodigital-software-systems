@@ -10,6 +10,8 @@ use Tests\TestCase;
 
 class StockControllerTest extends TestCase
 {
+    public $user;
+    public $category;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -23,7 +25,7 @@ class StockControllerTest extends TestCase
 
     public function test_index_displays_stocks(): void
     {
-        $stocks = Stock::factory()->count(3)->create(['category_id' => $this->category->id]);
+        Stock::factory()->count(3)->create(['category_id' => $this->category->id]);
 
         $this->user->givePermissionTo('view stocks');
 
@@ -309,7 +311,7 @@ class StockControllerTest extends TestCase
 
     public function test_unauthorized_user_cannot_manage_stocks(): void
     {
-        $stock = Stock::factory()->create(['category_id' => $this->category->id]);
+        Stock::factory()->create(['category_id' => $this->category->id]);
 
         $response = $this->actingAs($this->user)
             ->get(route('stocks.index'));

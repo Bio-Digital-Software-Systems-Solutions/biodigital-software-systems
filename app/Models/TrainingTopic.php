@@ -17,6 +17,8 @@ use Spatie\Activitylog\LogOptions;
  * @property int $order
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\Training $training
  * @method static \Database\Factories\TrainingTopicFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingTopic newModelQuery()
@@ -29,8 +31,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingTopic whereOrder($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingTopic whereTrainingId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingTopic whereUpdatedAt($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class TrainingTopic extends Model

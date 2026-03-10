@@ -81,14 +81,14 @@ class DepartmentTodoSeeder extends Seeder
                 $monthEnd = $now->copy()->subMonths($monthsAgo)->endOfMonth();
 
                 // Number of tasks per month varies (10-25)
-                $tasksThisMonth = rand(10, 25);
+                $tasksThisMonth = random_int(10, 25);
 
                 for ($i = 0; $i < $tasksThisMonth; $i++) {
                     $template = $todoTemplates[array_rand($todoTemplates)];
                     $assignee = $members->random();
 
                     // Random date within the month (use midday to avoid DST issues)
-                    $randomDay = rand(1, min($monthEnd->day, $now->day));
+                    $randomDay = random_int(1, min($monthEnd->day, $now->day));
                     $createdAt = $monthStart->copy()->addDays($randomDay - 1)->setTime(12, 0, 0);
                     if ($createdAt->gt($now)) {
                         $createdAt = $now->copy()->setTime(12, 0, 0);
@@ -96,21 +96,21 @@ class DepartmentTodoSeeder extends Seeder
 
                     // Determine status based on age and randomness
                     $daysOld = $createdAt->diffInDays($now);
-                    $status = $this->determineStatus($daysOld, $monthsAgo);
+                    $status = $this->determineStatus($monthsAgo);
 
                     // Set completion date for completed tasks
                     $completedAt = null;
                     $completedBy = null;
                     if ($status === ShiftTaskStatus::COMPLETED) {
                         // Completed between 1-14 days after creation
-                        $completedAt = $createdAt->copy()->addDays(rand(1, min(14, $daysOld ?: 1)));
+                        $completedAt = $createdAt->copy()->addDays(random_int(1, min(14, $daysOld ?: 1)));
                         $completedBy = $assignee->id;
                     }
 
                     // Due date: some tasks have due dates
                     $dueDate = null;
-                    if (rand(1, 100) > 30) { // 70% have due dates
-                        $dueDate = $createdAt->copy()->addDays(rand(3, 21));
+                    if (random_int(1, 100) > 30) { // 70% have due dates
+                        $dueDate = $createdAt->copy()->addDays(random_int(3, 21));
                     }
 
                     DepartmentTodo::create([
@@ -139,12 +139,12 @@ class DepartmentTodoSeeder extends Seeder
     /**
      * Determine task status based on age
      */
-    private function determineStatus(int $daysOld, int $monthsAgo): ShiftTaskStatus
+    private function determineStatus(int $monthsAgo): ShiftTaskStatus
     {
         // Older tasks are more likely to be completed
         if ($monthsAgo > 2) {
             // Tasks from 3+ months ago: 85% completed, 10% cancelled, 5% other
-            $rand = rand(1, 100);
+            $rand = random_int(1, 100);
             if ($rand <= 85) {
                 return ShiftTaskStatus::COMPLETED;
             }
@@ -157,7 +157,7 @@ class DepartmentTodoSeeder extends Seeder
 
         if ($monthsAgo >= 1) {
             // Tasks from 1-2 months ago: 70% completed, 5% cancelled, 25% active
-            $rand = rand(1, 100);
+            $rand = random_int(1, 100);
             if ($rand <= 70) {
                 return ShiftTaskStatus::COMPLETED;
             }
@@ -175,7 +175,7 @@ class DepartmentTodoSeeder extends Seeder
         }
 
         // Current month: mix of statuses
-        $rand = rand(1, 100);
+        $rand = random_int(1, 100);
         if ($rand <= 40) {
             return ShiftTaskStatus::COMPLETED;
         }

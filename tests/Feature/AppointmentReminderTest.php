@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create an organizer user
     $this->organizer = User::factory()->create([
         'first_name' => 'Jean',
@@ -35,7 +35,7 @@ beforeEach(function () {
 |--------------------------------------------------------------------------
 */
 
-it('finds appointments within the 24-hour reminder window', function () {
+it('finds appointments within the 24-hour reminder window', function (): void {
     Notification::fake();
 
     // Create an appointment exactly 24 hours from now
@@ -65,16 +65,14 @@ it('finds appointments within the 24-hour reminder window', function () {
     Notification::assertSentTo(
         $this->organizer,
         AppointmentReminder::class,
-        function ($notification) {
-            return $notification->isOrganizer === true;
-        }
+        fn($notification): bool => $notification->isOrganizer === true
     );
 
     $appointment->refresh();
     expect($appointment->reminder_sent_at)->not->toBeNull();
 });
 
-it('does not send reminders for appointments already reminded', function () {
+it('does not send reminders for appointments already reminded', function (): void {
     Notification::fake();
 
     // Create an appointment that already has a reminder sent
@@ -99,7 +97,7 @@ it('does not send reminders for appointments already reminded', function () {
     Notification::assertNotSentTo($this->organizer, AppointmentReminder::class);
 });
 
-it('does not send reminders for cancelled appointments', function () {
+it('does not send reminders for cancelled appointments', function (): void {
     Notification::fake();
 
     $appointment = Appointment::factory()
@@ -122,7 +120,7 @@ it('does not send reminders for cancelled appointments', function () {
     Notification::assertNotSentTo($this->organizer, AppointmentReminder::class);
 });
 
-it('does not send reminders for completed appointments', function () {
+it('does not send reminders for completed appointments', function (): void {
     Notification::fake();
 
     $appointment = Appointment::factory()
@@ -145,7 +143,7 @@ it('does not send reminders for completed appointments', function () {
     Notification::assertNotSentTo($this->organizer, AppointmentReminder::class);
 });
 
-it('sends reminders for pending appointments', function () {
+it('sends reminders for pending appointments', function (): void {
     Notification::fake();
 
     $appointment = Appointment::factory()
@@ -167,7 +165,7 @@ it('sends reminders for pending appointments', function () {
     Notification::assertSentTo($this->participant, AppointmentReminder::class);
 });
 
-it('only sends reminders to accepted participants', function () {
+it('only sends reminders to accepted participants', function (): void {
     Notification::fake();
 
     $declinedParticipant = User::factory()->create();
@@ -195,7 +193,7 @@ it('only sends reminders to accepted participants', function () {
     Notification::assertNotSentTo($pendingParticipant, AppointmentReminder::class);
 });
 
-it('does not send reminders for appointments outside the window', function () {
+it('does not send reminders for appointments outside the window', function (): void {
     Notification::fake();
 
     // Appointment too far in the future
@@ -232,7 +230,7 @@ it('does not send reminders for appointments outside the window', function () {
     Notification::assertNotSentTo($this->participant, AppointmentReminder::class);
 });
 
-it('runs in dry-run mode without sending notifications', function () {
+it('runs in dry-run mode without sending notifications', function (): void {
     Notification::fake();
 
     $appointment = Appointment::factory()
@@ -263,7 +261,7 @@ it('runs in dry-run mode without sending notifications', function () {
 |--------------------------------------------------------------------------
 */
 
-it('returns false when SMS is disabled', function () {
+it('returns false when SMS is disabled', function (): void {
     config(['services.sms.enabled' => false]);
 
     $service = app(AppointmentSmsNotificationService::class);
@@ -271,7 +269,7 @@ it('returns false when SMS is disabled', function () {
     expect($service->isSmsEnabled())->toBeFalse();
 });
 
-it('returns true when SMS is properly configured', function () {
+it('returns true when SMS is properly configured', function (): void {
     config([
         'services.sms.enabled' => true,
         'services.twilio.sid' => 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
@@ -284,7 +282,7 @@ it('returns true when SMS is properly configured', function () {
     expect($service->isSmsEnabled())->toBeTrue();
 });
 
-it('returns false when WhatsApp is disabled', function () {
+it('returns false when WhatsApp is disabled', function (): void {
     config(['services.whatsapp.enabled' => false]);
 
     $service = app(AppointmentSmsNotificationService::class);
@@ -292,7 +290,7 @@ it('returns false when WhatsApp is disabled', function () {
     expect($service->isWhatsAppEnabled())->toBeFalse();
 });
 
-it('returns true when WhatsApp is properly configured', function () {
+it('returns true when WhatsApp is properly configured', function (): void {
     config([
         'services.whatsapp.enabled' => true,
         'services.twilio.sid' => 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
@@ -305,7 +303,7 @@ it('returns true when WhatsApp is properly configured', function () {
     expect($service->isWhatsAppEnabled())->toBeTrue();
 });
 
-it('sends SMS reminder when enabled', function () {
+it('sends SMS reminder when enabled', function (): void {
     config([
         'services.sms.enabled' => true,
         'services.twilio.sid' => 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
@@ -333,14 +331,12 @@ it('sends SMS reminder when enabled', function () {
 
     expect($result)->toBeTrue();
 
-    Http::assertSent(function ($request) {
-        return str_contains($request->url(), 'api.twilio.com')
-            && $request['To'] === '+491709876543'
-            && str_contains($request['Body'], 'Rappel');
-    });
+    Http::assertSent(fn($request): bool => str_contains((string) $request->url(), 'api.twilio.com')
+        && $request['To'] === '+491709876543'
+        && str_contains((string) $request['Body'], 'Rappel'));
 });
 
-it('does not send SMS when participant has no phone number', function () {
+it('does not send SMS when participant has no phone number', function (): void {
     config([
         'services.sms.enabled' => true,
         'services.twilio.sid' => 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
@@ -363,7 +359,7 @@ it('does not send SMS when participant has no phone number', function () {
     expect($result)->toBeFalse();
 });
 
-it('sends WhatsApp reminder when enabled', function () {
+it('sends WhatsApp reminder when enabled', function (): void {
     config([
         'services.whatsapp.enabled' => true,
         'services.twilio.sid' => 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
@@ -391,14 +387,12 @@ it('sends WhatsApp reminder when enabled', function () {
 
     expect($result)->toBeTrue();
 
-    Http::assertSent(function ($request) {
-        return str_contains($request->url(), 'api.twilio.com')
-            && $request['To'] === 'whatsapp:+491709876543'
-            && str_contains($request['Body'], 'Rappel de rendez-vous');
-    });
+    Http::assertSent(fn($request): bool => str_contains((string) $request->url(), 'api.twilio.com')
+        && $request['To'] === 'whatsapp:+491709876543'
+        && str_contains((string) $request['Body'], 'Rappel de rendez-vous'));
 });
 
-it('normalizes German phone numbers correctly', function () {
+it('normalizes German phone numbers correctly', function (): void {
     config([
         'services.sms.enabled' => true,
         'services.twilio.sid' => 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
@@ -424,12 +418,10 @@ it('normalizes German phone numbers correctly', function () {
 
     expect($result)->toBeTrue();
 
-    Http::assertSent(function ($request) {
-        return $request['To'] === '+491701234567';
-    });
+    Http::assertSent(fn($request): bool => $request['To'] === '+491701234567');
 });
 
-it('handles Twilio API errors gracefully', function () {
+it('handles Twilio API errors gracefully', function (): void {
     config([
         'services.sms.enabled' => true,
         'services.twilio.sid' => 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
@@ -461,7 +453,7 @@ it('handles Twilio API errors gracefully', function () {
 |--------------------------------------------------------------------------
 */
 
-it('can mark SMS reminder as sent', function () {
+it('can mark SMS reminder as sent', function (): void {
     $appointment = Appointment::factory()
         ->ownedBy($this->organizer)
         ->confirmed()
@@ -477,7 +469,7 @@ it('can mark SMS reminder as sent', function () {
     expect($appointment->reminder_sent_at)->not->toBeNull();
 });
 
-it('can mark WhatsApp reminder as sent', function () {
+it('can mark WhatsApp reminder as sent', function (): void {
     $appointment = Appointment::factory()
         ->ownedBy($this->organizer)
         ->confirmed()
@@ -491,7 +483,7 @@ it('can mark WhatsApp reminder as sent', function () {
     expect($appointment->whatsapp_reminder_sent_at)->not->toBeNull();
 });
 
-it('can check if SMS notification is enabled for appointment', function () {
+it('can check if SMS notification is enabled for appointment', function (): void {
     $appointment = Appointment::factory()
         ->ownedBy($this->organizer)
         ->create([
@@ -503,7 +495,7 @@ it('can check if SMS notification is enabled for appointment', function () {
     expect($appointment->hasEmailNotificationEnabled())->toBeTrue();
 });
 
-it('defaults to email when notification_channels is null', function () {
+it('defaults to email when notification_channels is null', function (): void {
     $appointment = Appointment::factory()
         ->ownedBy($this->organizer)
         ->create([
@@ -515,7 +507,7 @@ it('defaults to email when notification_channels is null', function () {
     expect($appointment->hasWhatsAppNotificationEnabled())->toBeFalse();
 });
 
-it('can get participants with phone numbers', function () {
+it('can get participants with phone numbers', function (): void {
     $participantWithPhone = User::factory()->create([
         'phone_number' => '+491701234567',
     ]);
@@ -540,7 +532,7 @@ it('can get participants with phone numbers', function () {
     expect($participantsWithPhones->first()->id)->toBe($participantWithPhone->id);
 });
 
-it('scopes appointments needing reminders correctly', function () {
+it('scopes appointments needing reminders correctly', function (): void {
     // Appointment within window
     $appointmentInWindow = Appointment::factory()
         ->ownedBy($this->organizer)
@@ -590,7 +582,7 @@ it('scopes appointments needing reminders correctly', function () {
 |--------------------------------------------------------------------------
 */
 
-it('creates correct database notification for participant', function () {
+it('creates correct database notification for participant', function (): void {
     $appointment = Appointment::factory()
         ->ownedBy($this->organizer)
         ->confirmed()
@@ -609,7 +601,7 @@ it('creates correct database notification for participant', function () {
     expect($data['appointment_uuid'])->toBe($appointment->uuid);
 });
 
-it('creates correct database notification for organizer', function () {
+it('creates correct database notification for organizer', function (): void {
     $appointment = Appointment::factory()
         ->ownedBy($this->organizer)
         ->confirmed()
@@ -633,7 +625,7 @@ it('creates correct database notification for organizer', function () {
 |--------------------------------------------------------------------------
 */
 
-it('sends SMS reminders when enabled in command', function () {
+it('sends SMS reminders when enabled in command', function (): void {
     Notification::fake();
 
     config([
@@ -667,12 +659,10 @@ it('sends SMS reminders when enabled in command', function () {
     Notification::assertSentTo($this->participant, AppointmentReminder::class);
 
     // Verify SMS API was called
-    Http::assertSent(function ($request) {
-        return str_contains($request->url(), 'api.twilio.com');
-    });
+    Http::assertSent(fn($request): bool => str_contains((string) $request->url(), 'api.twilio.com'));
 });
 
-it('updates sms_reminder_sent_at when SMS is sent', function () {
+it('updates sms_reminder_sent_at when SMS is sent', function (): void {
     Notification::fake();
 
     config([

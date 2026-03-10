@@ -71,7 +71,6 @@ class TrendCalculator
      * @param string $currentPeriodStart Début période actuelle
      * @param string $currentPeriodEnd Fin période actuelle
      * @param string $comparisonType Type de comparaison: 'previous' (période précédente), 'last_month', 'last_year'
-     * @return array
      */
     public static function calculateForPeriod(
         callable $metricCallback,
@@ -135,7 +134,6 @@ class TrendCalculator
      * Calcule les trends pour plusieurs métriques en une fois
      *
      * @param array $metrics Tableau associatif ['metric_name' => ['current' => value, 'previous' => value]]
-     * @return array
      */
     public static function calculateMultiple(array $metrics): array
     {

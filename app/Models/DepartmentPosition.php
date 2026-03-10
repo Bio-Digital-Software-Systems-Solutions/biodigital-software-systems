@@ -12,6 +12,57 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $department_id
+ * @property string $name
+ * @property string|null $code
+ * @property string|null $description
+ * @property string|null $color
+ * @property int $min_staff
+ * @property int|null $max_staff
+ * @property array<array-key, mixed>|null $required_skills
+ * @property numeric|null $hourly_rate
+ * @property bool $is_active
+ * @property int $sort_order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\Department $department
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentPositionNomination> $nominations
+ * @property-read int|null $nominations_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Shift> $shifts
+ * @property-read int|null $shifts_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition active()
+ * @method static \Database\Factories\DepartmentPositionFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition ordered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereColor($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereHourlyRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereMaxStaff($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereMinStaff($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereRequiredSkills($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentPosition withoutTrashed()
+ * @mixin \Eloquent
+ */
 class DepartmentPosition extends Model
 {
     use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
@@ -47,7 +98,7 @@ class DepartmentPosition extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }

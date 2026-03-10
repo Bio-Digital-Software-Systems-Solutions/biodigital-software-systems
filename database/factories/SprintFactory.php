@@ -28,7 +28,7 @@ class SprintFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'active',
             'start_date' => now()->subDays(fake()->numberBetween(1, 14)),
             'end_date' => now()->addDays(fake()->numberBetween(7, 21)),
@@ -40,7 +40,7 @@ class SprintFactory extends Factory
      */
     public function planned(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'planned',
             'start_date' => now()->addDays(fake()->numberBetween(1, 30)),
             'end_date' => now()->addDays(fake()->numberBetween(31, 60)),
@@ -52,7 +52,7 @@ class SprintFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'completed',
             'start_date' => now()->subDays(fake()->numberBetween(30, 60)),
             'end_date' => now()->subDays(fake()->numberBetween(1, 29)),
@@ -64,7 +64,7 @@ class SprintFactory extends Factory
      */
     public function cancelled(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'cancelled',
         ]);
     }

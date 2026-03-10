@@ -24,11 +24,14 @@ class EventPolicy
         if ($event->is_public) {
             return $user->can('view events');
         }
-
         // Les événements privés sont visibles par le créateur et les participants
-        return $user->id === $event->user_id
-            || $event->participants->contains($user)
-            || $user->can('manage event participants');
+        if ($user->id === $event->user_id) {
+            return true;
+        }
+        if ($event->participants->contains($user)) {
+            return true;
+        }
+        return $user->can('manage event participants');
     }
 
     /**
@@ -86,9 +89,11 @@ class EventPolicy
         if (! $user->can('attend events')) {
             return false;
         }
-
         // Vérifier si l'utilisateur est déjà participant ou peut gérer les participants
-        return $event->participants->contains($user) || $user->can('manage event participants');
+        if ($event->participants->contains($user)) {
+            return true;
+        }
+        return $user->can('manage event participants');
     }
 
     /**

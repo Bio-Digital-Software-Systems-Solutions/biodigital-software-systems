@@ -26,9 +26,33 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
- * @property-read \App\Models\Department $department
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\User|null $creator
+ * @property-read \App\Models\Department $department
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentDocument> $documents
+ * @property-read int|null $documents_count
+ * @property-read string $month_name
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereIsSystem($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereMonth($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereSlug($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory whereYear($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocumentCategory withoutTrashed()
+ * @mixin \Eloquent
  */
 class DepartmentDocumentCategory extends Model
 {
@@ -84,7 +108,7 @@ class DepartmentDocumentCategory extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }

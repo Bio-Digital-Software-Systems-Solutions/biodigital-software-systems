@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pastor_availability', function (Blueprint $table) {
+        Schema::table('pastor_availability', function (Blueprint $table): void {
             $table->json('selected_slots')->nullable()->after('notes');
         });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pastor_availability', function (Blueprint $table) {
+        Schema::table('pastor_availability', function (Blueprint $table): void {
             $table->dropColumn('selected_slots');
         });
     }

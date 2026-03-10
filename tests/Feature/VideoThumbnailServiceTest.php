@@ -7,18 +7,18 @@ use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     Storage::fake('public');
 });
 
-describe('VideoThumbnailService', function () {
-    it('can be instantiated', function () {
+describe('VideoThumbnailService', function (): void {
+    it('can be instantiated', function (): void {
         $service = new VideoThumbnailService;
         expect($service)->toBeInstanceOf(VideoThumbnailService::class);
     });
 
-    describe('isFfmpegAvailable', function () {
-        it('returns true when ffmpeg is available', function () {
+    describe('isFfmpegAvailable', function (): void {
+        it('returns true when ffmpeg is available', function (): void {
             Process::fake([
                 'which ffmpeg*' => Process::result(output: '/usr/local/bin/ffmpeg'),
             ]);
@@ -27,7 +27,7 @@ describe('VideoThumbnailService', function () {
             expect($service->isFfmpegAvailable())->toBeTrue();
         });
 
-        it('returns false when ffmpeg is not available', function () {
+        it('returns false when ffmpeg is not available', function (): void {
             Process::fake([
                 '*' => Process::result(output: '', exitCode: 1),
             ]);
@@ -37,8 +37,8 @@ describe('VideoThumbnailService', function () {
         });
     });
 
-    describe('getVideoDuration', function () {
-        it('returns duration when ffprobe works', function () {
+    describe('getVideoDuration', function (): void {
+        it('returns duration when ffprobe works', function (): void {
             Process::fake([
                 'which ffmpeg*' => Process::result(output: '/usr/local/bin/ffmpeg'),
                 'ffprobe*' => Process::result(output: '125.5'),
@@ -54,7 +54,7 @@ describe('VideoThumbnailService', function () {
             expect($duration)->toBe(125.5);
         });
 
-        it('returns null when ffprobe fails', function () {
+        it('returns null when ffprobe fails', function (): void {
             Process::fake([
                 'which ffmpeg*' => Process::result(output: '/usr/local/bin/ffmpeg'),
                 'ffprobe*' => Process::result(output: '', exitCode: 1),
@@ -69,7 +69,7 @@ describe('VideoThumbnailService', function () {
             expect($duration)->toBeNull();
         });
 
-        it('returns null when ffmpeg is not available', function () {
+        it('returns null when ffmpeg is not available', function (): void {
             Process::fake([
                 '*' => Process::result(output: '', exitCode: 1),
             ]);
@@ -84,15 +84,15 @@ describe('VideoThumbnailService', function () {
         });
     });
 
-    describe('generate', function () {
-        it('returns null when video file does not exist', function () {
+    describe('generate', function (): void {
+        it('returns null when video file does not exist', function (): void {
             $service = new VideoThumbnailService;
             $result = $service->generate('nonexistent/video.mp4');
 
             expect($result)->toBeNull();
         });
 
-        it('generates thumbnail with ffmpeg when available', function () {
+        it('generates thumbnail with ffmpeg when available', function (): void {
             Process::fake([
                 'which ffmpeg*' => Process::result(output: '/usr/local/bin/ffmpeg'),
                 'ffprobe*' => Process::result(output: '60'),
@@ -117,7 +117,7 @@ describe('VideoThumbnailService', function () {
             expect($result)->toBe($expectedThumbPath);
         });
 
-        it('uses custom output path when provided', function () {
+        it('uses custom output path when provided', function (): void {
             Process::fake([
                 'which ffmpeg*' => Process::result(output: '/usr/local/bin/ffmpeg'),
                 'ffprobe*' => Process::result(output: '60'),
@@ -136,7 +136,7 @@ describe('VideoThumbnailService', function () {
             expect($result)->toBe($customPath);
         });
 
-        it('generates fallback thumbnail when ffmpeg not available', function () {
+        it('generates fallback thumbnail when ffmpeg not available', function (): void {
             Process::fake([
                 '*' => Process::result(output: '', exitCode: 1),
             ]);
@@ -155,7 +155,7 @@ describe('VideoThumbnailService', function () {
             }
         });
 
-        it('adjusts timestamp if it exceeds video duration', function () {
+        it('adjusts timestamp if it exceeds video duration', function (): void {
             Process::fake([
                 'which ffmpeg*' => Process::result(output: '/usr/local/bin/ffmpeg'),
                 'ffprobe*' => Process::result(output: '5'), // 5 second video
@@ -177,8 +177,8 @@ describe('VideoThumbnailService', function () {
         });
     });
 
-    describe('deleteThumbnail', function () {
-        it('deletes existing thumbnail', function () {
+    describe('deleteThumbnail', function (): void {
+        it('deletes existing thumbnail', function (): void {
             $thumbPath = 'events/media/1/thumbnails/video_thumb.jpg';
             Storage::disk('public')->put($thumbPath, 'fake thumbnail');
 
@@ -189,7 +189,7 @@ describe('VideoThumbnailService', function () {
             expect(Storage::disk('public')->exists($thumbPath))->toBeFalse();
         });
 
-        it('returns true for non-existent thumbnail', function () {
+        it('returns true for non-existent thumbnail', function (): void {
             $service = new VideoThumbnailService;
             $result = $service->deleteThumbnail('nonexistent/thumb.jpg');
 
@@ -198,8 +198,8 @@ describe('VideoThumbnailService', function () {
     });
 });
 
-describe('VideoThumbnailService Fallback', function () {
-    it('creates placeholder image with GD', function () {
+describe('VideoThumbnailService Fallback', function (): void {
+    it('creates placeholder image with GD', function (): void {
         if (! extension_loaded('gd')) {
             $this->markTestSkipped('GD extension not available');
         }

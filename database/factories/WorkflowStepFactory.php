@@ -42,7 +42,7 @@ class WorkflowStepFactory extends Factory
      */
     public function start(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => StepType::START,
             'name' => 'Start',
             'is_start' => true,
@@ -55,7 +55,7 @@ class WorkflowStepFactory extends Factory
      */
     public function end(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => StepType::END,
             'name' => 'End',
             'is_end' => true,
@@ -68,7 +68,7 @@ class WorkflowStepFactory extends Factory
      */
     public function task(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => StepType::ACTION,
         ]);
     }
@@ -78,7 +78,7 @@ class WorkflowStepFactory extends Factory
      */
     public function approval(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => StepType::APPROVAL,
         ]);
     }
@@ -88,7 +88,7 @@ class WorkflowStepFactory extends Factory
      */
     public function form(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => StepType::FORM,
         ]);
     }
@@ -98,7 +98,7 @@ class WorkflowStepFactory extends Factory
      */
     public function condition(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => StepType::CONDITION,
         ]);
     }
@@ -108,7 +108,7 @@ class WorkflowStepFactory extends Factory
      */
     public function notification(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => StepType::NOTIFICATION,
         ]);
     }

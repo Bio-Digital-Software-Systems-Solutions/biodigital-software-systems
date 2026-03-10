@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('books', function (Blueprint $table) {
+        Schema::table('books', function (Blueprint $table): void {
             // Add library_id column (nullable because existing books might not have one)
             $table->foreignId('library_id')->nullable()->after('category_id')->constrained()->onDelete('cascade');
         });
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('books', function (Blueprint $table) {
+        Schema::table('books', function (Blueprint $table): void {
             $table->dropForeign(['library_id']);
             $table->dropColumn('library_id');
         });

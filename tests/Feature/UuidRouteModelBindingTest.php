@@ -15,7 +15,7 @@ class UuidRouteModelBindingTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function task_can_be_found_by_uuid()
+    public function task_can_be_found_by_uuid(): void
     {
         $task = Task::factory()->make();
         $task->program_id = null; // Avoid Program dependency
@@ -32,7 +32,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function department_can_be_found_by_uuid()
+    public function department_can_be_found_by_uuid(): void
     {
         $department = Department::factory()->create();
 
@@ -47,7 +47,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function stock_can_be_found_by_uuid()
+    public function stock_can_be_found_by_uuid(): void
     {
         $stock = Stock::factory()->create();
 
@@ -62,7 +62,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function group_can_be_found_by_uuid()
+    public function group_can_be_found_by_uuid(): void
     {
         $group = Group::factory()->create();
 
@@ -77,7 +77,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function task_uuid_is_included_in_json_serialization()
+    public function task_uuid_is_included_in_json_serialization(): void
     {
         $task = Task::factory()->make();
         $task->program_id = null; // Avoid Program dependency
@@ -90,7 +90,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function department_uuid_is_included_in_json_serialization()
+    public function department_uuid_is_included_in_json_serialization(): void
     {
         $department = Department::factory()->create();
 
@@ -101,7 +101,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function stock_uuid_is_included_in_json_serialization()
+    public function stock_uuid_is_included_in_json_serialization(): void
     {
         $stock = Stock::factory()->create();
 
@@ -112,7 +112,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function group_uuid_is_included_in_json_serialization()
+    public function group_uuid_is_included_in_json_serialization(): void
     {
         $group = Group::factory()->create();
 
@@ -123,7 +123,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function task_uuid_is_unique()
+    public function task_uuid_is_unique(): void
     {
         $task1 = Task::factory()->make();
         $task1->program_id = null; // Avoid Program dependency
@@ -137,7 +137,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function department_uuid_is_unique()
+    public function department_uuid_is_unique(): void
     {
         $department1 = Department::factory()->create();
         $department2 = Department::factory()->create();
@@ -146,7 +146,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function stock_uuid_is_unique()
+    public function stock_uuid_is_unique(): void
     {
         $stock1 = Stock::factory()->create();
         $stock2 = Stock::factory()->create();
@@ -155,7 +155,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function group_uuid_is_unique()
+    public function group_uuid_is_unique(): void
     {
         $group1 = Group::factory()->create();
         $group2 = Group::factory()->create();
@@ -164,7 +164,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function task_uuid_is_valid_uuid_format()
+    public function task_uuid_is_valid_uuid_format(): void
     {
         $task = Task::factory()->make();
         $task->program_id = null; // Avoid Program dependency
@@ -177,7 +177,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function department_uuid_is_valid_uuid_format()
+    public function department_uuid_is_valid_uuid_format(): void
     {
         $department = Department::factory()->create();
 
@@ -188,7 +188,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function stock_uuid_is_valid_uuid_format()
+    public function stock_uuid_is_valid_uuid_format(): void
     {
         $stock = Stock::factory()->create();
 
@@ -199,7 +199,7 @@ class UuidRouteModelBindingTest extends TestCase
     }
 
     /** @test */
-    public function group_uuid_is_valid_uuid_format()
+    public function group_uuid_is_valid_uuid_format(): void
     {
         $group = Group::factory()->create();
 

@@ -54,7 +54,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_get_list_of_pastors()
+    public function it_can_get_list_of_pastors(): void
     {
         $response = $this->getJson('/api/pastoral-care/pastors');
 
@@ -77,7 +77,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_get_available_time_slots()
+    public function it_can_get_available_time_slots(): void
     {
         $tomorrow = Carbon::tomorrow()->format('Y-m-d');
 
@@ -98,7 +98,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_create_new_appointment()
+    public function it_can_create_new_appointment(): void
     {
         $themes = PastoralCareTheme::take(2)->pluck('id')->toArray();
 
@@ -154,7 +154,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_show_appointment_details()
+    public function it_can_show_appointment_details(): void
     {
         $response = $this->getJson("/api/pastoral-care/appointments/{$this->appointment->uuid}");
 
@@ -189,7 +189,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_confirm_appointment()
+    public function it_can_confirm_appointment(): void
     {
         $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/confirm");
 
@@ -207,7 +207,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_cannot_confirm_appointment_that_cannot_be_confirmed()
+    public function it_cannot_confirm_appointment_that_cannot_be_confirmed(): void
     {
         // Make appointment already confirmed
         $this->appointment->update(['status' => 'confirmed']);
@@ -224,7 +224,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_cancel_appointment()
+    public function it_can_cancel_appointment(): void
     {
         $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/cancel", [
             'cancellation_reason' => 'Client requested cancellation',
@@ -245,7 +245,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_complete_appointment()
+    public function it_can_complete_appointment(): void
     {
         $this->actingAs($this->pastor);
 
@@ -267,7 +267,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_cannot_complete_appointment_that_is_not_confirmed()
+    public function it_cannot_complete_appointment_that_is_not_confirmed(): void
     {
         $this->actingAs($this->pastor);
 
@@ -284,7 +284,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_mark_appointment_as_no_show()
+    public function it_can_mark_appointment_as_no_show(): void
     {
         $this->actingAs($this->pastor);
 
@@ -310,7 +310,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_update_pastor_notes()
+    public function it_can_update_pastor_notes(): void
     {
         $this->actingAs($this->pastor);
 
@@ -332,7 +332,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_pastor_notes_length()
+    public function it_validates_pastor_notes_length(): void
     {
         $this->actingAs($this->pastor);
 
@@ -348,7 +348,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_requires_authentication_for_protected_endpoints()
+    public function it_requires_authentication_for_protected_endpoints(): void
     {
         // Test update endpoint requires authentication
         $response = $this->patchJson("/api/pastoral-care/appointments/{$this->appointment->uuid}", [
@@ -364,7 +364,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_requires_pastor_role_for_pastor_specific_actions()
+    public function it_requires_pastor_role_for_pastor_specific_actions(): void
     {
         // Create a regular user (not a pastor)
         $regularUser = User::factory()->create();
@@ -385,7 +385,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_appointment_creation_data()
+    public function it_validates_appointment_creation_data(): void
     {
         $invalidData = [
             'pastor_id' => 'invalid',
@@ -415,7 +415,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_404_for_non_existent_appointment()
+    public function it_returns_404_for_non_existent_appointment(): void
     {
         $response = $this->getJson('/api/pastoral-care/appointments/non-existent-uuid');
 
@@ -427,7 +427,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_checks_time_slot_availability_when_creating_appointment()
+    public function it_checks_time_slot_availability_when_creating_appointment(): void
     {
         $themes = PastoralCareTheme::take(1)->pluck('id')->toArray();
 
@@ -451,7 +451,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_get_appointments_list_for_authenticated_pastor()
+    public function it_can_get_appointments_list_for_authenticated_pastor(): void
     {
         $this->actingAs($this->pastor);
 
@@ -489,7 +489,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_filters_appointments_by_status()
+    public function it_filters_appointments_by_status(): void
     {
         $this->actingAs($this->pastor);
 
@@ -515,7 +515,7 @@ class PastoralCareApiTest extends TestCase
     }
 
     /** @test */
-    public function it_can_delete_appointment_as_pastor()
+    public function it_can_delete_appointment_as_pastor(): void
     {
         $this->actingAs($this->pastor);
 

@@ -19,6 +19,8 @@ use Spatie\Activitylog\LogOptions;
  * @property string|null $comment
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\User $student
  * @property-read \App\Models\Training $training
  * @property-read \App\Models\TrainingTopic|null $trainingTopic
@@ -35,8 +37,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Evaluation whereTrainingTopicId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Evaluation whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Evaluation whereUpdatedAt($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class Evaluation extends Model

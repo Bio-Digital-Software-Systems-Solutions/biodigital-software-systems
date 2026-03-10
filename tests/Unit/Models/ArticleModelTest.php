@@ -54,7 +54,7 @@ class ArticleModelTest extends TestCase
         $publishedArticles = Article::published()->get();
 
         $this->assertCount(3, $publishedArticles);
-        $this->assertTrue($publishedArticles->every(fn ($article) => $article->status === 'published'));
+        $this->assertTrue($publishedArticles->every(fn ($article): bool => $article->status === 'published'));
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -66,7 +66,7 @@ class ArticleModelTest extends TestCase
         $draftArticles = Article::draft()->get();
 
         $this->assertCount(2, $draftArticles);
-        $this->assertTrue($draftArticles->every(fn ($article) => $article->status === 'draft'));
+        $this->assertTrue($draftArticles->every(fn ($article): bool => $article->status === 'draft'));
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -81,7 +81,7 @@ class ArticleModelTest extends TestCase
         $author1Articles = Article::byAuthor($author1->id)->get();
 
         $this->assertCount(3, $author1Articles);
-        $this->assertTrue($author1Articles->every(fn ($article) => $article->author_id === $author1->id));
+        $this->assertTrue($author1Articles->every(fn ($article): bool => $article->author_id === $author1->id));
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
@@ -129,7 +129,7 @@ class ArticleModelTest extends TestCase
         $article = Article::factory()->create(['content' => $content]);
 
         $this->assertNotEmpty($article->excerpt);
-        $this->assertLessThan(200, strlen($article->excerpt));
+        $this->assertLessThan(200, strlen((string) $article->excerpt));
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

@@ -34,7 +34,7 @@ class ProgramTest extends TestCase
         $program = Program::factory()->create(['user_id' => $user->id]);
         $status = Status::factory()->create();
 
-        $tasks = Task::factory()->count(3)->create([
+        Task::factory()->count(3)->create([
             'program_id' => $program->id,
             'status_id' => $status->id,
         ]);

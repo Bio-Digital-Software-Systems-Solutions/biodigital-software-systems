@@ -34,13 +34,13 @@ class UpdateRolesAndPermissions extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
         $this->info('🚀 Starting roles and permissions update...');
 
         // Check if dry run mode
         $dryRun = $this->option('dry-run');
-        $force = $this->option('force');
+        $this->option('force');
         $resetSuperAdmin = $this->option('reset-super-admin');
 
         if ($dryRun) {
@@ -92,7 +92,7 @@ class UpdateRolesAndPermissions extends Command
     /**
      * Create missing permissions based on the seeder
      */
-    private function createMissingPermissions($dryRun = false)
+    private function createMissingPermissions($dryRun = false): void
     {
         $this->info('📋 Creating missing permissions...');
 
@@ -168,7 +168,7 @@ class UpdateRolesAndPermissions extends Command
     /**
      * Create missing roles
      */
-    private function createMissingRoles($dryRun = false)
+    private function createMissingRoles($dryRun = false): void
     {
         $this->info('👥 Creating missing roles...');
 
@@ -205,7 +205,7 @@ class UpdateRolesAndPermissions extends Command
     /**
      * Update role permissions
      */
-    private function updateRolePermissions($dryRun = false)
+    private function updateRolePermissions($dryRun = false): void
     {
         $this->info('🔧 Updating role permissions...');
 
@@ -267,7 +267,7 @@ class UpdateRolesAndPermissions extends Command
                 $currentPermissions = $role->permissions->pluck('name')->toArray();
                 $permissionsToAdd = array_diff($permissions, $currentPermissions);
 
-                if (! empty($permissionsToAdd)) {
+                if ($permissionsToAdd !== []) {
                     if ($dryRun) {
                         $this->line("  Would update {$roleName}: ".implode(', ', $permissionsToAdd));
                     } else {
@@ -289,7 +289,7 @@ class UpdateRolesAndPermissions extends Command
     /**
      * Reset super-admin to have all permissions
      */
-    private function resetSuperAdminPermissions($dryRun = false)
+    private function resetSuperAdminPermissions($dryRun = false): void
     {
         $this->info('🔒 Resetting super-admin permissions...');
 
@@ -323,7 +323,7 @@ class UpdateRolesAndPermissions extends Command
     /**
      * Clear application caches
      */
-    private function clearApplicationCaches()
+    private function clearApplicationCaches(): void
     {
         $this->info('🧹 Clearing application caches...');
 
@@ -344,7 +344,7 @@ class UpdateRolesAndPermissions extends Command
     /**
      * Display summary of current state
      */
-    private function displaySummary()
+    private function displaySummary(): void
     {
         $this->info('📊 Current Summary:');
 

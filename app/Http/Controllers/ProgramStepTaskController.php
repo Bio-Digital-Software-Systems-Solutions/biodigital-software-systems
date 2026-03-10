@@ -31,7 +31,7 @@ class ProgramStepTaskController extends Controller
         $validated['program_step_id'] = $step->id;
         $validated['status_id'] = $status->id;
 
-        $task = Task::create($validated);
+        Task::create($validated);
 
         return back()->with('success', 'Task created successfully.');
     }

@@ -49,7 +49,7 @@ class TrainingEnrollmentEmailTest extends TestCase
         ]);
     }
 
-    public function test_approval_email_is_sent_when_enrollment_is_approved()
+    public function test_approval_email_is_sent_when_enrollment_is_approved(): void
     {
         Mail::fake();
 
@@ -72,14 +72,12 @@ class TrainingEnrollmentEmailTest extends TestCase
         $response->assertStatus(200);
 
         // Assert email was sent
-        Mail::assertSent(TrainingEnrollmentApproved::class, function ($mail) {
-            return $mail->hasTo('student@test.com') &&
-                   $mail->userName === 'John Doe' &&
-                   $mail->trainingName === 'Test Training Course';
-        });
+        Mail::assertSent(TrainingEnrollmentApproved::class, fn($mail): bool => $mail->hasTo('student@test.com') &&
+               $mail->userName === 'John Doe' &&
+               $mail->trainingName === 'Test Training Course');
     }
 
-    public function test_rejection_email_is_sent_when_enrollment_is_rejected()
+    public function test_rejection_email_is_sent_when_enrollment_is_rejected(): void
     {
         Mail::fake();
 
@@ -106,15 +104,13 @@ class TrainingEnrollmentEmailTest extends TestCase
         $response->assertStatus(200);
 
         // Assert email was sent
-        Mail::assertSent(TrainingEnrollmentRejected::class, function ($mail) use ($rejectionReason) {
-            return $mail->hasTo('student@test.com') &&
-                   $mail->userName === 'John Doe' &&
-                   $mail->trainingName === 'Test Training Course' &&
-                   $mail->rejectionReason === $rejectionReason;
-        });
+        Mail::assertSent(TrainingEnrollmentRejected::class, fn($mail): bool => $mail->hasTo('student@test.com') &&
+               $mail->userName === 'John Doe' &&
+               $mail->trainingName === 'Test Training Course' &&
+               $mail->rejectionReason === $rejectionReason);
     }
 
-    public function test_rejection_requires_reason()
+    public function test_rejection_requires_reason(): void
     {
         // Create a pending enrollment
         $enrollmentId = DB::table('training_enrollments')->insertGetId([
@@ -138,7 +134,7 @@ class TrainingEnrollmentEmailTest extends TestCase
         $response->assertJsonValidationErrors(['rejection_reason']);
     }
 
-    public function test_rejection_reason_must_be_at_least_10_characters()
+    public function test_rejection_reason_must_be_at_least_10_characters(): void
     {
         // Create a pending enrollment
         $enrollmentId = DB::table('training_enrollments')->insertGetId([
@@ -162,7 +158,7 @@ class TrainingEnrollmentEmailTest extends TestCase
         $response->assertJsonValidationErrors(['rejection_reason']);
     }
 
-    public function test_rejection_reason_is_stored_in_database()
+    public function test_rejection_reason_is_stored_in_database(): void
     {
         Mail::fake();
 
@@ -192,7 +188,7 @@ class TrainingEnrollmentEmailTest extends TestCase
         $this->assertEquals($rejectionReason, $enrollment->rejection_reason);
     }
 
-    public function test_student_role_is_assigned_on_approval()
+    public function test_student_role_is_assigned_on_approval(): void
     {
         Mail::fake();
 
@@ -220,7 +216,7 @@ class TrainingEnrollmentEmailTest extends TestCase
         $this->assertTrue($this->student->hasRole('Student'));
     }
 
-    public function test_student_with_role_can_access_student_dashboard()
+    public function test_student_with_role_can_access_student_dashboard(): void
     {
         // Assign Student role
         $this->student->assignRole('Student');
@@ -244,7 +240,7 @@ class TrainingEnrollmentEmailTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_user_without_student_role_cannot_access_student_dashboard()
+    public function test_user_without_student_role_cannot_access_student_dashboard(): void
     {
         // User without Student role (only has default roles)
         $response = $this->actingAs($this->student)

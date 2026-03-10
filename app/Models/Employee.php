@@ -17,6 +17,156 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $user_id
+ * @property int|null $department_id
+ * @property int|null $manager_id
+ * @property string $employee_number
+ * @property string|null $position
+ * @property string|null $job_title
+ * @property \Illuminate\Support\Carbon|null $birth_date
+ * @property string|null $nationality
+ * @property string|null $social_security_number
+ * @property string|null $tax_id
+ * @property string|null $personal_email
+ * @property string|null $work_phone
+ * @property string|null $personal_phone
+ * @property string|null $address
+ * @property string|null $city
+ * @property string|null $postal_code
+ * @property string $country
+ * @property string|null $emergency_contact_name
+ * @property string|null $emergency_contact_phone
+ * @property string|null $emergency_contact_relationship
+ * @property EmployeeStatus $status
+ * @property EmploymentType $employment_type
+ * @property \Illuminate\Support\Carbon|null $hire_date
+ * @property \Illuminate\Support\Carbon|null $probation_end_date
+ * @property \Illuminate\Support\Carbon|null $contract_end_date
+ * @property \Illuminate\Support\Carbon|null $termination_date
+ * @property string|null $termination_reason
+ * @property numeric|null $hourly_rate
+ * @property numeric|null $monthly_salary
+ * @property PaymentMethod|null $payment_method
+ * @property string|null $bank_name
+ * @property string|null $bank_iban
+ * @property string|null $bank_bic
+ * @property numeric $weekly_hours
+ * @property array<array-key, mixed>|null $working_days
+ * @property string|null $default_start_time
+ * @property string|null $default_end_time
+ * @property int $annual_leave_days
+ * @property int $remaining_leave_days
+ * @property int $sick_days_taken
+ * @property array<array-key, mixed>|null $skills
+ * @property array<array-key, mixed>|null $certifications
+ * @property array<array-key, mixed>|null $languages
+ * @property string|null $avatar
+ * @property string|null $contract_document
+ * @property string|null $id_document
+ * @property string|null $notes
+ * @property string|null $internal_notes
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Absence> $absences
+ * @property-read int|null $absences_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\Department|null $department
+ * @property-read int|null $age
+ * @property-read int|null $contract_remaining_days
+ * @property-read string $full_name
+ * @property-read bool $is_on_probation
+ * @property-read int|null $remaining_probation_days
+ * @property-read float|null $years_of_service
+ * @property-read Employee|null $manager
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Shift> $shifts
+ * @property-read int|null $shifts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Employee> $subordinates
+ * @property-read int|null $subordinates_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\TimeEntry> $timeEntries
+ * @property-read int|null $time_entries_count
+ * @property-read \App\Models\User $user
+ * @method static Builder<static>|Employee active()
+ * @method static Builder<static>|Employee byEmploymentType(\App\Enums\Employee\EmploymentType $type)
+ * @method static Builder<static>|Employee byStatus(\App\Enums\Employee\EmployeeStatus $status)
+ * @method static Builder<static>|Employee contractEndingSoon(int $days = 30)
+ * @method static \Database\Factories\EmployeeFactory factory($count = null, $state = [])
+ * @method static Builder<static>|Employee fullTime()
+ * @method static Builder<static>|Employee hiredAfter(\Carbon\Carbon $date)
+ * @method static Builder<static>|Employee hiredBefore(\Carbon\Carbon $date)
+ * @method static Builder<static>|Employee inDepartment(int $departmentId)
+ * @method static Builder<static>|Employee inactive()
+ * @method static Builder<static>|Employee newModelQuery()
+ * @method static Builder<static>|Employee newQuery()
+ * @method static Builder<static>|Employee onLeave()
+ * @method static Builder<static>|Employee onProbation()
+ * @method static Builder<static>|Employee onlyTrashed()
+ * @method static Builder<static>|Employee partTime()
+ * @method static Builder<static>|Employee query()
+ * @method static Builder<static>|Employee search(string $search)
+ * @method static Builder<static>|Employee terminated()
+ * @method static Builder<static>|Employee whereAddress($value)
+ * @method static Builder<static>|Employee whereAnnualLeaveDays($value)
+ * @method static Builder<static>|Employee whereAvatar($value)
+ * @method static Builder<static>|Employee whereBankBic($value)
+ * @method static Builder<static>|Employee whereBankIban($value)
+ * @method static Builder<static>|Employee whereBankName($value)
+ * @method static Builder<static>|Employee whereBirthDate($value)
+ * @method static Builder<static>|Employee whereCertifications($value)
+ * @method static Builder<static>|Employee whereCity($value)
+ * @method static Builder<static>|Employee whereContractDocument($value)
+ * @method static Builder<static>|Employee whereContractEndDate($value)
+ * @method static Builder<static>|Employee whereCountry($value)
+ * @method static Builder<static>|Employee whereCreatedAt($value)
+ * @method static Builder<static>|Employee whereDefaultEndTime($value)
+ * @method static Builder<static>|Employee whereDefaultStartTime($value)
+ * @method static Builder<static>|Employee whereDeletedAt($value)
+ * @method static Builder<static>|Employee whereDepartmentId($value)
+ * @method static Builder<static>|Employee whereEmergencyContactName($value)
+ * @method static Builder<static>|Employee whereEmergencyContactPhone($value)
+ * @method static Builder<static>|Employee whereEmergencyContactRelationship($value)
+ * @method static Builder<static>|Employee whereEmployeeNumber($value)
+ * @method static Builder<static>|Employee whereEmploymentType($value)
+ * @method static Builder<static>|Employee whereHireDate($value)
+ * @method static Builder<static>|Employee whereHourlyRate($value)
+ * @method static Builder<static>|Employee whereId($value)
+ * @method static Builder<static>|Employee whereIdDocument($value)
+ * @method static Builder<static>|Employee whereInternalNotes($value)
+ * @method static Builder<static>|Employee whereJobTitle($value)
+ * @method static Builder<static>|Employee whereLanguages($value)
+ * @method static Builder<static>|Employee whereManagerId($value)
+ * @method static Builder<static>|Employee whereMonthlySalary($value)
+ * @method static Builder<static>|Employee whereNationality($value)
+ * @method static Builder<static>|Employee whereNotes($value)
+ * @method static Builder<static>|Employee wherePaymentMethod($value)
+ * @method static Builder<static>|Employee wherePersonalEmail($value)
+ * @method static Builder<static>|Employee wherePersonalPhone($value)
+ * @method static Builder<static>|Employee wherePosition($value)
+ * @method static Builder<static>|Employee wherePostalCode($value)
+ * @method static Builder<static>|Employee whereProbationEndDate($value)
+ * @method static Builder<static>|Employee whereRemainingLeaveDays($value)
+ * @method static Builder<static>|Employee whereSickDaysTaken($value)
+ * @method static Builder<static>|Employee whereSkills($value)
+ * @method static Builder<static>|Employee whereSocialSecurityNumber($value)
+ * @method static Builder<static>|Employee whereStatus($value)
+ * @method static Builder<static>|Employee whereTaxId($value)
+ * @method static Builder<static>|Employee whereTerminationDate($value)
+ * @method static Builder<static>|Employee whereTerminationReason($value)
+ * @method static Builder<static>|Employee whereUpdatedAt($value)
+ * @method static Builder<static>|Employee whereUserId($value)
+ * @method static Builder<static>|Employee whereUuid($value)
+ * @method static Builder<static>|Employee whereWeeklyHours($value)
+ * @method static Builder<static>|Employee whereWorkPhone($value)
+ * @method static Builder<static>|Employee whereWorkingDays($value)
+ * @method static Builder<static>|Employee withManager()
+ * @method static Builder<static>|Employee withTrashed(bool $withTrashed = true)
+ * @method static Builder<static>|Employee withoutTrashed()
+ * @mixin \Eloquent
+ */
 class Employee extends Model
 {
     use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
@@ -107,7 +257,7 @@ class Employee extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
@@ -175,7 +325,7 @@ class Employee extends Model
 
     public function getFullNameAttribute(): string
     {
-        return $this->user?->full_name ?? 'N/A';
+        return (string) ($this->user?->full_name ?? 'N/A');
     }
 
     public function getIsOnProbationAttribute(): bool
@@ -212,7 +362,7 @@ class Employee extends Model
             return null;
         }
 
-        return Carbon::now()->diffInDays($this->probation_end_date);
+        return (int) Carbon::now()->diffInDays($this->probation_end_date);
     }
 
     public function getContractRemainingDaysAttribute(): ?int
@@ -221,7 +371,7 @@ class Employee extends Model
             return null;
         }
 
-        return Carbon::now()->diffInDays($this->contract_end_date);
+        return (int) Carbon::now()->diffInDays($this->contract_end_date);
     }
 
     // ==========================================
@@ -301,11 +451,11 @@ class Employee extends Model
 
     public function scopeSearch(Builder $query, string $search): Builder
     {
-        return $query->where(function ($q) use ($search) {
+        return $query->where(function ($q) use ($search): void {
             $q->where('employee_number', 'like', "%{$search}%")
                 ->orWhere('position', 'like', "%{$search}%")
                 ->orWhere('job_title', 'like', "%{$search}%")
-                ->orWhereHas('user', function ($userQuery) use ($search) {
+                ->orWhereHas('user', function ($userQuery) use ($search): void {
                     $userQuery->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
@@ -327,7 +477,7 @@ class Employee extends Model
             ->first();
 
         if ($lastEmployee) {
-            $lastNumber = (int) substr($lastEmployee->employee_number, -4);
+            $lastNumber = (int) substr((string) $lastEmployee->employee_number, -4);
             $newNumber = $lastNumber + 1;
         } else {
             $newNumber = 1;
@@ -405,7 +555,7 @@ class Employee extends Model
 
     public function hasSkill(string $skill): bool
     {
-        return $this->skills && in_array(strtolower($skill), array_map('strtolower', $this->skills));
+        return $this->skills && in_array(strtolower($skill), array_map(strtolower(...), $this->skills));
     }
 
     public function addSkill(string $skill): void
@@ -423,20 +573,20 @@ class Employee extends Model
             return;
         }
 
-        $skills = array_filter($this->skills, fn ($s) => strtolower($s) !== strtolower($skill));
+        $skills = array_filter($this->skills, fn ($s): bool => strtolower((string) $s) !== strtolower($skill));
         $this->update(['skills' => array_values($skills)]);
     }
 
     public function getWorkedHoursInPeriod(Carbon $start, Carbon $end): float
     {
-        return $this->timeEntries()
+        return (float) $this->timeEntries()
             ->whereBetween('date', [$start, $end])
             ->sum('actual_hours');
     }
 
     public function getScheduledHoursInPeriod(Carbon $start, Carbon $end): float
     {
-        return $this->shifts()
+        return (float) $this->shifts()
             ->whereBetween('date', [$start, $end])
             ->get()
             ->sum('duration_hours');

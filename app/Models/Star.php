@@ -16,6 +16,131 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $user_id
+ * @property int|null $department_id
+ * @property int|null $nominated_by
+ * @property string $star_number
+ * @property string|null $title
+ * @property string|null $description
+ * @property StarStatus $status
+ * @property StarType $type
+ * @property StarCategory|null $category
+ * @property int $points
+ * @property int $level
+ * @property \Illuminate\Support\Carbon|null $recognition_date
+ * @property \Illuminate\Support\Carbon|null $expiry_date
+ * @property array<array-key, mixed>|null $achievements
+ * @property array<array-key, mixed>|null $badges
+ * @property array<array-key, mixed>|null $skills
+ * @property array<array-key, mixed>|null $areas_of_service
+ * @property array<array-key, mixed>|null $available_days
+ * @property string|null $available_from
+ * @property string|null $available_to
+ * @property int $hours_per_week
+ * @property int $total_hours_served
+ * @property bool $is_contactable
+ * @property string|null $preferred_contact_method
+ * @property bool $receive_notifications
+ * @property string|null $bio
+ * @property string|null $avatar
+ * @property string|null $cover_image
+ * @property bool $is_public_profile
+ * @property bool $is_featured
+ * @property int $display_order
+ * @property string|null $testimonial
+ * @property string|null $favorite_verse
+ * @property string|null $notes
+ * @property string|null $internal_notes
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\Department|null $department
+ * @property-read int|null $days_until_expiry
+ * @property-read string $full_name
+ * @property-read bool $is_expired
+ * @property-read string $level_title
+ * @property-read int $next_level_points
+ * @property-read int $progress_to_next_level
+ * @property-read float|null $service_duration
+ * @property-read \App\Models\User|null $nominator
+ * @property-read \App\Models\User $user
+ * @method static Builder<static>|Star active()
+ * @method static Builder<static>|Star ambassadors()
+ * @method static Builder<static>|Star availableOn(string $day)
+ * @method static Builder<static>|Star byCategory(\App\Enums\Star\StarCategory $category)
+ * @method static Builder<static>|Star byStatus(\App\Enums\Star\StarStatus $status)
+ * @method static Builder<static>|Star byType(\App\Enums\Star\StarType $type)
+ * @method static Builder<static>|Star contactable()
+ * @method static Builder<static>|Star expiringSoon(int $days = 30)
+ * @method static \Database\Factories\StarFactory factory($count = null, $state = [])
+ * @method static Builder<static>|Star featured()
+ * @method static Builder<static>|Star graduated()
+ * @method static Builder<static>|Star inDepartment(int $departmentId)
+ * @method static Builder<static>|Star inactive()
+ * @method static Builder<static>|Star leaders()
+ * @method static Builder<static>|Star mentors()
+ * @method static Builder<static>|Star minLevel(int $level)
+ * @method static Builder<static>|Star newModelQuery()
+ * @method static Builder<static>|Star newQuery()
+ * @method static Builder<static>|Star notExpired()
+ * @method static Builder<static>|Star onBreak()
+ * @method static Builder<static>|Star onlyTrashed()
+ * @method static Builder<static>|Star publicProfile()
+ * @method static Builder<static>|Star query()
+ * @method static Builder<static>|Star recognizedAfter(\Carbon\Carbon $date)
+ * @method static Builder<static>|Star recognizedBefore(\Carbon\Carbon $date)
+ * @method static Builder<static>|Star search(string $search)
+ * @method static Builder<static>|Star suspended()
+ * @method static Builder<static>|Star volunteers()
+ * @method static Builder<static>|Star whereAchievements($value)
+ * @method static Builder<static>|Star whereAreasOfService($value)
+ * @method static Builder<static>|Star whereAvailableDays($value)
+ * @method static Builder<static>|Star whereAvailableFrom($value)
+ * @method static Builder<static>|Star whereAvailableTo($value)
+ * @method static Builder<static>|Star whereAvatar($value)
+ * @method static Builder<static>|Star whereBadges($value)
+ * @method static Builder<static>|Star whereBio($value)
+ * @method static Builder<static>|Star whereCategory($value)
+ * @method static Builder<static>|Star whereCoverImage($value)
+ * @method static Builder<static>|Star whereCreatedAt($value)
+ * @method static Builder<static>|Star whereDeletedAt($value)
+ * @method static Builder<static>|Star whereDepartmentId($value)
+ * @method static Builder<static>|Star whereDescription($value)
+ * @method static Builder<static>|Star whereDisplayOrder($value)
+ * @method static Builder<static>|Star whereExpiryDate($value)
+ * @method static Builder<static>|Star whereFavoriteVerse($value)
+ * @method static Builder<static>|Star whereHoursPerWeek($value)
+ * @method static Builder<static>|Star whereId($value)
+ * @method static Builder<static>|Star whereInternalNotes($value)
+ * @method static Builder<static>|Star whereIsContactable($value)
+ * @method static Builder<static>|Star whereIsFeatured($value)
+ * @method static Builder<static>|Star whereIsPublicProfile($value)
+ * @method static Builder<static>|Star whereLevel($value)
+ * @method static Builder<static>|Star whereNominatedBy($value)
+ * @method static Builder<static>|Star whereNotes($value)
+ * @method static Builder<static>|Star wherePoints($value)
+ * @method static Builder<static>|Star wherePreferredContactMethod($value)
+ * @method static Builder<static>|Star whereReceiveNotifications($value)
+ * @method static Builder<static>|Star whereRecognitionDate($value)
+ * @method static Builder<static>|Star whereSkills($value)
+ * @method static Builder<static>|Star whereStarNumber($value)
+ * @method static Builder<static>|Star whereStatus($value)
+ * @method static Builder<static>|Star whereTestimonial($value)
+ * @method static Builder<static>|Star whereTitle($value)
+ * @method static Builder<static>|Star whereTotalHoursServed($value)
+ * @method static Builder<static>|Star whereType($value)
+ * @method static Builder<static>|Star whereUpdatedAt($value)
+ * @method static Builder<static>|Star whereUserId($value)
+ * @method static Builder<static>|Star whereUuid($value)
+ * @method static Builder<static>|Star withTrashed(bool $withTrashed = true)
+ * @method static Builder<static>|Star withoutTrashed()
+ * @mixin \Eloquent
+ */
 class Star extends Model
 {
     use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
@@ -94,7 +219,7 @@ class Star extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
@@ -142,7 +267,7 @@ class Star extends Model
 
     public function getFullNameAttribute(): string
     {
-        return $this->user?->full_name ?? 'N/A';
+        return (string) ($this->user?->full_name ?? 'N/A');
     }
 
     public function getIsExpiredAttribute(): bool
@@ -160,7 +285,7 @@ class Star extends Model
             return null;
         }
 
-        return Carbon::now()->diffInDays($this->expiry_date);
+        return (int) Carbon::now()->diffInDays($this->expiry_date);
     }
 
     public function getServiceDurationAttribute(): ?float
@@ -301,7 +426,7 @@ class Star extends Model
 
     public function scopeNotExpired(Builder $query): Builder
     {
-        return $query->where(function ($q) {
+        return $query->where(function ($q): void {
             $q->whereNull('expiry_date')
                 ->orWhere('expiry_date', '>', Carbon::now());
         });
@@ -329,11 +454,11 @@ class Star extends Model
 
     public function scopeSearch(Builder $query, string $search): Builder
     {
-        return $query->where(function ($q) use ($search) {
+        return $query->where(function ($q) use ($search): void {
             $q->where('star_number', 'like', "%{$search}%")
                 ->orWhere('title', 'like', "%{$search}%")
                 ->orWhere('description', 'like', "%{$search}%")
-                ->orWhereHas('user', function ($userQuery) use ($search) {
+                ->orWhereHas('user', function ($userQuery) use ($search): void {
                     $userQuery->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
@@ -355,7 +480,7 @@ class Star extends Model
             ->first();
 
         if ($lastStar) {
-            $lastNumber = (int) substr($lastStar->star_number, -4);
+            $lastNumber = (int) substr((string) $lastStar->star_number, -4);
             $newNumber = $lastNumber + 1;
         } else {
             $newNumber = 1;
@@ -468,7 +593,7 @@ class Star extends Model
             return;
         }
 
-        $achievements = array_filter($this->achievements, fn ($a) => $a !== $achievement);
+        $achievements = array_filter($this->achievements, fn ($a): bool => $a !== $achievement);
         $this->update(['achievements' => array_values($achievements)]);
     }
 
@@ -492,7 +617,7 @@ class Star extends Model
             return;
         }
 
-        $badges = array_filter($this->badges, fn ($b) => $b !== $badge);
+        $badges = array_filter($this->badges, fn ($b): bool => $b !== $badge);
         $this->update(['badges' => array_values($badges)]);
     }
 
@@ -503,7 +628,7 @@ class Star extends Model
 
     public function hasSkill(string $skill): bool
     {
-        return $this->skills && in_array(strtolower($skill), array_map('strtolower', $this->skills));
+        return $this->skills && in_array(strtolower($skill), array_map(strtolower(...), $this->skills));
     }
 
     public function addSkill(string $skill): void
@@ -521,7 +646,7 @@ class Star extends Model
             return;
         }
 
-        $skills = array_filter($this->skills, fn ($s) => strtolower($s) !== strtolower($skill));
+        $skills = array_filter($this->skills, fn ($s): bool => strtolower((string) $s) !== strtolower($skill));
         $this->update(['skills' => array_values($skills)]);
     }
 

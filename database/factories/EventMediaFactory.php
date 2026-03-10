@@ -56,7 +56,7 @@ class EventMediaFactory extends Factory
      */
     public function image(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'file_path' => 'events/media/'.fake()->uuid().'.jpg',
             'file_name' => fake()->word().'.jpg',
             'file_type' => 'image/jpeg',
@@ -73,7 +73,7 @@ class EventMediaFactory extends Factory
      */
     public function video(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'file_path' => 'events/media/'.fake()->uuid().'.mp4',
             'file_name' => fake()->word().'.mp4',
             'file_type' => 'video/mp4',
@@ -90,7 +90,7 @@ class EventMediaFactory extends Factory
      */
     public function banner(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'collection' => EventMedia::COLLECTION_BANNER,
         ]);
     }
@@ -100,7 +100,7 @@ class EventMediaFactory extends Factory
      */
     public function gallery(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'collection' => EventMedia::COLLECTION_GALLERY,
         ]);
     }
@@ -110,7 +110,7 @@ class EventMediaFactory extends Factory
      */
     public function featured(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_featured' => true,
         ]);
     }

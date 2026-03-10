@@ -10,12 +10,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create a user for project manager
     User::factory()->create();
 });
 
-it('creates epics for existing projects', function () {
+it('creates epics for existing projects', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->count(2)->create();
 
@@ -25,7 +25,7 @@ it('creates epics for existing projects', function () {
     expect($epics)->toBeGreaterThan(0);
 });
 
-it('creates between 2 and 3 epics per project', function () {
+it('creates between 2 and 3 epics per project', function (): void {
     $this->seed(StatusSeeder::class);
     $project = Project::factory()->create();
 
@@ -40,7 +40,7 @@ it('creates between 2 and 3 epics per project', function () {
         ->toBeLessThanOrEqual(3);
 });
 
-it('creates epics with type set to epic', function () {
+it('creates epics with type set to epic', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -49,12 +49,12 @@ it('creates epics with type set to epic', function () {
     $epics = Task::where('type', 'epic')->get();
 
     expect($epics->count())->toBeGreaterThan(0);
-    $epics->each(function ($epic) {
+    $epics->each(function ($epic): void {
         expect($epic->type)->toBe('epic');
     });
 });
 
-it('creates child stories for each epic', function () {
+it('creates child stories for each epic', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -62,13 +62,13 @@ it('creates child stories for each epic', function () {
 
     $epics = Task::where('type', 'epic')->get();
 
-    $epics->each(function ($epic) {
+    $epics->each(function ($epic): void {
         $children = Task::where('epic_id', $epic->id)->count();
         expect($children)->toBe(5); // Each epic should have 5 stories
     });
 });
 
-it('associates child tasks with epics via epic_id', function () {
+it('associates child tasks with epics via epic_id', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -80,13 +80,13 @@ it('associates child tasks with epics via epic_id', function () {
         $childTasks = Task::where('epic_id', $epic->id)->get();
 
         expect($childTasks->count())->toBeGreaterThan(0);
-        $childTasks->each(function ($task) use ($epic) {
+        $childTasks->each(function ($task) use ($epic): void {
             expect($task->epic_id)->toBe($epic->id);
         });
     }
 });
 
-it('creates child tasks with story, task, or feature types', function () {
+it('creates child tasks with story, task, or feature types', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -103,7 +103,7 @@ it('creates child tasks with story, task, or feature types', function () {
     expect($hasValidType)->toBeTrue();
 });
 
-it('sets color in epic custom_fields', function () {
+it('sets color in epic custom_fields', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -117,7 +117,7 @@ it('sets color in epic custom_fields', function () {
     }
 });
 
-it('sets epic labels correctly', function () {
+it('sets epic labels correctly', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -131,7 +131,7 @@ it('sets epic labels correctly', function () {
     }
 });
 
-it('assigns story points to child tasks but not to epics', function () {
+it('assigns story points to child tasks but not to epics', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -141,18 +141,18 @@ it('assigns story points to child tasks but not to epics', function () {
     $childTasks = Task::whereNotNull('epic_id')->get();
 
     // Epics should not have story points
-    $epics->each(function ($epic) {
+    $epics->each(function ($epic): void {
         expect($epic->story_points)->toBeNull();
     });
 
     // Child tasks should have story points
-    $childTasks->each(function ($task) {
+    $childTasks->each(function ($task): void {
         expect($task->story_points)->toBeGreaterThanOrEqual(1)
             ->toBeLessThanOrEqual(8);
     });
 });
 
-it('skips projects that already have epics', function () {
+it('skips projects that already have epics', function (): void {
     $this->seed(StatusSeeder::class);
     $project = Project::factory()->create();
 
@@ -173,7 +173,7 @@ it('skips projects that already have epics', function () {
     expect($finalCount)->toBe($initialCount);
 });
 
-it('creates tasks with unique keys', function () {
+it('creates tasks with unique keys', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -185,7 +185,7 @@ it('creates tasks with unique keys', function () {
     expect(count($keys))->toBe(count($uniqueKeys));
 });
 
-it('assigns tasks to project members', function () {
+it('assigns tasks to project members', function (): void {
     $this->seed(StatusSeeder::class);
     $project = Project::factory()->create();
     $members = User::factory()->count(3)->create();
@@ -205,7 +205,7 @@ it('assigns tasks to project members', function () {
     expect($hasProjectMember)->toBeTrue();
 });
 
-it('sets reporter_id to project manager', function () {
+it('sets reporter_id to project manager', function (): void {
     $this->seed(StatusSeeder::class);
     $manager = User::factory()->create();
     $project = Project::factory()->create(['project_manager_id' => $manager->id]);
@@ -216,12 +216,12 @@ it('sets reporter_id to project manager', function () {
         ->where('taskable_id', $project->id)
         ->get();
 
-    $tasks->each(function ($task) use ($manager) {
+    $tasks->each(function ($task) use ($manager): void {
         expect($task->reporter_id)->toBe($manager->id);
     });
 });
 
-it('creates epics with predefined titles', function () {
+it('creates epics with predefined titles', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -244,7 +244,7 @@ it('creates epics with predefined titles', function () {
     expect($hasPredefindTitle)->toBeTrue();
 });
 
-it('creates child tasks with due dates', function () {
+it('creates child tasks with due dates', function (): void {
     $this->seed(StatusSeeder::class);
     $project = Project::factory()->create([
         'start_date' => now(),
@@ -257,12 +257,12 @@ it('creates child tasks with due dates', function () {
         ->where('taskable_id', $project->id)
         ->get();
 
-    $childTasks->each(function ($task) {
+    $childTasks->each(function ($task): void {
         expect($task->due_date)->not->toBeNull();
     });
 });
 
-it('sets appropriate status for stories based on epic status', function () {
+it('sets appropriate status for stories based on epic status', function (): void {
     $this->seed(StatusSeeder::class);
     $project = Project::factory()->create(['status' => 'completed']);
 
@@ -280,7 +280,7 @@ it('sets appropriate status for stories based on epic status', function () {
         expect($epic->status->name)->toBe('completed');
 
         // All children should also be completed
-        $children->each(function ($child) {
+        $children->each(function ($child): void {
             expect($child->status->name)->toBe('completed');
         });
     }

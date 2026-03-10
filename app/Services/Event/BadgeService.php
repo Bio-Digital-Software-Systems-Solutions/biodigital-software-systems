@@ -29,7 +29,7 @@ class BadgeService
         return DB::transaction(function () use ($registration, $options) {
             $event = $registration->event;
 
-            $badge = EventBadge::create([
+            return EventBadge::create([
                 'registration_id' => $registration->id,
                 'badge_number' => $this->generateBadgeNumber($event),
                 'template' => $options['template'] ?? 'default',
@@ -42,8 +42,6 @@ class BadgeService
                 'status' => BadgeStatus::GENERATED,
                 'generated_at' => now(),
             ]);
-
-            return $badge;
         });
     }
 
@@ -57,7 +55,7 @@ class BadgeService
                 RegistrationStatus::CONFIRMED,
                 RegistrationStatus::CHECKED_IN,
             ])
-            ->whereDoesntHave('badge', function ($q) {
+            ->whereDoesntHave('badge', function ($q): void {
                 $q->whereNotIn('status', [BadgeStatus::LOST]);
             })
             ->get();
@@ -141,7 +139,7 @@ class BadgeService
             // Generate replacement
             $event = $badge->registration->event;
 
-            $newBadge = EventBadge::create([
+            return EventBadge::create([
                 'registration_id' => $badge->registration_id,
                 'badge_number' => $this->generateBadgeNumber($event) . '-R',
                 'template' => $badge->template,
@@ -155,8 +153,6 @@ class BadgeService
                 'generated_at' => now(),
                 'replaced_by' => $replacedBy?->id,
             ]);
-
-            return $newBadge;
         });
     }
 
@@ -165,7 +161,7 @@ class BadgeService
      */
     public function getStats(Event $event): array
     {
-        $badges = EventBadge::whereHas('registration', function ($q) use ($event) {
+        $badges = EventBadge::whereHas('registration', function ($q) use ($event): void {
             $q->where('event_id', $event->id);
         })->get();
 
@@ -199,7 +195,7 @@ class BadgeService
      */
     public function getPendingPrint(Event $event): \Illuminate\Database\Eloquent\Collection
     {
-        return EventBadge::whereHas('registration', function ($q) use ($event) {
+        return EventBadge::whereHas('registration', function ($q) use ($event): void {
             $q->where('event_id', $event->id);
         })
             ->where('status', BadgeStatus::GENERATED)
@@ -213,7 +209,7 @@ class BadgeService
      */
     public function getPendingCollection(Event $event): \Illuminate\Database\Eloquent\Collection
     {
-        return EventBadge::whereHas('registration', function ($q) use ($event) {
+        return EventBadge::whereHas('registration', function ($q) use ($event): void {
             $q->where('event_id', $event->id);
         })
             ->where('status', BadgeStatus::PRINTED)
@@ -228,10 +224,10 @@ class BadgeService
      */
     public function search(Event $event, string $search): \Illuminate\Database\Eloquent\Collection
     {
-        return EventBadge::whereHas('registration', function ($q) use ($event) {
+        return EventBadge::whereHas('registration', function ($q) use ($event): void {
             $q->where('event_id', $event->id);
         })
-            ->where(function ($q) use ($search) {
+            ->where(function ($q) use ($search): void {
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('badge_number', 'like', "%{$search}%")
@@ -324,7 +320,7 @@ class BadgeService
             ->with('registration.event')
             ->get();
 
-        return $badges->map(fn ($badge) => $this->getBadgePrintData($badge))->toArray();
+        return $badges->map(fn (\App\Models\Event\EventBadge $badge): array => $this->getBadgePrintData($badge))->toArray();
     }
 
     /**
@@ -358,8 +354,8 @@ class BadgeService
      */
     protected function generateBadgeNumber(Event $event): string
     {
-        $prefix = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $event->title), 0, 3));
-        $count = EventBadge::whereHas('registration', function ($q) use ($event) {
+        $prefix = strtoupper(substr((string) preg_replace('/[^A-Za-z0-9]/', '', $event->title), 0, 3));
+        $count = EventBadge::whereHas('registration', function ($q) use ($event): void {
             $q->where('event_id', $event->id);
         })->count() + 1;
 

@@ -43,7 +43,7 @@ class WorkflowActivityLogFactory extends Factory
      */
     public function started(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'action' => 'started',
             'new_values' => ['status' => 'active'],
         ]);
@@ -54,7 +54,7 @@ class WorkflowActivityLogFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'action' => 'completed',
             'old_values' => ['status' => 'active'],
             'new_values' => ['status' => 'completed'],
@@ -66,7 +66,7 @@ class WorkflowActivityLogFactory extends Factory
      */
     public function paused(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'action' => 'paused',
             'old_values' => ['status' => 'active'],
             'new_values' => ['status' => 'paused'],
@@ -78,9 +78,9 @@ class WorkflowActivityLogFactory extends Factory
      */
     public function stepAction(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'action' => $this->faker->randomElement(['step_started', 'step_completed']),
-            'entity_type' => 'App\\Models\\WorkflowStepInstance',
+            'entity_type' => \App\Models\WorkflowStepInstance::class,
         ]);
     }
 
@@ -89,7 +89,7 @@ class WorkflowActivityLogFactory extends Factory
      */
     public function cancelled(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'action' => 'cancelled',
             'old_values' => ['status' => 'active'],
             'new_values' => ['status' => 'cancelled'],
@@ -101,7 +101,7 @@ class WorkflowActivityLogFactory extends Factory
      */
     public function withMetadata(array $metadata = []): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'metadata' => $metadata ?: ['extra_info' => $this->faker->sentence()],
         ]);
     }

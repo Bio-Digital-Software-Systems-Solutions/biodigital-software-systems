@@ -17,6 +17,107 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $weekly_schedule_id
+ * @property int $department_id
+ * @property int|null $position_id
+ * @property int|null $user_id
+ * @property \Illuminate\Support\Carbon $date
+ * @property string $start_time
+ * @property string $end_time
+ * @property int $break_duration
+ * @property ShiftType $type
+ * @property ShiftStatus $status
+ * @property string|null $title
+ * @property string|null $description
+ * @property string|null $location
+ * @property string|null $color
+ * @property int $min_employees
+ * @property int $max_employees
+ * @property array<array-key, mixed>|null $required_skills
+ * @property numeric|null $hourly_rate
+ * @property bool $is_overtime
+ * @property bool $requires_approval
+ * @property int|null $assigned_by
+ * @property \Illuminate\Support\Carbon|null $assigned_at
+ * @property \Illuminate\Support\Carbon|null $checked_in_at
+ * @property \Illuminate\Support\Carbon|null $checked_out_at
+ * @property string|null $notes
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read User|null $assignedBy
+ * @property-read Department $department
+ * @property-read bool $can_check_in
+ * @property-read bool $can_check_out
+ * @property-read float $duration_hours
+ * @property-read Carbon $end_date_time
+ * @property-read bool $is_future
+ * @property-read bool $is_past
+ * @property-read bool $is_today
+ * @property-read Carbon $start_date_time
+ * @property-read string $time_range
+ * @property-read \App\Models\Scheduling\SchedulingPosition|null $position
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\ShiftSwapRequest> $swapRequests
+ * @property-read int|null $swap_requests_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\ShiftTask> $tasks
+ * @property-read int|null $tasks_count
+ * @property-read \App\Models\Scheduling\TimeEntry|null $timeEntry
+ * @property-read User|null $user
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $users
+ * @property-read int|null $users_count
+ * @property-read \App\Models\Scheduling\WeeklySchedule $weeklySchedule
+ * @method static Builder<static>|Shift active()
+ * @method static Builder<static>|Shift assigned()
+ * @method static Builder<static>|Shift byStatus(\App\Enums\Scheduling\ShiftStatus $status)
+ * @method static Builder<static>|Shift byType(\App\Enums\Scheduling\ShiftType $type)
+ * @method static \Database\Factories\Scheduling\ShiftFactory factory($count = null, $state = [])
+ * @method static Builder<static>|Shift forDate(\Carbon\Carbon $date)
+ * @method static Builder<static>|Shift forDateRange(\Carbon\Carbon $start, \Carbon\Carbon $end)
+ * @method static Builder<static>|Shift forUser(int $userId)
+ * @method static Builder<static>|Shift newModelQuery()
+ * @method static Builder<static>|Shift newQuery()
+ * @method static Builder<static>|Shift onlyTrashed()
+ * @method static Builder<static>|Shift query()
+ * @method static Builder<static>|Shift today()
+ * @method static Builder<static>|Shift unassigned()
+ * @method static Builder<static>|Shift upcoming()
+ * @method static Builder<static>|Shift whereAssignedAt($value)
+ * @method static Builder<static>|Shift whereAssignedBy($value)
+ * @method static Builder<static>|Shift whereBreakDuration($value)
+ * @method static Builder<static>|Shift whereCheckedInAt($value)
+ * @method static Builder<static>|Shift whereCheckedOutAt($value)
+ * @method static Builder<static>|Shift whereColor($value)
+ * @method static Builder<static>|Shift whereCreatedAt($value)
+ * @method static Builder<static>|Shift whereDate($value)
+ * @method static Builder<static>|Shift whereDeletedAt($value)
+ * @method static Builder<static>|Shift whereDepartmentId($value)
+ * @method static Builder<static>|Shift whereDescription($value)
+ * @method static Builder<static>|Shift whereEndTime($value)
+ * @method static Builder<static>|Shift whereHourlyRate($value)
+ * @method static Builder<static>|Shift whereId($value)
+ * @method static Builder<static>|Shift whereIsOvertime($value)
+ * @method static Builder<static>|Shift whereLocation($value)
+ * @method static Builder<static>|Shift whereMaxEmployees($value)
+ * @method static Builder<static>|Shift whereMinEmployees($value)
+ * @method static Builder<static>|Shift whereNotes($value)
+ * @method static Builder<static>|Shift wherePositionId($value)
+ * @method static Builder<static>|Shift whereRequiredSkills($value)
+ * @method static Builder<static>|Shift whereRequiresApproval($value)
+ * @method static Builder<static>|Shift whereStartTime($value)
+ * @method static Builder<static>|Shift whereStatus($value)
+ * @method static Builder<static>|Shift whereTitle($value)
+ * @method static Builder<static>|Shift whereType($value)
+ * @method static Builder<static>|Shift whereUpdatedAt($value)
+ * @method static Builder<static>|Shift whereUserId($value)
+ * @method static Builder<static>|Shift whereUuid($value)
+ * @method static Builder<static>|Shift whereWeeklyScheduleId($value)
+ * @method static Builder<static>|Shift withTrashed(bool $withTrashed = true)
+ * @method static Builder<static>|Shift withoutTrashed()
+ * @mixin \Eloquent
+ */
 class Shift extends Model
 {
     use HasFactory, SoftDeletes;
@@ -72,7 +173,7 @@ class Shift extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }

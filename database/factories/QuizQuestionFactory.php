@@ -52,7 +52,7 @@ class QuizQuestionFactory extends Factory
 
     public function multipleChoice(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'multiple_choice',
             'options' => ['Option A', 'Option B', 'Option C', 'Option D'],
             'correct_answers' => ['Option A'],
@@ -61,7 +61,7 @@ class QuizQuestionFactory extends Factory
 
     public function trueFalse(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'true_false',
             'options' => null,
             'correct_answers' => [true],
@@ -70,7 +70,7 @@ class QuizQuestionFactory extends Factory
 
     public function shortAnswer(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'short_answer',
             'options' => null,
             'correct_answers' => ['answer'],

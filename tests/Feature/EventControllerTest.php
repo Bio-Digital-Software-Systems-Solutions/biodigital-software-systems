@@ -31,7 +31,7 @@ class EventControllerTest extends TestCase
         $memberRole->givePermissionTo(['view events']);
     }
 
-    public function test_authenticated_user_can_view_events_index()
+    public function test_authenticated_user_can_view_events_index(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -42,7 +42,7 @@ class EventControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Events/Index'));
     }
 
-    public function test_authenticated_user_with_permission_can_create_event()
+    public function test_authenticated_user_with_permission_can_create_event(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -53,7 +53,7 @@ class EventControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Events/Create'));
     }
 
-    public function test_user_without_permission_cannot_create_event()
+    public function test_user_without_permission_cannot_create_event(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -66,7 +66,7 @@ class EventControllerTest extends TestCase
         );
     }
 
-    public function test_user_can_store_event()
+    public function test_user_can_store_event(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -91,7 +91,7 @@ class EventControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_can_store_event_with_address()
+    public function test_user_can_store_event_with_address(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -127,7 +127,7 @@ class EventControllerTest extends TestCase
         ]);
     }
 
-    public function test_event_creation_validates_required_fields()
+    public function test_event_creation_validates_required_fields(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -137,7 +137,7 @@ class EventControllerTest extends TestCase
         $response->assertSessionHasErrors(['title', 'start_date', 'end_date']);
     }
 
-    public function test_event_creation_validates_end_date_after_start_date()
+    public function test_event_creation_validates_end_date_after_start_date(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -153,7 +153,7 @@ class EventControllerTest extends TestCase
         $response->assertSessionHasErrors(['end_date']);
     }
 
-    public function test_event_creation_validates_max_participants_minimum()
+    public function test_event_creation_validates_max_participants_minimum(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -170,7 +170,7 @@ class EventControllerTest extends TestCase
         $response->assertSessionHasErrors(['max_participants']);
     }
 
-    public function test_user_can_view_single_event()
+    public function test_user_can_view_single_event(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -187,7 +187,7 @@ class EventControllerTest extends TestCase
         );
     }
 
-    public function test_user_can_toggle_participation()
+    public function test_user_can_toggle_participation(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -213,7 +213,7 @@ class EventControllerTest extends TestCase
         $this->assertFalse($event->participants()->where('user_id', $user->id)->exists());
     }
 
-    public function test_user_cannot_join_full_event()
+    public function test_user_cannot_join_full_event(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -234,7 +234,7 @@ class EventControllerTest extends TestCase
         $this->assertFalse($event->participants()->where('user_id', $user->id)->exists());
     }
 
-    public function test_user_can_update_own_event()
+    public function test_user_can_update_own_event(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -264,7 +264,7 @@ class EventControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_can_update_event_with_address()
+    public function test_user_can_update_event_with_address(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -307,7 +307,7 @@ class EventControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_can_update_event_status()
+    public function test_user_can_update_event_status(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -337,7 +337,7 @@ class EventControllerTest extends TestCase
         ]);
     }
 
-    public function test_event_update_validates_status_values()
+    public function test_event_update_validates_status_values(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -358,7 +358,7 @@ class EventControllerTest extends TestCase
         $response->assertSessionHasErrors(['status']);
     }
 
-    public function test_user_can_delete_own_event()
+    public function test_user_can_delete_own_event(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -375,7 +375,7 @@ class EventControllerTest extends TestCase
         ]);
     }
 
-    public function test_guest_cannot_access_events()
+    public function test_guest_cannot_access_events(): void
     {
         $response = $this->get('/events');
         $response->assertRedirect('/login');

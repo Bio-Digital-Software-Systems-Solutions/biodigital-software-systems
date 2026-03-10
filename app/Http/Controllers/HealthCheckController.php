@@ -36,70 +36,70 @@ class HealthCheckController extends Controller
                 response: 200,
                 description: 'All systems healthy',
                 content: new OA\JsonContent(
-                    type: 'object',
                     properties: [
                         new OA\Property(property: 'status', type: 'string', example: 'healthy'),
                         new OA\Property(property: 'timestamp', type: 'string', format: 'date-time', example: '2025-10-11T12:00:00Z'),
                         new OA\Property(
                             property: 'checks',
-                            type: 'object',
                             properties: [
                                 new OA\Property(
                                     property: 'database',
-                                    type: 'object',
                                     properties: [
                                         new OA\Property(property: 'healthy', type: 'boolean', example: true),
                                         new OA\Property(property: 'message', type: 'string', example: 'Database connection successful'),
                                         new OA\Property(property: 'response_time_ms', type: 'number', format: 'float', example: 2.5),
-                                    ]
+                                    ],
+                                    type: 'object'
                                 ),
                                 new OA\Property(
                                     property: 'cache',
-                                    type: 'object',
                                     properties: [
                                         new OA\Property(property: 'healthy', type: 'boolean', example: true),
                                         new OA\Property(property: 'message', type: 'string', example: 'Cache working correctly'),
                                         new OA\Property(property: 'driver', type: 'string', example: 'redis'),
-                                    ]
+                                    ],
+                                    type: 'object'
                                 ),
                                 new OA\Property(
                                     property: 'storage',
-                                    type: 'object',
                                     properties: [
                                         new OA\Property(property: 'healthy', type: 'boolean', example: true),
                                         new OA\Property(property: 'message', type: 'string', example: 'Storage working correctly'),
                                         new OA\Property(property: 'driver', type: 'string', example: 'local'),
-                                    ]
+                                    ],
+                                    type: 'object'
                                 ),
                                 new OA\Property(
                                     property: 'queue',
-                                    type: 'object',
                                     properties: [
                                         new OA\Property(property: 'healthy', type: 'boolean', example: true),
                                         new OA\Property(property: 'message', type: 'string', example: 'Queue connection successful'),
                                         new OA\Property(property: 'driver', type: 'string', example: 'redis'),
                                         new OA\Property(property: 'pending_jobs', type: 'integer', example: 0),
-                                    ]
+                                    ],
+                                    type: 'object'
                                 ),
-                            ]
+                            ],
+                            type: 'object'
                         ),
                         new OA\Property(property: 'environment', type: 'string', example: 'production'),
                         new OA\Property(property: 'version', type: 'string', example: '1.0.0'),
-                    ]
+                    ],
+                    type: 'object'
                 )
             ),
             new OA\Response(
                 response: 503,
                 description: 'One or more systems unhealthy',
                 content: new OA\JsonContent(
-                    type: 'object',
                     properties: [
                         new OA\Property(property: 'status', type: 'string', example: 'unhealthy'),
                         new OA\Property(property: 'timestamp', type: 'string', format: 'date-time'),
                         new OA\Property(property: 'checks', type: 'object'),
                         new OA\Property(property: 'environment', type: 'string'),
                         new OA\Property(property: 'version', type: 'string'),
-                    ]
+                    ],
+                    type: 'object'
                 )
             ),
         ]

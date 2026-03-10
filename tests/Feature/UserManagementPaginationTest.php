@@ -5,7 +5,7 @@ use Spatie\Permission\Models\Role;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create roles
     Role::create(['name' => 'super-admin']);
     Role::create(['name' => 'admin']);
@@ -19,7 +19,7 @@ beforeEach(function () {
 
 // ===== Pagination Tests =====
 
-test('user management index returns paginated data structure', function () {
+test('user management index returns paginated data structure', function (): void {
     // Create 25 users to ensure pagination
     User::factory()->count(25)->create();
 
@@ -40,7 +40,7 @@ test('user management index returns paginated data structure', function () {
     );
 });
 
-test('pagination returns correct number of items per page', function () {
+test('pagination returns correct number of items per page', function (): void {
     // Create 30 users (including superAdmin = 31 total)
     User::factory()->count(30)->create();
 
@@ -55,7 +55,7 @@ test('pagination returns correct number of items per page', function () {
     );
 });
 
-test('pagination navigates to correct page', function () {
+test('pagination navigates to correct page', function (): void {
     // Create 30 users
     User::factory()->count(30)->create();
 
@@ -69,7 +69,7 @@ test('pagination navigates to correct page', function () {
     );
 });
 
-test('pagination returns correct total count', function () {
+test('pagination returns correct total count', function (): void {
     // Create 25 users + superAdmin = 26 total
     User::factory()->count(25)->create();
 
@@ -82,7 +82,7 @@ test('pagination returns correct total count', function () {
     );
 });
 
-test('pagination calculates last page correctly', function () {
+test('pagination calculates last page correctly', function (): void {
     // Create 45 users + superAdmin = 46 total, with 20 per page = 3 pages
     User::factory()->count(45)->create();
 
@@ -95,7 +95,7 @@ test('pagination calculates last page correctly', function () {
     );
 });
 
-test('pagination with custom per_page value', function () {
+test('pagination with custom per_page value', function (): void {
     // Create 60 users
     User::factory()->count(60)->create();
 
@@ -111,7 +111,7 @@ test('pagination with custom per_page value', function () {
 
 // ===== Search/Filter Tests =====
 
-test('search filter finds users by first name', function () {
+test('search filter finds users by first name', function (): void {
     User::factory()->create(['first_name' => 'John', 'last_name' => 'Doe']);
     User::factory()->create(['first_name' => 'Jane', 'last_name' => 'Smith']);
     User::factory()->count(10)->create();
@@ -126,7 +126,7 @@ test('search filter finds users by first name', function () {
     );
 });
 
-test('search filter finds users by last name', function () {
+test('search filter finds users by last name', function (): void {
     User::factory()->create(['first_name' => 'John', 'last_name' => 'Dupont']);
     User::factory()->create(['first_name' => 'Jane', 'last_name' => 'Smith']);
     User::factory()->count(10)->create();
@@ -140,7 +140,7 @@ test('search filter finds users by last name', function () {
     );
 });
 
-test('search filter finds users by email', function () {
+test('search filter finds users by email', function (): void {
     User::factory()->create(['email' => 'unique-test-email@example.com']);
     User::factory()->count(10)->create();
 
@@ -153,7 +153,7 @@ test('search filter finds users by email', function () {
     );
 });
 
-test('search filter is case insensitive', function () {
+test('search filter is case insensitive', function (): void {
     User::factory()->create(['first_name' => 'UPPERCASE', 'last_name' => 'Name']);
     User::factory()->count(5)->create();
 
@@ -166,7 +166,7 @@ test('search filter is case insensitive', function () {
     );
 });
 
-test('search filter with partial match', function () {
+test('search filter with partial match', function (): void {
     User::factory()->create(['first_name' => 'Alexander', 'last_name' => 'Hamilton']);
     User::factory()->count(5)->create();
 
@@ -181,7 +181,7 @@ test('search filter with partial match', function () {
 
 // ===== Role Filter Tests =====
 
-test('role filter returns only users with specific role', function () {
+test('role filter returns only users with specific role', function (): void {
     $adminUser = User::factory()->create();
     $adminUser->assignRole('admin');
 
@@ -203,7 +203,7 @@ test('role filter returns only users with specific role', function () {
     );
 });
 
-test('role filter with pastor role', function () {
+test('role filter with pastor role', function (): void {
     User::factory()->count(3)->create()->each(fn ($user) => $user->assignRole('pastor'));
     User::factory()->count(5)->create()->each(fn ($user) => $user->assignRole('member'));
 
@@ -216,7 +216,7 @@ test('role filter with pastor role', function () {
     );
 });
 
-test('empty role filter returns all users', function () {
+test('empty role filter returns all users', function (): void {
     User::factory()->count(10)->create();
 
     $response = $this->actingAs($this->superAdmin)
@@ -230,7 +230,7 @@ test('empty role filter returns all users', function () {
 
 // ===== Combined Search and Role Filter Tests =====
 
-test('search and role filter work together', function () {
+test('search and role filter work together', function (): void {
     $targetUser = User::factory()->create(['first_name' => 'TargetUser', 'last_name' => 'Test']);
     $targetUser->assignRole('admin');
 
@@ -254,7 +254,7 @@ test('search and role filter work together', function () {
     );
 });
 
-test('search with pagination works correctly', function () {
+test('search with pagination works correctly', function (): void {
     // Create 30 users with "Test" in their name
     User::factory()->count(30)->create(['first_name' => 'TestUser']);
 
@@ -278,7 +278,7 @@ test('search with pagination works correctly', function () {
 
 // ===== Edge Cases =====
 
-test('empty search returns all users', function () {
+test('empty search returns all users', function (): void {
     User::factory()->count(5)->create();
 
     $response = $this->actingAs($this->superAdmin)
@@ -290,7 +290,7 @@ test('empty search returns all users', function () {
     );
 });
 
-test('search with no results returns empty data', function () {
+test('search with no results returns empty data', function (): void {
     User::factory()->count(5)->create();
 
     $response = $this->actingAs($this->superAdmin)
@@ -303,7 +303,7 @@ test('search with no results returns empty data', function () {
     );
 });
 
-test('invalid page number defaults gracefully', function () {
+test('invalid page number defaults gracefully', function (): void {
     User::factory()->count(5)->create();
 
     $response = $this->actingAs($this->superAdmin)
@@ -315,7 +315,7 @@ test('invalid page number defaults gracefully', function () {
     );
 });
 
-test('users are ordered by first name and last name', function () {
+test('users are ordered by first name and last name', function (): void {
     User::factory()->create(['first_name' => 'Zara', 'last_name' => 'Smith']);
     User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Johnson']);
     User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Adams']);
@@ -324,7 +324,7 @@ test('users are ordered by first name and last name', function () {
         ->get(route('user-management.index'));
 
     $response->assertStatus(200);
-    $response->assertInertia(function ($page) {
+    $response->assertInertia(function ($page): bool {
         $users = $page->toArray()['props']['users']['data'];
         // Alice Adams should come before Alice Johnson (both before Zara)
         $aliceAdamsIndex = array_search('Adams', array_column($users, 'last_name'));
@@ -337,7 +337,7 @@ test('users are ordered by first name and last name', function () {
 
 // ===== Filters are Passed to Frontend =====
 
-test('filters are passed correctly to frontend', function () {
+test('filters are passed correctly to frontend', function (): void {
     $response = $this->actingAs($this->superAdmin)
         ->get(route('user-management.index', [
             'search' => 'test',
@@ -353,7 +353,7 @@ test('filters are passed correctly to frontend', function () {
     );
 });
 
-test('default filters are provided when none specified', function () {
+test('default filters are provided when none specified', function (): void {
     $response = $this->actingAs($this->superAdmin)
         ->get(route('user-management.index'));
 
@@ -367,7 +367,7 @@ test('default filters are provided when none specified', function () {
 
 // ===== Access Control Tests =====
 
-test('non_superadmin_cannot_access_user_management', function () {
+test('non_superadmin_cannot_access_user_management', function (): void {
     $regularUser = User::factory()->create();
 
     // Without exception handling, it throws HttpException
@@ -379,7 +379,7 @@ test('non_superadmin_cannot_access_user_management', function () {
         ->get(route('user-management.index'));
 });
 
-test('unauthenticated_user_cannot_access_user_management', function () {
+test('unauthenticated_user_cannot_access_user_management', function (): void {
     $response = $this->get(route('user-management.index'));
 
     $response->assertRedirect(route('login'));

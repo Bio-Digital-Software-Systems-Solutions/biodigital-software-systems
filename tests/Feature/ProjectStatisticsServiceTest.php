@@ -91,12 +91,12 @@ class ProjectStatisticsServiceTest extends TestCase
         $inProgressStatus = Status::factory()->inProgress()->create();
 
         Task::factory()->count(3)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $completedStatus->id,
         ]);
         Task::factory()->count(2)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $inProgressStatus->id,
         ]);
@@ -114,13 +114,13 @@ class ProjectStatisticsServiceTest extends TestCase
         $status = Status::factory()->create();
 
         Task::factory()->count(4)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $status->id,
             'priority' => 'high',
         ]);
         Task::factory()->count(2)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $status->id,
             'priority' => 'low',
@@ -184,12 +184,12 @@ class ProjectStatisticsServiceTest extends TestCase
         $pendingStatus = Status::factory()->pending()->create();
 
         Task::factory()->count(3)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $completedStatus->id,
         ]);
         Task::factory()->count(7)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $pendingStatus->id,
         ]);
@@ -212,13 +212,13 @@ class ProjectStatisticsServiceTest extends TestCase
         $pendingStatus = Status::factory()->pending()->create();
 
         Task::factory()->count(2)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $completedStatus->id,
             'assigned_to' => $user->id,
         ]);
         Task::factory()->count(3)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $pendingStatus->id,
             'assigned_to' => $user->id,
@@ -321,7 +321,7 @@ class ProjectStatisticsServiceTest extends TestCase
         // Create 30 completed tasks updated in the last 30 days
         for ($i = 0; $i < 30; $i++) {
             Task::factory()->create([
-                'taskable_type' => 'App\Models\Project',
+                'taskable_type' => \App\Models\Project::class,
                 'taskable_id' => $project->id,
                 'status_id' => $completedStatus->id,
                 'updated_at' => now()->subDays($i),
@@ -351,7 +351,7 @@ class ProjectStatisticsServiceTest extends TestCase
 
         // Create tasks that are not completed
         Task::factory()->count(10)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $pendingStatus->id,
         ]);
@@ -374,7 +374,7 @@ class ProjectStatisticsServiceTest extends TestCase
 
         // Create tasks completed more than 30 days ago (outside daily period)
         Task::factory()->count(5)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $completedStatus->id,
             'updated_at' => now()->subDays(45),
@@ -398,7 +398,7 @@ class ProjectStatisticsServiceTest extends TestCase
         // Create 60 tasks (2 per day average)
         for ($i = 0; $i < 60; $i++) {
             Task::factory()->create([
-                'taskable_type' => 'App\Models\Project',
+                'taskable_type' => \App\Models\Project::class,
                 'taskable_id' => $project->id,
                 'status_id' => $completedStatus->id,
                 'updated_at' => now()->subDays($i % 30),
@@ -421,7 +421,7 @@ class ProjectStatisticsServiceTest extends TestCase
         $completedStatus = Status::factory()->completed()->create();
 
         Task::factory()->count(15)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $completedStatus->id,
             'updated_at' => now()->subDays(5),
@@ -443,7 +443,7 @@ class ProjectStatisticsServiceTest extends TestCase
         $completedStatus = Status::factory()->completed()->create();
 
         Task::factory()->count(20)->create([
-            'taskable_type' => 'App\Models\Project',
+            'taskable_type' => \App\Models\Project::class,
             'taskable_id' => $project->id,
             'status_id' => $completedStatus->id,
             'updated_at' => now()->subDays(10),

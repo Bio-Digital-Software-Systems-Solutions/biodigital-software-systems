@@ -56,7 +56,7 @@ class SprintSeeder extends Seeder
             }
 
             // Create 2-4 sprints per project
-            $numberOfSprints = rand(2, 4);
+            $numberOfSprints = random_int(2, 4);
             $sprintNumber = 1;
 
             // Create a completed sprint
@@ -65,14 +65,14 @@ class SprintSeeder extends Seeder
                     'project_id' => $project->id,
                     'name' => "Sprint {$sprintNumber} - {$project->name}",
                     'goal' => $sprintGoals[array_rand($sprintGoals)],
-                    'start_date' => now()->subDays(rand(45, 60)),
-                    'end_date' => now()->subDays(rand(15, 30)),
+                    'start_date' => now()->subDays(random_int(45, 60)),
+                    'end_date' => now()->subDays(random_int(15, 30)),
                     'status' => 'completed',
-                    'capacity' => rand(40, 80),
+                    'capacity' => random_int(40, 80),
                 ]);
 
                 // Create 5-8 completed tasks for this sprint
-                $this->createTasksForSprint($completedSprint, $project, $completedStatus, $taskTypes, $taskPriorities, rand(5, 8));
+                $this->createTasksForSprint($completedSprint, $project, $completedStatus, $taskTypes, $taskPriorities, random_int(5, 8));
                 $sprintNumber++;
             }
 
@@ -82,10 +82,10 @@ class SprintSeeder extends Seeder
                     'project_id' => $project->id,
                     'name' => "Sprint {$sprintNumber} - {$project->name}",
                     'goal' => $sprintGoals[array_rand($sprintGoals)],
-                    'start_date' => now()->subDays(rand(5, 10)),
-                    'end_date' => now()->addDays(rand(4, 10)),
+                    'start_date' => now()->subDays(random_int(5, 10)),
+                    'end_date' => now()->addDays(random_int(4, 10)),
                     'status' => 'active',
-                    'capacity' => rand(50, 100),
+                    'capacity' => random_int(50, 100),
                 ]);
 
                 // Create tasks with mixed statuses for active sprint
@@ -95,7 +95,7 @@ class SprintSeeder extends Seeder
                     [$todoStatus, $inProgressStatus, $underReviewStatus, $completedStatus],
                     $taskTypes,
                     $taskPriorities,
-                    rand(6, 12)
+                    random_int(6, 12)
                 );
                 $sprintNumber++;
             }
@@ -106,32 +106,32 @@ class SprintSeeder extends Seeder
                     'project_id' => $project->id,
                     'name' => "Sprint {$sprintNumber} - {$project->name}",
                     'goal' => $sprintGoals[array_rand($sprintGoals)],
-                    'start_date' => now()->addDays(rand(5, 15)),
-                    'end_date' => now()->addDays(rand(20, 35)),
+                    'start_date' => now()->addDays(random_int(5, 15)),
+                    'end_date' => now()->addDays(random_int(20, 35)),
                     'status' => 'planned',
-                    'capacity' => rand(60, 100),
+                    'capacity' => random_int(60, 100),
                 ]);
 
                 // Create only todo tasks for planned sprint
-                $this->createTasksForSprint($plannedSprint, $project, $todoStatus, $taskTypes, $taskPriorities, rand(4, 8));
+                $this->createTasksForSprint($plannedSprint, $project, $todoStatus, $taskTypes, $taskPriorities, random_int(4, 8));
                 $sprintNumber++;
             }
 
             // Optionally create another planned or cancelled sprint
             if ($numberOfSprints >= 4) {
-                $status = rand(0, 1) === 0 ? 'planned' : 'cancelled';
+                $status = random_int(0, 1) === 0 ? 'planned' : 'cancelled';
                 $extraSprint = Sprint::create([
                     'project_id' => $project->id,
                     'name' => "Sprint {$sprintNumber} - {$project->name}",
                     'goal' => $sprintGoals[array_rand($sprintGoals)],
-                    'start_date' => now()->addDays(rand(20, 40)),
-                    'end_date' => now()->addDays(rand(45, 60)),
+                    'start_date' => now()->addDays(random_int(20, 40)),
+                    'end_date' => now()->addDays(random_int(45, 60)),
                     'status' => $status,
-                    'capacity' => rand(50, 80),
+                    'capacity' => random_int(50, 80),
                 ]);
 
                 if ($status === 'planned') {
-                    $this->createTasksForSprint($extraSprint, $project, $todoStatus, $taskTypes, $taskPriorities, rand(3, 6));
+                    $this->createTasksForSprint($extraSprint, $project, $todoStatus, $taskTypes, $taskPriorities, random_int(3, 6));
                 }
             }
         }
@@ -150,11 +150,11 @@ class SprintSeeder extends Seeder
         array $taskPriorities,
         int $count
     ): void {
-        if (! $status) {
+        if (!$status instanceof \App\Models\Status) {
             return;
         }
 
-        $projectKey = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
+        $projectKey = strtoupper(substr((string) preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
         $existingTaskCount = Task::where('taskable_type', Project::class)
             ->where('taskable_id', $project->id)
             ->count();
@@ -178,8 +178,8 @@ class SprintSeeder extends Seeder
                 'priority' => $taskPriorities[array_rand($taskPriorities)],
                 'assigned_to' => $members->random()->id,
                 'reporter_id' => $project->project_manager_id,
-                'story_points' => rand(1, 13),
-                'estimated_hours' => rand(2, 20),
+                'story_points' => random_int(1, 13),
+                'estimated_hours' => random_int(2, 20),
                 'due_date' => fake()->dateTimeBetween($sprint->start_date, $sprint->end_date),
             ]);
         }
@@ -196,12 +196,12 @@ class SprintSeeder extends Seeder
         array $taskPriorities,
         int $count
     ): void {
-        $validStatuses = array_filter($statuses, fn ($s) => $s !== null);
-        if (empty($validStatuses)) {
+        $validStatuses = array_filter($statuses, fn ($s): bool => $s !== null);
+        if ($validStatuses === []) {
             return;
         }
 
-        $projectKey = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
+        $projectKey = strtoupper(substr((string) preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
         $existingTaskCount = Task::where('taskable_type', Project::class)
             ->where('taskable_id', $project->id)
             ->count();
@@ -227,9 +227,9 @@ class SprintSeeder extends Seeder
                 'priority' => $taskPriorities[array_rand($taskPriorities)],
                 'assigned_to' => $members->random()->id,
                 'reporter_id' => $project->project_manager_id,
-                'story_points' => rand(1, 13),
-                'estimated_hours' => rand(2, 20),
-                'actual_hours' => $status->name === 'completed' ? rand(1, 25) : null,
+                'story_points' => random_int(1, 13),
+                'estimated_hours' => random_int(2, 20),
+                'actual_hours' => $status->name === 'completed' ? random_int(1, 25) : null,
                 'due_date' => fake()->dateTimeBetween($sprint->start_date, $sprint->end_date),
             ]);
         }

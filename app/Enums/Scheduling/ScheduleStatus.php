@@ -61,7 +61,7 @@ enum ScheduleStatus: string
     public function canTransitionTo(self $newStatus): bool
     {
         return match ($this) {
-            self::DRAFT => in_array($newStatus, [self::PUBLISHED]),
+            self::DRAFT => $newStatus == self::PUBLISHED,
             self::PUBLISHED => in_array($newStatus, [self::LOCKED, self::DRAFT]),
             self::LOCKED => false,
         };

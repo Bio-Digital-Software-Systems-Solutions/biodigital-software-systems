@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('event_registrations', function (Blueprint $table) {
+        Schema::create('event_registrations', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('registration_number')->unique();

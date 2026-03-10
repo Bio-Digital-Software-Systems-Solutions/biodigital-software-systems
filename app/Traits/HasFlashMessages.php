@@ -20,7 +20,6 @@ trait HasFlashMessages
      * @param string $route Route name
      * @param string $message Success message
      * @param array<string, mixed> $parameters Route parameters
-     * @return RedirectResponse
      */
     protected function redirectWithSuccess(
         string $route,
@@ -38,7 +37,6 @@ trait HasFlashMessages
      * @param string $route Route name
      * @param string $message Error message
      * @param array<string, mixed> $parameters Route parameters
-     * @return RedirectResponse
      */
     protected function redirectWithError(
         string $route,
@@ -54,7 +52,6 @@ trait HasFlashMessages
      * Go back with error message
      *
      * @param string $message Error message
-     * @return RedirectResponse
      */
     protected function backWithError(string $message): RedirectResponse
     {
@@ -65,7 +62,6 @@ trait HasFlashMessages
      * Go back with success message
      *
      * @param string $message Success message
-     * @return RedirectResponse
      */
     protected function backWithSuccess(string $message): RedirectResponse
     {
@@ -78,7 +74,6 @@ trait HasFlashMessages
      * @param string $route Route name
      * @param string $message Info message
      * @param array<string, mixed> $parameters Route parameters
-     * @return RedirectResponse
      */
     protected function redirectWithInfo(
         string $route,
@@ -96,7 +91,6 @@ trait HasFlashMessages
      * @param string $route Route name
      * @param string $message Warning message
      * @param array<string, mixed> $parameters Route parameters
-     * @return RedirectResponse
      */
     protected function redirectWithWarning(
         string $route,
@@ -112,7 +106,6 @@ trait HasFlashMessages
      * Go back with info message
      *
      * @param string $message Info message
-     * @return RedirectResponse
      */
     protected function backWithInfo(string $message): RedirectResponse
     {
@@ -123,7 +116,6 @@ trait HasFlashMessages
      * Go back with warning message
      *
      * @param string $message Warning message
-     * @return RedirectResponse
      */
     protected function backWithWarning(string $message): RedirectResponse
     {

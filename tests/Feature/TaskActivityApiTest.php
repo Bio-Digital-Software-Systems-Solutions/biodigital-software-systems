@@ -15,7 +15,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create permissions
     Permission::firstOrCreate(['name' => 'view tasks']);
     Permission::firstOrCreate(['name' => 'create tasks']);
@@ -41,7 +41,7 @@ beforeEach(function () {
 // Status Change Activity Tests
 // ==========================================
 
-it('logs activity when task status is changed', function () {
+it('logs activity when task status is changed', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -72,7 +72,7 @@ it('logs activity when task status is changed', function () {
     expect($activity->causer_id)->toBe($user->id);
 });
 
-it('does not log activity when status is unchanged', function () {
+it('does not log activity when status is unchanged', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -105,7 +105,7 @@ it('does not log activity when status is unchanged', function () {
 // Progress Change Activity Tests
 // ==========================================
 
-it('logs activity when task progress is changed', function () {
+it('logs activity when task progress is changed', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -133,7 +133,7 @@ it('logs activity when task progress is changed', function () {
     expect($activity->causer_id)->toBe($user->id);
 });
 
-it('does not log activity when progress is unchanged', function () {
+it('does not log activity when progress is unchanged', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -160,7 +160,7 @@ it('does not log activity when progress is unchanged', function () {
     expect($activity)->toBeNull();
 });
 
-it('logs activity when progress changes from zero to value', function () {
+it('logs activity when progress changes from zero to value', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -189,7 +189,7 @@ it('logs activity when progress changes from zero to value', function () {
 // Participant Activity Tests
 // ==========================================
 
-it('logs activity when participant is added to task', function () {
+it('logs activity when participant is added to task', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -222,7 +222,7 @@ it('logs activity when participant is added to task', function () {
     expect($activity->causer_id)->toBe($user->id);
 });
 
-it('logs activity when participant is removed from task', function () {
+it('logs activity when participant is removed from task', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -263,7 +263,7 @@ it('logs activity when participant is removed from task', function () {
 // Attachment Activity Tests
 // ==========================================
 
-it('logs activity when attachment is added to task', function () {
+it('logs activity when attachment is added to task', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -291,7 +291,7 @@ it('logs activity when attachment is added to task', function () {
     expect($activity->causer_id)->toBe($user->id);
 });
 
-it('logs activity when attachment is removed from task', function () {
+it('logs activity when attachment is removed from task', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -330,7 +330,7 @@ it('logs activity when attachment is removed from task', function () {
 // Get Activities Endpoint Tests
 // ==========================================
 
-it('returns all activities for a task', function () {
+it('returns all activities for a task', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -364,7 +364,7 @@ it('returns all activities for a task', function () {
     expect($activities[0])->toHaveKeys(['id', 'description', 'event', 'properties', 'causer', 'created_at']);
 });
 
-it('returns activities for multiple status changes', function () {
+it('returns activities for multiple status changes', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -395,7 +395,7 @@ it('returns activities for multiple status changes', function () {
 
     // Filter only status_changed events
     $statusActivities = collect($activities)
-        ->filter(fn ($a) => $a['event'] === 'status_changed')
+        ->filter(fn ($a): bool => $a['event'] === 'status_changed')
         ->values();
 
     expect($statusActivities->count())->toBe(2);
@@ -410,7 +410,7 @@ it('returns activities for multiple status changes', function () {
 // TaskActivityService Unit Tests
 // ==========================================
 
-it('TaskActivityService logs status change correctly', function () {
+it('TaskActivityService logs status change correctly', function (): void {
     $user = User::factory()->create();
     $pendingStatus = Status::where('name', 'pending')->first();
     $completedStatus = Status::where('name', 'completed')->first();
@@ -429,7 +429,7 @@ it('TaskActivityService logs status change correctly', function () {
     expect($activity->properties['new_status_name'])->toBe('completed');
 });
 
-it('TaskActivityService logs progress change correctly', function () {
+it('TaskActivityService logs progress change correctly', function (): void {
     $user = User::factory()->create();
 
     $task = Task::factory()->create([
@@ -446,7 +446,7 @@ it('TaskActivityService logs progress change correctly', function () {
     expect($activity->properties['new_progress'])->toBe(75);
 });
 
-it('TaskActivityService logs participant added correctly', function () {
+it('TaskActivityService logs participant added correctly', function (): void {
     $user = User::factory()->create();
     $participantUser = User::factory()->create([
         'first_name' => 'Test',
@@ -471,7 +471,7 @@ it('TaskActivityService logs participant added correctly', function () {
     expect($activity->properties['role'])->toBe('reviewer');
 });
 
-it('TaskActivityService logs participant removed correctly', function () {
+it('TaskActivityService logs participant removed correctly', function (): void {
     $user = User::factory()->create();
     $participantUser = User::factory()->create([
         'first_name' => 'Removed',
@@ -490,7 +490,7 @@ it('TaskActivityService logs participant removed correctly', function () {
     expect($activity->properties['role'])->toBe('contributor');
 });
 
-it('TaskActivityService logs attachment added correctly', function () {
+it('TaskActivityService logs attachment added correctly', function (): void {
     $user = User::factory()->create();
 
     $task = Task::factory()->create();
@@ -514,7 +514,7 @@ it('TaskActivityService logs attachment added correctly', function () {
     expect($activity->properties['file_name'])->toBe('test-file.pdf');
 });
 
-it('TaskActivityService logs attachment removed correctly', function () {
+it('TaskActivityService logs attachment removed correctly', function (): void {
     $user = User::factory()->create();
 
     $task = Task::factory()->create();
@@ -528,7 +528,7 @@ it('TaskActivityService logs attachment removed correctly', function () {
     expect($activity->properties['file_name'])->toBe('deleted-file.docx');
 });
 
-it('TaskActivityService getTaskActivities returns all activities for task', function () {
+it('TaskActivityService getTaskActivities returns all activities for task', function (): void {
     $user = User::factory()->create();
     $pendingStatus = Status::where('name', 'pending')->first();
     $inProgressStatus = Status::where('name', 'in_progress')->first();
@@ -553,7 +553,7 @@ it('TaskActivityService getTaskActivities returns all activities for task', func
 // Edge Cases
 // ==========================================
 
-it('handles activity logging when causer is null', function () {
+it('handles activity logging when causer is null', function (): void {
     $pendingStatus = Status::where('name', 'pending')->first();
     $completedStatus = Status::where('name', 'completed')->first();
 
@@ -565,13 +565,13 @@ it('handles activity logging when causer is null', function () {
     $service = new TaskActivityService;
 
     // This should not throw an exception
-    $activity = $service->logStatusChange($task, $pendingStatus->id, $completedStatus->id, null);
+    $activity = $service->logStatusChange($task, $pendingStatus->id, $completedStatus->id);
 
     expect($activity)->toBeInstanceOf(Activity::class);
     // causer_id should be null when no user is authenticated
 });
 
-it('logs complete workflow of task activities', function () {
+it('logs complete workflow of task activities', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 

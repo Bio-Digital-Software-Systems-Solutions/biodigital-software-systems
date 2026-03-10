@@ -11,22 +11,19 @@ class TwoFactorCodeNotification extends Notification
     use Queueable;
 
     /**
-     * The 2FA code
-     */
-    protected string $code;
-
-    /**
-     * The expiration time in minutes
-     */
-    protected int $expirationMinutes;
-
-    /**
      * Create a new notification instance.
      */
-    public function __construct(string $code, int $expirationMinutes)
+    public function __construct(
+        /**
+         * The 2FA code
+         */
+        protected string $code,
+        /**
+         * The expiration time in minutes
+         */
+        protected int $expirationMinutes
+    )
     {
-        $this->code = $code;
-        $this->expirationMinutes = $expirationMinutes;
     }
 
     /**

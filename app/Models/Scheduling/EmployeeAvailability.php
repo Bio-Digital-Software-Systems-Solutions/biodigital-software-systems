@@ -13,6 +13,50 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $user_id
+ * @property int $department_id
+ * @property string $day_of_week
+ * @property string $start_time
+ * @property string $end_time
+ * @property AvailabilityStatus $status
+ * @property RecurrenceType $recurrence_type
+ * @property \Illuminate\Support\Carbon|null $effective_from
+ * @property \Illuminate\Support\Carbon|null $effective_until
+ * @property string|null $notes
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read Department $department
+ * @property-read bool $is_recurring
+ * @property-read string|null $time_range
+ * @property-read User $user
+ * @method static Builder<static>|EmployeeAvailability available()
+ * @method static Builder<static>|EmployeeAvailability forDate(\Carbon\Carbon $date)
+ * @method static Builder<static>|EmployeeAvailability forDayOfWeek(string $dayOfWeek)
+ * @method static Builder<static>|EmployeeAvailability forDepartment(int $departmentId)
+ * @method static Builder<static>|EmployeeAvailability forUser(int $userId)
+ * @method static Builder<static>|EmployeeAvailability newModelQuery()
+ * @method static Builder<static>|EmployeeAvailability newQuery()
+ * @method static Builder<static>|EmployeeAvailability query()
+ * @method static Builder<static>|EmployeeAvailability unavailable()
+ * @method static Builder<static>|EmployeeAvailability whereCreatedAt($value)
+ * @method static Builder<static>|EmployeeAvailability whereDayOfWeek($value)
+ * @method static Builder<static>|EmployeeAvailability whereDepartmentId($value)
+ * @method static Builder<static>|EmployeeAvailability whereEffectiveFrom($value)
+ * @method static Builder<static>|EmployeeAvailability whereEffectiveUntil($value)
+ * @method static Builder<static>|EmployeeAvailability whereEndTime($value)
+ * @method static Builder<static>|EmployeeAvailability whereId($value)
+ * @method static Builder<static>|EmployeeAvailability whereNotes($value)
+ * @method static Builder<static>|EmployeeAvailability whereRecurrenceType($value)
+ * @method static Builder<static>|EmployeeAvailability whereStartTime($value)
+ * @method static Builder<static>|EmployeeAvailability whereStatus($value)
+ * @method static Builder<static>|EmployeeAvailability whereUpdatedAt($value)
+ * @method static Builder<static>|EmployeeAvailability whereUserId($value)
+ * @method static Builder<static>|EmployeeAvailability whereUuid($value)
+ * @mixin \Eloquent
+ */
 class EmployeeAvailability extends Model
 {
     use HasFactory;
@@ -42,7 +86,7 @@ class EmployeeAvailability extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
@@ -81,11 +125,11 @@ class EmployeeAvailability extends Model
     {
         $dayOfWeek = strtolower($date->format('l'));
         return $query->where('day_of_week', $dayOfWeek)
-            ->where(function ($q) use ($date) {
+            ->where(function ($q) use ($date): void {
                 $q->whereNull('effective_from')
                   ->orWhere('effective_from', '<=', $date);
             })
-            ->where(function ($q) use ($date) {
+            ->where(function ($q) use ($date): void {
                 $q->whereNull('effective_until')
                   ->orWhere('effective_until', '>=', $date);
             });
@@ -155,12 +199,7 @@ class EmployeeAvailability extends Model
         if ($this->effective_from && $date->lt($this->effective_from)) {
             return false;
         }
-
-        if ($this->effective_until && $date->gt($this->effective_until)) {
-            return false;
-        }
-
-        return true;
+        return !($this->effective_until && $date->gt($this->effective_until));
     }
 
     public static function getForUserAndWeek(int $userId, int $departmentId, Carbon $weekStart): array
@@ -180,9 +219,7 @@ class EmployeeAvailability extends Model
             $dayOfWeek = strtolower($current->format('l'));
 
             // Find availability that applies to this date
-            $applicable = $availabilities->first(function ($avail) use ($current) {
-                return $avail->appliesToDate($current);
-            });
+            $applicable = $availabilities->first(fn($avail) => $avail->appliesToDate($current));
 
             $result[$dateKey] = $applicable;
             $current->addDay();

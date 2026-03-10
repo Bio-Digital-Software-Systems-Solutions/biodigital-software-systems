@@ -7,7 +7,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Reset cached roles and permissions
     app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
@@ -17,14 +17,14 @@ beforeEach(function () {
     Permission::firstOrCreate(['name' => 'view events']);
 });
 
-it('can run in dry-run mode', function () {
+it('can run in dry-run mode', function (): void {
     Role::firstOrCreate(['name' => 'SuperAdmin']);
 
     $this->artisan('roles:unify', ['--dry-run' => true])
         ->assertSuccessful();
 });
 
-it('renames SuperAdmin to super-admin when target does not exist', function () {
+it('renames SuperAdmin to super-admin when target does not exist', function (): void {
     // Create SuperAdmin role
     $superAdmin = Role::firstOrCreate(['name' => 'SuperAdmin']);
     $superAdmin->givePermissionTo(['view articles', 'edit articles']);
@@ -50,7 +50,7 @@ it('renames SuperAdmin to super-admin when target does not exist', function () {
     expect($newRole->hasPermissionTo('edit articles'))->toBeTrue();
 });
 
-it('migrates users from duplicate PascalCase roles to kebab-case equivalents', function () {
+it('migrates users from duplicate PascalCase roles to kebab-case equivalents', function (): void {
     // Create both roles (simulating a duplicate scenario)
     $kebabRole = Role::firstOrCreate(['name' => 'project-manager']);
     $kebabRole->givePermissionTo(['view articles']);
@@ -73,7 +73,7 @@ it('migrates users from duplicate PascalCase roles to kebab-case equivalents', f
     expect(Role::where('name', 'ProjectManager')->exists())->toBeFalse();
 });
 
-it('renames mlr_agent to mlr-agent', function () {
+it('renames mlr_agent to mlr-agent', function (): void {
     // Create snake_case role
     $mlrAgent = Role::firstOrCreate(['name' => 'mlr_agent']);
     $mlrAgent->givePermissionTo(['view articles']);
@@ -94,7 +94,7 @@ it('renames mlr_agent to mlr-agent', function () {
     expect($user->hasRole('mlr-agent'))->toBeTrue();
 });
 
-it('reports success when roles are already standardized', function () {
+it('reports success when roles are already standardized', function (): void {
     // Create only standardized roles
     Role::firstOrCreate(['name' => 'admin']);
     Role::firstOrCreate(['name' => 'member']);

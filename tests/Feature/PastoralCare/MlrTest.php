@@ -10,7 +10,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create roles
     Role::create(['name' => 'pastor']);
     $mlrAgentRole = Role::create(['name' => 'mlr-agent']);
@@ -64,14 +64,14 @@ function mlr_createRegularUser(): User
     return User::factory()->create();
 }
 
-describe('MLR Dashboard Access Control', function () {
-    test('unauthenticated users cannot access MLR dashboard', function () {
+describe('MLR Dashboard Access Control', function (): void {
+    test('unauthenticated users cannot access MLR dashboard', function (): void {
         $response = $this->get(route('pastoral-care.mlr'));
 
         $response->assertRedirect(route('login'));
     });
 
-    test('regular users without permission cannot access MLR dashboard', function () {
+    test('regular users without permission cannot access MLR dashboard', function (): void {
         $user = mlr_createRegularUser();
 
         $response = $this->actingAs($user)->get(route('pastoral-care.mlr'));
@@ -81,7 +81,7 @@ describe('MLR Dashboard Access Control', function () {
         $response->assertSessionHas('unauthorized');
     });
 
-    test('pastors without MLR permission cannot access MLR dashboard', function () {
+    test('pastors without MLR permission cannot access MLR dashboard', function (): void {
         $pastor = mlr_createPastor();
 
         $response = $this->actingAs($pastor)->get(route('pastoral-care.mlr'));
@@ -91,13 +91,13 @@ describe('MLR Dashboard Access Control', function () {
         $response->assertSessionHas('unauthorized');
     });
 
-    test('MLR agents can access MLR dashboard', function () {
+    test('MLR agents can access MLR dashboard', function (): void {
         $mlrAgent = mlr_createMlrAgent();
 
         $response = $this->actingAs($mlrAgent)->get(route('pastoral-care.mlr'));
 
         $response->assertOk();
-        $response->assertInertia(fn (AssertableInertia $page) => $page
+        $response->assertInertia(fn (AssertableInertia $page): \Inertia\Testing\AssertableInertia => $page
             ->component('PastoralCare/Mlr')
             ->has('stats')
             ->has('appointments')
@@ -105,7 +105,7 @@ describe('MLR Dashboard Access Control', function () {
         );
     });
 
-    test('admins can access MLR dashboard', function () {
+    test('admins can access MLR dashboard', function (): void {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
         Permission::findOrCreate('view mlr dashboard');
@@ -117,14 +117,14 @@ describe('MLR Dashboard Access Control', function () {
     });
 });
 
-describe('MLR Statistics Endpoint', function () {
-    test('unauthenticated users cannot access statistics', function () {
+describe('MLR Statistics Endpoint', function (): void {
+    test('unauthenticated users cannot access statistics', function (): void {
         $response = $this->get(route('pastoral-care.mlr.statistics'));
 
         $response->assertRedirect(route('login'));
     });
 
-    test('MLR agents can access statistics endpoint', function () {
+    test('MLR agents can access statistics endpoint', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $pastor = mlr_createPastor();
 
@@ -153,7 +153,7 @@ describe('MLR Statistics Endpoint', function () {
         ]);
     });
 
-    test('statistics endpoint accepts different period parameters', function () {
+    test('statistics endpoint accepts different period parameters', function (): void {
         $mlrAgent = mlr_createMlrAgent();
 
         foreach (['week', 'month', 'quarter', 'year'] as $period) {
@@ -170,8 +170,8 @@ describe('MLR Statistics Endpoint', function () {
     });
 });
 
-describe('Transfer Functionality', function () {
-    test('unauthenticated users cannot transfer appointments', function () {
+describe('Transfer Functionality', function (): void {
+    test('unauthenticated users cannot transfer appointments', function (): void {
         $pastor = mlr_createPastor();
         $appointment = PastoralCare::factory()->create([
             'pastor_id' => $pastor->id,
@@ -185,7 +185,7 @@ describe('Transfer Functionality', function () {
         $response->assertRedirect(route('login'));
     });
 
-    test('regular users cannot transfer appointments', function () {
+    test('regular users cannot transfer appointments', function (): void {
         $user = mlr_createRegularUser();
         $pastor = mlr_createPastor();
         $appointment = PastoralCare::factory()->create([
@@ -202,7 +202,7 @@ describe('Transfer Functionality', function () {
         $response->assertSessionHas('unauthorized');
     });
 
-    test('MLR agents can transfer pending appointments', function () {
+    test('MLR agents can transfer pending appointments', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $originalPastor = mlr_createPastor();
         $newPastor = mlr_createPastor();
@@ -231,7 +231,7 @@ describe('Transfer Functionality', function () {
         expect($appointment->transferred_at)->not->toBeNull();
     });
 
-    test('MLR agents can transfer confirmed appointments', function () {
+    test('MLR agents can transfer confirmed appointments', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $originalPastor = mlr_createPastor();
         $newPastor = mlr_createPastor();
@@ -256,7 +256,7 @@ describe('Transfer Functionality', function () {
         expect($appointment->status)->toBe('pending'); // Reset to pending after transfer
     });
 
-    test('cannot transfer to the same pastor', function () {
+    test('cannot transfer to the same pastor', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $pastor = mlr_createPastor();
 
@@ -274,7 +274,7 @@ describe('Transfer Functionality', function () {
         $response->assertSessionHasErrors('transferred_to_id');
     });
 
-    test('cannot transfer completed appointments', function () {
+    test('cannot transfer completed appointments', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $originalPastor = mlr_createPastor();
         $newPastor = mlr_createPastor();
@@ -295,7 +295,7 @@ describe('Transfer Functionality', function () {
         $response->assertSessionHas('error');
     });
 
-    test('cannot transfer cancelled appointments', function () {
+    test('cannot transfer cancelled appointments', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $originalPastor = mlr_createPastor();
         $newPastor = mlr_createPastor();
@@ -314,7 +314,7 @@ describe('Transfer Functionality', function () {
         $response->assertSessionHas('error');
     });
 
-    test('transfer requires a valid user ID', function () {
+    test('transfer requires a valid user ID', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $pastor = mlr_createPastor();
 
@@ -330,7 +330,7 @@ describe('Transfer Functionality', function () {
         $response->assertSessionHasErrors('transferred_to_id');
     });
 
-    test('transfer reason is optional', function () {
+    test('transfer reason is optional', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $originalPastor = mlr_createPastor();
         $newPastor = mlr_createPastor();
@@ -354,7 +354,7 @@ describe('Transfer Functionality', function () {
         expect($appointment->transfer_reason)->toBeNull();
     });
 
-    test('transfer reason has max length validation', function () {
+    test('transfer reason has max length validation', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $originalPastor = mlr_createPastor();
         $newPastor = mlr_createPastor();
@@ -373,8 +373,8 @@ describe('Transfer Functionality', function () {
     });
 });
 
-describe('MLR Dashboard Data', function () {
-    test('dashboard shows correct appointment counts by status', function () {
+describe('MLR Dashboard Data', function (): void {
+    test('dashboard shows correct appointment counts by status', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $pastor = mlr_createPastor();
 
@@ -400,7 +400,7 @@ describe('MLR Dashboard Data', function () {
         $response = $this->actingAs($mlrAgent)->get(route('pastoral-care.mlr'));
 
         $response->assertOk();
-        $response->assertInertia(fn (AssertableInertia $page) => $page
+        $response->assertInertia(fn (AssertableInertia $page): \Inertia\Testing\AssertableInertia => $page
             ->component('PastoralCare/Mlr')
             ->where('stats.overview.pending', 3)
             ->where('stats.overview.confirmed', 2)
@@ -409,7 +409,7 @@ describe('MLR Dashboard Data', function () {
         );
     });
 
-    test('dashboard includes availabilities for all pastors', function () {
+    test('dashboard includes availabilities for all pastors', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $pastor1 = mlr_createPastor();
         $pastor2 = mlr_createPastor();
@@ -431,13 +431,13 @@ describe('MLR Dashboard Data', function () {
         $response = $this->actingAs($mlrAgent)->get(route('pastoral-care.mlr'));
 
         $response->assertOk();
-        $response->assertInertia(fn (AssertableInertia $page) => $page
+        $response->assertInertia(fn (AssertableInertia $page): \Inertia\Testing\AssertableInertia => $page
             ->component('PastoralCare/Mlr')
             ->has('stats.availabilities', 2)
         );
     });
 
-    test('dashboard includes list of pastors for transfer dropdown', function () {
+    test('dashboard includes list of pastors for transfer dropdown', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $pastor1 = User::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
         $pastor1->assignRole('pastor');
@@ -447,7 +447,7 @@ describe('MLR Dashboard Data', function () {
         $response = $this->actingAs($mlrAgent)->get(route('pastoral-care.mlr'));
 
         $response->assertOk();
-        $response->assertInertia(fn (AssertableInertia $page) => $page
+        $response->assertInertia(fn (AssertableInertia $page): \Inertia\Testing\AssertableInertia => $page
             ->component('PastoralCare/Mlr')
             // mlr_agent is also included in pastors list (3 = 1 mlr_agent + 2 pastors)
             ->has('pastors', 3)
@@ -455,8 +455,8 @@ describe('MLR Dashboard Data', function () {
     });
 });
 
-describe('MLR Dashboard Pagination', function () {
-    test('appointments are paginated', function () {
+describe('MLR Dashboard Pagination', function (): void {
+    test('appointments are paginated', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $pastor = mlr_createPastor();
 
@@ -469,7 +469,7 @@ describe('MLR Dashboard Pagination', function () {
         $response = $this->actingAs($mlrAgent)->get(route('pastoral-care.mlr'));
 
         $response->assertOk();
-        $response->assertInertia(fn (AssertableInertia $page) => $page
+        $response->assertInertia(fn (AssertableInertia $page): \Inertia\Testing\AssertableInertia => $page
             ->component('PastoralCare/Mlr')
             ->has('appointments.data') // Paginated data
             ->has('appointments.meta')
@@ -477,8 +477,8 @@ describe('MLR Dashboard Pagination', function () {
     });
 });
 
-describe('MLR Dashboard Period Filter', function () {
-    test('can filter by week period', function () {
+describe('MLR Dashboard Period Filter', function (): void {
+    test('can filter by week period', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $pastor = mlr_createPastor();
 
@@ -497,15 +497,15 @@ describe('MLR Dashboard Period Filter', function () {
         $response = $this->actingAs($mlrAgent)->get(route('pastoral-care.mlr', ['period' => 'week']));
 
         $response->assertOk();
-        $response->assertInertia(fn (AssertableInertia $page) => $page
+        $response->assertInertia(fn (AssertableInertia $page): \Inertia\Testing\AssertableInertia => $page
             ->component('PastoralCare/Mlr')
             ->where('stats.overview.total', 3)
         );
     });
 });
 
-describe('MLR Analytics Data', function () {
-    test('dashboard includes analytics data', function () {
+describe('MLR Analytics Data', function (): void {
+    test('dashboard includes analytics data', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $pastor = mlr_createPastor();
 
@@ -520,7 +520,7 @@ describe('MLR Analytics Data', function () {
         $response = $this->actingAs($mlrAgent)->get(route('pastoral-care.mlr'));
 
         $response->assertOk();
-        $response->assertInertia(fn (AssertableInertia $page) => $page
+        $response->assertInertia(fn (AssertableInertia $page): \Inertia\Testing\AssertableInertia => $page
             ->component('PastoralCare/Mlr')
             ->has('stats.analytics')
             ->has('stats.analytics.appointments_by_status')
@@ -534,7 +534,7 @@ describe('MLR Analytics Data', function () {
         );
     });
 
-    test('analytics includes correct status distribution', function () {
+    test('analytics includes correct status distribution', function (): void {
         $mlrAgent = mlr_createMlrAgent();
         $pastor = mlr_createPastor();
 
@@ -553,7 +553,7 @@ describe('MLR Analytics Data', function () {
         $response = $this->actingAs($mlrAgent)->get(route('pastoral-care.mlr'));
 
         $response->assertOk();
-        $response->assertInertia(fn (AssertableInertia $page) => $page
+        $response->assertInertia(fn (AssertableInertia $page): \Inertia\Testing\AssertableInertia => $page
             ->component('PastoralCare/Mlr')
             ->where('stats.analytics.global_progress.total', 5)
             ->where('stats.analytics.global_progress.completed', 3)
@@ -561,13 +561,13 @@ describe('MLR Analytics Data', function () {
         );
     });
 
-    test('analytics includes velocity metrics', function () {
+    test('analytics includes velocity metrics', function (): void {
         $mlrAgent = mlr_createMlrAgent();
 
         $response = $this->actingAs($mlrAgent)->get(route('pastoral-care.mlr'));
 
         $response->assertOk();
-        $response->assertInertia(fn (AssertableInertia $page) => $page
+        $response->assertInertia(fn (AssertableInertia $page): \Inertia\Testing\AssertableInertia => $page
             ->component('PastoralCare/Mlr')
             ->has('stats.analytics.velocity.daily')
             ->has('stats.analytics.velocity.weekly')
@@ -575,13 +575,13 @@ describe('MLR Analytics Data', function () {
         );
     });
 
-    test('analytics includes evolution data for multiple periods', function () {
+    test('analytics includes evolution data for multiple periods', function (): void {
         $mlrAgent = mlr_createMlrAgent();
 
         $response = $this->actingAs($mlrAgent)->get(route('pastoral-care.mlr'));
 
         $response->assertOk();
-        $response->assertInertia(fn (AssertableInertia $page) => $page
+        $response->assertInertia(fn (AssertableInertia $page): \Inertia\Testing\AssertableInertia => $page
             ->component('PastoralCare/Mlr')
             ->has('stats.analytics.appointment_evolution.weekly')
             ->has('stats.analytics.appointment_evolution.monthly')

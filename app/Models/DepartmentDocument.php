@@ -30,8 +30,45 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\Department $department
+ * @property-read bool $can_preview
+ * @property-read string $file_type
+ * @property-read string $file_url
+ * @property-read string $formatted_file_size
+ * @property-read string $month_name
+ * @property-read string $preview_type
+ * @property-read string $preview_url
  * @property-read \App\Models\User $uploader
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument byMonth(int $year, int $month)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument byYear(int $year)
+ * @method static \Database\Factories\DepartmentDocumentFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereCategory($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereExtension($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereFileName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereFilePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereFileSize($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereMimeType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereMonth($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereOriginalName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereUploadedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument whereYear($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentDocument withoutTrashed()
+ * @mixin \Eloquent
  */
 class DepartmentDocument extends Model
 {
@@ -91,7 +128,7 @@ class DepartmentDocument extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
@@ -290,13 +327,13 @@ class DepartmentDocument extends Model
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get()
-            ->groupBy(fn($cat) => "{$cat->year}-{$cat->month}");
+            ->groupBy(fn($cat): string => "{$cat->year}-{$cat->month}");
 
         $tree = [];
 
         // First, create structure from categories (ensures empty categories show)
         foreach ($allCategories as $periodKey => $categories) {
-            [$year, $month] = explode('-', $periodKey);
+            [$year, $month] = explode('-', (string) $periodKey);
             $year = (int) $year;
             $month = (int) $month;
 
@@ -408,22 +445,26 @@ class DepartmentDocument extends Model
             foreach ($yearData['months'] as &$monthData) {
                 // Sort categories: rapports first (is_system=true), then others alphabetically
                 $categories = $monthData['categories'];
-                uksort($categories, function($a, $b) use ($categories) {
+                uksort($categories, function($a, $b) use ($categories): int {
                     $aIsSystem = $categories[$a]['is_system'] ?? false;
                     $bIsSystem = $categories[$b]['is_system'] ?? false;
-                    if ($aIsSystem && !$bIsSystem) return -1;
-                    if (!$aIsSystem && $bIsSystem) return 1;
+                    if ($aIsSystem && !$bIsSystem) {
+                        return -1;
+                    }
+                    if (!$aIsSystem && $bIsSystem) {
+                        return 1;
+                    }
                     return strcmp($a, $b);
                 });
                 $monthData['categories'] = array_values($categories);
             }
             $yearData['months'] = array_values($yearData['months']);
-            usort($yearData['months'], fn($a, $b) => $b['month'] - $a['month']);
+            usort($yearData['months'], fn(array $a, array $b): int|float => $b['month'] - $a['month']);
         }
 
         // Convert tree to indexed array and sort by year desc
         $result = array_values($tree);
-        usort($result, fn($a, $b) => $b['year'] - $a['year']);
+        usort($result, fn(array $a, array $b): int|float => $b['year'] - $a['year']);
 
         return $result;
     }

@@ -33,7 +33,7 @@ class BookRentalFactory extends Factory
 
     public function returned(): static
     {
-        return $this->state(function (array $attributes) {
+        return $this->state(function (array $attributes): array {
             $returnDate = $this->faker->dateTimeBetween($attributes['rental_date'], 'now');
 
             return [
@@ -45,7 +45,7 @@ class BookRentalFactory extends Factory
 
     public function overdue(): static
     {
-        return $this->state(function (array $attributes) {
+        return $this->state(function (array $attributes): array {
             $rentalDate = $this->faker->dateTimeBetween('-2 months', '-1 month');
             $dueDate = (clone $rentalDate)->modify('+7 days');
 

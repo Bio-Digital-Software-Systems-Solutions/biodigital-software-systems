@@ -31,7 +31,7 @@ class PastoralCarePermissionsSeeder extends Seeder
         }
 
         // Create pastor role if it doesn't exist
-        $pastorRole = Role::firstOrCreate(['name' => 'pastor']);
+        Role::firstOrCreate(['name' => 'pastor']);
 
         // Assign permissions to roles
         // Note: 'select pastor for pastoral care' - allows users to choose a specific pastor

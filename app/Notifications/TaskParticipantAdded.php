@@ -13,18 +13,11 @@ class TaskParticipantAdded extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public Task $task;
-    public string $role;
-    public User $addedBy;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(Task $task, string $role, User $addedBy)
+    public function __construct(public Task $task, public string $role, public User $addedBy)
     {
-        $this->task = $task;
-        $this->role = $role;
-        $this->addedBy = $addedBy;
     }
 
     /**

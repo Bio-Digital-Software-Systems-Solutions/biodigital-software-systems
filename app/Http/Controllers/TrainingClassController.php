@@ -24,7 +24,7 @@ class TrainingClassController extends Controller
     public function index(Request $request): Response
     {
         $query = TrainingClass::with([
-            'training.students' => function ($query) {
+            'training.students' => function ($query): void {
                 $query->wherePivot('status', 'approved');
             },
             'teacher',
@@ -35,7 +35,7 @@ class TrainingClassController extends Controller
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('room', 'like', "%{$search}%")
                     ->orWhereHas('training', fn ($q) => $q->where('title', 'like', "%{$search}%"))
@@ -71,7 +71,7 @@ class TrainingClassController extends Controller
             ->paginate(12)
             ->appends($request->query());
 
-        $classesData = $classes->getCollection()->map(fn ($class) => $this->formatClassData($class));
+        $classesData = $classes->getCollection()->map(fn (\App\Models\TrainingClass $class): array => $this->formatClassData($class));
 
         $trainings = Training::select('id', 'title')->get();
         $teachers = User::whereHas('teacher')->select('id', 'first_name', 'last_name')->get();
@@ -101,7 +101,7 @@ class TrainingClassController extends Controller
     public function show(TrainingClass $trainingClass): Response
     {
         $trainingClass->load([
-            'training.students' => function ($query) {
+            'training.students' => function ($query): void {
                 $query->wherePivot('status', 'approved');
             },
             'teacher',
@@ -111,7 +111,7 @@ class TrainingClassController extends Controller
         ]);
 
         $students = $trainingClass->training->students
-            ->map(function ($student) use ($trainingClass) {
+            ->map(function ($student) use ($trainingClass): array {
                 $attendance = $trainingClass->attendances->firstWhere('student_id', $student->id);
 
                 return [
@@ -140,7 +140,7 @@ class TrainingClassController extends Controller
             ->orderBy('training_enrollments.created_at', 'desc')
             ->get();
 
-        $materials = $trainingClass->materials->map(fn ($material) => [
+        $materials = $trainingClass->materials->map(fn ($material): array => [
             'id' => $material->id,
             'uuid' => $material->uuid,
             'title' => $material->title,
@@ -152,7 +152,7 @@ class TrainingClassController extends Controller
             'uploaded_by_name' => $material->uploadedBy?->first_name.' '.$material->uploadedBy?->last_name,
         ]);
 
-        $quizzes = $trainingClass->quizzes->map(fn ($quiz) => [
+        $quizzes = $trainingClass->quizzes->map(fn ($quiz): array => [
             'id' => $quiz->id,
             'uuid' => $quiz->uuid,
             'title' => $quiz->title,
@@ -226,7 +226,7 @@ class TrainingClassController extends Controller
         }
 
         $class->load([
-            'training.students' => function ($query) {
+            'training.students' => function ($query): void {
                 $query->wherePivot('status', 'approved');
             },
             'teacher',
@@ -276,7 +276,7 @@ class TrainingClassController extends Controller
         if (isset($validated['schedules']) && count($validated['schedules']) > 0) {
             // Delete existing schedules not in the new list
             $newScheduleUuids = array_filter(array_column($validated['schedules'], 'uuid'));
-            if (! empty($newScheduleUuids)) {
+            if ($newScheduleUuids !== []) {
                 $trainingClass->schedules()->whereNotIn('uuid', $newScheduleUuids)->delete();
             } else {
                 $trainingClass->schedules()->delete();
@@ -327,7 +327,7 @@ class TrainingClassController extends Controller
         ]);
 
         $trainingClass->load([
-            'training.students' => function ($query) {
+            'training.students' => function ($query): void {
                 $query->wherePivot('status', 'approved');
             },
             'teacher',
@@ -370,7 +370,7 @@ class TrainingClassController extends Controller
         $students = $training->students()
             ->where('status', 'approved')
             ->get()
-            ->map(function ($student) use ($trainingClass) {
+            ->map(function ($student) use ($trainingClass): array {
                 $attendance = Attendance::where('training_class_id', $trainingClass->id)
                     ->where('student_id', $student->id)
                     ->first();
@@ -428,32 +428,28 @@ class TrainingClassController extends Controller
      */
     public function schedules()
     {
-        $trainings = Training::with(['classes' => function ($query) {
+        $trainings = Training::with(['classes' => function ($query): void {
             $query->where('date', '>=', now()->toDateString())
                 ->with('teacher')
                 ->orderBy('date')
                 ->orderBy('start_time');
         }])->get();
 
-        $schedules = $trainings->map(function ($training) {
-            return [
-                'training_id' => $training->id,
-                'training_name' => $training->title,
-                'classes' => $training->classes->map(function ($class) {
-                    return [
-                        'id' => $class->id,
-                        'uuid' => $class->uuid,
-                        'name' => $class->name,
-                        'date' => $class->date,
-                        'day' => \Carbon\Carbon::parse($class->date)->locale('fr')->isoFormat('dddd'),
-                        'start_time' => $class->start_time,
-                        'end_time' => $class->end_time,
-                        'room' => $class->room,
-                        'teacher' => $class->teacher ? $class->teacher->first_name.' '.$class->teacher->last_name : 'N/A',
-                    ];
-                }),
-            ];
-        });
+        $schedules = $trainings->map(fn($training): array => [
+            'training_id' => $training->id,
+            'training_name' => $training->title,
+            'classes' => $training->classes->map(fn($class): array => [
+                'id' => $class->id,
+                'uuid' => $class->uuid,
+                'name' => $class->name,
+                'date' => $class->date,
+                'day' => \Carbon\Carbon::parse($class->date)->locale('fr')->isoFormat('dddd'),
+                'start_time' => $class->start_time,
+                'end_time' => $class->end_time,
+                'room' => $class->room,
+                'teacher' => $class->teacher ? $class->teacher->first_name.' '.$class->teacher->last_name : 'N/A',
+            ]),
+        ]);
 
         return response()->json($schedules);
     }
@@ -463,15 +459,13 @@ class TrainingClassController extends Controller
      */
     public function getClassSchedules(TrainingClass $trainingClass)
     {
-        $schedules = $trainingClass->schedules()->get()->map(function ($schedule) {
-            return [
-                'uuid' => $schedule->uuid,
-                'day_of_week' => $schedule->day_of_week,
-                'start_time' => $schedule->start_time,
-                'end_time' => $schedule->end_time,
-                'room' => $schedule->room,
-            ];
-        });
+        $schedules = $trainingClass->schedules()->get()->map(fn($schedule): array => [
+            'uuid' => $schedule->uuid,
+            'day_of_week' => $schedule->day_of_week,
+            'start_time' => $schedule->start_time,
+            'end_time' => $schedule->end_time,
+            'room' => $schedule->room,
+        ]);
 
         return response()->json($schedules);
     }
@@ -488,7 +482,7 @@ class TrainingClassController extends Controller
             ->get()
             ->keyBy('day_of_week');
 
-        $weekSchedule = collect($allDays)->map(function ($day) use ($schedules) {
+        $weekSchedule = collect($allDays)->map(function ($day) use ($schedules): array {
             $schedule = $schedules->get($day);
 
             return [
@@ -557,7 +551,7 @@ class TrainingClassController extends Controller
         $students = $training->students()
             ->where('status', 'approved')
             ->get()
-            ->map(function ($student) use ($schedule) {
+            ->map(function ($student) use ($schedule): array {
                 $attendance = $schedule->attendances()
                     ->where('student_id', $student->id)
                     ->first();
@@ -620,17 +614,15 @@ class TrainingClassController extends Controller
         $students = $training->students()
             ->where('status', 'approved')
             ->get()
-            ->map(function ($student) use ($trainingId) {
-                return [
-                    'id' => $student->id,
-                    'name' => $student->first_name.' '.$student->last_name,
-                    'email' => $student->email,
-                    'grade' => $student->pivot->grade,
-                    'progress' => $student->pivot->progress,
-                    'attendance_rate' => $student->pivot->attendance_rate ?? 0,
-                    'training_id' => $trainingId,
-                ];
-            });
+            ->map(fn($student): array => [
+                'id' => $student->id,
+                'name' => $student->first_name.' '.$student->last_name,
+                'email' => $student->email,
+                'grade' => $student->pivot->grade,
+                'progress' => $student->pivot->progress,
+                'attendance_rate' => $student->pivot->attendance_rate ?? 0,
+                'training_id' => $trainingId,
+            ]);
 
         return response()->json($students);
     }
@@ -640,24 +632,22 @@ class TrainingClassController extends Controller
      */
     public function studentAttendanceHistory($studentId, $trainingId)
     {
-        $history = Attendance::whereHas('trainingClass', function ($query) use ($trainingId) {
+        $history = Attendance::whereHas('trainingClass', function ($query) use ($trainingId): void {
             $query->where('training_id', $trainingId);
         })
             ->where('student_id', $studentId)
             ->with('trainingClass')
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($attendance) {
-                return [
-                    'class_id' => $attendance->training_class_id,
-                    'class_date' => $attendance->trainingClass->date,
-                    'start_time' => $attendance->trainingClass->start_time,
-                    'end_time' => $attendance->trainingClass->end_time,
-                    'room' => $attendance->trainingClass->room,
-                    'status' => $attendance->status,
-                    'reason' => $attendance->reason,
-                ];
-            });
+            ->map(fn($attendance): array => [
+                'class_id' => $attendance->training_class_id,
+                'class_date' => $attendance->trainingClass->date,
+                'start_time' => $attendance->trainingClass->start_time,
+                'end_time' => $attendance->trainingClass->end_time,
+                'room' => $attendance->trainingClass->room,
+                'status' => $attendance->status,
+                'reason' => $attendance->reason,
+            ]);
 
         return response()->json($history);
     }
@@ -670,16 +660,14 @@ class TrainingClassController extends Controller
         $totalClasses = TrainingClass::count();
         $upcomingClasses = TrainingClass::where('date', '>=', now()->toDateString())->count();
 
-        $allStudents = User::whereHas('trainings', function ($query) {
+        $allStudents = User::whereHas('trainings', function ($query): void {
             $query->where('status', 'approved');
         })->get();
 
         $totalStudents = $allStudents->count();
 
         $averageGrade = $totalStudents > 0
-            ? $allStudents->flatMap(function ($student) {
-                return $student->trainings->pluck('pivot.grade')->filter();
-            })->avg()
+            ? $allStudents->flatMap(fn($student) => $student->trainings->pluck('pivot.grade')->filter())->avg()
             : 0;
 
         $totalAttendances = Attendance::count();
@@ -687,9 +675,9 @@ class TrainingClassController extends Controller
         $attendanceRate = $totalAttendances > 0 ? ($presentCount / $totalAttendances) * 100 : 0;
 
         // Get top students
-        $topStudents = User::whereHas('trainings', function ($query) {
+        $topStudents = User::whereHas('trainings', function ($query): void {
             $query->where('status', 'approved');
-        })->with('trainings')->get()->map(function ($student) {
+        })->with('trainings')->get()->map(function ($student): array {
             $grades = $student->trainings->pluck('pivot.grade')->filter();
 
             return [
@@ -701,9 +689,9 @@ class TrainingClassController extends Controller
         })->sortByDesc('average_grade')->take(5)->values();
 
         // Get grade distribution by training
-        $gradeDistribution = Training::with(['students' => function ($query) {
+        $gradeDistribution = Training::with(['students' => function ($query): void {
             $query->where('status', 'approved');
-        }])->get()->map(function ($training) {
+        }])->get()->map(function ($training): array {
             $students = $training->students;
             $grades = $students->pluck('pivot.grade')->filter();
 
@@ -783,7 +771,7 @@ class TrainingClassController extends Controller
         $copy = $trainingClass->duplicate($validated['name'] ?? null);
 
         $copy->load([
-            'training.students' => function ($query) {
+            'training.students' => function ($query): void {
                 $query->wherePivot('status', 'approved');
             },
             'teacher',
@@ -805,7 +793,7 @@ class TrainingClassController extends Controller
     private function formatClassData(TrainingClass $class): array
     {
         $schedules = $class->relationLoaded('schedules')
-            ? $class->schedules->map(fn ($schedule) => [
+            ? $class->schedules->map(fn ($schedule): array => [
                 'id' => $schedule->id,
                 'day_of_week' => $schedule->day_of_week,
                 'start_time' => $schedule->start_time,
@@ -851,7 +839,7 @@ class TrainingClassController extends Controller
     /**
      * Update attendance rates for all students in a class
      */
-    private function updateAttendanceRates(TrainingClass $class)
+    private function updateAttendanceRates(TrainingClass $class): void
     {
         $training = $class->training;
         $students = $training->students()->where('status', 'approved')->get();
@@ -861,7 +849,7 @@ class TrainingClassController extends Controller
                 ->where('date', '<=', now()->toDateString())
                 ->count();
 
-            $attendedClasses = Attendance::whereHas('trainingClass', function ($query) use ($training) {
+            $attendedClasses = Attendance::whereHas('trainingClass', function ($query) use ($training): void {
                 $query->where('training_id', $training->id);
             })
                 ->where('student_id', $student->id)

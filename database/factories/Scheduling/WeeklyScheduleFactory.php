@@ -27,14 +27,14 @@ class WeeklyScheduleFactory extends Factory
 
     public function draft(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ScheduleStatus::DRAFT,
         ]);
     }
 
     public function published(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ScheduleStatus::PUBLISHED,
             'published_at' => now(),
         ]);
@@ -42,7 +42,7 @@ class WeeklyScheduleFactory extends Factory
 
     public function locked(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ScheduleStatus::LOCKED,
             'published_at' => now()->subDays(2),
             'locked_at' => now(),
@@ -51,7 +51,7 @@ class WeeklyScheduleFactory extends Factory
 
     public function forWeek(Carbon $weekStart): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'week_start' => $weekStart->startOfWeek(Carbon::MONDAY),
             'week_end' => $weekStart->copy()->endOfWeek(Carbon::SUNDAY),
         ]);

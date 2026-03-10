@@ -22,7 +22,7 @@ class PastorAvailabilityControllerTest extends TestCase
         Role::create(['name' => 'admin']);
     }
 
-    public function test_pastor_can_view_availability_index()
+    public function test_pastor_can_view_availability_index(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -38,7 +38,7 @@ class PastorAvailabilityControllerTest extends TestCase
         );
     }
 
-    public function test_non_pastor_cannot_access_availability_index()
+    public function test_non_pastor_cannot_access_availability_index(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -48,14 +48,14 @@ class PastorAvailabilityControllerTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_unauthenticated_user_cannot_access_availability()
+    public function test_unauthenticated_user_cannot_access_availability(): void
     {
         $response = $this->get('/pastoral-availability');
 
         $response->assertRedirect('/login');
     }
 
-    public function test_pastor_can_view_create_form()
+    public function test_pastor_can_view_create_form(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -70,7 +70,7 @@ class PastorAvailabilityControllerTest extends TestCase
         );
     }
 
-    public function test_pastor_can_create_weekly_availability()
+    public function test_pastor_can_create_weekly_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -103,7 +103,7 @@ class PastorAvailabilityControllerTest extends TestCase
         ]);
     }
 
-    public function test_pastor_can_create_weekly_availability_for_sunday()
+    public function test_pastor_can_create_weekly_availability_for_sunday(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -137,7 +137,7 @@ class PastorAvailabilityControllerTest extends TestCase
         ]);
     }
 
-    public function test_day_of_week_validation_accepts_all_valid_days()
+    public function test_day_of_week_validation_accepts_all_valid_days(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -165,7 +165,7 @@ class PastorAvailabilityControllerTest extends TestCase
         }
     }
 
-    public function test_day_of_week_validation_rejects_invalid_days()
+    public function test_day_of_week_validation_rejects_invalid_days(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -192,7 +192,7 @@ class PastorAvailabilityControllerTest extends TestCase
         $response->assertSessionHasErrors(['day_of_week']);
     }
 
-    public function test_pastor_can_create_specific_date_availability()
+    public function test_pastor_can_create_specific_date_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -221,7 +221,7 @@ class PastorAvailabilityControllerTest extends TestCase
         ]);
     }
 
-    public function test_cannot_create_conflicting_weekly_availability()
+    public function test_cannot_create_conflicting_weekly_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -250,7 +250,7 @@ class PastorAvailabilityControllerTest extends TestCase
         $this->assertEquals(1, PastorAvailability::where('pastor_id', $pastor->id)->count());
     }
 
-    public function test_cannot_create_conflicting_specific_date_availability()
+    public function test_cannot_create_conflicting_specific_date_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -278,7 +278,7 @@ class PastorAvailabilityControllerTest extends TestCase
         $response->assertSessionHasErrors('conflict');
     }
 
-    public function test_create_availability_validation_rules()
+    public function test_create_availability_validation_rules(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -320,7 +320,7 @@ class PastorAvailabilityControllerTest extends TestCase
         $response->assertSessionHasErrors(['end_time']);
     }
 
-    public function test_pastor_can_view_specific_availability()
+    public function test_pastor_can_view_specific_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -342,7 +342,7 @@ class PastorAvailabilityControllerTest extends TestCase
         );
     }
 
-    public function test_pastor_cannot_view_other_pastor_availability()
+    public function test_pastor_cannot_view_other_pastor_availability(): void
     {
         $pastor1 = User::factory()->create();
         $pastor1->assignRole('pastor');
@@ -359,7 +359,7 @@ class PastorAvailabilityControllerTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_pastor_can_edit_availability()
+    public function test_pastor_can_edit_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -383,7 +383,7 @@ class PastorAvailabilityControllerTest extends TestCase
         );
     }
 
-    public function test_pastor_can_update_availability()
+    public function test_pastor_can_update_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -424,7 +424,7 @@ class PastorAvailabilityControllerTest extends TestCase
         ]);
     }
 
-    public function test_pastor_can_delete_availability()
+    public function test_pastor_can_delete_availability(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -443,7 +443,7 @@ class PastorAvailabilityControllerTest extends TestCase
         ]);
     }
 
-    public function test_pastor_can_toggle_availability_status()
+    public function test_pastor_can_toggle_availability_status(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -464,7 +464,7 @@ class PastorAvailabilityControllerTest extends TestCase
         ]);
 
         // Toggle back
-        $response = $this->actingAs($pastor)->post("/pastoral-availability/{$availability->id}/toggle-status");
+        $this->actingAs($pastor)->post("/pastoral-availability/{$availability->id}/toggle-status");
 
         $this->assertDatabaseHas('pastor_availability', [
             'id' => $availability->id,
@@ -472,7 +472,7 @@ class PastorAvailabilityControllerTest extends TestCase
         ]);
     }
 
-    public function test_preview_slots_endpoint_returns_correct_data()
+    public function test_preview_slots_endpoint_returns_correct_data(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -492,7 +492,7 @@ class PastorAvailabilityControllerTest extends TestCase
         ]);
     }
 
-    public function test_preview_slots_validates_input()
+    public function test_preview_slots_validates_input(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
@@ -512,7 +512,7 @@ class PastorAvailabilityControllerTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function test_non_pastor_cannot_access_any_availability_routes()
+    public function test_non_pastor_cannot_access_any_availability_routes(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -539,23 +539,23 @@ class PastorAvailabilityControllerTest extends TestCase
                 'slot_duration' => 60,
             ]);
 
-            $response->assertStatus(403, "Route {$method} {$route} should be forbidden for non-pastor");
+            $response->assertStatus(403);
         }
     }
 
-    public function test_availability_index_shows_correct_data_structure()
+    public function test_availability_index_shows_correct_data_structure(): void
     {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
 
         // Create different types of availability
-        $weeklyAvailability = PastorAvailability::factory()->create([
+        PastorAvailability::factory()->create([
             'pastor_id' => $pastor->id,
             'type' => 'weekly',
             'day_of_week' => 1,
         ]);
 
-        $specificDateAvailability = PastorAvailability::factory()->create([
+        PastorAvailability::factory()->create([
             'pastor_id' => $pastor->id,
             'type' => 'specific_date',
             'specific_date' => '2025-12-25',
@@ -566,9 +566,7 @@ class PastorAvailabilityControllerTest extends TestCase
         $response->assertInertia(
             fn($page) => $page
                 ->component('PastoralCare/Availability/Index')
-                ->where('availabilities', function ($availabilities) {
-                    return count($availabilities) === 2;
-                })
+                ->where('availabilities', fn($availabilities): bool => count($availabilities) === 2)
                 ->where('pastor.id', $pastor->id)
         );
     }

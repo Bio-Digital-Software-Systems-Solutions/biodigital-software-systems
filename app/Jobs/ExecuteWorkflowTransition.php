@@ -81,7 +81,7 @@ class ExecuteWorkflowTransition implements ShouldQueue
             }
         }
 
-        if (empty($nextSteps)) {
+        if ($nextSteps === []) {
             // Use default transition if no condition matched
             $defaultTransition = $transitions->firstWhere('is_default', true);
             if ($defaultTransition) {

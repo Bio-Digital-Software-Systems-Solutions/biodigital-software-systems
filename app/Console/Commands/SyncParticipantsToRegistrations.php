@@ -84,7 +84,7 @@ class SyncParticipantsToRegistrations extends Command
                 }
 
                 if (!$isDryRun) {
-                    DB::transaction(function () use ($event, $participant) {
+                    DB::transaction(function () use ($event, $participant): void {
                         EventRegistration::create([
                             'event_id' => $event->id,
                             'user_id' => $participant->id,

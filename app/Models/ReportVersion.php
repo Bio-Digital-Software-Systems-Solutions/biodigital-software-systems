@@ -8,6 +8,34 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+/**
+ * @property int $id
+ * @property int $report_id
+ * @property int $version_number
+ * @property array<array-key, mixed> $snapshot
+ * @property string|null $change_summary
+ * @property int $created_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\User $creator
+ * @property-read \App\Models\DepartmentReport $report
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion forReport(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion latest()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion whereChangeSummary($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion whereReportId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion whereSnapshot($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportVersion whereVersionNumber($value)
+ * @mixin \Eloquent
+ */
 class ReportVersion extends Model
 {
     use HasFactory, LogsActivity;

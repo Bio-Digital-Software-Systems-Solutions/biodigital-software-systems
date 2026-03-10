@@ -12,6 +12,63 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $report_id
+ * @property int|null $section_id
+ * @property int $user_id
+ * @property int|null $parent_id
+ * @property CommentType $type
+ * @property string $content
+ * @property bool $is_resolved
+ * @property int|null $resolved_by
+ * @property \Illuminate\Support\Carbon|null $resolved_at
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read string $type_color
+ * @property-read string $type_icon
+ * @property-read string $type_label
+ * @property-read ReportComment|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ReportComment> $replies
+ * @property-read int|null $replies_count
+ * @property-read \App\Models\DepartmentReport $report
+ * @property-read \App\Models\User|null $resolver
+ * @property-read \App\Models\ReportSection|null $section
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment byType(\App\Enums\Report\CommentType $type)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment forReport(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment forSection(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment resolved()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment rootLevel()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment unresolved()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereContent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereIsResolved($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereParentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereReportId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereResolvedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereResolvedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereSectionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportComment withoutTrashed()
+ * @mixin \Eloquent
+ */
 class ReportComment extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
@@ -54,7 +111,7 @@ class ReportComment extends Model
     protected static function boot(): void
     {
         parent::boot();
-        static::creating(fn($m) => $m->uuid = $m->uuid ?? (string) Str::uuid());
+        static::creating(fn($m) => $m->uuid ??= (string) Str::uuid());
     }
 
     public function getRouteKeyName(): string

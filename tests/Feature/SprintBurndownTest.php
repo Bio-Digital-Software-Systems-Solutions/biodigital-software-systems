@@ -370,9 +370,7 @@ class SprintBurndownTest extends TestCase
         $chartData = $response->json('data.chartData');
 
         // Find a future date data point
-        $futureDates = array_filter($chartData, function ($point) {
-            return Carbon::parse($point['date'])->isAfter(Carbon::today());
-        });
+        $futureDates = array_filter($chartData, fn(array $point): bool => Carbon::parse($point['date'])->isAfter(Carbon::today()));
 
         foreach ($futureDates as $futurePoint) {
             $this->assertNull($futurePoint['actual']);

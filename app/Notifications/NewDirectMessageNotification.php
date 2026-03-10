@@ -13,7 +13,13 @@ class NewDirectMessageNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * @var \App\Models\ChatMessage
+     */
     public $chatMessage;
+    /**
+     * @var \App\Models\User
+     */
     public $sender;
 
     /**
@@ -44,8 +50,8 @@ class NewDirectMessageNotification extends Notification implements ShouldQueue
         $senderName = $this->sender->first_name . ' ' . $this->sender->last_name;
 
         // Truncate message content for email preview
-        $messagePreview = strlen($this->chatMessage->content) > 100
-            ? substr($this->chatMessage->content, 0, 100) . '...'
+        $messagePreview = strlen((string) $this->chatMessage->content) > 100
+            ? substr((string) $this->chatMessage->content, 0, 100) . '...'
             : $this->chatMessage->content;
 
         return (new MailMessage)

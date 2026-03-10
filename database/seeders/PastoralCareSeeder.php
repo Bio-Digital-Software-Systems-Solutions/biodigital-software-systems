@@ -15,7 +15,7 @@ class PastoralCareSeeder extends Seeder
     public function run(): void
     {
         // Get pastors
-        $pastors = User::whereHas('roles', function ($query) {
+        $pastors = User::whereHas('roles', function ($query): void {
             $query->where('name', 'pastor');
         })->get();
 
@@ -26,11 +26,9 @@ class PastoralCareSeeder extends Seeder
         }
 
         // Get some regular users for appointments
-        $users = User::whereDoesntHave('roles', function ($query) {
+        $users = User::whereDoesntHave('roles', function ($query): void {
             $query->where('name', 'pastor');
         })->take(5)->get();
-
-        $statuses = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'];
         $locationTypes = ['in_person', 'zoom', 'hybrid'];
 
         $clientNames = [
@@ -77,21 +75,21 @@ class PastoralCareSeeder extends Seeder
         foreach ($pastors as $pastor) {
             // Create past completed appointments
             for ($i = 1; $i <= 5; $i++) {
-                $date = Carbon::now()->subDays(rand(7, 60));
-                $hour = rand(10, 16);
+                $date = Carbon::now()->subDays(random_int(7, 60));
+                $hour = random_int(10, 16);
 
                 PastoralCare::create([
                     'pastor_id' => $pastor->id,
                     'user_id' => $users->random()?->id,
                     'client_name' => $clientNames[array_rand($clientNames)],
-                    'client_email' => 'client'.rand(1, 100).'@example.com',
-                    'client_phone' => '+49 '.rand(100, 999).' '.rand(1000000, 9999999),
+                    'client_email' => 'client'.random_int(1, 100).'@example.com',
+                    'client_phone' => '+49 '.random_int(100, 999).' '.random_int(1000000, 9999999),
                     'appointment_date' => $date->toDateString(),
                     'appointment_time' => $date->setTime($hour, 0),
                     'duration_minutes' => [30, 60, 90][array_rand([30, 60, 90])],
                     'status' => 'completed',
                     'location_type' => $locationTypes[array_rand($locationTypes)],
-                    'zoom_link' => rand(0, 1) ? 'https://zoom.us/j/'.rand(1000000000, 9999999999) : null,
+                    'zoom_link' => random_int(0, 1) !== 0 ? 'https://zoom.us/j/'.random_int(1000000000, 9999999999) : null,
                     'notes' => $notes[array_rand($notes)],
                     'pastor_notes' => $pastorNotes[array_rand($pastorNotes)],
                 ]);
@@ -100,15 +98,15 @@ class PastoralCareSeeder extends Seeder
 
             // Create past cancelled appointments
             for ($i = 1; $i <= 2; $i++) {
-                $date = Carbon::now()->subDays(rand(7, 30));
-                $hour = rand(10, 16);
+                $date = Carbon::now()->subDays(random_int(7, 30));
+                $hour = random_int(10, 16);
 
                 PastoralCare::create([
                     'pastor_id' => $pastor->id,
                     'user_id' => $users->random()?->id,
                     'client_name' => $clientNames[array_rand($clientNames)],
-                    'client_email' => 'client'.rand(1, 100).'@example.com',
-                    'client_phone' => '+49 '.rand(100, 999).' '.rand(1000000, 9999999),
+                    'client_email' => 'client'.random_int(1, 100).'@example.com',
+                    'client_phone' => '+49 '.random_int(100, 999).' '.random_int(1000000, 9999999),
                     'appointment_date' => $date->toDateString(),
                     'appointment_time' => $date->setTime($hour, 0),
                     'duration_minutes' => 60,
@@ -123,38 +121,38 @@ class PastoralCareSeeder extends Seeder
 
             // Create upcoming confirmed appointments
             for ($i = 1; $i <= 3; $i++) {
-                $date = Carbon::now()->addDays(rand(3, 14));
-                $hour = rand(10, 16);
+                $date = Carbon::now()->addDays(random_int(3, 14));
+                $hour = random_int(10, 16);
 
                 PastoralCare::create([
                     'pastor_id' => $pastor->id,
                     'user_id' => $users->random()?->id,
                     'client_name' => $clientNames[array_rand($clientNames)],
-                    'client_email' => 'client'.rand(1, 100).'@example.com',
-                    'client_phone' => '+49 '.rand(100, 999).' '.rand(1000000, 9999999),
+                    'client_email' => 'client'.random_int(1, 100).'@example.com',
+                    'client_phone' => '+49 '.random_int(100, 999).' '.random_int(1000000, 9999999),
                     'appointment_date' => $date->toDateString(),
                     'appointment_time' => $date->setTime($hour, 0),
                     'duration_minutes' => [30, 60, 90][array_rand([30, 60, 90])],
                     'status' => 'confirmed',
                     'location_type' => $locationTypes[array_rand($locationTypes)],
-                    'zoom_link' => rand(0, 1) ? 'https://zoom.us/j/'.rand(1000000000, 9999999999) : null,
+                    'zoom_link' => random_int(0, 1) !== 0 ? 'https://zoom.us/j/'.random_int(1000000000, 9999999999) : null,
                     'notes' => $notes[array_rand($notes)],
-                    'confirmation_sent_at' => now()->subDays(rand(1, 3)),
+                    'confirmation_sent_at' => now()->subDays(random_int(1, 3)),
                 ]);
                 $appointmentCount++;
             }
 
             // Create upcoming pending appointments
             for ($i = 1; $i <= 2; $i++) {
-                $date = Carbon::now()->addDays(rand(5, 21));
-                $hour = rand(10, 16);
+                $date = Carbon::now()->addDays(random_int(5, 21));
+                $hour = random_int(10, 16);
 
                 PastoralCare::create([
                     'pastor_id' => $pastor->id,
                     'user_id' => $users->random()?->id,
                     'client_name' => $clientNames[array_rand($clientNames)],
-                    'client_email' => 'client'.rand(1, 100).'@example.com',
-                    'client_phone' => '+49 '.rand(100, 999).' '.rand(1000000, 9999999),
+                    'client_email' => 'client'.random_int(1, 100).'@example.com',
+                    'client_phone' => '+49 '.random_int(100, 999).' '.random_int(1000000, 9999999),
                     'appointment_date' => $date->toDateString(),
                     'appointment_time' => $date->setTime($hour, 0),
                     'duration_minutes' => 60,
@@ -166,13 +164,13 @@ class PastoralCareSeeder extends Seeder
             }
 
             // Create a no-show appointment
-            $date = Carbon::now()->subDays(rand(2, 10));
-            $hour = rand(10, 16);
+            $date = Carbon::now()->subDays(random_int(2, 10));
+            $hour = random_int(10, 16);
 
             PastoralCare::create([
                 'pastor_id' => $pastor->id,
                 'client_name' => $clientNames[array_rand($clientNames)],
-                'client_email' => 'client'.rand(1, 100).'@example.com',
+                'client_email' => 'client'.random_int(1, 100).'@example.com',
                 'appointment_date' => $date->toDateString(),
                 'appointment_time' => $date->setTime($hour, 0),
                 'duration_minutes' => 60,
@@ -190,8 +188,8 @@ class PastoralCareSeeder extends Seeder
             ->get();
 
         foreach ($completedAppointments as $parent) {
-            $date = Carbon::now()->addDays(rand(7, 14));
-            $hour = rand(10, 16);
+            $date = Carbon::now()->addDays(random_int(7, 14));
+            $hour = random_int(10, 16);
 
             PastoralCare::create([
                 'pastor_id' => $parent->pastor_id,

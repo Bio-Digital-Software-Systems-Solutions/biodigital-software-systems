@@ -36,9 +36,9 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function guests_can_view_hero_slides_index()
+    public function guests_can_view_hero_slides_index(): void
     {
-        $slides = HeroSlide::factory()->count(3)->create();
+        HeroSlide::factory()->count(3)->create();
 
         $response = $this->get(route('hero-slides.index'));
 
@@ -46,9 +46,9 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_view_hero_slides_index()
+    public function admin_can_view_hero_slides_index(): void
     {
-        $slides = HeroSlide::factory()->count(3)->create();
+        HeroSlide::factory()->count(3)->create();
 
         $response = $this->actingAs($this->admin)->get(route('hero-slides.index'));
 
@@ -56,7 +56,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_view_create_hero_slide_form()
+    public function admin_can_view_create_hero_slide_form(): void
     {
         $response = $this->actingAs($this->admin)->get(route('hero-slides.create'));
 
@@ -64,7 +64,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function non_admin_cannot_view_create_hero_slide_form()
+    public function non_admin_cannot_view_create_hero_slide_form(): void
     {
         $response = $this->actingAs($this->user)->get(route('hero-slides.create'));
 
@@ -75,7 +75,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_create_hero_slide()
+    public function admin_can_create_hero_slide(): void
     {
         $data = [
             'title' => 'Test Slide',
@@ -99,7 +99,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function non_admin_cannot_create_hero_slide()
+    public function non_admin_cannot_create_hero_slide(): void
     {
         $data = [
             'title' => 'Test Slide',
@@ -117,7 +117,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function validation_fails_when_required_fields_are_missing()
+    public function validation_fails_when_required_fields_are_missing(): void
     {
         $response = $this->actingAs($this->admin)->post(route('hero-slides.store'), []);
 
@@ -125,7 +125,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_view_hero_slide()
+    public function admin_can_view_hero_slide(): void
     {
         $slide = HeroSlide::factory()->create();
 
@@ -135,7 +135,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_view_edit_hero_slide_form()
+    public function admin_can_view_edit_hero_slide_form(): void
     {
         $slide = HeroSlide::factory()->create();
 
@@ -145,7 +145,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function non_admin_cannot_view_edit_hero_slide_form()
+    public function non_admin_cannot_view_edit_hero_slide_form(): void
     {
         $slide = HeroSlide::factory()->create();
 
@@ -158,7 +158,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_update_hero_slide()
+    public function admin_can_update_hero_slide(): void
     {
         $slide = HeroSlide::factory()->create();
 
@@ -185,7 +185,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function non_admin_cannot_update_hero_slide()
+    public function non_admin_cannot_update_hero_slide(): void
     {
         $slide = HeroSlide::factory()->create();
 
@@ -205,7 +205,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_delete_hero_slide()
+    public function admin_can_delete_hero_slide(): void
     {
         $slide = HeroSlide::factory()->create();
 
@@ -216,7 +216,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function non_admin_cannot_delete_hero_slide()
+    public function non_admin_cannot_delete_hero_slide(): void
     {
         $slide = HeroSlide::factory()->create();
 
@@ -230,10 +230,10 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function active_slides_only_returns_active_slides()
+    public function active_slides_only_returns_active_slides(): void
     {
         $activeSlide = HeroSlide::factory()->create(['is_active' => true, 'order' => 1]);
-        $inactiveSlide = HeroSlide::factory()->create(['is_active' => false, 'order' => 2]);
+        HeroSlide::factory()->create(['is_active' => false, 'order' => 2]);
 
         $activeSlides = HeroSlide::active()->get();
 
@@ -242,7 +242,7 @@ class HeroSlideControllerTest extends TestCase
     }
 
     /** @test */
-    public function active_slides_are_ordered_correctly()
+    public function active_slides_are_ordered_correctly(): void
     {
         $slide1 = HeroSlide::factory()->create(['is_active' => true, 'order' => 3]);
         $slide2 = HeroSlide::factory()->create(['is_active' => true, 'order' => 1]);

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('workflow_transitions', function (Blueprint $table) {
+        Schema::table('workflow_transitions', function (Blueprint $table): void {
             $table->boolean('is_default')->default(false)->after('priority');
             $table->json('metadata')->nullable()->after('is_default');
         });
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('workflow_transitions', function (Blueprint $table) {
+        Schema::table('workflow_transitions', function (Blueprint $table): void {
             $table->dropColumn(['is_default', 'metadata']);
         });
     }

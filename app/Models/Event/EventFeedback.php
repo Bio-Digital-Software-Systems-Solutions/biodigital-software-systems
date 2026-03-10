@@ -11,6 +11,69 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $event_id
+ * @property int|null $session_id
+ * @property int|null $registration_id
+ * @property int|null $user_id
+ * @property int|null $overall_rating
+ * @property int|null $content_rating
+ * @property int|null $speaker_rating
+ * @property int|null $venue_rating
+ * @property int|null $organization_rating
+ * @property int|null $nps_score
+ * @property string|null $positive_feedback
+ * @property string|null $improvement_suggestions
+ * @property string|null $additional_comments
+ * @property array<array-key, mixed>|null $custom_answers
+ * @property bool|null $would_recommend
+ * @property bool|null $would_attend_again
+ * @property bool $is_anonymous
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read Event $event
+ * @property-read float|null $average_rating
+ * @property-read string|null $nps_category
+ * @property-read string|null $responder_name
+ * @property-read \App\Models\Event\EventRegistration|null $registration
+ * @property-read \App\Models\Event\EventSession|null $session
+ * @property-read User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback anonymous()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback forEvent(int $eventId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback forSession(int $sessionId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback public()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereAdditionalComments($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereContentRating($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereCustomAnswers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereEventId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereImprovementSuggestions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereIsAnonymous($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereNpsScore($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereOrganizationRating($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereOverallRating($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback wherePositiveFeedback($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereRegistrationId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereSpeakerRating($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereVenueRating($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereWouldAttendAgain($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback whereWouldRecommend($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback withNps()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventFeedback withOverallRating()
+ * @mixin \Eloquent
+ */
 class EventFeedback extends Model
 {
     use HasFactory, HasUuid, LogsActivity;
@@ -127,7 +190,7 @@ class EventFeedback extends Model
             $this->organization_rating,
         ]);
 
-        if (empty($ratings)) {
+        if ($ratings === []) {
             return null;
         }
 
@@ -158,11 +221,11 @@ class EventFeedback extends Model
         }
 
         if ($this->registration) {
-            return $this->registration->full_name;
+            return (string) $this->registration->full_name;
         }
 
         if ($this->user) {
-            return $this->user->name;
+            return (string) $this->user->name;
         }
 
         return null;

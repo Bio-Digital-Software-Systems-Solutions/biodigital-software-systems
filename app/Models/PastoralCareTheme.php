@@ -18,6 +18,25 @@ use Illuminate\Support\Str;
  * @property int $sort_order
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PastoralCare> $pastoralCares
+ * @property-read int|null $pastoral_cares_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme active()
+ * @method static \Database\Factories\PastoralCareThemeFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme ordered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme whereColor($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme whereIcon($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme whereSlug($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PastoralCareTheme whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class PastoralCareTheme extends Model
 {
@@ -46,7 +65,7 @@ class PastoralCareTheme extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->slug)) {
                 $model->slug = Str::slug($model->name);
             }

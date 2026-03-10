@@ -14,20 +14,11 @@ class TaskCreated extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public Task $task;
-
-    public Project $project;
-
-    public ?User $createdBy;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(Task $task, Project $project, ?User $createdBy = null)
+    public function __construct(public Task $task, public Project $project, public ?User $createdBy = null)
     {
-        $this->task = $task;
-        $this->project = $project;
-        $this->createdBy = $createdBy;
     }
 
     /**
@@ -45,7 +36,7 @@ class TaskCreated extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $createdByName = $this->createdBy
+        $createdByName = $this->createdBy instanceof \App\Models\User
             ? $this->createdBy->first_name.' '.$this->createdBy->last_name
             : 'Le système';
 
@@ -57,7 +48,7 @@ class TaskCreated extends Notification implements ShouldQueue
             ->line("**Tâche :** {$this->task->title}");
 
         if ($this->task->description) {
-            $description = \Str::limit(strip_tags($this->task->description), 200);
+            $description = \Str::limit(strip_tags((string) $this->task->description), 200);
             $mailMessage->line("**Description :** {$description}");
         }
 
@@ -85,7 +76,7 @@ class TaskCreated extends Notification implements ShouldQueue
      */
     public function toDatabase(object $notifiable): array
     {
-        $createdByName = $this->createdBy
+        $createdByName = $this->createdBy instanceof \App\Models\User
             ? $this->createdBy->first_name.' '.$this->createdBy->last_name
             : 'Le système';
 

@@ -21,11 +21,8 @@ class PastoralCareReportExport implements WithMultipleSheets
 {
     use Exportable;
 
-    protected array $data;
-
-    public function __construct(array $data)
+    public function __construct(protected array $data)
     {
-        $this->data = $data;
     }
 
     public function sheets(): array
@@ -40,11 +37,8 @@ class PastoralCareReportExport implements WithMultipleSheets
 
 class SummarySheet implements FromArray, WithColumnWidths, WithEvents, WithStyles, WithTitle
 {
-    protected array $data;
-
-    public function __construct(array $data)
+    public function __construct(protected array $data)
     {
-        $this->data = $data;
     }
 
     public function array(): array
@@ -108,7 +102,7 @@ class SummarySheet implements FromArray, WithColumnWidths, WithEvents, WithStyle
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event): void {
                 // Merge title cell
                 $event->sheet->mergeCells('A1:B1');
 
@@ -126,11 +120,8 @@ class SummarySheet implements FromArray, WithColumnWidths, WithEvents, WithStyle
 
 class AppointmentsSheet implements FromArray, ShouldAutoSize, WithEvents, WithHeadings, WithStyles, WithTitle
 {
-    protected array $data;
-
-    public function __construct(array $data)
+    public function __construct(protected array $data)
     {
-        $this->data = $data;
     }
 
     public function headings(): array
@@ -148,7 +139,7 @@ class AppointmentsSheet implements FromArray, ShouldAutoSize, WithEvents, WithHe
 
     public function array(): array
     {
-        return collect($this->data['appointments'])->map(function ($apt, $index) {
+        return collect($this->data['appointments'])->map(function (array $apt, $index): array {
             $type = '';
             if ($apt['is_parent']) {
                 $type = 'Premier RDV';
@@ -191,7 +182,7 @@ class AppointmentsSheet implements FromArray, ShouldAutoSize, WithEvents, WithHe
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event): void {
                 $lastRow = count($this->data['appointments']) + 1;
 
                 // Add borders to the table
@@ -224,11 +215,8 @@ class AppointmentsSheet implements FromArray, ShouldAutoSize, WithEvents, WithHe
 
 class NotesSheet implements FromArray, WithColumnWidths, WithEvents, WithStyles, WithTitle
 {
-    protected array $data;
-
-    public function __construct(array $data)
+    public function __construct(protected array $data)
     {
-        $this->data = $data;
     }
 
     public function array(): array
@@ -253,11 +241,7 @@ class NotesSheet implements FromArray, WithColumnWidths, WithEvents, WithStyles,
 
             // Client notes
             $rows[] = ['Notes du client:'];
-            if (! empty($apt['client_notes'])) {
-                $rows[] = [$apt['client_notes']];
-            } else {
-                $rows[] = ['(Aucune note)'];
-            }
+            $rows[] = empty($apt['client_notes']) ? ['(Aucune note)'] : [$apt['client_notes']];
             $rows[] = [''];
 
             // Pastor notes
@@ -303,7 +287,7 @@ class NotesSheet implements FromArray, WithColumnWidths, WithEvents, WithStyles,
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event): void {
                 // Find and style appointment headers
                 $currentRow = 1;
                 foreach ($this->data['appointments'] as $index => $apt) {

@@ -9,7 +9,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create necessary roles
     Role::firstOrCreate(['name' => 'pastor']);
     Role::firstOrCreate(['name' => 'member']);
@@ -51,7 +51,7 @@ beforeEach(function () {
 // PROPOSAL SUBMISSION TESTS
 // ==========================================
 
-it('can submit a proposal for a custom appointment date', function () {
+it('can submit a proposal for a custom appointment date', function (): void {
     $proposalData = [
         'client_name' => 'Jean Dupont',
         'client_email' => 'jean.dupont@example.com',
@@ -100,7 +100,7 @@ it('can submit a proposal for a custom appointment date', function () {
     ]);
 });
 
-it('validates required fields when submitting a proposal', function () {
+it('validates required fields when submitting a proposal', function (): void {
     $response = $this->postJson('/api/pastoral-care/proposals', []);
 
     $response->assertStatus(422)
@@ -115,7 +115,7 @@ it('validates required fields when submitting a proposal', function () {
         ]);
 });
 
-it('validates appointment time is within reasonable hours (8:00-20:00)', function () {
+it('validates appointment time is within reasonable hours (8:00-20:00)', function (): void {
     $proposalData = [
         'client_name' => 'Jean Dupont',
         'client_email' => 'jean.dupont@example.com',
@@ -135,7 +135,7 @@ it('validates appointment time is within reasonable hours (8:00-20:00)', functio
         ]);
 });
 
-it('validates appointment date is not too far in the future (max 3 months)', function () {
+it('validates appointment date is not too far in the future (max 3 months)', function (): void {
     // Use a date well beyond 3 months to ensure it fails
     $proposalData = [
         'client_name' => 'Jean Dupont',
@@ -160,7 +160,7 @@ it('validates appointment date is not too far in the future (max 3 months)', fun
 // PROPOSAL VIEW TESTS
 // ==========================================
 
-it('can view a proposal by token', function () {
+it('can view a proposal by token', function (): void {
     $proposal = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Jean Dupont',
@@ -200,7 +200,7 @@ it('can view a proposal by token', function () {
     expect($response->json('data.has_counter_proposal'))->toBeFalse();
 });
 
-it('returns 404 for invalid proposal token', function () {
+it('returns 404 for invalid proposal token', function (): void {
     $response = $this->getJson('/api/pastoral-care/proposals/show?token=invalid_token_12345678901234567890123456789012345678901234567890');
 
     $response->assertStatus(404)
@@ -214,7 +214,7 @@ it('returns 404 for invalid proposal token', function () {
 // MLR PROPOSAL MANAGEMENT TESTS
 // ==========================================
 
-it('allows MLR agent to view pending proposals', function () {
+it('allows MLR agent to view pending proposals', function (): void {
     // Create some proposals
     PastoralCare::factory()->count(3)->create([
         'pastor_id' => $this->pastor->id,
@@ -244,7 +244,7 @@ it('allows MLR agent to view pending proposals', function () {
     expect($response->json('stats.pending'))->toBe(3);
 });
 
-it('denies proposal access to regular users', function () {
+it('denies proposal access to regular users', function (): void {
     $response = $this->actingAs($this->regularUser)
         ->getJson('/api/pastoral-care/proposals');
 
@@ -255,7 +255,7 @@ it('denies proposal access to regular users', function () {
         ]);
 });
 
-it('allows MLR agent to accept a proposal and assign a pastor', function () {
+it('allows MLR agent to accept a proposal and assign a pastor', function (): void {
     $proposal = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Jean Dupont',
@@ -290,7 +290,7 @@ it('allows MLR agent to accept a proposal and assign a pastor', function () {
     expect($proposal->proposal_reviewed_at)->not->toBeNull();
 });
 
-it('validates that assigned pastor is actually a pastor', function () {
+it('validates that assigned pastor is actually a pastor', function (): void {
     $proposal = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Jean Dupont',
@@ -319,7 +319,7 @@ it('validates that assigned pastor is actually a pastor', function () {
         ]);
 });
 
-it('allows MLR agent to reject a proposal without counter-proposal', function () {
+it('allows MLR agent to reject a proposal without counter-proposal', function (): void {
     $proposal = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Jean Dupont',
@@ -353,7 +353,7 @@ it('allows MLR agent to reject a proposal without counter-proposal', function ()
     expect($proposal->proposal_rejection_reason)->toBe('Aucun pasteur disponible à cette date');
 });
 
-it('allows MLR agent to reject a proposal with counter-proposal', function () {
+it('allows MLR agent to reject a proposal with counter-proposal', function (): void {
     $proposal = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Jean Dupont',
@@ -390,7 +390,7 @@ it('allows MLR agent to reject a proposal with counter-proposal', function () {
     expect($proposal->status)->toBe('proposed'); // Still proposed, waiting for client response
     expect($proposal->proposal_response_status)->toBe('counter_proposed');
     expect($proposal->counter_proposed_date->format('Y-m-d'))->toBe($counterDate);
-    expect(substr($proposal->counter_proposed_time, 0, 5))->toBe('10:00'); // MySQL stores as 10:00:00
+    expect(substr((string) $proposal->counter_proposed_time, 0, 5))->toBe('10:00'); // MySQL stores as 10:00:00
     expect($proposal->counter_proposal_message)->toBe('Nous vous proposons ce créneau alternatif.');
     expect($proposal->counter_proposal_sent_at)->not->toBeNull();
 });
@@ -399,7 +399,7 @@ it('allows MLR agent to reject a proposal with counter-proposal', function () {
 // CLIENT COUNTER-PROPOSAL RESPONSE TESTS
 // ==========================================
 
-it('allows client to accept a counter-proposal', function () {
+it('allows client to accept a counter-proposal', function (): void {
     $counterDate = Carbon::tomorrow()->addDays(7);
 
     $proposal = PastoralCare::create([
@@ -442,7 +442,7 @@ it('allows client to accept a counter-proposal', function () {
     expect($proposal->counter_proposed_time)->toBeNull();
 });
 
-it('allows client to reject a counter-proposal', function () {
+it('allows client to reject a counter-proposal', function (): void {
     $counterDate = Carbon::tomorrow()->addDays(7);
 
     $proposal = PastoralCare::create([
@@ -481,7 +481,7 @@ it('allows client to reject a counter-proposal', function () {
     expect($proposal->client_responded_at)->not->toBeNull();
 });
 
-it('returns error when trying to accept counter-proposal without one', function () {
+it('returns error when trying to accept counter-proposal without one', function (): void {
     $proposal = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Jean Dupont',
@@ -513,7 +513,7 @@ it('returns error when trying to accept counter-proposal without one', function 
 // MODEL METHOD TESTS
 // ==========================================
 
-it('correctly identifies proposals with counter-proposals', function () {
+it('correctly identifies proposals with counter-proposals', function (): void {
     $proposalWithoutCounter = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Client 1',
@@ -554,7 +554,7 @@ it('correctly identifies proposals with counter-proposals', function () {
     expect($proposalWithCounter->hasCounterProposal())->toBeTrue();
 });
 
-it('generates proposal token automatically when is_proposal is true', function () {
+it('generates proposal token automatically when is_proposal is true', function (): void {
     $proposal = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Test Client',
@@ -568,12 +568,12 @@ it('generates proposal token automatically when is_proposal is true', function (
     ]);
 
     expect($proposal->proposal_token)->not->toBeNull();
-    expect(strlen($proposal->proposal_token))->toBe(64);
+    expect(strlen((string) $proposal->proposal_token))->toBe(64);
     expect($proposal->proposal_submitted_at)->not->toBeNull();
     expect($proposal->proposal_response_status)->toBe('pending');
 });
 
-it('returns correct proposal status label', function () {
+it('returns correct proposal status label', function (): void {
     $proposal = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Test Client',
@@ -606,7 +606,7 @@ it('returns correct proposal status label', function () {
 // SCOPE TESTS
 // ==========================================
 
-it('filters proposals using scopes', function () {
+it('filters proposals using scopes', function (): void {
     // Create regular appointments
     PastoralCare::factory()->count(2)->create([
         'pastor_id' => $this->pastor->id,
@@ -643,7 +643,7 @@ it('filters proposals using scopes', function () {
 // EDGE CASES AND ERROR HANDLING
 // ==========================================
 
-it('prevents accepting already processed proposal', function () {
+it('prevents accepting already processed proposal', function (): void {
     // Create proposal and then accept it to mark it as processed
     $proposal = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
@@ -677,7 +677,7 @@ it('prevents accepting already processed proposal', function () {
         ]);
 });
 
-it('prevents rejecting already processed proposal', function () {
+it('prevents rejecting already processed proposal', function (): void {
     $proposal = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Jean Dupont',
@@ -706,7 +706,7 @@ it('prevents rejecting already processed proposal', function () {
         ]);
 });
 
-it('returns 404 for non-existent proposal', function () {
+it('returns 404 for non-existent proposal', function (): void {
     $response = $this->actingAs($this->mlrAgent)
         ->postJson('/api/pastoral-care/proposals/non-existent-uuid/accept', [
             'pastor_id' => $this->pastor->id,
@@ -719,7 +719,7 @@ it('returns 404 for non-existent proposal', function () {
         ]);
 });
 
-it('admin can also manage proposals', function () {
+it('admin can also manage proposals', function (): void {
     $proposal = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Jean Dupont',

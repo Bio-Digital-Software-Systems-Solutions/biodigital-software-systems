@@ -86,10 +86,8 @@ class AssignmentNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->assignee,
             TaskAssigned::class,
-            function ($notification) {
-                return $notification->task->title === 'New Task'
-                    && $notification->assignedBy->id === $this->admin->id;
-            }
+            fn($notification): bool => $notification->task->title === 'New Task'
+                && $notification->assignedBy->id === $this->admin->id
         );
     }
 
@@ -116,9 +114,7 @@ class AssignmentNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->assignee,
             TaskAssigned::class,
-            function ($notification) use ($task) {
-                return $notification->task->id === $task->id;
-            }
+            fn($notification): bool => $notification->task->id === $task->id
         );
     }
 
@@ -229,11 +225,9 @@ class AssignmentNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->assignee,
             ProjectManagerAssigned::class,
-            function ($notification) {
-                return $notification->project->name === 'New Project'
-                    && $notification->role === 'manager'
-                    && $notification->assignedBy->id === $this->admin->id;
-            }
+            fn($notification): bool => $notification->project->name === 'New Project'
+                && $notification->role === 'manager'
+                && $notification->assignedBy->id === $this->admin->id
         );
     }
 
@@ -257,9 +251,7 @@ class AssignmentNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->assignee,
             ProjectManagerAssigned::class,
-            function ($notification) {
-                return $notification->role === 'manager';
-            }
+            fn($notification): bool => $notification->role === 'manager'
         );
     }
 
@@ -278,9 +270,7 @@ class AssignmentNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->assignee,
             ProjectManagerAssigned::class,
-            function ($notification) {
-                return $notification->role === 'reviewer';
-            }
+            fn($notification): bool => $notification->role === 'reviewer'
         );
     }
 
@@ -305,13 +295,13 @@ class AssignmentNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->assignee,
             ProjectManagerAssigned::class,
-            fn ($notification) => $notification->role === 'manager'
+            fn ($notification): bool => $notification->role === 'manager'
         );
 
         Notification::assertSentTo(
             $reviewer,
             ProjectManagerAssigned::class,
-            fn ($notification) => $notification->role === 'reviewer'
+            fn ($notification): bool => $notification->role === 'reviewer'
         );
     }
 
@@ -406,10 +396,8 @@ class AssignmentNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->assignee,
             DepartmentTodoAssigned::class,
-            function ($notification) {
-                return $notification->todo->title === 'New Todo'
-                    && $notification->assignedBy->id === $this->admin->id;
-            }
+            fn($notification): bool => $notification->todo->title === 'New Todo'
+                && $notification->assignedBy->id === $this->admin->id
         );
     }
 
@@ -436,9 +424,7 @@ class AssignmentNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->assignee,
             DepartmentTodoAssigned::class,
-            function ($notification) use ($todo) {
-                return $notification->todo->id === $todo->id;
-            }
+            fn($notification): bool => $notification->todo->id === $todo->id
         );
     }
 
@@ -512,9 +498,7 @@ class AssignmentNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->assignee,
             DepartmentTodoAssigned::class,
-            function ($notification) {
-                return $notification->assignedBy === null;
-            }
+            fn($notification): bool => $notification->assignedBy === null
         );
     }
 

@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         // Add missing columns to tasks table to match project_tasks
-        Schema::table('tasks', function (Blueprint $table) {
+        Schema::table('tasks', function (Blueprint $table): void {
             if (!Schema::hasColumn('tasks', 'key')) {
                 $table->string('key')->nullable()->unique()->after('uuid');
             }
@@ -50,7 +50,7 @@ return new class extends Migration
         // Only run if project_tasks table exists
         if (Schema::hasTable('project_tasks')) {
             $projectTasks = DB::table('project_tasks')
-                ->whereNotExists(function ($query) {
+                ->whereNotExists(function ($query): void {
                     $query->select(DB::raw(1))
                         ->from('tasks')
                         ->whereColumn('tasks.key', 'project_tasks.key');
@@ -62,7 +62,7 @@ return new class extends Migration
 
         foreach ($projectTasks as $pt) {
             $statusId = DB::table('statuses')
-                ->whereRaw('LOWER(name) = ?', [strtolower($pt->status)])
+                ->whereRaw('LOWER(name) = ?', [strtolower((string) $pt->status)])
                 ->value('id');
 
             DB::table('tasks')->insert([
@@ -70,7 +70,7 @@ return new class extends Migration
                 'title' => $pt->title,
                 'key' => $pt->key,
                 'description' => $pt->description,
-                'taskable_type' => 'App\\Models\\Project',
+                'taskable_type' => \App\Models\Project::class,
                 'taskable_id' => $pt->project_id,
                 'project_id' => $pt->project_id,
                 'parent_id' => $pt->parent_id,
@@ -107,7 +107,7 @@ return new class extends Migration
         ");
 
         // Remove added columns
-        Schema::table('tasks', function (Blueprint $table) {
+        Schema::table('tasks', function (Blueprint $table): void {
             if (Schema::hasColumn('tasks', 'position')) {
                 $table->dropColumn('position');
             }

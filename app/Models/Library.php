@@ -9,14 +9,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $name
  * @property string $code
  * @property string|null $description
+ * @property string|null $image
  * @property \App\Models\Address|null $address
  * @property string|null $contact_person
  * @property string|null $contact_email
@@ -25,6 +27,8 @@ use Spatie\Activitylog\LogOptions;
  * @property int|null $address_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BookRental> $bookRentals
  * @property-read int|null $book_rentals_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Book> $books
@@ -49,20 +53,16 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereUpdatedAt($value)
- * @property string $uuid
- * @property string|null $image
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Library whereUuid($value)
  * @mixin \Eloquent
  */
 class Library extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -74,6 +74,7 @@ class Library extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -137,7 +138,7 @@ class Library extends Model
      */
     public function getTotalBooksAttribute(): int
     {
-        return $this->books()->sum('library_book.quantity');
+        return (int) $this->books()->sum('library_book.quantity');
     }
 
     /**
@@ -145,7 +146,7 @@ class Library extends Model
      */
     public function getAvailableBooksAttribute(): int
     {
-        return $this->books()->sum('library_book.available_quantity');
+        return (int) $this->books()->sum('library_book.available_quantity');
     }
 
     /**
@@ -153,7 +154,7 @@ class Library extends Model
      */
     public function getRentedBooksAttribute(): int
     {
-        return $this->bookRentals()->active()->count();
+        return (int) $this->bookRentals()->active()->count();
     }
 
     /**

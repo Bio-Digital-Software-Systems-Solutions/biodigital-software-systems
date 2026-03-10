@@ -22,28 +22,30 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property \Illuminate\Support\Carbon $start_datetime
  * @property \Illuminate\Support\Carbon $end_datetime
  * @property string|null $location
+ * @property string $meeting_mode
+ * @property string|null $meeting_link
+ * @property string|null $meeting_platform
  * @property string $status
  * @property string $type
  * @property string $visibility
  * @property int $user_id
  * @property string|null $appointmentable_type
  * @property int|null $appointmentable_id
- * @property array|null $metadata
- * @property array|null $notification_channels
+ * @property array<array-key, mixed>|null $metadata
+ * @property array<array-key, mixed>|null $notification_channels
  * @property \Illuminate\Support\Carbon|null $reminder_sent_at
  * @property \Illuminate\Support\Carbon|null $sms_reminder_sent_at
  * @property \Illuminate\Support\Carbon|null $whatsapp_reminder_sent_at
  * @property \Illuminate\Support\Carbon|null $telegram_reminder_sent_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\User $organizer
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $participants
- * @property-read int|null $participants_count
- * @property-read Model|\Eloquent $appointmentable
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
  * @property-read int|null $activities_count
+ * @property-read Model|\Eloquent|null $appointmentable
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $confirmedParticipants
  * @property-read int|null $confirmed_participants_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentMeeting> $departmentMeetings
+ * @property-read int|null $department_meetings_count
  * @property-read bool $can_be_cancelled
  * @property-read bool $can_be_modified
  * @property-read int $duration_minutes
@@ -52,18 +54,24 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read bool $is_future
  * @property-read bool $is_past
  * @property-read bool $is_today
- *
+ * @property-read int|null $participants_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Department> $meetingDepartments
+ * @property-read int|null $meeting_departments_count
+ * @property-read \App\Models\User $organizer
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $participants
  * @method static Builder<static>|Appointment betweenDates(string $startDate, string $endDate)
  * @method static Builder<static>|Appointment conflictsWith(\Carbon\Carbon $startDateTime, \Carbon\Carbon $endDateTime, ?int $excludeId = null)
  * @method static \Database\Factories\AppointmentFactory factory($count = null, $state = [])
  * @method static Builder<static>|Appointment forDate(string $date)
  * @method static Builder<static>|Appointment forUser(\App\Models\User $user)
+ * @method static Builder<static>|Appointment needingReminders(int $hoursAhead = 24)
  * @method static Builder<static>|Appointment newModelQuery()
  * @method static Builder<static>|Appointment newQuery()
  * @method static Builder<static>|Appointment past()
  * @method static Builder<static>|Appointment private()
  * @method static Builder<static>|Appointment public()
  * @method static Builder<static>|Appointment query()
+ * @method static Builder<static>|Appointment search(string $term)
  * @method static Builder<static>|Appointment today()
  * @method static Builder<static>|Appointment upcoming()
  * @method static Builder<static>|Appointment whereAppointmentableId($value)
@@ -73,18 +81,25 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static Builder<static>|Appointment whereEndDatetime($value)
  * @method static Builder<static>|Appointment whereId($value)
  * @method static Builder<static>|Appointment whereLocation($value)
+ * @method static Builder<static>|Appointment whereMeetingLink($value)
+ * @method static Builder<static>|Appointment whereMeetingMode($value)
+ * @method static Builder<static>|Appointment whereMeetingPlatform($value)
  * @method static Builder<static>|Appointment whereMetadata($value)
+ * @method static Builder<static>|Appointment whereNotificationChannels($value)
+ * @method static Builder<static>|Appointment whereReminderSentAt($value)
+ * @method static Builder<static>|Appointment whereSmsReminderSentAt($value)
  * @method static Builder<static>|Appointment whereStartDatetime($value)
  * @method static Builder<static>|Appointment whereStatus($value)
+ * @method static Builder<static>|Appointment whereTelegramReminderSentAt($value)
  * @method static Builder<static>|Appointment whereTitle($value)
  * @method static Builder<static>|Appointment whereType($value)
  * @method static Builder<static>|Appointment whereUpdatedAt($value)
  * @method static Builder<static>|Appointment whereUserId($value)
  * @method static Builder<static>|Appointment whereUuid($value)
  * @method static Builder<static>|Appointment whereVisibility($value)
+ * @method static Builder<static>|Appointment whereWhatsappReminderSentAt($value)
  * @method static Builder<static>|Appointment withStatus(string $status)
  * @method static Builder<static>|Appointment withType(string $type)
- *
  * @mixin \Eloquent
  */
 class Appointment extends Model
@@ -259,13 +274,24 @@ class Appointment extends Model
     }
 
     /**
+     * Scope: Search appointments by title or description.
+     */
+    public function scopeSearch(Builder $query, string $term): Builder
+    {
+        return $query->where(function ($q) use ($term): void {
+            $q->where('title', 'like', "%{$term}%")
+                ->orWhere('description', 'like', "%{$term}%");
+        });
+    }
+
+    /**
      * Scope: Get appointments for a specific user (organizer or participant).
      */
     public function scopeForUser(Builder $query, User $user): Builder
     {
-        return $query->where(function ($q) use ($user) {
+        return $query->where(function ($q) use ($user): void {
             $q->where('user_id', $user->id)
-                ->orWhereHas('participants', function ($q) use ($user) {
+                ->orWhereHas('participants', function ($q) use ($user): void {
                     $q->where('user_id', $user->id);
                 });
         });
@@ -276,7 +302,7 @@ class Appointment extends Model
      */
     public function scopeConflictsWith(Builder $query, Carbon $startDateTime, Carbon $endDateTime, ?int $excludeId = null): Builder
     {
-        $query = $query->where(function ($q) use ($startDateTime, $endDateTime) {
+        $query = $query->where(function ($q) use ($startDateTime, $endDateTime): void {
             $q->where('start_datetime', '<', $endDateTime)
                 ->where('end_datetime', '>', $startDateTime);
         })->whereNotIn('status', ['cancelled']);
@@ -293,7 +319,7 @@ class Appointment extends Model
      */
     public function getDurationMinutesAttribute(): int
     {
-        return $this->start_datetime->diffInMinutes($this->end_datetime);
+        return (int) $this->start_datetime->diffInMinutes($this->end_datetime);
     }
 
     /**
@@ -366,7 +392,7 @@ class Appointment extends Model
             return $this->attributes['participants_count'];
         }
 
-        return $this->participants()->count();
+        return (int) $this->participants()->count();
     }
 
     /**
@@ -402,7 +428,7 @@ class Appointment extends Model
             ->whereNotIn('status', ['cancelled'])
             ->orderBy('start_datetime');
 
-        if ($organizer) {
+        if ($organizer instanceof \App\Models\User) {
             $query->forUser($organizer);
         }
 
@@ -445,11 +471,7 @@ class Appointment extends Model
                 if ($isPast) {
                     $reason = 'Passé';
                 } elseif ($conflictingAppointment) {
-                    if ($conflictingAppointment->visibility === 'public') {
-                        $reason = 'Occupé - '.$conflictingAppointment->title;
-                    } else {
-                        $reason = 'Occupé';
-                    }
+                    $reason = $conflictingAppointment->visibility === 'public' ? 'Occupé - '.$conflictingAppointment->title : 'Occupé';
                 }
 
                 $slots[] = [
@@ -517,8 +539,10 @@ class Appointment extends Model
     public function canBeModifiedBy(User $user): bool
     {
         // Admin or appointment organizer can modify
-        return $user->hasPermissionTo('edit appointments') ||
-               $this->user_id === $user->id;
+        if ($user->hasPermissionTo('edit appointments')) {
+            return true;
+        }
+        return $this->user_id === $user->id;
     }
 
     /**
@@ -638,11 +662,7 @@ class Appointment extends Model
                 if ($isPast) {
                     $reason = 'Passé';
                 } elseif ($conflictingAppointment) {
-                    if ($conflictingAppointment->visibility === 'public') {
-                        $reason = 'Occupé - '.$conflictingAppointment->title;
-                    } else {
-                        $reason = 'Occupé';
-                    }
+                    $reason = $conflictingAppointment->visibility === 'public' ? 'Occupé - '.$conflictingAppointment->title : 'Occupé';
                 }
 
                 $slots[] = [
@@ -671,17 +691,15 @@ class Appointment extends Model
             ->orderBy('start_datetime')
             ->get(['id', 'start_datetime', 'end_datetime', 'title', 'type', 'status', 'visibility']);
 
-        return $appointments->map(function ($appointment) {
-            return [
-                'start_datetime' => $appointment->start_datetime->format('Y-m-d\TH:i:s'),
-                'end_datetime' => $appointment->end_datetime->format('Y-m-d\TH:i:s'),
-                'title' => $appointment->title,
-                'type' => $appointment->type,
-                'formatted_time' => $appointment->formatted_time_range,
-                'status' => $appointment->status,
-                'visibility' => $appointment->visibility,
-            ];
-        })->toArray();
+        return $appointments->map(fn($appointment): array => [
+            'start_datetime' => $appointment->start_datetime->format('Y-m-d\TH:i:s'),
+            'end_datetime' => $appointment->end_datetime->format('Y-m-d\TH:i:s'),
+            'title' => $appointment->title,
+            'type' => $appointment->type,
+            'formatted_time' => $appointment->formatted_time_range,
+            'status' => $appointment->status,
+            'visibility' => $appointment->visibility,
+        ])->toArray();
     }
 
     /**
@@ -811,6 +829,7 @@ class Appointment extends Model
      */
     public function getParticipantsWithPhones(): \Illuminate\Database\Eloquent\Collection
     {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, User> */
         return $this->participants()
             ->whereNotNull('phone_number')
             ->where('phone_number', '!=', '')
@@ -824,6 +843,7 @@ class Appointment extends Model
      */
     public function getParticipantsWithTelegram(): \Illuminate\Database\Eloquent\Collection
     {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, User> */
         return $this->participants()
             ->whereNotNull('telegram_chat_id')
             ->where('telegram_chat_id', '!=', '')

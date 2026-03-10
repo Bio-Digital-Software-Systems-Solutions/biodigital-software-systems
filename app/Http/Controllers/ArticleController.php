@@ -34,7 +34,7 @@ class ArticleController extends Controller
             ->withCount('likes');
 
         if ($request->search) {
-            $query->where(function ($q) use ($request) {
+            $query->where(function ($q) use ($request): void {
                 $q->where('title', 'like', "%{$request->search}%")
                     ->orWhere('content', 'like', "%{$request->search}%");
             });
@@ -217,7 +217,7 @@ class ArticleController extends Controller
         // Get related articles
         $relatedArticles = Article::where('id', '!=', $article->id)
             ->whereNotNull('published_at')
-            ->when($article->category_id, function ($query) use ($article) {
+            ->when($article->category_id, function ($query) use ($article): void {
                 $query->where('category_id', $article->category_id);
             })
             ->latest('published_at')
@@ -227,8 +227,8 @@ class ArticleController extends Controller
         return Inertia::render('Articles/Show', [
             'article' => $article,
             'relatedArticles' => $relatedArticles,
-            'isLiked' => Auth::check() ? \Maize\Markable\Models\Like::has($article, Auth::user()) : false,
-            'isFavorited' => Auth::check() ? \Maize\Markable\Models\Bookmark::has($article, Auth::user()) : false,
+            'isLiked' => Auth::check() && \Maize\Markable\Models\Like::has($article, Auth::user()),
+            'isFavorited' => Auth::check() && \Maize\Markable\Models\Bookmark::has($article, Auth::user()),
             'likesCount' => \Maize\Markable\Models\Like::count($article),
         ]);
     }

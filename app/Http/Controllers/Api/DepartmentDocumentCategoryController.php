@@ -33,7 +33,7 @@ class DepartmentDocumentCategoryController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $categories->map(fn($cat) => $this->formatCategory($cat)),
+            'data' => $categories->map(fn(\App\Models\DepartmentDocumentCategory $cat): array => $this->formatCategory($cat)),
             'year' => $year,
             'month' => $month,
         ]);

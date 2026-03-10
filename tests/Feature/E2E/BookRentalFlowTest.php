@@ -242,16 +242,12 @@ class BookRentalFlowTest extends TestCase
         $member = User::factory()->create();
 
         // Member tries to reserve unavailable book
-        $response = $this->actingAs($member)->post('/books/reserve', [
+        $this->actingAs($member)->post('/books/reserve', [
             'book_id' => $book->id,
         ]);
 
         // Reservation should be created (if implemented)
-        if ($response->isRedirect() || $response->isSuccessful()) {
-            $this->assertTrue(true);
-        } else {
-            $this->assertTrue(true);
-        }
+        $this->assertTrue(true);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]

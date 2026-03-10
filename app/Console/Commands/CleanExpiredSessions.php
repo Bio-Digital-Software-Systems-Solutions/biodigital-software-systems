@@ -24,7 +24,7 @@ class CleanExpiredSessions extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
         $lifetime = config('session.lifetime');
         $expiredTime = now()->subMinutes($lifetime)->timestamp;

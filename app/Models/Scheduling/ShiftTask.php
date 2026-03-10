@@ -10,6 +10,43 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $shift_id
+ * @property string $title
+ * @property string|null $description
+ * @property ShiftTaskStatus $status
+ * @property int $sort_order
+ * @property int|null $estimated_minutes
+ * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property int|null $completed_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read User|null $completedBy
+ * @property-read bool $is_overdue
+ * @property-read \App\Models\Scheduling\Shift $shift
+ * @method static Builder<static>|ShiftTask byStatus(\App\Enums\Scheduling\ShiftTaskStatus $status)
+ * @method static Builder<static>|ShiftTask completed()
+ * @method static Builder<static>|ShiftTask newModelQuery()
+ * @method static Builder<static>|ShiftTask newQuery()
+ * @method static Builder<static>|ShiftTask ordered()
+ * @method static Builder<static>|ShiftTask pending()
+ * @method static Builder<static>|ShiftTask query()
+ * @method static Builder<static>|ShiftTask whereCompletedAt($value)
+ * @method static Builder<static>|ShiftTask whereCompletedBy($value)
+ * @method static Builder<static>|ShiftTask whereCreatedAt($value)
+ * @method static Builder<static>|ShiftTask whereDescription($value)
+ * @method static Builder<static>|ShiftTask whereEstimatedMinutes($value)
+ * @method static Builder<static>|ShiftTask whereId($value)
+ * @method static Builder<static>|ShiftTask whereShiftId($value)
+ * @method static Builder<static>|ShiftTask whereSortOrder($value)
+ * @method static Builder<static>|ShiftTask whereStatus($value)
+ * @method static Builder<static>|ShiftTask whereTitle($value)
+ * @method static Builder<static>|ShiftTask whereUpdatedAt($value)
+ * @method static Builder<static>|ShiftTask whereUuid($value)
+ * @mixin \Eloquent
+ */
 class ShiftTask extends Model
 {
     use HasFactory;
@@ -37,7 +74,7 @@ class ShiftTask extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }

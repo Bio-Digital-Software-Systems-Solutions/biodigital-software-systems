@@ -11,7 +11,7 @@ class TeacherControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_authenticated_user_can_view_teachers_index()
+    public function test_authenticated_user_can_view_teachers_index(): void
     {
         $user = User::factory()->create();
 
@@ -21,14 +21,14 @@ class TeacherControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Teachers/Index'));
     }
 
-    public function test_unauthenticated_user_cannot_view_teachers_index()
+    public function test_unauthenticated_user_cannot_view_teachers_index(): void
     {
         $response = $this->get('/teachers');
 
         $response->assertRedirect('/login');
     }
 
-    public function test_authenticated_user_can_view_create_teacher_page()
+    public function test_authenticated_user_can_view_create_teacher_page(): void
     {
         $user = User::factory()->create();
 
@@ -38,7 +38,7 @@ class TeacherControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Teachers/Create'));
     }
 
-    public function test_authenticated_user_can_create_teacher()
+    public function test_authenticated_user_can_create_teacher(): void
     {
         $user = User::factory()->create();
         $targetUser = User::factory()->create();
@@ -63,7 +63,7 @@ class TeacherControllerTest extends TestCase
         ]);
     }
 
-    public function test_teacher_creation_validates_required_fields()
+    public function test_teacher_creation_validates_required_fields(): void
     {
         $user = User::factory()->create();
 
@@ -72,7 +72,7 @@ class TeacherControllerTest extends TestCase
         $response->assertSessionHasErrors(['user_id', 'specialization', 'experience_years']);
     }
 
-    public function test_teacher_creation_validates_user_id_exists()
+    public function test_teacher_creation_validates_user_id_exists(): void
     {
         $user = User::factory()->create();
 
@@ -87,7 +87,7 @@ class TeacherControllerTest extends TestCase
         $response->assertSessionHasErrors(['user_id']);
     }
 
-    public function test_teacher_creation_validates_unique_user_id()
+    public function test_teacher_creation_validates_unique_user_id(): void
     {
         $user = User::factory()->create();
         $targetUser = User::factory()->create();
@@ -105,7 +105,7 @@ class TeacherControllerTest extends TestCase
         $response->assertSessionHasErrors(['user_id']);
     }
 
-    public function test_teacher_creation_validates_experience_years_range()
+    public function test_teacher_creation_validates_experience_years_range(): void
     {
         $user = User::factory()->create();
         $targetUser = User::factory()->create();
@@ -127,7 +127,7 @@ class TeacherControllerTest extends TestCase
         $response->assertSessionHasErrors(['experience_years']);
     }
 
-    public function test_authenticated_user_can_view_teacher_details()
+    public function test_authenticated_user_can_view_teacher_details(): void
     {
         $user = User::factory()->create();
         $teacher = Teacher::factory()->create();
@@ -138,7 +138,7 @@ class TeacherControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Teachers/Show'));
     }
 
-    public function test_authenticated_user_can_view_edit_teacher_page()
+    public function test_authenticated_user_can_view_edit_teacher_page(): void
     {
         $user = User::factory()->create();
         $teacher = Teacher::factory()->create();
@@ -149,7 +149,7 @@ class TeacherControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Teachers/Edit'));
     }
 
-    public function test_authenticated_user_can_update_teacher()
+    public function test_authenticated_user_can_update_teacher(): void
     {
         $user = User::factory()->create();
         $teacher = Teacher::factory()->create([
@@ -174,7 +174,7 @@ class TeacherControllerTest extends TestCase
         ]);
     }
 
-    public function test_teacher_update_validates_unique_user_id()
+    public function test_teacher_update_validates_unique_user_id(): void
     {
         $user = User::factory()->create();
         $teacher1 = Teacher::factory()->create();
@@ -191,7 +191,7 @@ class TeacherControllerTest extends TestCase
         $response->assertSessionHasErrors(['user_id']);
     }
 
-    public function test_authenticated_user_can_delete_teacher()
+    public function test_authenticated_user_can_delete_teacher(): void
     {
         $user = User::factory()->create();
         $teacher = Teacher::factory()->create();
@@ -204,7 +204,7 @@ class TeacherControllerTest extends TestCase
         ]);
     }
 
-    public function test_teacher_relationships_are_loaded_correctly()
+    public function test_teacher_relationships_are_loaded_correctly(): void
     {
         $user = User::factory()->create();
         $teacher = Teacher::factory()->create();
@@ -218,7 +218,7 @@ class TeacherControllerTest extends TestCase
         );
     }
 
-    public function test_teachers_index_displays_paginated_results()
+    public function test_teachers_index_displays_paginated_results(): void
     {
         $user = User::factory()->create();
         Teacher::factory(15)->create();
@@ -232,7 +232,7 @@ class TeacherControllerTest extends TestCase
         );
     }
 
-    public function test_qualifications_are_stored_as_array()
+    public function test_qualifications_are_stored_as_array(): void
     {
         $user = User::factory()->create();
         $targetUser = User::factory()->create();

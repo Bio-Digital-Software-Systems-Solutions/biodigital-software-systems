@@ -67,7 +67,7 @@ class ChatController extends Controller
         // For direct messages, check if room already exists
         if ($validated['type'] === 'direct' && count($participantIds) === 2) {
             $existingRoom = ChatRoom::where('type', 'direct')
-                ->whereHas('participants', function ($query) use ($participantIds) {
+                ->whereHas('participants', function ($query) use ($participantIds): void {
                     $query->whereIn('user_id', $participantIds);
                 }, '=', 2)
                 ->first();
@@ -109,7 +109,7 @@ class ChatController extends Controller
             ->get()
             ->reverse()
             ->values()
-            ->map(function ($message) {
+            ->map(function ($message): \stdClass {
                 $message->sender->full_name = $message->sender->first_name.' '.$message->sender->last_name;
 
                 return $message;
@@ -137,7 +137,7 @@ class ChatController extends Controller
         ]);
 
         // Sanitize content to prevent XSS
-        $sanitizedContent = strip_tags($validated['content']);
+        $sanitizedContent = strip_tags((string) $validated['content']);
 
         $message = ChatMessage::create([
             'room_id' => $room->id,
@@ -162,7 +162,7 @@ class ChatController extends Controller
     {
         $user = Auth::user();
 
-        $unreadCount = ChatMessage::whereHas('room.participants', function ($query) use ($user) {
+        $unreadCount = ChatMessage::whereHas('room.participants', function ($query) use ($user): void {
             $query->where('user_id', $user->id);
         })
             ->where('sender_id', '!=', $user->id)

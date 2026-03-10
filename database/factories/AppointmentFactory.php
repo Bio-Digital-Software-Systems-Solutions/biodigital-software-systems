@@ -4,9 +4,9 @@ namespace Database\Factories;
 
 use App\Models\Appointment;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Appointment>
@@ -28,10 +28,10 @@ class AppointmentFactory extends Factory
     public function definition(): array
     {
         $startDateTime = $this->faker->dateTimeBetween('now', '+2 months');
-        $endDateTime = (clone $startDateTime)->modify('+' . $this->faker->numberBetween(30, 180) . ' minutes');
+        $endDateTime = (clone $startDateTime)->modify('+'.$this->faker->numberBetween(30, 180).' minutes');
 
         return [
-            'uuid' => Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'title' => $this->faker->sentence(3),
             'description' => $this->faker->optional(0.7)->paragraph(),
             'start_datetime' => $startDateTime,
@@ -52,7 +52,7 @@ class AppointmentFactory extends Factory
      */
     public function pending(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'pending',
         ]);
     }
@@ -62,7 +62,7 @@ class AppointmentFactory extends Factory
      */
     public function confirmed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'confirmed',
         ]);
     }
@@ -72,7 +72,7 @@ class AppointmentFactory extends Factory
      */
     public function cancelled(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'cancelled',
         ]);
     }
@@ -82,7 +82,7 @@ class AppointmentFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'completed',
         ]);
     }
@@ -92,7 +92,7 @@ class AppointmentFactory extends Factory
      */
     public function individual(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'individual',
         ]);
     }
@@ -102,7 +102,7 @@ class AppointmentFactory extends Factory
      */
     public function group(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'group',
         ]);
     }
@@ -112,7 +112,7 @@ class AppointmentFactory extends Factory
      */
     public function consultation(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'consultation',
         ]);
     }
@@ -122,7 +122,7 @@ class AppointmentFactory extends Factory
      */
     public function meeting(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'meeting',
         ]);
     }
@@ -133,9 +133,9 @@ class AppointmentFactory extends Factory
     public function past(): static
     {
         $startDateTime = $this->faker->dateTimeBetween('-2 months', '-1 day');
-        $endDateTime = (clone $startDateTime)->modify('+' . $this->faker->numberBetween(30, 180) . ' minutes');
+        $endDateTime = (clone $startDateTime)->modify('+'.$this->faker->numberBetween(30, 180).' minutes');
 
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'start_datetime' => $startDateTime,
             'end_datetime' => $endDateTime,
             'status' => $this->faker->randomElement(['completed', 'cancelled']),
@@ -152,7 +152,7 @@ class AppointmentFactory extends Factory
         $startDateTime = Carbon::today()->setTime($hour, $minute);
         $endDateTime = (clone $startDateTime)->addMinutes($this->faker->numberBetween(30, 180));
 
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'start_datetime' => $startDateTime,
             'end_datetime' => $endDateTime,
         ]);
@@ -164,9 +164,9 @@ class AppointmentFactory extends Factory
     public function future(): static
     {
         $startDateTime = $this->faker->dateTimeBetween('+1 day', '+2 months');
-        $endDateTime = (clone $startDateTime)->modify('+' . $this->faker->numberBetween(30, 180) . ' minutes');
+        $endDateTime = (clone $startDateTime)->modify('+'.$this->faker->numberBetween(30, 180).' minutes');
 
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'start_datetime' => $startDateTime,
             'end_datetime' => $endDateTime,
             'status' => $this->faker->randomElement(['pending', 'confirmed']),
@@ -178,7 +178,7 @@ class AppointmentFactory extends Factory
      */
     public function duration(int $minutes): static
     {
-        return $this->state(function (array $attributes) use ($minutes) {
+        return $this->state(function (array $attributes) use ($minutes): array {
             $startDateTime = isset($attributes['start_datetime'])
                 ? Carbon::parse($attributes['start_datetime'])
                 : $this->faker->dateTimeBetween('now', '+2 months');
@@ -195,7 +195,7 @@ class AppointmentFactory extends Factory
      */
     public function withMetadata(array $metadata): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'metadata' => json_encode($metadata),
         ]);
     }
@@ -205,7 +205,7 @@ class AppointmentFactory extends Factory
      */
     public function ownedBy(User $user): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'user_id' => $user->id,
         ]);
     }
@@ -215,10 +215,10 @@ class AppointmentFactory extends Factory
      */
     public function at(string $date, string $time): static
     {
-        $startDateTime = Carbon::createFromFormat('Y-m-d H:i', $date . ' ' . $time);
+        $startDateTime = Carbon::createFromFormat('Y-m-d H:i', $date.' '.$time);
         $endDateTime = (clone $startDateTime)->addHour();
 
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'start_datetime' => $startDateTime,
             'end_datetime' => $endDateTime,
         ]);

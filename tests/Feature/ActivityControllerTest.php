@@ -162,7 +162,7 @@ class ActivityControllerTest extends TestCase
     /** @test */
     public function it_formats_activity_data_correctly(): void
     {
-        $event = Event::factory()->create(['title' => 'Test Event Title']);
+        Event::factory()->create(['title' => 'Test Event Title']);
 
         $response = $this->actingAs($this->user)
             ->get(route('activity.index'));

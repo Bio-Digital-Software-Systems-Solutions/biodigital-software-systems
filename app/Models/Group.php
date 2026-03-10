@@ -13,16 +13,21 @@ use Spatie\Activitylog\LogOptions;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $name
  * @property string|null $description
+ * @property string|null $image
  * @property string $code
  * @property int|null $max_members
  * @property int|null $leader_id
  * @property bool $is_active
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read int $members_count
  * @property-read \App\Models\User|null $leader
+ * @property-read \App\Models\Pivots\GroupUser|null $pivot
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
  * @property-read int|null $users_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group active()
@@ -34,19 +39,14 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereLeaderId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereMaxMembers($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Group withSpace()
- * @property string $uuid
- * @property string|null $image
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- * @property-read \App\Models\Pivots\GroupUser|null $pivot
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Group withSpace()
  * @mixin \Eloquent
  */
 class Group extends Model
@@ -67,7 +67,7 @@ class Group extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
@@ -147,7 +147,7 @@ class Group extends Model
 
     public function scopeWithSpace($query)
     {
-        return $query->where(function ($q) {
+        return $query->where(function ($q): void {
             $q->whereNull('max_members')
                 ->orWhereRaw('(SELECT COUNT(*) FROM group_user WHERE group_id = groups.id) < max_members');
         });

@@ -85,22 +85,22 @@ class DepartmentTodoController extends Controller
         // For API requests, return JSON
         if ($request->wantsJson()) {
             return response()->json([
-                'todos' => $todos->map(fn ($todo) => $todo->toArrayForApi()),
+                'todos' => $todos->map(fn ($todo): array => $todo->toArrayForApi()),
                 'stats' => $this->getTodoStats($department),
             ]);
         }
 
         return Inertia::render('Departments/Todos/Index', [
             'department' => $department,
-            'todos' => $todos->map(fn ($todo) => $todo->toArrayForApi()),
+            'todos' => $todos->map(fn ($todo): array => $todo->toArrayForApi()),
             'stats' => $this->getTodoStats($department),
             'members' => $this->getDepartmentMembers($department),
-            'statuses' => collect(ShiftTaskStatus::cases())->map(fn ($s) => [
+            'statuses' => collect(ShiftTaskStatus::cases())->map(fn ($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
             ]),
-            'priorities' => collect(TodoPriority::cases())->map(fn ($p) => [
+            'priorities' => collect(TodoPriority::cases())->map(fn ($p): array => [
                 'value' => $p->value,
                 'label' => $p->label(),
                 'color' => $p->color(),
@@ -442,7 +442,7 @@ class DepartmentTodoController extends Controller
             ->get();
 
         return response()->json([
-            'todos' => $todos->map(fn ($todo) => $todo->toArrayForApi()),
+            'todos' => $todos->map(fn ($todo): array => $todo->toArrayForApi()),
         ]);
     }
 
@@ -541,7 +541,7 @@ class DepartmentTodoController extends Controller
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->get()
-            ->map(fn ($user) => [
+            ->map(fn ($user): array => [
                 'uuid' => $user->uuid,
                 'name' => $user->full_name ?? $user->name,
                 'email' => $user->email,

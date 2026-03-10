@@ -45,7 +45,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function super_admin_can_create_permission()
+    public function super_admin_can_create_permission(): void
     {
         $permissionData = [
             'name' => 'test permission',
@@ -68,7 +68,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function regular_user_cannot_create_permission()
+    public function regular_user_cannot_create_permission(): void
     {
         $permissionData = [
             'name' => 'test permission',
@@ -86,7 +86,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_create_permission()
+    public function guest_cannot_create_permission(): void
     {
         $permissionData = [
             'name' => 'test permission',
@@ -102,7 +102,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function permission_name_is_required()
+    public function permission_name_is_required(): void
     {
         $response = $this->actingAs($this->superAdmin)
             ->postJson(route('user-management.create-permission'), []);
@@ -112,7 +112,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function permission_name_must_be_unique()
+    public function permission_name_must_be_unique(): void
     {
         // Create initial permission
         Permission::create(['name' => 'existing permission']);
@@ -127,7 +127,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function creating_permission_invalidates_cache()
+    public function creating_permission_invalidates_cache(): void
     {
         // Seed cache with a pattern that matches forgetPattern
         Cache::put('user_management.permissions', 'cached_value', 60);
@@ -147,7 +147,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function super_admin_can_delete_permission()
+    public function super_admin_can_delete_permission(): void
     {
         $permission = Permission::create(['name' => 'test permission']);
 
@@ -165,7 +165,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function regular_user_cannot_delete_permission()
+    public function regular_user_cannot_delete_permission(): void
     {
         $permission = Permission::create(['name' => 'test permission']);
 
@@ -181,7 +181,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function deleting_permission_invalidates_cache()
+    public function deleting_permission_invalidates_cache(): void
     {
         $permission = Permission::create(['name' => 'test permission']);
 
@@ -201,7 +201,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function cannot_delete_nonexistent_permission()
+    public function cannot_delete_nonexistent_permission(): void
     {
         $response = $this->actingAs($this->superAdmin)
             ->deleteJson(route('user-management.delete-permission', 99999));
@@ -210,7 +210,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function can_view_user_management_index_with_permissions()
+    public function can_view_user_management_index_with_permissions(): void
     {
         // Create test permissions
         Permission::create(['name' => 'view articles']);
@@ -232,7 +232,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function permission_creation_with_special_characters()
+    public function permission_creation_with_special_characters(): void
     {
         $permissionData = [
             'name' => 'manage api-endpoints',
@@ -249,7 +249,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function permission_creation_trims_whitespace()
+    public function permission_creation_trims_whitespace(): void
     {
         $permissionData = [
             'name' => '  test permission  ',
@@ -267,7 +267,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function can_create_multiple_permissions_for_same_model()
+    public function can_create_multiple_permissions_for_same_model(): void
     {
         $permissions = [
             'view books',
@@ -293,7 +293,7 @@ class PermissionManagementTest extends TestCase
     }
 
     /** @test */
-    public function permission_deletion_removes_from_roles()
+    public function permission_deletion_removes_from_roles(): void
     {
         $permission = Permission::create(['name' => 'test permission']);
         $role = Role::create(['name' => 'test role']);

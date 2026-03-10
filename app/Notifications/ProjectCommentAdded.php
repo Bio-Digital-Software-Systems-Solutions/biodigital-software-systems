@@ -14,20 +14,11 @@ class ProjectCommentAdded extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public Project $project;
-
-    public ProjectComment $comment;
-
-    public User $commentedBy;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(Project $project, ProjectComment $comment, User $commentedBy)
+    public function __construct(public Project $project, public ProjectComment $comment, public User $commentedBy)
     {
-        $this->project = $project;
-        $this->comment = $comment;
-        $this->commentedBy = $commentedBy;
     }
 
     /**

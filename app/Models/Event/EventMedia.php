@@ -13,6 +13,77 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $event_id
+ * @property int|null $uploaded_by
+ * @property string|null $title
+ * @property string|null $description
+ * @property string $file_path
+ * @property string $file_name
+ * @property string $file_type
+ * @property int $file_size
+ * @property string $media_type
+ * @property string $collection
+ * @property bool $is_featured
+ * @property string|null $thumbnail_path
+ * @property int|null $width
+ * @property int|null $height
+ * @property int|null $duration
+ * @property int $sort_order
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read Event $event
+ * @property-read float|null $aspect_ratio
+ * @property-read string|null $dimensions
+ * @property-read string|null $duration_for_humans
+ * @property-read bool $file_exists
+ * @property-read string $file_size_for_humans
+ * @property-read string $file_url
+ * @property-read string|null $thumbnail_url
+ * @property-read User|null $uploader
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia banner()
+ * @method static \Database\Factories\EventMediaFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia featured()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia gallery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia images()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia ordered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia videos()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereCollection($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereDuration($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereEventId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereFileName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereFilePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereFileSize($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereFileType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereHeight($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereIsFeatured($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereMediaType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereThumbnailPath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereUploadedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia whereWidth($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventMedia withoutTrashed()
+ * @mixin \Eloquent
+ */
 class EventMedia extends Model
 {
     use ClearsCache, HasFactory, HasUuid, LogsActivity, SoftDeletes;
@@ -202,7 +273,7 @@ class EventMedia extends Model
 
     public function fileExists(): bool
     {
-        return $this->file_exists;
+        return (bool) $this->file_exists;
     }
 
     public function isImage(): bool

@@ -13,6 +13,55 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $event_id
+ * @property int|null $uploaded_by
+ * @property string $file_path
+ * @property string $file_name
+ * @property string $file_type
+ * @property int $file_size
+ * @property string|null $share_token
+ * @property \Illuminate\Support\Carbon|null $share_token_expires_at
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read Event $event
+ * @property-read bool $can_preview
+ * @property-read bool $file_exists
+ * @property-read string $file_size_for_humans
+ * @property-read string $file_url
+ * @property-read bool $is_image
+ * @property-read bool $is_pdf
+ * @property-read string|null $share_url
+ * @property-read User|null $uploader
+ * @method static \Database\Factories\EventProgrammeFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereEventId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereFileName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereFilePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereFileSize($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereFileType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereShareToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereShareTokenExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereUploadedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventProgramme withoutTrashed()
+ * @mixin \Eloquent
+ */
 class EventProgramme extends Model
 {
     use ClearsCache, HasFactory, HasUuid, LogsActivity, SoftDeletes;

@@ -426,3 +426,145 @@ describe('renderMentionedContent', () => {
         expect(mentionLink).toHaveClass('cursor-pointer');
     });
 });
+
+describe('renderMentionedContent - URL linkification', () => {
+    it('renders a URL as a clickable link', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('Check this https://example.com please')}</div>
+        );
+
+        const link = container.querySelector('a[href="https://example.com"]');
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveTextContent('https://example.com');
+        expect(link).toHaveAttribute('target', '_blank');
+        expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+
+    it('renders URL with path and query string', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('See https://example.com/page?id=42&lang=fr for details')}</div>
+        );
+
+        const link = container.querySelector('a[href="https://example.com/page?id=42&lang=fr"]');
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveTextContent('https://example.com/page?id=42&lang=fr');
+    });
+
+    it('renders http URL as a clickable link', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('Visit http://example.com')}</div>
+        );
+
+        const link = container.querySelector('a[href="http://example.com"]');
+        expect(link).toBeInTheDocument();
+    });
+
+    it('renders multiple URLs as clickable links', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('Check https://one.com and https://two.com')}</div>
+        );
+
+        const links = container.querySelectorAll('a[target="_blank"]');
+        expect(links).toHaveLength(2);
+        expect(links[0]).toHaveAttribute('href', 'https://one.com');
+        expect(links[1]).toHaveAttribute('href', 'https://two.com');
+    });
+
+    it('renders URL at the start of text', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('https://example.com is great')}</div>
+        );
+
+        const link = container.querySelector('a[href="https://example.com"]');
+        expect(link).toBeInTheDocument();
+        expect(container.textContent).toContain('is great');
+    });
+
+    it('renders URL at the end of text', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('Visit https://example.com')}</div>
+        );
+
+        const link = container.querySelector('a[href="https://example.com"]');
+        expect(link).toBeInTheDocument();
+        expect(container.textContent).toContain('Visit');
+    });
+
+    it('preserves text around URLs', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('Before https://example.com after')}</div>
+        );
+
+        expect(container.textContent).toBe('Before https://example.com after');
+    });
+
+    it('does not linkify text without URLs', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('Just plain text here')}</div>
+        );
+
+        expect(container.querySelector('a')).not.toBeInTheDocument();
+        expect(container.textContent).toBe('Just plain text here');
+    });
+
+    it('renders URL with special characters in path', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('See https://docs.google.com/spreadsheets/d/1WeT0kxNg9054eclo-VVk/edit?gid=300551873#gid=300551873')}</div>
+        );
+
+        const link = container.querySelector('a[target="_blank"]');
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveAttribute('href', 'https://docs.google.com/spreadsheets/d/1WeT0kxNg9054eclo-VVk/edit?gid=300551873#gid=300551873');
+    });
+
+    it('URL link has correct styling classes', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('Visit https://example.com')}</div>
+        );
+
+        const link = container.querySelector('a[target="_blank"]');
+        expect(link).toHaveClass('text-blue-600');
+        expect(link).toHaveClass('hover:underline');
+    });
+
+    it('renders mentions and URLs together correctly', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('Hey @[John Doe](1) check https://example.com please')}</div>
+        );
+
+        // Mention link
+        const mentionLink = container.querySelector('a[href="/profile/1"]');
+        expect(mentionLink).toBeInTheDocument();
+        expect(mentionLink).toHaveTextContent('@John Doe');
+
+        // URL link
+        const urlLink = container.querySelector('a[href="https://example.com"]');
+        expect(urlLink).toBeInTheDocument();
+        expect(urlLink).toHaveAttribute('target', '_blank');
+    });
+
+    it('renders URL before mention correctly', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('See https://example.com @[Jane](2) FYI')}</div>
+        );
+
+        const urlLink = container.querySelector('a[href="https://example.com"]');
+        expect(urlLink).toBeInTheDocument();
+
+        const mentionLink = container.querySelector('a[href="/profile/2"]');
+        expect(mentionLink).toBeInTheDocument();
+        expect(mentionLink).toHaveTextContent('@Jane');
+    });
+
+    it('renders multiple URLs and mentions mixed together', () => {
+        const { container } = render(
+            <div>{renderMentionedContent('Hey @[John](1) see https://one.com and @[Jane](2) check https://two.com')}</div>
+        );
+
+        const mentionLinks = container.querySelectorAll('a.text-primary');
+        expect(mentionLinks).toHaveLength(2);
+
+        const urlLinks = container.querySelectorAll('a[target="_blank"]');
+        expect(urlLinks).toHaveLength(2);
+    });
+});

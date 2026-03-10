@@ -33,7 +33,7 @@ class BlockedLoginAttemptFactory extends Factory
      */
     public function acknowledged(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'acknowledged' => true,
             'acknowledged_by' => User::factory(),
             'acknowledged_at' => now(),

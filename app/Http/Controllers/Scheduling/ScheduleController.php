@@ -53,7 +53,7 @@ class ScheduleController extends Controller
             ->with(['assignee', 'creator', 'completedBy', 'shift.user'])
             ->ordered()
             ->get()
-            ->map(fn ($todo) => $todo->toArrayForApi());
+            ->map(fn ($todo): array => $todo->toArrayForApi());
 
         // Get todo stats
         $todoStats = [
@@ -69,7 +69,7 @@ class ScheduleController extends Controller
             ->orderBy('last_name')
             ->orderBy('first_name')
             ->get()
-            ->map(fn ($user) => [
+            ->map(fn ($user): array => [
                 'uuid' => $user->uuid,
                 'name' => $user->full_name ?? $user->name,
                 'email' => $user->email,
@@ -89,12 +89,12 @@ class ScheduleController extends Controller
             'todos' => $todos,
             'todoStats' => $todoStats,
             'members' => $members,
-            'todoStatuses' => collect(ShiftTaskStatus::cases())->map(fn ($s) => [
+            'todoStatuses' => collect(ShiftTaskStatus::cases())->map(fn ($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
             ]),
-            'todoPriorities' => collect(TodoPriority::cases())->map(fn ($p) => [
+            'todoPriorities' => collect(TodoPriority::cases())->map(fn ($p): array => [
                 'value' => $p->value,
                 'label' => $p->label(),
                 'color' => $p->color(),

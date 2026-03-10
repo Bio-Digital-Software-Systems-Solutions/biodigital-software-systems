@@ -64,7 +64,7 @@ enum WorkflowInstanceStatus: string
 
     public static function toSelectOptions(): array
     {
-        return array_map(fn($case) => [
+        return array_map(fn(\App\Enums\Workflow\WorkflowInstanceStatus $case): array => [
             'value' => $case->value,
             'label' => $case->label(),
             'color' => $case->color(),

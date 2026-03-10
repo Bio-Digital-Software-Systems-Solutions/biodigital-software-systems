@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->string('theme')->nullable()->after('notes');
             $table->index('theme');
         });
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->dropIndex(['theme']);
             $table->dropColumn('theme');
         });

@@ -210,7 +210,7 @@ class WorkflowInstanceControllerTest extends TestCase
     {
         $instance = $this->createInstance(['status' => WorkflowInstanceStatus::COMPLETED]);
 
-        $response = $this->actingAs($this->user)
+        $this->actingAs($this->user)
             ->post(route('workflow-instances.pause', $instance));
 
         $instance->refresh();
@@ -365,14 +365,14 @@ class WorkflowInstanceControllerTest extends TestCase
         $instance = $this->createInstance();
 
         // Create logs with specific timestamps
-        $oldLog = \App\Models\WorkflowActivityLog::factory()->create([
+        \App\Models\WorkflowActivityLog::factory()->create([
             'workflow_instance_id' => $instance->id,
             'user_id' => $this->user->id,
             'action' => 'started',
             'created_at' => now()->subHours(2),
         ]);
 
-        $newLog = \App\Models\WorkflowActivityLog::factory()->create([
+        \App\Models\WorkflowActivityLog::factory()->create([
             'workflow_instance_id' => $instance->id,
             'user_id' => $this->user->id,
             'action' => 'completed',

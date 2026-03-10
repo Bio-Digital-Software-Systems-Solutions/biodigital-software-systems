@@ -13,7 +13,7 @@ return new class extends Migration
     {
         // 1. Weekly Schedules - Main schedule container
         if (!Schema::hasTable('weekly_schedules')) {
-            Schema::create('weekly_schedules', function (Blueprint $table) {
+            Schema::create('weekly_schedules', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->foreignId('department_id')->constrained()->cascadeOnDelete();
@@ -33,7 +33,7 @@ return new class extends Migration
 
         // 2. Department Scheduling Settings
         if (!Schema::hasTable('department_scheduling_settings')) {
-            Schema::create('department_scheduling_settings', function (Blueprint $table) {
+            Schema::create('department_scheduling_settings', function (Blueprint $table): void {
                 $table->id();
                 $table->foreignId('department_id')->unique()->constrained()->cascadeOnDelete();
                 $table->integer('default_shift_duration')->default(8);
@@ -57,7 +57,7 @@ return new class extends Migration
 
         // 3. Scheduling Positions
         if (!Schema::hasTable('scheduling_positions')) {
-            Schema::create('scheduling_positions', function (Blueprint $table) {
+            Schema::create('scheduling_positions', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->foreignId('department_id')->constrained()->cascadeOnDelete();
@@ -76,7 +76,7 @@ return new class extends Migration
 
         // 4. Shifts
         if (!Schema::hasTable('shifts')) {
-            Schema::create('shifts', function (Blueprint $table) {
+            Schema::create('shifts', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->foreignId('weekly_schedule_id')->constrained()->cascadeOnDelete();
@@ -114,7 +114,7 @@ return new class extends Migration
 
         // 5. Shift Tasks
         if (!Schema::hasTable('shift_tasks')) {
-            Schema::create('shift_tasks', function (Blueprint $table) {
+            Schema::create('shift_tasks', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->foreignId('shift_id')->constrained()->cascadeOnDelete();
@@ -131,7 +131,7 @@ return new class extends Migration
 
         // 6. Employee Availabilities
         if (!Schema::hasTable('employee_availabilities')) {
-            Schema::create('employee_availabilities', function (Blueprint $table) {
+            Schema::create('employee_availabilities', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -152,7 +152,7 @@ return new class extends Migration
 
         // 7. Employee Absences
         if (!Schema::hasTable('employee_absences')) {
-            Schema::create('employee_absences', function (Blueprint $table) {
+            Schema::create('employee_absences', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -178,7 +178,7 @@ return new class extends Migration
 
         // 8. Shift Swap Requests
         if (!Schema::hasTable('shift_swap_requests')) {
-            Schema::create('shift_swap_requests', function (Blueprint $table) {
+            Schema::create('shift_swap_requests', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->foreignId('requester_id')->constrained('users')->cascadeOnDelete();
@@ -197,7 +197,7 @@ return new class extends Migration
 
         // 9. Time Entries
         if (!Schema::hasTable('time_entries')) {
-            Schema::create('time_entries', function (Blueprint $table) {
+            Schema::create('time_entries', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -224,7 +224,7 @@ return new class extends Migration
 
         // 10. Scheduling Templates
         if (!Schema::hasTable('scheduling_templates')) {
-            Schema::create('scheduling_templates', function (Blueprint $table) {
+            Schema::create('scheduling_templates', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->foreignId('department_id')->constrained()->cascadeOnDelete();
@@ -239,7 +239,7 @@ return new class extends Migration
 
         // 11. Schedule Conflicts
         if (!Schema::hasTable('schedule_conflicts')) {
-            Schema::create('schedule_conflicts', function (Blueprint $table) {
+            Schema::create('schedule_conflicts', function (Blueprint $table): void {
                 $table->id();
                 $table->foreignId('shift_id')->constrained()->cascadeOnDelete();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -255,7 +255,7 @@ return new class extends Migration
 
         // 12. Skills
         if (!Schema::hasTable('skills')) {
-            Schema::create('skills', function (Blueprint $table) {
+            Schema::create('skills', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->string('name');
@@ -268,7 +268,7 @@ return new class extends Migration
 
         // 13. Employee Skills
         if (!Schema::hasTable('employee_skills')) {
-            Schema::create('employee_skills', function (Blueprint $table) {
+            Schema::create('employee_skills', function (Blueprint $table): void {
                 $table->id();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();
                 $table->foreignId('skill_id')->constrained('skills')->cascadeOnDelete();
@@ -283,7 +283,7 @@ return new class extends Migration
 
         // 14. Shift Assignments History
         if (!Schema::hasTable('shift_assignment_history')) {
-            Schema::create('shift_assignment_history', function (Blueprint $table) {
+            Schema::create('shift_assignment_history', function (Blueprint $table): void {
                 $table->id();
                 $table->foreignId('shift_id')->constrained()->cascadeOnDelete();
                 $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
@@ -296,7 +296,7 @@ return new class extends Migration
 
         // 15. Overtime Rules
         if (!Schema::hasTable('overtime_rules')) {
-            Schema::create('overtime_rules', function (Blueprint $table) {
+            Schema::create('overtime_rules', function (Blueprint $table): void {
                 $table->id();
                 $table->foreignId('department_id')->constrained()->cascadeOnDelete();
                 $table->string('name');
@@ -311,7 +311,7 @@ return new class extends Migration
 
         // 16. Scheduling Notifications
         if (!Schema::hasTable('scheduling_notifications')) {
-            Schema::create('scheduling_notifications', function (Blueprint $table) {
+            Schema::create('scheduling_notifications', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -331,7 +331,7 @@ return new class extends Migration
 
         // 17. Scheduling Reports
         if (!Schema::hasTable('scheduling_reports')) {
-            Schema::create('scheduling_reports', function (Blueprint $table) {
+            Schema::create('scheduling_reports', function (Blueprint $table): void {
                 $table->id();
                 $table->uuid('uuid')->unique();
                 $table->foreignId('department_id')->constrained()->cascadeOnDelete();

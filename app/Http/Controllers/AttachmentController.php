@@ -27,9 +27,9 @@ class AttachmentController extends Controller
 
         // Determine file type
         $fileType = 'document';
-        if (str_starts_with($mimeType, 'image/')) {
+        if (str_starts_with((string) $mimeType, 'image/')) {
             $fileType = 'image';
-        } elseif (str_starts_with($mimeType, 'video/')) {
+        } elseif (str_starts_with((string) $mimeType, 'video/')) {
             $fileType = 'video';
         }
 
@@ -38,7 +38,7 @@ class AttachmentController extends Controller
         $filePath = $file->storeAs('attachments', $fileName, 'public');
 
         // Create attachment record
-        $attachment = Attachment::create([
+        Attachment::create([
             'attachable_type' => $validated['attachable_type'],
             'attachable_id' => $validated['attachable_id'],
             'name' => $file->getClientOriginalName(),

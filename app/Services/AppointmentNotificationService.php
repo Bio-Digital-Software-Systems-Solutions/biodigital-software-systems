@@ -48,10 +48,10 @@ class AppointmentNotificationService
         $existingRoom = ChatRoom::where('type', 'direct')
             ->withCount('participants')
             ->having('participants_count', '=', 2)
-            ->whereHas('participants', function ($query) use ($participantIds) {
+            ->whereHas('participants', function ($query) use ($participantIds): void {
                 $query->where('user_id', $participantIds[0]);
             })
-            ->whereHas('participants', function ($query) use ($participantIds) {
+            ->whereHas('participants', function ($query) use ($participantIds): void {
                 $query->where('user_id', $participantIds[1]);
             })
             ->first();
@@ -135,9 +135,8 @@ class AppointmentNotificationService
         $message .= '<p>⚡ <strong>Actions rapides :</strong><br>';
         $message .= "✅ <a href=\"{$confirmUrl}\">Confirmer</a><br>";
         $message .= "❌ <a href=\"{$declineUrl}\">Décliner</a></p>";
-        $message .= '<p>Merci de répondre à cette invitation !</p>';
 
-        return $message;
+        return $message . '<p>Merci de répondre à cette invitation !</p>';
     }
 
     /**
@@ -248,9 +247,7 @@ class AppointmentNotificationService
             }
         }
 
-        $message .= '<p>📄 <a href="'.route('appointments.show', $appointment->uuid).'">Consultez le détail</a></p>';
-
-        return $message;
+        return $message . ('<p>📄 <a href="' . route('appointments.show', $appointment->uuid) . '">Consultez le détail</a></p>');
     }
 
     /**
@@ -261,7 +258,7 @@ class AppointmentNotificationService
         // Look for existing personal notification room
         $existingRoom = ChatRoom::where('type', 'group')
             ->where('name', 'Mes rendez-vous')
-            ->whereHas('participants', function ($query) use ($organizer) {
+            ->whereHas('participants', function ($query) use ($organizer): void {
                 $query->where('user_id', $organizer->id);
             }, '=', 1)
             ->first();
@@ -335,9 +332,7 @@ class AppointmentNotificationService
         $message .= '<p>📄 <strong>Détails :</strong> <a href="'.route('appointments.show', $appointment->uuid).'">Voir le rendez-vous</a><br>';
         $message .= '✏️ <strong>Modifier :</strong> <a href="'.route('appointments.edit', $appointment->uuid).'">Modifier le rendez-vous</a></p>';
 
-        $message .= '<p>Votre rendez-vous a été créé et les invitations ont été envoyées aux participants.</p>';
-
-        return $message;
+        return $message . '<p>Votre rendez-vous a été créé et les invitations ont été envoyées aux participants.</p>';
     }
 
     /**

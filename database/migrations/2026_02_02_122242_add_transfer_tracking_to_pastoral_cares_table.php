@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->foreignId('transferred_from_id')->nullable()->after('pastor_id')->constrained('users')->nullOnDelete();
             $table->foreignId('transferred_to_id')->nullable()->after('transferred_from_id')->constrained('users')->nullOnDelete();
             $table->timestamp('transferred_at')->nullable()->after('transferred_to_id');
@@ -26,7 +26,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->dropIndex(['transferred_at']);
             $table->dropForeign(['transferred_from_id']);
             $table->dropForeign(['transferred_to_id']);

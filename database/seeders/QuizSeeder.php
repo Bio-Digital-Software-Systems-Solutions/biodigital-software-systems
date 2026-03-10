@@ -47,7 +47,7 @@ class QuizSeeder extends Seeder
 
         // Créer 2-3 quizzes par formation
         foreach ($trainings as $training) {
-            $numberOfQuizzes = rand(2, 3);
+            $numberOfQuizzes = random_int(2, 3);
 
             for ($i = 0; $i < $numberOfQuizzes; $i++) {
                 $template = $quizTemplates[$i % count($quizTemplates)];

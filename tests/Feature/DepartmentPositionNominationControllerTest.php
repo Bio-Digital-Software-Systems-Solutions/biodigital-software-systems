@@ -5,13 +5,13 @@ use App\Models\DepartmentPosition;
 use App\Models\DepartmentPositionNomination;
 use App\Models\User;
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
     $this->admin = User::factory()->create();
     $this->admin->givePermissionTo('manage departments');
 });
 
-it('lists active nominations for a department', function () {
+it('lists active nominations for a department', function (): void {
     $department = Department::factory()->create();
     $position = DepartmentPosition::factory()->create(['department_id' => $department->id]);
     $member = User::factory()->create();
@@ -32,7 +32,7 @@ it('lists active nominations for a department', function () {
     $response->assertJsonCount(1);
 });
 
-it('creates a nomination for a department member', function () {
+it('creates a nomination for a department member', function (): void {
     $department = Department::factory()->create();
     $position = DepartmentPosition::factory()->create(['department_id' => $department->id]);
     $member = User::factory()->create();
@@ -57,7 +57,7 @@ it('creates a nomination for a department member', function () {
     ]);
 });
 
-it('cannot nominate a non-member to a position', function () {
+it('cannot nominate a non-member to a position', function (): void {
     $department = Department::factory()->create();
     $position = DepartmentPosition::factory()->create(['department_id' => $department->id]);
     $nonMember = User::factory()->create();
@@ -71,7 +71,7 @@ it('cannot nominate a non-member to a position', function () {
     $response->assertSessionHasErrors(['user_id']);
 });
 
-it('cannot nominate to a position from another department', function () {
+it('cannot nominate to a position from another department', function (): void {
     $department = Department::factory()->create();
     $otherDepartment = Department::factory()->create();
     $position = DepartmentPosition::factory()->create(['department_id' => $otherDepartment->id]);
@@ -87,7 +87,7 @@ it('cannot nominate to a position from another department', function () {
     $response->assertSessionHasErrors(['department_position_id']);
 });
 
-it('cannot create duplicate active nomination for same position and user', function () {
+it('cannot create duplicate active nomination for same position and user', function (): void {
     $department = Department::factory()->create();
     $position = DepartmentPosition::factory()->create(['department_id' => $department->id]);
     $member = User::factory()->create();
@@ -112,7 +112,7 @@ it('cannot create duplicate active nomination for same position and user', funct
     $response->assertSessionHasErrors(['user_id']);
 });
 
-it('updates a nomination', function () {
+it('updates a nomination', function (): void {
     $department = Department::factory()->create();
     $position = DepartmentPosition::factory()->create(['department_id' => $department->id]);
     $member = User::factory()->create();
@@ -140,7 +140,7 @@ it('updates a nomination', function () {
     expect($nomination->end_date->format('Y-m-d'))->toBe('2025-12-31');
 });
 
-it('deletes a nomination by deactivating it', function () {
+it('deletes a nomination by deactivating it', function (): void {
     $department = Department::factory()->create();
     $position = DepartmentPosition::factory()->create(['department_id' => $department->id]);
     $member = User::factory()->create();
@@ -165,7 +165,7 @@ it('deletes a nomination by deactivating it', function () {
     expect($nomination->deleted_at)->not->toBeNull();
 });
 
-it('requires manage departments permission', function () {
+it('requires manage departments permission', function (): void {
     $user = User::factory()->create();
     $department = Department::factory()->create();
 

@@ -10,6 +10,8 @@ use Tests\CreatesPermissions;
 
 class GroupControllerTest extends TestCase
 {
+    public $user;
+    public $leader;
     use RefreshDatabase, CreatesPermissions;
 
     protected function setUp(): void
@@ -23,7 +25,7 @@ class GroupControllerTest extends TestCase
 
     public function test_index_displays_groups(): void
     {
-        $groups = Group::factory()->count(3)->create();
+        Group::factory()->count(3)->create();
 
         $this->user->givePermissionTo('view groups');
 
@@ -340,7 +342,7 @@ class GroupControllerTest extends TestCase
 
     public function test_unauthorized_user_cannot_access_groups(): void
     {
-        $group = Group::factory()->create();
+        Group::factory()->create();
 
         $response = $this->actingAs($this->user)
             ->get(route('groups.index'));

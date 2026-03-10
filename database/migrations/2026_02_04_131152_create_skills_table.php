@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('profile_skills', function (Blueprint $table) {
+        Schema::create('profile_skills', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('name');
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->unique(['name', 'category']);
         });
 
-        Schema::create('profile_skill_user', function (Blueprint $table) {
+        Schema::create('profile_skill_user', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('profile_skill_id')->constrained()->cascadeOnDelete();

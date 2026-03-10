@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('chat_rooms', function (Blueprint $table) {
+        Schema::create('chat_rooms', function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->enum('type', ['direct', 'group'])->default('direct');

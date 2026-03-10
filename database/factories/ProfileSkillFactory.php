@@ -43,7 +43,7 @@ class ProfileSkillFactory extends Factory
      */
     public function soft(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'category' => 'soft',
             'name' => fake()->randomElement(['Communication', 'Leadership', 'Teamwork', 'Problem Solving', 'Time Management']),
         ]);
@@ -54,7 +54,7 @@ class ProfileSkillFactory extends Factory
      */
     public function hard(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'category' => 'hard',
             'name' => fake()->randomElement(['Project Management', 'Data Analysis', 'Financial Planning', 'Marketing Strategy']),
         ]);
@@ -65,7 +65,7 @@ class ProfileSkillFactory extends Factory
      */
     public function technical(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'category' => 'technical',
             'name' => fake()->randomElement(['PHP', 'Laravel', 'React', 'TypeScript', 'JavaScript', 'Python']),
         ]);

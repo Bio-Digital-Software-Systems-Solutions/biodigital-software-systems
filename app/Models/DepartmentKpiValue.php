@@ -8,6 +8,41 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+/**
+ * @property int $id
+ * @property int $kpi_id
+ * @property int|null $report_id
+ * @property numeric $value
+ * @property \Illuminate\Support\Carbon $recorded_at
+ * @property int|null $recorded_by
+ * @property string|null $notes
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\DepartmentKpi $kpi
+ * @property-read \App\Models\User|null $recorder
+ * @property-read \App\Models\DepartmentReport|null $report
+ * @method static \Database\Factories\DepartmentKpiValueFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue forKpi(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue forPeriod($start, $end)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue forReport(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue whereKpiId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue whereNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue whereRecordedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue whereRecordedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue whereReportId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpiValue whereValue($value)
+ * @mixin \Eloquent
+ */
 class DepartmentKpiValue extends Model
 {
     use HasFactory, LogsActivity;

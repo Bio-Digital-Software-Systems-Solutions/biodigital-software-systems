@@ -64,20 +64,20 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_list_task_appointments()
+    public function it_can_list_task_appointments(): void
     {
         Sanctum::actingAs($this->user);
 
         // Create appointments for the task
-        $appointment1 = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+        Appointment::factory()->create([
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'title' => 'Task Review Meeting',
         ]);
 
-        $appointment2 = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+        Appointment::factory()->create([
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'title' => 'Task Progress Update',
@@ -107,7 +107,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_create_a_task_appointment()
+    public function it_can_create_a_task_appointment(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -134,13 +134,13 @@ class TaskAppointmentControllerTest extends TestCase
 
         $this->assertDatabaseHas('appointments', [
             'title' => 'Task Kickoff Meeting',
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
         ]);
     }
 
     /** @test */
-    public function it_validates_required_fields_when_creating_task_appointment()
+    public function it_validates_required_fields_when_creating_task_appointment(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -151,7 +151,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_end_datetime_is_after_start_datetime()
+    public function it_validates_end_datetime_is_after_start_datetime(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -170,12 +170,12 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_update_a_task_appointment()
+    public function it_can_update_a_task_appointment(): void
     {
         Sanctum::actingAs($this->user);
 
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'title' => 'Original Title',
@@ -204,12 +204,12 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_delete_a_task_appointment()
+    public function it_can_delete_a_task_appointment(): void
     {
         Sanctum::actingAs($this->user);
 
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
         ]);
@@ -228,7 +228,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_cannot_delete_appointment_from_another_task()
+    public function it_cannot_delete_appointment_from_another_task(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -241,7 +241,7 @@ class TaskAppointmentControllerTest extends TestCase
 
         // Create appointment for another task
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $anotherTask->id,
             'user_id' => $this->user->id,
         ]);
@@ -253,21 +253,21 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_get_appointments_for_a_specific_month()
+    public function it_can_get_appointments_for_a_specific_month(): void
     {
         Sanctum::actingAs($this->user);
 
         // Create appointments in different months
-        $thisMonthAppointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+        Appointment::factory()->create([
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'start_datetime' => now()->startOfMonth()->addDays(5),
             'end_datetime' => now()->startOfMonth()->addDays(5)->addHour(),
         ]);
 
-        $nextMonthAppointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+        Appointment::factory()->create([
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'start_datetime' => now()->addMonth()->startOfMonth()->addDays(5),
@@ -284,7 +284,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_adds_organizer_as_confirmed_participant()
+    public function it_adds_organizer_as_confirmed_participant(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -305,7 +305,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_requires_authentication()
+    public function it_requires_authentication(): void
     {
         $response = $this->getJson("/api/tasks/{$this->task->uuid}/appointments");
 
@@ -313,7 +313,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_appointment_type()
+    public function it_validates_appointment_type(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -332,7 +332,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_visibility()
+    public function it_validates_visibility(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -351,12 +351,12 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_update_appointment_participants()
+    public function it_can_update_appointment_participants(): void
     {
         Sanctum::actingAs($this->user);
 
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
         ]);
@@ -380,12 +380,12 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_update_appointment_status()
+    public function it_can_update_appointment_status(): void
     {
         Sanctum::actingAs($this->user);
 
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'status' => 'pending',
@@ -405,12 +405,12 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_cancel_appointment()
+    public function it_can_cancel_appointment(): void
     {
         Sanctum::actingAs($this->user);
 
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'status' => 'confirmed',
@@ -425,12 +425,12 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_complete_appointment()
+    public function it_can_complete_appointment(): void
     {
         Sanctum::actingAs($this->user);
 
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'status' => 'confirmed',
@@ -445,12 +445,12 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_update_appointment_datetime()
+    public function it_can_update_appointment_datetime(): void
     {
         Sanctum::actingAs($this->user);
 
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
         ]);
@@ -473,12 +473,12 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_appointment_with_participants_in_response()
+    public function it_returns_appointment_with_participants_in_response(): void
     {
         Sanctum::actingAs($this->user);
 
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
         ]);
@@ -508,7 +508,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_sends_invitation_email_to_participants_on_create()
+    public function it_sends_invitation_email_to_participants_on_create(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
@@ -536,13 +536,13 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_sends_invitation_email_to_new_participants_on_update()
+    public function it_sends_invitation_email_to_new_participants_on_update(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
 
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
         ]);
@@ -573,13 +573,13 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_sends_update_notification_to_existing_participants_when_details_change()
+    public function it_sends_update_notification_to_existing_participants_when_details_change(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
 
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'title' => 'Original Title',
@@ -609,13 +609,13 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_does_not_send_update_notification_when_no_significant_changes()
+    public function it_does_not_send_update_notification_when_no_significant_changes(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
 
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'description' => 'Original Description',
@@ -642,7 +642,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_stores_confirmation_token_for_new_participants()
+    public function it_stores_confirmation_token_for_new_participants(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
@@ -672,12 +672,12 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_appointmentable_info_in_response()
+    public function it_returns_appointmentable_info_in_response(): void
     {
         Sanctum::actingAs($this->user);
 
-        $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+        Appointment::factory()->create([
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'title' => 'Task Meeting',
@@ -691,7 +691,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_only_returns_appointments_for_specific_task()
+    public function it_only_returns_appointments_for_specific_task(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -703,16 +703,16 @@ class TaskAppointmentControllerTest extends TestCase
         ]);
 
         // Create appointment for this task
-        $thisTaskAppointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+        Appointment::factory()->create([
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $this->task->id,
             'user_id' => $this->user->id,
             'title' => 'This Task Meeting',
         ]);
 
         // Create appointment for another task
-        $anotherTaskAppointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+        Appointment::factory()->create([
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $anotherTask->id,
             'user_id' => $this->user->id,
             'title' => 'Another Task Meeting',
@@ -726,7 +726,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_cannot_update_appointment_from_another_task()
+    public function it_cannot_update_appointment_from_another_task(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -739,7 +739,7 @@ class TaskAppointmentControllerTest extends TestCase
 
         // Create appointment for another task
         $appointment = Appointment::factory()->create([
-            'appointmentable_type' => 'App\\Models\\Task',
+            'appointmentable_type' => \App\Models\Task::class,
             'appointmentable_id' => $anotherTask->id,
             'user_id' => $this->user->id,
             'title' => 'Another Task Meeting',
@@ -756,7 +756,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_max_participants()
+    public function it_validates_max_participants(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -776,7 +776,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_accepts_all_valid_appointment_types()
+    public function it_accepts_all_valid_appointment_types(): void
     {
         Sanctum::actingAs($this->user);
 
@@ -800,7 +800,7 @@ class TaskAppointmentControllerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_create_appointment_with_location()
+    public function it_can_create_appointment_with_location(): void
     {
         Sanctum::actingAs($this->user);
 

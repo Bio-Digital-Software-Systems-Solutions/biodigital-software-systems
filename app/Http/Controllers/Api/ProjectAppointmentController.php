@@ -32,14 +32,14 @@ class ProjectAppointmentController extends Controller
         $this->authorize('view', $project);
 
         // Get project appointments
-        $projectAppointments = Appointment::where('appointmentable_type', 'App\\Models\\Project')
+        $projectAppointments = Appointment::where('appointmentable_type', \App\Models\Project::class)
             ->where('appointmentable_id', $project->id)
             ->with(['organizer:id,first_name,last_name', 'participants:id,first_name,last_name'])
             ->get();
 
         // Get task appointments for this project
         $taskIds = $project->tasks()->pluck('id');
-        $taskAppointments = Appointment::where('appointmentable_type', 'App\\Models\\Task')
+        $taskAppointments = Appointment::where('appointmentable_type', \App\Models\Task::class)
             ->whereIn('appointmentable_id', $taskIds)
             ->with(['organizer:id,first_name,last_name', 'participants:id,first_name,last_name', 'appointmentable'])
             ->get();
@@ -47,9 +47,7 @@ class ProjectAppointmentController extends Controller
         $allAppointments = $projectAppointments->merge($taskAppointments)
             ->sortBy('start_datetime')
             ->values()
-            ->map(function ($appointment) {
-                return $this->formatAppointment($appointment);
-            });
+            ->map($this->formatAppointment(...));
 
         return response()->json([
             'success' => true,
@@ -73,7 +71,7 @@ class ProjectAppointmentController extends Controller
         $endOfMonth = now()->setYear((int) $validated['year'])->setMonth((int) $validated['month'])->endOfMonth()->toDateTimeString();
 
         // Get project appointments
-        $projectAppointments = Appointment::where('appointmentable_type', 'App\\Models\\Project')
+        $projectAppointments = Appointment::where('appointmentable_type', \App\Models\Project::class)
             ->where('appointmentable_id', $project->id)
             ->betweenDates($startOfMonth, $endOfMonth)
             ->with(['organizer:id,first_name,last_name', 'participants:id,first_name,last_name'])
@@ -81,7 +79,7 @@ class ProjectAppointmentController extends Controller
 
         // Get task appointments for this project
         $taskIds = $project->tasks()->pluck('id');
-        $taskAppointments = Appointment::where('appointmentable_type', 'App\\Models\\Task')
+        $taskAppointments = Appointment::where('appointmentable_type', \App\Models\Task::class)
             ->whereIn('appointmentable_id', $taskIds)
             ->betweenDates($startOfMonth, $endOfMonth)
             ->with(['organizer:id,first_name,last_name', 'participants:id,first_name,last_name', 'appointmentable'])
@@ -90,9 +88,7 @@ class ProjectAppointmentController extends Controller
         $allAppointments = $projectAppointments->merge($taskAppointments)
             ->sortBy('start_datetime')
             ->values()
-            ->map(function ($appointment) {
-                return $this->formatAppointment($appointment);
-            });
+            ->map($this->formatAppointment(...));
 
         return response()->json([
             'success' => true,
@@ -118,12 +114,12 @@ class ProjectAppointmentController extends Controller
             'max_participants' => 'nullable|integer|min:1|max:1000',
             'participants' => 'nullable|array',
             'participants.*' => 'integer|exists:users,id',
-            'appointmentable_type' => ['required', Rule::in(['App\\Models\\Project', 'App\\Models\\Task'])],
+            'appointmentable_type' => ['required', Rule::in([\App\Models\Project::class, \App\Models\Task::class])],
             'appointmentable_id' => 'required|integer',
         ]);
 
         // Validate appointmentable
-        if ($validated['appointmentable_type'] === 'App\\Models\\Task') {
+        if ($validated['appointmentable_type'] === \App\Models\Task::class) {
             $task = Task::findOrFail($validated['appointmentable_id']);
             // Ensure task belongs to this project
             if ($task->project_id !== $project->id && $task->taskable_id !== $project->id) {
@@ -176,7 +172,7 @@ class ProjectAppointmentController extends Controller
                     ];
                     $newParticipantIds[$userId] = $confirmationToken;
                 }
-                if (!empty($participantsData)) {
+                if ($participantsData !== []) {
                     $appointment->participants()->attach($participantsData);
                 }
             }
@@ -275,7 +271,7 @@ class ProjectAppointmentController extends Controller
             // Update participants if provided
             $newParticipantIds = [];
             if (isset($validated['participants'])) {
-                $requestedParticipants = array_filter($validated['participants'], fn($id) => $id != $appointment->user_id);
+                $requestedParticipants = array_filter($validated['participants'], fn($id): bool => $id != $appointment->user_id);
 
                 // Find new participants (not in existing list)
                 $newParticipants = array_diff($requestedParticipants, $existingParticipantIds);
@@ -337,7 +333,7 @@ class ProjectAppointmentController extends Controller
                     }
                     $participant->notify(new AppointmentCancellation($appointment));
                 }
-            } elseif (!empty($changes)) {
+            } elseif ($changes !== []) {
                 // Notify existing participants about changes (if there were changes and participants exist)
                 $existingParticipantsToNotify = array_diff($existingParticipantIds, array_keys($newParticipantIds));
                 foreach ($existingParticipantsToNotify as $userId) {
@@ -402,11 +398,11 @@ class ProjectAppointmentController extends Controller
      */
     private function appointmentBelongsToProject(Appointment $appointment, Project $project): bool
     {
-        if ($appointment->appointmentable_type === 'App\\Models\\Project') {
+        if ($appointment->appointmentable_type === \App\Models\Project::class) {
             return $appointment->appointmentable_id === $project->id;
         }
 
-        if ($appointment->appointmentable_type === 'App\\Models\\Task') {
+        if ($appointment->appointmentable_type === \App\Models\Task::class) {
             $task = Task::find($appointment->appointmentable_id);
             if ($task) {
                 return $task->project_id === $project->id || $task->taskable_id === $project->id;
@@ -439,14 +435,12 @@ class ProjectAppointmentController extends Controller
                 'last_name' => $appointment->organizer->last_name,
             ] : null,
             'participants_count' => $appointment->participants->count(),
-            'participants' => $appointment->participants->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'first_name' => $user->first_name,
-                    'last_name' => $user->last_name,
-                    'status' => $user->pivot->status ?? 'pending',
-                ];
-            }),
+            'participants' => $appointment->participants->map(fn($user): array => [
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'status' => $user->pivot->status ?? 'pending',
+            ]),
             'appointmentable_type' => class_basename($appointment->appointmentable_type),
             'appointmentable' => $appointment->appointmentable ? [
                 'id' => $appointment->appointmentable->id,

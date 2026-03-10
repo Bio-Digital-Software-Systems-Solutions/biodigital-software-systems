@@ -157,6 +157,12 @@ jobs:
       - name: Run TypeScript compilation
         run: npx tsc --noEmit
 
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier check
+        run: npm run format:check
+
       - name: Run Jest tests
         run: npm run test
 

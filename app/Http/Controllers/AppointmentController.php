@@ -2,35 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ImportIcsRequest;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Http\Requests\UpdateAppointmentRequest;
-use App\Mail\AppointmentCreated;
 use App\Models\Appointment;
 use App\Models\User;
-use App\Notifications\AppointmentInvitation;
-use App\Notifications\AppointmentConfirmation;
 use App\Notifications\AppointmentCancellation;
-use App\Services\CacheService;
 use App\Services\AppointmentNotificationService;
+use App\Services\CacheService;
+use App\Services\ICalendarService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AppointmentController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('can:view appointments')->only(['index', 'show']);
-        $this->middleware('can:create appointments')->only(['create', 'store']);
+        $this->middleware('can:view appointments')->only(['index', 'show', 'exportIcs', 'exportBulkIcs']);
+        $this->middleware('can:create appointments')->only(['create', 'store', 'importIcs']);
         $this->middleware('can:edit appointments')->only(['edit', 'update']);
         $this->middleware('can:delete appointments')->only(['destroy']);
         $this->middleware('can:manage appointment participants')->only([
-            'inviteUser', 'removeParticipant', 'markAttended'
+            'inviteUser', 'removeParticipant', 'markAttended',
         ]);
     }
 
@@ -62,17 +61,17 @@ class AppointmentController extends Controller
                     ->withCount('participants')
                     ->select([
                         'id', 'uuid', 'title', 'description', 'start_datetime', 'end_datetime',
-                        'location', 'status', 'type', 'user_id', 'created_at'
+                        'location', 'status', 'type', 'user_id', 'created_at',
                     ]);
 
                 if ($search) {
-                    $query->where(function ($q) use ($search) {
+                    $query->where(function ($q) use ($search): void {
                         $q->where('title', 'like', "%{$search}%")
-                          ->orWhere('description', 'like', "%{$search}%")
-                          ->orWhere('location', 'like', "%{$search}%")
-                          ->orWhereHas('organizer', function ($q) use ($search) {
-                              $q->where('name', 'like', "%{$search}%");
-                          });
+                            ->orWhere('description', 'like', "%{$search}%")
+                            ->orWhere('location', 'like', "%{$search}%")
+                            ->orWhereHas('organizer', function ($q) use ($search): void {
+                                $q->where('name', 'like', "%{$search}%");
+                            });
                     });
                 }
 
@@ -95,15 +94,13 @@ class AppointmentController extends Controller
         );
 
         // Get statistics for the dashboard
-        $stats = CacheService::remember('appointments.stats', function () {
-            return [
-                'total' => Appointment::count(),
-                'upcoming' => Appointment::upcoming()->count(),
-                'today' => Appointment::today()->count(),
-                'pending' => Appointment::withStatus('pending')->count(),
-                'confirmed' => Appointment::withStatus('confirmed')->count(),
-            ];
-        }, CacheService::SHORT_CACHE);
+        $stats = CacheService::remember('appointments.stats', fn(): array => [
+            'total' => Appointment::count(),
+            'upcoming' => Appointment::upcoming()->count(),
+            'today' => Appointment::today()->count(),
+            'pending' => Appointment::withStatus('pending')->count(),
+            'confirmed' => Appointment::withStatus('confirmed')->count(),
+        ], CacheService::SHORT_CACHE);
 
         return Inertia::render('Appointments/Index', [
             'appointments' => $appointments,
@@ -141,7 +138,7 @@ class AppointmentController extends Controller
             $participantIds = $request->get('participant_ids');
             // Handle both array and single value cases
             if (is_array($participantIds)) {
-                $prefilledData['participant_ids'] = array_map('intval', $participantIds);
+                $prefilledData['participant_ids'] = array_map(intval(...), $participantIds);
             } else {
                 $prefilledData['participant_ids'] = [intval($participantIds)];
             }
@@ -153,18 +150,20 @@ class AppointmentController extends Controller
             ->orderBy('first_name')
             ->get()
             ->map(function ($user) {
-                $user->name = $user->first_name . ' ' . $user->last_name;
+                $user->name = $user->first_name.' '.$user->last_name;
+
                 return $user;
             });
 
         // Get pre-selected participants data if any
         $preselectedParticipants = [];
-        if (!empty($prefilledData['participant_ids'])) {
+        if (isset($prefilledData['participant_ids']) && $prefilledData['participant_ids'] !== []) {
             $preselectedParticipants = User::select(['id', 'uuid', 'first_name', 'last_name', 'email'])
                 ->whereIn('id', $prefilledData['participant_ids'])
                 ->get()
                 ->map(function ($user) {
-                    $user->name = $user->first_name . ' ' . $user->last_name;
+                    $user->name = $user->first_name.' '.$user->last_name;
+
                     return $user;
                 });
         }
@@ -188,7 +187,7 @@ class AppointmentController extends Controller
         $appointment = Appointment::create($data);
 
         // Invite participants if any
-        if (!empty($data['participant_ids'])) {
+        if (! empty($data['participant_ids'])) {
             // Bulk load users to avoid N+1 queries
             $users = User::whereIn('id', $data['participant_ids'])->get()->keyBy('id');
             foreach ($data['participant_ids'] as $userId) {
@@ -199,7 +198,7 @@ class AppointmentController extends Controller
         }
 
         // Send confirmation message to organizer
-        $notificationService = new AppointmentNotificationService();
+        $notificationService = new AppointmentNotificationService;
         $notificationService->sendOrganizerConfirmation($appointment);
 
         // Clear cache
@@ -215,7 +214,9 @@ class AppointmentController extends Controller
     private function inviteParticipant(Appointment $appointment, int $userId): void
     {
         $user = User::find($userId);
-        if (!$user) return;
+        if (! $user) {
+            return;
+        }
 
         // Generate unique confirmation token
         $confirmationToken = Str::random(64);
@@ -229,7 +230,7 @@ class AppointmentController extends Controller
         ]);
 
         // Send complete invitation notification (email + database notification + direct message + message notification)
-        $notificationService = new AppointmentNotificationService();
+        $notificationService = new AppointmentNotificationService;
         $notificationService->sendInvitationNotification($appointment, $user, $confirmationToken);
     }
 
@@ -250,7 +251,7 @@ class AppointmentController extends Controller
         ]);
 
         // Send complete invitation notification (email + database notification + direct message + message notification)
-        $notificationService = new AppointmentNotificationService();
+        $notificationService = new AppointmentNotificationService;
         $notificationService->sendInvitationNotification($appointment, $user, $confirmationToken);
     }
 
@@ -260,20 +261,27 @@ class AppointmentController extends Controller
     public function show(Appointment $appointment): Response
     {
         // Check permission
-        if (!$appointment->canBeViewedBy(Auth::user())) {
+        if (! $appointment->canBeViewedBy(Auth::user())) {
             abort(403, 'Vous n\'avez pas l\'autorisation de voir ce rendez-vous.');
         }
 
         $appointment->load([
             'organizer:id,first_name,last_name,email',
             'participants:id,first_name,last_name,email',
-            'appointmentable'
+            'appointmentable',
         ]);
+
+        $icalService = new ICalendarService;
 
         return Inertia::render('Appointments/Show', [
             'appointment' => $appointment,
             'canModify' => $appointment->canBeModifiedBy(Auth::user()),
             'canCancel' => $appointment->can_be_cancelled,
+            'calendarUrls' => [
+                'google' => $icalService->generateGoogleCalendarUrl($appointment),
+                'outlook' => $icalService->generateOutlookWebUrl($appointment),
+                'ics' => route('appointments.export-ics', $appointment->uuid),
+            ],
         ]);
     }
 
@@ -283,7 +291,7 @@ class AppointmentController extends Controller
     public function edit(Appointment $appointment): Response
     {
         // Check permission
-        if (!$appointment->canBeModifiedBy(Auth::user())) {
+        if (! $appointment->canBeModifiedBy(Auth::user())) {
             abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce rendez-vous.');
         }
 
@@ -308,7 +316,7 @@ class AppointmentController extends Controller
     public function update(UpdateAppointmentRequest $request, Appointment $appointment): RedirectResponse
     {
         // Check permission
-        if (!$appointment->canBeModifiedBy(Auth::user())) {
+        if (! $appointment->canBeModifiedBy(Auth::user())) {
             abort(403, 'Vous n\'avez pas l\'autorisation de modifier ce rendez-vous.');
         }
 
@@ -316,7 +324,7 @@ class AppointmentController extends Controller
 
         // Store previous participants before update
         $appointment->load('participants');
-        $previousParticipants = $appointment->participants->pluck('id')->toArray();
+        $appointment->participants->pluck('id')->toArray();
 
         $appointment->update($data);
 
@@ -339,7 +347,7 @@ class AppointmentController extends Controller
 
             // Notify about the update
             $appointment->load('participants');
-            $notificationService = new AppointmentNotificationService();
+            $notificationService = new AppointmentNotificationService;
             foreach ($appointment->participants as $participant) {
                 $notificationService->sendUpdateNotification($appointment, $participant, 'updated');
             }
@@ -358,7 +366,7 @@ class AppointmentController extends Controller
     public function destroy(Appointment $appointment): RedirectResponse
     {
         // Check permission
-        if (!$appointment->canBeModifiedBy(Auth::user())) {
+        if (! $appointment->canBeModifiedBy(Auth::user())) {
             abort(403, 'Vous n\'avez pas l\'autorisation de supprimer ce rendez-vous.');
         }
 
@@ -377,11 +385,11 @@ class AppointmentController extends Controller
     public function cancel(Appointment $appointment): RedirectResponse
     {
         // Check permission
-        if (!$appointment->canBeModifiedBy(Auth::user())) {
+        if (! $appointment->canBeModifiedBy(Auth::user())) {
             abort(403, 'Vous n\'avez pas l\'autorisation d\'annuler ce rendez-vous.');
         }
 
-        if (!$appointment->can_be_cancelled) {
+        if (! $appointment->can_be_cancelled) {
             return redirect()->back()
                 ->with('error', 'Ce rendez-vous ne peut plus être annulé.');
         }
@@ -392,7 +400,7 @@ class AppointmentController extends Controller
         $appointment->update(['status' => 'cancelled']);
 
         // Send cancellation notifications to all participants
-        $notificationService = new AppointmentNotificationService();
+        $notificationService = new AppointmentNotificationService;
         foreach ($appointment->participants as $participant) {
             $participant->notify(new AppointmentCancellation($appointment, 'Rendez-vous annulé par l\'organisateur'));
             $notificationService->sendUpdateNotification($appointment, $participant, 'cancelled');
@@ -411,7 +419,7 @@ class AppointmentController extends Controller
     public function confirm(Appointment $appointment): RedirectResponse
     {
         // Check permission
-        if (!$appointment->canBeModifiedBy(Auth::user())) {
+        if (! $appointment->canBeModifiedBy(Auth::user())) {
             abort(403, 'Vous n\'avez pas l\'autorisation de confirmer ce rendez-vous.');
         }
 
@@ -419,7 +427,7 @@ class AppointmentController extends Controller
 
         // Send confirmation notifications to all participants
         $appointment->load('participants');
-        $notificationService = new AppointmentNotificationService();
+        $notificationService = new AppointmentNotificationService;
         foreach ($appointment->participants as $participant) {
             $notificationService->sendUpdateNotification($appointment, $participant, 'confirmed');
         }
@@ -461,7 +469,7 @@ class AppointmentController extends Controller
         $request->validate([
             'date' => 'required|date|after_or_equal:today',
             'duration' => 'nullable|integer|min:30|max:240',
-            'organizer_id' => 'nullable|exists:users,id'
+            'organizer_id' => 'nullable|exists:users,id',
         ]);
 
         $date = $request->get('date');
@@ -469,7 +477,6 @@ class AppointmentController extends Controller
         $organizerId = $request->get('organizer_id');
 
         $organizer = $organizerId ? User::find($organizerId) : Auth::user();
-
 
         $slots = Appointment::getAvailableSlots($date, $duration, '03:00', '00:00', $organizer);
 
@@ -479,8 +486,8 @@ class AppointmentController extends Controller
                 'date' => $date,
                 'duration_minutes' => $duration,
                 'available_slots' => $slots,
-                'total_slots' => count($slots)
-            ]
+                'total_slots' => count($slots),
+            ],
         ]);
     }
 
@@ -490,35 +497,31 @@ class AppointmentController extends Controller
     public function calendar(Request $request): Response
     {
         $month = $request->get('month', now()->format('Y-m'));
-        $startDate = Carbon::parse($month . '-01')->startOfMonth();
+        $startDate = Carbon::parse($month.'-01')->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
 
         $appointments = CacheService::remember(
             "appointments.calendar.{$month}",
-            function () use ($startDate, $endDate) {
-                return Appointment::with(['organizer:id,first_name,last_name', 'participants:id,first_name,last_name'])
-                    ->betweenDates($startDate, $endDate)
-                    ->whereNotIn('status', ['cancelled'])
-                    ->get()
-                    ->map(function ($appointment) {
-                        return [
-                            'id' => $appointment->uuid,
-                            'title' => $appointment->title,
-                            'start' => $appointment->start_datetime->format('Y-m-d\TH:i:s'),
-                            'end' => $appointment->end_datetime->format('Y-m-d\TH:i:s'),
-                            'backgroundColor' => $this->getStatusColor($appointment->status),
-                            'borderColor' => $this->getStatusColor($appointment->status),
-                            'url' => route('appointments.show', $appointment->uuid),
-                            'extendedProps' => [
-                                'status' => $appointment->status,
-                                'type' => $appointment->type,
-                                'location' => $appointment->location,
-                                'organizer' => $appointment->organizer->first_name . ' ' . $appointment->organizer->last_name,
-                                'participants_count' => $appointment->participants_count,
-                            ]
-                        ];
-                    });
-            },
+            fn() => Appointment::with(['organizer:id,first_name,last_name', 'participants:id,first_name,last_name'])
+                ->betweenDates($startDate, $endDate)
+                ->whereNotIn('status', ['cancelled'])
+                ->get()
+                ->map(fn($appointment): array => [
+                    'id' => $appointment->uuid,
+                    'title' => $appointment->title,
+                    'start' => $appointment->start_datetime->format('Y-m-d\TH:i:s'),
+                    'end' => $appointment->end_datetime->format('Y-m-d\TH:i:s'),
+                    'backgroundColor' => $this->getStatusColor($appointment->status),
+                    'borderColor' => $this->getStatusColor($appointment->status),
+                    'url' => route('appointments.show', $appointment->uuid),
+                    'extendedProps' => [
+                        'status' => $appointment->status,
+                        'type' => $appointment->type,
+                        'location' => $appointment->location,
+                        'organizer' => $appointment->organizer->first_name.' '.$appointment->organizer->last_name,
+                        'participants_count' => $appointment->participants_count,
+                    ],
+                ]),
             CacheService::SHORT_CACHE
         );
 
@@ -529,12 +532,117 @@ class AppointmentController extends Controller
     }
 
     /**
+     * Export a single appointment as an .ics file download.
+     */
+    public function exportIcs(Appointment $appointment): StreamedResponse
+    {
+        if (! $appointment->canBeViewedBy(Auth::user())) {
+            abort(403, 'Vous n\'avez pas l\'autorisation de voir ce rendez-vous.');
+        }
+
+        $icalService = new ICalendarService;
+        $content = $icalService->exportAppointment($appointment);
+        $filename = Str::slug($appointment->title).'.ics';
+
+        return response()->streamDownload(function () use ($content): void {
+            echo $content;
+        }, $filename, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+        ]);
+    }
+
+    /**
+     * Export filtered appointments as a bulk .ics file download.
+     */
+    public function exportBulkIcs(Request $request): StreamedResponse
+    {
+        $query = Appointment::with('organizer:id,first_name,last_name,email');
+
+        if ($request->get('status')) {
+            $query->withStatus($request->get('status'));
+        }
+
+        if ($request->get('type')) {
+            $query->withType($request->get('type'));
+        }
+
+        if ($request->get('month')) {
+            $startDate = Carbon::parse($request->get('month').'-01')->startOfMonth();
+            $endDate = $startDate->copy()->endOfMonth();
+            $query->betweenDates($startDate, $endDate);
+        }
+
+        $appointments = $query->orderBy('start_datetime', 'asc')->get();
+
+        $icalService = new ICalendarService;
+        $content = $icalService->exportAppointments($appointments);
+
+        return response()->streamDownload(function () use ($content): void {
+            echo $content;
+        }, 'rendez-vous.ics', [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+        ]);
+    }
+
+    /**
+     * Import appointments from an uploaded .ics file.
+     */
+    public function importIcs(ImportIcsRequest $request): RedirectResponse
+    {
+        $icalService = new ICalendarService;
+        $events = $icalService->parseIcsFile($request->file('file'));
+
+        if ($events === []) {
+            return redirect()->back()
+                ->with('error', 'Aucun événement valide trouvé dans le fichier.');
+        }
+
+        $created = 0;
+        $skipped = 0;
+
+        foreach ($events as $eventData) {
+            // Skip events without required fields
+            if (empty($eventData['title']) || empty($eventData['start_datetime'])) {
+                $skipped++;
+
+                continue;
+            }
+
+            Appointment::create([
+                'title' => $eventData['title'],
+                'description' => $eventData['description'] ?? null,
+                'start_datetime' => $eventData['start_datetime'],
+                'end_datetime' => $eventData['end_datetime'],
+                'location' => $eventData['location'] ?? null,
+                'user_id' => Auth::id(),
+                'status' => 'pending',
+                'type' => 'meeting',
+                'visibility' => 'private',
+                'meeting_mode' => 'in_person',
+            ]);
+
+            $created++;
+        }
+
+        // Clear cache
+        CacheService::forgetPattern('appointments.*');
+
+        $message = "{$created} rendez-vous importé(s) avec succès.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} événement(s) ignoré(s).";
+        }
+
+        return redirect()->back()->with('message', $message);
+    }
+
+    /**
      * Generate cache key for appointments.
      */
     private function generateCacheKey(string $base, array $params): string
     {
         $filteredParams = array_filter($params);
-        return $filteredParams ? $base . '.' . md5(serialize($filteredParams)) : $base;
+
+        return $filteredParams !== [] ? $base.'.'.md5(serialize($filteredParams)) : $base;
     }
 
     /**

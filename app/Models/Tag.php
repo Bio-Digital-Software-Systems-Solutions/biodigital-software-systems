@@ -13,12 +13,15 @@ use Spatie\Activitylog\LogOptions;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $name
  * @property string $slug
  * @property string|null $description
  * @property string $color
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Article> $articles
  * @property-read int|null $articles_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Tag newModelQuery()
@@ -31,9 +34,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Tag whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Tag whereSlug($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Tag whereUpdatedAt($value)
- * @property string $uuid
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Tag whereUuid($value)
  * @mixin \Eloquent
  */
@@ -70,13 +70,13 @@ class Tag extends Model
     {
         parent::boot();
 
-        static::creating(function ($tag) {
+        static::creating(function ($tag): void {
             if (empty($tag->slug)) {
                 $tag->slug = Str::slug($tag->name);
             }
         });
 
-        static::updating(function ($tag) {
+        static::updating(function ($tag): void {
             if ($tag->isDirty('name') && empty($tag->slug)) {
                 $tag->slug = Str::slug($tag->name);
             }

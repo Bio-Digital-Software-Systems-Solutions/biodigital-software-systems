@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('workflow_step_instances', function (Blueprint $table) {
+        Schema::create('workflow_step_instances', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('workflow_instance_id')->constrained()->onDelete('cascade');
@@ -38,7 +38,7 @@ return new class extends Migration
         });
 
         // Add foreign key constraint for parent_step_instance_id in workflow_instances
-        Schema::table('workflow_instances', function (Blueprint $table) {
+        Schema::table('workflow_instances', function (Blueprint $table): void {
             $table->foreign('parent_step_instance_id')
                 ->references('id')
                 ->on('workflow_step_instances')
@@ -48,7 +48,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('workflow_instances', function (Blueprint $table) {
+        Schema::table('workflow_instances', function (Blueprint $table): void {
             $table->dropForeign(['parent_step_instance_id']);
         });
 

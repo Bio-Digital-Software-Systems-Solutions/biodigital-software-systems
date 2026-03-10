@@ -11,7 +11,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create necessary roles and permissions
     $pastorRole = Role::firstOrCreate(['name' => 'pastor']);
     $adminRole = Role::firstOrCreate(['name' => 'admin']);
@@ -76,7 +76,7 @@ beforeEach(function () {
     ]);
 });
 
-it('sends email to new pastor when appointment is transferred', function () {
+it('sends email to new pastor when appointment is transferred', function (): void {
     Mail::fake();
 
     $this->actingAs($this->admin)
@@ -86,13 +86,11 @@ it('sends email to new pastor when appointment is transferred', function () {
         ])
         ->assertRedirect();
 
-    Mail::assertQueued(PastoralCareTransferNotification::class, function ($mail) {
-        return $mail->hasTo($this->newPastor->email)
-            && $mail->recipientType === 'new_pastor';
-    });
+    Mail::assertQueued(PastoralCareTransferNotification::class, fn($mail): bool => $mail->hasTo($this->newPastor->email)
+        && $mail->recipientType === 'new_pastor');
 });
 
-it('sends email to old pastor when appointment is transferred', function () {
+it('sends email to old pastor when appointment is transferred', function (): void {
     Mail::fake();
 
     $this->actingAs($this->admin)
@@ -102,13 +100,11 @@ it('sends email to old pastor when appointment is transferred', function () {
         ])
         ->assertRedirect();
 
-    Mail::assertQueued(PastoralCareTransferNotification::class, function ($mail) {
-        return $mail->hasTo($this->oldPastor->email)
-            && $mail->recipientType === 'old_pastor';
-    });
+    Mail::assertQueued(PastoralCareTransferNotification::class, fn($mail): bool => $mail->hasTo($this->oldPastor->email)
+        && $mail->recipientType === 'old_pastor');
 });
 
-it('sends email to client when appointment is transferred', function () {
+it('sends email to client when appointment is transferred', function (): void {
     Mail::fake();
 
     $this->actingAs($this->admin)
@@ -118,13 +114,11 @@ it('sends email to client when appointment is transferred', function () {
         ])
         ->assertRedirect();
 
-    Mail::assertQueued(PastoralCareTransferNotification::class, function ($mail) {
-        return $mail->hasTo($this->appointment->client_email)
-            && $mail->recipientType === 'client';
-    });
+    Mail::assertQueued(PastoralCareTransferNotification::class, fn($mail): bool => $mail->hasTo($this->appointment->client_email)
+        && $mail->recipientType === 'client');
 });
 
-it('sends all three emails when appointment is transferred', function () {
+it('sends all three emails when appointment is transferred', function (): void {
     Mail::fake();
 
     $this->actingAs($this->admin)
@@ -138,7 +132,7 @@ it('sends all three emails when appointment is transferred', function () {
     Mail::assertQueued(PastoralCareTransferNotification::class, 3);
 });
 
-it('creates platform message for new pastor when appointment is transferred', function () {
+it('creates platform message for new pastor when appointment is transferred', function (): void {
     Mail::fake();
 
     $this->actingAs($this->admin)
@@ -154,7 +148,7 @@ it('creates platform message for new pastor when appointment is transferred', fu
     ]);
 });
 
-it('creates platform message for old pastor when appointment is transferred', function () {
+it('creates platform message for old pastor when appointment is transferred', function (): void {
     Mail::fake();
 
     $this->actingAs($this->admin)
@@ -170,7 +164,7 @@ it('creates platform message for old pastor when appointment is transferred', fu
     ]);
 });
 
-it('creates platform message for client when appointment is transferred and client has account', function () {
+it('creates platform message for client when appointment is transferred and client has account', function (): void {
     Mail::fake();
 
     $this->actingAs($this->admin)
@@ -186,7 +180,7 @@ it('creates platform message for client when appointment is transferred and clie
     ]);
 });
 
-it('sends email to client even when they do not have an account', function () {
+it('sends email to client even when they do not have an account', function (): void {
     Mail::fake();
 
     // Create appointment without user_id (external client)
@@ -207,13 +201,11 @@ it('sends email to client even when they do not have an account', function () {
         ->assertRedirect();
 
     // Email should still be queued for client
-    Mail::assertQueued(PastoralCareTransferNotification::class, function ($mail) {
-        return $mail->hasTo('external@example.com')
-            && $mail->recipientType === 'client';
-    });
+    Mail::assertQueued(PastoralCareTransferNotification::class, fn($mail): bool => $mail->hasTo('external@example.com')
+        && $mail->recipientType === 'client');
 });
 
-it('does not create platform message for client without account', function () {
+it('does not create platform message for client without account', function (): void {
     Mail::fake();
 
     // Create appointment without user_id (external client)
@@ -236,7 +228,7 @@ it('does not create platform message for client without account', function () {
     expect(Message::count())->toBe($initialMessageCount + 2);
 });
 
-it('includes transfer reason in notifications when provided', function () {
+it('includes transfer reason in notifications when provided', function (): void {
     Mail::fake();
 
     $transferReason = 'Vacances du pasteur initial';
@@ -248,16 +240,14 @@ it('includes transfer reason in notifications when provided', function () {
         ]);
 
     // Check that the mailable contains the transfer reason
-    Mail::assertQueued(PastoralCareTransferNotification::class, function ($mail) use ($transferReason) {
-        return $mail->appointment->transfer_reason === $transferReason;
-    });
+    Mail::assertQueued(PastoralCareTransferNotification::class, fn($mail): bool => $mail->appointment->transfer_reason === $transferReason);
 
     // Check platform message content
     $message = Message::where('receiver_id', $this->newPastor->id)->first();
     expect($message->content)->toContain($transferReason);
 });
 
-it('mailable has correct subject for new pastor', function () {
+it('mailable has correct subject for new pastor', function (): void {
     $mailable = new PastoralCareTransferNotification(
         $this->appointment,
         $this->oldPastor,
@@ -269,7 +259,7 @@ it('mailable has correct subject for new pastor', function () {
     expect($mailable->envelope()->subject)->toContain($this->appointment->client_name);
 });
 
-it('mailable has correct subject for old pastor', function () {
+it('mailable has correct subject for old pastor', function (): void {
     $mailable = new PastoralCareTransferNotification(
         $this->appointment,
         $this->oldPastor,
@@ -281,7 +271,7 @@ it('mailable has correct subject for old pastor', function () {
     expect($mailable->envelope()->subject)->toContain($this->newPastor->first_name);
 });
 
-it('mailable has correct subject for client', function () {
+it('mailable has correct subject for client', function (): void {
     $mailable = new PastoralCareTransferNotification(
         $this->appointment,
         $this->oldPastor,
@@ -292,7 +282,7 @@ it('mailable has correct subject for client', function () {
     expect($mailable->envelope()->subject)->toContain('Changement de responsable');
 });
 
-it('mailable is queued', function () {
+it('mailable is queued', function (): void {
     $mailable = new PastoralCareTransferNotification(
         $this->appointment,
         $this->oldPastor,
@@ -303,7 +293,7 @@ it('mailable is queued', function () {
     expect($mailable)->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class);
 });
 
-it('requires transfer pastoral care permission to transfer', function () {
+it('requires transfer pastoral care permission to transfer', function (): void {
     Mail::fake();
 
     // Create a user without transfer permission

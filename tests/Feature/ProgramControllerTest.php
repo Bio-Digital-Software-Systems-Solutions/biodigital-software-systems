@@ -9,6 +9,7 @@ use Tests\TestCase;
 
 class ProgramControllerTest extends TestCase
 {
+    public $user;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -21,7 +22,7 @@ class ProgramControllerTest extends TestCase
 
     public function test_index_displays_programs(): void
     {
-        $programs = Program::factory()->count(3)->create(['user_id' => $this->user->id]);
+        Program::factory()->count(3)->create(['user_id' => $this->user->id]);
 
         $this->user->givePermissionTo('view programs');
 
@@ -260,7 +261,7 @@ class ProgramControllerTest extends TestCase
 
     public function test_unauthorized_user_cannot_access_programs(): void
     {
-        $program = Program::factory()->create(['user_id' => $this->user->id]);
+        Program::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->actingAs($this->user)
             ->get(route('programs.index'));

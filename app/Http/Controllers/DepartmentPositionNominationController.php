@@ -56,7 +56,7 @@ class DepartmentPositionNominationController extends Controller
             return back()->withErrors(['user_id' => 'Cet utilisateur est déjà nommé à ce poste.']);
         }
 
-        $nomination = DepartmentPositionNomination::create([
+        DepartmentPositionNomination::create([
             ...$validated,
             'department_id' => $department->id,
             'nominated_by' => auth()->id(),

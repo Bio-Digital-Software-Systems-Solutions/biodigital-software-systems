@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create required permissions
     \Spatie\Permission\Models\Permission::create(['name' => 'view programs']);
     \Spatie\Permission\Models\Permission::create(['name' => 'manage programs']);
@@ -34,8 +34,8 @@ beforeEach(function () {
 // MentionService Tests
 // ============================================
 
-describe('MentionService - parseMentions', function () {
-    it('parses explicit format mentions @[Name](id)', function () {
+describe('MentionService - parseMentions', function (): void {
+    it('parses explicit format mentions @[Name](id)', function (): void {
         $content = 'Hello @[John Doe](123) and @[Jane Smith](456)!';
 
         $mentions = $this->mentionService->parseMentions($content);
@@ -43,7 +43,7 @@ describe('MentionService - parseMentions', function () {
         expect($mentions)->toBe([123, 456]);
     });
 
-    it('returns empty array when no mentions', function () {
+    it('returns empty array when no mentions', function (): void {
         $content = 'Hello world, no mentions here!';
 
         $mentions = $this->mentionService->parseMentions($content);
@@ -51,7 +51,7 @@ describe('MentionService - parseMentions', function () {
         expect($mentions)->toBe([]);
     });
 
-    it('returns unique user IDs', function () {
+    it('returns unique user IDs', function (): void {
         $content = '@[John Doe](123) says hello to @[John Doe](123)';
 
         $mentions = $this->mentionService->parseMentions($content);
@@ -59,7 +59,7 @@ describe('MentionService - parseMentions', function () {
         expect($mentions)->toBe([123]);
     });
 
-    it('parses simple @mention format with first name', function () {
+    it('parses simple @mention format with first name', function (): void {
         $user = User::factory()->create([
             'first_name' => 'UniqueJohn',
             'last_name' => 'Doe',
@@ -72,7 +72,7 @@ describe('MentionService - parseMentions', function () {
         expect($mentions)->toContain($user->id);
     });
 
-    it('parses simple @mention format with full name', function () {
+    it('parses simple @mention format with full name', function (): void {
         $user = User::factory()->create([
             'first_name' => 'UniqueMark',
             'last_name' => 'Smith',
@@ -85,7 +85,7 @@ describe('MentionService - parseMentions', function () {
         expect($mentions)->toContain($user->id);
     });
 
-    it('validates mentions against provided user collection', function () {
+    it('validates mentions against provided user collection', function (): void {
         $validUser = User::factory()->create(['first_name' => 'ValidUser']);
         $invalidUser = User::factory()->create(['first_name' => 'InvalidUser']);
 
@@ -99,8 +99,8 @@ describe('MentionService - parseMentions', function () {
     });
 });
 
-describe('MentionService - validateMentionedUsers', function () {
-    it('returns valid user IDs', function () {
+describe('MentionService - validateMentionedUsers', function (): void {
+    it('returns valid user IDs', function (): void {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
 
@@ -113,13 +113,13 @@ describe('MentionService - validateMentionedUsers', function () {
             ->not->toContain(99999);
     });
 
-    it('returns empty array for empty input', function () {
+    it('returns empty array for empty input', function (): void {
         $result = $this->mentionService->validateMentionedUsers([]);
 
         expect($result)->toBe([]);
     });
 
-    it('filters against provided user collection', function () {
+    it('filters against provided user collection', function (): void {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
         $user3 = User::factory()->create();
@@ -137,8 +137,8 @@ describe('MentionService - validateMentionedUsers', function () {
     });
 });
 
-describe('MentionService - getMentionableUsersForProject', function () {
-    it('returns project members', function () {
+describe('MentionService - getMentionableUsersForProject', function (): void {
+    it('returns project members', function (): void {
         $project = Project::factory()->create();
         $member = User::factory()->create();
 
@@ -149,7 +149,7 @@ describe('MentionService - getMentionableUsersForProject', function () {
         expect($users->pluck('id')->toArray())->toContain($member->id);
     });
 
-    it('returns project manager', function () {
+    it('returns project manager', function (): void {
         $manager = User::factory()->create();
         $project = Project::factory()->create([
             'project_manager_id' => $manager->id,
@@ -160,7 +160,7 @@ describe('MentionService - getMentionableUsersForProject', function () {
         expect($users->pluck('id')->toArray())->toContain($manager->id);
     });
 
-    it('returns project participants', function () {
+    it('returns project participants', function (): void {
         $project = Project::factory()->create();
         $participant = User::factory()->create();
 
@@ -175,8 +175,8 @@ describe('MentionService - getMentionableUsersForProject', function () {
     });
 });
 
-describe('MentionService - getMentionableUsersForTask', function () {
-    it('returns task participants', function () {
+describe('MentionService - getMentionableUsersForTask', function (): void {
+    it('returns task participants', function (): void {
         $task = Task::factory()->create();
         $participant = User::factory()->create();
 
@@ -191,7 +191,7 @@ describe('MentionService - getMentionableUsersForTask', function () {
         expect($users->pluck('id')->toArray())->toContain($participant->id);
     });
 
-    it('returns task assignee', function () {
+    it('returns task assignee', function (): void {
         $assignee = User::factory()->create();
         $task = Task::factory()->create([
             'assigned_to' => $assignee->id,
@@ -202,7 +202,7 @@ describe('MentionService - getMentionableUsersForTask', function () {
         expect($users->pluck('id')->toArray())->toContain($assignee->id);
     });
 
-    it('includes project members when project context provided', function () {
+    it('includes project members when project context provided', function (): void {
         $project = Project::factory()->create();
         $task = Task::factory()->create([
             'project_id' => $project->id,
@@ -217,8 +217,8 @@ describe('MentionService - getMentionableUsersForTask', function () {
     });
 });
 
-describe('MentionService - enrichContent', function () {
-    it('converts simple @mentions to rich format', function () {
+describe('MentionService - enrichContent', function (): void {
+    it('converts simple @mentions to rich format', function (): void {
         $user = User::factory()->create([
             'first_name' => 'RichJohn',
             'last_name' => 'Doe',
@@ -230,7 +230,7 @@ describe('MentionService - enrichContent', function () {
         expect($enriched)->toContain("@[RichJohn Doe]({$user->uuid})");
     });
 
-    it('returns original content when no mentions', function () {
+    it('returns original content when no mentions', function (): void {
         $content = 'Hello world!';
         $enriched = $this->mentionService->enrichContent($content, []);
 
@@ -238,20 +238,20 @@ describe('MentionService - enrichContent', function () {
     });
 });
 
-describe('MentionService - extractUserIds', function () {
-    it('extracts valid user IDs from array', function () {
+describe('MentionService - extractUserIds', function (): void {
+    it('extracts valid user IDs from array', function (): void {
         $result = $this->mentionService->extractUserIds([1, 2, 3, '4', null, 0, -1]);
 
         expect($result)->toBe([1, 2, 3, 4]);
     });
 
-    it('returns empty array for null input', function () {
+    it('returns empty array for null input', function (): void {
         $result = $this->mentionService->extractUserIds(null);
 
         expect($result)->toBe([]);
     });
 
-    it('removes duplicates', function () {
+    it('removes duplicates', function (): void {
         $result = $this->mentionService->extractUserIds([1, 2, 1, 2, 3]);
 
         expect($result)->toBe([1, 2, 3]);
@@ -262,8 +262,8 @@ describe('MentionService - extractUserIds', function () {
 // Task Comment Mention Integration Tests
 // ============================================
 
-describe('Task Comment Mentions', function () {
-    beforeEach(function () {
+describe('Task Comment Mentions', function (): void {
+    beforeEach(function (): void {
         $this->project = Project::factory()->create();
         $this->task = Task::factory()->create([
             'project_id' => $this->project->id,
@@ -277,7 +277,7 @@ describe('Task Comment Mentions', function () {
         ]);
     });
 
-    it('stores mentions when creating a comment with explicit mentions', function () {
+    it('stores mentions when creating a comment with explicit mentions', function (): void {
         $mentionedUser = User::factory()->create();
         TaskParticipant::create([
             'task_id' => $this->task->id,
@@ -304,7 +304,7 @@ describe('Task Comment Mentions', function () {
         expect($comment->mentions)->toContain($mentionedUser->id);
     });
 
-    it('parses mentions from content without explicit mentions array', function () {
+    it('parses mentions from content without explicit mentions array', function (): void {
         $mentionedUser = User::factory()->create([
             'first_name' => 'TestMention',
             'last_name' => 'User',
@@ -328,7 +328,7 @@ describe('Task Comment Mentions', function () {
         expect($comment->mentions)->toContain($mentionedUser->id);
     });
 
-    it('sends notification to mentioned users', function () {
+    it('sends notification to mentioned users', function (): void {
         $mentionedUser = User::factory()->create();
         TaskParticipant::create([
             'task_id' => $this->task->id,
@@ -350,7 +350,7 @@ describe('Task Comment Mentions', function () {
         );
     });
 
-    it('does not send notification to the commenter if they mention themselves', function () {
+    it('does not send notification to the commenter if they mention themselves', function (): void {
         Notification::fake();
 
         $this->actingAs($this->user)
@@ -362,7 +362,7 @@ describe('Task Comment Mentions', function () {
         Notification::assertNotSentTo($this->user, UserMentionedInComment::class);
     });
 
-    it('validates mentions array contains valid user IDs', function () {
+    it('validates mentions array contains valid user IDs', function (): void {
         $response = $this->actingAs($this->user)
             ->postJson("/api/tasks/{$this->task->uuid}/comments", [
                 'content' => 'Test comment',
@@ -372,7 +372,7 @@ describe('Task Comment Mentions', function () {
         $response->assertUnprocessable();
     });
 
-    it('rejects mentions with non-existent user IDs', function () {
+    it('rejects mentions with non-existent user IDs', function (): void {
         $validUser = User::factory()->create();
         TaskParticipant::create([
             'task_id' => $this->task->id,
@@ -390,7 +390,7 @@ describe('Task Comment Mentions', function () {
         $response->assertJsonValidationErrors(['mentions.1']);
     });
 
-    it('stores comment with valid mentions only', function () {
+    it('stores comment with valid mentions only', function (): void {
         $validUser = User::factory()->create();
         TaskParticipant::create([
             'task_id' => $this->task->id,
@@ -412,7 +412,7 @@ describe('Task Comment Mentions', function () {
         expect($comment->mentions)->toContain($validUser->id);
     });
 
-    it('returns mentionable users for a task', function () {
+    it('returns mentionable users for a task', function (): void {
         $participant = User::factory()->create([
             'first_name' => 'Participant',
             'last_name' => 'User',
@@ -439,14 +439,14 @@ describe('Task Comment Mentions', function () {
 // Project Comment Mention Integration Tests
 // ============================================
 
-describe('Project Comment Mentions', function () {
-    beforeEach(function () {
+describe('Project Comment Mentions', function (): void {
+    beforeEach(function (): void {
         $this->project = Project::factory()->create([
             'project_manager_id' => $this->user->id,
         ]);
     });
 
-    it('stores mentions when creating a project comment', function () {
+    it('stores mentions when creating a project comment', function (): void {
         $mentionedUser = User::factory()->create();
         $this->project->participants()->create([
             'user_id' => $mentionedUser->id,
@@ -467,7 +467,7 @@ describe('Project Comment Mentions', function () {
         expect($comment->mentions)->toContain($mentionedUser->id);
     });
 
-    it('sends notification to mentioned users on project', function () {
+    it('sends notification to mentioned users on project', function (): void {
         $mentionedUser = User::factory()->create();
         $this->project->participants()->create([
             'user_id' => $mentionedUser->id,
@@ -485,13 +485,11 @@ describe('Project Comment Mentions', function () {
         Notification::assertSentTo(
             $mentionedUser,
             UserMentionedInComment::class,
-            function ($notification) {
-                return $notification->contextType === 'project';
-            }
+            fn($notification): bool => $notification->contextType === 'project'
         );
     });
 
-    it('returns mentionable users for a project', function () {
+    it('returns mentionable users for a project', function (): void {
         $participant = User::factory()->create([
             'first_name' => 'Project',
             'last_name' => 'Participant',
@@ -517,8 +515,8 @@ describe('Project Comment Mentions', function () {
 // Comment Model Methods Tests
 // ============================================
 
-describe('Comment Model Methods', function () {
-    it('can get mentioned users from TaskComment', function () {
+describe('Comment Model Methods', function (): void {
+    it('can get mentioned users from TaskComment', function (): void {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
         $task = Task::factory()->create();
@@ -536,7 +534,7 @@ describe('Comment Model Methods', function () {
             ->toContain($user2->id);
     });
 
-    it('can add mention to TaskComment', function () {
+    it('can add mention to TaskComment', function (): void {
         $user = User::factory()->create();
         $task = Task::factory()->create();
 
@@ -550,7 +548,7 @@ describe('Comment Model Methods', function () {
         expect($comment->fresh()->mentions)->toContain($user->id);
     });
 
-    it('can remove mention from TaskComment', function () {
+    it('can remove mention from TaskComment', function (): void {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
         $task = Task::factory()->create();
@@ -567,7 +565,7 @@ describe('Comment Model Methods', function () {
             ->toContain($user2->id);
     });
 
-    it('can check if user is mentioned', function () {
+    it('can check if user is mentioned', function (): void {
         $user = User::factory()->create();
         $task = Task::factory()->create();
 
@@ -580,7 +578,7 @@ describe('Comment Model Methods', function () {
         expect($comment->hasMention(99999))->toBeFalse();
     });
 
-    it('returns empty collection when no mentions', function () {
+    it('returns empty collection when no mentions', function (): void {
         $task = Task::factory()->create();
 
         $comment = TaskComment::factory()->create([
@@ -596,8 +594,8 @@ describe('Comment Model Methods', function () {
 // Notification Content Tests
 // ============================================
 
-describe('Notification Content', function () {
-    it('notification contains correct context for task mention', function () {
+describe('Notification Content', function (): void {
+    it('notification contains correct context for task mention', function (): void {
         $mentionedUser = User::factory()->create();
         $task = Task::factory()->create();
 
@@ -618,9 +616,7 @@ describe('Notification Content', function () {
         Notification::assertSentTo(
             $mentionedUser,
             UserMentionedInComment::class,
-            function ($notification) {
-                return $notification->contextType === 'task';
-            }
+            fn($notification): bool => $notification->contextType === 'task'
         );
     });
 });

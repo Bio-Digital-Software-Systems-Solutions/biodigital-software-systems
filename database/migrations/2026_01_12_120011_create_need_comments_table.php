@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('need_comments', function (Blueprint $table) {
+        Schema::create('need_comments', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('need_id')->constrained('department_needs')->onDelete('cascade');

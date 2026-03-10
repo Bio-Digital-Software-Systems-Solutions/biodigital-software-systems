@@ -16,20 +16,63 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $name
  * @property string $code
  * @property string|null $description
+ * @property string|null $image
  * @property int|null $head_of_department
+ * @property int|null $first_deputy_id
+ * @property int|null $second_deputy_id
  * @property numeric|null $budget
  * @property bool $is_active
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentPosition> $activePositions
+ * @property-read int|null $active_positions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentWorkflow> $activeWorkflows
+ * @property-read int|null $active_workflows_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Appointment> $appointments
+ * @property-read int|null $appointments_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentDocumentCategory> $categories
+ * @property-read int|null $categories_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentDocument> $documents
+ * @property-read int|null $documents_count
+ * @property-read \App\Models\User|null $firstDeputy
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentForm> $forms
+ * @property-read int|null $forms_count
  * @property-read mixed $head_of_department_user
  * @property-read int|null $users_count
  * @property-read \App\Models\User|null $headOfDepartment
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Appointment> $meetingAppointments
+ * @property-read int|null $meeting_appointments_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentMeeting> $meetings
+ * @property-read int|null $meetings_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $members
+ * @property-read int|null $members_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentNeed> $needs
+ * @property-read int|null $needs_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentNeed> $pendingNeeds
+ * @property-read int|null $pending_needs_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentPosition> $positions
+ * @property-read int|null $positions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentForm> $publishedForms
+ * @property-read int|null $published_forms_count
+ * @property-read \App\Models\User|null $secondDeputy
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\DepartmentTodo> $todos
+ * @property-read int|null $todos_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Appointment> $upcomingAppointments
+ * @property-read int|null $upcoming_appointments_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentMeeting> $upcomingMeetings
+ * @property-read int|null $upcoming_meetings_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
- *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowInstance> $workflowInstances
+ * @property-read int|null $workflow_instances_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentWorkflow> $workflows
+ * @property-read int|null $workflows_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department active()
  * @method static \Database\Factories\DepartmentFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department newModelQuery()
@@ -42,22 +85,17 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereFirstDeputyId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereHeadOfDepartment($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereSecondDeputyId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereUuid($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department withoutTrashed()
- *
- * @property string $uuid
- * @property string|null $image
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- *
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereImage($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereUuid($value)
- *
  * @mixin \Eloquent
  */
 class Department extends Model
@@ -79,7 +117,7 @@ class Department extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
@@ -364,7 +402,7 @@ class Department extends Model
     public function upcomingMeetings(): HasMany
     {
         return $this->hasMany(DepartmentMeeting::class)
-            ->whereHas('appointment', function ($query) {
+            ->whereHas('appointment', function ($query): void {
                 $query->where('start_datetime', '>', now());
             });
     }

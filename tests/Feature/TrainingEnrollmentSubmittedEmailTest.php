@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Mail;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 
     $this->user = User::factory()->create([
@@ -29,7 +29,7 @@ beforeEach(function () {
     ]);
 });
 
-it('sends a submission email when a user enrolls in a training', function () {
+it('sends a submission email when a user enrolls in a training', function (): void {
     Mail::fake();
 
     $response = $this->actingAs($this->user)
@@ -43,15 +43,13 @@ it('sends a submission email when a user enrolls in a training', function () {
 
     $response->assertRedirect();
 
-    Mail::assertSent(TrainingEnrollmentSubmitted::class, function ($mail) {
-        return $mail->hasTo('jane@test.com')
-            && $mail->userName === 'Jane Smith'
-            && $mail->trainingName === 'Formation Laravel Avancé'
-            && $mail->paymentMethod === 'monthly';
-    });
+    Mail::assertSent(TrainingEnrollmentSubmitted::class, fn($mail): bool => $mail->hasTo('jane@test.com')
+        && $mail->userName === 'Jane Smith'
+        && $mail->trainingName === 'Formation Laravel Avancé'
+        && $mail->paymentMethod === 'monthly');
 });
 
-it('does not send a submission email when enrollment validation fails', function () {
+it('does not send a submission email when enrollment validation fails', function (): void {
     Mail::fake();
 
     $response = $this->actingAs($this->user)
@@ -68,7 +66,7 @@ it('does not send a submission email when enrollment validation fails', function
     Mail::assertNotSent(TrainingEnrollmentSubmitted::class);
 });
 
-it('does not send a submission email when user is already enrolled', function () {
+it('does not send a submission email when user is already enrolled', function (): void {
     Mail::fake();
 
     $this->training->students()->attach($this->user->id, [
@@ -89,7 +87,7 @@ it('does not send a submission email when user is already enrolled', function ()
     Mail::assertNotSent(TrainingEnrollmentSubmitted::class);
 });
 
-it('includes correct subject in the submission email', function () {
+it('includes correct subject in the submission email', function (): void {
     Mail::fake();
 
     $this->actingAs($this->user)
@@ -101,7 +99,5 @@ it('includes correct subject in the submission email', function () {
             'hasReadPrivacyPolicy' => true,
         ]);
 
-    Mail::assertSent(TrainingEnrollmentSubmitted::class, function ($mail) {
-        return $mail->envelope()->subject === 'Demande d\'inscription soumise - Formation Laravel Avancé';
-    });
+    Mail::assertSent(TrainingEnrollmentSubmitted::class, fn($mail): bool => $mail->envelope()->subject === 'Demande d\'inscription soumise - Formation Laravel Avancé');
 });

@@ -74,7 +74,7 @@ class ParticipantNotificationTest extends TestCase
     // ==========================================
 
     /** @test */
-    public function it_sends_notification_when_adding_participant_to_project()
+    public function it_sends_notification_when_adding_participant_to_project(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
@@ -89,16 +89,14 @@ class ParticipantNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->participant,
             ProjectParticipantAdded::class,
-            function ($notification) {
-                return $notification->project->id === $this->project->id
-                    && $notification->role === 'member'
-                    && $notification->addedBy->id === $this->user->id;
-            }
+            fn($notification): bool => $notification->project->id === $this->project->id
+                && $notification->role === 'member'
+                && $notification->addedBy->id === $this->user->id
         );
     }
 
     /** @test */
-    public function it_does_not_send_notification_when_user_adds_themselves_to_project()
+    public function it_does_not_send_notification_when_user_adds_themselves_to_project(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
@@ -114,7 +112,7 @@ class ParticipantNotificationTest extends TestCase
     }
 
     /** @test */
-    public function it_does_not_send_notification_when_updating_existing_participant_role()
+    public function it_does_not_send_notification_when_updating_existing_participant_role(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
@@ -140,7 +138,7 @@ class ParticipantNotificationTest extends TestCase
     }
 
     /** @test */
-    public function project_participant_notification_contains_correct_data()
+    public function project_participant_notification_contains_correct_data(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
@@ -153,7 +151,7 @@ class ParticipantNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->participant,
             ProjectParticipantAdded::class,
-            function ($notification, $channels) {
+            function ($notification, iterable $channels): true {
                 // Check channels
                 $this->assertContains('mail', $channels);
                 $this->assertContains('database', $channels);
@@ -175,7 +173,7 @@ class ParticipantNotificationTest extends TestCase
     }
 
     /** @test */
-    public function project_participant_notification_mail_has_correct_subject()
+    public function project_participant_notification_mail_has_correct_subject(): void
     {
         $notification = new ProjectParticipantAdded($this->project, 'member', $this->user);
         $mailMessage = $notification->toMail($this->participant);
@@ -188,7 +186,7 @@ class ParticipantNotificationTest extends TestCase
     // ==========================================
 
     /** @test */
-    public function it_sends_notification_when_adding_participant_to_task()
+    public function it_sends_notification_when_adding_participant_to_task(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
@@ -203,16 +201,14 @@ class ParticipantNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->participant,
             TaskParticipantAdded::class,
-            function ($notification) {
-                return $notification->task->id === $this->task->id
-                    && $notification->role === 'assignee'
-                    && $notification->addedBy->id === $this->user->id;
-            }
+            fn($notification): bool => $notification->task->id === $this->task->id
+                && $notification->role === 'assignee'
+                && $notification->addedBy->id === $this->user->id
         );
     }
 
     /** @test */
-    public function it_does_not_send_notification_when_user_adds_themselves_to_task()
+    public function it_does_not_send_notification_when_user_adds_themselves_to_task(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
@@ -228,7 +224,7 @@ class ParticipantNotificationTest extends TestCase
     }
 
     /** @test */
-    public function it_does_not_send_duplicate_notification_for_existing_task_participant()
+    public function it_does_not_send_duplicate_notification_for_existing_task_participant(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
@@ -252,7 +248,7 @@ class ParticipantNotificationTest extends TestCase
     }
 
     /** @test */
-    public function task_participant_notification_contains_correct_data()
+    public function task_participant_notification_contains_correct_data(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
@@ -265,7 +261,7 @@ class ParticipantNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->participant,
             TaskParticipantAdded::class,
-            function ($notification, $channels) {
+            function ($notification, iterable $channels): true {
                 // Check channels
                 $this->assertContains('mail', $channels);
                 $this->assertContains('database', $channels);
@@ -287,7 +283,7 @@ class ParticipantNotificationTest extends TestCase
     }
 
     /** @test */
-    public function task_participant_notification_mail_has_correct_subject()
+    public function task_participant_notification_mail_has_correct_subject(): void
     {
         $notification = new TaskParticipantAdded($this->task, 'assignee', $this->user);
         $mailMessage = $notification->toMail($this->participant);
@@ -296,7 +292,7 @@ class ParticipantNotificationTest extends TestCase
     }
 
     /** @test */
-    public function task_notification_includes_project_info_when_available()
+    public function task_notification_includes_project_info_when_available(): void
     {
         Notification::fake();
         Sanctum::actingAs($this->user);
@@ -309,7 +305,7 @@ class ParticipantNotificationTest extends TestCase
         Notification::assertSentTo(
             $this->participant,
             TaskParticipantAdded::class,
-            function ($notification) {
+            function ($notification): true {
                 $dbData = $notification->toDatabase($this->participant);
                 $this->assertEquals($this->project->id, $dbData['project_id']);
                 $this->assertEquals($this->project->name, $dbData['project_name']);
@@ -324,7 +320,7 @@ class ParticipantNotificationTest extends TestCase
     // ==========================================
 
     /** @test */
-    public function project_notification_translates_all_role_labels_correctly()
+    public function project_notification_translates_all_role_labels_correctly(): void
     {
         $testCases = [
             'member' => 'Membre',
@@ -342,7 +338,7 @@ class ParticipantNotificationTest extends TestCase
     }
 
     /** @test */
-    public function task_notification_translates_all_role_labels_correctly()
+    public function task_notification_translates_all_role_labels_correctly(): void
     {
         $testCases = [
             'assignee' => 'Assigné',

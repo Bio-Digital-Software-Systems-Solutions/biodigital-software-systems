@@ -18,6 +18,8 @@ use Spatie\Activitylog\LogOptions;
  * @property array<array-key, mixed>|null $skills
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProgramStep> $programSteps
  * @property-read int|null $program_steps_count
  * @method static \Database\Factories\ParticipantFactory factory($count = null, $state = [])
@@ -32,8 +34,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Participant whereRole($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Participant whereSkills($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Participant whereUpdatedAt($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class Participant extends Model

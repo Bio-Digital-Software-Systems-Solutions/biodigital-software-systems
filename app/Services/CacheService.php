@@ -13,12 +13,9 @@ class CacheService
     const SHORT_CACHE = 300;      // 5 minutes
     const MEDIUM_CACHE = 3600;    // 1 hour
     const LONG_CACHE = 86400;     // 24 hours
-
     /**
      * Remember a value in cache with automatic key generation
      *
-     * @param string $key
-     * @param callable $callback
      * @param int $ttl Time to live in seconds
      * @return mixed
      */
@@ -60,10 +57,10 @@ class CacheService
             // Convert wildcard pattern to prefix matching
             if (str_ends_with($pattern, '.*')) {
                 $prefix = substr($pattern, 0, -2); // Remove '.*' suffix
-                $matchingKeys = array_filter($keys, fn($key) => str_starts_with($key, $prefix));
+                $matchingKeys = array_filter($keys, fn($key): bool => str_starts_with((string) $key, $prefix));
             } else {
                 // Fallback to contains for exact patterns
-                $matchingKeys = array_filter($keys, fn($key) => str_contains($key, $pattern));
+                $matchingKeys = array_filter($keys, fn($key): bool => str_contains((string) $key, $pattern));
             }
 
             foreach ($matchingKeys as $key) {
@@ -87,7 +84,7 @@ class CacheService
     {
         try {
             Cache::tags([$tag])->flush();
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             Log::warning('Cache tags not supported, falling back to pattern matching');
             self::forgetPattern($tag);
         }

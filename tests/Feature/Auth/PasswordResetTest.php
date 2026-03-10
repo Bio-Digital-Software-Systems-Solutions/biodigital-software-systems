@@ -61,7 +61,7 @@ class PasswordResetTest extends TestCase
 
         $this->post('/forgot-password', ['email' => $user->email]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
+        Notification::assertSentTo($user, ResetPassword::class, function ($notification): true {
             $response = $this->get('/reset-password/'.$notification->token);
 
             $response->assertStatus(200);
@@ -78,7 +78,7 @@ class PasswordResetTest extends TestCase
 
         $this->post('/forgot-password', ['email' => $user->email]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user): true {
             $response = $this->post('/reset-password', [
                 'token' => $notification->token,
                 'email' => $user->email,
@@ -116,7 +116,7 @@ class PasswordResetTest extends TestCase
 
         $this->post('/forgot-password', ['email' => $user->email]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user): true {
             $response = $this->post('/reset-password', [
                 'token' => $notification->token,
                 'email' => $user->email,
@@ -138,7 +138,7 @@ class PasswordResetTest extends TestCase
 
         $this->post('/forgot-password', ['email' => $user->email]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user): true {
             $response = $this->post('/reset-password', [
                 'token' => $notification->token,
                 'email' => $user->email,
@@ -164,7 +164,7 @@ class PasswordResetTest extends TestCase
 
         $this->post('/forgot-password', ['email' => $user->email]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user, $oldPasswordHash) {
+        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user, $oldPasswordHash): true {
             $this->post('/reset-password', [
                 'token' => $notification->token,
                 'email' => $user->email,
@@ -190,7 +190,7 @@ class PasswordResetTest extends TestCase
 
         $this->post('/forgot-password', ['email' => $user->email]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user): true {
             // Reset password
             $this->post('/reset-password', [
                 'token' => $notification->token,
@@ -217,7 +217,7 @@ class PasswordResetTest extends TestCase
         $user = User::factory()->create();
 
         // Create an expired token (tokens expire after 1 hour by default)
-        $token = Password::createToken($user);
+        Password::createToken($user);
 
         // Manipulate time to make token expired (this is a simplified test)
         $response = $this->post('/reset-password', [
@@ -240,7 +240,7 @@ class PasswordResetTest extends TestCase
         $this->post('/forgot-password', ['email' => $user->email]);
 
         $firstToken = null;
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use (&$firstToken) {
+        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use (&$firstToken): true {
             $firstToken = $notification->token;
 
             return true;

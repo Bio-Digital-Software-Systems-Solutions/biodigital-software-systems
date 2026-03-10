@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('quiz_questions', function (Blueprint $table) {
+        Schema::table('quiz_questions', function (Blueprint $table): void {
             $table->text('feedback_correct')->nullable()->after('correct_answers');
             $table->text('feedback_incorrect')->nullable()->after('feedback_correct');
         });
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('quiz_questions', function (Blueprint $table) {
+        Schema::table('quiz_questions', function (Blueprint $table): void {
             $table->dropColumn(['feedback_correct', 'feedback_incorrect']);
         });
     }

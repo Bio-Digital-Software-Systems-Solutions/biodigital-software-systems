@@ -13,6 +13,70 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $event_id
+ * @property int|null $session_id
+ * @property int|null $uploaded_by
+ * @property string $title
+ * @property string|null $description
+ * @property string $file_path
+ * @property string $file_name
+ * @property string $file_type
+ * @property int $file_size
+ * @property string $document_type
+ * @property string $visibility
+ * @property int $download_count
+ * @property bool $is_downloadable
+ * @property int $sort_order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read Event $event
+ * @property-read bool $can_preview
+ * @property-read string $file_size_for_humans
+ * @property-read string $file_url
+ * @property-read string $icon
+ * @property-read bool $is_image
+ * @property-read bool $is_pdf
+ * @property-read bool $is_video
+ * @property-read \App\Models\Event\EventSession|null $session
+ * @property-read User|null $uploader
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument byType(string $type)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument downloadable()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument forRegistered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument ordered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument public()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereDocumentType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereDownloadCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereEventId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereFileName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereFilePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereFileSize($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereFileType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereIsDownloadable($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereUploadedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument whereVisibility($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventDocument withoutTrashed()
+ * @mixin \Eloquent
+ */
 class EventDocument extends Model
 {
     use ClearsCache, HasFactory, HasUuid, LogsActivity, SoftDeletes;
@@ -197,15 +261,10 @@ class EventDocument extends Model
         }
 
         if ($this->visibility === self::VISIBILITY_REGISTERED) {
-            return $registration !== null || ($user && $this->event->participants->contains($user));
+            return $registration instanceof \App\Models\Event\EventRegistration || ($user && $this->event->participants->contains($user));
         }
-
         // Private - only event organizers
-        if ($user && ($user->hasRole('super-admin') || $this->event->user_id === $user->id)) {
-            return true;
-        }
-
-        return false;
+        return $user && ($user->hasRole('super-admin') || $this->event->user_id === $user->id);
     }
 
     // Static methods

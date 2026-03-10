@@ -16,6 +16,99 @@ use Carbon\Carbon;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $department_id
+ * @property int|null $template_id
+ * @property int $author_id
+ * @property int|null $approver_id
+ * @property string $title
+ * @property ReportType $type
+ * @property ReportStatus $status
+ * @property ReportPeriodType $period_type
+ * @property \Illuminate\Support\Carbon $period_start
+ * @property \Illuminate\Support\Carbon $period_end
+ * @property string|null $executive_summary
+ * @property string|null $submission_notes
+ * @property string|null $approval_notes
+ * @property string|null $rejection_reason
+ * @property \Illuminate\Support\Carbon|null $submitted_at
+ * @property \Illuminate\Support\Carbon|null $approved_at
+ * @property \Illuminate\Support\Carbon|null $published_at
+ * @property int $version
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReportApproval> $approvals
+ * @property-read int|null $approvals_count
+ * @property-read \App\Models\User|null $approver
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReportAttachment> $attachments
+ * @property-read int|null $attachments_count
+ * @property-read \App\Models\User $author
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReportComment> $comments
+ * @property-read int|null $comments_count
+ * @property-read \App\Models\Department $department
+ * @property-read bool $can_edit
+ * @property-read bool $can_submit
+ * @property-read \App\Models\ReportApproval|null $current_approval_step
+ * @property-read string $period_label
+ * @property-read int $progress
+ * @property-read string $status_color
+ * @property-read string $status_icon
+ * @property-read string $status_label
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentKpiValue> $kpiValues
+ * @property-read int|null $kpi_values_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReportSection> $sections
+ * @property-read int|null $sections_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReportTag> $tags
+ * @property-read int|null $tags_count
+ * @property-read \App\Models\ReportTemplate|null $template
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReportVersion> $versions
+ * @property-read int|null $versions_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport byType(\App\Enums\Report\ReportType $type)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport byYear(int $year)
+ * @method static \Database\Factories\DepartmentReportFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport forDepartment(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport forPeriod(\Carbon\Carbon $start, \Carbon\Carbon $end)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport published()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereApprovalNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereApprovedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereApproverId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereAuthorId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereExecutiveSummary($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport wherePeriodEnd($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport wherePeriodStart($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport wherePeriodType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport wherePublishedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereRejectionReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereSubmissionNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereSubmittedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereTemplateId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport whereVersion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport withStatus(\App\Enums\Report\ReportStatus $status)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentReport withoutTrashed()
+ * @mixin \Eloquent
+ */
 class DepartmentReport extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity, ClearsCache;
@@ -76,7 +169,7 @@ class DepartmentReport extends Model
     protected static function boot(): void
     {
         parent::boot();
-        static::creating(fn($m) => $m->uuid = $m->uuid ?? (string) Str::uuid());
+        static::creating(fn($m) => $m->uuid ??= (string) Str::uuid());
     }
 
     public function getRouteKeyName(): string
@@ -208,7 +301,10 @@ class DepartmentReport extends Model
             return false;
         }
         $required = $this->sections->where('is_required', true);
-        return $required->isEmpty() || $required->every(fn($s) => $s->is_complete);
+        if ($required->isEmpty()) {
+            return true;
+        }
+        return $required->every(fn($s) => $s->is_complete);
     }
 
     public function getCurrentApprovalStepAttribute(): ?ReportApproval
@@ -288,7 +384,7 @@ class DepartmentReport extends Model
             'executive_summary' => $this->executive_summary,
             'department' => $this->department?->only(['id', 'name']),
             'author' => $this->author?->only(['id', 'first_name', 'last_name', 'email']),
-            'sections' => $this->sections->map(fn($s) => [
+            'sections' => $this->sections->map(fn($s): array => [
                 'type' => $s->type->value,
                 'title' => $s->title,
                 'content' => $s->content,

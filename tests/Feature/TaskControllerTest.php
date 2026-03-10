@@ -11,6 +11,9 @@ use Tests\TestCase;
 
 class TaskControllerTest extends TestCase
 {
+    public $user;
+    public $program;
+    public $status;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -25,7 +28,7 @@ class TaskControllerTest extends TestCase
 
     public function test_index_displays_tasks(): void
     {
-        $tasks = Task::factory()->count(3)->create([
+        Task::factory()->count(3)->create([
             'program_id' => $this->program->id,
             'status_id' => $this->status->id,
         ]);
@@ -274,7 +277,7 @@ class TaskControllerTest extends TestCase
 
     public function test_unauthorized_user_cannot_access_tasks(): void
     {
-        $task = Task::factory()->create([
+        Task::factory()->create([
             'program_id' => $this->program->id,
             'status_id' => $this->status->id,
         ]);
@@ -289,13 +292,13 @@ class TaskControllerTest extends TestCase
     {
         $assignedUser = User::factory()->create();
 
-        $myTask = Task::factory()->create([
+        Task::factory()->create([
             'program_id' => $this->program->id,
             'status_id' => $this->status->id,
             'assigned_to' => $assignedUser->id,
         ]);
 
-        $otherTask = Task::factory()->create([
+        Task::factory()->create([
             'program_id' => $this->program->id,
             'status_id' => $this->status->id,
             'assigned_to' => $this->user->id,

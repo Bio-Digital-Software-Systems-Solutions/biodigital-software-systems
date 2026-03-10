@@ -11,12 +11,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create a user for project manager
     User::factory()->create();
 });
 
-it('creates sprints for existing projects', function () {
+it('creates sprints for existing projects', function (): void {
     // Seed dependencies
     $this->seed(StatusSeeder::class);
     Project::factory()->count(2)->create();
@@ -28,7 +28,7 @@ it('creates sprints for existing projects', function () {
     expect(Sprint::count())->toBeGreaterThan(0);
 });
 
-it('creates between 2 and 4 sprints per project', function () {
+it('creates between 2 and 4 sprints per project', function (): void {
     $this->seed(StatusSeeder::class);
     $project = Project::factory()->create();
 
@@ -39,7 +39,7 @@ it('creates between 2 and 4 sprints per project', function () {
         ->toBeLessThanOrEqual(4);
 });
 
-it('creates sprints with different statuses', function () {
+it('creates sprints with different statuses', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -52,7 +52,7 @@ it('creates sprints with different statuses', function () {
         ->toContain('active');
 });
 
-it('associates tasks with sprints', function () {
+it('associates tasks with sprints', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -62,7 +62,7 @@ it('associates tasks with sprints', function () {
     expect($sprintsWithTasks)->toBeGreaterThan(0);
 });
 
-it('creates tasks with proper status for completed sprints', function () {
+it('creates tasks with proper status for completed sprints', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -78,13 +78,13 @@ it('creates tasks with proper status for completed sprints', function () {
 
         if ($completedStatus) {
             // All tasks in completed sprint should be completed
-            $allCompleted = $tasks->every(fn ($task) => $task->status_id === $completedStatus->id);
+            $allCompleted = $tasks->every(fn ($task): bool => $task->status_id === $completedStatus->id);
             expect($allCompleted)->toBeTrue();
         }
     }
 });
 
-it('creates tasks with mixed statuses for active sprints', function () {
+it('creates tasks with mixed statuses for active sprints', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -102,20 +102,20 @@ it('creates tasks with mixed statuses for active sprints', function () {
     }
 });
 
-it('sets sprint dates correctly', function () {
+it('sets sprint dates correctly', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
     $this->seed(SprintSeeder::class);
 
-    Sprint::all()->each(function ($sprint) {
+    Sprint::all()->each(function ($sprint): void {
         expect($sprint->start_date)->not->toBeNull();
         expect($sprint->end_date)->not->toBeNull();
         expect($sprint->end_date->gte($sprint->start_date))->toBeTrue();
     });
 });
 
-it('skips projects that already have sprints', function () {
+it('skips projects that already have sprints', function (): void {
     $this->seed(StatusSeeder::class);
     $project = Project::factory()->create();
 
@@ -130,7 +130,7 @@ it('skips projects that already have sprints', function () {
     expect($finalCount)->toBe($initialCount);
 });
 
-it('assigns tasks to project members', function () {
+it('assigns tasks to project members', function (): void {
     $this->seed(StatusSeeder::class);
     $project = Project::factory()->create();
     $members = User::factory()->count(3)->create();
@@ -150,7 +150,7 @@ it('assigns tasks to project members', function () {
     }
 });
 
-it('creates tasks with unique keys', function () {
+it('creates tasks with unique keys', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
@@ -162,14 +162,14 @@ it('creates tasks with unique keys', function () {
     expect(count($keys))->toBe(count($uniqueKeys));
 });
 
-it('sets task due dates within sprint period', function () {
+it('sets task due dates within sprint period', function (): void {
     $this->seed(StatusSeeder::class);
     Project::factory()->create();
 
     $this->seed(SprintSeeder::class);
 
-    Sprint::with('tasks')->get()->each(function ($sprint) {
-        $sprint->tasks->each(function ($task) use ($sprint) {
+    Sprint::with('tasks')->get()->each(function ($sprint): void {
+        $sprint->tasks->each(function ($task) use ($sprint): void {
             if ($task->due_date) {
                 expect($task->due_date->gte($sprint->start_date))->toBeTrue();
                 expect($task->due_date->lte($sprint->end_date))->toBeTrue();

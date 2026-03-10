@@ -44,7 +44,7 @@ class DepartmentTodoFactory extends Factory
      */
     public function forShift(Shift $shift): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'shift_id' => $shift->id,
             'department_id' => $shift->department_id,
         ]);
@@ -55,7 +55,7 @@ class DepartmentTodoFactory extends Factory
      */
     public function assignedTo(User $user): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'assigned_to' => $user->id,
         ]);
     }
@@ -65,7 +65,7 @@ class DepartmentTodoFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ShiftTaskStatus::COMPLETED,
             'completed_at' => now(),
             'completed_by' => $attributes['created_by'] ?? User::factory(),
@@ -77,7 +77,7 @@ class DepartmentTodoFactory extends Factory
      */
     public function inProgress(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ShiftTaskStatus::IN_PROGRESS,
         ]);
     }
@@ -87,7 +87,7 @@ class DepartmentTodoFactory extends Factory
      */
     public function blocked(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ShiftTaskStatus::BLOCKED,
         ]);
     }
@@ -97,7 +97,7 @@ class DepartmentTodoFactory extends Factory
      */
     public function urgent(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'priority' => TodoPriority::URGENT,
         ]);
     }
@@ -107,7 +107,7 @@ class DepartmentTodoFactory extends Factory
      */
     public function high(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'priority' => TodoPriority::HIGH,
         ]);
     }
@@ -117,8 +117,8 @@ class DepartmentTodoFactory extends Factory
      */
     public function overdue(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'due_date' => now()->subDays(rand(1, 7)),
+        return $this->state(fn (array $attributes): array => [
+            'due_date' => now()->subDays(random_int(1, 7)),
             'status' => ShiftTaskStatus::TODO,
         ]);
     }
@@ -128,7 +128,7 @@ class DepartmentTodoFactory extends Factory
      */
     public function dueToday(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'due_date' => now(),
             'status' => ShiftTaskStatus::TODO,
         ]);

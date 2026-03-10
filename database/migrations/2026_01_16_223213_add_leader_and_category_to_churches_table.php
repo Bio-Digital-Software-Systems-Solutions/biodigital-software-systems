@@ -10,7 +10,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('churches', function (Blueprint $table) {
+        Schema::table('churches', function (Blueprint $table): void {
             $table->string('leader_name', 255)->nullable()->after('phone');
             $table->string('category', 50)->nullable()->default('eglise')->after('leader_name');
         });
@@ -21,7 +21,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('churches', function (Blueprint $table) {
+        Schema::table('churches', function (Blueprint $table): void {
             $table->dropColumn(['leader_name', 'category']);
         });
     }

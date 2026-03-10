@@ -29,7 +29,7 @@ class BookRentalControllerTest extends TestCase
         $memberRole->givePermissionTo(['view books', 'rent books']);
     }
 
-    public function test_user_can_view_their_book_rentals()
+    public function test_user_can_view_their_book_rentals(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -58,7 +58,7 @@ class BookRentalControllerTest extends TestCase
         );
     }
 
-    public function test_user_cannot_see_other_users_rentals()
+    public function test_user_cannot_see_other_users_rentals(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -84,7 +84,7 @@ class BookRentalControllerTest extends TestCase
         );
     }
 
-    public function test_user_can_filter_rentals_by_status()
+    public function test_user_can_filter_rentals_by_status(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -118,14 +118,14 @@ class BookRentalControllerTest extends TestCase
         );
     }
 
-    public function test_guest_cannot_access_rentals()
+    public function test_guest_cannot_access_rentals(): void
     {
         $response = $this->get('/my-rentals');
 
         $response->assertRedirect('/login');
     }
 
-    public function test_user_without_view_books_permission_cannot_access_rentals()
+    public function test_user_without_view_books_permission_cannot_access_rentals(): void
     {
         $user = User::factory()->create();
         // Don't give any permissions

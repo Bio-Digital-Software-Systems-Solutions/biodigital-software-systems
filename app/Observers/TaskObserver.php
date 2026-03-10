@@ -28,6 +28,7 @@ class TaskObserver
         if ($task->wasChanged('status_id')) {
             $this->updateStepStatus($task);
             $this->updateProjectStatus($task);
+            $this->syncProgressFromStatus($task);
         }
 
         // Notify user if assignment changed
@@ -134,7 +135,7 @@ class TaskObserver
     protected function updateProjectStatus(Task $task): void
     {
         // Only process if the task belongs to a project
-        if (! $task->taskable_type || $task->taskable_type !== 'App\Models\Project') {
+        if (! $task->taskable_type || $task->taskable_type !== \App\Models\Project::class) {
             return;
         }
 
@@ -146,6 +147,7 @@ class TaskObserver
 
         // Get pending status
         $pendingStatus = Status::where('name', 'pending')->first();
+        $completedStatus = Status::where('name', 'completed')->first();
 
         // Get all tasks for this project (excluding soft deleted)
         // Note: Status is auto-loaded via Task model's $with property
@@ -161,6 +163,44 @@ class TaskObserver
                 $project->status = ProjectStatus::ACTIVE;
                 $project->save();
             }
+        }
+
+        // Auto-complete project when all tasks are completed
+        if ($project->status === ProjectStatus::ACTIVE && $completedStatus) {
+            $allCompleted = $allTasks->isNotEmpty()
+                && $allTasks->every(fn (Task $t): bool => $t->status_id === $completedStatus->id);
+
+            if ($allCompleted) {
+                $project->status = ProjectStatus::COMPLETED;
+                $project->save();
+            }
+        }
+    }
+
+    /**
+     * Sync the task progress based on its status.
+     */
+    protected function syncProgressFromStatus(Task $task): void
+    {
+        // Reload status relationship since status_id was just changed
+        $task->load('status');
+        $status = $task->status;
+
+        if (! $status) {
+            return;
+        }
+
+        $progress = match (true) {
+            $status->isCompleted() => 100,
+            $status->isPending() || $status->name === 'todo' => 0,
+            $status->name === 'cancelled' => 0,
+            $status->isInProgress() => max((int) $task->progress, 10),
+            in_array($status->name, ['under_review', 'in_review']) => max((int) $task->progress, 75),
+            default => (int) $task->progress,
+        };
+
+        if ($progress !== (int) $task->progress) {
+            $task->updateQuietly(['progress' => $progress]);
         }
     }
 }

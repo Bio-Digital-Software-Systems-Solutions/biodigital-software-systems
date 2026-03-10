@@ -198,7 +198,7 @@ class ViewSwitcherTest extends TestCase
             'author' => 'John Doe',
         ]);
 
-        $book2 = Book::factory()->create([
+        Book::factory()->create([
             'title' => 'React Development',
             'author' => 'Jane Smith',
         ]);
@@ -217,7 +217,7 @@ class ViewSwitcherTest extends TestCase
         $user->givePermissionTo('view departments');
 
         $activeDept = Department::factory()->create(['is_active' => true]);
-        $inactiveDept = Department::factory()->create(['is_active' => false]);
+        Department::factory()->create(['is_active' => false]);
 
         $response = $this->actingAs($user)->get(route('departments.index', ['status' => 'active']));
 
@@ -233,7 +233,7 @@ class ViewSwitcherTest extends TestCase
         $user->givePermissionTo('view groups');
 
         $activeGroup = Group::factory()->create(['is_active' => true]);
-        $inactiveGroup = Group::factory()->create(['is_active' => false]);
+        Group::factory()->create(['is_active' => false]);
 
         $response = $this->actingAs($user)->get(route('groups.index', ['status' => 'active']));
 

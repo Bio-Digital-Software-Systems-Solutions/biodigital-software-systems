@@ -56,7 +56,7 @@ class AbsenceControllerTest extends TestCase
             'status' => AbsenceStatus::PENDING,
         ]);
 
-        $otherAbsence = Absence::factory()->create([
+        Absence::factory()->create([
             'user_id' => $this->admin->id,
             'department_id' => $this->department->id,
             'type' => AbsenceType::SICK_LEAVE,
@@ -694,7 +694,7 @@ class AbsenceControllerTest extends TestCase
             'end_date' => now()->addDays(7),
         ]);
 
-        $outsideRange = Absence::factory()->create([
+        Absence::factory()->create([
             'user_id' => $this->user->id,
             'department_id' => $this->department->id,
             'start_date' => now()->addDays(30),
@@ -750,7 +750,7 @@ class AbsenceControllerTest extends TestCase
 
         $startDate = now()->addDays(5);
         $endDate = now()->addDays(7);
-        $expectedDays = $startDate->diffInDays($endDate) + 1; // 3 days
+        $startDate->diffInDays($endDate); // 3 days
 
         $absence = Absence::factory()->create([
             'user_id' => $this->user->id,
@@ -966,7 +966,7 @@ class AbsenceControllerTest extends TestCase
     public function search_interim_returns_employees(): void
     {
         // Create an employee in the department
-        $employee = \App\Models\Employee::factory()->create([
+        \App\Models\Employee::factory()->create([
             'user_id' => $this->admin->id,
             'department_id' => $this->department->id,
             'status' => \App\Enums\Employee\EmployeeStatus::ACTIVE,
@@ -1049,7 +1049,7 @@ class AbsenceControllerTest extends TestCase
         $data = $response->json();
 
         // Count occurrences of the user's id
-        $userIdCount = count(array_filter($data, fn($item) => $item['value'] === $dualUser->id));
+        $userIdCount = count(array_filter($data, fn(array $item): bool => $item['value'] === $dualUser->id));
         $this->assertEquals(1, $userIdCount);
     }
 

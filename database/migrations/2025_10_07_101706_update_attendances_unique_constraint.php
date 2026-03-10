@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('attendances', function (Blueprint $table) {
+        Schema::table('attendances', function (Blueprint $table): void {
             // Drop foreign keys first
             $table->dropForeign(['training_class_id']);
             $table->dropForeign(['student_id']);
@@ -33,7 +33,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('attendances', function (Blueprint $table) {
+        Schema::table('attendances', function (Blueprint $table): void {
             // Drop new unique constraint
             $table->dropUnique(['training_class_schedule_id', 'student_id']);
 

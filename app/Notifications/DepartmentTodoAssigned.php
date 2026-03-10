@@ -13,17 +13,11 @@ class DepartmentTodoAssigned extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public DepartmentTodo $todo;
-
-    public ?User $assignedBy;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(DepartmentTodo $todo, ?User $assignedBy = null)
+    public function __construct(public DepartmentTodo $todo, public ?User $assignedBy = null)
     {
-        $this->todo = $todo;
-        $this->assignedBy = $assignedBy;
     }
 
     /**
@@ -41,7 +35,7 @@ class DepartmentTodoAssigned extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $assignedByName = $this->assignedBy
+        $assignedByName = $this->assignedBy instanceof \App\Models\User
             ? $this->assignedBy->first_name.' '.$this->assignedBy->last_name
             : 'Le système';
 
@@ -81,7 +75,7 @@ class DepartmentTodoAssigned extends Notification implements ShouldQueue
      */
     public function toDatabase(object $notifiable): array
     {
-        $assignedByName = $this->assignedBy
+        $assignedByName = $this->assignedBy instanceof \App\Models\User
             ? $this->assignedBy->first_name.' '.$this->assignedBy->last_name
             : 'Le système';
 

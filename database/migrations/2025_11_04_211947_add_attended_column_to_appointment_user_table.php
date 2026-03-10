@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('appointment_user', function (Blueprint $table) {
+        Schema::table('appointment_user', function (Blueprint $table): void {
             if (!Schema::hasColumn('appointment_user', 'attended')) {
                 $table->boolean('attended')->default(false)->after('notification_sent_at');
             }
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('appointment_user', function (Blueprint $table) {
+        Schema::table('appointment_user', function (Blueprint $table): void {
             if (Schema::hasColumn('appointment_user', 'attended')) {
                 $table->dropColumn('attended');
             }

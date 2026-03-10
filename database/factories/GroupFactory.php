@@ -33,7 +33,7 @@ class GroupFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_active' => true,
         ]);
     }
@@ -43,7 +43,7 @@ class GroupFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_active' => false,
         ]);
     }
@@ -53,7 +53,7 @@ class GroupFactory extends Factory
      */
     public function withLeader(User $leader): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'leader_id' => $leader->id,
         ]);
     }
@@ -63,7 +63,7 @@ class GroupFactory extends Factory
      */
     public function withMaxMembers(int $maxMembers): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'max_members' => $maxMembers,
         ]);
     }
@@ -73,7 +73,7 @@ class GroupFactory extends Factory
      */
     public function unlimited(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'max_members' => null,
         ]);
     }

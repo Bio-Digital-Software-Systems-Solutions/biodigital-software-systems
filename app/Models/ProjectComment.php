@@ -16,28 +16,27 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $user_id
  * @property int|null $parent_id
  * @property string $content
+ * @property array<array-key, mixed>|null $mentions
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read ProjectComment|null $parent
  * @property-read \App\Models\Project $project
  * @property-read \Illuminate\Database\Eloquent\Collection<int, ProjectComment> $replies
  * @property-read int|null $replies_count
  * @property-read \App\Models\User $user
- *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectComment newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectComment newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectComment query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectComment whereContent($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectComment whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectComment whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectComment whereMentions($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectComment whereParentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectComment whereProjectId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectComment whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ProjectComment whereUserId($value)
- *
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- *
  * @mixin \Eloquent
  */
 class ProjectComment extends Model
@@ -124,7 +123,7 @@ class ProjectComment extends Model
     public function removeMention(int $userId): self
     {
         $mentions = $this->mentions ?? [];
-        $mentions = array_filter($mentions, fn ($id) => $id !== $userId);
+        $mentions = array_filter($mentions, fn ($id): bool => $id !== $userId);
         $this->update(['mentions' => array_values($mentions)]);
 
         return $this;

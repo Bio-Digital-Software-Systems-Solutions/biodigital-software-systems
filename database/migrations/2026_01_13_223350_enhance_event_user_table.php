@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('event_user', function (Blueprint $table) {
+        Schema::table('event_user', function (Blueprint $table): void {
             // Add reference to new registration system
             $table->foreignId('registration_id')->nullable()->after('user_id')
                 ->constrained('event_registrations')->nullOnDelete();
@@ -32,7 +32,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('event_user', function (Blueprint $table) {
+        Schema::table('event_user', function (Blueprint $table): void {
             $table->dropForeign(['registration_id']);
             $table->dropIndex(['role']);
             $table->dropColumn(['registration_id', 'role', 'notes']);

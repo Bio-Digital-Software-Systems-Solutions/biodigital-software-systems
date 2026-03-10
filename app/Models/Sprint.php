@@ -9,11 +9,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $name
  * @property string|null $goal
  * @property int $project_id
@@ -23,6 +24,8 @@ use Spatie\Activitylog\LogOptions;
  * @property int|null $capacity
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Attachment> $attachments
  * @property-read int|null $attachments_count
  * @property-read int $velocity
@@ -45,15 +48,12 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Sprint whereStartDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Sprint whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Sprint whereUpdatedAt($value)
- * @property string $uuid
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Sprint whereUuid($value)
  * @mixin \Eloquent
  */
 class Sprint extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -65,6 +65,7 @@ class Sprint extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     protected $fillable = [
         'name',
         'goal',
@@ -117,10 +118,10 @@ class Sprint extends Model
 
     public function getVelocityAttribute(): int
     {
-        return $this->tasks()
-            ->whereHas('status', function ($query) {
+        return (int) ($this->tasks()
+            ->whereHas('status', function ($query): void {
                 $query->where('name', 'completed');
             })
-            ->sum('story_points') ?? 0;
+            ->sum('story_points') ?? 0);
     }
 }

@@ -16,7 +16,7 @@ class MessageTest extends TestCase
         parent::setUp();
     }
 
-    public function test_message_belongs_to_sender()
+    public function test_message_belongs_to_sender(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -31,7 +31,7 @@ class MessageTest extends TestCase
         $this->assertEquals($sender->email, $message->sender->email);
     }
 
-    public function test_message_belongs_to_receiver()
+    public function test_message_belongs_to_receiver(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -46,7 +46,7 @@ class MessageTest extends TestCase
         $this->assertEquals($receiver->email, $message->receiver->email);
     }
 
-    public function test_message_can_check_if_read()
+    public function test_message_can_check_if_read(): void
     {
         $message = Message::factory()->create(['read_at' => null]);
         $this->assertFalse($message->isRead());
@@ -55,7 +55,7 @@ class MessageTest extends TestCase
         $this->assertTrue($message->isRead());
     }
 
-    public function test_message_can_be_marked_as_read()
+    public function test_message_can_be_marked_as_read(): void
     {
         $message = Message::factory()->create(['read_at' => null]);
         $this->assertFalse($message->isRead());
@@ -67,7 +67,7 @@ class MessageTest extends TestCase
         $this->assertNotNull($message->read_at);
     }
 
-    public function test_marking_already_read_message_as_read_does_not_change_timestamp()
+    public function test_marking_already_read_message_as_read_does_not_change_timestamp(): void
     {
         $readAt = now()->subHour();
         $message = Message::factory()->create(['read_at' => $readAt]);
@@ -78,7 +78,7 @@ class MessageTest extends TestCase
         $this->assertEquals($readAt->format('Y-m-d H:i:s'), $message->read_at->format('Y-m-d H:i:s'));
     }
 
-    public function test_message_excerpt_attribute()
+    public function test_message_excerpt_attribute(): void
     {
         $longContent = str_repeat('Lorem ipsum dolor sit amet. ', 20);
         $message = Message::factory()->create(['content' => $longContent]);
@@ -88,7 +88,7 @@ class MessageTest extends TestCase
         $this->assertLessThanOrEqual(103, strlen($excerpt)); // 100 chars + '...'
     }
 
-    public function test_message_excerpt_attribute_with_html_tags()
+    public function test_message_excerpt_attribute_with_html_tags(): void
     {
         $htmlContent = '<p>This is a <strong>test</strong> message with <em>HTML</em> tags.</p>';
         $message = Message::factory()->create(['content' => $htmlContent]);
@@ -100,7 +100,7 @@ class MessageTest extends TestCase
         $this->assertStringEndsWith('...', $excerpt);
     }
 
-    public function test_message_type_label_attribute()
+    public function test_message_type_label_attribute(): void
     {
         $directMessage = Message::factory()->create(['type' => 'direct']);
         $this->assertEquals('Direct Message', $directMessage->type_label);
@@ -112,13 +112,13 @@ class MessageTest extends TestCase
         $this->assertEquals('System Message', $systemMessage->type_label);
     }
 
-    public function test_message_type_label_attribute_with_direct_type()
+    public function test_message_type_label_attribute_with_direct_type(): void
     {
         $message = Message::factory()->create(['type' => 'direct']);
         $this->assertEquals('Direct Message', $message->type_label);
     }
 
-    public function test_message_unread_scope()
+    public function test_message_unread_scope(): void
     {
         $readMessage = Message::factory()->create(['read_at' => now()]);
         $unreadMessage = Message::factory()->create(['read_at' => null]);
@@ -130,7 +130,7 @@ class MessageTest extends TestCase
         $this->assertFalse($unreadMessages->contains($readMessage));
     }
 
-    public function test_message_read_scope()
+    public function test_message_read_scope(): void
     {
         $readMessage = Message::factory()->create(['read_at' => now()]);
         $unreadMessage = Message::factory()->create(['read_at' => null]);
@@ -142,7 +142,7 @@ class MessageTest extends TestCase
         $this->assertFalse($readMessages->contains($unreadMessage));
     }
 
-    public function test_message_type_scope()
+    public function test_message_type_scope(): void
     {
         $directMessage = Message::factory()->create(['type' => 'direct']);
         $broadcastMessage = Message::factory()->create(['type' => 'broadcast']);
@@ -161,7 +161,7 @@ class MessageTest extends TestCase
         $this->assertEquals($systemMessage->id, $systemMessages->first()->id);
     }
 
-    public function test_message_between_users_scope()
+    public function test_message_between_users_scope(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -193,7 +193,7 @@ class MessageTest extends TestCase
         $this->assertFalse($messagesBetween->contains($message3));
     }
 
-    public function test_message_fillable_attributes()
+    public function test_message_fillable_attributes(): void
     {
         $messageData = [
             'subject' => 'Test Subject',
@@ -215,7 +215,7 @@ class MessageTest extends TestCase
         $this->assertNotNull($message->read_at);
     }
 
-    public function test_message_casts_read_at_to_datetime()
+    public function test_message_casts_read_at_to_datetime(): void
     {
         $message = Message::factory()->create([
             'read_at' => '2024-01-01 12:00:00',
@@ -225,7 +225,7 @@ class MessageTest extends TestCase
         $this->assertEquals('2024-01-01 12:00:00', $message->read_at->format('Y-m-d H:i:s'));
     }
 
-    public function test_message_creation_with_minimum_required_fields()
+    public function test_message_creation_with_minimum_required_fields(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -248,7 +248,7 @@ class MessageTest extends TestCase
         $this->assertNull($message->read_at);
     }
 
-    public function test_message_creation_with_all_fields()
+    public function test_message_creation_with_all_fields(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -273,7 +273,7 @@ class MessageTest extends TestCase
         $this->assertNotNull($message->read_at);
     }
 
-    public function test_message_can_have_empty_subject()
+    public function test_message_can_have_empty_subject(): void
     {
         $message = Message::factory()->create(['subject' => null]);
         $this->assertNull($message->subject);
@@ -282,7 +282,7 @@ class MessageTest extends TestCase
         $this->assertEquals('', $message->subject);
     }
 
-    public function test_message_content_is_required()
+    public function test_message_content_is_required(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -297,7 +297,7 @@ class MessageTest extends TestCase
         ]);
     }
 
-    public function test_message_type_defaults_to_direct_in_database()
+    public function test_message_type_defaults_to_direct_in_database(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -312,7 +312,7 @@ class MessageTest extends TestCase
         $this->assertEquals('direct', $message->fresh()->type);
     }
 
-    public function test_message_belongs_to_department()
+    public function test_message_belongs_to_department(): void
     {
         $sender = User::factory()->create();
         $department = \App\Models\Department::factory()->create();
@@ -329,7 +329,7 @@ class MessageTest extends TestCase
         $this->assertEquals($department->name, $message->department->name);
     }
 
-    public function test_message_can_have_user_recipient_type()
+    public function test_message_can_have_user_recipient_type(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -346,7 +346,7 @@ class MessageTest extends TestCase
         $this->assertNull($message->department_id);
     }
 
-    public function test_message_can_have_department_recipient_type()
+    public function test_message_can_have_department_recipient_type(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -364,7 +364,7 @@ class MessageTest extends TestCase
         $this->assertEquals($department->id, $message->department_id);
     }
 
-    public function test_message_fillable_includes_new_fields()
+    public function test_message_fillable_includes_new_fields(): void
     {
         $messageData = [
             'subject' => 'Test Subject',

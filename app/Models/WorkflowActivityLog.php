@@ -7,6 +7,45 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * @property int $id
+ * @property int|null $workflow_instance_id
+ * @property int|null $step_instance_id
+ * @property int|null $user_id
+ * @property string $action
+ * @property string $entity_type
+ * @property int $entity_id
+ * @property array<array-key, mixed>|null $old_values
+ * @property array<array-key, mixed>|null $new_values
+ * @property array<array-key, mixed>|null $metadata
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read Model|\Eloquent $entity
+ * @property-read \App\Models\WorkflowStepInstance|null $stepInstance
+ * @property-read \App\Models\User|null $user
+ * @property-read \App\Models\WorkflowInstance|null $workflowInstance
+ * @method static \Database\Factories\WorkflowActivityLogFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereAction($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereEntityId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereEntityType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereIpAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereNewValues($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereOldValues($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereStepInstanceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereUserAgent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowActivityLog whereWorkflowInstanceId($value)
+ * @mixin \Eloquent
+ */
 class WorkflowActivityLog extends Model
 {
     use HasFactory;

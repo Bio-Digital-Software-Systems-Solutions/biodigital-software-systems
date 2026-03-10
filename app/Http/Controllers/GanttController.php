@@ -21,7 +21,7 @@ class GanttController extends Controller
         // Eager load projects with their tasks (using polymorphic relation)
         $query = Project::with([
             'manager',
-            'tasks' => function ($query) {
+            'tasks' => function ($query): void {
                 $query->whereNotNull('due_date')
                       ->with(['assignee']);
             }
@@ -39,7 +39,7 @@ class GanttController extends Controller
         $projects = $query->latest()->get();
 
         // Transform projects and tasks for Gantt chart
-        $ganttData = $projects->map(function ($project) {
+        $ganttData = $projects->map(function ($project): array {
             // Tasks are already loaded via eager loading
             $tasks = $project->tasks;
 
@@ -52,20 +52,18 @@ class GanttController extends Controller
                 'progress' => $this->calculateProgress($tasks),
                 'type' => 'project',
                 'color' => $project->color,
-                'tasks' => $tasks->map(function ($task) {
-                    return [
-                        'id' => 'task-'.$task->uuid,
-                        'uuid' => $task->uuid,
-                        'name' => $task->title,
-                        'start' => $task->created_at,
-                        'end' => $task->due_date,
-                        'progress' => $this->getTaskProgress($task),
-                        'type' => 'task',
-                        'assignee' => $task->assignee ? $task->assignee->first_name.' '.$task->assignee->last_name : null,
-                        'priority' => $task->priority,
-                        'status' => $task->status ? $task->status->name : null,
-                    ];
-                }),
+                'tasks' => $tasks->map(fn($task): array => [
+                    'id' => 'task-'.$task->uuid,
+                    'uuid' => $task->uuid,
+                    'name' => $task->title,
+                    'start' => $task->created_at,
+                    'end' => $task->due_date,
+                    'progress' => $this->getTaskProgress($task),
+                    'type' => 'task',
+                    'assignee' => $task->assignee ? $task->assignee->first_name.' '.$task->assignee->last_name : null,
+                    'priority' => $task->priority,
+                    'status' => $task->status ? $task->status->name : null,
+                ]),
             ];
         });
 
@@ -86,12 +84,10 @@ class GanttController extends Controller
             return 0;
         }
 
-        $completedTasks = $tasks->filter(function ($task) {
-            return $task->status && in_array($task->status->name, [
-                TaskStatus::COMPLETED->value,
-                TaskStatus::DONE->value
-            ]);
-        })->count();
+        $completedTasks = $tasks->filter(fn($task): bool => $task->status && in_array($task->status->name, [
+            TaskStatus::COMPLETED->value,
+            TaskStatus::DONE->value
+        ]))->count();
 
         return round(($completedTasks / $totalTasks) * 100);
     }

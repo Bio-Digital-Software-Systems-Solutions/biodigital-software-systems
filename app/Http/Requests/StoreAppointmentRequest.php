@@ -28,7 +28,7 @@ class StoreAppointmentRequest extends FormRequest
                 'required',
                 'date',
                 'after:now',
-                function ($attribute, $value, $fail) {
+                function ($attribute, \DateTimeInterface|\Carbon\WeekDay|\Carbon\Month|string|int|float|null $value, $fail): void {
                     $startDateTime = Carbon::parse($value);
 
                     // Business hours validation (3 AM to midnight)
@@ -46,7 +46,7 @@ class StoreAppointmentRequest extends FormRequest
                 'required',
                 'date',
                 'after:start_datetime',
-                function ($attribute, $value, $fail) {
+                function ($attribute, \DateTimeInterface|\Carbon\WeekDay|\Carbon\Month|string|int|float|null $value, $fail): void {
                     if ($this->has('start_datetime')) {
                         $startDateTime = Carbon::parse($this->input('start_datetime'));
                         $endDateTime = Carbon::parse($value);

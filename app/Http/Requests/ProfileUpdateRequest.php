@@ -25,7 +25,7 @@ class ProfileUpdateRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:500'],
             'is_calendar_public' => ['nullable', 'boolean'],
             // Avatar can be either an uploaded file or a string (filename from TUS upload)
-            'avatar' => ['nullable', function ($attribute, $value, $fail) {
+            'avatar' => ['nullable', function ($attribute, $value, $fail): void {
                 // If it's an uploaded file, validate as image
                 if ($value instanceof \Illuminate\Http\UploadedFile) {
                     $validator = \Validator::make(

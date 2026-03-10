@@ -246,7 +246,7 @@ class ArticleControllerTest extends TestCase
             'category_id' => $category->id,
         ]);
 
-        $article2 = Article::factory()->create([
+        Article::factory()->create([
             'status' => 'published',
         ]);
 

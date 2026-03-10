@@ -15,43 +15,43 @@ class CacheServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_can_remember_values_in_cache()
+    public function it_can_remember_values_in_cache(): void
     {
         $key = 'test.key';
         $value = 'test value';
 
-        $result = CacheService::remember($key, fn() => $value);
+        $result = CacheService::remember($key, fn(): string => $value);
 
         $this->assertEquals($value, $result);
         $this->assertTrue(Cache::has($key));
     }
 
     /** @test */
-    public function it_tracks_cache_keys_for_pattern_deletion()
+    public function it_tracks_cache_keys_for_pattern_deletion(): void
     {
         $key = 'test.tracked.key';
 
-        CacheService::remember($key, fn() => 'value');
+        CacheService::remember($key, fn(): string => 'value');
 
         $trackedKeys = Cache::get('cache_keys', []);
         $this->assertContains($key, $trackedKeys);
     }
 
     /** @test */
-    public function it_can_remember_paginated_data()
+    public function it_can_remember_paginated_data(): void
     {
         $baseKey = 'articles.list';
         $page = 1;
         $data = ['article1', 'article2'];
 
-        $result = CacheService::rememberPaginated($baseKey, $page, fn() => $data);
+        $result = CacheService::rememberPaginated($baseKey, $page, fn(): array => $data);
 
         $this->assertEquals($data, $result);
         $this->assertTrue(Cache::has("{$baseKey}.page.{$page}"));
     }
 
     /** @test */
-    public function it_can_forget_cache_patterns_with_wildcard()
+    public function it_can_forget_cache_patterns_with_wildcard(): void
     {
         // Create multiple cache entries with same prefix
         $keys = [
@@ -62,7 +62,7 @@ class CacheServiceTest extends TestCase
         ];
 
         foreach ($keys as $key) {
-            CacheService::remember($key, fn() => 'value');
+            CacheService::remember($key, fn(): string => 'value');
             $this->assertTrue(Cache::has($key));
         }
 
@@ -79,7 +79,7 @@ class CacheServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_can_forget_cache_patterns_with_contains()
+    public function it_can_forget_cache_patterns_with_contains(): void
     {
         $keys = [
             'user.profile.123',
@@ -88,7 +88,7 @@ class CacheServiceTest extends TestCase
         ];
 
         foreach ($keys as $key) {
-            CacheService::remember($key, fn() => 'value');
+            CacheService::remember($key, fn(): string => 'value');
         }
 
         // Forget patterns containing 'user'
@@ -100,7 +100,7 @@ class CacheServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_updates_tracked_keys_when_forgetting_patterns()
+    public function it_updates_tracked_keys_when_forgetting_patterns(): void
     {
         $keys = [
             'test.pattern.1',
@@ -109,7 +109,7 @@ class CacheServiceTest extends TestCase
         ];
 
         foreach ($keys as $key) {
-            CacheService::remember($key, fn() => 'value');
+            CacheService::remember($key, fn(): string => 'value');
         }
 
         CacheService::forgetPattern('test.*');
@@ -121,7 +121,7 @@ class CacheServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_generates_user_specific_cache_keys()
+    public function it_generates_user_specific_cache_keys(): void
     {
         $base = 'profile';
         $userId = 123;
@@ -132,7 +132,7 @@ class CacheServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_generates_role_specific_cache_keys()
+    public function it_generates_role_specific_cache_keys(): void
     {
         $base = 'permissions';
         $role = 'admin';
@@ -143,19 +143,19 @@ class CacheServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_handles_cache_failures_gracefully()
+    public function it_handles_cache_failures_gracefully(): void
     {
         // Mock Cache to throw exception
         Cache::shouldReceive('remember')->andThrow(new \Exception('Cache error'));
         Cache::shouldReceive('get')->andReturn([]);
 
-        $result = CacheService::remember('test.key', fn() => 'fallback value');
+        $result = CacheService::remember('test.key', fn(): string => 'fallback value');
 
         $this->assertEquals('fallback value', $result);
     }
 
     /** @test */
-    public function it_uses_correct_cache_durations()
+    public function it_uses_correct_cache_durations(): void
     {
         $this->assertEquals(300, CacheService::SHORT_CACHE);
         $this->assertEquals(3600, CacheService::MEDIUM_CACHE);
@@ -163,7 +163,7 @@ class CacheServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_has_forget_by_tag_method_available()
+    public function it_has_forget_by_tag_method_available(): void
     {
         // Test that the forgetByTag method exists and can be called without error
         // In production with Redis/Memcached it will use tags, otherwise fallback to pattern
@@ -171,13 +171,13 @@ class CacheServiceTest extends TestCase
 
         try {
             CacheService::forgetByTag('some_tag');
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             // Should handle gracefully
         }
     }
 
     /** @test */
-    public function it_handles_empty_cache_keys_list()
+    public function it_handles_empty_cache_keys_list(): void
     {
         // Ensure no cache_keys exist
         Cache::forget('cache_keys');
@@ -189,13 +189,13 @@ class CacheServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_preserves_cache_keys_list_integrity()
+    public function it_preserves_cache_keys_list_integrity(): void
     {
         $initialKeys = ['existing.key.1', 'existing.key.2'];
         Cache::put('cache_keys', $initialKeys, 3600);
 
         // Add new key
-        CacheService::remember('new.key', fn() => 'value');
+        CacheService::remember('new.key', fn(): string => 'value');
 
         $updatedKeys = Cache::get('cache_keys', []);
         $this->assertContains('existing.key.1', $updatedKeys);
@@ -204,12 +204,12 @@ class CacheServiceTest extends TestCase
     }
 
     /** @test */
-    public function it_removes_forgotten_keys_from_tracked_list()
+    public function it_removes_forgotten_keys_from_tracked_list(): void
     {
         $keys = ['users.1', 'users.2', 'events.1'];
 
         foreach ($keys as $key) {
-            CacheService::remember($key, fn() => 'value');
+            CacheService::remember($key, fn(): string => 'value');
         }
 
         $trackedKeys = Cache::get('cache_keys', []);

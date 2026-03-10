@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('training_classes', function (Blueprint $table) {
+        Schema::table('training_classes', function (Blueprint $table): void {
             $table->integer('max_students')->nullable()->after('room');
         });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('training_classes', function (Blueprint $table) {
+        Schema::table('training_classes', function (Blueprint $table): void {
             $table->dropColumn('max_students');
         });
     }

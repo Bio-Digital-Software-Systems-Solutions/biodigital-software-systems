@@ -41,7 +41,7 @@ class WorkflowTransitionFactory extends Factory
      */
     public function default(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_default' => true,
         ]);
     }
@@ -51,7 +51,7 @@ class WorkflowTransitionFactory extends Factory
      */
     public function fieldCondition(string $field, string $operator, mixed $value): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'condition_type' => TransitionConditionType::FORM_FIELD,
             'condition_config' => [
                 'field' => $field,
@@ -66,7 +66,7 @@ class WorkflowTransitionFactory extends Factory
      */
     public function approvalResult(bool $approved): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'condition_type' => TransitionConditionType::APPROVAL_RESULT,
             'condition_config' => [
                 'approved' => $approved,

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('event_media', function (Blueprint $table) {
+        Schema::create('event_media', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('event_id')->constrained()->cascadeOnDelete();

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->boolean('email_notifications')->default(true)->after('remember_token');
             $table->boolean('sms_notifications')->default(false)->after('email_notifications');
             $table->boolean('push_notifications')->default(true)->after('sms_notifications');
@@ -27,7 +27,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->dropColumn([
                 'email_notifications',
                 'sms_notifications',

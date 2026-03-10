@@ -55,7 +55,7 @@ class DepartmentDocumentController extends Controller
             ->orderBy('month', 'desc')
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn($doc) => $this->formatDocument($doc));
+            ->map(fn(\App\Models\DepartmentDocument $doc): array => $this->formatDocument($doc));
 
         return response()->json([
             'success' => true,
@@ -73,7 +73,7 @@ class DepartmentDocumentController extends Controller
             ->with('uploader:id,first_name,last_name')
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn($doc) => $this->formatDocument($doc));
+            ->map(fn(\App\Models\DepartmentDocument $doc): array => $this->formatDocument($doc));
 
         return response()->json([
             'success' => true,
@@ -93,7 +93,7 @@ class DepartmentDocumentController extends Controller
         $searchTerm = $validated['q'];
 
         $documents = $department->documents()
-            ->where(function ($query) use ($searchTerm) {
+            ->where(function ($query) use ($searchTerm): void {
                 $query->where('title', 'like', "%{$searchTerm}%")
                     ->orWhere('original_name', 'like', "%{$searchTerm}%")
                     ->orWhere('description', 'like', "%{$searchTerm}%")
@@ -104,7 +104,7 @@ class DepartmentDocumentController extends Controller
             ->orderBy('month', 'desc')
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn($doc) => $this->formatDocument($doc));
+            ->map(fn(\App\Models\DepartmentDocument $doc): array => $this->formatDocument($doc));
 
         return response()->json([
             'success' => true,
@@ -148,7 +148,7 @@ class DepartmentDocumentController extends Controller
             $month = $validated['month'] ?? now()->month;
 
             // Determine category - if not provided, leave null (document will appear directly under month)
-            $category = !empty($validated['category']) ? $validated['category'] : null;
+            $category = empty($validated['category']) ? null : $validated['category'];
 
             // Store file in organized folder structure: department_documents/{department_id}/{year}/{month}/
             $path = "department_documents/{$department->id}/{$year}/{$month}";

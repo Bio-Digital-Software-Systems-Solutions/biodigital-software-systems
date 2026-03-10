@@ -13,7 +13,7 @@ trait HasEagerLoading
     public static function bootHasEagerLoading(): void
     {
         // Automatically eager load relationships when querying
-        static::addGlobalScope('eagerLoad', function (Builder $builder) {
+        static::addGlobalScope('eagerLoad', function (Builder $builder): void {
             if (method_exists($builder->getModel(), 'getDefaultEagerLoads')) {
                 $builder->with($builder->getModel()->getDefaultEagerLoads());
             }
@@ -22,8 +22,6 @@ trait HasEagerLoading
 
     /**
      * Get the relationships that should be eager loaded by default.
-     *
-     * @return array
      */
     public function getDefaultEagerLoads(): array
     {
@@ -33,9 +31,7 @@ trait HasEagerLoading
     /**
      * Scope a query to eager load specific relationships.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  array|string  $relations
-     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeWithRelations(Builder $query, $relations): Builder
     {
@@ -45,9 +41,7 @@ trait HasEagerLoading
     /**
      * Scope a query to count relationships without loading them.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  array|string  $relations
-     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeWithCount(Builder $query, $relations): Builder
     {
@@ -57,9 +51,7 @@ trait HasEagerLoading
     /**
      * Scope a query to eager load relationships only if they exist.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  array|string  $relations
-     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeWithExists(Builder $query, $relations): Builder
     {
@@ -87,8 +79,6 @@ trait HasEagerLoading
 
     /**
      * Get eager loadable relation names.
-     *
-     * @return array
      */
     public function getEagerLoadableRelations(): array
     {
@@ -103,7 +93,7 @@ trait HasEagerLoading
                 if ($reflection->isPublic() &&
                     ! $reflection->isStatic() &&
                     ! $reflection->isAbstract() &&
-                    strpos($method, '__') !== 0 &&
+                    !str_starts_with($method, '__') &&
                     $method !== 'getEagerLoadableRelations'
                 ) {
                     $returnType = $reflection->getReturnType();
@@ -114,7 +104,7 @@ trait HasEagerLoading
                         $relations[] = $method;
                     }
                 }
-            } catch (\ReflectionException $e) {
+            } catch (\ReflectionException) {
                 continue;
             }
         }

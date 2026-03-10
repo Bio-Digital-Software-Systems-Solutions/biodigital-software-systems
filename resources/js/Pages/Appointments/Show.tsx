@@ -19,6 +19,8 @@ import {
     XCircle,
     AlertCircle,
     MoreHorizontal,
+    Download,
+    ExternalLink,
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -36,7 +38,7 @@ import { fr } from 'date-fns/locale';
 import type { AppointmentShowProps, AppointmentStatus, ParticipantStatus } from '@/Types/appointment';
 
 export default function AppointmentShow() {
-    const { appointment, canModify, canCancel } = usePage<AppointmentShowProps>().props;
+    const { appointment, canModify, canCancel, calendarUrls } = usePage<AppointmentShowProps>().props;
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
     const handleDelete = () => {
@@ -385,6 +387,30 @@ export default function AppointmentShow() {
                                         Annuler
                                     </Button>
                                 )}
+
+                                <Separator />
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-full">
+                                            <Download className="h-4 w-4 mr-2" />
+                                            Ajouter au calendrier
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <DropdownMenuItem onClick={() => window.open(calendarUrls.ics)}>
+                                            <Download className="h-4 w-4 mr-2" />
+                                            Télécharger .ics
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => window.open(calendarUrls.google, '_blank')}>
+                                            <ExternalLink className="h-4 w-4 mr-2" />
+                                            Google Calendar
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => window.open(calendarUrls.outlook, '_blank')}>
+                                            <ExternalLink className="h-4 w-4 mr-2" />
+                                            Outlook
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
 
                                 {/* Invitation response buttons for participants */}
                                 {appointment.participants?.some(p => p.id === usePage().props.auth?.user?.id && p.pivot.status === 'pending') && (

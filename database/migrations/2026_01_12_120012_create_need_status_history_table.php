@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('need_status_history', function (Blueprint $table) {
+        Schema::create('need_status_history', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('need_id')->constrained('department_needs')->onDelete('cascade');
             $table->foreignId('changed_by')->constrained('users')->onDelete('cascade');

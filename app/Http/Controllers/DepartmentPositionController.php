@@ -48,7 +48,7 @@ class DepartmentPositionController extends Controller
 
         $maxSortOrder = $department->positions()->max('sort_order') ?? 0;
 
-        $position = $department->positions()->create([
+        $department->positions()->create([
             ...$validated,
             'sort_order' => $maxSortOrder + 1,
             'is_active' => $validated['is_active'] ?? true,

@@ -25,9 +25,7 @@ class ChatRoomPolicy
         $cacheKey = "user:{$user->id}:room:{$chatRoom->id}:participant";
 
         // Use cache to prevent timing attacks and improve performance
-        $isParticipant = Cache::remember($cacheKey, 3600, function () use ($user, $chatRoom) {
-            return $chatRoom->participants()->where('user_id', $user->id)->exists();
-        });
+        $isParticipant = Cache::remember($cacheKey, 3600, fn() => $chatRoom->participants()->where('user_id', $user->id)->exists());
 
         // Add random delay (1-5ms) to mask timing differences
         usleep(random_int(1000, 5000));
@@ -66,9 +64,7 @@ class ChatRoomPolicy
         // Users can leave rooms they are participants in
         $cacheKey = "user:{$user->id}:room:{$chatRoom->id}:participant";
 
-        $isParticipant = Cache::remember($cacheKey, 3600, function () use ($user, $chatRoom) {
-            return $chatRoom->participants()->where('user_id', $user->id)->exists();
-        });
+        $isParticipant = Cache::remember($cacheKey, 3600, fn() => $chatRoom->participants()->where('user_id', $user->id)->exists());
 
         usleep(random_int(1000, 5000));
 

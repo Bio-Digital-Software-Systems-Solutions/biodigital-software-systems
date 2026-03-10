@@ -126,10 +126,10 @@ class SettingsController extends Controller
         $validated['order'] = $maxOrder + 1;
 
         // Set default values if not provided
-        $validated['title'] = $validated['title'] ?? '';
-        $validated['description'] = $validated['description'] ?? '';
-        $validated['overlay_opacity'] = $validated['overlay_opacity'] ?? 0.5;
-        $validated['is_active'] = $validated['is_active'] ?? true;
+        $validated['title'] ??= '';
+        $validated['description'] ??= '';
+        $validated['overlay_opacity'] ??= 0.5;
+        $validated['is_active'] ??= true;
 
         unset($validated['media_file']);
 
@@ -173,8 +173,8 @@ class SettingsController extends Controller
         unset($validated['media_file']);
 
         // Set default values if null (database requires non-null)
-        $validated['title'] = $validated['title'] ?? $heroSlide->title ?? '';
-        $validated['description'] = $validated['description'] ?? $heroSlide->description ?? '';
+        $validated['title'] ??= $heroSlide->title ?? '';
+        $validated['description'] ??= $heroSlide->description ?? '';
 
         $heroSlide->update($validated);
 

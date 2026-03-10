@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('quizzes', function (Blueprint $table) {
+        Schema::table('quizzes', function (Blueprint $table): void {
             $table->string('status')->default('draft')->after('score_display');
         });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('quizzes', function (Blueprint $table) {
+        Schema::table('quizzes', function (Blueprint $table): void {
             $table->dropColumn('status');
         });
     }

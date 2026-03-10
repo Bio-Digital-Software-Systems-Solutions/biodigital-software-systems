@@ -38,18 +38,18 @@ class TaskController extends Controller
         $query = Task::query();
 
         // Apply filters
-        $query->when(request('status'), function ($query, $status) {
-            $query->whereHas('status', function ($q) use ($status) {
+        $query->when(request('status'), function ($query, $status): void {
+            $query->whereHas('status', function ($q) use ($status): void {
                 $q->where('name', $status);
             });
         })
-            ->when(request('program'), function ($query, $program) {
+            ->when(request('program'), function ($query, $program): void {
                 $query->where('program_id', $program);
             })
-            ->when(request('priority'), function ($query, $priority) {
+            ->when(request('priority'), function ($query, $priority): void {
                 $query->where('priority', $priority);
             })
-            ->when(request('assigned_to'), function ($query, $userId) {
+            ->when(request('assigned_to'), function ($query, $userId): void {
                 $query->where('assigned_to', $userId);
             });
 
@@ -113,7 +113,7 @@ class TaskController extends Controller
         $statuses = Status::all();
 
         // Get all users
-        $users = User::all()->map(fn ($user) => [
+        $users = User::all()->map(fn ($user): array => [
             'id' => $user->id,
             'uuid' => $user->uuid ?? null,
             'first_name' => $user->first_name,
@@ -126,7 +126,7 @@ class TaskController extends Controller
         $employees = Employee::with('user')
             ->where('status', EmployeeStatus::ACTIVE)
             ->get()
-            ->map(fn ($employee) => [
+            ->map(fn ($employee): array => [
                 'id' => $employee->user_id,
                 'uuid' => $employee->uuid,
                 'first_name' => $employee->user->first_name ?? '',
@@ -140,7 +140,7 @@ class TaskController extends Controller
         $stars = Star::with('user')
             ->where('status', StarStatus::ACTIVE)
             ->get()
-            ->map(fn ($star) => [
+            ->map(fn ($star): array => [
                 'id' => $star->user_id,
                 'uuid' => $star->uuid,
                 'first_name' => $star->user->first_name ?? '',
@@ -182,11 +182,11 @@ class TaskController extends Controller
 
         // Backward compatibility: if project_id or program_id is provided, set taskable
         if ($request->filled('project_id')) {
-            $validated['taskable_type'] = 'App\\Models\\Project';
+            $validated['taskable_type'] = \App\Models\Project::class;
             $validated['taskable_id'] = $request->input('project_id');
             $validated['project_id'] = $request->input('project_id');
         } elseif ($request->filled('program_id')) {
-            $validated['taskable_type'] = 'App\\Models\\Program';
+            $validated['taskable_type'] = \App\Models\Program::class;
             $validated['taskable_id'] = $request->input('program_id');
             $validated['program_id'] = $request->input('program_id');
         }
@@ -207,7 +207,7 @@ class TaskController extends Controller
         $this->notifyProjectMembersOfNewTask($task, $validated);
 
         // Redirect to project if task was created from a project page
-        if (isset($validated['taskable_type']) && $validated['taskable_type'] === 'App\\Models\\Project' && $request->has('from_project')) {
+        if (isset($validated['taskable_type']) && $validated['taskable_type'] === \App\Models\Project::class && $request->has('from_project')) {
             $project = \App\Models\Project::find($validated['taskable_id']);
             if ($project) {
                 return redirect()->route('projects.show', $project->uuid)
@@ -233,7 +233,7 @@ class TaskController extends Controller
         // Load comments separately to properly eager-load nested relations
         $comments = $task->comments()
             ->whereNull('parent_id')
-            ->with(['user', 'replies' => function ($query) {
+            ->with(['user', 'replies' => function ($query): void {
                 $query->with('user')->orderBy('created_at', 'asc');
             }])
             ->orderBy('created_at', 'desc')
@@ -246,7 +246,7 @@ class TaskController extends Controller
             ->with('causer')
             ->orderBy('created_at', 'desc')
             ->get()
-            ->filter(function ($activity) {
+            ->filter(function ($activity): bool {
                 // Include created events or status_id changes
                 if ($activity->description === 'created') {
                     return true;
@@ -255,7 +255,7 @@ class TaskController extends Controller
 
                 return isset($attributes['status_id']);
             })
-            ->map(function ($activity) {
+            ->map(function ($activity): array {
                 $oldStatusId = $activity->properties['old']['status_id'] ?? null;
                 $newStatusId = $activity->properties['attributes']['status_id'] ?? null;
 
@@ -323,11 +323,11 @@ class TaskController extends Controller
 
         // Backward compatibility: if project_id or program_id is provided, set taskable
         if ($request->filled('project_id')) {
-            $validated['taskable_type'] = 'App\\Models\\Project';
+            $validated['taskable_type'] = \App\Models\Project::class;
             $validated['taskable_id'] = $request->input('project_id');
             $validated['project_id'] = $request->input('project_id');
         } elseif ($request->filled('program_id')) {
-            $validated['taskable_type'] = 'App\\Models\\Program';
+            $validated['taskable_type'] = \App\Models\Program::class;
             $validated['taskable_id'] = $request->input('program_id');
             $validated['program_id'] = $request->input('program_id');
         }
@@ -375,7 +375,7 @@ class TaskController extends Controller
         return back()->with('success', 'Task status updated successfully.');
     }
 
-    public function toggleComplete(Request $request, Task $task)
+    public function toggleComplete(Request $request, Task $task): \Illuminate\Http\RedirectResponse
     {
         $completedStatus = Status::where('name', 'completed')->first();
         $pendingStatus = Status::where('name', 'pending')->first();
@@ -402,8 +402,11 @@ class TaskController extends Controller
         $status = Status::where('name', $statusName)->first();
 
         if ($status) {
-            Task::whereIn('id', $validated['task_ids'])
-                ->update(['status_id' => $status->id]);
+            $tasks = Task::whereIn('id', $validated['task_ids'])->get();
+
+            foreach ($tasks as $task) {
+                $task->update(['status_id' => $status->id]);
+            }
         }
 
         return back()->with('success', 'Tasks updated successfully.');
@@ -520,7 +523,7 @@ class TaskController extends Controller
             'user_id' => $currentUser->id,
             'content' => $validated['content'],
             'parent_id' => $validated['parent_id'] ?? null,
-            'mentions' => ! empty($validMentions) ? $validMentions : null,
+            'mentions' => $validMentions === [] ? null : $validMentions,
         ]);
 
         // Send mention notifications
@@ -538,14 +541,14 @@ class TaskController extends Controller
      */
     private function notifyMentionedUsers(Task $task, TaskComment $comment, User $mentionedBy, array $mentionedUserIds): void
     {
-        if (empty($mentionedUserIds)) {
+        if ($mentionedUserIds === []) {
             return;
         }
 
         // Don't notify the user who wrote the comment
-        $mentionedUserIds = array_filter($mentionedUserIds, fn ($id) => $id !== $mentionedBy->id);
+        $mentionedUserIds = array_filter($mentionedUserIds, fn ($id): bool => $id !== $mentionedBy->id);
 
-        if (empty($mentionedUserIds)) {
+        if ($mentionedUserIds === []) {
             return;
         }
 
@@ -564,7 +567,7 @@ class TaskController extends Controller
     private function notifyProjectMembersOfNewTask(Task $task, array $validated): void
     {
         // Only notify if task is associated with a project
-        if (! isset($validated['taskable_type']) || $validated['taskable_type'] !== 'App\\Models\\Project') {
+        if (! isset($validated['taskable_type']) || $validated['taskable_type'] !== \App\Models\Project::class) {
             return;
         }
 
@@ -642,7 +645,7 @@ class TaskController extends Controller
      */
     public function addAttachment(Request $request, Task $task)
     {
-        $validated = $request->validate([
+        $request->validate([
             'file' => 'required|file|max:51200', // Max 50MB
         ]);
 

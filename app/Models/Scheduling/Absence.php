@@ -13,6 +13,82 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $user_id
+ * @property int|null $department_id
+ * @property AbsenceType $type
+ * @property \Illuminate\Support\Carbon $start_date
+ * @property \Illuminate\Support\Carbon $end_date
+ * @property int $is_full_day
+ * @property bool $is_half_day_start
+ * @property bool $is_half_day_end
+ * @property string|null $start_time
+ * @property string|null $end_time
+ * @property numeric|null $days_count
+ * @property AbsenceStatus $status
+ * @property string|null $reason
+ * @property string|null $document_path
+ * @property int|null $approved_by
+ * @property int|null $interim_user_id
+ * @property string|null $interim_notes
+ * @property \Illuminate\Support\Carbon|null $approved_at
+ * @property \Illuminate\Support\Carbon|null $rejected_at
+ * @property string|null $rejection_reason
+ * @property string|null $documents
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string|null $deleted_at
+ * @property-read User|null $approvedBy
+ * @property-read User|null $approvedByUser
+ * @property-read Department|null $department
+ * @property-read string $date_range
+ * @property-read bool $is_approved
+ * @property-read bool $is_current
+ * @property-read bool $is_pending
+ * @property-read User|null $interimUser
+ * @property-read User $user
+ * @method static Builder<static>|Absence active()
+ * @method static Builder<static>|Absence approved()
+ * @method static Builder<static>|Absence byType(\App\Enums\Scheduling\AbsenceType $type)
+ * @method static \Database\Factories\Scheduling\AbsenceFactory factory($count = null, $state = [])
+ * @method static Builder<static>|Absence forDateRange(\Carbon\Carbon $start, \Carbon\Carbon $end)
+ * @method static Builder<static>|Absence forDepartment(int $departmentId)
+ * @method static Builder<static>|Absence forUser(int $userId)
+ * @method static Builder<static>|Absence newModelQuery()
+ * @method static Builder<static>|Absence newQuery()
+ * @method static Builder<static>|Absence pending()
+ * @method static Builder<static>|Absence query()
+ * @method static Builder<static>|Absence upcoming()
+ * @method static Builder<static>|Absence whereApprovedAt($value)
+ * @method static Builder<static>|Absence whereApprovedBy($value)
+ * @method static Builder<static>|Absence whereCreatedAt($value)
+ * @method static Builder<static>|Absence whereDaysCount($value)
+ * @method static Builder<static>|Absence whereDeletedAt($value)
+ * @method static Builder<static>|Absence whereDepartmentId($value)
+ * @method static Builder<static>|Absence whereDocumentPath($value)
+ * @method static Builder<static>|Absence whereDocuments($value)
+ * @method static Builder<static>|Absence whereEndDate($value)
+ * @method static Builder<static>|Absence whereEndTime($value)
+ * @method static Builder<static>|Absence whereId($value)
+ * @method static Builder<static>|Absence whereInterimNotes($value)
+ * @method static Builder<static>|Absence whereInterimUserId($value)
+ * @method static Builder<static>|Absence whereIsFullDay($value)
+ * @method static Builder<static>|Absence whereIsHalfDayEnd($value)
+ * @method static Builder<static>|Absence whereIsHalfDayStart($value)
+ * @method static Builder<static>|Absence whereReason($value)
+ * @method static Builder<static>|Absence whereRejectedAt($value)
+ * @method static Builder<static>|Absence whereRejectionReason($value)
+ * @method static Builder<static>|Absence whereStartDate($value)
+ * @method static Builder<static>|Absence whereStartTime($value)
+ * @method static Builder<static>|Absence whereStatus($value)
+ * @method static Builder<static>|Absence whereType($value)
+ * @method static Builder<static>|Absence whereUpdatedAt($value)
+ * @method static Builder<static>|Absence whereUserId($value)
+ * @method static Builder<static>|Absence whereUuid($value)
+ * @mixin \Eloquent
+ */
 class Absence extends Model
 {
     use HasFactory;
@@ -56,7 +132,7 @@ class Absence extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
@@ -65,7 +141,7 @@ class Absence extends Model
             }
         });
 
-        static::updating(function ($model) {
+        static::updating(function ($model): void {
             if ($model->isDirty(['start_date', 'end_date', 'is_half_day_start', 'is_half_day_end'])) {
                 $model->days_count = $model->calculateDaysCount();
             }
@@ -134,10 +210,10 @@ class Absence extends Model
 
     public function scopeForDateRange(Builder $query, Carbon $start, Carbon $end): Builder
     {
-        return $query->where(function ($q) use ($start, $end) {
+        return $query->where(function ($q) use ($start, $end): void {
             $q->whereBetween('start_date', [$start, $end])
                 ->orWhereBetween('end_date', [$start, $end])
-                ->orWhere(function ($q2) use ($start, $end) {
+                ->orWhere(function ($q2) use ($start, $end): void {
                     $q2->where('start_date', '<=', $start)
                         ->where('end_date', '>=', $end);
                 });

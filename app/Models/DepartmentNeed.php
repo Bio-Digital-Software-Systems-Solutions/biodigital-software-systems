@@ -14,6 +14,107 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $department_id
+ * @property int $requester_id
+ * @property int|null $assigned_to
+ * @property string $title
+ * @property string|null $description
+ * @property NeedCategory $category
+ * @property NeedPriority $priority
+ * @property NeedStatus $status
+ * @property numeric|null $estimated_cost
+ * @property numeric|null $approved_budget
+ * @property numeric|null $actual_cost
+ * @property string $currency
+ * @property int $quantity
+ * @property string|null $unit
+ * @property string|null $justification
+ * @property array<array-key, mixed>|null $specifications
+ * @property array<array-key, mixed>|null $vendor_info
+ * @property int|null $approved_by
+ * @property int|null $rejected_by
+ * @property string|null $rejection_reason
+ * @property int|null $workflow_instance_id
+ * @property int|null $form_submission_id
+ * @property \Illuminate\Support\Carbon|null $needed_by
+ * @property \Illuminate\Support\Carbon|null $expected_delivery
+ * @property \Illuminate\Support\Carbon|null $actual_delivery
+ * @property \Illuminate\Support\Carbon|null $submitted_at
+ * @property \Illuminate\Support\Carbon|null $approved_at
+ * @property \Illuminate\Support\Carbon|null $rejected_at
+ * @property \Illuminate\Support\Carbon|null $ordered_at
+ * @property \Illuminate\Support\Carbon|null $delivered_at
+ * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\User|null $approver
+ * @property-read \App\Models\User|null $assignee
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\NeedAttachment> $attachments
+ * @property-read int|null $attachments_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\NeedComment> $comments
+ * @property-read int|null $comments_count
+ * @property-read \App\Models\Department $department
+ * @property-read \App\Models\DepartmentFormSubmission|null $formSubmission
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\NeedComment> $internalComments
+ * @property-read int|null $internal_comments_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\NeedComment> $publicComments
+ * @property-read int|null $public_comments_count
+ * @property-read \App\Models\User|null $rejecter
+ * @property-read \App\Models\User $requester
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\NeedStatusHistory> $statusHistory
+ * @property-read int|null $status_history_count
+ * @property-read \App\Models\WorkflowInstance|null $workflowInstance
+ * @method static \Database\Factories\DepartmentNeedFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereActualCost($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereActualDelivery($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereApprovedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereApprovedBudget($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereApprovedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereAssignedTo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereCategory($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereCurrency($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereDeliveredAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereEstimatedCost($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereExpectedDelivery($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereFormSubmissionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereJustification($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereNeededBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereOrderedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed wherePriority($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereQuantity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereRejectedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereRejectedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereRejectionReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereRequesterId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereSpecifications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereSubmittedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereUnit($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereVendorInfo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed whereWorkflowInstanceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentNeed withoutTrashed()
+ * @mixin \Eloquent
+ */
 class DepartmentNeed extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
@@ -77,13 +178,13 @@ class DepartmentNeed extends Model
     {
         parent::boot();
 
-        static::creating(function (self $model) {
+        static::creating(function (self $model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
         });
 
-        static::updating(function (self $model) {
+        static::updating(function (self $model): void {
             $originalValue = $model->getRawOriginal('status');
             $newValue = $model->status?->value ?? $model->status;
             if ($originalValue !== $newValue) {

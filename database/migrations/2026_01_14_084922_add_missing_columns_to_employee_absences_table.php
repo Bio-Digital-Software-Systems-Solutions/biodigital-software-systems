@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('employee_absences', function (Blueprint $table) {
+        Schema::table('employee_absences', function (Blueprint $table): void {
             // Add missing columns for Absence model compatibility
             if (!Schema::hasColumn('employee_absences', 'is_half_day_start')) {
                 $table->boolean('is_half_day_start')->default(false)->after('is_full_day');
@@ -36,7 +36,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('employee_absences', function (Blueprint $table) {
+        Schema::table('employee_absences', function (Blueprint $table): void {
             $table->dropColumn([
                 'is_half_day_start',
                 'is_half_day_end',

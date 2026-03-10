@@ -7,22 +7,48 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * Church model for ICC churches worldwide
- * 
+ *
  * @property int $id
  * @property string $name
  * @property string $city
  * @property string $country
- * @property float $latitude
- * @property float $longitude
+ * @property float|null $latitude
+ * @property float|null $longitude
  * @property int $members
  * @property string|null $address
  * @property string|null $website
  * @property string|null $email
  * @property string|null $phone
+ * @property string|null $leader_name
+ * @property string|null $category
  * @property string|null $continent
  * @property bool $is_active
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read string $category_label
+ * @property-read array $coordinates
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereCategory($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereCity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereContinent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereCountry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereLatitude($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereLeaderName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereLongitude($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereMembers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church wherePhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Church whereWebsite($value)
+ * @mixin \Eloquent
  */
 class Church extends Model
 {
@@ -122,7 +148,7 @@ class Church extends Model
     {
         parent::boot();
 
-        static::saving(function ($church) {
+        static::saving(function ($church): void {
             if (!$church->continent && $church->latitude !== null && $church->longitude !== null) {
                 $church->continent = static::detectContinent($church->latitude, $church->longitude);
             }

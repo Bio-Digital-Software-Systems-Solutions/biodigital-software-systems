@@ -21,14 +21,14 @@ class ChatRoomFactory extends Factory
 
     public function direct(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'direct',
         ]);
     }
 
     public function group(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'type' => 'group',
         ]);
     }

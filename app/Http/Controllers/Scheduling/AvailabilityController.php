@@ -42,12 +42,12 @@ class AvailabilityController extends Controller
         $allUserIds = $memberIds->merge($availabilityUserIds)->unique();
 
         $members = \App\Models\User::whereIn('id', $allUserIds)
-            ->with(['employeeAvailabilities' => function ($query) use ($department) {
+            ->with(['employeeAvailabilities' => function ($query) use ($department): void {
                 $query->where('department_id', $department->id);
             }, 'absences'])
             ->get();
 
-        $availabilityMatrix = $members->map(function ($member) use ($weekStart, $weekEnd, $department) {
+        $availabilityMatrix = $members->map(function (\App\Models\User $member) use ($weekStart, $weekEnd, $department): array {
             $dates = [];
             $current = $weekStart->copy();
 
@@ -74,7 +74,7 @@ class AvailabilityController extends Controller
             'weekEnd' => $weekEnd->format('Y-m-d'),
             'prevWeek' => $weekStart->copy()->subWeek()->format('Y-m-d'),
             'nextWeek' => $weekStart->copy()->addWeek()->format('Y-m-d'),
-            'availabilityStatuses' => collect(AvailabilityStatus::cases())->map(fn($s) => [
+            'availabilityStatuses' => collect(AvailabilityStatus::cases())->map(fn($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
@@ -116,7 +116,7 @@ class AvailabilityController extends Controller
                 $currentAvailability[$dayKey] = [
                     'available' => $isAvailable,
                     'slots' => $data['start_time'] && $data['end_time']
-                        ? [['start' => substr($data['start_time'], 0, 5), 'end' => substr($data['end_time'], 0, 5)]]
+                        ? [['start' => substr((string) $data['start_time'], 0, 5), 'end' => substr((string) $data['end_time'], 0, 5)]]
                         : [['start' => '08:00', 'end' => '12:00'], ['start' => '14:00', 'end' => '18:00']],
                     'notes' => $data['notes'] ?? '',
                 ];
@@ -131,12 +131,12 @@ class AvailabilityController extends Controller
             'weekEnd' => $weekEnd->format('Y-m-d'),
             'prevWeek' => $weekStart->copy()->subWeek()->format('Y-m-d'),
             'nextWeek' => $weekStart->copy()->addWeek()->format('Y-m-d'),
-            'availabilityStatuses' => collect(AvailabilityStatus::cases())->map(fn($s) => [
+            'availabilityStatuses' => collect(AvailabilityStatus::cases())->map(fn($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
             ]),
-            'daysOfWeek' => collect(DayOfWeek::cases())->map(fn($d) => [
+            'daysOfWeek' => collect(DayOfWeek::cases())->map(fn($d): array => [
                 'value' => $d->value,
                 'label' => $d->label(),
                 'short' => $d->shortLabel(),

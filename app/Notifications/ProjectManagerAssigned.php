@@ -13,22 +13,13 @@ class ProjectManagerAssigned extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public Project $project;
-
-    public string $role;
-
-    public ?User $assignedBy;
-
     /**
      * Create a new notification instance.
      *
      * @param  string  $role  'manager' or 'reviewer'
      */
-    public function __construct(Project $project, string $role, ?User $assignedBy = null)
+    public function __construct(public Project $project, public string $role, public ?User $assignedBy = null)
     {
-        $this->project = $project;
-        $this->role = $role;
-        $this->assignedBy = $assignedBy;
     }
 
     /**
@@ -47,7 +38,7 @@ class ProjectManagerAssigned extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $roleLabel = $this->getRoleLabel($this->role);
-        $assignedByName = $this->assignedBy
+        $assignedByName = $this->assignedBy instanceof \App\Models\User
             ? $this->assignedBy->first_name.' '.$this->assignedBy->last_name
             : 'Le système';
 
@@ -86,7 +77,7 @@ class ProjectManagerAssigned extends Notification implements ShouldQueue
     public function toDatabase(object $notifiable): array
     {
         $roleLabel = $this->getRoleLabel($this->role);
-        $assignedByName = $this->assignedBy
+        $assignedByName = $this->assignedBy instanceof \App\Models\User
             ? $this->assignedBy->first_name.' '.$this->assignedBy->last_name
             : 'Le système';
 

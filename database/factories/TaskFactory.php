@@ -39,7 +39,7 @@ class TaskFactory extends Factory
      */
     public function highPriority(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'priority' => 'high',
         ]);
     }
@@ -49,7 +49,7 @@ class TaskFactory extends Factory
      */
     public function overdue(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'due_date' => fake()->dateTimeBetween('-1 month', '-1 day'),
         ]);
     }
@@ -59,7 +59,7 @@ class TaskFactory extends Factory
      */
     public function assignedTo(User $user): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'assigned_to' => $user->id,
         ]);
     }

@@ -19,8 +19,27 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property \Illuminate\Support\Carbon|null $acknowledged_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read User $user
- * @property-read User|null $acknowledgedByUser
+ * @property-read \App\Models\User|null $acknowledgedByUser
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\User $user
+ * @method static \Database\Factories\BlockedLoginAttemptFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt recent(int $days = 30)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt unacknowledged()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt whereAcknowledged($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt whereAcknowledgedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt whereAcknowledgedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt whereIpAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt whereUserAgent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BlockedLoginAttempt whereUserId($value)
+ * @mixin \Eloquent
  */
 class BlockedLoginAttempt extends Model
 {

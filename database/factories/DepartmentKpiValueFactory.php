@@ -39,7 +39,7 @@ class DepartmentKpiValueFactory extends Factory
      */
     public function forKpi(DepartmentKpi $kpi): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'kpi_id' => $kpi->id,
         ]);
     }
@@ -49,7 +49,7 @@ class DepartmentKpiValueFactory extends Factory
      */
     public function forReport(DepartmentReport $report): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'report_id' => $report->id,
         ]);
     }
@@ -59,7 +59,7 @@ class DepartmentKpiValueFactory extends Factory
      */
     public function withValue(float $value): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'value' => $value,
         ]);
     }
@@ -69,7 +69,7 @@ class DepartmentKpiValueFactory extends Factory
      */
     public function recordedAt(Carbon $date): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'recorded_at' => $date,
         ]);
     }
@@ -79,7 +79,7 @@ class DepartmentKpiValueFactory extends Factory
      */
     public function recordedBy(User $user): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'recorded_by' => $user->id,
         ]);
     }

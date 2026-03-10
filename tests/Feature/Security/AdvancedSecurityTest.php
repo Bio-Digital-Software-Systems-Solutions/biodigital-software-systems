@@ -32,7 +32,7 @@ class AdvancedSecurityTest extends TestCase
         $initialSessionId = Session::getId();
 
         // Login
-        $response = $this->post('/login', [
+        $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
@@ -60,16 +60,14 @@ class AdvancedSecurityTest extends TestCase
 
         // Should fail without valid CSRF token
         $this->assertTrue(
-            $response->status() === 419 ||
-            $response->status() === 403 ||
-            $response->status() === 500
+            in_array($response->status(), [419, 403, 500], true)
         );
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
     public function rate_limiting_prevents_brute_force_login(): void
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'email' => 'test@example.com',
             'password' => Hash::make('correct-password'),
         ]);
@@ -283,7 +281,7 @@ class AdvancedSecurityTest extends TestCase
         $user = User::factory()->create();
 
         // Login from first device
-        $response1 = $this->post('/login', [
+        $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
@@ -292,7 +290,7 @@ class AdvancedSecurityTest extends TestCase
 
         // Login from second device
         $this->withSession([]); // Clear session
-        $response2 = $this->post('/login', [
+        $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
@@ -380,7 +378,7 @@ class AdvancedSecurityTest extends TestCase
     #[\PHPUnit\Framework\Attributes\Test]
     public function timing_attack_resistance_in_authentication(): void
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'email' => 'timing@example.com',
             'password' => Hash::make('correct-password'),
         ]);
@@ -433,7 +431,7 @@ class AdvancedSecurityTest extends TestCase
         $cookies = $response->headers->getCookies();
 
         foreach ($cookies as $cookie) {
-            if (strpos($cookie->getName(), 'session') !== false) {
+            if (str_contains($cookie->getName(), 'session')) {
                 // Cookie should have HttpOnly flag
                 $this->assertTrue($cookie->isHttpOnly());
 
@@ -478,11 +476,11 @@ class AdvancedSecurityTest extends TestCase
             $this->assertStringContainsString('script-src', $cspHeader);
 
             // Should not allow unsafe-inline without nonce/hash
-            if (strpos($cspHeader, 'unsafe-inline') !== false) {
+            if (str_contains($cspHeader, 'unsafe-inline')) {
                 // If unsafe-inline is present, should have nonce or hash
                 $this->assertTrue(
-                    strpos($cspHeader, 'nonce-') !== false ||
-                    strpos($cspHeader, 'sha256-') !== false
+                    str_contains($cspHeader, 'nonce-') ||
+                    str_contains($cspHeader, 'sha256-')
                 );
             }
         }

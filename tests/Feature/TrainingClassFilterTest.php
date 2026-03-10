@@ -61,7 +61,7 @@ class TrainingClassFilterTest extends TestCase
         ]);
     }
 
-    public function test_classes_can_be_retrieved_for_index()
+    public function test_classes_can_be_retrieved_for_index(): void
     {
         // Create classes
         TrainingClass::factory()->create([
@@ -87,15 +87,15 @@ class TrainingClassFilterTest extends TestCase
         );
     }
 
-    public function test_search_filters_classes_by_training_name()
+    public function test_search_filters_classes_by_training_name(): void
     {
-        $class1 = TrainingClass::factory()->create([
+        TrainingClass::factory()->create([
             'training_id' => $this->training1->id,
             'teacher_id' => $this->teacher1->id,
             'room' => 'Room A1',
         ]);
 
-        $class2 = TrainingClass::factory()->create([
+        TrainingClass::factory()->create([
             'training_id' => $this->training2->id,
             'teacher_id' => $this->teacher2->id,
             'room' => 'Room B2',
@@ -117,7 +117,7 @@ class TrainingClassFilterTest extends TestCase
         $this->assertContains('React Development', $trainingNames);
     }
 
-    public function test_classes_have_correct_teacher_information()
+    public function test_classes_have_correct_teacher_information(): void
     {
         TrainingClass::factory()->create([
             'training_id' => $this->training1->id,
@@ -134,7 +134,7 @@ class TrainingClassFilterTest extends TestCase
         $this->assertNotNull($classes[0]['teacher_name']);
     }
 
-    public function test_classes_have_correct_room_information()
+    public function test_classes_have_correct_room_information(): void
     {
         TrainingClass::factory()->create([
             'training_id' => $this->training1->id,
@@ -157,7 +157,7 @@ class TrainingClassFilterTest extends TestCase
         $this->assertContains('Computer Lab', $rooms);
     }
 
-    public function test_classes_have_status_information()
+    public function test_classes_have_status_information(): void
     {
         TrainingClass::factory()->create([
             'training_id' => $this->training1->id,
@@ -173,7 +173,7 @@ class TrainingClassFilterTest extends TestCase
         $this->assertContains('À venir', $statuses);
     }
 
-    public function test_classes_include_student_count()
+    public function test_classes_include_student_count(): void
     {
         $class = TrainingClass::factory()->create([
             'training_id' => $this->training1->id,
@@ -205,24 +205,24 @@ class TrainingClassFilterTest extends TestCase
         $this->assertEquals(30, $targetClass['max_students']);
     }
 
-    public function test_non_authenticated_users_cannot_access_classes()
+    public function test_non_authenticated_users_cannot_access_classes(): void
     {
         $response = $this->get(route('training-classes.index'));
 
         $response->assertRedirect(route('login'));
     }
 
-    public function test_classes_can_be_filtered_by_multiple_criteria()
+    public function test_classes_can_be_filtered_by_multiple_criteria(): void
     {
         // Create multiple classes with different attributes
-        $class1 = TrainingClass::factory()->create([
+        TrainingClass::factory()->create([
             'training_id' => $this->training1->id,
             'teacher_id' => $this->teacher1->id,
             'room' => 'Room A',
             'date' => now()->addDay(),
         ]);
 
-        $class2 = TrainingClass::factory()->create([
+        TrainingClass::factory()->create([
             'training_id' => $this->training2->id,
             'teacher_id' => $this->teacher2->id,
             'room' => 'Room B',

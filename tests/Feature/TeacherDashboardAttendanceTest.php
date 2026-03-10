@@ -42,7 +42,7 @@ class TeacherDashboardAttendanceTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_view_attendance_data()
+    public function teacher_can_view_attendance_data(): void
     {
         // Create students
         $student1 = User::factory()->create();
@@ -92,7 +92,7 @@ class TeacherDashboardAttendanceTest extends TestCase
     }
 
     /** @test */
-    public function attendance_rate_is_calculated_correctly()
+    public function attendance_rate_is_calculated_correctly(): void
     {
         // Create 10 students
         $students = User::factory()->count(10)->create();
@@ -141,7 +141,7 @@ class TeacherDashboardAttendanceTest extends TestCase
     }
 
     /** @test */
-    public function teacher_only_sees_their_own_class_attendance()
+    public function teacher_only_sees_their_own_class_attendance(): void
     {
         $otherTeacher = User::factory()->create();
         $otherTeacher->assignRole('teacher');
@@ -184,7 +184,7 @@ class TeacherDashboardAttendanceTest extends TestCase
     }
 
     /** @test */
-    public function class_with_no_attendance_shows_zero_rate()
+    public function class_with_no_attendance_shows_zero_rate(): void
     {
         // Create students but no attendance records
         $students = User::factory()->count(5)->create();
@@ -210,7 +210,7 @@ class TeacherDashboardAttendanceTest extends TestCase
     }
 
     /** @test */
-    public function class_with_no_students_shows_zero_rate()
+    public function class_with_no_students_shows_zero_rate(): void
     {
         $response = $this->actingAs($this->teacher)
             ->get(route('teacher.dashboard'));

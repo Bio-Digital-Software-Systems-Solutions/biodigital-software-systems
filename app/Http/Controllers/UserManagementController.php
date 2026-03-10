@@ -41,7 +41,7 @@ class UserManagementController extends Controller
 
         // Apply search filter
         if ($search) {
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%");
@@ -50,7 +50,7 @@ class UserManagementController extends Controller
 
         // Apply role filter
         if ($roleFilter) {
-            $query->whereHas('roles', function ($q) use ($roleFilter) {
+            $query->whereHas('roles', function ($q) use ($roleFilter): void {
                 $q->where('name', $roleFilter);
             });
         }
@@ -295,7 +295,7 @@ class UserManagementController extends Controller
         $query = User::with(['roles', 'permissions']);
 
         if ($request->search) {
-            $query->where(function ($q) use ($request) {
+            $query->where(function ($q) use ($request): void {
                 $q->where('first_name', 'like', "%{$request->search}%")
                     ->orWhere('last_name', 'like', "%{$request->search}%")
                     ->orWhere('email', 'like', "%{$request->search}%");
@@ -303,7 +303,7 @@ class UserManagementController extends Controller
         }
 
         if ($request->role) {
-            $query->whereHas('roles', function ($q) use ($request) {
+            $query->whereHas('roles', function ($q) use ($request): void {
                 $q->where('name', $request->role);
             });
         }

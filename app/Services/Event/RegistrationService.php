@@ -16,11 +16,8 @@ use Illuminate\Support\Str;
 
 class RegistrationService
 {
-    protected TicketService $ticketService;
-
-    public function __construct(TicketService $ticketService)
+    public function __construct(protected TicketService $ticketService)
     {
-        $this->ticketService = $ticketService;
     }
 
     /**
@@ -36,7 +33,7 @@ class RegistrationService
         return DB::transaction(function () use ($event, $data, $ticket, $promoCode, $user) {
             // Calculate pricing
             $quantity = $data['quantity'] ?? 1;
-            $pricing = $ticket
+            $pricing = $ticket instanceof \App\Models\Event\EventTicket
                 ? $this->ticketService->calculatePrice($ticket, $quantity, $promoCode)
                 : ['unit_price' => 0, 'discount' => 0, 'total' => 0, 'currency' => 'EUR'];
 
@@ -73,12 +70,12 @@ class RegistrationService
             ]);
 
             // Reserve tickets if applicable
-            if ($ticket) {
+            if ($ticket instanceof \App\Models\Event\EventTicket) {
                 $this->ticketService->reserveTickets($ticket, $quantity);
             }
 
             // Increment promo code usage
-            if ($promoCode) {
+            if ($promoCode instanceof \App\Models\Event\EventPromoCode) {
                 $promoCode->increment('usage_count');
             }
 
@@ -324,7 +321,7 @@ class RegistrationService
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
@@ -354,24 +351,22 @@ class RegistrationService
             $query->whereIn('status', (array) $filters['status']);
         }
 
-        return $query->get()->map(function ($reg) {
-            return [
-                'registration_number' => $reg->registration_number,
-                'first_name' => $reg->first_name,
-                'last_name' => $reg->last_name,
-                'email' => $reg->email,
-                'phone' => $reg->phone,
-                'company' => $reg->company,
-                'job_title' => $reg->job_title,
-                'ticket' => $reg->ticket?->name,
-                'quantity' => $reg->quantity,
-                'total_amount' => $reg->total_amount,
-                'status' => $reg->status->label(),
-                'participant_role' => $reg->participant_role->label(),
-                'registered_at' => $reg->registered_at?->format('Y-m-d H:i:s'),
-                'confirmed_at' => $reg->confirmed_at?->format('Y-m-d H:i:s'),
-            ];
-        })->toArray();
+        return $query->get()->map(fn($reg): array => [
+            'registration_number' => $reg->registration_number,
+            'first_name' => $reg->first_name,
+            'last_name' => $reg->last_name,
+            'email' => $reg->email,
+            'phone' => $reg->phone,
+            'company' => $reg->company,
+            'job_title' => $reg->job_title,
+            'ticket' => $reg->ticket?->name,
+            'quantity' => $reg->quantity,
+            'total_amount' => $reg->total_amount,
+            'status' => $reg->status->label(),
+            'participant_role' => $reg->participant_role->label(),
+            'registered_at' => $reg->registered_at?->format('Y-m-d H:i:s'),
+            'confirmed_at' => $reg->confirmed_at?->format('Y-m-d H:i:s'),
+        ])->toArray();
     }
 
     /**
@@ -491,7 +486,7 @@ class RegistrationService
             ->whereNotIn('status', [RegistrationStatus::CANCELLED]);
 
         if ($userId) {
-            return $query->where(function ($q) use ($email, $userId) {
+            return $query->where(function ($q) use ($email, $userId): void {
                 $q->where('email', $email)->orWhere('user_id', $userId);
             })->exists();
         }

@@ -11,6 +11,7 @@ use Spatie\Activitylog\LogOptions;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $title
  * @property string $description
  * @property string $media_type
@@ -22,6 +23,8 @@ use Spatie\Activitylog\LogOptions;
  * @property bool $is_active
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|HeroSlide active()
  * @method static \Database\Factories\HeroSlideFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|HeroSlide newModelQuery()
@@ -39,9 +42,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|HeroSlide whereOverlayOpacity($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|HeroSlide whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|HeroSlide whereUpdatedAt($value)
- * @property string $uuid
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|HeroSlide whereUuid($value)
  * @mixin \Eloquent
  */

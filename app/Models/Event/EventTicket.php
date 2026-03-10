@@ -14,9 +14,81 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $event_id
+ * @property string $name
+ * @property string|null $description
+ * @property TicketType $type
+ * @property numeric $price
+ * @property numeric|null $original_price
+ * @property string $currency
+ * @property int|null $quantity_total
+ * @property int $quantity_sold
+ * @property int $quantity_reserved
+ * @property int $min_per_order
+ * @property int|null $max_per_order
+ * @property \Illuminate\Support\Carbon|null $sales_start
+ * @property \Illuminate\Support\Carbon|null $sales_end
+ * @property array<array-key, mixed>|null $benefits
+ * @property array<array-key, mixed>|null $restrictions
+ * @property bool $is_visible
+ * @property bool $requires_approval
+ * @property int $sort_order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read Event $event
+ * @property-read int|null $discount_percentage
+ * @property-read string $formatted_price
+ * @property-read bool $has_discount
+ * @property-read bool $is_free
+ * @property-read bool $is_sold_out
+ * @property-read int|null $quantity_available
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event\EventRegistration> $registrations
+ * @property-read int|null $registrations_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket available()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket onSale()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket ordered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket visible()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereBenefits($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereCurrency($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereEventId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereIsVisible($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereMaxPerOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereMinPerOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereOriginalPrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket wherePrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereQuantityReserved($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereQuantitySold($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereQuantityTotal($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereRequiresApproval($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereRestrictions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereSalesEnd($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereSalesStart($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventTicket withoutTrashed()
+ * @mixin \Eloquent
+ */
 class EventTicket extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache, SoftDeletes;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'event_id',
@@ -90,10 +162,10 @@ class EventTicket extends Model
 
     public function scopeOnSale($query)
     {
-        return $query->where(function ($q) {
+        return $query->where(function ($q): void {
             $q->whereNull('sales_start')
                 ->orWhere('sales_start', '<=', now());
-        })->where(function ($q) {
+        })->where(function ($q): void {
             $q->whereNull('sales_end')
                 ->orWhere('sales_end', '>=', now());
         });
@@ -141,7 +213,7 @@ class EventTicket extends Model
 
     public function getDiscountPercentageAttribute(): ?int
     {
-        if (!$this->has_discount || $this->original_price == 0) {
+        if (! $this->has_discount || $this->original_price == 0) {
             return null;
         }
 
@@ -154,7 +226,7 @@ class EventTicket extends Model
             return 'Gratuit';
         }
 
-        return number_format($this->price, 2, ',', ' ') . ' ' . $this->currency;
+        return number_format($this->price, 2, ',', ' ').' '.$this->currency;
     }
 
     // Methods
@@ -164,22 +236,17 @@ class EventTicket extends Model
         if ($this->sales_start && now()->isBefore($this->sales_start)) {
             return false;
         }
-
-        if ($this->sales_end && now()->isAfter($this->sales_end)) {
-            return false;
-        }
-
-        return true;
+        return !($this->sales_end && now()->isAfter($this->sales_end));
     }
 
     public function isSoldOut(): bool
     {
-        return $this->is_sold_out;
+        return (bool) $this->is_sold_out;
     }
 
     public function canPurchase(int $quantity = 1): bool
     {
-        if (!$this->is_visible || !$this->isOnSale()) {
+        if (! $this->is_visible || ! $this->isOnSale()) {
             return false;
         }
 
@@ -204,7 +271,7 @@ class EventTicket extends Model
 
     public function reserve(int $quantity): bool
     {
-        if (!$this->canPurchase($quantity)) {
+        if (! $this->canPurchase($quantity)) {
             return false;
         }
 

@@ -236,9 +236,8 @@ class TelegramNotificationService
         }
 
         $message .= "\nEn cas d'empechement, veuillez prevenir l'organisateur.\n\n";
-        $message .= 'A bientot !';
 
-        return $message;
+        return $message . 'A bientot !';
     }
 
     /**
@@ -249,7 +248,7 @@ class TelegramNotificationService
         $date = $appointment->start_datetime->format('d/m/Y');
         $time = $appointment->start_datetime->format('H:i');
         $participantsCount = $appointment->confirmedParticipants()->count();
-        $appName = config('app.name', 'ICC Munich');
+        config('app.name', 'ICC Munich');
 
         $message = "<b>Rappel - Votre rendez-vous de demain</b>\n\n";
         $message .= "<b>{$appointment->title}</b>\n\n";
@@ -261,9 +260,7 @@ class TelegramNotificationService
             $message .= "Lieu: {$appointment->location}\n";
         }
 
-        $message .= "\nConsultez vos emails pour plus de details.";
-
-        return $message;
+        return $message . "\nConsultez vos emails pour plus de details.";
     }
 
     /**
@@ -284,9 +281,8 @@ class TelegramNotificationService
         $message .= "Heure: {$time}\n";
         $message .= "Organisateur: {$organizer}\n\n";
         $message .= "Vous recevrez un rappel 24h avant le rendez-vous.\n\n";
-        $message .= 'A bientot !';
 
-        return $message;
+        return $message . 'A bientot !';
     }
 
     /**
@@ -303,9 +299,8 @@ class TelegramNotificationService
         $message .= "Nous vous informons que le rendez-vous suivant a ete annule :\n\n";
         $message .= "<b>{$appointment->title}</b>\n";
         $message .= "Date prevue: {$date} a {$time}\n\n";
-        $message .= 'Nous vous prions de nous excuser pour ce desagrement.';
 
-        return $message;
+        return $message . 'Nous vous prions de nous excuser pour ce desagrement.';
     }
 
     /**
@@ -340,14 +335,13 @@ class TelegramNotificationService
         }
 
         if ($appointment->description) {
-            $message .= "\nDescription: ".strip_tags($appointment->description)."\n";
+            $message .= "\nDescription: ".strip_tags((string) $appointment->description)."\n";
         }
 
         $message .= "\nPour repondre a cette invitation, cliquez sur les liens ci-dessous :\n";
         $message .= "Accepter: {$confirmUrl}\n";
-        $message .= "Decliner: {$declineUrl}\n";
 
-        return $message;
+        return $message . "Decliner: {$declineUrl}\n";
     }
 
     /**
@@ -366,7 +360,7 @@ class TelegramNotificationService
         $message .= "Date: {$date}\n";
         $message .= "Heure: {$time}\n";
 
-        if (! empty($changes)) {
+        if ($changes !== []) {
             $message .= "\nModifications :\n";
             foreach ($changes as $field => $change) {
                 $fieldLabel = $this->getFieldLabel($field);
@@ -374,9 +368,7 @@ class TelegramNotificationService
             }
         }
 
-        $message .= "\nConsultez vos emails pour plus de details.";
-
-        return $message;
+        return $message . "\nConsultez vos emails pour plus de details.";
     }
 
     /**

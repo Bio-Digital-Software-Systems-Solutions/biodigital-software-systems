@@ -58,7 +58,7 @@ class DepartmentDocumentFactory extends Factory
      */
     public function forDepartment(Department $department): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'department_id' => $department->id,
             'file_path' => 'department_documents/' . $department->id . '/' . now()->year . '/' . now()->month . '/' . $attributes['file_name'],
         ]);
@@ -69,7 +69,7 @@ class DepartmentDocumentFactory extends Factory
      */
     public function uploadedBy(User $user): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'uploaded_by' => $user->id,
         ]);
     }
@@ -79,7 +79,7 @@ class DepartmentDocumentFactory extends Factory
      */
     public function forPeriod(int $year, int $month): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'year' => $year,
             'month' => $month,
         ]);
@@ -90,7 +90,7 @@ class DepartmentDocumentFactory extends Factory
      */
     public function pdf(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'extension' => 'pdf',
             'mime_type' => 'application/pdf',
             'original_name' => fake()->words(3, true) . '.pdf',
@@ -102,7 +102,7 @@ class DepartmentDocumentFactory extends Factory
      */
     public function word(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'extension' => 'docx',
             'mime_type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'original_name' => fake()->words(3, true) . '.docx',
@@ -114,7 +114,7 @@ class DepartmentDocumentFactory extends Factory
      */
     public function excel(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'extension' => 'xlsx',
             'mime_type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'original_name' => fake()->words(3, true) . '.xlsx',
@@ -126,7 +126,7 @@ class DepartmentDocumentFactory extends Factory
      */
     public function image(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'extension' => 'jpg',
             'mime_type' => 'image/jpeg',
             'original_name' => fake()->words(3, true) . '.jpg',

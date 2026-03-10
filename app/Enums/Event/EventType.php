@@ -115,7 +115,7 @@ enum EventType: string
 
     public function isVirtual(): bool
     {
-        return in_array($this, [self::WEBINAR]);
+        return $this == self::WEBINAR;
     }
 
     public function isHybrid(): bool

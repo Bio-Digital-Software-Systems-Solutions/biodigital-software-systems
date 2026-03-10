@@ -66,32 +66,28 @@ class SchedulingService
      */
     public function createShift(array $data): Shift
     {
-        return DB::transaction(function () use ($data) {
-            $shift = Shift::create([
-                'weekly_schedule_id' => $data['weekly_schedule_id'],
-                'department_id' => $data['department_id'],
-                'position_id' => $data['position_id'] ?? null,
-                'user_id' => $data['user_id'] ?? null,
-                'date' => $data['date'],
-                'start_time' => $data['start_time'],
-                'end_time' => $data['end_time'],
-                'break_duration' => $data['break_duration'] ?? 0,
-                'type' => $data['type'],
-                'status' => $data['status'] ?? ShiftStatus::DRAFT,
-                'title' => $data['title'] ?? null,
-                'description' => $data['description'] ?? null,
-                'location' => $data['location'] ?? null,
-                'color' => $data['color'] ?? null,
-                'min_employees' => $data['min_employees'] ?? 1,
-                'max_employees' => $data['max_employees'] ?? 1,
-                'required_skills' => $data['required_skills'] ?? [],
-                'hourly_rate' => $data['hourly_rate'] ?? null,
-                'is_overtime' => $data['is_overtime'] ?? false,
-                'requires_approval' => $data['requires_approval'] ?? false,
-            ]);
-
-            return $shift;
-        });
+        return DB::transaction(fn() => Shift::create([
+            'weekly_schedule_id' => $data['weekly_schedule_id'],
+            'department_id' => $data['department_id'],
+            'position_id' => $data['position_id'] ?? null,
+            'user_id' => $data['user_id'] ?? null,
+            'date' => $data['date'],
+            'start_time' => $data['start_time'],
+            'end_time' => $data['end_time'],
+            'break_duration' => $data['break_duration'] ?? 0,
+            'type' => $data['type'],
+            'status' => $data['status'] ?? ShiftStatus::DRAFT,
+            'title' => $data['title'] ?? null,
+            'description' => $data['description'] ?? null,
+            'location' => $data['location'] ?? null,
+            'color' => $data['color'] ?? null,
+            'min_employees' => $data['min_employees'] ?? 1,
+            'max_employees' => $data['max_employees'] ?? 1,
+            'required_skills' => $data['required_skills'] ?? [],
+            'hourly_rate' => $data['hourly_rate'] ?? null,
+            'is_overtime' => $data['is_overtime'] ?? false,
+            'requires_approval' => $data['requires_approval'] ?? false,
+        ]));
     }
 
     /**
@@ -169,8 +165,8 @@ class SchedulingService
      */
     public function lockSchedule(WeeklySchedule $schedule, User $lockedBy): WeeklySchedule
     {
-        return DB::transaction(function () use ($schedule, $lockedBy) {
-            $schedule->lock($lockedBy);
+        return DB::transaction(function () use ($schedule) {
+            $schedule->lock();
 
             return $schedule->fresh();
         });
@@ -186,7 +182,7 @@ class SchedulingService
             ->with(['employeeAvailabilities', 'absences', 'shifts', 'skills'])
             ->get();
 
-        return $employees->map(function ($employee) use ($shift) {
+        return $employees->map(function (\App\Models\User $employee) use ($shift): array {
             $availability = $this->availabilityService->getAvailabilityForDate(
                 $employee,
                 $shift->date
@@ -226,7 +222,7 @@ class SchedulingService
 
         foreach ($unassignedShifts as $shift) {
             $availableEmployees = $this->getAvailableEmployees($shift);
-            $bestMatch = $availableEmployees->first(fn($e) => $e['is_available']);
+            $bestMatch = $availableEmployees->first(fn($e): mixed => $e['is_available']);
 
             $suggestions->push([
                 'shift' => $shift,
@@ -348,21 +344,13 @@ class SchedulingService
         $totalShifts = $shifts->count();
 
         // A shift is assigned if it has user_id OR has users in the many-to-many relationship
-        $assignedShifts = $shifts->filter(function ($shift) {
-            return $shift->user_id || $shift->users->isNotEmpty();
-        })->count();
+        $assignedShifts = $shifts->filter(fn($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->count();
         $unassignedShifts = $totalShifts - $assignedShifts;
 
-        $totalHours = $shifts->sum(function ($shift) {
-            return $shift->duration_hours;
-        });
+        $totalHours = $shifts->sum(fn($shift) => $shift->duration_hours);
 
         // Assigned hours = hours from shifts that have at least one user assigned
-        $assignedHours = $shifts->filter(function ($shift) {
-            return $shift->user_id || $shift->users->isNotEmpty();
-        })->sum(function ($shift) {
-            return $shift->duration_hours;
-        });
+        $assignedHours = $shifts->filter(fn($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->sum(fn($shift) => $shift->duration_hours);
 
         // Calculate employee distribution from both relationships
         $employeeHoursMap = [];
@@ -398,10 +386,10 @@ class SchedulingService
         }
 
         $byStatus = $shifts->groupBy(fn($s) => $s->status->value)
-            ->map(fn($group) => $group->count());
+            ->map(fn($group): int => $group->count());
 
         $byType = $shifts->groupBy(fn($s) => $s->type->value)
-            ->map(fn($group) => $group->count());
+            ->map(fn($group): int => $group->count());
 
         return [
             'total_shifts' => $totalShifts,
@@ -429,21 +417,13 @@ class SchedulingService
         $totalShifts = $shifts->count();
 
         // A shift is assigned if it has user_id OR has users in the many-to-many relationship
-        $assignedShifts = $shifts->filter(function ($shift) {
-            return $shift->user_id || $shift->users->isNotEmpty();
-        })->count();
+        $assignedShifts = $shifts->filter(fn($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->count();
         $unassignedShifts = $totalShifts - $assignedShifts;
 
-        $totalHours = $shifts->sum(function ($shift) {
-            return $shift->duration_hours;
-        });
+        $totalHours = $shifts->sum(fn($shift) => $shift->duration_hours);
 
         // Assigned hours = hours from shifts that have at least one user assigned
-        $assignedHours = $shifts->filter(function ($shift) {
-            return $shift->user_id || $shift->users->isNotEmpty();
-        })->sum(function ($shift) {
-            return $shift->duration_hours;
-        });
+        $assignedHours = $shifts->filter(fn($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->sum(fn($shift) => $shift->duration_hours);
 
         // Calculate employee distribution from both relationships
         $employeeHoursMap = [];

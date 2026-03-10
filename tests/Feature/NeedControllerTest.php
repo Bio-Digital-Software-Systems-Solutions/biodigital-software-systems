@@ -1424,7 +1424,7 @@ class NeedControllerTest extends TestCase
         // Start session to get CSRF token
         $this->actingAs($randomUser)->get(route('needs.index'));
 
-        $response = $this->actingAs($randomUser)
+        $this->actingAs($randomUser)
             ->post(route('needs.approve', $need), [
                 '_token' => csrf_token(),
             ]);
@@ -1599,7 +1599,7 @@ class NeedControllerTest extends TestCase
                 'status' => NeedStatus::SUBMITTED,
             ]);
 
-        $response = $this->actingAs($this->user)
+        $this->actingAs($this->user)
             ->delete(route('needs.destroy', $need));
 
         // Should redirect with error or fail
@@ -1620,7 +1620,7 @@ class NeedControllerTest extends TestCase
                 'status' => NeedStatus::DRAFT,
             ]);
 
-        $response = $this->actingAs($otherUser)
+        $this->actingAs($otherUser)
             ->delete(route('needs.destroy', $need));
 
         // Should not be deleted

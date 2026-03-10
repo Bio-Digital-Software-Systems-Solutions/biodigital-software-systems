@@ -2,18 +2,20 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\User;
-use App\Models\Department;
-use App\Models\DepartmentWorkflow;
-use App\Models\WorkflowStep;
-use App\Models\WorkflowTransition;
-use App\Models\WorkflowInstance;
-use App\Models\WorkflowStepInstance;
-use App\Services\WorkflowEngineService;
-use App\Enums\Workflow\WorkflowStatus;
-use App\Enums\Workflow\InstanceStatus;
 use App\Enums\Workflow\StepInstanceStatus;
 use App\Enums\Workflow\StepType;
+use App\Enums\Workflow\WorkflowInstanceStatus;
+use App\Enums\Workflow\WorkflowStatus;
+use App\Models\Department;
+use App\Models\DepartmentWorkflow;
+use App\Models\StepApproval;
+use App\Models\User;
+use App\Models\WorkflowInstance;
+use App\Models\WorkflowStep;
+use App\Models\WorkflowStepInstance;
+use App\Models\WorkflowTransition;
+use App\Services\Workflow\StepExecutorService;
+use App\Services\Workflow\WorkflowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,16 +23,22 @@ class WorkflowEngineServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected WorkflowEngineService $service;
+    protected WorkflowService $service;
+
+    protected StepExecutorService $stepExecutor;
+
     protected User $user;
+
     protected Department $department;
+
     protected DepartmentWorkflow $workflow;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->service = new WorkflowEngineService();
+        $this->service = app(WorkflowService::class);
+        $this->stepExecutor = app(StepExecutorService::class);
         $this->department = Department::factory()->create();
         $this->user = User::factory()->create();
 
@@ -38,42 +46,39 @@ class WorkflowEngineServiceTest extends TestCase
             ->for($this->department)
             ->create([
                 'created_by' => $this->user->id,
-                'status' => WorkflowStatus::Active,
+                'status' => WorkflowStatus::ACTIVE,
             ]);
     }
 
     public function test_can_start_workflow_instance(): void
     {
-        // Create start and end steps
         $startStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::Start,
+            'type' => StepType::START,
             'is_start' => true,
             'name' => 'Start',
         ]);
 
         $endStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::End,
+            'type' => StepType::END,
             'is_end' => true,
             'name' => 'End',
         ]);
 
-        // Create transition
         WorkflowTransition::factory()->create([
             'workflow_id' => $this->workflow->id,
             'from_step_id' => $startStep->id,
             'to_step_id' => $endStep->id,
         ]);
 
-        $instance = $this->service->startWorkflow($this->workflow, $this->user, [
+        $instance = $this->service->startWorkflow($this->workflow, $this->user->id, [
             'test_data' => 'value',
         ]);
 
         $this->assertInstanceOf(WorkflowInstance::class, $instance);
-        $this->assertEquals(InstanceStatus::Running, $instance->status);
-        $this->assertEquals($this->user->id, $instance->initiated_by_id);
-        $this->assertEquals(['test_data' => 'value'], $instance->data);
+        $this->assertEquals($this->user->id, $instance->started_by);
+        $this->assertEquals(['test_data' => 'value'], $instance->input_data);
     }
 
     public function test_cannot_start_draft_workflow(): void
@@ -82,32 +87,31 @@ class WorkflowEngineServiceTest extends TestCase
             ->for($this->department)
             ->create([
                 'created_by' => $this->user->id,
-                'status' => WorkflowStatus::Draft,
+                'status' => WorkflowStatus::DRAFT,
             ]);
 
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Workflow must be active');
+        $this->expectExceptionMessage('Cannot start inactive workflow.');
 
-        $this->service->startWorkflow($draftWorkflow, $this->user);
+        $this->service->startWorkflow($draftWorkflow, $this->user->id);
     }
 
     public function test_can_complete_step_instance(): void
     {
-        // Create workflow structure
         $startStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::Start,
+            'type' => StepType::START,
             'is_start' => true,
         ]);
 
         $taskStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::Task,
+            'type' => StepType::ACTION,
         ]);
 
         $endStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::End,
+            'type' => StepType::END,
             'is_end' => true,
         ]);
 
@@ -123,42 +127,41 @@ class WorkflowEngineServiceTest extends TestCase
             'to_step_id' => $endStep->id,
         ]);
 
-        // Start workflow
-        $instance = $this->service->startWorkflow($this->workflow, $this->user);
+        $instance = $this->service->startWorkflow($this->workflow, $this->user->id);
 
-        // Get the active step instance (should be task step after auto-completing start)
         $taskStepInstance = WorkflowStepInstance::where('workflow_instance_id', $instance->id)
-            ->where('step_id', $taskStep->id)
+            ->where('workflow_step_id', $taskStep->id)
             ->first();
 
-        if ($taskStepInstance) {
-            $this->service->completeStepInstance($taskStepInstance, $this->user, [
-                'result' => 'completed',
-            ]);
+        $this->assertNotNull($taskStepInstance);
+        $this->assertEquals(StepInstanceStatus::ACTIVE, $taskStepInstance->status);
 
-            $taskStepInstance->refresh();
-            $this->assertEquals(StepInstanceStatus::Completed, $taskStepInstance->status);
-        }
+        $taskStepInstance->complete(['result' => 'completed'], $this->user->id);
+
+        $taskStepInstance->refresh();
+        $this->assertEquals(StepInstanceStatus::COMPLETED, $taskStepInstance->status);
     }
 
     public function test_approval_step_can_be_approved(): void
     {
-        // Create workflow with approval step
+        $approver = User::factory()->create();
+
         $startStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::Start,
+            'type' => StepType::START,
             'is_start' => true,
         ]);
 
         $approvalStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::Approval,
+            'type' => StepType::APPROVAL,
             'name' => 'Manager Approval',
+            'approvers' => [['type' => 'user', 'id' => $approver->id]],
         ]);
 
         $endStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::End,
+            'type' => StepType::END,
             'is_end' => true,
         ]);
 
@@ -174,44 +177,43 @@ class WorkflowEngineServiceTest extends TestCase
             'to_step_id' => $endStep->id,
         ]);
 
-        // Start workflow
-        $instance = $this->service->startWorkflow($this->workflow, $this->user);
+        $instance = $this->service->startWorkflow($this->workflow, $this->user->id);
 
-        // Get the approval step instance
         $approvalStepInstance = WorkflowStepInstance::where('workflow_instance_id', $instance->id)
-            ->where('step_id', $approvalStep->id)
+            ->where('workflow_step_id', $approvalStep->id)
             ->first();
 
-        if ($approvalStepInstance) {
-            $approver = User::factory()->create();
+        $this->assertNotNull($approvalStepInstance);
+        $this->assertEquals(StepInstanceStatus::ACTIVE, $approvalStepInstance->status);
 
-            $this->service->processApproval($approvalStepInstance, $approver, true, 'Approved');
+        $approval = StepApproval::where('step_instance_id', $approvalStepInstance->id)
+            ->where('approver_id', $approver->id)
+            ->first();
 
-            $approvalStepInstance->refresh();
-            $this->assertEquals(StepInstanceStatus::Completed, $approvalStepInstance->status);
-            $this->assertNotNull($approvalStepInstance->output_data['approved_at'] ?? null);
-        }
+        $this->assertNotNull($approval);
+
+        $this->stepExecutor->processApproval($approval, 'approved', 'Looks good');
+
+        $approvalStepInstance->refresh();
+        $this->assertEquals(StepInstanceStatus::COMPLETED, $approvalStepInstance->status);
+        $this->assertEquals('approved', $approvalStepInstance->output_data['approval_result'] ?? null);
     }
 
     public function test_approval_step_can_be_rejected(): void
     {
-        // Create workflow with approval step
+        $approver = User::factory()->create();
+
         $startStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::Start,
+            'type' => StepType::START,
             'is_start' => true,
         ]);
 
         $approvalStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::Approval,
+            'type' => StepType::APPROVAL,
             'name' => 'Manager Approval',
-        ]);
-
-        $endStep = WorkflowStep::factory()->create([
-            'workflow_id' => $this->workflow->id,
-            'type' => StepType::End,
-            'is_end' => true,
+            'approvers' => [['type' => 'user', 'id' => $approver->id]],
         ]);
 
         WorkflowTransition::factory()->create([
@@ -220,36 +222,38 @@ class WorkflowEngineServiceTest extends TestCase
             'to_step_id' => $approvalStep->id,
         ]);
 
-        // Start workflow
-        $instance = $this->service->startWorkflow($this->workflow, $this->user);
+        $instance = $this->service->startWorkflow($this->workflow, $this->user->id);
 
-        // Get the approval step instance
         $approvalStepInstance = WorkflowStepInstance::where('workflow_instance_id', $instance->id)
-            ->where('step_id', $approvalStep->id)
+            ->where('workflow_step_id', $approvalStep->id)
             ->first();
 
-        if ($approvalStepInstance) {
-            $approver = User::factory()->create();
+        $this->assertNotNull($approvalStepInstance);
 
-            $this->service->processApproval($approvalStepInstance, $approver, false, 'Rejected due to budget');
+        $approval = StepApproval::where('step_instance_id', $approvalStepInstance->id)
+            ->where('approver_id', $approver->id)
+            ->first();
 
-            $approvalStepInstance->refresh();
-            $this->assertEquals(StepInstanceStatus::Rejected, $approvalStepInstance->status);
-        }
+        $this->assertNotNull($approval);
+
+        $this->stepExecutor->processApproval($approval, 'rejected', 'Rejected due to budget');
+
+        $approvalStepInstance->refresh();
+        $this->assertEquals(StepInstanceStatus::COMPLETED, $approvalStepInstance->status);
+        $this->assertEquals('rejected', $approvalStepInstance->output_data['approval_result'] ?? null);
     }
 
     public function test_workflow_instance_completes_when_end_step_reached(): void
     {
-        // Create simple workflow
         $startStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::Start,
+            'type' => StepType::START,
             'is_start' => true,
         ]);
 
         $endStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::End,
+            'type' => StepType::END,
             'is_end' => true,
         ]);
 
@@ -259,31 +263,24 @@ class WorkflowEngineServiceTest extends TestCase
             'to_step_id' => $endStep->id,
         ]);
 
-        // Start workflow - should auto-complete start and move to end
-        $instance = $this->service->startWorkflow($this->workflow, $this->user);
+        $instance = $this->service->startWorkflow($this->workflow, $this->user->id);
 
-        // Give the jobs time to process or manually process
         $instance->refresh();
-
-        // The workflow may still be running if jobs are queued
-        $this->assertContains($instance->status, [
-            InstanceStatus::Running,
-            InstanceStatus::Completed,
-        ]);
+        $this->assertEquals(WorkflowInstanceStatus::COMPLETED, $instance->status);
+        $this->assertNotNull($instance->completed_at);
     }
 
     public function test_can_cancel_workflow_instance(): void
     {
-        // Create simple workflow
         $startStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::Start,
+            'type' => StepType::START,
             'is_start' => true,
         ]);
 
         $taskStep = WorkflowStep::factory()->create([
             'workflow_id' => $this->workflow->id,
-            'type' => StepType::Task,
+            'type' => StepType::ACTION,
         ]);
 
         WorkflowTransition::factory()->create([
@@ -292,12 +289,12 @@ class WorkflowEngineServiceTest extends TestCase
             'to_step_id' => $taskStep->id,
         ]);
 
-        $instance = $this->service->startWorkflow($this->workflow, $this->user);
+        $instance = $this->service->startWorkflow($this->workflow, $this->user->id);
 
-        $this->service->cancelWorkflow($instance, $this->user, 'No longer needed');
+        $this->service->cancelWorkflow($instance, 'No longer needed');
 
         $instance->refresh();
-        $this->assertEquals(InstanceStatus::Cancelled, $instance->status);
-        $this->assertNotNull($instance->completed_at);
+        $this->assertEquals(WorkflowInstanceStatus::CANCELLED, $instance->status);
+        $this->assertNotNull($instance->cancelled_at);
     }
 }

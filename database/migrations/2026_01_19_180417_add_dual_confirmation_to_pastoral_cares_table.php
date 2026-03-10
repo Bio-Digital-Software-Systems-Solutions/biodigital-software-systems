@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             // Dual confirmation timestamps
             $table->timestamp('client_confirmed_at')->nullable()->after('confirmation_sent_at');
             $table->timestamp('pastor_confirmed_at')->nullable()->after('client_confirmed_at');
@@ -33,7 +33,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->dropIndex(['client_confirmation_token']);
             $table->dropIndex(['pastor_confirmation_token']);
             $table->dropColumn([

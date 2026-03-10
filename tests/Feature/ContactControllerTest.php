@@ -32,7 +32,7 @@ class ContactControllerTest extends TestCase
         $adminRole->givePermissionTo('manage contacts');
 
         // Create member role without contact management permission
-        $memberRole = Role::create(['name' => 'member']);
+        Role::create(['name' => 'member']);
 
         // Create users
         $this->admin = User::factory()->create();
@@ -43,7 +43,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function guest_can_view_contact_form()
+    public function guest_can_view_contact_form(): void
     {
         $response = $this->get(route('contacts.create'));
 
@@ -52,7 +52,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function guest_can_submit_contact_form()
+    public function guest_can_submit_contact_form(): void
     {
         $data = [
             'name' => $this->faker->name,
@@ -74,7 +74,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function contact_form_requires_name()
+    public function contact_form_requires_name(): void
     {
         $data = [
             'email' => $this->faker->safeEmail,
@@ -88,7 +88,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function contact_form_requires_valid_email()
+    public function contact_form_requires_valid_email(): void
     {
         $data = [
             'name' => $this->faker->name,
@@ -103,7 +103,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function contact_form_requires_subject()
+    public function contact_form_requires_subject(): void
     {
         $data = [
             'name' => $this->faker->name,
@@ -117,7 +117,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function contact_form_requires_message()
+    public function contact_form_requires_message(): void
     {
         $data = [
             'name' => $this->faker->name,
@@ -131,7 +131,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_view_contacts_index()
+    public function guest_cannot_view_contacts_index(): void
     {
         $response = $this->get(route('contacts.index'));
 
@@ -139,7 +139,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function member_without_permission_cannot_view_contacts_index()
+    public function member_without_permission_cannot_view_contacts_index(): void
     {
         $response = $this->actingAs($this->member)->get(route('contacts.index'));
 
@@ -150,7 +150,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_view_contacts_index()
+    public function admin_can_view_contacts_index(): void
     {
         Contact::factory()->count(5)->create();
 
@@ -161,7 +161,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_view_contact_details()
+    public function admin_can_view_contact_details(): void
     {
         $contact = Contact::factory()->create();
 
@@ -174,7 +174,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function viewing_contact_marks_it_as_read()
+    public function viewing_contact_marks_it_as_read(): void
     {
         $contact = Contact::factory()->create(['read_at' => null]);
 
@@ -186,7 +186,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_update_contact_status()
+    public function admin_can_update_contact_status(): void
     {
         $contact = Contact::factory()->create(['status' => 'new']);
 
@@ -204,7 +204,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_delete_contact()
+    public function admin_can_delete_contact(): void
     {
         $contact = Contact::factory()->create();
 
@@ -215,7 +215,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function member_without_permission_cannot_update_contact()
+    public function member_without_permission_cannot_update_contact(): void
     {
         $contact = Contact::factory()->create(['status' => 'new']);
 
@@ -230,7 +230,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function member_without_permission_cannot_delete_contact()
+    public function member_without_permission_cannot_delete_contact(): void
     {
         $contact = Contact::factory()->create();
 
@@ -243,7 +243,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function contacts_are_ordered_with_new_status_first()
+    public function contacts_are_ordered_with_new_status_first(): void
     {
         Contact::factory()->create(['status' => 'resolved', 'created_at' => now()->subDay()]);
         Contact::factory()->create(['status' => 'new', 'created_at' => now()->subDays(2)]);
@@ -256,7 +256,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function contact_can_have_phone_number_optional()
+    public function contact_can_have_phone_number_optional(): void
     {
         $data = [
             'name' => $this->faker->name,
@@ -276,7 +276,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function update_requires_valid_status()
+    public function update_requires_valid_status(): void
     {
         $contact = Contact::factory()->create();
 
@@ -288,7 +288,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function update_requires_valid_user_id_when_assigning()
+    public function update_requires_valid_user_id_when_assigning(): void
     {
         $contact = Contact::factory()->create();
 
@@ -301,7 +301,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function contact_submission_sends_email_to_admins_with_permission()
+    public function contact_submission_sends_email_to_admins_with_permission(): void
     {
         Mail::fake();
 
@@ -323,20 +323,16 @@ class ContactControllerTest extends TestCase
         $response->assertSessionHas('success');
 
         // Assert that email was queued to both admins
-        Mail::assertQueued(ContactSubmitted::class, function ($mail) {
-            return $mail->hasTo($this->admin->email);
-        });
+        Mail::assertQueued(ContactSubmitted::class, fn($mail) => $mail->hasTo($this->admin->email));
 
-        Mail::assertQueued(ContactSubmitted::class, function ($mail) use ($anotherAdmin) {
-            return $mail->hasTo($anotherAdmin->email);
-        });
+        Mail::assertQueued(ContactSubmitted::class, fn($mail) => $mail->hasTo($anotherAdmin->email));
 
         // Assert that email was queued twice (once to each admin)
         Mail::assertQueued(ContactSubmitted::class, 2);
     }
 
     /** @test */
-    public function contact_submission_sends_email_with_correct_content()
+    public function contact_submission_sends_email_with_correct_content(): void
     {
         Mail::fake();
 
@@ -350,7 +346,7 @@ class ContactControllerTest extends TestCase
 
         $this->post(route('contacts.store'), $data);
 
-        Mail::assertQueued(ContactSubmitted::class, function ($mail) use ($data) {
+        Mail::assertQueued(ContactSubmitted::class, function ($mail) use ($data): bool {
             $contact = $mail->contact;
 
             return $contact->name === $data['name'] &&
@@ -361,7 +357,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function contact_submission_sends_email_with_reply_to()
+    public function contact_submission_sends_email_with_reply_to(): void
     {
         Mail::fake();
 
@@ -374,13 +370,11 @@ class ContactControllerTest extends TestCase
 
         $this->post(route('contacts.store'), $data);
 
-        Mail::assertQueued(ContactSubmitted::class, function ($mail) use ($data) {
-            return $mail->hasReplyTo($data['email']);
-        });
+        Mail::assertQueued(ContactSubmitted::class, fn($mail) => $mail->hasReplyTo($data['email']));
     }
 
     /** @test */
-    public function contact_submission_sends_to_default_email_when_no_admins()
+    public function contact_submission_sends_to_default_email_when_no_admins(): void
     {
         Mail::fake();
 
@@ -399,13 +393,11 @@ class ContactControllerTest extends TestCase
 
         $this->post(route('contacts.store'), $data);
 
-        Mail::assertQueued(ContactSubmitted::class, function ($mail) {
-            return $mail->hasTo('default@example.com');
-        });
+        Mail::assertQueued(ContactSubmitted::class, fn($mail) => $mail->hasTo('default@example.com'));
     }
 
     /** @test */
-    public function contact_submission_does_not_send_email_when_no_admins_and_no_default()
+    public function contact_submission_does_not_send_email_when_no_admins_and_no_default(): void
     {
         Mail::fake();
 
@@ -428,7 +420,7 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
-    public function contact_email_is_queued()
+    public function contact_email_is_queued(): void
     {
         Mail::fake();
 

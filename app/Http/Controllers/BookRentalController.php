@@ -130,10 +130,10 @@ class BookRentalController extends Controller
         }
 
         if ($request->search) {
-            $query->whereHas('book', function ($q) use ($request) {
+            $query->whereHas('book', function ($q) use ($request): void {
                 $q->where('title', 'like', "%{$request->search}%")
                     ->orWhere('author', 'like', "%{$request->search}%");
-            })->orWhereHas('user', function ($q) use ($request) {
+            })->orWhereHas('user', function ($q) use ($request): void {
                 $q->where('first_name', 'like', "%{$request->search}%")
                     ->orWhere('last_name', 'like', "%{$request->search}%")
                     ->orWhere('email', 'like', "%{$request->search}%");

@@ -224,7 +224,7 @@ class FormSubmissionController extends Controller
             }
         }
 
-        if (!empty($errors)) {
+        if ($errors !== []) {
             return response()->json(['valid' => false, 'errors' => $errors], 422);
         }
 

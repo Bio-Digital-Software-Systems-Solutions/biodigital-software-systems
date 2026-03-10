@@ -22,7 +22,7 @@ class TrainingClassScheduleController extends Controller
     {
         // Load the training class with its training and students
         $trainingClassSchedule->load([
-            'trainingClass.training.students' => function ($query) {
+            'trainingClass.training.students' => function ($query): void {
                 $query->where('status', 'approved');
             },
             'attendances.student'
@@ -31,7 +31,7 @@ class TrainingClassScheduleController extends Controller
         $trainingClass = $trainingClassSchedule->trainingClass;
 
         // Map students with their attendance data
-        $students = $trainingClass->training->students->map(function ($student) use ($trainingClassSchedule) {
+        $students = $trainingClass->training->students->map(function ($student) use ($trainingClassSchedule): array {
             $attendance = $trainingClassSchedule->attendances->firstWhere('student_id', $student->id);
 
             return [

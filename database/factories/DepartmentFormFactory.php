@@ -44,7 +44,7 @@ class DepartmentFormFactory extends Factory
      */
     public function published(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => FormStatus::PUBLISHED,
             'published_at' => now(),
         ]);
@@ -55,7 +55,7 @@ class DepartmentFormFactory extends Factory
      */
     public function archived(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => FormStatus::ARCHIVED,
         ]);
     }
@@ -65,7 +65,7 @@ class DepartmentFormFactory extends Factory
      */
     public function template(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_template' => true,
         ]);
     }
@@ -75,7 +75,7 @@ class DepartmentFormFactory extends Factory
      */
     public function multiStep(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_multi_step' => true,
         ]);
     }

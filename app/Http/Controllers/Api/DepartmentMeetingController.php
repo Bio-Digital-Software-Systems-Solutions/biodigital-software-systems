@@ -22,7 +22,7 @@ class DepartmentMeetingController extends Controller
     {
         $meetings = $department->meetings()
             ->with([
-                'appointment' => function ($query) {
+                'appointment' => function ($query): void {
                     $query->with(['organizer:id,uuid,first_name,last_name,email', 'participants:id,uuid,first_name,last_name,email'])
                           ->withCount('participants');
                 },
@@ -30,9 +30,7 @@ class DepartmentMeetingController extends Controller
             ])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($meeting) {
-                return $this->formatMeeting($meeting);
-            });
+            ->map($this->formatMeeting(...));
 
         return response()->json([
             'success' => true,
@@ -127,7 +125,7 @@ class DepartmentMeetingController extends Controller
 
             // Reload with relationships
             $meeting->load([
-                'appointment' => function ($query) {
+                'appointment' => function ($query): void {
                     $query->with(['organizer:id,uuid,first_name,last_name,email', 'participants:id,uuid,first_name,last_name,email'])
                           ->withCount('participants');
                 },
@@ -171,7 +169,7 @@ class DepartmentMeetingController extends Controller
         }
 
         $meeting->load([
-            'appointment' => function ($query) {
+            'appointment' => function ($query): void {
                 $query->with(['organizer:id,uuid,first_name,last_name,email', 'participants:id,uuid,first_name,last_name,email'])
                       ->withCount('participants');
             },
@@ -218,14 +216,14 @@ class DepartmentMeetingController extends Controller
             // Update appointment fields
             $appointmentFields = ['title', 'description', 'start_datetime', 'end_datetime', 'location', 'type', 'visibility', 'status'];
             $appointmentData = array_intersect_key($validated, array_flip($appointmentFields));
-            if (!empty($appointmentData)) {
+            if ($appointmentData !== []) {
                 $meeting->appointment->update($appointmentData);
             }
 
             // Update meeting fields
             $meetingFields = ['notify_all_members', 'is_mandatory', 'notes'];
             $meetingData = array_intersect_key($validated, array_flip($meetingFields));
-            if (!empty($meetingData)) {
+            if ($meetingData !== []) {
                 $meeting->update($meetingData);
             }
 
@@ -233,7 +231,7 @@ class DepartmentMeetingController extends Controller
 
             // Reload with relationships
             $meeting->load([
-                'appointment' => function ($query) {
+                'appointment' => function ($query): void {
                     $query->with(['organizer:id,uuid,first_name,last_name,email', 'participants:id,uuid,first_name,last_name,email'])
                           ->withCount('participants');
                 },
@@ -307,20 +305,18 @@ class DepartmentMeetingController extends Controller
         $endDate = $startDate->copy()->endOfMonth();
 
         $meetings = $department->meetings()
-            ->whereHas('appointment', function ($query) use ($startDate, $endDate) {
+            ->whereHas('appointment', function ($query) use ($startDate, $endDate): void {
                 $query->whereBetween('start_datetime', [$startDate, $endDate]);
             })
             ->with([
-                'appointment' => function ($query) {
+                'appointment' => function ($query): void {
                     $query->with(['organizer:id,uuid,first_name,last_name,email', 'participants:id,uuid,first_name,last_name,email'])
                           ->withCount('participants');
                 },
                 'creator:id,uuid,first_name,last_name,email'
             ])
             ->get()
-            ->map(function ($meeting) {
-                return $this->formatMeeting($meeting);
-            });
+            ->map($this->formatMeeting(...));
 
         return response()->json([
             'success' => true,
@@ -338,9 +334,9 @@ class DepartmentMeetingController extends Controller
         $membersToNotify = collect();
 
         // If notify_all_members is true AND no participants specified, notify all department members
-        if ($meeting->notify_all_members && empty($specifiedParticipantIds)) {
+        if ($meeting->notify_all_members && $specifiedParticipantIds === []) {
             $membersToNotify = $meeting->department->users;
-        } elseif (!empty($specifiedParticipantIds)) {
+        } elseif ($specifiedParticipantIds !== []) {
             // Only notify specified participants (they already received invite via AppointmentInvitation)
             // So we don't send DepartmentMeetingCreated to them
             // Instead, notify remaining department members if notify_all_members is true
@@ -351,9 +347,7 @@ class DepartmentMeetingController extends Controller
         }
 
         // Exclude the creator from notifications
-        $membersToNotify = $membersToNotify->reject(function ($member) use ($meeting) {
-            return $member->id === $meeting->created_by;
-        });
+        $membersToNotify = $membersToNotify->reject(fn($member): bool => $member->id === $meeting->created_by);
 
         if ($membersToNotify->isNotEmpty()) {
             Notification::send($membersToNotify, new DepartmentMeetingCreated($meeting));
@@ -403,15 +397,13 @@ class DepartmentMeetingController extends Controller
                     'name' => $appointment->organizer->first_name . ' ' . $appointment->organizer->last_name,
                     'email' => $appointment->organizer->email,
                 ] : null,
-                'participants' => $appointment->participants->map(function ($participant) {
-                    return [
-                        'id' => $participant->id,
-                        'uuid' => $participant->uuid,
-                        'name' => $participant->first_name . ' ' . $participant->last_name,
-                        'email' => $participant->email,
-                        'status' => $participant->pivot->status ?? 'pending',
-                    ];
-                }),
+                'participants' => $appointment->participants->map(fn($participant): array => [
+                    'id' => $participant->id,
+                    'uuid' => $participant->uuid,
+                    'name' => $participant->first_name . ' ' . $participant->last_name,
+                    'email' => $participant->email,
+                    'status' => $participant->pivot->status ?? 'pending',
+                ]),
             ] : null,
         ];
     }

@@ -11,6 +11,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property-read Department|null $department
+ * @property-read User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmployeeWorkPreferences newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmployeeWorkPreferences newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmployeeWorkPreferences query()
+ * @mixin \Eloquent
+ */
 class EmployeeWorkPreferences extends Model
 {
     use HasFactory;
@@ -48,7 +56,7 @@ class EmployeeWorkPreferences extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
@@ -95,21 +103,12 @@ class EmployeeWorkPreferences extends Model
         if ($this->isUnavailableOnDay($day)) {
             return false;
         }
-
-        if ($day->isWeekend() && !$this->can_work_weekends) {
-            return false;
-        }
-
-        return true;
+        return !($day->isWeekend() && !$this->can_work_weekends);
     }
 
     public function canWorkShiftType(ShiftType $type): bool
     {
-        if ($type === ShiftType::NIGHT && !$this->can_work_nights) {
-            return false;
-        }
-
-        return true;
+        return !($type === ShiftType::NIGHT && !$this->can_work_nights);
     }
 
     public function isWithinTimeRange(string $startTime, string $endTime): bool
@@ -121,12 +120,7 @@ class EmployeeWorkPreferences extends Model
         if ($this->earliest_start && $startTime < $this->earliest_start) {
             return false;
         }
-
-        if ($this->latest_end && $endTime > $this->latest_end) {
-            return false;
-        }
-
-        return true;
+        return !($this->latest_end && $endTime > $this->latest_end);
     }
 
     public function getPreferenceScore(Shift $shift): int

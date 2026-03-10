@@ -46,17 +46,17 @@ class ProfileController extends Controller
             'is_calendar_public' => $user->is_calendar_public,
             'created_at' => $user->created_at,
             // Always show departments, groups, trainings, roles (public organizational data)
-            'departments' => $user->departments->map(fn ($dept) => [
+            'departments' => $user->departments->map(fn ($dept): array => [
                 'id' => $dept->id,
                 'uuid' => $dept->uuid,
                 'name' => $dept->name,
             ]),
-            'groups' => $user->groups->map(fn ($group) => [
+            'groups' => $user->groups->map(fn ($group): array => [
                 'id' => $group->id,
                 'uuid' => $group->uuid,
                 'name' => $group->name,
             ]),
-            'trainings' => $user->trainings->map(fn ($training) => [
+            'trainings' => $user->trainings->map(fn ($training): array => [
                 'id' => $training->id,
                 'uuid' => $training->uuid,
                 'title' => $training->title,
@@ -86,7 +86,7 @@ class ProfileController extends Controller
         // Only include languages, interests, skills if privacy settings allow
         // (not including the key at all when private, so frontend can check with 'key' in user)
         if ($privacySettings['languages']) {
-            $userData['languages'] = $user->spokenLanguages->map(fn ($lang) => [
+            $userData['languages'] = $user->spokenLanguages->map(fn ($lang): array => [
                 'id' => $lang->id,
                 'uuid' => $lang->uuid,
                 'name' => $lang->name,
@@ -96,7 +96,7 @@ class ProfileController extends Controller
             ]);
         }
         if ($privacySettings['interests']) {
-            $userData['interests'] = $user->interests->map(fn ($interest) => [
+            $userData['interests'] = $user->interests->map(fn ($interest): array => [
                 'id' => $interest->id,
                 'uuid' => $interest->uuid,
                 'name' => $interest->name,
@@ -104,7 +104,7 @@ class ProfileController extends Controller
             ]);
         }
         if ($privacySettings['skills']) {
-            $userData['skills'] = $user->profileSkills->map(fn ($skill) => [
+            $userData['skills'] = $user->profileSkills->map(fn ($skill): array => [
                 'id' => $skill->id,
                 'uuid' => $skill->uuid,
                 'name' => $skill->name,
@@ -142,13 +142,13 @@ class ProfileController extends Controller
                 'last_login_at' => $user->last_login_at,
                 'last_login_ip' => $user->last_login_ip,
                 'last_login_user_agent' => $user->last_login_user_agent,
-                'departments' => $user->departments->map(fn ($dept) => [
+                'departments' => $user->departments->map(fn ($dept): array => [
                     'id' => $dept->id,
                     'uuid' => $dept->uuid,
                     'name' => $dept->name,
                     'code' => $dept->code,
                 ]),
-                'groups' => $user->groups->map(fn ($group) => [
+                'groups' => $user->groups->map(fn ($group): array => [
                     'id' => $group->id,
                     'uuid' => $group->uuid,
                     'name' => $group->name,
@@ -170,31 +170,31 @@ class ProfileController extends Controller
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
-            'availableLanguages' => SpokenLanguage::orderBy('name')->get()->map(fn ($lang) => [
+            'availableLanguages' => SpokenLanguage::orderBy('name')->get()->map(fn ($lang): array => [
                 'id' => $lang->id,
                 'uuid' => $lang->uuid,
                 'name' => $lang->name,
                 'code' => $lang->code,
                 'native_name' => $lang->native_name,
             ]),
-            'availableInterests' => Interest::orderBy('name')->get()->map(fn ($interest) => [
+            'availableInterests' => Interest::orderBy('name')->get()->map(fn ($interest): array => [
                 'id' => $interest->id,
                 'uuid' => $interest->uuid,
                 'name' => $interest->name,
                 'icon' => $interest->icon,
             ]),
-            'availableSkills' => ProfileSkill::orderBy('category')->orderBy('name')->get()->map(fn ($skill) => [
+            'availableSkills' => ProfileSkill::orderBy('category')->orderBy('name')->get()->map(fn ($skill): array => [
                 'id' => $skill->id,
                 'uuid' => $skill->uuid,
                 'name' => $skill->name,
                 'category' => $skill->category,
             ]),
-            'userLanguages' => $user->spokenLanguages->map(fn ($lang) => [
+            'userLanguages' => $user->spokenLanguages->map(fn ($lang): array => [
                 'id' => $lang->id,
                 'level' => $lang->pivot->level,
             ]),
             'userInterests' => $user->interests->pluck('id'),
-            'userSkills' => $user->profileSkills->map(fn ($skill) => [
+            'userSkills' => $user->profileSkills->map(fn ($skill): array => [
                 'id' => $skill->id,
                 'level' => $skill->pivot->level,
             ]),

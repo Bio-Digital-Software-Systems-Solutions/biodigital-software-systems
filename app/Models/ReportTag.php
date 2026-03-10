@@ -6,6 +6,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $report_id
+ * @property string $tag
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\DepartmentReport $report
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportTag forReport(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportTag newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportTag newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportTag query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportTag whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportTag whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportTag whereReportId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportTag whereTag($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportTag whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportTag withTag(string $tag)
+ * @mixin \Eloquent
+ */
 class ReportTag extends Model
 {
     use HasFactory;

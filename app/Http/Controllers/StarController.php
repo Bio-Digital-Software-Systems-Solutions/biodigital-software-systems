@@ -29,25 +29,25 @@ class StarController extends Controller
     public function index(Request $request): Response
     {
         $query = Star::with(['user', 'department', 'nominator'])
-            ->when($request->filled('search'), function ($q) use ($request) {
+            ->when($request->filled('search'), function ($q) use ($request): void {
                 $q->search($request->search);
             })
-            ->when($request->filled('status'), function ($q) use ($request) {
+            ->when($request->filled('status'), function ($q) use ($request): void {
                 $q->where('status', $request->status);
             })
-            ->when($request->filled('type'), function ($q) use ($request) {
+            ->when($request->filled('type'), function ($q) use ($request): void {
                 $q->where('type', $request->type);
             })
-            ->when($request->filled('category'), function ($q) use ($request) {
+            ->when($request->filled('category'), function ($q) use ($request): void {
                 $q->where('category', $request->category);
             })
-            ->when($request->filled('department'), function ($q) use ($request) {
+            ->when($request->filled('department'), function ($q) use ($request): void {
                 $q->where('department_id', $request->department);
             })
-            ->when($request->filled('level'), function ($q) use ($request) {
+            ->when($request->filled('level'), function ($q) use ($request): void {
                 $q->where('level', '>=', $request->level);
             })
-            ->when($request->boolean('featured'), function ($q) {
+            ->when($request->boolean('featured'), function ($q): void {
                 $q->featured();
             })
             ->orderBy('is_featured', 'desc')
@@ -57,65 +57,63 @@ class StarController extends Controller
         $stars = $query->paginate(15)->withQueryString();
 
         // Transform stars for frontend
-        $stars->getCollection()->transform(function ($star) {
-            return [
-                'id' => $star->id,
-                'uuid' => $star->uuid,
-                'star_number' => $star->star_number,
-                'full_name' => $star->full_name,
-                'title' => $star->title,
-                'status' => [
-                    'value' => $star->status->value,
-                    'label' => $star->status->label(),
-                    'color' => $star->status->color(),
-                ],
-                'type' => [
-                    'value' => $star->type->value,
-                    'label' => $star->type->label(),
-                    'color' => $star->type->color(),
-                ],
-                'category' => $star->category ? [
-                    'value' => $star->category->value,
-                    'label' => $star->category->label(),
-                    'color' => $star->category->color(),
-                ] : null,
-                'department' => $star->department ? [
-                    'id' => $star->department->id,
-                    'uuid' => $star->department->uuid,
-                    'name' => $star->department->name,
-                ] : null,
-                'level' => $star->level,
-                'level_title' => $star->level_title,
-                'points' => $star->points,
-                'total_hours_served' => $star->total_hours_served,
-                'is_featured' => $star->is_featured,
-                'is_public_profile' => $star->is_public_profile,
-                'recognition_date' => $star->recognition_date?->format('Y-m-d'),
-                'user' => $star->user ? [
-                    'id' => $star->user->id,
-                    'uuid' => $star->user->uuid,
-                    'name' => $star->user->full_name,
-                    'email' => $star->user->email,
-                    'avatar' => $star->user->avatar,
-                ] : null,
-                'avatar' => $star->avatar ? Storage::url($star->avatar) : null,
-            ];
-        });
+        $stars->getCollection()->transform(fn($star): array => [
+            'id' => $star->id,
+            'uuid' => $star->uuid,
+            'star_number' => $star->star_number,
+            'full_name' => $star->full_name,
+            'title' => $star->title,
+            'status' => [
+                'value' => $star->status->value,
+                'label' => $star->status->label(),
+                'color' => $star->status->color(),
+            ],
+            'type' => [
+                'value' => $star->type->value,
+                'label' => $star->type->label(),
+                'color' => $star->type->color(),
+            ],
+            'category' => $star->category ? [
+                'value' => $star->category->value,
+                'label' => $star->category->label(),
+                'color' => $star->category->color(),
+            ] : null,
+            'department' => $star->department ? [
+                'id' => $star->department->id,
+                'uuid' => $star->department->uuid,
+                'name' => $star->department->name,
+            ] : null,
+            'level' => $star->level,
+            'level_title' => $star->level_title,
+            'points' => $star->points,
+            'total_hours_served' => $star->total_hours_served,
+            'is_featured' => $star->is_featured,
+            'is_public_profile' => $star->is_public_profile,
+            'recognition_date' => $star->recognition_date?->format('Y-m-d'),
+            'user' => $star->user ? [
+                'id' => $star->user->id,
+                'uuid' => $star->user->uuid,
+                'name' => $star->user->full_name,
+                'email' => $star->user->email,
+                'avatar' => $star->user->avatar,
+            ] : null,
+            'avatar' => $star->avatar ? Storage::url($star->avatar) : null,
+        ]);
 
         return Inertia::render('Stars/Index', [
             'stars' => $stars,
             'filters' => $request->only(['search', 'status', 'type', 'category', 'department', 'level', 'featured']),
-            'statuses' => collect(StarStatus::cases())->map(fn($s) => [
+            'statuses' => collect(StarStatus::cases())->map(fn($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
             ]),
-            'types' => collect(StarType::cases())->map(fn($t) => [
+            'types' => collect(StarType::cases())->map(fn($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
             ]),
-            'categories' => collect(StarCategory::cases())->map(fn($c) => [
+            'categories' => collect(StarCategory::cases())->map(fn($c): array => [
                 'value' => $c->value,
                 'label' => $c->label(),
                 'color' => $c->color(),
@@ -141,15 +139,15 @@ class StarController extends Controller
                 ->get(['id', 'uuid', 'first_name', 'last_name', 'email']),
             'departments' => Department::active()->orderBy('name')->get(['id', 'uuid', 'name']),
             'nominators' => User::orderBy('first_name')->get(['id', 'uuid', 'first_name', 'last_name']),
-            'statuses' => collect(StarStatus::cases())->map(fn($s) => [
+            'statuses' => collect(StarStatus::cases())->map(fn($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
             ]),
-            'types' => collect(StarType::cases())->map(fn($t) => [
+            'types' => collect(StarType::cases())->map(fn($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
             ]),
-            'categories' => collect(StarCategory::cases())->map(fn($c) => [
+            'categories' => collect(StarCategory::cases())->map(fn($c): array => [
                 'value' => $c->value,
                 'label' => $c->label(),
             ]),
@@ -364,15 +362,15 @@ class StarController extends Controller
             ],
             'departments' => Department::active()->orderBy('name')->get(['id', 'uuid', 'name']),
             'nominators' => User::orderBy('first_name')->get(['id', 'uuid', 'first_name', 'last_name']),
-            'statuses' => collect(StarStatus::cases())->map(fn($s) => [
+            'statuses' => collect(StarStatus::cases())->map(fn($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
             ]),
-            'types' => collect(StarType::cases())->map(fn($t) => [
+            'types' => collect(StarType::cases())->map(fn($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
             ]),
-            'categories' => collect(StarCategory::cases())->map(fn($c) => [
+            'categories' => collect(StarCategory::cases())->map(fn($c): array => [
                 'value' => $c->value,
                 'label' => $c->label(),
             ]),
@@ -566,7 +564,7 @@ class StarController extends Controller
             ->get();
 
         return response()->json([
-            'stars' => $stars->map(fn($s) => [
+            'stars' => $stars->map(fn($s): array => [
                 'star_number' => $s->star_number,
                 'name' => $s->full_name,
                 'email' => $s->user?->email,

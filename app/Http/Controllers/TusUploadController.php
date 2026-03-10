@@ -37,7 +37,7 @@ class TusUploadController extends Controller
             ]);
 
             // After successful upload, move file to appropriate location
-            $server->event()->addListener('tus-server.upload.complete', function ($event) {
+            $server->event()->addListener('tus-server.upload.complete', function ($event): void {
                 $filePath = $event->getFile()->getFilePath();
                 $fileName = basename($filePath); // Extract filename from path
 
@@ -120,7 +120,7 @@ class TusUploadController extends Controller
                 'offset' => $file['offset'] ?? 0,
                 'metadata' => $file['metadata'] ?? [],
             ]);
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             return response()->json(['error' => 'File not found'], 404);
         }
     }

@@ -13,7 +13,13 @@ class AppointmentInvitation extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * @var \App\Models\Appointment
+     */
     public $appointment;
+    /**
+     * @var string
+     */
     public $confirmationToken;
 
     /**

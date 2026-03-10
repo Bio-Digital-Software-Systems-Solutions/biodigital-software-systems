@@ -67,7 +67,7 @@ class HasSkuTraitTest extends TestCase
     {
         // Create stock without category (if allowed by validation)
         // Since category_id is required in the controller, we test the trait directly
-        $sku = Stock::generateUniqueSku(null);
+        $sku = Stock::generateUniqueSku();
 
         $this->assertStringContainsString('-GEN-', $sku);
     }

@@ -13,8 +13,17 @@ class AppointmentConfirmation extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * @var \App\Models\Appointment
+     */
     public $appointment;
+    /**
+     * @var \App\Models\User
+     */
     public $participant;
+    /**
+     * @var string
+     */
     public $status;
 
     /**
@@ -55,9 +64,7 @@ class AppointmentConfirmation extends Notification implements ShouldQueue
             ->line("**{$this->appointment->title}**")
             ->line("📅 **Date :** {$startDate->format('d/m/Y')}")
             ->line("🕐 **Heure :** {$startDate->format('H:i')} - {$endDate->format('H:i')}")
-            ->when($this->appointment->location, function ($message) {
-                return $message->line("📍 **Lieu :** {$this->appointment->location}");
-            })
+            ->when($this->appointment->location, fn($message) => $message->line("📍 **Lieu :** {$this->appointment->location}"))
             ->action('Voir les détails', url("/appointments/{$this->appointment->id}"))
             ->line('Vous pouvez consulter l\'état complet des participants dans les détails du rendez-vous.')
             ->salutation('L\'équipe ICC München');

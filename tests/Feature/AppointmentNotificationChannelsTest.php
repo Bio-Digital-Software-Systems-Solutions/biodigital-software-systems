@@ -8,7 +8,7 @@ use Spatie\Permission\Models\Permission;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create necessary permissions
     Permission::firstOrCreate(['name' => 'view appointments', 'guard_name' => 'web']);
     Permission::firstOrCreate(['name' => 'create appointments', 'guard_name' => 'web']);
@@ -27,20 +27,20 @@ beforeEach(function () {
     $this->actingAs($this->organizer);
 });
 
-describe('Scheduler Configuration', function () {
-    it('has appointment reminders scheduled', function () {
+describe('Scheduler Configuration', function (): void {
+    it('has appointment reminders scheduled', function (): void {
         // Use artisan to list scheduled events
         $this->artisan('schedule:list')
             ->expectsOutputToContain('appointments:send-reminders')
             ->assertSuccessful();
     });
 
-    it('command exists and can run with dry-run', function () {
+    it('command exists and can run with dry-run', function (): void {
         $this->artisan('appointments:send-reminders', ['--dry-run' => true])
             ->assertSuccessful();
     });
 
-    it('routes/console.php contains scheduler configuration', function () {
+    it('routes/console.php contains scheduler configuration', function (): void {
         $consoleRoutesPath = base_path('routes/console.php');
         $content = file_get_contents($consoleRoutesPath);
 
@@ -51,7 +51,7 @@ describe('Scheduler Configuration', function () {
         expect($content)->toContain('->onOneServer()');
     });
 
-    it('has 6:00 PM schedule with 18 hours option', function () {
+    it('has 6:00 PM schedule with 18 hours option', function (): void {
         $consoleRoutesPath = base_path('routes/console.php');
         $content = file_get_contents($consoleRoutesPath);
 
@@ -60,8 +60,8 @@ describe('Scheduler Configuration', function () {
     });
 });
 
-describe('Notification Channels Validation', function () {
-    it('accepts valid notification channels on create', function () {
+describe('Notification Channels Validation', function (): void {
+    it('accepts valid notification channels on create', function (): void {
         $response = $this->post(route('appointments.store'), [
             'title' => 'Test Appointment',
             'start_datetime' => now()->addDays(2)->setHour(10)->setMinute(0)->format('Y-m-d H:i:s'),
@@ -78,7 +78,7 @@ describe('Notification Channels Validation', function () {
         expect($appointment->notification_channels)->toBe(['email', 'sms', 'whatsapp']);
     });
 
-    it('accepts only email notification channel', function () {
+    it('accepts only email notification channel', function (): void {
         $response = $this->post(route('appointments.store'), [
             'title' => 'Test Appointment',
             'start_datetime' => now()->addDays(2)->setHour(10)->setMinute(0)->format('Y-m-d H:i:s'),
@@ -95,7 +95,7 @@ describe('Notification Channels Validation', function () {
         expect($appointment->notification_channels)->toBe(['email']);
     });
 
-    it('rejects invalid notification channels', function () {
+    it('rejects invalid notification channels', function (): void {
         $response = $this->post(route('appointments.store'), [
             'title' => 'Test Appointment',
             'start_datetime' => now()->addDays(2)->setHour(10)->setMinute(0)->format('Y-m-d H:i:s'),
@@ -109,7 +109,7 @@ describe('Notification Channels Validation', function () {
         $response->assertSessionHasErrors('notification_channels.1');
     });
 
-    it('allows null notification channels (defaults to email)', function () {
+    it('allows null notification channels (defaults to email)', function (): void {
         $response = $this->post(route('appointments.store'), [
             'title' => 'Test Appointment',
             'start_datetime' => now()->addDays(2)->setHour(10)->setMinute(0)->format('Y-m-d H:i:s'),
@@ -126,8 +126,8 @@ describe('Notification Channels Validation', function () {
     });
 });
 
-describe('Notification Channels on Update', function () {
-    it('can update notification channels', function () {
+describe('Notification Channels on Update', function (): void {
+    it('can update notification channels', function (): void {
         $appointment = Appointment::factory()->create([
             'user_id' => $this->organizer->id,
             'notification_channels' => ['email'],
@@ -151,7 +151,7 @@ describe('Notification Channels on Update', function () {
         expect($appointment->notification_channels)->toBe(['email', 'sms', 'whatsapp']);
     });
 
-    it('can remove sms and whatsapp channels', function () {
+    it('can remove sms and whatsapp channels', function (): void {
         $appointment = Appointment::factory()->create([
             'user_id' => $this->organizer->id,
             'notification_channels' => ['email', 'sms', 'whatsapp'],
@@ -176,8 +176,8 @@ describe('Notification Channels on Update', function () {
     });
 });
 
-describe('Model Notification Channel Methods', function () {
-    it('correctly identifies sms notification enabled', function () {
+describe('Model Notification Channel Methods', function (): void {
+    it('correctly identifies sms notification enabled', function (): void {
         $appointment = Appointment::factory()->create([
             'user_id' => $this->organizer->id,
             'notification_channels' => ['email', 'sms'],
@@ -186,7 +186,7 @@ describe('Model Notification Channel Methods', function () {
         expect($appointment->hasSmsNotificationEnabled())->toBeTrue();
     });
 
-    it('correctly identifies sms notification disabled', function () {
+    it('correctly identifies sms notification disabled', function (): void {
         $appointment = Appointment::factory()->create([
             'user_id' => $this->organizer->id,
             'notification_channels' => ['email'],
@@ -195,7 +195,7 @@ describe('Model Notification Channel Methods', function () {
         expect($appointment->hasSmsNotificationEnabled())->toBeFalse();
     });
 
-    it('correctly identifies whatsapp notification enabled', function () {
+    it('correctly identifies whatsapp notification enabled', function (): void {
         $appointment = Appointment::factory()->create([
             'user_id' => $this->organizer->id,
             'notification_channels' => ['email', 'whatsapp'],
@@ -204,7 +204,7 @@ describe('Model Notification Channel Methods', function () {
         expect($appointment->hasWhatsAppNotificationEnabled())->toBeTrue();
     });
 
-    it('correctly identifies whatsapp notification disabled', function () {
+    it('correctly identifies whatsapp notification disabled', function (): void {
         $appointment = Appointment::factory()->create([
             'user_id' => $this->organizer->id,
             'notification_channels' => ['email'],
@@ -213,7 +213,7 @@ describe('Model Notification Channel Methods', function () {
         expect($appointment->hasWhatsAppNotificationEnabled())->toBeFalse();
     });
 
-    it('handles null notification channels gracefully', function () {
+    it('handles null notification channels gracefully', function (): void {
         $appointment = Appointment::factory()->create([
             'user_id' => $this->organizer->id,
             'notification_channels' => null,
@@ -224,8 +224,8 @@ describe('Model Notification Channel Methods', function () {
     });
 });
 
-describe('Appointment Reminders Tracking', function () {
-    it('can mark sms reminder as sent', function () {
+describe('Appointment Reminders Tracking', function (): void {
+    it('can mark sms reminder as sent', function (): void {
         $appointment = Appointment::factory()->create([
             'user_id' => $this->organizer->id,
             'sms_reminder_sent_at' => null,
@@ -236,7 +236,7 @@ describe('Appointment Reminders Tracking', function () {
         expect($appointment->sms_reminder_sent_at)->not->toBeNull();
     });
 
-    it('can mark whatsapp reminder as sent', function () {
+    it('can mark whatsapp reminder as sent', function (): void {
         $appointment = Appointment::factory()->create([
             'user_id' => $this->organizer->id,
             'whatsapp_reminder_sent_at' => null,
@@ -247,7 +247,7 @@ describe('Appointment Reminders Tracking', function () {
         expect($appointment->whatsapp_reminder_sent_at)->not->toBeNull();
     });
 
-    it('can mark general reminder as sent', function () {
+    it('can mark general reminder as sent', function (): void {
         $appointment = Appointment::factory()->create([
             'user_id' => $this->organizer->id,
             'reminder_sent_at' => null,
@@ -259,8 +259,8 @@ describe('Appointment Reminders Tracking', function () {
     });
 });
 
-describe('Inertia Page Props', function () {
-    it('create page renders successfully', function () {
+describe('Inertia Page Props', function (): void {
+    it('create page renders successfully', function (): void {
         $response = $this->get(route('appointments.create'));
 
         $response->assertStatus(200);
@@ -271,7 +271,7 @@ describe('Inertia Page Props', function () {
         );
     });
 
-    it('edit page renders with notification_channels', function () {
+    it('edit page renders with notification_channels', function (): void {
         $appointment = Appointment::factory()->create([
             'user_id' => $this->organizer->id,
             'notification_channels' => ['email', 'sms'],

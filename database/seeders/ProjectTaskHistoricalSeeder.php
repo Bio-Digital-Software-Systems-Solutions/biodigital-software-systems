@@ -47,8 +47,6 @@ class ProjectTaskHistoricalSeeder extends Seeder
             $this->call(ProjectSeeder::class);
             $projects = Project::with(['members', 'manager'])->get();
         }
-
-        $taskTypes = ['feature', 'bug', 'task', 'story'];
         $taskPriorities = ['lowest', 'low', 'medium', 'high', 'highest'];
 
         $taskTemplates = [
@@ -99,7 +97,7 @@ class ProjectTaskHistoricalSeeder extends Seeder
             }
 
             $reporter = $project->manager ?? $members->first();
-            $projectKey = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
+            $projectKey = strtoupper(substr((string) preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
 
             // Get existing task count for unique keys
             $existingTaskCount = Task::where('taskable_type', Project::class)
@@ -137,7 +135,7 @@ class ProjectTaskHistoricalSeeder extends Seeder
                 $monthEnd = $now->copy()->subMonths($monthsAgo)->endOfMonth();
 
                 // Number of tasks per month varies (8-20)
-                $tasksThisMonth = rand(8, 20);
+                $tasksThisMonth = random_int(8, 20);
 
                 for ($i = 0; $i < $tasksThisMonth; $i++) {
                     $template = $taskTemplates[array_rand($taskTemplates)];
@@ -145,7 +143,7 @@ class ProjectTaskHistoricalSeeder extends Seeder
 
                     // Random date within the month (use midday to avoid DST issues)
                     $maxDay = $monthsAgo === 0 ? $now->day : $monthEnd->day;
-                    $randomDay = rand(1, $maxDay);
+                    $randomDay = random_int(1, $maxDay);
                     $createdAt = $monthStart->copy()->addDays($randomDay - 1)->setTime(12, 0, 0);
 
                     // Determine status based on age
@@ -164,7 +162,7 @@ class ProjectTaskHistoricalSeeder extends Seeder
                     if ($status && $status->name === 'completed') {
                         // Completed between 1-14 days after creation
                         $daysOld = $createdAt->diffInDays($now);
-                        $completionDays = rand(1, min(14, max(1, $daysOld)));
+                        $completionDays = random_int(1, min(14, max(1, $daysOld)));
                         $updatedAt = $createdAt->copy()->addDays($completionDays);
                         if ($updatedAt->gt($now)) {
                             $updatedAt = $now;
@@ -173,15 +171,15 @@ class ProjectTaskHistoricalSeeder extends Seeder
 
                     // Assign to sprint if available
                     $sprintId = null;
-                    if (! empty($sprints) && rand(1, 100) > 30) { // 70% assigned to sprints
+                    if (! empty($sprints) && random_int(1, 100) > 30) { // 70% assigned to sprints
                         $sprint = $sprints[array_rand($sprints)];
                         $sprintId = $sprint['id'] ?? $sprint->id ?? null;
                     }
 
                     // Due date: some tasks have due dates
                     $dueDate = null;
-                    if (rand(1, 100) > 20) { // 80% have due dates
-                        $dueDate = $createdAt->copy()->addDays(rand(5, 30));
+                    if (random_int(1, 100) > 20) { // 80% have due dates
+                        $dueDate = $createdAt->copy()->addDays(random_int(5, 30));
                     }
 
                     $task = Task::create([
@@ -189,16 +187,16 @@ class ProjectTaskHistoricalSeeder extends Seeder
                         'taskable_id' => $project->id,
                         'sprint_id' => $sprintId,
                         'key' => "{$projectKey}-{$taskNumber}",
-                        'title' => $template['title'].' #'.rand(100, 999),
+                        'title' => $template['title'].' #'.random_int(100, 999),
                         'description' => 'Tâche créée automatiquement pour les données historiques de test.',
                         'status_id' => $status?->id,
                         'type' => $template['type'],
                         'priority' => $taskPriorities[array_rand($taskPriorities)],
                         'assigned_to' => $assignee->id,
                         'reporter_id' => $reporter->id,
-                        'story_points' => rand(1, 13),
-                        'estimated_hours' => rand(2, 40),
-                        'actual_hours' => ($status && $status->name === 'completed') ? rand(1, 45) : null,
+                        'story_points' => random_int(1, 13),
+                        'estimated_hours' => random_int(2, 40),
+                        'actual_hours' => ($status && $status->name === 'completed') ? random_int(1, 45) : null,
                         'due_date' => $dueDate,
                         'created_at' => $createdAt,
                         'updated_at' => $updatedAt,
@@ -230,7 +228,7 @@ class ProjectTaskHistoricalSeeder extends Seeder
         ];
 
         // Create 4-6 sprints over the last 6 months
-        $numberOfSprints = rand(4, 6);
+        $numberOfSprints = random_int(4, 6);
 
         for ($i = 0; $i < $numberOfSprints; $i++) {
             $sprintStatus = $this->determineSprintStatus($i, $numberOfSprints);
@@ -246,7 +244,7 @@ class ProjectTaskHistoricalSeeder extends Seeder
                 'start_date' => $sprintStart,
                 'end_date' => $sprintEnd,
                 'status' => $sprintStatus,
-                'capacity' => rand(40, 100),
+                'capacity' => random_int(40, 100),
             ]);
 
             $sprints[] = $sprint;
@@ -264,10 +262,10 @@ class ProjectTaskHistoricalSeeder extends Seeder
             return 'completed';
         }
         if ($index === $total - 2) {
-            return rand(0, 1) ? 'completed' : 'active';
+            return random_int(0, 1) !== 0 ? 'completed' : 'active';
         }
         if ($index === $total - 1) {
-            return rand(0, 1) ? 'active' : 'planned';
+            return random_int(0, 1) !== 0 ? 'active' : 'planned';
         }
 
         return 'planned';
@@ -306,13 +304,13 @@ class ProjectTaskHistoricalSeeder extends Seeder
         $epics = [];
 
         // Create 2-3 epics per project
-        $selectedTemplates = array_slice($epicTemplates, 0, rand(2, 3));
+        $selectedTemplates = array_slice($epicTemplates, 0, random_int(2, 3));
 
         foreach ($selectedTemplates as $template) {
-            $createdAt = $now->copy()->subMonths(rand(3, 10))->setTime(12, 0, 0);
+            $createdAt = $now->copy()->subMonths(random_int(3, 10))->setTime(12, 0, 0);
 
             // Determine epic status
-            $epicStatus = match (rand(1, 10)) {
+            $epicStatus = match (random_int(1, 10)) {
                 1, 2, 3, 4, 5 => $completedStatus, // 50% completed
                 6, 7, 8 => $inProgressStatus, // 30% in progress
                 default => $todoStatus, // 20% todo
@@ -331,7 +329,7 @@ class ProjectTaskHistoricalSeeder extends Seeder
                 'reporter_id' => $reporter->id,
                 'created_at' => $createdAt,
                 'updated_at' => $epicStatus?->name === 'completed'
-                    ? $createdAt->copy()->addDays(rand(14, 60))
+                    ? $createdAt->copy()->addDays(random_int(14, 60))
                     : $createdAt,
             ]);
 
@@ -340,12 +338,12 @@ class ProjectTaskHistoricalSeeder extends Seeder
 
             // Create stories for this epic
             foreach ($template['stories'] as $storyTitle) {
-                $storyCreatedAt = $createdAt->copy()->addDays(rand(1, 14))->setTime(14, 0, 0);
+                $storyCreatedAt = $createdAt->copy()->addDays(random_int(1, 14))->setTime(14, 0, 0);
 
                 // Story status based on epic status
                 $storyStatus = match ($epicStatus?->name) {
                     'completed' => $completedStatus,
-                    'in_progress' => match (rand(1, 4)) {
+                    'in_progress' => match (random_int(1, 4)) {
                         1, 2 => $completedStatus,
                         3 => $inProgressStatus,
                         default => $todoStatus,
@@ -365,12 +363,12 @@ class ProjectTaskHistoricalSeeder extends Seeder
                     'priority' => $taskPriorities[array_rand($taskPriorities)],
                     'assigned_to' => $members->random()->id,
                     'reporter_id' => $reporter->id,
-                    'story_points' => rand(1, 8),
-                    'estimated_hours' => rand(4, 24),
-                    'actual_hours' => $storyStatus?->name === 'completed' ? rand(2, 30) : null,
+                    'story_points' => random_int(1, 8),
+                    'estimated_hours' => random_int(4, 24),
+                    'actual_hours' => $storyStatus?->name === 'completed' ? random_int(2, 30) : null,
                     'created_at' => $storyCreatedAt,
                     'updated_at' => $storyStatus?->name === 'completed'
-                        ? $storyCreatedAt->copy()->addDays(rand(2, 20))
+                        ? $storyCreatedAt->copy()->addDays(random_int(2, 20))
                         : $storyCreatedAt,
                 ]);
 
@@ -396,7 +394,7 @@ class ProjectTaskHistoricalSeeder extends Seeder
         // Older tasks are more likely to be completed
         if ($monthsAgo > 3) {
             // Tasks from 4+ months ago: 85% completed, 10% cancelled, 5% other
-            $rand = rand(1, 100);
+            $rand = random_int(1, 100);
             if ($rand <= 85) {
                 return $completedStatus;
             }
@@ -409,7 +407,7 @@ class ProjectTaskHistoricalSeeder extends Seeder
 
         if ($monthsAgo >= 2) {
             // Tasks from 2-3 months ago: 75% completed, 10% in progress, 10% under review, 5% cancelled
-            $rand = rand(1, 100);
+            $rand = random_int(1, 100);
             if ($rand <= 75) {
                 return $completedStatus;
             }
@@ -425,7 +423,7 @@ class ProjectTaskHistoricalSeeder extends Seeder
 
         if ($monthsAgo === 1) {
             // Tasks from 1 month ago: 60% completed, 20% in progress, 10% under review, 10% other
-            $rand = rand(1, 100);
+            $rand = random_int(1, 100);
             if ($rand <= 60) {
                 return $completedStatus;
             }
@@ -443,7 +441,7 @@ class ProjectTaskHistoricalSeeder extends Seeder
         }
 
         // Current month: mix of statuses
-        $rand = rand(1, 100);
+        $rand = random_int(1, 100);
         if ($rand <= 35) {
             return $completedStatus;
         }

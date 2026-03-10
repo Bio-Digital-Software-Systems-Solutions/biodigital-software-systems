@@ -12,6 +12,8 @@ use Tests\TestCase;
 
 class KanbanControllerTest extends TestCase
 {
+    public $user;
+    public $project;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -188,7 +190,7 @@ class KanbanControllerTest extends TestCase
             'status' => 'todo',
         ]);
 
-        $task2 = ProjectTask::factory()->create([
+        ProjectTask::factory()->create([
             'project_id' => $project2->id,
             'reporter_id' => $this->user->id,
             'status' => 'todo',
@@ -216,7 +218,7 @@ class KanbanControllerTest extends TestCase
             'status' => 'todo',
         ]);
 
-        $task2 = ProjectTask::factory()->create([
+        ProjectTask::factory()->create([
             'project_id' => $this->project->id,
             'reporter_id' => $this->user->id,
             'assignee_id' => $user2->id,
@@ -315,7 +317,7 @@ class KanbanControllerTest extends TestCase
             'status' => 'todo',
         ]);
 
-        $taskWithoutSprint = ProjectTask::factory()->create([
+        ProjectTask::factory()->create([
             'project_id' => $this->project->id,
             'reporter_id' => $this->user->id,
             'sprint_id' => null,
@@ -342,7 +344,7 @@ class KanbanControllerTest extends TestCase
             'status' => 'todo',
         ]);
 
-        $nonMatchingTask = ProjectTask::factory()->create([
+        ProjectTask::factory()->create([
             'project_id' => $this->project->id,
             'reporter_id' => $this->user->id,
             'title' => 'Add new feature',

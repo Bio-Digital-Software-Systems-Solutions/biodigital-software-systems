@@ -47,7 +47,7 @@ class NeedController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
             });
@@ -98,7 +98,7 @@ class NeedController extends Controller
             'users' => User::select('id', 'first_name', 'last_name')
                 ->orderBy('first_name')
                 ->get()
-                ->map(fn($user) => [
+                ->map(fn($user): array => [
                     'id' => $user->id,
                     'name' => $user->first_name . ' ' . $user->last_name,
                 ]),
@@ -188,7 +188,7 @@ class NeedController extends Controller
             'users' => User::select('id', 'first_name', 'last_name')
                 ->orderBy('first_name')
                 ->get()
-                ->map(fn($user) => [
+                ->map(fn($user): array => [
                     'id' => $user->id,
                     'name' => $user->first_name . ' ' . $user->last_name,
                 ]),
@@ -520,7 +520,7 @@ class NeedController extends Controller
             'parent_id' => 'nullable|exists:need_comments,id',
         ]);
 
-        $comment = $this->needService->addComment(
+        $this->needService->addComment(
             $need,
             Auth::id(),
             $validated['content'],
@@ -608,22 +608,20 @@ class NeedController extends Controller
             ->with('changedBy:id,first_name,last_name,email')
             ->orderByDesc('created_at')
             ->get()
-            ->map(function ($entry) {
-                return [
-                    'id' => $entry->id,
-                    'from_status' => $entry->from_status?->value,
-                    'to_status' => $entry->to_status->value,
-                    'reason' => $entry->reason,
-                    'metadata' => $entry->metadata,
-                    'created_at' => $entry->created_at->toISOString(),
-                    'user' => $entry->changedBy ? [
-                        'id' => $entry->changedBy->id,
-                        'first_name' => $entry->changedBy->first_name,
-                        'last_name' => $entry->changedBy->last_name,
-                        'full_name' => $entry->changedBy->first_name . ' ' . $entry->changedBy->last_name,
-                    ] : null,
-                ];
-            });
+            ->map(fn($entry): array => [
+                'id' => $entry->id,
+                'from_status' => $entry->from_status?->value,
+                'to_status' => $entry->to_status->value,
+                'reason' => $entry->reason,
+                'metadata' => $entry->metadata,
+                'created_at' => $entry->created_at->toISOString(),
+                'user' => $entry->changedBy ? [
+                    'id' => $entry->changedBy->id,
+                    'first_name' => $entry->changedBy->first_name,
+                    'last_name' => $entry->changedBy->last_name,
+                    'full_name' => $entry->changedBy->first_name . ' ' . $entry->changedBy->last_name,
+                ] : null,
+            ]);
 
         return response()->json([
             'success' => true,
@@ -641,36 +639,32 @@ class NeedController extends Controller
             ->whereNull('parent_id') // Only top-level comments
             ->orderByDesc('created_at')
             ->get()
-            ->map(function ($comment) {
-                return [
-                    'id' => $comment->id,
-                    'uuid' => $comment->uuid,
-                    'content' => $comment->content,
-                    'is_internal' => $comment->is_internal,
-                    'created_at' => $comment->created_at->toISOString(),
-                    'user' => $comment->user ? [
-                        'id' => $comment->user->id,
-                        'first_name' => $comment->user->first_name,
-                        'last_name' => $comment->user->last_name,
-                        'full_name' => $comment->user->first_name . ' ' . $comment->user->last_name,
+            ->map(fn($comment): array => [
+                'id' => $comment->id,
+                'uuid' => $comment->uuid,
+                'content' => $comment->content,
+                'is_internal' => $comment->is_internal,
+                'created_at' => $comment->created_at->toISOString(),
+                'user' => $comment->user ? [
+                    'id' => $comment->user->id,
+                    'first_name' => $comment->user->first_name,
+                    'last_name' => $comment->user->last_name,
+                    'full_name' => $comment->user->first_name . ' ' . $comment->user->last_name,
+                ] : null,
+                'replies' => $comment->replies->map(fn($reply): array => [
+                    'id' => $reply->id,
+                    'uuid' => $reply->uuid,
+                    'content' => $reply->content,
+                    'is_internal' => $reply->is_internal,
+                    'created_at' => $reply->created_at->toISOString(),
+                    'user' => $reply->user ? [
+                        'id' => $reply->user->id,
+                        'first_name' => $reply->user->first_name,
+                        'last_name' => $reply->user->last_name,
+                        'full_name' => $reply->user->first_name . ' ' . $reply->user->last_name,
                     ] : null,
-                    'replies' => $comment->replies->map(function ($reply) {
-                        return [
-                            'id' => $reply->id,
-                            'uuid' => $reply->uuid,
-                            'content' => $reply->content,
-                            'is_internal' => $reply->is_internal,
-                            'created_at' => $reply->created_at->toISOString(),
-                            'user' => $reply->user ? [
-                                'id' => $reply->user->id,
-                                'first_name' => $reply->user->first_name,
-                                'last_name' => $reply->user->last_name,
-                                'full_name' => $reply->user->first_name . ' ' . $reply->user->last_name,
-                            ] : null,
-                        ];
-                    }),
-                ];
-            });
+                ]),
+            ]);
 
         return response()->json([
             'success' => true,
@@ -724,13 +718,8 @@ class NeedController extends Controller
         if ($need->department->head_of_department === $user->id) {
             return true;
         }
-
         // Check for approval permission
-        if ($user->hasPermissionTo('approve needs')) {
-            return true;
-        }
-
-        return false;
+        return (bool) $user->hasPermissionTo('approve needs');
     }
 
     /**

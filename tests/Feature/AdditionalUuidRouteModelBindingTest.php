@@ -27,10 +27,10 @@ class AdditionalUuidRouteModelBindingTest extends TestCase
     /**
      * Test that models using UUID for routing have proper UUID setup
      */
-    public function test_models_with_uuid_routing()
+    public function test_models_with_uuid_routing(): void
     {
         $models = [
-            ['class' => Message::class, 'factory_data' => function () {
+            ['class' => Message::class, 'factory_data' => function (): array {
                 $sender = User::factory()->create();
                 $receiver = User::factory()->create();
 
@@ -67,13 +67,13 @@ class AdditionalUuidRouteModelBindingTest extends TestCase
     /**
      * Test that models with UUID but using other routing keys still have UUID field
      */
-    public function test_models_with_uuid_but_custom_routing()
+    public function test_models_with_uuid_but_custom_routing(): void
     {
         $models = [
             ['class' => Library::class, 'route_key' => 'code', 'factory_data' => []],
             ['class' => Category::class, 'route_key' => 'slug', 'factory_data' => []],
             ['class' => Status::class, 'route_key' => 'name', 'factory_data' => []],
-            ['class' => Article::class, 'route_key' => 'slug', 'factory_data' => function () {
+            ['class' => Article::class, 'route_key' => 'slug', 'factory_data' => function (): array {
                 $user = User::factory()->create();
                 $category = Category::factory()->create();
 
@@ -102,7 +102,7 @@ class AdditionalUuidRouteModelBindingTest extends TestCase
     /**
      * Test UUID uniqueness across multiple records
      */
-    public function test_uuid_uniqueness()
+    public function test_uuid_uniqueness(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();

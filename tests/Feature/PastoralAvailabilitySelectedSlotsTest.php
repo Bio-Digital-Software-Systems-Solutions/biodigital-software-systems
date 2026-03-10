@@ -33,7 +33,7 @@ class PastoralAvailabilitySelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function pastor_can_create_availability_with_selected_slots()
+    public function pastor_can_create_availability_with_selected_slots(): void
     {
         $this->actingAs($this->pastor);
 
@@ -78,7 +78,7 @@ class PastoralAvailabilitySelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function pastor_can_create_availability_with_empty_selected_slots()
+    public function pastor_can_create_availability_with_empty_selected_slots(): void
     {
         $this->actingAs($this->pastor);
 
@@ -114,7 +114,7 @@ class PastoralAvailabilitySelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function pastor_can_update_selected_slots()
+    public function pastor_can_update_selected_slots(): void
     {
         $this->actingAs($this->pastor);
 
@@ -147,7 +147,7 @@ class PastoralAvailabilitySelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function pastor_can_clear_selected_slots()
+    public function pastor_can_clear_selected_slots(): void
     {
         $this->actingAs($this->pastor);
 
@@ -178,7 +178,7 @@ class PastoralAvailabilitySelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function selected_slots_are_cast_to_array()
+    public function selected_slots_are_cast_to_array(): void
     {
         $this->actingAs($this->pastor);
 
@@ -203,7 +203,7 @@ class PastoralAvailabilitySelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function selected_slots_validation_accepts_valid_time_strings()
+    public function selected_slots_validation_accepts_valid_time_strings(): void
     {
         $this->actingAs($this->pastor);
 
@@ -228,7 +228,7 @@ class PastoralAvailabilitySelectedSlotsTest extends TestCase
     }
 
     /** @test */
-    public function selected_slots_validation_rejects_invalid_data()
+    public function selected_slots_validation_rejects_invalid_data(): void
     {
         $this->actingAs($this->pastor);
 

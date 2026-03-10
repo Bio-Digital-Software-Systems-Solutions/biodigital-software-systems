@@ -6,7 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('creates a spoken language with uuid', function () {
+it('creates a spoken language with uuid', function (): void {
     $language = SpokenLanguage::factory()->french()->create();
 
     expect($language)->toBeInstanceOf(SpokenLanguage::class)
@@ -16,7 +16,7 @@ it('creates a spoken language with uuid', function () {
         ->and($language->native_name)->toBe('Français');
 });
 
-it('has users relationship with level pivot', function () {
+it('has users relationship with level pivot', function (): void {
     $language = SpokenLanguage::factory()->english()->create();
     $user = User::factory()->create();
 
@@ -27,13 +27,13 @@ it('has users relationship with level pivot', function () {
         ->and($language->users->first()->pivot->level)->toBe('native');
 });
 
-it('uses uuid as route key', function () {
+it('uses uuid as route key', function (): void {
     $language = SpokenLanguage::factory()->create();
 
     expect($language->getRouteKeyName())->toBe('uuid');
 });
 
-it('has unique name constraint', function () {
+it('has unique name constraint', function (): void {
     SpokenLanguage::factory()->create(['name' => 'Spanish', 'code' => 'es']);
 
     $this->expectException(\Illuminate\Database\QueryException::class);
@@ -41,7 +41,7 @@ it('has unique name constraint', function () {
     SpokenLanguage::factory()->create(['name' => 'Spanish', 'code' => 'es2']);
 });
 
-it('has unique code constraint', function () {
+it('has unique code constraint', function (): void {
     SpokenLanguage::factory()->create(['name' => 'Portuguese', 'code' => 'pt']);
 
     $this->expectException(\Illuminate\Database\QueryException::class);
@@ -49,7 +49,7 @@ it('has unique code constraint', function () {
     SpokenLanguage::factory()->create(['name' => 'Brazilian Portuguese', 'code' => 'pt']);
 });
 
-it('supports different language levels', function () {
+it('supports different language levels', function (): void {
     $language = SpokenLanguage::factory()->german()->create();
     $users = User::factory()->count(4)->create();
 
@@ -66,7 +66,7 @@ it('supports different language levels', function () {
         ->toBe(['beginner', 'intermediate', 'advanced', 'native']);
 });
 
-it('can have optional native name', function () {
+it('can have optional native name', function (): void {
     $language = SpokenLanguage::factory()->create([
         'name' => 'Esperanto',
         'code' => 'eo',

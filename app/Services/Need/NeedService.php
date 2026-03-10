@@ -89,7 +89,7 @@ class NeedService
             throw new \Exception('Need cannot be rejected from current status.');
         }
 
-        if (empty($reason)) {
+        if ($reason === '' || $reason === '0') {
             throw new \Exception('Rejection reason is required.');
         }
 
@@ -237,7 +237,7 @@ class NeedService
             ->with(['requester', 'assignee']);
 
         if ($userId) {
-            $query->where(function ($q) use ($userId) {
+            $query->where(function ($q) use ($userId): void {
                 $q->where('requester_id', $userId)
                     ->orWhere('assigned_to', $userId);
             });
@@ -339,7 +339,7 @@ class NeedService
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
             });

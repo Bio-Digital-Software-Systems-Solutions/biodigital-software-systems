@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('messages', function (Blueprint $table) {
+        Schema::table('messages', function (Blueprint $table): void {
             // Add recipient_type column (user or department)
             $table->string('recipient_type', 50)->default('user')->after('receiver_id');
 
@@ -29,7 +29,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('messages', function (Blueprint $table) {
+        Schema::table('messages', function (Blueprint $table): void {
             $table->dropForeign(['department_id']);
             $table->dropColumn(['recipient_type', 'department_id']);
             $table->unsignedBigInteger('receiver_id')->nullable(false)->change();

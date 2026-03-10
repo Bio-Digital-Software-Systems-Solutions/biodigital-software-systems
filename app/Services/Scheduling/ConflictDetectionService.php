@@ -91,16 +91,16 @@ class ConflictDetectionService
             ->where('id', '!=', $shift->id ?? 0)
             ->where('date', $shift->date)
             ->whereNotIn('status', [ShiftStatus::CANCELLED])
-            ->where(function ($query) use ($shift) {
-                $query->where(function ($q) use ($shift) {
+            ->where(function ($query) use ($shift): void {
+                $query->where(function ($q) use ($shift): void {
                     // New shift starts during existing shift
                     $q->where('start_time', '<=', $shift->start_time)
                         ->where('end_time', '>', $shift->start_time);
-                })->orWhere(function ($q) use ($shift) {
+                })->orWhere(function ($q) use ($shift): void {
                     // New shift ends during existing shift
                     $q->where('start_time', '<', $shift->end_time)
                         ->where('end_time', '>=', $shift->end_time);
-                })->orWhere(function ($q) use ($shift) {
+                })->orWhere(function ($q) use ($shift): void {
                     // New shift contains existing shift
                     $q->where('start_time', '>=', $shift->start_time)
                         ->where('end_time', '<=', $shift->end_time);
@@ -333,7 +333,7 @@ class ConflictDetectionService
         $employeeSkillIds = $employee->skills->pluck('id')->toArray();
         $missingSkills = array_diff($shift->required_skills, $employeeSkillIds);
 
-        if (!empty($missingSkills)) {
+        if ($missingSkills !== []) {
             return [
                 'type' => self::CONFLICT_SKILLS,
                 'severity' => 'warning',
@@ -358,8 +358,8 @@ class ConflictDetectionService
             $results[$shift->id] = $this->detectConflicts($shift, $employee);
         }
 
-        $totalConflicts = collect($results)->sum(fn($r) => count($r['conflicts']));
-        $totalWarnings = collect($results)->sum(fn($r) => count($r['warnings']));
+        $totalConflicts = collect($results)->sum(fn($r): int => count($r['conflicts']));
+        $totalWarnings = collect($results)->sum(fn($r): int => count($r['warnings']));
 
         return [
             'is_valid' => $totalConflicts === 0,
@@ -374,14 +374,10 @@ class ConflictDetectionService
      */
     public function findEmployeesWithConflicts(Shift $shift, Collection $employees): Collection
     {
-        return $employees->map(function ($employee) use ($shift) {
-            return [
-                'employee' => $employee,
-                'conflicts' => $this->detectConflicts($shift, $employee),
-            ];
-        })->filter(function ($result) {
-            return $result['conflicts']['has_blocking_conflicts'] || $result['conflicts']['has_warnings'];
-        })->values();
+        return $employees->map(fn(\App\Models\User $employee): array => [
+            'employee' => $employee,
+            'conflicts' => $this->detectConflicts($shift, $employee),
+        ])->filter(fn($result): bool => $result['conflicts']['has_blocking_conflicts'] || $result['conflicts']['has_warnings'])->values();
     }
 
     /**

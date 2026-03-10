@@ -10,6 +10,48 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $workflow_id
+ * @property int $from_step_id
+ * @property int $to_step_id
+ * @property string|null $name
+ * @property TransitionConditionType $condition_type
+ * @property string|null $condition_expression
+ * @property array<array-key, mixed>|null $condition_config
+ * @property int $priority
+ * @property bool $is_default
+ * @property array<array-key, mixed>|null $metadata
+ * @property string|null $label
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\WorkflowStep $fromStep
+ * @property-read \App\Models\WorkflowStep $toStep
+ * @property-read \App\Models\DepartmentWorkflow $workflow
+ * @method static \Database\Factories\WorkflowTransitionFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereConditionConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereConditionExpression($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereConditionType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereFromStepId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereIsDefault($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereLabel($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition wherePriority($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereToStepId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowTransition whereWorkflowId($value)
+ * @mixin \Eloquent
+ */
 class WorkflowTransition extends Model
 {
     use HasFactory, LogsActivity;
@@ -38,7 +80,7 @@ class WorkflowTransition extends Model
     {
         parent::boot();
 
-        static::creating(function (self $model) {
+        static::creating(function (self $model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
@@ -157,7 +199,7 @@ class WorkflowTransition extends Model
         return match ($operator) {
             'equals' => $actualValue == $expectedValue,
             'not_equals' => $actualValue != $expectedValue,
-            'is_true' => (bool) $actualValue === true,
+            'is_true' => (bool) $actualValue,
             'is_false' => (bool) $actualValue === false,
             default => false,
         };

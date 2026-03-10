@@ -37,7 +37,6 @@ class QuizDeadlineReminder extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $urgency = $this->daysRemaining === 1 ? 'urgent' : 'reminder';
         $subject = $this->daysRemaining === 1
             ? "⚠️ Dernier jour pour compléter le quiz: {$this->quiz->title}"
             : "📝 Rappel: Quiz à compléter dans {$this->daysRemaining} jours";
@@ -50,9 +49,7 @@ class QuizDeadlineReminder extends Notification implements ShouldQueue
             ->line("⏰ Date limite: " . $this->quiz->available_until->format('d/m/Y à H:i'))
             ->line("⏱️ Durée: {$this->quiz->duration_minutes} minutes")
             ->line("🎯 Score minimum requis: {$this->quiz->passing_score}%")
-            ->when($this->daysRemaining === 1, function ($message) {
-                return $message->line("⚠️ **Il ne vous reste plus qu'un jour pour compléter ce quiz!**");
-            })
+            ->when($this->daysRemaining === 1, fn($message) => $message->line("⚠️ **Il ne vous reste plus qu'un jour pour compléter ce quiz!**"))
             ->action('Commencer le quiz', route('quizzes.start', $this->quiz->uuid))
             ->line('Bonne chance!');
     }

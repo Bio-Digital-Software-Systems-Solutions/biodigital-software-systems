@@ -13,16 +13,11 @@ class AppointmentUpdated extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public Appointment $appointment;
-    public array $changes;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(Appointment $appointment, array $changes = [])
+    public function __construct(public Appointment $appointment, public array $changes = [])
     {
-        $this->appointment = $appointment;
-        $this->changes = $changes;
     }
 
     /**
@@ -57,7 +52,7 @@ class AppointmentUpdated extends Notification implements ShouldQueue
             $mailMessage->line("- **Lieu :** {$this->appointment->location}");
         }
 
-        if (!empty($this->changes)) {
+        if ($this->changes !== []) {
             $mailMessage->line('')
                 ->line("**Modifications apportées :**");
 

@@ -134,7 +134,7 @@ class TicketService
             return true;
         }
 
-        return DB::transaction(function () use ($ticket, $quantity) {
+        return DB::transaction(function () use ($ticket, $quantity): bool {
             $ticket->lockForUpdate();
 
             if ($ticket->available_quantity < $quantity) {
@@ -153,7 +153,7 @@ class TicketService
      */
     public function releaseReservation(EventTicket $ticket, int $quantity): void
     {
-        DB::transaction(function () use ($ticket, $quantity) {
+        DB::transaction(function () use ($ticket, $quantity): void {
             $ticket->decrement('quantity_reserved', min($quantity, $ticket->quantity_reserved));
             $this->clearTicketCache($ticket->event_id);
         });
@@ -164,7 +164,7 @@ class TicketService
      */
     public function confirmPurchase(EventTicket $ticket, int $quantity): void
     {
-        DB::transaction(function () use ($ticket, $quantity) {
+        DB::transaction(function () use ($ticket, $quantity): void {
             $ticket->lockForUpdate();
 
             // Release reservation and mark as sold
@@ -209,7 +209,7 @@ class TicketService
         return Cache::remember(
             "event.{$event->id}.ticket_stats",
             now()->addMinutes(10),
-            function () use ($event) {
+            function () use ($event): array {
                 $tickets = $event->tickets;
 
                 return [
@@ -218,12 +218,12 @@ class TicketService
                     'total_sold' => $tickets->sum('quantity_sold'),
                     'total_reserved' => $tickets->sum('quantity_reserved'),
                     'total_available' => $tickets->sum(fn ($t) => $t->available_quantity ?? 0),
-                    'revenue' => $tickets->sum(fn ($t) => $t->quantity_sold * $t->price),
+                    'revenue' => $tickets->sum(fn ($t): int|float => $t->quantity_sold * $t->price),
                     'currency' => $tickets->first()?->currency ?? 'EUR',
-                    'by_type' => $tickets->groupBy('type')->map(fn ($group) => [
+                    'by_type' => $tickets->groupBy('type')->map(fn ($group): array => [
                         'count' => $group->count(),
                         'sold' => $group->sum('quantity_sold'),
-                        'revenue' => $group->sum(fn ($t) => $t->quantity_sold * $t->price),
+                        'revenue' => $group->sum(fn ($t): int|float => $t->quantity_sold * $t->price),
                     ])->toArray(),
                 ];
             }
@@ -254,7 +254,7 @@ class TicketService
     {
         return EventPromoCode::create([
             'event_id' => $event->id,
-            'code' => strtoupper($data['code']),
+            'code' => strtoupper((string) $data['code']),
             'description' => $data['description'] ?? null,
             'discount_type' => $data['discount_type'],
             'discount_value' => $data['discount_value'],
@@ -304,10 +304,10 @@ class TicketService
     public function getTicketsWithStats(Event $event): \Illuminate\Database\Eloquent\Collection
     {
         return $event->tickets()
-            ->withCount(['registrations as confirmed_count' => function ($query) {
+            ->withCount(['registrations as confirmed_count' => function ($query): void {
                 $query->whereIn('status', ['confirmed', 'checked_in']);
             }])
-            ->withCount(['registrations as pending_count' => function ($query) {
+            ->withCount(['registrations as pending_count' => function ($query): void {
                 $query->where('status', 'pending');
             }])
             ->ordered()

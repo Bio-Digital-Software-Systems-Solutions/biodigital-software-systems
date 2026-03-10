@@ -16,29 +16,64 @@ use Spatie\Activitylog\LogOptions;
 
 /**
  * @property int $id
+ * @property string $uuid
+ * @property string|null $key
  * @property string $title
  * @property string|null $description
+ * @property string|null $image
  * @property \Illuminate\Support\Carbon|null $due_date
  * @property string $priority
+ * @property int $progress
+ * @property string $type
  * @property numeric|null $estimated_hours
+ * @property int|null $story_points
  * @property numeric|null $actual_hours
  * @property string|null $notes
+ * @property array<array-key, mixed>|null $labels
+ * @property array<array-key, mixed>|null $custom_fields
+ * @property int $position
  * @property int|null $status_id
  * @property int|null $program_id
+ * @property int|null $project_id
+ * @property int|null $program_step_id
  * @property int|null $assigned_to
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
- * @property int|null $program_step_id
+ * @property string|null $taskable_type
+ * @property int|null $taskable_id
+ * @property int|null $parent_id
+ * @property int|null $reporter_id
+ * @property int|null $sprint_id
+ * @property int|null $epic_id
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\User|null $assignedUser
+ * @property-read \App\Models\User|null $assignee
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Attachment> $attachments
+ * @property-read int|null $attachments_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TaskComment> $comments
+ * @property-read int|null $comments_count
+ * @property-read Task|null $epic
  * @property-read string $assignee_name
  * @property-read float $completion_percentage
  * @property-read int|null $days_until_due
  * @property-read float $hours_variance
  * @property-read string $priority_label
+ * @property-read Task|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $participantUsers
+ * @property-read int|null $participant_users_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TaskParticipant> $participants
+ * @property-read int|null $participants_count
  * @property-read \App\Models\Program|null $program
  * @property-read \App\Models\ProgramStep|null $programStep
+ * @property-read \App\Models\Project|null $project
+ * @property-read \App\Models\User|null $reporter
+ * @property-read \App\Models\Sprint|null $sprint
  * @property-read \App\Models\Status|null $status
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TaskAttachment> $taskAttachments
+ * @property-read int|null $task_attachments_count
+ * @property-read Model|\Eloquent|null $taskable
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task assignedTo($userId)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task completed()
  * @method static \Database\Factories\TaskFactory factory($count = null, $state = [])
@@ -53,61 +88,36 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereActualHours($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereAssignedTo($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereCustomFields($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereDueDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereEpicId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereEstimatedHours($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereNotes($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Task wherePriority($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereProgramId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereProgramStepId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereStatusId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereTitle($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Task withTrashed(bool $withTrashed = true)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Task withoutTrashed()
- * @property string $uuid
- * @property string|null $key
- * @property string|null $image
- * @property string $type
- * @property int|null $story_points
- * @property array<array-key, mixed>|null $labels
- * @property array<array-key, mixed>|null $custom_fields
- * @property int $position
- * @property int|null $project_id
- * @property string|null $taskable_type
- * @property int|null $taskable_id
- * @property int|null $parent_id
- * @property int|null $reporter_id
- * @property int|null $sprint_id
- * @property int|null $epic_id
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- * @property-read \App\Models\User|null $assignee
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Attachment> $attachments
- * @property-read int|null $attachments_count
- * @property-read Task|null $epic
- * @property-read Task|null $parent
- * @property-read \App\Models\Project|null $project
- * @property-read \App\Models\User|null $reporter
- * @property-read \App\Models\Sprint|null $sprint
- * @property-read Model|\Eloquent|null $taskable
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereCustomFields($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereEpicId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereKey($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereLabels($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereNotes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereParentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task wherePosition($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task wherePriority($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereProgramId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereProgramStepId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereProgress($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereProjectId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereReporterId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereSprintId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereStatusId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereStoryPoints($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereTaskableId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereTaskableType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Task withoutTrashed()
  * @mixin \Eloquent
  */
 class Task extends Model
@@ -135,7 +145,7 @@ class Task extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
@@ -421,7 +431,7 @@ class Task extends Model
      */
     public function scopeOverdue($query)
     {
-        return $query->whereHas('status', function ($q) {
+        return $query->whereHas('status', function ($q): void {
             $q->where('name', '!=', 'completed');
         })
             ->where('due_date', '<', now());
@@ -432,7 +442,7 @@ class Task extends Model
      */
     public function scopeCompleted($query)
     {
-        return $query->whereHas('status', function ($q) {
+        return $query->whereHas('status', function ($q): void {
             $q->where('name', 'completed');
         });
     }
@@ -442,7 +452,7 @@ class Task extends Model
      */
     public function scopePending($query)
     {
-        return $query->whereHas('status', function ($q) {
+        return $query->whereHas('status', function ($q): void {
             $q->where('name', 'pending');
         });
     }
@@ -452,7 +462,7 @@ class Task extends Model
      */
     public function scopeInProgress($query)
     {
-        return $query->whereHas('status', function ($q) {
+        return $query->whereHas('status', function ($q): void {
             $q->where('name', 'in_progress');
         });
     }

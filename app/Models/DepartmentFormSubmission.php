@@ -10,6 +10,55 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $form_id
+ * @property int|null $user_id
+ * @property int|null $workflow_instance_id
+ * @property int|null $step_instance_id
+ * @property array<array-key, mixed> $data
+ * @property int $current_step
+ * @property SubmissionStatus $status
+ * @property array<array-key, mixed>|null $metadata
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property \Illuminate\Support\Carbon|null $submitted_at
+ * @property string|null $notes
+ * @property int|null $processed_by
+ * @property \Illuminate\Support\Carbon|null $processed_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\DepartmentForm $form
+ * @property-read \App\Models\User|null $processor
+ * @property-read \App\Models\WorkflowStepInstance|null $stepInstance
+ * @property-read \App\Models\User|null $user
+ * @property-read \App\Models\WorkflowInstance|null $workflowInstance
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereCurrentStep($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereData($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereFormId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereIpAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereProcessedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereProcessedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereStepInstanceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereSubmittedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereUserAgent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentFormSubmission whereWorkflowInstanceId($value)
+ * @mixin \Eloquent
+ */
 class DepartmentFormSubmission extends Model
 {
     use HasFactory, LogsActivity;
@@ -44,7 +93,7 @@ class DepartmentFormSubmission extends Model
     {
         parent::boot();
 
-        static::creating(function (self $model) {
+        static::creating(function (self $model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }

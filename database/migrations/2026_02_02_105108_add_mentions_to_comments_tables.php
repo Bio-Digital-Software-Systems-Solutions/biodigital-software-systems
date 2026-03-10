@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('task_comments', function (Blueprint $table) {
+        Schema::table('task_comments', function (Blueprint $table): void {
             $table->json('mentions')->nullable()->after('content');
         });
 
-        Schema::table('project_comments', function (Blueprint $table) {
+        Schema::table('project_comments', function (Blueprint $table): void {
             $table->json('mentions')->nullable()->after('content');
         });
     }
@@ -25,11 +25,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('task_comments', function (Blueprint $table) {
+        Schema::table('task_comments', function (Blueprint $table): void {
             $table->dropColumn('mentions');
         });
 
-        Schema::table('project_comments', function (Blueprint $table) {
+        Schema::table('project_comments', function (Blueprint $table): void {
             $table->dropColumn('mentions');
         });
     }

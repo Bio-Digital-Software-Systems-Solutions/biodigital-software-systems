@@ -17,7 +17,7 @@ return new class extends Migration
             DB::statement("ALTER TABLE pastoral_cares MODIFY COLUMN status ENUM('pending', 'confirmed', 'completed', 'cancelled', 'no_show', 'proposed') DEFAULT 'pending'");
         }
 
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             // Proposal tracking columns
             $table->boolean('is_proposal')->default(false)->after('status');
             $table->text('proposal_reason')->nullable()->after('is_proposal');
@@ -52,7 +52,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->dropIndex(['is_proposal', 'proposal_response_status']);
             $table->dropIndex(['proposal_token']);
 

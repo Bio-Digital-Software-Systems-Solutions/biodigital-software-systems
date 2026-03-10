@@ -20,13 +20,9 @@ Route::get('/', function () {
 });
 
 // Legal pages (public access)
-Route::get('/privacy-policy', function () {
-    return Inertia::render('Legal/PrivacyPolicy');
-})->name('privacy-policy');
+Route::get('/privacy-policy', fn() => Inertia::render('Legal/PrivacyPolicy'))->name('privacy-policy');
 
-Route::get('/terms-of-service', function () {
-    return Inertia::render('Legal/TermsOfService');
-})->name('terms-of-service');
+Route::get('/terms-of-service', fn() => Inertia::render('Legal/TermsOfService'))->name('terms-of-service');
 
 // CAPTCHA generation (public access for registration)
 Route::get('/captcha', [App\Http\Controllers\CaptchaController::class, 'generate'])->name('captcha.generate');
@@ -47,7 +43,7 @@ Route::resource('hero-slides', App\Http\Controllers\HeroSlideController::class);
 Route::get('contact', [App\Http\Controllers\ContactController::class, 'create'])->name('contacts.create');
 Route::post('contact', [App\Http\Controllers\ContactController::class, 'store'])->name('contacts.store');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function (): void {
     // Contact management routes (admin only)
     Route::resource('contacts', App\Http\Controllers\ContactController::class)->except(['create', 'store']);
     Route::get('/profile/{user:uuid}', [ProfileController::class, 'publicShow'])->name('profile.public');
@@ -264,7 +260,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('departments.remove-user');
 
     // Department Position Nominations
-    Route::prefix('departments/{department}/nominations')->name('departments.nominations.')->group(function () {
+    Route::prefix('departments/{department}/nominations')->name('departments.nominations.')->group(function (): void {
         Route::get('/', [App\Http\Controllers\DepartmentPositionNominationController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\DepartmentPositionNominationController::class, 'store'])->name('store');
         Route::put('/{nomination}', [App\Http\Controllers\DepartmentPositionNominationController::class, 'update'])->name('update');
@@ -272,7 +268,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Department Positions
-    Route::prefix('departments/{department}/positions')->name('departments.positions.')->group(function () {
+    Route::prefix('departments/{department}/positions')->name('departments.positions.')->group(function (): void {
         Route::get('/', [App\Http\Controllers\DepartmentPositionController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\DepartmentPositionController::class, 'store'])->name('store');
         Route::put('/{position}', [App\Http\Controllers\DepartmentPositionController::class, 'update'])->name('update');
@@ -283,7 +279,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     // Department Scheduling Routes
     // ============================================
-    Route::prefix('departments/{department}/schedule')->name('departments.schedule.')->group(function () {
+    Route::prefix('departments/{department}/schedule')->name('departments.schedule.')->group(function (): void {
         // Weekly Schedule routes
         Route::get('/', [App\Http\Controllers\Scheduling\ScheduleController::class, 'index'])
             ->name('index');
@@ -338,7 +334,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Availability routes (under department)
-    Route::prefix('departments/{department}/availability')->name('departments.availability.')->group(function () {
+    Route::prefix('departments/{department}/availability')->name('departments.availability.')->group(function (): void {
         Route::get('/', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'index'])
             ->name('index');
         Route::get('/my', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'myAvailability'])
@@ -362,7 +358,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Absence routes (under department)
-    Route::prefix('departments/{department}/absences')->name('departments.absences.')->group(function () {
+    Route::prefix('departments/{department}/absences')->name('departments.absences.')->group(function (): void {
         Route::get('/', [App\Http\Controllers\Scheduling\AbsenceController::class, 'index'])
             ->name('index');
         Route::get('/my', [App\Http\Controllers\Scheduling\AbsenceController::class, 'myAbsences'])
@@ -394,7 +390,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Shift Swap routes (under department)
-    Route::prefix('departments/{department}/swap-requests')->name('departments.swap-requests.')->group(function () {
+    Route::prefix('departments/{department}/swap-requests')->name('departments.swap-requests.')->group(function (): void {
         Route::get('/', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'index'])
             ->name('index');
         Route::get('/my', [App\Http\Controllers\Scheduling\ShiftSwapController::class, 'mySwapRequests'])
@@ -422,7 +418,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Department TODOs routes
-    Route::prefix('departments/{department}/todos')->name('departments.todos.')->group(function () {
+    Route::prefix('departments/{department}/todos')->name('departments.todos.')->group(function (): void {
         Route::get('/', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'index'])
             ->name('index');
         Route::post('/', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'store'])
@@ -692,7 +688,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('training-class-schedules.mark-attendance');
 
     // Training Class Materials routes (for teachers)
-    Route::prefix('training-classes/{trainingClass}/materials')->middleware('restrict.member')->group(function () {
+    Route::prefix('training-classes/{trainingClass}/materials')->middleware('restrict.member')->group(function (): void {
         Route::get('/', [App\Http\Controllers\TrainingClassMaterialController::class, 'index'])
             ->name('training-classes.materials.index');
         Route::post('/', [App\Http\Controllers\TrainingClassMaterialController::class, 'store'])
@@ -718,7 +714,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('training-class-materials.download');
 
     // Quiz Management routes (for teachers/admins)
-    Route::prefix('trainings/{training}/quizzes')->group(function () {
+    Route::prefix('trainings/{training}/quizzes')->group(function (): void {
         Route::get('/', [App\Http\Controllers\QuizController::class, 'index'])
             ->name('trainings.quizzes.index');
         Route::get('/create', [App\Http\Controllers\QuizController::class, 'create'])
@@ -860,6 +856,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('appointments/{appointment:uuid}/decline-invitation', [App\Http\Controllers\AppointmentController::class, 'declineInvitation'])
         ->name('appointments.decline-invitation');
 
+    // iCalendar export/import
+    Route::get('appointments/{appointment:uuid}/export-ics', [App\Http\Controllers\AppointmentController::class, 'exportIcs'])
+        ->name('appointments.export-ics');
+    Route::get('appointments-export-ics', [App\Http\Controllers\AppointmentController::class, 'exportBulkIcs'])
+        ->name('appointments.export-bulk-ics');
+    Route::post('appointments/import-ics', [App\Http\Controllers\AppointmentController::class, 'importIcs'])
+        ->name('appointments.import-ics');
+
     // API endpoints for appointments
     Route::get('api/appointments/available-slots', [App\Http\Controllers\AppointmentController::class, 'availableSlots'])
         ->name('api.appointments.available-slots');
@@ -873,7 +877,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('api.users.schedule');
 
     // Pastoral Care routes (authenticated pastors)
-    Route::prefix('pastoral-care')->name('pastoral-care.')->group(function () {
+    Route::prefix('pastoral-care')->name('pastoral-care.')->group(function (): void {
         Route::resource('appointments', App\Http\Controllers\PastoralCareController::class)
             ->names([
                 'index' => 'index',
@@ -912,7 +916,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Pastor Availability Management routes
-    Route::prefix('pastoral-availability')->name('pastoral-availability.')->middleware('can:manage pastor availability')->group(function () {
+    Route::prefix('pastoral-availability')->name('pastoral-availability.')->middleware('can:manage pastor availability')->group(function (): void {
         Route::resource('', App\Http\Controllers\PastorAvailabilityController::class)
             ->names([
                 'index' => 'index',
@@ -950,7 +954,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     // Workflow Builder Routes
     // ============================================
-    Route::prefix('workflows')->name('workflows.')->middleware('can:view workflows')->group(function () {
+    Route::prefix('workflows')->name('workflows.')->middleware('can:view workflows')->group(function (): void {
         Route::get('/', [App\Http\Controllers\WorkflowController::class, 'index'])->name('index');
         Route::get('/create', [App\Http\Controllers\WorkflowController::class, 'create'])->middleware('can:create workflows')->name('create');
         Route::post('/', [App\Http\Controllers\WorkflowController::class, 'store'])->middleware('can:create workflows')->name('store');
@@ -967,7 +971,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Workflow Instance Routes
-    Route::prefix('workflow-instances')->name('workflow-instances.')->group(function () {
+    Route::prefix('workflow-instances')->name('workflow-instances.')->group(function (): void {
         Route::get('/', [App\Http\Controllers\WorkflowInstanceController::class, 'index'])->name('index');
         Route::get('/my-approvals', [App\Http\Controllers\WorkflowInstanceController::class, 'myApprovals'])->name('my-approvals');
         Route::get('/my-tasks', [App\Http\Controllers\WorkflowInstanceController::class, 'myTasks'])->name('my-tasks');
@@ -993,7 +997,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     // Form Builder Routes
     // ============================================
-    Route::prefix('forms')->name('forms.')->middleware('can:view forms')->group(function () {
+    Route::prefix('forms')->name('forms.')->middleware('can:view forms')->group(function (): void {
         Route::get('/', [App\Http\Controllers\FormController::class, 'index'])->name('index');
         Route::get('/create', [App\Http\Controllers\FormController::class, 'create'])->middleware('can:create forms')->name('create');
         Route::post('/', [App\Http\Controllers\FormController::class, 'store'])->middleware('can:create forms')->name('store');
@@ -1024,7 +1028,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/p/{token}/download', [App\Http\Controllers\EventProgrammeController::class, 'downloadShared'])->name('events.programme.shared.download')->withoutMiddleware(['auth', 'verified']);
 
     // Form Submission Routes
-    Route::prefix('form-submissions')->name('form-submissions.')->group(function () {
+    Route::prefix('form-submissions')->name('form-submissions.')->group(function (): void {
         Route::get('/', [App\Http\Controllers\FormSubmissionController::class, 'index'])->name('index');
         Route::get('/{formSubmission}', [App\Http\Controllers\FormSubmissionController::class, 'show'])->name('show');
         Route::get('/{formSubmission}/edit', [App\Http\Controllers\FormSubmissionController::class, 'edit'])->name('edit');
@@ -1040,7 +1044,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     // Department Need Management Routes
     // ============================================
-    Route::prefix('needs')->name('needs.')->middleware('can:view needs')->group(function () {
+    Route::prefix('needs')->name('needs.')->middleware('can:view needs')->group(function (): void {
         Route::get('/', [App\Http\Controllers\NeedController::class, 'index'])->name('index');
         Route::get('/kanban', [App\Http\Controllers\NeedController::class, 'kanban'])->name('kanban');
         Route::get('/my-needs', [App\Http\Controllers\NeedController::class, 'myNeeds'])->name('my-needs');
@@ -1088,7 +1092,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('need-comments.destroy');
 
     // Department Reports
-    Route::prefix('reports')->name('reports.')->middleware('can:view reports')->group(function () {
+    Route::prefix('reports')->name('reports.')->middleware('can:view reports')->group(function (): void {
         Route::get('/', [App\Http\Controllers\DepartmentReportController::class, 'index'])->name('index');
         Route::get('/create', [App\Http\Controllers\DepartmentReportController::class, 'create'])->middleware('can:generate reports')->name('create');
         Route::post('/', [App\Http\Controllers\DepartmentReportController::class, 'store'])->middleware('can:generate reports')->name('store');
@@ -1270,7 +1274,7 @@ Route::get('pastoral-care/appointments/{uuid}/success', function ($uuid) {
 // Public Pastoral Care booking interface (moved to authenticated section)
 
 // Sentry test routes (only available in local/development environments)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth'])->group(function (): void {
     Route::get('sentry/test-error', [App\Http\Controllers\SentryTestController::class, 'testError'])
         ->name('sentry.test-error');
     Route::get('sentry/test-message', [App\Http\Controllers\SentryTestController::class, 'testMessage'])

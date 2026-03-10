@@ -10,11 +10,8 @@ use Illuminate\Http\Request;
 
 class EventAnalyticsController extends Controller
 {
-    protected EventAnalyticsService $analyticsService;
-
-    public function __construct(EventAnalyticsService $analyticsService)
+    public function __construct(protected EventAnalyticsService $analyticsService)
     {
-        $this->analyticsService = $analyticsService;
         $this->middleware('can:view events');
     }
 

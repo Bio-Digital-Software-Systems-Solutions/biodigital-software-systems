@@ -147,9 +147,8 @@ class PastoralCareNotificationService
         }
 
         $message .= "\nEn cas d'empêchement, contactez-nous au {$phone}\n\n";
-        $message .= 'Que Dieu vous bénisse!';
 
-        return $message;
+        return $message . 'Que Dieu vous bénisse!';
     }
 
     /**
@@ -268,9 +267,9 @@ class PastoralCareNotificationService
         $phone = preg_replace('/[^\d+]/', '', $phone);
 
         // If doesn't start with +, assume German number
-        if (! str_starts_with($phone, '+')) {
+        if (! str_starts_with((string) $phone, '+')) {
             // Remove leading 0 if present
-            $phone = ltrim($phone, '0');
+            $phone = ltrim((string) $phone, '0');
             // Add German country code
             $phone = '+49'.$phone;
         }
@@ -334,9 +333,8 @@ class PastoralCareNotificationService
         $message .= "Heure: {$time}\n";
         $message .= "Pasteur: {$pastor}\n\n";
         $message .= "Vous recevrez un rappel 24h avant le rendez-vous.\n\n";
-        $message .= 'Que Dieu vous bénisse !';
 
-        return $message;
+        return $message . 'Que Dieu vous bénisse !';
     }
 
     /**

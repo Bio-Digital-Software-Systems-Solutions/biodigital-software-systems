@@ -50,7 +50,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_can_create_a_task_for_a_program()
+    public function it_can_create_a_task_for_a_program(): void
     {
         $taskData = [
             'title' => 'New Task',
@@ -78,7 +78,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_requires_authentication_to_create_task()
+    public function it_requires_authentication_to_create_task(): void
     {
         $taskData = [
             'title' => 'New Task',
@@ -93,7 +93,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_requires_create_tasks_permission()
+    public function it_requires_create_tasks_permission(): void
     {
         $userWithoutPermission = User::factory()->create();
 
@@ -111,7 +111,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_required_fields()
+    public function it_validates_required_fields(): void
     {
         $response = $this->actingAs($this->user)
             ->post(route('tasks.store'), []);
@@ -120,7 +120,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_title_is_required()
+    public function it_validates_title_is_required(): void
     {
         $taskData = [
             'description' => 'Task description',
@@ -136,7 +136,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_priority_is_valid()
+    public function it_validates_priority_is_valid(): void
     {
         $taskData = [
             'title' => 'New Task',
@@ -152,7 +152,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_program_exists()
+    public function it_validates_program_exists(): void
     {
         $taskData = [
             'title' => 'New Task',
@@ -168,7 +168,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_status_exists()
+    public function it_validates_status_exists(): void
     {
         $taskData = [
             'title' => 'New Task',
@@ -184,7 +184,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_assigned_user_exists()
+    public function it_validates_assigned_user_exists(): void
     {
         $taskData = [
             'title' => 'New Task',
@@ -201,7 +201,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_due_date_is_in_future()
+    public function it_validates_due_date_is_in_future(): void
     {
         $taskData = [
             'title' => 'New Task',
@@ -218,7 +218,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_validates_estimated_hours_is_positive()
+    public function it_validates_estimated_hours_is_positive(): void
     {
         $taskData = [
             'title' => 'New Task',
@@ -235,7 +235,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_can_create_task_with_all_optional_fields()
+    public function it_can_create_task_with_all_optional_fields(): void
     {
         $taskData = [
             'title' => 'Comprehensive Task',
@@ -266,7 +266,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_can_create_task_without_optional_fields()
+    public function it_can_create_task_without_optional_fields(): void
     {
         $taskData = [
             'title' => 'Minimal Task',
@@ -289,7 +289,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_associates_task_with_program()
+    public function it_associates_task_with_program(): void
     {
         $taskData = [
             'title' => 'Program Task',
@@ -309,7 +309,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_can_create_multiple_tasks_for_same_program()
+    public function it_can_create_multiple_tasks_for_same_program(): void
     {
         $task1Data = [
             'title' => 'Task 1',
@@ -335,7 +335,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_loads_program_id_from_query_parameter_in_create_form()
+    public function it_loads_program_id_from_query_parameter_in_create_form(): void
     {
         $response = $this->actingAs($this->user)
             ->get(route('tasks.create', ['program' => $this->program->id]));
@@ -349,10 +349,10 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_shows_all_active_programs_in_create_form()
+    public function it_shows_all_active_programs_in_create_form(): void
     {
-        $activeProgram = Program::factory()->create(['status' => 'active']);
-        $inactiveProgram = Program::factory()->create(['status' => 'cancelled']);
+        Program::factory()->create(['status' => 'active']);
+        Program::factory()->create(['status' => 'cancelled']);
 
         $response = $this->actingAs($this->user)
             ->get(route('tasks.create'));
@@ -364,7 +364,7 @@ class ProgramTaskCreationTest extends TestCase
     }
 
     /** @test */
-    public function it_redirects_to_program_show_after_successful_creation()
+    public function it_redirects_to_program_show_after_successful_creation(): void
     {
         $taskData = [
             'title' => 'Test Task',

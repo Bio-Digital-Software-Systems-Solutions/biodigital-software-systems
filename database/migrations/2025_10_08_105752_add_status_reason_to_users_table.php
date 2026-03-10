@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->text('status_reason')->nullable()->after('is_blocked');
             $table->timestamp('status_changed_at')->nullable()->after('status_reason');
             $table->unsignedBigInteger('status_changed_by')->nullable()->after('status_changed_at');
@@ -25,7 +25,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->dropForeign(['status_changed_by']);
             $table->dropColumn(['status_reason', 'status_changed_at', 'status_changed_by']);
         });

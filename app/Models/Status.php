@@ -7,17 +7,20 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $name
  * @property string|null $description
  * @property string|null $color
  * @property bool $is_active
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read int $active_tasks_count
  * @property-read string $color_class
  * @property-read string $display_label
@@ -40,15 +43,12 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Status whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Status whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Status whereUpdatedAt($value)
- * @property string $uuid
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Status whereUuid($value)
  * @mixin \Eloquent
  */
 class Status extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -60,6 +60,7 @@ class Status extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -112,7 +113,7 @@ class Status extends Model
     public function getActiveTasksCountAttribute(): int
     {
         return $this->tasks()
-            ->whereHas('program', function ($query) {
+            ->whereHas('program', function ($query): void {
                 $query->whereIn('status', ['active', 'in_progress']);
             })
             ->count();
@@ -147,7 +148,7 @@ class Status extends Model
      */
     public function getDisplayLabelAttribute(): string
     {
-        return $this->label ?: ucfirst(str_replace('_', ' ', $this->name));
+        return (string) ($this->label ?: ucfirst(str_replace('_', ' ', $this->name)));
     }
 
     /**

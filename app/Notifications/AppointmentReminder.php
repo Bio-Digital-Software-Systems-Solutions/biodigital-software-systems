@@ -14,17 +14,11 @@ class AppointmentReminder extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public Appointment $appointment;
-
-    public bool $isOrganizer;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(Appointment $appointment, bool $isOrganizer = false)
+    public function __construct(public Appointment $appointment, public bool $isOrganizer = false)
     {
-        $this->appointment = $appointment;
-        $this->isOrganizer = $isOrganizer;
     }
 
     /**

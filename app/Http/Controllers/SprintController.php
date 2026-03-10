@@ -25,7 +25,7 @@ class SprintController extends Controller
         }
 
         if ($request->has('status') && $request->status) {
-            $query->where(function ($q) use ($request) {
+            $query->where(function ($q) use ($request): void {
                 $now = now();
                 switch ($request->status) {
                     case 'active':
@@ -42,11 +42,9 @@ class SprintController extends Controller
             });
         }
 
-        $sprints = $query->latest('start_date')->get()->map(function ($sprint) {
+        $sprints = $query->latest('start_date')->get()->map(function ($sprint): array {
             $totalTasks = $sprint->tasks->count();
-            $completedTasks = $sprint->tasks->filter(function ($task) {
-                return $task->status && $task->status->name === 'completed';
-            })->count();
+            $completedTasks = $sprint->tasks->filter(fn($task): bool => $task->status && $task->status->name === 'completed')->count();
 
             $now = now();
             $status = 'upcoming';
@@ -69,18 +67,16 @@ class SprintController extends Controller
                 'completed_tasks' => $completedTasks,
                 'progress' => $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0,
                 'tasks' => $sprint->tasks,
-                'attachments' => $sprint->attachments->map(function ($attachment) {
-                    return [
-                        'id' => $attachment->id,
-                        'file_name' => $attachment->file_name,
-                        'file_type' => $attachment->file_type,
-                        'mime_type' => $attachment->mime_type,
-                        'file_size' => $attachment->file_size,
-                        'file_url' => $attachment->file_url,
-                        'uploaded_by' => $attachment->user ? $attachment->user->name : 'Unknown',
-                        'created_at' => $attachment->created_at->format('d/m/Y H:i'),
-                    ];
-                }),
+                'attachments' => $sprint->attachments->map(fn($attachment): array => [
+                    'id' => $attachment->id,
+                    'file_name' => $attachment->file_name,
+                    'file_type' => $attachment->file_type,
+                    'mime_type' => $attachment->mime_type,
+                    'file_size' => $attachment->file_size,
+                    'file_url' => $attachment->file_url,
+                    'uploaded_by' => $attachment->user ? $attachment->user->name : 'Unknown',
+                    'created_at' => $attachment->created_at->format('d/m/Y H:i'),
+                ]),
             ];
         });
 
@@ -111,7 +107,7 @@ class SprintController extends Controller
             'end_date' => 'required|date|after:start_date',
         ]);
 
-        $sprint = Sprint::create($validated);
+        Sprint::create($validated);
 
         return redirect()->route('sprints.index')->with('success', 'Sprint créé avec succès.');
     }

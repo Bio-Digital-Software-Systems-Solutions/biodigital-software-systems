@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('trainings', function (Blueprint $table) {
+        Schema::create('trainings', function (Blueprint $table): void {
             $table->id();
             $table->string('title');
             $table->text('description');
@@ -23,7 +23,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('training_topics', function (Blueprint $table) {
+        Schema::create('training_topics', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('training_id')->constrained()->onDelete('cascade');
             $table->string('name');
@@ -32,7 +32,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('training_enrollments', function (Blueprint $table) {
+        Schema::create('training_enrollments', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('training_id')->constrained()->onDelete('cascade');
@@ -49,7 +49,7 @@ return new class extends Migration
             $table->unique(['user_id', 'training_id']);
         });
 
-        Schema::create('training_materials', function (Blueprint $table) {
+        Schema::create('training_materials', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('training_id')->constrained()->onDelete('cascade');
             $table->string('title');
@@ -60,7 +60,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('training_material_progress', function (Blueprint $table) {
+        Schema::create('training_material_progress', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('training_material_id')->constrained()->onDelete('cascade');
@@ -71,7 +71,7 @@ return new class extends Migration
             $table->unique(['user_id', 'training_material_id'], 'user_material_unique');
         });
 
-        Schema::create('training_evaluations', function (Blueprint $table) {
+        Schema::create('training_evaluations', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('training_id')->constrained()->onDelete('cascade');
             $table->string('title');
@@ -81,7 +81,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('training_evaluation_results', function (Blueprint $table) {
+        Schema::create('training_evaluation_results', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('training_evaluation_id')->constrained()->onDelete('cascade');
@@ -93,7 +93,7 @@ return new class extends Migration
             $table->unique(['user_id', 'training_evaluation_id'], 'user_evaluation_unique');
         });
 
-        Schema::create('training_classes', function (Blueprint $table) {
+        Schema::create('training_classes', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('training_id')->constrained()->onDelete('cascade');
             $table->string('name');

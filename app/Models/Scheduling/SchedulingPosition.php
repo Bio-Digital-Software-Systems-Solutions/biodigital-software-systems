@@ -11,6 +11,50 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $department_id
+ * @property string $name
+ * @property string|null $description
+ * @property string|null $color
+ * @property numeric|null $hourly_rate
+ * @property array<array-key, mixed>|null $required_skills
+ * @property int $min_experience_months
+ * @property bool $is_active
+ * @property int $sort_order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read Department $department
+ * @property-read bool $has_required_skills
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Shift> $shifts
+ * @property-read int|null $shifts_count
+ * @method static Builder<static>|SchedulingPosition active()
+ * @method static Builder<static>|SchedulingPosition forDepartment(int $departmentId)
+ * @method static Builder<static>|SchedulingPosition newModelQuery()
+ * @method static Builder<static>|SchedulingPosition newQuery()
+ * @method static Builder<static>|SchedulingPosition onlyTrashed()
+ * @method static Builder<static>|SchedulingPosition ordered()
+ * @method static Builder<static>|SchedulingPosition query()
+ * @method static Builder<static>|SchedulingPosition whereColor($value)
+ * @method static Builder<static>|SchedulingPosition whereCreatedAt($value)
+ * @method static Builder<static>|SchedulingPosition whereDeletedAt($value)
+ * @method static Builder<static>|SchedulingPosition whereDepartmentId($value)
+ * @method static Builder<static>|SchedulingPosition whereDescription($value)
+ * @method static Builder<static>|SchedulingPosition whereHourlyRate($value)
+ * @method static Builder<static>|SchedulingPosition whereId($value)
+ * @method static Builder<static>|SchedulingPosition whereIsActive($value)
+ * @method static Builder<static>|SchedulingPosition whereMinExperienceMonths($value)
+ * @method static Builder<static>|SchedulingPosition whereName($value)
+ * @method static Builder<static>|SchedulingPosition whereRequiredSkills($value)
+ * @method static Builder<static>|SchedulingPosition whereSortOrder($value)
+ * @method static Builder<static>|SchedulingPosition whereUpdatedAt($value)
+ * @method static Builder<static>|SchedulingPosition whereUuid($value)
+ * @method static Builder<static>|SchedulingPosition withTrashed(bool $withTrashed = true)
+ * @method static Builder<static>|SchedulingPosition withoutTrashed()
+ * @mixin \Eloquent
+ */
 class SchedulingPosition extends Model
 {
     use HasFactory, SoftDeletes;
@@ -42,7 +86,7 @@ class SchedulingPosition extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
@@ -84,7 +128,7 @@ class SchedulingPosition extends Model
     // Accessors
     public function getHasRequiredSkillsAttribute(): bool
     {
-        return !empty($this->required_skills);
+        return ! empty($this->required_skills);
     }
 
     // Methods
@@ -97,7 +141,7 @@ class SchedulingPosition extends Model
 
     public function getTotalHoursThisWeek(): float
     {
-        return $this->shifts()
+        return (float) $this->shifts()
             ->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()])
             ->get()
             ->sum('duration_hours');

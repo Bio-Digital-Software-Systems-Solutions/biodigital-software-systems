@@ -14,11 +14,8 @@ use Illuminate\Support\Facades\Auth;
 
 class EventCheckInController extends Controller
 {
-    protected CheckInService $checkInService;
-
-    public function __construct(CheckInService $checkInService)
+    public function __construct(protected CheckInService $checkInService)
     {
-        $this->checkInService = $checkInService;
         $this->middleware('can:view events');
         $this->middleware('can:edit events')->except(['stats', 'search']);
     }
@@ -209,7 +206,7 @@ class EventCheckInController extends Controller
     {
         $search = $request->input('q', '');
 
-        if (strlen($search) < 2) {
+        if (strlen((string) $search) < 2) {
             return response()->json(['data' => []]);
         }
 
@@ -274,7 +271,7 @@ class EventCheckInController extends Controller
      */
     public function index(Request $request, Event $event): JsonResponse
     {
-        $query = EventCheckin::whereHas('registration', function ($q) use ($event) {
+        $query = EventCheckin::whereHas('registration', function ($q) use ($event): void {
             $q->where('event_id', $event->id);
         })
             ->with(['registration.ticket', 'checkedInBy', 'session'])

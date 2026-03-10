@@ -12,6 +12,81 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $department_id
+ * @property int $created_by
+ * @property string $name
+ * @property string|null $description
+ * @property FormStatus $status
+ * @property string $scope
+ * @property bool $is_template
+ * @property int|null $parent_form_id
+ * @property bool $is_multi_step
+ * @property array<array-key, mixed>|null $settings
+ * @property array<array-key, mixed>|null $validation_rules
+ * @property array<array-key, mixed>|null $conditional_logic
+ * @property string|null $success_message
+ * @property string|null $redirect_url
+ * @property string|null $submit_action
+ * @property string|null $submit_config
+ * @property int $version
+ * @property \Illuminate\Support\Carbon|null $published_at
+ * @property string|null $archived_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, DepartmentForm> $childForms
+ * @property-read int|null $child_forms_count
+ * @property-read \App\Models\User $creator
+ * @property-read \App\Models\Department $department
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\FormField> $fields
+ * @property-read int|null $fields_count
+ * @property-read DepartmentForm|null $parentForm
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\FormField> $rootFields
+ * @property-read int|null $root_fields_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\FormShareLink> $shareLinks
+ * @property-read int|null $share_links_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentFormSubmission> $submissions
+ * @property-read int|null $submissions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowStep> $workflowSteps
+ * @property-read int|null $workflow_steps_count
+ * @method static \Database\Factories\DepartmentFormFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereArchivedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereConditionalLogic($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereIsMultiStep($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereIsTemplate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereParentFormId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm wherePublishedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereRedirectUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereScope($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereSettings($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereSubmitAction($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereSubmitConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereSuccessMessage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereValidationRules($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm whereVersion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentForm withoutTrashed()
+ * @mixin \Eloquent
+ */
 class DepartmentForm extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
@@ -49,14 +124,14 @@ class DepartmentForm extends Model
     {
         parent::boot();
 
-        static::creating(function (self $model) {
+        static::creating(function (self $model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
         });
 
         // Cascade delete share links when form is deleted (soft or force)
-        static::deleting(function (self $model) {
+        static::deleting(function (self $model): void {
             $model->shareLinks()->delete();
         });
     }
@@ -197,17 +272,13 @@ class DepartmentForm extends Model
 
     public function getFieldsStructure(): array
     {
-        return $this->rootFields->map(function ($field) {
-            return $this->buildFieldStructure($field);
-        })->toArray();
+        return $this->rootFields->map($this->buildFieldStructure(...))->toArray();
     }
 
     protected function buildFieldStructure(FormField $field): array
     {
         $structure = $field->toArray();
-        $structure['children'] = $field->children->map(function ($child) {
-            return $this->buildFieldStructure($child);
-        })->toArray();
+        $structure['children'] = $field->children->map($this->buildFieldStructure(...))->toArray();
 
         return $structure;
     }

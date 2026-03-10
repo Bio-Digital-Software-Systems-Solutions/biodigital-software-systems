@@ -12,14 +12,11 @@ class DepartmentMeetingCreated extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public DepartmentMeeting $meeting;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(DepartmentMeeting $meeting)
+    public function __construct(public DepartmentMeeting $meeting)
     {
-        $this->meeting = $meeting;
     }
 
     /**

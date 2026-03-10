@@ -28,14 +28,12 @@ class TaskAppointmentController extends Controller
      */
     public function index(Task $task): JsonResponse
     {
-        $appointments = Appointment::where('appointmentable_type', 'App\\Models\\Task')
+        $appointments = Appointment::where('appointmentable_type', \App\Models\Task::class)
             ->where('appointmentable_id', $task->id)
             ->with(['organizer:id,first_name,last_name', 'participants:id,first_name,last_name'])
             ->orderBy('start_datetime')
             ->get()
-            ->map(function ($appointment) {
-                return $this->formatAppointment($appointment);
-            });
+            ->map($this->formatAppointment(...));
 
         return response()->json([
             'success' => true,
@@ -56,15 +54,13 @@ class TaskAppointmentController extends Controller
         $startOfMonth = now()->setYear((int) $validated['year'])->setMonth((int) $validated['month'])->startOfMonth()->toDateTimeString();
         $endOfMonth = now()->setYear((int) $validated['year'])->setMonth((int) $validated['month'])->endOfMonth()->toDateTimeString();
 
-        $appointments = Appointment::where('appointmentable_type', 'App\\Models\\Task')
+        $appointments = Appointment::where('appointmentable_type', \App\Models\Task::class)
             ->where('appointmentable_id', $task->id)
             ->betweenDates($startOfMonth, $endOfMonth)
             ->with(['organizer:id,first_name,last_name', 'participants:id,first_name,last_name'])
             ->orderBy('start_datetime')
             ->get()
-            ->map(function ($appointment) {
-                return $this->formatAppointment($appointment);
-            });
+            ->map($this->formatAppointment(...));
 
         return response()->json([
             'success' => true,
@@ -104,7 +100,7 @@ class TaskAppointmentController extends Controller
                 'max_participants' => $validated['max_participants'] ?? null,
                 'status' => 'pending',
                 'user_id' => Auth::id(),
-                'appointmentable_type' => 'App\\Models\\Task',
+                'appointmentable_type' => \App\Models\Task::class,
                 'appointmentable_id' => $task->id,
             ]);
 
@@ -127,7 +123,7 @@ class TaskAppointmentController extends Controller
                     ];
                     $newParticipantIds[$userId] = $confirmationToken;
                 }
-                if (! empty($participantsData)) {
+                if ($participantsData !== []) {
                     $appointment->participants()->attach($participantsData);
                 }
             }
@@ -176,7 +172,7 @@ class TaskAppointmentController extends Controller
     public function update(Request $request, Task $task, Appointment $appointment): JsonResponse
     {
         // Verify appointment belongs to task
-        if ($appointment->appointmentable_type !== 'App\\Models\\Task' || $appointment->appointmentable_id !== $task->id) {
+        if ($appointment->appointmentable_type !== \App\Models\Task::class || $appointment->appointmentable_id !== $task->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ce rendez-vous n\'appartient pas à cette tâche.',
@@ -225,7 +221,7 @@ class TaskAppointmentController extends Controller
             // Update participants if provided
             $newParticipantIds = [];
             if (isset($validated['participants'])) {
-                $requestedParticipants = array_filter($validated['participants'], fn ($id) => $id != $appointment->user_id);
+                $requestedParticipants = array_filter($validated['participants'], fn ($id): bool => $id != $appointment->user_id);
 
                 // Find new participants (not in existing list)
                 $newParticipants = array_diff($requestedParticipants, $existingParticipantIds);
@@ -287,7 +283,7 @@ class TaskAppointmentController extends Controller
                     }
                     $participant->notify(new AppointmentCancellation($appointment));
                 }
-            } elseif (! empty($changes)) {
+            } elseif ($changes !== []) {
                 // Notify existing participants about changes (if there were changes and participants exist)
                 $existingParticipantsToNotify = array_diff($existingParticipantIds, array_keys($newParticipantIds));
                 foreach ($existingParticipantsToNotify as $userId) {
@@ -322,7 +318,7 @@ class TaskAppointmentController extends Controller
     public function destroy(Task $task, Appointment $appointment): JsonResponse
     {
         // Verify appointment belongs to task
-        if ($appointment->appointmentable_type !== 'App\\Models\\Task' || $appointment->appointmentable_id !== $task->id) {
+        if ($appointment->appointmentable_type !== \App\Models\Task::class || $appointment->appointmentable_id !== $task->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ce rendez-vous n\'appartient pas à cette tâche.',
@@ -369,14 +365,12 @@ class TaskAppointmentController extends Controller
                 'last_name' => $appointment->organizer->last_name,
             ] : null,
             'participants_count' => $appointment->participants->count(),
-            'participants' => $appointment->participants->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'first_name' => $user->first_name,
-                    'last_name' => $user->last_name,
-                    'status' => $user->pivot->status ?? 'pending',
-                ];
-            }),
+            'participants' => $appointment->participants->map(fn($user): array => [
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'status' => $user->pivot->status ?? 'pending',
+            ]),
             'appointmentable_type' => class_basename($appointment->appointmentable_type),
             'appointmentable' => $appointment->appointmentable ? [
                 'id' => $appointment->appointmentable->id,

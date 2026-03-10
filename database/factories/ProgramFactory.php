@@ -36,7 +36,7 @@ class ProgramFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'active',
         ]);
     }
@@ -46,7 +46,7 @@ class ProgramFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'completed',
             'progress_percentage' => 100,
         ]);
@@ -57,7 +57,7 @@ class ProgramFactory extends Factory
      */
     public function highPriority(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'priority' => 'high',
         ]);
     }

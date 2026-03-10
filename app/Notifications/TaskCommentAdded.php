@@ -14,20 +14,11 @@ class TaskCommentAdded extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public Task $task;
-
-    public TaskComment $comment;
-
-    public User $commentedBy;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(Task $task, TaskComment $comment, User $commentedBy)
+    public function __construct(public Task $task, public TaskComment $comment, public User $commentedBy)
     {
-        $this->task = $task;
-        $this->comment = $comment;
-        $this->commentedBy = $commentedBy;
     }
 
     /**

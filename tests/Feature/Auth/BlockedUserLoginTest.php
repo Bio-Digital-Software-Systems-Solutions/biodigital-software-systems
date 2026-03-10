@@ -10,13 +10,13 @@ use Spatie\Permission\Models\Role as SpatieRole;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Ensure super-admin role exists for all tests (required by LoginRequest)
     SpatieRole::findOrCreate(Role::SUPER_ADMIN->value, 'web');
 });
 
-describe('Blocked User Login', function () {
-    it('prevents blocked users from logging in', function () {
+describe('Blocked User Login', function (): void {
+    it('prevents blocked users from logging in', function (): void {
         $user = User::factory()->blocked()->create();
 
         $response = $this->post('/login', [
@@ -28,7 +28,7 @@ describe('Blocked User Login', function () {
         $this->assertGuest();
     });
 
-    it('shows the correct error message for blocked users', function () {
+    it('shows the correct error message for blocked users', function (): void {
         $user = User::factory()->blocked()->create();
 
         $response = $this->post('/login', [
@@ -41,7 +41,7 @@ describe('Blocked User Login', function () {
         ]);
     });
 
-    it('logs blocked login attempts when password is correct', function () {
+    it('logs blocked login attempts when password is correct', function (): void {
         $user = User::factory()->blocked()->create();
 
         $this->assertDatabaseCount('blocked_login_attempts', 0);
@@ -59,7 +59,7 @@ describe('Blocked User Login', function () {
         ]);
     });
 
-    it('does not log attempts when password is incorrect for blocked user', function () {
+    it('does not log attempts when password is incorrect for blocked user', function (): void {
         $user = User::factory()->blocked()->create();
 
         $this->post('/login', [
@@ -70,7 +70,7 @@ describe('Blocked User Login', function () {
         $this->assertDatabaseCount('blocked_login_attempts', 0);
     });
 
-    it('records IP address and user agent in blocked login attempts', function () {
+    it('records IP address and user agent in blocked login attempts', function (): void {
         $user = User::factory()->blocked()->create();
 
         $this->post('/login', [
@@ -85,7 +85,7 @@ describe('Blocked User Login', function () {
         expect($attempt->user_agent)->toBe('Test Browser/1.0');
     });
 
-    it('allows unblocked users to log in normally', function () {
+    it('allows unblocked users to log in normally', function (): void {
         $user = User::factory()->active()->create();
 
         $response = $this->post('/login', [
@@ -97,7 +97,7 @@ describe('Blocked User Login', function () {
         $response->assertRedirect(route('dashboard'));
     });
 
-    it('does not log attempts for unblocked users', function () {
+    it('does not log attempts for unblocked users', function (): void {
         $user = User::factory()->active()->create();
 
         $this->post('/login', [
@@ -108,7 +108,7 @@ describe('Blocked User Login', function () {
         $this->assertDatabaseCount('blocked_login_attempts', 0);
     });
 
-    it('allows a user to log in after being unblocked', function () {
+    it('allows a user to log in after being unblocked', function (): void {
         $user = User::factory()->blocked()->create();
 
         // First, verify they can't log in while blocked
@@ -130,7 +130,7 @@ describe('Blocked User Login', function () {
         $this->assertAuthenticated();
     });
 
-    it('logs multiple blocked login attempts separately', function () {
+    it('logs multiple blocked login attempts separately', function (): void {
         $user = User::factory()->blocked()->create();
 
         // First attempt
@@ -155,8 +155,8 @@ describe('Blocked User Login', function () {
     });
 });
 
-describe('Blocked Login Attempts Management', function () {
-    it('can be acknowledged by an admin', function () {
+describe('Blocked Login Attempts Management', function (): void {
+    it('can be acknowledged by an admin', function (): void {
         $admin = User::factory()->create();
         $blockedUser = User::factory()->blocked()->create();
 
@@ -177,7 +177,7 @@ describe('Blocked Login Attempts Management', function () {
         expect($attempt->acknowledged_at)->not->toBeNull();
     });
 
-    it('can filter unacknowledged attempts', function () {
+    it('can filter unacknowledged attempts', function (): void {
         $blockedUser = User::factory()->blocked()->create();
         $admin = User::factory()->create();
 
@@ -204,7 +204,7 @@ describe('Blocked Login Attempts Management', function () {
         expect($unacknowledgedAttempts->first()->id)->toBe($unacknowledged->id);
     });
 
-    it('can filter recent attempts', function () {
+    it('can filter recent attempts', function (): void {
         $blockedUser = User::factory()->blocked()->create();
 
         // Create old attempt (31 days ago)
@@ -231,7 +231,7 @@ describe('Blocked Login Attempts Management', function () {
         expect($recentAttempts->first()->id)->toBe($recent->id);
     });
 
-    it('has correct user relationship', function () {
+    it('has correct user relationship', function (): void {
         $blockedUser = User::factory()->blocked()->create();
 
         $attempt = BlockedLoginAttempt::create([
@@ -244,7 +244,7 @@ describe('Blocked Login Attempts Management', function () {
         expect($attempt->user->full_name)->toBe($blockedUser->full_name);
     });
 
-    it('has correct acknowledgedByUser relationship', function () {
+    it('has correct acknowledgedByUser relationship', function (): void {
         $blockedUser = User::factory()->blocked()->create();
         $admin = User::factory()->create();
 
@@ -261,8 +261,8 @@ describe('Blocked Login Attempts Management', function () {
     });
 });
 
-describe('BlockedLoginAttempt Factory', function () {
-    it('creates a blocked login attempt with factory', function () {
+describe('BlockedLoginAttempt Factory', function (): void {
+    it('creates a blocked login attempt with factory', function (): void {
         $attempt = BlockedLoginAttempt::factory()->create();
 
         expect($attempt->user)->not->toBeNull();
@@ -270,7 +270,7 @@ describe('BlockedLoginAttempt Factory', function () {
         expect($attempt->acknowledged)->toBeFalse();
     });
 
-    it('creates an acknowledged attempt with factory state', function () {
+    it('creates an acknowledged attempt with factory state', function (): void {
         $attempt = BlockedLoginAttempt::factory()->acknowledged()->create();
 
         expect($attempt->acknowledged)->toBeTrue();
@@ -279,15 +279,15 @@ describe('BlockedLoginAttempt Factory', function () {
     });
 });
 
-describe('User Factory Blocked State', function () {
-    it('creates a blocked user with factory state', function () {
+describe('User Factory Blocked State', function (): void {
+    it('creates a blocked user with factory state', function (): void {
         $user = User::factory()->blocked()->create();
 
         expect($user->is_blocked)->toBeTrue();
         expect($user->status_reason)->not->toBeNull();
     });
 
-    it('creates an active user with factory state', function () {
+    it('creates an active user with factory state', function (): void {
         $user = User::factory()->active()->create();
 
         expect($user->is_active)->toBeTrue();
@@ -295,8 +295,8 @@ describe('User Factory Blocked State', function () {
     });
 });
 
-describe('Blocked Login Email Notification to Admins', function () {
-    it('sends email notification to super-admins when blocked user attempts to log in', function () {
+describe('Blocked Login Email Notification to Admins', function (): void {
+    it('sends email notification to super-admins when blocked user attempts to log in', function (): void {
         Notification::fake();
 
         $superAdmin1 = User::factory()->create();
@@ -318,7 +318,7 @@ describe('Blocked Login Email Notification to Admins', function () {
         );
     });
 
-    it('notification contains correct blocked user information', function () {
+    it('notification contains correct blocked user information', function (): void {
         Notification::fake();
 
         $superAdmin = User::factory()->create();
@@ -334,14 +334,12 @@ describe('Blocked Login Email Notification to Admins', function () {
         Notification::assertSentTo(
             $superAdmin,
             BlockedLoginAttemptNotification::class,
-            function (BlockedLoginAttemptNotification $notification) use ($blockedUser) {
-                return $notification->blockedUser->id === $blockedUser->id
-                    && $notification->attempt->email === $blockedUser->email;
-            }
+            fn(BlockedLoginAttemptNotification $notification): bool => $notification->blockedUser->id === $blockedUser->id
+                && $notification->attempt->email === $blockedUser->email
         );
     });
 
-    it('does not send notification when password is incorrect for blocked user', function () {
+    it('does not send notification when password is incorrect for blocked user', function (): void {
         Notification::fake();
 
         $superAdmin = User::factory()->create();
@@ -357,7 +355,7 @@ describe('Blocked Login Email Notification to Admins', function () {
         Notification::assertNothingSent();
     });
 
-    it('does not send notification when non-blocked user logs in', function () {
+    it('does not send notification when non-blocked user logs in', function (): void {
         Notification::fake();
 
         $superAdmin = User::factory()->create();
@@ -373,7 +371,7 @@ describe('Blocked Login Email Notification to Admins', function () {
         Notification::assertNothingSent();
     });
 
-    it('does not send notification when there are no super-admins', function () {
+    it('does not send notification when there are no super-admins', function (): void {
         Notification::fake();
 
         $blockedUser = User::factory()->blocked()->create();
@@ -386,7 +384,7 @@ describe('Blocked Login Email Notification to Admins', function () {
         Notification::assertNothingSent();
     });
 
-    it('sends notification for each blocked login attempt', function () {
+    it('sends notification for each blocked login attempt', function (): void {
         Notification::fake();
 
         $superAdmin = User::factory()->create();

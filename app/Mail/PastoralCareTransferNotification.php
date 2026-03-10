@@ -44,8 +44,8 @@ class PastoralCareTransferNotification extends Mailable implements ShouldQueue
         };
 
         return new Envelope(
-            subject: $subject.' - ICC Munich',
             from: config('mail.from.address', 'noreply@icc-munich.de'),
+            subject: $subject.' - ICC Munich',
         );
     }
 

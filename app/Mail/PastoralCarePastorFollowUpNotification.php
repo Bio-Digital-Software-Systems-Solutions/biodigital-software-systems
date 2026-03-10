@@ -31,8 +31,8 @@ class PastoralCarePastorFollowUpNotification extends Mailable implements ShouldQ
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Nouveau rendez-vous de suivi créé - Confirmation requise - ICC Munich',
             from: config('mail.from.address', 'noreply@icc-munich.de'),
+            subject: 'Nouveau rendez-vous de suivi créé - Confirmation requise - ICC Munich',
         );
     }
 

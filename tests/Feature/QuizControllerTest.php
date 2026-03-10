@@ -21,7 +21,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_view_quiz_index()
+    public function teacher_can_view_quiz_index(): void
     {
         $teacher = User::factory()->create();
         $teacher->assignRole('teacher');
@@ -39,7 +39,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_access_quiz_management()
+    public function student_cannot_access_quiz_management(): void
     {
         $student = User::factory()->create();
         $student->assignRole('student');
@@ -52,7 +52,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_create_quiz_with_questions()
+    public function teacher_can_create_quiz_with_questions(): void
     {
         $teacher = User::factory()->create();
         $teacher->assignRole('teacher');
@@ -100,7 +100,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function quiz_creation_validates_required_fields()
+    public function quiz_creation_validates_required_fields(): void
     {
         $teacher = User::factory()->create();
         $teacher->assignRole('teacher');
@@ -119,7 +119,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_update_quiz_and_questions()
+    public function teacher_can_update_quiz_and_questions(): void
     {
         $teacher = User::factory()->create();
         $teacher->assignRole('teacher');
@@ -167,7 +167,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_delete_quiz()
+    public function teacher_can_delete_quiz(): void
     {
         $teacher = User::factory()->create();
         $teacher->assignRole('teacher');
@@ -186,7 +186,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_can_start_active_quiz()
+    public function student_can_start_active_quiz(): void
     {
         $student = User::factory()->create();
         $student->assignRole('student');
@@ -216,7 +216,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_start_inactive_quiz()
+    public function student_cannot_start_inactive_quiz(): void
     {
         $student = User::factory()->create();
         $student->assignRole('student');
@@ -240,7 +240,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_retake_completed_quiz()
+    public function student_cannot_retake_completed_quiz(): void
     {
         $student = User::factory()->create();
         $student->assignRole('student');
@@ -265,7 +265,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_can_submit_quiz_and_score_is_calculated_correctly()
+    public function student_can_submit_quiz_and_score_is_calculated_correctly(): void
     {
         $student = User::factory()->create();
         $student->assignRole('student');
@@ -315,7 +315,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_submit_another_students_attempt()
+    public function student_cannot_submit_another_students_attempt(): void
     {
         $student1 = User::factory()->create();
         $student1->assignRole('student');
@@ -339,7 +339,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_view_quiz_results()
+    public function teacher_can_view_quiz_results(): void
     {
         $teacher = User::factory()->create();
         $teacher->assignRole('teacher');
@@ -369,7 +369,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function teacher_can_export_quiz_results_as_csv()
+    public function teacher_can_export_quiz_results_as_csv(): void
     {
         $teacher = User::factory()->create();
         $teacher->assignRole('teacher');
@@ -396,7 +396,7 @@ class QuizControllerTest extends TestCase
     }
 
     /** @test */
-    public function correct_answers_are_not_sent_to_frontend_when_taking_quiz()
+    public function correct_answers_are_not_sent_to_frontend_when_taking_quiz(): void
     {
         $student = User::factory()->create();
         $student->assignRole('student');
@@ -407,7 +407,7 @@ class QuizControllerTest extends TestCase
             'is_active' => true,
         ]);
 
-        $question = QuizQuestion::factory()->create([
+        QuizQuestion::factory()->create([
             'quiz_id' => $quiz->id,
             'correct_answers' => ['secret answer'],
         ]);

@@ -344,7 +344,45 @@ export function MentionInput({
     );
 }
 
-// Helper function to render content with highlighted mentions as clickable links
+// Helper function to render plain text with URLs converted to clickable links
+function renderTextWithLinks(text: string, keyPrefix: string): React.ReactNode[] {
+    const urlPattern = /(https?:\/\/[^\s<>'")\]]+)/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = urlPattern.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+            parts.push(<React.Fragment key={`${keyPrefix}-text-${lastIndex}`}>{text.slice(lastIndex, match.index)}</React.Fragment>);
+        }
+
+        const url = match[1];
+        parts.push(
+            <a
+                key={`${keyPrefix}-url-${match.index}`}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline break-all"
+                onClick={(e) => {
+                    e.stopPropagation();
+                }}
+            >
+                {url}
+            </a>
+        );
+
+        lastIndex = match.index + url.length;
+    }
+
+    if (lastIndex < text.length) {
+        parts.push(<React.Fragment key={`${keyPrefix}-text-${lastIndex}`}>{text.slice(lastIndex)}</React.Fragment>);
+    }
+
+    return parts;
+}
+
+// Helper function to render content with highlighted mentions as clickable links and URLs as links
 export function renderMentionedContent(content: string): React.ReactNode {
     // Pattern to match @[Name](uuid) format - supports both numeric ids and UUIDs
     const mentionPattern = /@\[([^\]]+)\]\(([a-zA-Z0-9-]+)\)/g;
@@ -353,9 +391,9 @@ export function renderMentionedContent(content: string): React.ReactNode {
     let match;
 
     while ((match = mentionPattern.exec(content)) !== null) {
-        // Add text before the mention
+        // Add text before the mention (with URL linkification)
         if (match.index > lastIndex) {
-            parts.push(content.slice(lastIndex, match.index));
+            parts.push(...renderTextWithLinks(content.slice(lastIndex, match.index), `pre-${match.index}`));
         }
 
         // Add the mention as a clickable link to user profile
@@ -376,9 +414,9 @@ export function renderMentionedContent(content: string): React.ReactNode {
         lastIndex = match.index + fullMatch.length;
     }
 
-    // Add remaining text
+    // Add remaining text (with URL linkification)
     if (lastIndex < content.length) {
-        parts.push(content.slice(lastIndex));
+        parts.push(...renderTextWithLinks(content.slice(lastIndex), `post-${lastIndex}`));
     }
 
     return parts.length > 0 ? parts : content;

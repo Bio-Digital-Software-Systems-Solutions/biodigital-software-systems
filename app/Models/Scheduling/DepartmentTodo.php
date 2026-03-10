@@ -14,6 +14,74 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $department_id
+ * @property int|null $shift_id
+ * @property int|null $assigned_to
+ * @property array<array-key, mixed>|null $backup_assignees
+ * @property int $created_by
+ * @property string $title
+ * @property string|null $description
+ * @property ShiftTaskStatus $status
+ * @property TodoPriority $priority
+ * @property \Illuminate\Support\Carbon|null $due_date
+ * @property int $sort_order
+ * @property int|null $estimated_minutes
+ * @property int|null $completed_by
+ * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read User|null $assignee
+ * @property-read User|null $completedBy
+ * @property-read User $creator
+ * @property-read Department $department
+ * @property-read \Illuminate\Support\Collection $backup_users
+ * @property-read bool $is_due_today
+ * @property-read bool $is_overdue
+ * @property-read \App\Models\Scheduling\Shift|null $shift
+ * @method static Builder<static>|DepartmentTodo active()
+ * @method static Builder<static>|DepartmentTodo assignedTo(\App\Models\User|int $user)
+ * @method static Builder<static>|DepartmentTodo byPriority(\App\Enums\Scheduling\TodoPriority $priority)
+ * @method static Builder<static>|DepartmentTodo byStatus(\App\Enums\Scheduling\ShiftTaskStatus $status)
+ * @method static Builder<static>|DepartmentTodo completed()
+ * @method static Builder<static>|DepartmentTodo dueThisWeek()
+ * @method static Builder<static>|DepartmentTodo dueToday()
+ * @method static \Database\Factories\Scheduling\DepartmentTodoFactory factory($count = null, $state = [])
+ * @method static Builder<static>|DepartmentTodo forDepartment(\App\Models\Department|int $department)
+ * @method static Builder<static>|DepartmentTodo forShift(\App\Models\Scheduling\Shift|int|null $shift)
+ * @method static Builder<static>|DepartmentTodo newModelQuery()
+ * @method static Builder<static>|DepartmentTodo newQuery()
+ * @method static Builder<static>|DepartmentTodo ordered()
+ * @method static Builder<static>|DepartmentTodo overdue()
+ * @method static Builder<static>|DepartmentTodo pending()
+ * @method static Builder<static>|DepartmentTodo query()
+ * @method static Builder<static>|DepartmentTodo unassigned()
+ * @method static Builder<static>|DepartmentTodo whereAssignedTo($value)
+ * @method static Builder<static>|DepartmentTodo whereBackupAssignees($value)
+ * @method static Builder<static>|DepartmentTodo whereCompletedAt($value)
+ * @method static Builder<static>|DepartmentTodo whereCompletedBy($value)
+ * @method static Builder<static>|DepartmentTodo whereCreatedAt($value)
+ * @method static Builder<static>|DepartmentTodo whereCreatedBy($value)
+ * @method static Builder<static>|DepartmentTodo whereDepartmentId($value)
+ * @method static Builder<static>|DepartmentTodo whereDescription($value)
+ * @method static Builder<static>|DepartmentTodo whereDueDate($value)
+ * @method static Builder<static>|DepartmentTodo whereEstimatedMinutes($value)
+ * @method static Builder<static>|DepartmentTodo whereId($value)
+ * @method static Builder<static>|DepartmentTodo wherePriority($value)
+ * @method static Builder<static>|DepartmentTodo whereShiftId($value)
+ * @method static Builder<static>|DepartmentTodo whereSortOrder($value)
+ * @method static Builder<static>|DepartmentTodo whereStatus($value)
+ * @method static Builder<static>|DepartmentTodo whereTitle($value)
+ * @method static Builder<static>|DepartmentTodo whereUpdatedAt($value)
+ * @method static Builder<static>|DepartmentTodo whereUuid($value)
+ * @method static Builder<static>|DepartmentTodo withShift()
+ * @method static Builder<static>|DepartmentTodo withoutShift()
+ * @mixin \Eloquent
+ */
 class DepartmentTodo extends Model
 {
     use HasFactory;
@@ -51,7 +119,7 @@ class DepartmentTodo extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
@@ -338,7 +406,7 @@ class DepartmentTodo extends Model
                 'name' => $this->assignee->full_name ?? $this->assignee->name,
                 'avatar_url' => $this->assignee->avatar_url ?? null,
             ] : null,
-            'backup_assignees' => $this->backup_users->map(fn ($user) => [
+            'backup_assignees' => $this->backup_users->map(fn ($user): array => [
                 'uuid' => $user->uuid,
                 'name' => $user->full_name ?? $user->name,
                 'avatar_url' => $user->avatar_url ?? null,

@@ -48,8 +48,8 @@ class UserManagementStarsEmployeesTest extends TestCase
     public function test_index_page_includes_stars_and_employees(): void
     {
         // Create some stars and employees
-        $star = Star::factory()->create(['user_id' => $this->targetUser->id]);
-        $employee = Employee::factory()->create(['user_id' => $this->superAdmin->id]);
+        Star::factory()->create(['user_id' => $this->targetUser->id]);
+        Employee::factory()->create(['user_id' => $this->superAdmin->id]);
 
         $response = $this->actingAs($this->superAdmin)
             ->get(route('user-management.index'));
@@ -285,8 +285,8 @@ class UserManagementStarsEmployeesTest extends TestCase
      */
     public function test_stars_and_employees_include_user_relationship(): void
     {
-        $star = Star::factory()->create(['user_id' => $this->targetUser->id]);
-        $employee = Employee::factory()->create(['user_id' => $this->superAdmin->id]);
+        Star::factory()->create(['user_id' => $this->targetUser->id]);
+        Employee::factory()->create(['user_id' => $this->superAdmin->id]);
 
         $response = $this->actingAs($this->superAdmin)
             ->get(route('user-management.index'));

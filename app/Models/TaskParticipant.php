@@ -16,6 +16,8 @@ use Spatie\Activitylog\LogOptions;
  * @property string $role
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\Task $task
  * @property-read \App\Models\User $user
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskParticipant newModelQuery()
@@ -27,8 +29,6 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskParticipant whereTaskId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskParticipant whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TaskParticipant whereUserId($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class TaskParticipant extends Model

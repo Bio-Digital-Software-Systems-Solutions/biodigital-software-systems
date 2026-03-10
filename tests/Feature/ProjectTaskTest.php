@@ -49,7 +49,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_view_task_details()
+    public function user_can_view_task_details(): void
     {
         $response = $this->actingAs($this->user)
             ->get(route('project-tasks.show', $this->task));
@@ -63,7 +63,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_start_task()
+    public function user_can_start_task(): void
     {
         $this->assertNull($this->task->started_at);
 
@@ -77,7 +77,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_pause_task()
+    public function user_can_pause_task(): void
     {
         $this->task->update(['started_at' => now()]);
 
@@ -91,7 +91,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_stop_task()
+    public function user_can_stop_task(): void
     {
         $this->task->update(['started_at' => now()]);
 
@@ -105,7 +105,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_add_comment_to_task()
+    public function user_can_add_comment_to_task(): void
     {
         $commentData = [
             'content' => 'This is a test comment',
@@ -133,7 +133,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_delete_own_comment()
+    public function user_can_delete_own_comment(): void
     {
         $comment = TaskComment::factory()->create([
             'task_id' => $this->task->id,
@@ -149,7 +149,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_delete_other_users_comment_without_permission()
+    public function user_cannot_delete_other_users_comment_without_permission(): void
     {
         // Create a regular user without 'manage programs' permission
         $regularUser = User::factory()->create();
@@ -174,7 +174,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_add_participant_to_task()
+    public function user_can_add_participant_to_task(): void
     {
         $participant = User::factory()->create();
 
@@ -191,7 +191,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_remove_participant_from_task()
+    public function user_can_remove_participant_from_task(): void
     {
         $participant = User::factory()->create();
         TaskParticipant::create([
@@ -210,7 +210,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function reviewer_can_approve_task()
+    public function reviewer_can_approve_task(): void
     {
         $reviewer = User::factory()->create();
         $reviewer->assignRole('project-manager');
@@ -232,7 +232,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function task_can_have_multiple_participants()
+    public function task_can_have_multiple_participants(): void
     {
         $participants = User::factory()->count(3)->create();
 
@@ -247,7 +247,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function task_can_have_multiple_comments()
+    public function task_can_have_multiple_comments(): void
     {
         $users = User::factory()->count(3)->create();
         $users->each(fn ($user) => $user->assignRole('project-manager'));
@@ -264,7 +264,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function cannot_add_same_participant_twice()
+    public function cannot_add_same_participant_twice(): void
     {
         $participant = User::factory()->create();
 
@@ -282,7 +282,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_upload_attachment()
+    public function user_can_upload_attachment(): void
     {
         Storage::fake('public');
 
@@ -319,7 +319,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_upload_video_attachment()
+    public function user_can_upload_video_attachment(): void
     {
         Storage::fake('public');
 
@@ -339,7 +339,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_upload_document_attachment()
+    public function user_can_upload_document_attachment(): void
     {
         Storage::fake('public');
 
@@ -359,7 +359,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_can_delete_own_attachment()
+    public function user_can_delete_own_attachment(): void
     {
         Storage::fake('public');
 
@@ -385,7 +385,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function user_cannot_delete_other_users_attachment_without_permission()
+    public function user_cannot_delete_other_users_attachment_without_permission(): void
     {
         Storage::fake('public');
 
@@ -418,7 +418,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function attachment_upload_validates_file()
+    public function attachment_upload_validates_file(): void
     {
         $response = $this->actingAs($this->user)
             ->postJson("/api/tasks/{$this->task->id}/attachments", [
@@ -429,7 +429,7 @@ class ProjectTaskTest extends TestCase
     }
 
     /** @test */
-    public function task_can_have_multiple_attachments()
+    public function task_can_have_multiple_attachments(): void
     {
         Storage::fake('public');
 

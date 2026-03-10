@@ -31,7 +31,7 @@ return new class extends Migration
         }
 
         // Change column type to JSON
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->json('pastor_notes')->nullable()->change();
         });
     }
@@ -47,11 +47,11 @@ return new class extends Migration
             ->get(['id', 'pastor_notes']);
 
         foreach ($records as $record) {
-            $notes = json_decode($record->pastor_notes, true);
-            if (is_array($notes) && ! empty($notes)) {
+            $notes = json_decode((string) $record->pastor_notes, true);
+            if (is_array($notes) && $notes !== []) {
                 // Combine all notes into text
                 $textNotes = collect($notes)
-                    ->map(fn ($note) => $note['content'] ?? '')
+                    ->map(fn ($note): mixed => $note['content'] ?? '')
                     ->filter()
                     ->join("\n\n---\n\n");
 
@@ -62,7 +62,7 @@ return new class extends Migration
         }
 
         // Change column back to text
-        Schema::table('pastoral_cares', function (Blueprint $table) {
+        Schema::table('pastoral_cares', function (Blueprint $table): void {
             $table->text('pastor_notes')->nullable()->change();
         });
     }

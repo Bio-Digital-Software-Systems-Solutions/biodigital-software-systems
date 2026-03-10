@@ -37,7 +37,7 @@ class EventProgrammeFactory extends Factory
      */
     public function withShareToken(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'share_token' => bin2hex(random_bytes(32)),
             'share_token_expires_at' => now()->addHours(24),
         ]);
@@ -48,7 +48,7 @@ class EventProgrammeFactory extends Factory
      */
     public function withExpiredToken(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'share_token' => bin2hex(random_bytes(32)),
             'share_token_expires_at' => now()->subHour(),
         ]);
@@ -59,7 +59,7 @@ class EventProgrammeFactory extends Factory
      */
     public function image(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'file_path' => 'events/programmes/'.fake()->uuid().'.jpg',
             'file_name' => fake()->word().'-programme.jpg',
             'file_type' => 'image/jpeg',

@@ -13,7 +13,7 @@ class ProjectSeeder extends Seeder
 {
     public function run(): void
     {
-        $managers = User::whereHas('roles', function ($query) {
+        $managers = User::whereHas('roles', function ($query): void {
             $query->whereIn('name', ['admin', 'project-manager', 'super-admin']);
         })->get();
 
@@ -106,7 +106,7 @@ class ProjectSeeder extends Seeder
             // Add 2-4 additional members
             $additionalMembers = User::whereNotIn('id', [$projectData['project_manager_id']])
                 ->inRandomOrder()
-                ->take(rand(2, 4))
+                ->take(random_int(2, 4))
                 ->get();
 
             foreach ($additionalMembers as $member) {
@@ -122,10 +122,10 @@ class ProjectSeeder extends Seeder
             $taskTypes = ['feature', 'bug', 'task', 'story'];
             $taskPriorities = ['lowest', 'low', 'medium', 'high', 'highest'];
 
-            $numberOfTasks = rand(5, 15);
+            $numberOfTasks = random_int(5, 15);
 
             // Generate project key (first 3-4 letters of project name in uppercase)
-            $projectKey = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $project->name), 0, 4));
+            $projectKey = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', (string) $project->name), 0, 4));
 
             for ($i = 1; $i <= $numberOfTasks; $i++) {
                 $statusName = $project->status === 'completed' ? 'completed' : $taskStatusNames[array_rand($taskStatusNames)];
@@ -142,8 +142,8 @@ class ProjectSeeder extends Seeder
                     'priority' => $taskPriorities[array_rand($taskPriorities)],
                     'assigned_to' => $project->members->random()->id,
                     'reporter_id' => $projectData['project_manager_id'],
-                    'estimated_hours' => rand(2, 40),
-                    'due_date' => now()->addDays(rand(1, 60)),
+                    'estimated_hours' => random_int(2, 40),
+                    'due_date' => now()->addDays(random_int(1, 60)),
                 ]);
             }
         }

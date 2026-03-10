@@ -9,7 +9,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Run the seeder to create all roles and permissions
     $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
 });
@@ -22,7 +22,7 @@ function getUserPermissionsFromInertia($response): array
     $page = $response->viewData('page');
 
     return collect($page['props']['auth']['user']['permissions'] ?? [])
-        ->map(fn ($p) => is_string($p) ? $p : $p['name'])
+        ->map(fn ($p): mixed => is_string($p) ? $p : $p['name'])
         ->toArray();
 }
 
@@ -40,7 +40,7 @@ function userHasPermissionInProps($response, string $permission): bool
 // Admin Role Tests
 // ============================================
 
-it('admin user has all navigation permissions', function () {
+it('admin user has all navigation permissions', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -81,7 +81,7 @@ it('admin user has all navigation permissions', function () {
 // SuperAdmin Role Tests
 // ============================================
 
-it('super admin has all permissions including user management', function () {
+it('super admin has all permissions including user management', function (): void {
     $user = User::factory()->create();
     $user->assignRole('super-admin');
 
@@ -89,7 +89,7 @@ it('super admin has all permissions including user management', function () {
     $response->assertStatus(200);
 
     $response->assertInertia(fn ($page) => $page
-        ->where('auth.user.roles', function ($roles) {
+        ->where('auth.user.roles', function ($roles): bool {
             $rolesArray = $roles instanceof \Illuminate\Support\Collection ? $roles->toArray() : (array) $roles;
 
             return in_array('super-admin', $rolesArray);
@@ -108,7 +108,7 @@ it('super admin has all permissions including user management', function () {
 // Member Role Tests
 // ============================================
 
-it('member role has correct limited navigation permissions', function () {
+it('member role has correct limited navigation permissions', function (): void {
     $user = User::factory()->create();
     $user->assignRole('member');
 
@@ -159,7 +159,7 @@ it('member role has correct limited navigation permissions', function () {
 // Student Role Tests
 // ============================================
 
-it('student role has student dashboard access', function () {
+it('student role has student dashboard access', function (): void {
     $user = User::factory()->create();
     $user->assignRole('student');
 
@@ -202,7 +202,7 @@ it('student role has student dashboard access', function () {
 // Teacher Role Tests
 // ============================================
 
-it('teacher role has teacher dashboard and training management access', function () {
+it('teacher role has teacher dashboard and training management access', function (): void {
     $user = User::factory()->create();
     $user->assignRole('teacher');
 
@@ -236,7 +236,7 @@ it('teacher role has teacher dashboard and training management access', function
 // Pastor Role Tests
 // ============================================
 
-it('pastor role has pastoral care and availability management access', function () {
+it('pastor role has pastoral care and availability management access', function (): void {
     $user = User::factory()->create();
     $user->assignRole('pastor');
 
@@ -283,7 +283,7 @@ it('pastor role has pastoral care and availability management access', function 
 // Project Manager Role Tests
 // ============================================
 
-it('project manager has project and workflow management access', function () {
+it('project manager has project and workflow management access', function (): void {
     $user = User::factory()->create();
     $user->assignRole('project-manager');
 
@@ -315,7 +315,7 @@ it('project manager has project and workflow management access', function () {
 // Event Manager Role Tests
 // ============================================
 
-it('event manager has event management access but not projects', function () {
+it('event manager has event management access but not projects', function (): void {
     $user = User::factory()->create();
     $user->assignRole('event-manager');
 
@@ -358,7 +358,7 @@ it('event manager has event management access but not projects', function () {
 // Department Leader Role Tests
 // ============================================
 
-it('department leader has department and needs management access', function () {
+it('department leader has department and needs management access', function (): void {
     $user = User::factory()->create();
     $user->assignRole('department-leader');
 
@@ -388,7 +388,7 @@ it('department leader has department and needs management access', function () {
 // Employee Role Tests
 // ============================================
 
-it('employee has extended viewing permissions including projects', function () {
+it('employee has extended viewing permissions including projects', function (): void {
     $user = User::factory()->create();
     $user->assignRole('employee');
 
@@ -427,7 +427,7 @@ it('employee has extended viewing permissions including projects', function () {
 // Library Manager Role Tests
 // ============================================
 
-it('library manager has book management access', function () {
+it('library manager has book management access', function (): void {
     $user = User::factory()->create();
     $user->assignRole('library-manager');
 
@@ -467,7 +467,7 @@ it('library manager has book management access', function () {
 // Writer Role Tests
 // ============================================
 
-it('writer has content management access', function () {
+it('writer has content management access', function (): void {
     $user = User::factory()->create();
     $user->assignRole('writer');
 
@@ -508,7 +508,7 @@ it('writer has content management access', function () {
 // Star (Volunteer) Role Tests
 // ============================================
 
-it('star volunteer has basic needs submission access', function () {
+it('star volunteer has basic needs submission access', function (): void {
     $user = User::factory()->create();
     $user->assignRole('star');
 
@@ -547,7 +547,7 @@ it('star volunteer has basic needs submission access', function () {
 // Multiple Roles Tests
 // ============================================
 
-it('user with multiple roles receives combined permissions', function () {
+it('user with multiple roles receives combined permissions', function (): void {
     $user = User::factory()->create();
     $user->assignRole(['member', 'teacher']);
 
@@ -575,7 +575,7 @@ it('user with multiple roles receives combined permissions', function () {
 // Route Access Control Tests
 // ============================================
 
-it('member cannot access user management route', function () {
+it('member cannot access user management route', function (): void {
     $user = User::factory()->create();
     $user->assignRole('member');
 
@@ -584,7 +584,7 @@ it('member cannot access user management route', function () {
     expect($response->status())->toBeIn([302, 403]);
 });
 
-it('super admin can access user management route', function () {
+it('super admin can access user management route', function (): void {
     $user = User::factory()->create();
     $user->assignRole('super-admin');
 
@@ -592,7 +592,7 @@ it('super admin can access user management route', function () {
     $response->assertStatus(200);
 });
 
-it('member cannot access pastoral availability route', function () {
+it('member cannot access pastoral availability route', function (): void {
     $user = User::factory()->create();
     $user->assignRole('member');
 
@@ -601,7 +601,7 @@ it('member cannot access pastoral availability route', function () {
     expect($response->status())->toBeIn([302, 403]);
 });
 
-it('pastor can access pastoral availability route', function () {
+it('pastor can access pastoral availability route', function (): void {
     $user = User::factory()->create();
     $user->assignRole('pastor');
 
@@ -610,7 +610,7 @@ it('pastor can access pastoral availability route', function () {
     expect($response->status())->toBeIn([200, 302]);
 });
 
-it('student cannot access teacher dashboard', function () {
+it('student cannot access teacher dashboard', function (): void {
     $user = User::factory()->create();
     $user->assignRole('student');
 
@@ -619,7 +619,7 @@ it('student cannot access teacher dashboard', function () {
     expect($response->status())->toBeIn([302, 403]);
 });
 
-it('teacher can access teacher dashboard', function () {
+it('teacher can access teacher dashboard', function (): void {
     $user = User::factory()->create();
     $user->assignRole('teacher');
 
@@ -627,7 +627,7 @@ it('teacher can access teacher dashboard', function () {
     $response->assertStatus(200);
 });
 
-it('teacher cannot access student dashboard', function () {
+it('teacher cannot access student dashboard', function (): void {
     $user = User::factory()->create();
     $user->assignRole('teacher');
 
@@ -636,7 +636,7 @@ it('teacher cannot access student dashboard', function () {
     expect($response->status())->toBeIn([302, 403]);
 });
 
-it('student can access student dashboard', function () {
+it('student can access student dashboard', function (): void {
     $user = User::factory()->create();
     $user->assignRole('student');
 
@@ -644,7 +644,7 @@ it('student can access student dashboard', function () {
     $response->assertStatus(200);
 });
 
-it('member cannot access projects route', function () {
+it('member cannot access projects route', function (): void {
     $user = User::factory()->create();
     $user->assignRole('member');
 
@@ -653,7 +653,7 @@ it('member cannot access projects route', function () {
     expect($response->status())->toBeIn([302, 403]);
 });
 
-it('project manager can access projects route', function () {
+it('project manager can access projects route', function (): void {
     $user = User::factory()->create();
     $user->assignRole('project-manager');
 
@@ -661,7 +661,7 @@ it('project manager can access projects route', function () {
     $response->assertStatus(200);
 });
 
-it('member cannot access workflows route', function () {
+it('member cannot access workflows route', function (): void {
     $user = User::factory()->create();
     $user->assignRole('member');
 
@@ -670,7 +670,7 @@ it('member cannot access workflows route', function () {
     expect($response->status())->toBeIn([302, 403]);
 });
 
-it('department leader can access workflows route', function () {
+it('department leader can access workflows route', function (): void {
     $user = User::factory()->create();
     $user->assignRole('department-leader');
 

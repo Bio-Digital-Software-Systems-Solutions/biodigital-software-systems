@@ -11,7 +11,7 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 uses(Tests\CreatesPermissions::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->setupPermissions();
 
     // Create pastoral care permissions
@@ -25,9 +25,9 @@ beforeEach(function () {
     $pastorRole->givePermissionTo(['view pastoral care', 'create pastoral care', 'manage pastoral care', 'view mlr dashboard']);
 });
 
-describe('PastoralCare Update Notifications', function () {
+describe('PastoralCare Update Notifications', function (): void {
 
-    it('sends email to client when appointment date changes', function () {
+    it('sends email to client when appointment date changes', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create();
@@ -48,13 +48,11 @@ describe('PastoralCare Update Notifications', function () {
             'appointment_date' => now()->addDays(10),
         ]);
 
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return $mail->hasTo('client@example.com')
-                && $mail->recipientType === 'client';
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail): bool => $mail->hasTo('client@example.com')
+            && $mail->recipientType === 'client');
     });
 
-    it('sends email to pastor when appointment time changes', function () {
+    it('sends email to pastor when appointment time changes', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create(['email' => 'pastor@example.com']);
@@ -79,13 +77,11 @@ describe('PastoralCare Update Notifications', function () {
             'appointment_time' => now()->setTime(14, 0),
         ]);
 
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return $mail->hasTo('pastor@example.com')
-                && $mail->recipientType === 'pastor';
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail): bool => $mail->hasTo('pastor@example.com')
+            && $mail->recipientType === 'pastor');
     });
 
-    it('sends email to both client and pastor when pastor changes', function () {
+    it('sends email to both client and pastor when pastor changes', function (): void {
         Mail::fake();
 
         $oldPastor = User::factory()->create(['email' => 'old.pastor@example.com']);
@@ -108,17 +104,13 @@ describe('PastoralCare Update Notifications', function () {
         ]);
 
         // Client should receive notification
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return $mail->hasTo('client@example.com');
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail) => $mail->hasTo('client@example.com'));
 
         // New pastor should receive notification
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return $mail->hasTo('new.pastor@example.com');
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail) => $mail->hasTo('new.pastor@example.com'));
     });
 
-    it('sends email when location type changes', function () {
+    it('sends email when location type changes', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create();
@@ -139,12 +131,10 @@ describe('PastoralCare Update Notifications', function () {
             'zoom_link' => 'https://zoom.us/j/123456789',
         ]);
 
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return isset($mail->changes['location_type']);
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail): bool => isset($mail->changes['location_type']));
     });
 
-    it('does not send notification for status-only changes', function () {
+    it('does not send notification for status-only changes', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create();
@@ -167,7 +157,7 @@ describe('PastoralCare Update Notifications', function () {
         Mail::assertNotQueued(PastoralCareAppointmentUpdated::class);
     });
 
-    it('does not notify pastor making the change', function () {
+    it('does not notify pastor making the change', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create(['email' => 'pastor@example.com']);
@@ -189,17 +179,13 @@ describe('PastoralCare Update Notifications', function () {
         ]);
 
         // Pastor should NOT receive notification since they made the change
-        Mail::assertNotQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return $mail->hasTo('pastor@example.com');
-        });
+        Mail::assertNotQueued(PastoralCareAppointmentUpdated::class, fn($mail) => $mail->hasTo('pastor@example.com'));
 
         // But client should still receive notification
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return $mail->hasTo('client@example.com');
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail) => $mail->hasTo('client@example.com'));
     });
 
-    it('includes all changed fields in the notification', function () {
+    it('includes all changed fields in the notification', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create();
@@ -221,13 +207,11 @@ describe('PastoralCare Update Notifications', function () {
             'duration_minutes' => 90,
         ]);
 
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return isset($mail->changes['appointment_date'])
-                && isset($mail->changes['duration_minutes']);
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail): bool => isset($mail->changes['appointment_date'])
+            && isset($mail->changes['duration_minutes']));
     });
 
-    it('does not send notification when non-notifiable fields change', function () {
+    it('does not send notification when non-notifiable fields change', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create();
@@ -252,9 +236,9 @@ describe('PastoralCare Update Notifications', function () {
 
 });
 
-describe('PastoralCare Mail Content', function () {
+describe('PastoralCare Mail Content', function (): void {
 
-    it('mail has correct subject', function () {
+    it('mail has correct subject', function (): void {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
 
@@ -273,7 +257,7 @@ describe('PastoralCare Mail Content', function () {
         expect($mail->envelope()->subject)->toContain('modifie');
     });
 
-    it('mail includes appointment details', function () {
+    it('mail includes appointment details', function (): void {
         $pastor = User::factory()->create(['first_name' => 'John', 'last_name' => 'Doe']);
         $pastor->assignRole('pastor');
 
@@ -294,7 +278,7 @@ describe('PastoralCare Mail Content', function () {
         expect($content->with['changes'])->toBe($changes);
     });
 
-    it('mail differentiates between client and pastor recipients', function () {
+    it('mail differentiates between client and pastor recipients', function (): void {
         $pastor = User::factory()->create();
         $pastor->assignRole('pastor');
 
@@ -314,9 +298,9 @@ describe('PastoralCare Mail Content', function () {
 
 });
 
-describe('Edge Cases', function () {
+describe('Edge Cases', function (): void {
 
-    it('handles appointment without client email gracefully', function () {
+    it('handles appointment without client email gracefully', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create(['email' => 'pastor@example.com']);
@@ -338,7 +322,7 @@ describe('Edge Cases', function () {
         Mail::assertQueued(PastoralCareAppointmentUpdated::class, 1);
     });
 
-    it('handles multiple simultaneous changes', function () {
+    it('handles multiple simultaneous changes', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create();
@@ -365,15 +349,13 @@ describe('Edge Cases', function () {
             'zoom_link' => 'https://zoom.us/j/123',
         ]);
 
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return isset($mail->changes['pastor_id'])
-                && isset($mail->changes['appointment_date'])
-                && isset($mail->changes['location_type'])
-                && isset($mail->changes['zoom_link']);
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail): bool => isset($mail->changes['pastor_id'])
+            && isset($mail->changes['appointment_date'])
+            && isset($mail->changes['location_type'])
+            && isset($mail->changes['zoom_link']));
     });
 
-    it('sends notification to user account if different from client email', function () {
+    it('sends notification to user account if different from client email', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create();
@@ -392,16 +374,12 @@ describe('Edge Cases', function () {
         ]);
 
         // Both emails should receive notifications
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return $mail->hasTo('different.email@example.com');
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail) => $mail->hasTo('different.email@example.com'));
 
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return $mail->hasTo('user.account@example.com');
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail) => $mail->hasTo('user.account@example.com'));
     });
 
-    it('handles sequential updates correctly', function () {
+    it('handles sequential updates correctly', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create();
@@ -424,9 +402,9 @@ describe('Edge Cases', function () {
 
 });
 
-describe('Field Label Formatting', function () {
+describe('Field Label Formatting', function (): void {
 
-    it('formats location type labels correctly', function () {
+    it('formats location type labels correctly', function (): void {
         Mail::fake();
 
         $pastor = User::factory()->create();
@@ -442,13 +420,11 @@ describe('Field Label Formatting', function () {
             'location_type' => 'zoom',
         ]);
 
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return $mail->changes['location_type']['old'] === 'En personne'
-                && $mail->changes['location_type']['new'] === 'Zoom';
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail): bool => $mail->changes['location_type']['old'] === 'En personne'
+            && $mail->changes['location_type']['new'] === 'Zoom');
     });
 
-    it('formats pastor name when pastor changes', function () {
+    it('formats pastor name when pastor changes', function (): void {
         Mail::fake();
 
         $oldPastor = User::factory()->create(['first_name' => 'John', 'last_name' => 'Smith']);
@@ -466,10 +442,8 @@ describe('Field Label Formatting', function () {
             'pastor_id' => $newPastor->id,
         ]);
 
-        Mail::assertQueued(PastoralCareAppointmentUpdated::class, function ($mail) {
-            return $mail->changes['pastor_id']['old'] === 'John Smith'
-                && $mail->changes['pastor_id']['new'] === 'Jane Doe';
-        });
+        Mail::assertQueued(PastoralCareAppointmentUpdated::class, fn($mail): bool => $mail->changes['pastor_id']['old'] === 'John Smith'
+            && $mail->changes['pastor_id']['new'] === 'Jane Doe');
     });
 
 });

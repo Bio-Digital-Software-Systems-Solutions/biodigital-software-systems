@@ -93,7 +93,7 @@ class WorkloadService
         while ($weekStart->lte($monthEnd)) {
             $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
             $weekShifts = $shifts->filter(
-                fn($s) => $s->date->gte($weekStart) && $s->date->lte($weekEnd)
+                fn($s): bool => $s->date->gte($weekStart) && $s->date->lte($weekEnd)
             );
 
             $byWeek[] = [
@@ -127,7 +127,7 @@ class WorkloadService
     ): array {
         $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
 
-        $members = $department->members()->with(['shifts' => function ($query) use ($weekStart, $weekEnd) {
+        $members = $department->members()->with(['shifts' => function ($query) use ($weekStart, $weekEnd): void {
             $query->whereBetween('date', [$weekStart, $weekEnd])
                 ->whereNotIn('status', [ShiftStatus::CANCELLED]);
         }])->get();
@@ -135,7 +135,7 @@ class WorkloadService
         $settings = $this->getSettings($department->id);
         $maxHours = $settings->max_hours_per_week ?? 40;
 
-        $distribution = $members->map(function ($member) use ($maxHours) {
+        $distribution = $members->map(function ($member) use ($maxHours): array {
             $totalHours = $member->shifts->sum(fn($s) => $s->duration_hours);
 
             return [
@@ -181,7 +181,7 @@ class WorkloadService
 
         $hours = collect($distribution['employees'])->pluck('total_hours');
         $avg = $hours->avg();
-        $variance = $hours->map(fn($h) => pow($h - $avg, 2))->avg();
+        $variance = $hours->map(fn($h): float|int => ($h - $avg) ** 2)->avg();
         $stdDev = sqrt($variance);
 
         // Calculate coefficient of variation (lower is better)
@@ -278,13 +278,11 @@ class WorkloadService
         $totalOvertimeHours = $overtimeShifts->sum(fn($s) => $s->duration_hours);
 
         $byEmployee = $overtimeShifts->groupBy('user_id')
-            ->map(function ($employeeShifts) {
-                return [
-                    'employee' => $employeeShifts->first()->user,
-                    'overtime_shifts' => $employeeShifts->count(),
-                    'overtime_hours' => $employeeShifts->sum(fn($s) => $s->duration_hours),
-                ];
-            })
+            ->map(fn($employeeShifts): array => [
+                'employee' => $employeeShifts->first()->user,
+                'overtime_shifts' => $employeeShifts->count(),
+                'overtime_hours' => $employeeShifts->sum(fn($s) => $s->duration_hours),
+            ])
             ->sortByDesc('overtime_hours')
             ->values();
 

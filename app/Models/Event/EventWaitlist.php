@@ -11,6 +11,68 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $event_id
+ * @property int|null $ticket_id
+ * @property int|null $user_id
+ * @property string $email
+ * @property string $first_name
+ * @property string $last_name
+ * @property string|null $phone
+ * @property int $quantity
+ * @property int $position
+ * @property string $status
+ * @property \Illuminate\Support\Carbon|null $notified_at
+ * @property \Illuminate\Support\Carbon|null $expires_at
+ * @property \Illuminate\Support\Carbon|null $converted_at
+ * @property int|null $registration_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read Event $event
+ * @property-read bool $can_be_notified
+ * @property-read string $full_name
+ * @property-read bool $has_expired
+ * @property-read bool $is_converted
+ * @property-read bool $is_expired
+ * @property-read bool $is_notified
+ * @property-read bool $is_waiting
+ * @property-read \App\Models\Event\EventRegistration|null $registration
+ * @property-read \App\Models\Event\EventTicket|null $ticket
+ * @property-read User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist converted()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist expired()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist forEvent(int $eventId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist notified()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist ordered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist waiting()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereConvertedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereEventId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereFirstName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereLastName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereNotifiedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist wherePhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist wherePosition($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereQuantity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereRegistrationId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereTicketId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventWaitlist whereUuid($value)
+ * @mixin \Eloquent
+ */
 class EventWaitlist extends Model
 {
     use HasFactory, HasUuid, LogsActivity;

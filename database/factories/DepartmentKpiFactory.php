@@ -44,7 +44,7 @@ class DepartmentKpiFactory extends Factory
      */
     public function forDepartment(Department $department): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'department_id' => $department->id,
         ]);
     }
@@ -54,7 +54,7 @@ class DepartmentKpiFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_active' => true,
         ]);
     }
@@ -64,7 +64,7 @@ class DepartmentKpiFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'is_active' => false,
         ]);
     }
@@ -74,7 +74,7 @@ class DepartmentKpiFactory extends Factory
      */
     public function higherIsBetter(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'trend_direction' => TrendDirection::HIGHER_IS_BETTER,
         ]);
     }
@@ -84,7 +84,7 @@ class DepartmentKpiFactory extends Factory
      */
     public function lowerIsBetter(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'trend_direction' => TrendDirection::LOWER_IS_BETTER,
         ]);
     }
@@ -94,7 +94,7 @@ class DepartmentKpiFactory extends Factory
      */
     public function targetIsBest(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'trend_direction' => TrendDirection::TARGET_IS_BEST,
         ]);
     }
@@ -104,7 +104,7 @@ class DepartmentKpiFactory extends Factory
      */
     public function withUnit(string $unit): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'unit' => $unit,
         ]);
     }
@@ -114,7 +114,7 @@ class DepartmentKpiFactory extends Factory
      */
     public function withTarget(float $target): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'target_value' => $target,
         ]);
     }

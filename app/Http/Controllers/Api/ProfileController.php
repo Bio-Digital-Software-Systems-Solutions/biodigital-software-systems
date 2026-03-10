@@ -41,7 +41,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Langues mises à jour avec succès.',
-            'languages' => $user->spokenLanguages()->get()->map(fn ($lang) => [
+            'languages' => $user->spokenLanguages()->get()->map(fn ($lang): array => [
                 'id' => $lang->id,
                 'uuid' => $lang->uuid,
                 'name' => $lang->name,
@@ -70,7 +70,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Centres d\'intérêt mis à jour avec succès.',
-            'interests' => $user->interests()->get()->map(fn ($interest) => [
+            'interests' => $user->interests()->get()->map(fn ($interest): array => [
                 'id' => $interest->id,
                 'uuid' => $interest->uuid,
                 'name' => $interest->name,
@@ -107,7 +107,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Compétences mises à jour avec succès.',
-            'skills' => $user->profileSkills()->get()->map(fn ($skill) => [
+            'skills' => $user->profileSkills()->get()->map(fn ($skill): array => [
                 'id' => $skill->id,
                 'uuid' => $skill->uuid,
                 'name' => $skill->name,
@@ -123,7 +123,7 @@ class ProfileController extends Controller
     public function getLanguages(): JsonResponse
     {
         return response()->json([
-            'languages' => SpokenLanguage::orderBy('name')->get()->map(fn ($lang) => [
+            'languages' => SpokenLanguage::orderBy('name')->get()->map(fn ($lang): array => [
                 'id' => $lang->id,
                 'uuid' => $lang->uuid,
                 'name' => $lang->name,
@@ -139,7 +139,7 @@ class ProfileController extends Controller
     public function getInterests(): JsonResponse
     {
         return response()->json([
-            'interests' => Interest::orderBy('name')->get()->map(fn ($interest) => [
+            'interests' => Interest::orderBy('name')->get()->map(fn ($interest): array => [
                 'id' => $interest->id,
                 'uuid' => $interest->uuid,
                 'name' => $interest->name,
@@ -154,7 +154,7 @@ class ProfileController extends Controller
     public function getSkills(): JsonResponse
     {
         return response()->json([
-            'skills' => ProfileSkill::orderBy('category')->orderBy('name')->get()->map(fn ($skill) => [
+            'skills' => ProfileSkill::orderBy('category')->orderBy('name')->get()->map(fn ($skill): array => [
                 'id' => $skill->id,
                 'uuid' => $skill->uuid,
                 'name' => $skill->name,

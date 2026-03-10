@@ -18,9 +18,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $name
  * @property string $slug
  * @property string|null $description
+ * @property string|null $image
  * @property ProjectStatus $status
  * @property Priority $priority
  * @property string $color
@@ -34,6 +36,8 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProjectAttachment> $attachments
  * @property-read int|null $attachments_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProjectComment> $comments
@@ -49,7 +53,6 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read int|null $sprints_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $tasks
  * @property-read int|null $tasks_count
- *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project active()
  * @method static \Database\Factories\ProjectFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project forUser(\App\Models\User $user)
@@ -64,6 +67,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereEndDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereIsTemplate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project wherePriority($value)
@@ -74,17 +78,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereStartDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereUuid($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project withoutTrashed()
- *
- * @property string $uuid
- * @property string|null $image
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- *
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereImage($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereUuid($value)
- *
  * @mixin \Eloquent
  */
 class Project extends Model
@@ -184,7 +180,7 @@ class Project extends Model
 
     public function scopeForUser($query, User $user)
     {
-        return $query->whereHas('members', function ($q) use ($user) {
+        return $query->whereHas('members', function ($q) use ($user): void {
             $q->where('user_id', $user->id);
         });
     }
@@ -205,7 +201,7 @@ class Project extends Model
             } else {
                 // Fall back to query if not loaded
                 $completedTasks = $this->tasks()
-                    ->whereHas('status', function ($query) {
+                    ->whereHas('status', function ($query): void {
                         $query->where('name', 'completed');
                     })
                     ->count();
@@ -221,7 +217,7 @@ class Project extends Model
         }
 
         $completedTasks = $this->tasks()
-            ->whereHas('status', function ($query) {
+            ->whereHas('status', function ($query): void {
                 $query->where('name', 'completed');
             })
             ->count();
@@ -274,9 +270,7 @@ class Project extends Model
         // Remove duplicates by user ID and optionally exclude a specific user
         return $users
             ->unique('id')
-            ->when($excludeUserId, function ($collection, $excludeUserId) {
-                return $collection->filter(fn (User $user) => $user->id !== $excludeUserId);
-            })
+            ->when($excludeUserId, fn($collection, $excludeUserId) => $collection->filter(fn (User $user): bool => $user->id !== $excludeUserId))
             ->values();
     }
 }

@@ -9,6 +9,45 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+/**
+ * @property int $id
+ * @property int $department_id
+ * @property int|null $template_id
+ * @property ReminderType $type
+ * @property \Illuminate\Support\Carbon $scheduled_at
+ * @property \Illuminate\Support\Carbon|null $sent_at
+ * @property int $recipient_id
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\Department $department
+ * @property-read bool $is_pending
+ * @property-read bool $is_sent
+ * @property-read string $type_label
+ * @property-read \App\Models\User $recipient
+ * @property-read \App\Models\ReportTemplate|null $template
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder byType(\App\Enums\Report\ReminderType $type)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder forDepartment(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder scheduledFor($date)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder sent()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder whereRecipientId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder whereScheduledAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder whereSentAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder whereTemplateId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ReportReminder whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class ReportReminder extends Model
 {
     use HasFactory, LogsActivity;

@@ -29,16 +29,16 @@ class EmployeeController extends Controller
     public function index(Request $request): Response
     {
         $query = Employee::with(['user', 'department', 'manager.user'])
-            ->when($request->filled('search'), function ($q) use ($request) {
+            ->when($request->filled('search'), function ($q) use ($request): void {
                 $q->search($request->search);
             })
-            ->when($request->filled('status'), function ($q) use ($request) {
+            ->when($request->filled('status'), function ($q) use ($request): void {
                 $q->where('status', $request->status);
             })
-            ->when($request->filled('employment_type'), function ($q) use ($request) {
+            ->when($request->filled('employment_type'), function ($q) use ($request): void {
                 $q->where('employment_type', $request->employment_type);
             })
-            ->when($request->filled('department'), function ($q) use ($request) {
+            ->when($request->filled('department'), function ($q) use ($request): void {
                 $q->where('department_id', $request->department);
             })
             ->orderBy('created_at', 'desc');
@@ -46,51 +46,49 @@ class EmployeeController extends Controller
         $employees = $query->paginate(15)->withQueryString();
 
         // Transform employees for frontend
-        $employees->getCollection()->transform(function ($employee) {
-            return [
-                'id' => $employee->id,
-                'uuid' => $employee->uuid,
-                'employee_number' => $employee->employee_number,
-                'full_name' => $employee->full_name,
-                'position' => $employee->position,
-                'job_title' => $employee->job_title,
-                'status' => [
-                    'value' => $employee->status->value,
-                    'label' => $employee->status->label(),
-                    'color' => $employee->status->color(),
-                ],
-                'employment_type' => [
-                    'value' => $employee->employment_type->value,
-                    'label' => $employee->employment_type->label(),
-                    'color' => $employee->employment_type->color(),
-                ],
-                'department' => $employee->department ? [
-                    'id' => $employee->department->id,
-                    'uuid' => $employee->department->uuid,
-                    'name' => $employee->department->name,
-                ] : null,
-                'hire_date' => $employee->hire_date?->format('Y-m-d'),
-                'years_of_service' => $employee->years_of_service,
-                'user' => $employee->user ? [
-                    'id' => $employee->user->id,
-                    'uuid' => $employee->user->uuid,
-                    'name' => $employee->user->full_name,
-                    'email' => $employee->user->email,
-                    'avatar' => $employee->user->avatar,
-                ] : null,
-                'avatar' => $employee->avatar,
-            ];
-        });
+        $employees->getCollection()->transform(fn($employee): array => [
+            'id' => $employee->id,
+            'uuid' => $employee->uuid,
+            'employee_number' => $employee->employee_number,
+            'full_name' => $employee->full_name,
+            'position' => $employee->position,
+            'job_title' => $employee->job_title,
+            'status' => [
+                'value' => $employee->status->value,
+                'label' => $employee->status->label(),
+                'color' => $employee->status->color(),
+            ],
+            'employment_type' => [
+                'value' => $employee->employment_type->value,
+                'label' => $employee->employment_type->label(),
+                'color' => $employee->employment_type->color(),
+            ],
+            'department' => $employee->department ? [
+                'id' => $employee->department->id,
+                'uuid' => $employee->department->uuid,
+                'name' => $employee->department->name,
+            ] : null,
+            'hire_date' => $employee->hire_date?->format('Y-m-d'),
+            'years_of_service' => $employee->years_of_service,
+            'user' => $employee->user ? [
+                'id' => $employee->user->id,
+                'uuid' => $employee->user->uuid,
+                'name' => $employee->user->full_name,
+                'email' => $employee->user->email,
+                'avatar' => $employee->user->avatar,
+            ] : null,
+            'avatar' => $employee->avatar,
+        ]);
 
         return Inertia::render('Employees/Index', [
             'employees' => $employees,
             'filters' => $request->only(['search', 'status', 'employment_type', 'department']),
-            'statuses' => collect(EmployeeStatus::cases())->map(fn($s) => [
+            'statuses' => collect(EmployeeStatus::cases())->map(fn($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
             ]),
-            'employmentTypes' => collect(EmploymentType::cases())->map(fn($t) => [
+            'employmentTypes' => collect(EmploymentType::cases())->map(fn($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
                 'color' => $t->color(),
@@ -115,21 +113,21 @@ class EmployeeController extends Controller
                 ->orderBy('first_name')
                 ->get(['id', 'uuid', 'first_name', 'last_name', 'email']),
             'departments' => Department::active()->orderBy('name')->get(['id', 'uuid', 'name']),
-            'managers' => Employee::active()->with('user')->get()->map(fn($e) => [
+            'managers' => Employee::active()->with('user')->get()->map(fn($e): array => [
                 'id' => $e->id,
                 'uuid' => $e->uuid,
                 'name' => $e->full_name,
                 'position' => $e->position,
             ]),
-            'statuses' => collect(EmployeeStatus::cases())->map(fn($s) => [
+            'statuses' => collect(EmployeeStatus::cases())->map(fn($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
             ]),
-            'employmentTypes' => collect(EmploymentType::cases())->map(fn($t) => [
+            'employmentTypes' => collect(EmploymentType::cases())->map(fn($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
             ]),
-            'paymentMethods' => collect(PaymentMethod::cases())->map(fn($p) => [
+            'paymentMethods' => collect(PaymentMethod::cases())->map(fn($p): array => [
                 'value' => $p->value,
                 'label' => $p->label(),
             ]),
@@ -302,7 +300,7 @@ class EmployeeController extends Controller
                     'name' => $employee->manager->full_name,
                     'position' => $employee->manager->position,
                 ] : null,
-                'subordinates' => $employee->subordinates->map(fn($s) => [
+                'subordinates' => $employee->subordinates->map(fn($s): array => [
                     'id' => $s->id,
                     'uuid' => $s->uuid,
                     'name' => $s->full_name,
@@ -379,21 +377,21 @@ class EmployeeController extends Controller
                 ->where('id', '!=', $employee->id)
                 ->with('user')
                 ->get()
-                ->map(fn($e) => [
+                ->map(fn($e): array => [
                     'id' => $e->id,
                     'uuid' => $e->uuid,
                     'name' => $e->full_name,
                     'position' => $e->position,
                 ]),
-            'statuses' => collect(EmployeeStatus::cases())->map(fn($s) => [
+            'statuses' => collect(EmployeeStatus::cases())->map(fn($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
             ]),
-            'employmentTypes' => collect(EmploymentType::cases())->map(fn($t) => [
+            'employmentTypes' => collect(EmploymentType::cases())->map(fn($t): array => [
                 'value' => $t->value,
                 'label' => $t->label(),
             ]),
-            'paymentMethods' => collect(PaymentMethod::cases())->map(fn($p) => [
+            'paymentMethods' => collect(PaymentMethod::cases())->map(fn($p): array => [
                 'value' => $p->value,
                 'label' => $p->label(),
             ]),
@@ -545,7 +543,7 @@ class EmployeeController extends Controller
 
         // Return as JSON for now, can be extended to Excel/CSV
         return response()->json([
-            'employees' => $employees->map(fn($e) => [
+            'employees' => $employees->map(fn($e): array => [
                 'employee_number' => $e->employee_number,
                 'name' => $e->full_name,
                 'email' => $e->user?->email,

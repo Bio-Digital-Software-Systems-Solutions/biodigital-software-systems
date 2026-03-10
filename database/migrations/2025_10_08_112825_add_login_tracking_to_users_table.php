@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->timestamp('last_login_at')->nullable()->after('email_verified_at');
             $table->string('last_login_ip', 45)->nullable()->after('last_login_at');
             $table->text('last_login_user_agent')->nullable()->after('last_login_ip');
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->dropColumn(['last_login_at', 'last_login_ip', 'last_login_user_agent']);
         });
     }

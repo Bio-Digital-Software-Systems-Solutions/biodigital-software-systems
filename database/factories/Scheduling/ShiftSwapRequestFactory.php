@@ -30,21 +30,21 @@ class ShiftSwapRequestFactory extends Factory
 
     public function pendingColleague(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => SwapRequestStatus::PENDING_COLLEAGUE,
         ]);
     }
 
     public function pendingManager(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => SwapRequestStatus::PENDING_MANAGER,
         ]);
     }
 
     public function approved(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => SwapRequestStatus::APPROVED,
             'approved_by' => User::factory(),
             'approved_at' => now(),
@@ -53,14 +53,14 @@ class ShiftSwapRequestFactory extends Factory
 
     public function rejectedByColleague(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => SwapRequestStatus::REJECTED_COLLEAGUE,
         ]);
     }
 
     public function rejectedByManager(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => SwapRequestStatus::REJECTED_MANAGER,
             'rejection_reason' => $this->faker->sentence(),
             'approved_by' => User::factory(),
@@ -70,14 +70,14 @@ class ShiftSwapRequestFactory extends Factory
 
     public function cancelled(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => SwapRequestStatus::CANCELLED,
         ]);
     }
 
     public function expired(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => SwapRequestStatus::EXPIRED,
             'expires_at' => now()->subDay(),
         ]);
@@ -85,14 +85,14 @@ class ShiftSwapRequestFactory extends Factory
 
     public function withOfferedShift(Shift $shift = null): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'offered_shift_id' => $shift?->id ?? Shift::factory(),
         ]);
     }
 
     public function withoutOfferedShift(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'offered_shift_id' => null,
         ]);
     }

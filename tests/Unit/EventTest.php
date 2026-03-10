@@ -13,7 +13,7 @@ class EventTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_event_belongs_to_creator()
+    public function test_event_belongs_to_creator(): void
     {
         $user = User::factory()->create();
         $event = Event::factory()->create(['user_id' => $user->id]);
@@ -21,7 +21,7 @@ class EventTest extends TestCase
         $this->assertTrue($event->creator->is($user));
     }
 
-    public function test_event_can_have_address()
+    public function test_event_can_have_address(): void
     {
         $address = Address::factory()->create();
         $event = Event::factory()->create(['address_id' => $address->id]);
@@ -29,7 +29,7 @@ class EventTest extends TestCase
         $this->assertTrue($event->address->is($address));
     }
 
-    public function test_event_can_have_participants()
+    public function test_event_can_have_participants(): void
     {
         $event = Event::factory()->create();
         $user = User::factory()->create();
@@ -39,7 +39,7 @@ class EventTest extends TestCase
         $this->assertTrue($event->participants->contains($user));
     }
 
-    public function test_event_dates_are_cast_to_datetime()
+    public function test_event_dates_are_cast_to_datetime(): void
     {
         $event = Event::factory()->create([
             'start_date' => '2024-12-01 10:00:00',
@@ -50,12 +50,12 @@ class EventTest extends TestCase
         $this->assertInstanceOf(Carbon::class, $event->end_date);
     }
 
-    public function test_event_can_determine_if_full()
+    public function test_event_can_determine_if_full(): void
     {
         $event = Event::factory()->create(['max_participants' => 2]);
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
-        $user3 = User::factory()->create();
+        User::factory()->create();
 
         // Event is not full initially
         $this->assertFalse($event->isFull());
@@ -71,7 +71,7 @@ class EventTest extends TestCase
         $this->assertFalse($event->canAddParticipant());
     }
 
-    public function test_event_with_no_max_participants_is_never_full()
+    public function test_event_with_no_max_participants_is_never_full(): void
     {
         $event = Event::factory()->create(['max_participants' => null]);
         $users = User::factory()->count(100)->create();
@@ -83,21 +83,21 @@ class EventTest extends TestCase
         $this->assertTrue($event->canAddParticipant());
     }
 
-    public function test_event_status_defaults_to_planned()
+    public function test_event_status_defaults_to_planned(): void
     {
         $event = Event::factory()->create();
 
         $this->assertEquals('planned', $event->status);
     }
 
-    public function test_event_is_public_by_default()
+    public function test_event_is_public_by_default(): void
     {
         $event = Event::factory()->create();
 
         $this->assertTrue($event->is_public);
     }
 
-    public function test_event_can_be_private()
+    public function test_event_can_be_private(): void
     {
         $event = Event::factory()->create(['is_public' => false]);
 

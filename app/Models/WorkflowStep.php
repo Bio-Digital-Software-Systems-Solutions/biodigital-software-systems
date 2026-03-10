@@ -13,6 +13,96 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $workflow_id
+ * @property string $name
+ * @property string|null $description
+ * @property StepType $type
+ * @property array<array-key, mixed>|null $config
+ * @property string $position_x
+ * @property string $position_y
+ * @property bool $is_start
+ * @property bool $is_end
+ * @property ApprovalType|null $approval_type
+ * @property array<array-key, mixed>|null $approvers
+ * @property int|null $min_approvals
+ * @property int|null $timeout_minutes
+ * @property int|null $timeout_hours
+ * @property TimeoutAction|null $timeout_action
+ * @property int|null $escalation_user_id
+ * @property int $retry_count
+ * @property int|null $retry_delay_minutes
+ * @property array<array-key, mixed>|null $conditions
+ * @property array<array-key, mixed>|null $metadata
+ * @property string|null $timeout_config
+ * @property int|null $reminder_interval_minutes
+ * @property int|null $max_reminders
+ * @property int|null $form_id
+ * @property int|null $subprocess_workflow_id
+ * @property string|null $action_type
+ * @property string|null $action_config
+ * @property string|null $notification_config
+ * @property int|null $wait_minutes
+ * @property string|null $wait_until_event
+ * @property int $order
+ * @property int $is_optional
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\User|null $escalationUser
+ * @property-read \App\Models\DepartmentForm|null $form
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowTransition> $incomingTransitions
+ * @property-read int|null $incoming_transitions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowStepInstance> $instances
+ * @property-read int|null $instances_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowTransition> $outgoingTransitions
+ * @property-read int|null $outgoing_transitions_count
+ * @property-read \App\Models\DepartmentWorkflow $workflow
+ * @method static \Database\Factories\WorkflowStepFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereActionConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereActionType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereApprovalType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereApprovers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereConditions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereEscalationUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereFormId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereIsEnd($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereIsOptional($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereIsStart($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereMaxReminders($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereMinApprovals($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereNotificationConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep wherePositionX($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep wherePositionY($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereReminderIntervalMinutes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereRetryCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereRetryDelayMinutes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereSubprocessWorkflowId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereTimeoutAction($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereTimeoutConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereTimeoutHours($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereTimeoutMinutes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereWaitMinutes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereWaitUntilEvent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowStep whereWorkflowId($value)
+ * @mixin \Eloquent
+ */
 class WorkflowStep extends Model
 {
     use HasFactory, LogsActivity;
@@ -58,7 +148,7 @@ class WorkflowStep extends Model
     {
         parent::boot();
 
-        static::creating(function (self $model) {
+        static::creating(function (self $model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
@@ -128,7 +218,7 @@ class WorkflowStep extends Model
         return in_array($this->type, [
             StepType::APPROVAL,
             StepType::FORM,
-            StepType::TASK,
+            StepType::ACTION,
         ]);
     }
 
@@ -151,7 +241,7 @@ class WorkflowStep extends Model
 
         $users = User::whereIn('id', $userIds)->get();
 
-        if (!empty($roleNames)) {
+        if ($roleNames !== []) {
             $roleUsers = User::role($roleNames)->get();
             $users = $users->merge($roleUsers)->unique('id');
         }

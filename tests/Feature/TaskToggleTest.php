@@ -47,7 +47,7 @@ class TaskToggleTest extends TestCase
     }
 
     /** @test */
-    public function user_can_toggle_task_to_completed()
+    public function user_can_toggle_task_to_completed(): void
     {
         $task = Task::factory()->create([
             'program_id' => $this->program->id,
@@ -66,7 +66,7 @@ class TaskToggleTest extends TestCase
     }
 
     /** @test */
-    public function user_can_toggle_task_to_incomplete()
+    public function user_can_toggle_task_to_incomplete(): void
     {
         $task = Task::factory()->create([
             'program_id' => $this->program->id,
@@ -85,7 +85,7 @@ class TaskToggleTest extends TestCase
     }
 
     /** @test */
-    public function user_can_bulk_mark_tasks_as_completed()
+    public function user_can_bulk_mark_tasks_as_completed(): void
     {
         $task1 = Task::factory()->create([
             'program_id' => $this->program->id,
@@ -117,7 +117,7 @@ class TaskToggleTest extends TestCase
     }
 
     /** @test */
-    public function user_can_bulk_mark_tasks_as_incomplete()
+    public function user_can_bulk_mark_tasks_as_incomplete(): void
     {
         $task1 = Task::factory()->create([
             'program_id' => $this->program->id,
@@ -149,7 +149,7 @@ class TaskToggleTest extends TestCase
     }
 
     /** @test */
-    public function bulk_toggle_requires_task_ids()
+    public function bulk_toggle_requires_task_ids(): void
     {
         $response = $this->actingAs($this->user)
             ->post(route('tasks.bulk-toggle-complete'), [
@@ -160,7 +160,7 @@ class TaskToggleTest extends TestCase
     }
 
     /** @test */
-    public function bulk_toggle_requires_completed_flag()
+    public function bulk_toggle_requires_completed_flag(): void
     {
         $task = Task::factory()->create([
             'program_id' => $this->program->id,
@@ -176,7 +176,7 @@ class TaskToggleTest extends TestCase
     }
 
     /** @test */
-    public function unauthorized_user_cannot_toggle_task()
+    public function unauthorized_user_cannot_toggle_task(): void
     {
         $unauthorizedUser = User::factory()->create();
 
@@ -197,7 +197,7 @@ class TaskToggleTest extends TestCase
     }
 
     /** @test */
-    public function task_toggle_preserves_other_fields()
+    public function task_toggle_preserves_other_fields(): void
     {
         $task = Task::factory()->create([
             'program_id' => $this->program->id,

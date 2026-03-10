@@ -55,10 +55,10 @@ class QuizAttemptsTest extends TestCase
     }
 
     /** @test */
-    public function student_only_sees_active_and_published_quizzes()
+    public function student_only_sees_active_and_published_quizzes(): void
     {
         // Create active + published quiz
-        $publishedQuiz = Quiz::factory()->create([
+        Quiz::factory()->create([
             'training_id' => $this->training->id,
             'title' => 'Published Quiz',
             'is_active' => true,
@@ -66,7 +66,7 @@ class QuizAttemptsTest extends TestCase
         ]);
 
         // Create inactive quiz
-        $inactiveQuiz = Quiz::factory()->create([
+        Quiz::factory()->create([
             'training_id' => $this->training->id,
             'title' => 'Inactive Quiz',
             'is_active' => false,
@@ -74,7 +74,7 @@ class QuizAttemptsTest extends TestCase
         ]);
 
         // Create draft quiz
-        $draftQuiz = Quiz::factory()->create([
+        Quiz::factory()->create([
             'training_id' => $this->training->id,
             'title' => 'Draft Quiz',
             'is_active' => true,
@@ -95,9 +95,9 @@ class QuizAttemptsTest extends TestCase
     }
 
     /** @test */
-    public function student_can_start_quiz_with_no_attempts()
+    public function student_can_start_quiz_with_no_attempts(): void
     {
-        $quiz = Quiz::factory()->create([
+        Quiz::factory()->create([
             'training_id' => $this->training->id,
             'is_active' => true,
             'status' => 'published',
@@ -119,7 +119,7 @@ class QuizAttemptsTest extends TestCase
     }
 
     /** @test */
-    public function student_can_retake_quiz_if_attempts_remaining()
+    public function student_can_retake_quiz_if_attempts_remaining(): void
     {
         $quiz = Quiz::factory()->create([
             'training_id' => $this->training->id,
@@ -158,7 +158,7 @@ class QuizAttemptsTest extends TestCase
     }
 
     /** @test */
-    public function student_cannot_retake_quiz_when_max_attempts_reached()
+    public function student_cannot_retake_quiz_when_max_attempts_reached(): void
     {
         $quiz = Quiz::factory()->create([
             'training_id' => $this->training->id,
@@ -197,7 +197,7 @@ class QuizAttemptsTest extends TestCase
     }
 
     /** @test */
-    public function student_sees_latest_attempt_details()
+    public function student_sees_latest_attempt_details(): void
     {
         $quiz = Quiz::factory()->create([
             'training_id' => $this->training->id,
@@ -216,7 +216,7 @@ class QuizAttemptsTest extends TestCase
         ]);
 
         // Create latest attempt
-        $latestAttempt = QuizAttempt::factory()->create([
+        QuizAttempt::factory()->create([
             'quiz_id' => $quiz->id,
             'student_id' => $this->student->id,
             'status' => 'completed',
@@ -239,7 +239,7 @@ class QuizAttemptsTest extends TestCase
     }
 
     /** @test */
-    public function quiz_with_unlimited_attempts_allows_retaking()
+    public function quiz_with_unlimited_attempts_allows_retaking(): void
     {
         $quiz = Quiz::factory()->create([
             'training_id' => $this->training->id,
@@ -273,7 +273,7 @@ class QuizAttemptsTest extends TestCase
     }
 
     /** @test */
-    public function in_progress_attempts_are_not_counted()
+    public function in_progress_attempts_are_not_counted(): void
     {
         $quiz = Quiz::factory()->create([
             'training_id' => $this->training->id,

@@ -45,7 +45,7 @@ class WorkflowInstanceFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => WorkflowInstanceStatus::ACTIVE,
             'started_at' => now(),
         ]);
@@ -56,7 +56,7 @@ class WorkflowInstanceFactory extends Factory
      */
     public function paused(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => WorkflowInstanceStatus::PAUSED,
         ]);
     }
@@ -66,7 +66,7 @@ class WorkflowInstanceFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => WorkflowInstanceStatus::COMPLETED,
             'completed_at' => now(),
         ]);
@@ -77,7 +77,7 @@ class WorkflowInstanceFactory extends Factory
      */
     public function cancelled(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => WorkflowInstanceStatus::CANCELLED,
             'cancelled_at' => now(),
         ]);
@@ -88,7 +88,7 @@ class WorkflowInstanceFactory extends Factory
      */
     public function failed(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => WorkflowInstanceStatus::FAILED,
             'failed_at' => now(),
             'failure_reason' => $this->faker->sentence(),

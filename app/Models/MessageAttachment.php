@@ -21,13 +21,13 @@ use Spatie\Activitylog\LogOptions;
  * @property string|null $file_type
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Message $message
- * @property-read string $file_url
- * @property-read string $download_url
- * @property-read string $human_file_size
- * @property-read bool $is_image
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
  * @property-read int|null $activities_count
+ * @property-read string $download_url
+ * @property-read string $file_url
+ * @property-read string $human_file_size
+ * @property-read bool $is_image
+ * @property-read \App\Models\Message $message
  * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|MessageAttachment query()
@@ -63,7 +63,7 @@ class MessageAttachment extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }

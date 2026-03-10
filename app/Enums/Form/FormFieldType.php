@@ -181,7 +181,7 @@ enum FormFieldType: string
 
     public static function toSelectOptions(): array
     {
-        return array_map(fn($case) => [
+        return array_map(fn(\App\Enums\Form\FormFieldType $case): array => [
             'value' => $case->value,
             'label' => $case->label(),
             'icon' => $case->icon(),

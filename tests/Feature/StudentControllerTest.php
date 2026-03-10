@@ -11,7 +11,7 @@ class StudentControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_authenticated_user_can_view_students_index()
+    public function test_authenticated_user_can_view_students_index(): void
     {
         $user = User::factory()->create();
 
@@ -21,14 +21,14 @@ class StudentControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Students/Index'));
     }
 
-    public function test_unauthenticated_user_cannot_view_students_index()
+    public function test_unauthenticated_user_cannot_view_students_index(): void
     {
         $response = $this->get('/students');
 
         $response->assertRedirect('/login');
     }
 
-    public function test_authenticated_user_can_view_create_student_page()
+    public function test_authenticated_user_can_view_create_student_page(): void
     {
         $user = User::factory()->create();
 
@@ -38,7 +38,7 @@ class StudentControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Students/Create'));
     }
 
-    public function test_authenticated_user_can_create_student()
+    public function test_authenticated_user_can_create_student(): void
     {
         $user = User::factory()->create();
         $targetUser = User::factory()->create();
@@ -65,7 +65,7 @@ class StudentControllerTest extends TestCase
         ]);
     }
 
-    public function test_student_creation_validates_required_fields()
+    public function test_student_creation_validates_required_fields(): void
     {
         $user = User::factory()->create();
 
@@ -74,7 +74,7 @@ class StudentControllerTest extends TestCase
         $response->assertSessionHasErrors(['user_id', 'student_number', 'level', 'enrollment_date']);
     }
 
-    public function test_student_creation_validates_user_id_exists()
+    public function test_student_creation_validates_user_id_exists(): void
     {
         $user = User::factory()->create();
 
@@ -90,7 +90,7 @@ class StudentControllerTest extends TestCase
         $response->assertSessionHasErrors(['user_id']);
     }
 
-    public function test_student_creation_validates_unique_user_id()
+    public function test_student_creation_validates_unique_user_id(): void
     {
         $user = User::factory()->create();
         $targetUser = User::factory()->create();
@@ -109,7 +109,7 @@ class StudentControllerTest extends TestCase
         $response->assertSessionHasErrors(['user_id']);
     }
 
-    public function test_student_creation_validates_unique_student_number()
+    public function test_student_creation_validates_unique_student_number(): void
     {
         $user = User::factory()->create();
         $targetUser1 = User::factory()->create();
@@ -132,7 +132,7 @@ class StudentControllerTest extends TestCase
         $response->assertSessionHasErrors(['student_number']);
     }
 
-    public function test_student_creation_validates_level_values()
+    public function test_student_creation_validates_level_values(): void
     {
         $user = User::factory()->create();
         $targetUser = User::factory()->create();
@@ -149,7 +149,7 @@ class StudentControllerTest extends TestCase
         $response->assertSessionHasErrors(['level']);
     }
 
-    public function test_authenticated_user_can_view_student_details()
+    public function test_authenticated_user_can_view_student_details(): void
     {
         $user = User::factory()->create();
         $student = Student::factory()->create();
@@ -160,7 +160,7 @@ class StudentControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Students/Show'));
     }
 
-    public function test_authenticated_user_can_view_edit_student_page()
+    public function test_authenticated_user_can_view_edit_student_page(): void
     {
         $user = User::factory()->create();
         $student = Student::factory()->create();
@@ -171,7 +171,7 @@ class StudentControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Students/Edit'));
     }
 
-    public function test_authenticated_user_can_update_student()
+    public function test_authenticated_user_can_update_student(): void
     {
         $user = User::factory()->create();
         $student = Student::factory()->create([
@@ -196,7 +196,7 @@ class StudentControllerTest extends TestCase
         ]);
     }
 
-    public function test_student_update_validates_unique_user_id()
+    public function test_student_update_validates_unique_user_id(): void
     {
         $user = User::factory()->create();
         $student1 = Student::factory()->create();
@@ -212,11 +212,11 @@ class StudentControllerTest extends TestCase
         $response->assertSessionHasErrors(['user_id']);
     }
 
-    public function test_student_update_validates_unique_student_number()
+    public function test_student_update_validates_unique_student_number(): void
     {
         $user = User::factory()->create();
         $student1 = Student::factory()->create(['student_number' => 'STU111111']);
-        $student2 = Student::factory()->create(['student_number' => 'STU222222']);
+        Student::factory()->create(['student_number' => 'STU222222']);
 
         $updateData = [
             'student_number' => 'STU222222',
@@ -228,7 +228,7 @@ class StudentControllerTest extends TestCase
         $response->assertSessionHasErrors(['student_number']);
     }
 
-    public function test_authenticated_user_can_delete_student()
+    public function test_authenticated_user_can_delete_student(): void
     {
         $user = User::factory()->create();
         $student = Student::factory()->create();
@@ -241,7 +241,7 @@ class StudentControllerTest extends TestCase
         ]);
     }
 
-    public function test_student_relationships_are_loaded_correctly()
+    public function test_student_relationships_are_loaded_correctly(): void
     {
         $user = User::factory()->create();
         $student = Student::factory()->create();
@@ -255,7 +255,7 @@ class StudentControllerTest extends TestCase
         );
     }
 
-    public function test_students_index_displays_paginated_results()
+    public function test_students_index_displays_paginated_results(): void
     {
         $user = User::factory()->create();
         Student::factory(15)->create();
@@ -269,7 +269,7 @@ class StudentControllerTest extends TestCase
         );
     }
 
-    public function test_enrollment_date_is_stored_correctly()
+    public function test_enrollment_date_is_stored_correctly(): void
     {
         $user = User::factory()->create();
         $targetUser = User::factory()->create();
@@ -289,7 +289,7 @@ class StudentControllerTest extends TestCase
         $this->assertEquals('2024-01-15', $student->enrollment_date->format('Y-m-d'));
     }
 
-    public function test_student_can_have_all_optional_fields_empty()
+    public function test_student_can_have_all_optional_fields_empty(): void
     {
         $user = User::factory()->create();
         $targetUser = User::factory()->create();

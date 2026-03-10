@@ -63,7 +63,7 @@ class QuizObserver
 
         // Get all enrolled students for this training
         $enrolledStudents = $quiz->training->students()
-            ->whereHas('roles', function ($query) {
+            ->whereHas('roles', function ($query): void {
                 $query->whereIn('name', ['member', 'student']);
             })
             ->wherePivot('status', 'approved')  // Only notify approved students

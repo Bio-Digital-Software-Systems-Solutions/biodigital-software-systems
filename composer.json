@@ -25,7 +25,9 @@
         "mews/purifier": "^3.4",
         "phpoffice/phpword": "^1.4",
         "predis/predis": "*",
+        "sabre/vobject": "^4.5",
         "sentry/sentry-laravel": "^4.16",
+        "spatie/icalendar-generator": "^3.2",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-backup": "^9.3",
         "spatie/laravel-permission": "^6.21",
@@ -39,6 +41,7 @@
         "fakerphp/faker": "^1.23",
         "haydenpierce/class-finder": "^0.5.3",
         "jawira/plantuml-encoding": "^1.1",
+        "larastan/larastan": "^3.0",
         "laravel/boost": "*",
         "laravel/breeze": "^2.3",
         "laravel/pail": "^1.2.2",
@@ -52,7 +55,9 @@
         "phpmd/phpmd": "^2.15",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.5.3",
-        "squizlabs/php_codesniffer": "^4.0"
+        "rector/rector": "^2.2",
+        "squizlabs/php_codesniffer": "^4.0",
+        "vimeo/psalm": "^6.15"
     },
     "autoload": {
         "psr-4": {

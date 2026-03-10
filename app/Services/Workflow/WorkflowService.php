@@ -4,7 +4,6 @@ namespace App\Services\Workflow;
 
 use App\Enums\Workflow\StepInstanceStatus;
 use App\Enums\Workflow\WorkflowInstanceStatus;
-use App\Enums\Workflow\WorkflowStatus;
 use App\Models\DepartmentWorkflow;
 use App\Models\WorkflowActivityLog;
 use App\Models\WorkflowInstance;
@@ -32,6 +31,7 @@ class WorkflowService
     public function updateWorkflow(DepartmentWorkflow $workflow, array $data): DepartmentWorkflow
     {
         $workflow->update($data);
+
         return $workflow->fresh();
     }
 
@@ -44,7 +44,7 @@ class WorkflowService
             throw new \Exception('Workflow must have at least one step before activation.');
         }
 
-        if (!$workflow->steps()->where('is_start', true)->exists()) {
+        if (! $workflow->steps()->where('is_start', true)->exists()) {
             throw new \Exception('Workflow must have a start step.');
         }
 
@@ -61,7 +61,7 @@ class WorkflowService
         ?int $parentInstanceId = null,
         ?int $parentStepInstanceId = null
     ): WorkflowInstance {
-        if (!$workflow->isActive()) {
+        if (! $workflow->isActive()) {
             throw new \Exception('Cannot start inactive workflow.');
         }
 
@@ -70,7 +70,7 @@ class WorkflowService
                 'workflow_id' => $workflow->id,
                 'department_id' => $workflow->department_id,
                 'started_by' => $userId,
-                'name' => $workflow->name . ' - ' . now()->format('Y-m-d H:i'),
+                'name' => $workflow->name.' - '.now()->format('Y-m-d H:i'),
                 'status' => WorkflowInstanceStatus::ACTIVE,
                 'input_data' => $inputData,
                 'context' => array_merge($workflow->variables ?? [], $inputData),
@@ -113,6 +113,7 @@ class WorkflowService
             if ($startStep) {
                 $this->createAndExecuteStepInstance($instance, $startStep);
             }
+
             return;
         }
 
@@ -134,6 +135,7 @@ class WorkflowService
         // Check if this is an end step
         if ($step->is_end) {
             $this->checkWorkflowCompletion($instance);
+
             return;
         }
 
@@ -165,7 +167,7 @@ class WorkflowService
         }
 
         // If no transition taken and there's a default, use it
-        if (!$transitionTaken) {
+        if (! $transitionTaken) {
             $defaultTransition = $transitions->where('is_default', true)->first();
             if ($defaultTransition && $defaultTransition->toStep) {
                 $this->createAndExecuteStepInstance($instance, $defaultTransition->toStep);
@@ -209,7 +211,14 @@ class WorkflowService
         // Execute the step
         $this->stepExecutor->execute($stepInstance);
 
-        return $stepInstance->fresh();
+        $stepInstance = $stepInstance->fresh();
+
+        // If the step auto-completed, process its completion to advance the workflow
+        if ($stepInstance->isCompleted()) {
+            $this->processCompletedStep($instance, $stepInstance);
+        }
+
+        return $stepInstance;
     }
 
     /**
@@ -232,7 +241,7 @@ class WorkflowService
             // Check if any end step was reached
             $completedEndSteps = $instance->stepInstances()
                 ->where('status', StepInstanceStatus::COMPLETED->value)
-                ->whereHas('step', fn($q) => $q->where('is_end', true))
+                ->whereHas('step', fn ($q) => $q->where('is_end', true))
                 ->exists();
 
             if ($completedEndSteps) {
@@ -266,7 +275,7 @@ class WorkflowService
      */
     public function cancelWorkflow(WorkflowInstance $instance, ?string $reason = null): WorkflowInstance
     {
-        return DB::transaction(function () use ($instance, $reason) {
+        return DB::transaction(function () use ($instance, $reason): \App\Models\WorkflowInstance {
             // Cancel all pending/active step instances
             $instance->stepInstances()
                 ->whereIn('status', [
@@ -363,9 +372,7 @@ class WorkflowService
             return null;
         }
 
-        $totalMinutes = $completedInstances->sum(function ($instance) {
-            return $instance->started_at->diffInMinutes($instance->completed_at);
-        });
+        $totalMinutes = $completedInstances->sum(fn($instance) => $instance->started_at->diffInMinutes($instance->completed_at));
 
         return round($totalMinutes / $completedInstances->count(), 2);
     }

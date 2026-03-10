@@ -12,7 +12,7 @@ uses(RefreshDatabase::class);
 // Public Profile Privacy Tests
 // ============================================
 
-it('shows all data when all privacy settings are public', function () {
+it('shows all data when all privacy settings are public', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -52,7 +52,7 @@ it('shows all data when all privacy settings are public', function () {
     );
 });
 
-it('hides email when privacy is set to private', function () {
+it('hides email when privacy is set to private', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -70,7 +70,7 @@ it('hides email when privacy is set to private', function () {
     );
 });
 
-it('hides phone number when privacy is set to private', function () {
+it('hides phone number when privacy is set to private', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -88,7 +88,7 @@ it('hides phone number when privacy is set to private', function () {
     );
 });
 
-it('hides bio when privacy is set to private', function () {
+it('hides bio when privacy is set to private', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -106,7 +106,7 @@ it('hides bio when privacy is set to private', function () {
     );
 });
 
-it('hides position when privacy is set to private', function () {
+it('hides position when privacy is set to private', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -124,7 +124,7 @@ it('hides position when privacy is set to private', function () {
     );
 });
 
-it('hides address when privacy is set to private', function () {
+it('hides address when privacy is set to private', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -142,7 +142,7 @@ it('hides address when privacy is set to private', function () {
     );
 });
 
-it('hides birth date when privacy is set to private', function () {
+it('hides birth date when privacy is set to private', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -160,7 +160,7 @@ it('hides birth date when privacy is set to private', function () {
     );
 });
 
-it('hides languages when privacy is set to private', function () {
+it('hides languages when privacy is set to private', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -180,7 +180,7 @@ it('hides languages when privacy is set to private', function () {
     );
 });
 
-it('hides interests when privacy is set to private', function () {
+it('hides interests when privacy is set to private', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -200,7 +200,7 @@ it('hides interests when privacy is set to private', function () {
     );
 });
 
-it('hides skills when privacy is set to private', function () {
+it('hides skills when privacy is set to private', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -220,7 +220,7 @@ it('hides skills when privacy is set to private', function () {
     );
 });
 
-it('always shows name and avatar regardless of privacy settings', function () {
+it('always shows name and avatar regardless of privacy settings', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -249,7 +249,7 @@ it('always shows name and avatar regardless of privacy settings', function () {
     );
 });
 
-it('applies mixed privacy settings correctly', function () {
+it('applies mixed privacy settings correctly', function (): void {
     $viewer = User::factory()->create();
     $this->actingAs($viewer);
 
@@ -278,7 +278,7 @@ it('applies mixed privacy settings correctly', function () {
     );
 });
 
-it('requires authentication to view public profile', function () {
+it('requires authentication to view public profile', function (): void {
     $user = User::factory()->create();
 
     $response = $this->get(route('profile.public', $user));
@@ -290,7 +290,7 @@ it('requires authentication to view public profile', function () {
 // Profile Edit Page Tests
 // ============================================
 
-it('loads privacy settings on profile edit page', function () {
+it('loads privacy settings on profile edit page', function (): void {
     $user = User::factory()->create([
         'privacy_settings' => ['email' => false, 'bio' => true],
     ]);
@@ -308,7 +308,7 @@ it('loads privacy settings on profile edit page', function () {
     );
 });
 
-it('loads default privacy settings for user without custom settings', function () {
+it('loads default privacy settings for user without custom settings', function (): void {
     $user = User::factory()->create([
         'privacy_settings' => null,
     ]);

@@ -13,9 +13,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $name
  * @property string $sku
  * @property string|null $description
+ * @property string|null $image
  * @property int $quantity
  * @property int $minimum_quantity
  * @property numeric $unit_price
@@ -24,16 +26,20 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property \Illuminate\Support\Carbon|null $expiry_date
  * @property string|null $location
  * @property bool $is_active
+ * @property string $status
  * @property int|null $category_id
+ * @property int|null $department_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\Category|null $category
+ * @property-read \App\Models\Department|null $department
  * @property-read int|null $days_until_expiry
  * @property-read string $expiry_status
  * @property-read string $stock_status
  * @property-read string $stock_status_label
  * @property-read float $total_value
- *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock active()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock bySupplier($supplier)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock expired()
@@ -46,28 +52,23 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereCategoryId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereDepartmentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereExpiryDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereLocation($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereMinimumQuantity($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereQuantity($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereSku($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereSupplier($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereSupplierContact($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereUnitPrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereUpdatedAt($value)
- *
- * @property string $uuid
- * @property string|null $image
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- *
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereImage($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Stock whereUuid($value)
- *
  * @mixin \Eloquent
  */
 class Stock extends Model

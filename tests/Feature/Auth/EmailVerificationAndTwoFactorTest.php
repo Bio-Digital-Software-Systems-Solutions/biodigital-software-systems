@@ -19,7 +19,7 @@ class EmailVerificationAndTwoFactorTest extends TestCase
         parent::setUp();
 
         // Seed roles and permissions
-        $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\RoleAndPermissionSeeder']);
+        $this->artisan('db:seed', ['--class' => \Database\Seeders\RoleAndPermissionSeeder::class]);
     }
 
     public function test_registration_sends_welcome_email_and_redirects_to_verification_notice(): void
@@ -37,9 +37,7 @@ class EmailVerificationAndTwoFactorTest extends TestCase
 
         $response->assertRedirect(route('verification.notice'));
 
-        Mail::assertSent(\App\Mail\WelcomeMail::class, function ($mail) {
-            return $mail->hasTo('test@example.com');
-        });
+        Mail::assertSent(\App\Mail\WelcomeMail::class, fn($mail) => $mail->hasTo('test@example.com'));
 
         $this->assertDatabaseHas('users', [
             'email' => 'test@example.com',

@@ -48,7 +48,7 @@ class SpokenLanguageFactory extends Factory
      */
     public function french(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'name' => 'French',
             'code' => 'fr',
             'native_name' => 'Français',
@@ -60,7 +60,7 @@ class SpokenLanguageFactory extends Factory
      */
     public function english(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'name' => 'English',
             'code' => 'en',
             'native_name' => 'English',
@@ -72,7 +72,7 @@ class SpokenLanguageFactory extends Factory
      */
     public function german(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'name' => 'German',
             'code' => 'de',
             'native_name' => 'Deutsch',

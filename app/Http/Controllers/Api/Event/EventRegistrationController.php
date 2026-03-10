@@ -16,13 +16,8 @@ use Illuminate\Support\Facades\Auth;
 
 class EventRegistrationController extends Controller
 {
-    protected RegistrationService $registrationService;
-    protected TicketService $ticketService;
-
-    public function __construct(RegistrationService $registrationService, TicketService $ticketService)
+    public function __construct(protected RegistrationService $registrationService, protected TicketService $ticketService)
     {
-        $this->registrationService = $registrationService;
-        $this->ticketService = $ticketService;
         $this->middleware('can:view events');
         $this->middleware('can:edit events')->except(['register', 'myRegistrations', 'show', 'cancel']);
     }
@@ -119,7 +114,7 @@ class EventRegistrationController extends Controller
         $promoCode = null;
         if (!empty($validated['promo_code'])) {
             $promoCode = $this->ticketService->validatePromoCode($event, $validated['promo_code']);
-            if (!$promoCode) {
+            if (!$promoCode instanceof \App\Models\Event\EventPromoCode) {
                 return response()->json(['error' => 'Code promo invalide.'], 422);
             }
         }

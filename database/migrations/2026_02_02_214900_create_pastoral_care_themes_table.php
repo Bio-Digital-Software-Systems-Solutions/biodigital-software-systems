@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pastoral_care_themes', function (Blueprint $table) {
+        Schema::create('pastoral_care_themes', function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();

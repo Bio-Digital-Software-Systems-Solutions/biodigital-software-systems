@@ -8,7 +8,7 @@ use Spatie\Permission\Models\Role as SpatieRole;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create super-admin role if it doesn't exist
     SpatieRole::findOrCreate(Role::SUPER_ADMIN->value, 'web');
 
@@ -20,8 +20,8 @@ beforeEach(function () {
     $this->regularUser = User::factory()->create();
 });
 
-describe('Blocked Login Attempts List', function () {
-    it('allows super-admin to view blocked login attempts', function () {
+describe('Blocked Login Attempts List', function (): void {
+    it('allows super-admin to view blocked login attempts', function (): void {
         $blockedUser = User::factory()->blocked()->create();
         BlockedLoginAttempt::factory()->count(5)->create([
             'user_id' => $blockedUser->id,
@@ -54,14 +54,14 @@ describe('Blocked Login Attempts List', function () {
         ]);
     });
 
-    it('denies access to non-super-admin users', function () {
+    it('denies access to non-super-admin users', function (): void {
         $response = $this->actingAs($this->regularUser)
             ->getJson(route('user-management.blocked-login-attempts'));
 
         $response->assertForbidden();
     });
 
-    it('filters by acknowledged status', function () {
+    it('filters by acknowledged status', function (): void {
         $blockedUser = User::factory()->blocked()->create();
 
         // Create acknowledged attempts
@@ -91,7 +91,7 @@ describe('Blocked Login Attempts List', function () {
         expect($response->json('attempts.total'))->toBe(5);
     });
 
-    it('filters by user_id', function () {
+    it('filters by user_id', function (): void {
         $blockedUser1 = User::factory()->blocked()->create();
         $blockedUser2 = User::factory()->blocked()->create();
 
@@ -112,7 +112,7 @@ describe('Blocked Login Attempts List', function () {
         expect($response->json('attempts.total'))->toBe(3);
     });
 
-    it('returns unacknowledged count', function () {
+    it('returns unacknowledged count', function (): void {
         $blockedUser = User::factory()->blocked()->create();
 
         BlockedLoginAttempt::factory()->count(3)->acknowledged()->create([
@@ -133,8 +133,8 @@ describe('Blocked Login Attempts List', function () {
     });
 });
 
-describe('Acknowledge Single Attempt', function () {
-    it('allows super-admin to acknowledge an attempt', function () {
+describe('Acknowledge Single Attempt', function (): void {
+    it('allows super-admin to acknowledge an attempt', function (): void {
         $blockedUser = User::factory()->blocked()->create();
         $attempt = BlockedLoginAttempt::factory()->create([
             'user_id' => $blockedUser->id,
@@ -153,7 +153,7 @@ describe('Acknowledge Single Attempt', function () {
         expect($attempt->acknowledged_at)->not->toBeNull();
     });
 
-    it('returns error when attempt already acknowledged', function () {
+    it('returns error when attempt already acknowledged', function (): void {
         $blockedUser = User::factory()->blocked()->create();
         $attempt = BlockedLoginAttempt::factory()->acknowledged()->create([
             'user_id' => $blockedUser->id,
@@ -167,7 +167,7 @@ describe('Acknowledge Single Attempt', function () {
         $response->assertJson(['message' => 'This attempt has already been acknowledged']);
     });
 
-    it('denies access to non-super-admin users', function () {
+    it('denies access to non-super-admin users', function (): void {
         $blockedUser = User::factory()->blocked()->create();
         $attempt = BlockedLoginAttempt::factory()->create([
             'user_id' => $blockedUser->id,
@@ -181,8 +181,8 @@ describe('Acknowledge Single Attempt', function () {
     });
 });
 
-describe('Acknowledge Multiple Attempts', function () {
-    it('allows super-admin to acknowledge multiple attempts', function () {
+describe('Acknowledge Multiple Attempts', function (): void {
+    it('allows super-admin to acknowledge multiple attempts', function (): void {
         $blockedUser = User::factory()->blocked()->create();
         $attempts = BlockedLoginAttempt::factory()->count(3)->create([
             'user_id' => $blockedUser->id,
@@ -206,7 +206,7 @@ describe('Acknowledge Multiple Attempts', function () {
         }
     });
 
-    it('skips already acknowledged attempts', function () {
+    it('skips already acknowledged attempts', function (): void {
         $blockedUser = User::factory()->blocked()->create();
 
         $unacknowledged = BlockedLoginAttempt::factory()->count(2)->create([
@@ -232,7 +232,7 @@ describe('Acknowledge Multiple Attempts', function () {
         ]);
     });
 
-    it('validates attempt_ids is required', function () {
+    it('validates attempt_ids is required', function (): void {
         $response = $this->actingAs($this->superAdmin)
             ->postJson(route('user-management.acknowledge-multiple-blocked-attempts'), []);
 
@@ -240,7 +240,7 @@ describe('Acknowledge Multiple Attempts', function () {
         $response->assertJsonValidationErrors(['attempt_ids']);
     });
 
-    it('validates attempt_ids exist', function () {
+    it('validates attempt_ids exist', function (): void {
         $response = $this->actingAs($this->superAdmin)
             ->postJson(route('user-management.acknowledge-multiple-blocked-attempts'), [
                 'attempt_ids' => [99999, 99998],
@@ -251,8 +251,8 @@ describe('Acknowledge Multiple Attempts', function () {
     });
 });
 
-describe('User Blocked Attempts', function () {
-    it('returns blocked attempts for a specific user', function () {
+describe('User Blocked Attempts', function (): void {
+    it('returns blocked attempts for a specific user', function (): void {
         $blockedUser = User::factory()->blocked()->create();
         $otherUser = User::factory()->blocked()->create();
 
@@ -279,7 +279,7 @@ describe('User Blocked Attempts', function () {
         expect(count($response->json('attempts')))->toBe(5);
     });
 
-    it('returns unacknowledged count for user', function () {
+    it('returns unacknowledged count for user', function (): void {
         $blockedUser = User::factory()->blocked()->create();
 
         BlockedLoginAttempt::factory()->count(3)->acknowledged()->create([
@@ -300,8 +300,8 @@ describe('User Blocked Attempts', function () {
     });
 });
 
-describe('User Management Index', function () {
-    it('includes unacknowledged blocked attempts count', function () {
+describe('User Management Index', function (): void {
+    it('includes unacknowledged blocked attempts count', function (): void {
         $blockedUser = User::factory()->blocked()->create();
 
         BlockedLoginAttempt::factory()->count(5)->create([
@@ -320,8 +320,8 @@ describe('User Management Index', function () {
     });
 });
 
-describe('User Show Page', function () {
-    it('includes blocked attempts for blocked user', function () {
+describe('User Show Page', function (): void {
+    it('includes blocked attempts for blocked user', function (): void {
         $blockedUser = User::factory()->blocked()->create();
 
         BlockedLoginAttempt::factory()->count(3)->create([
@@ -339,7 +339,7 @@ describe('User Show Page', function () {
         );
     });
 
-    it('returns empty attempts for non-blocked user', function () {
+    it('returns empty attempts for non-blocked user', function (): void {
         $normalUser = User::factory()->create();
 
         $response = $this->actingAs($this->superAdmin)

@@ -42,7 +42,7 @@ class HomePageSettingsControllerTest extends TestCase
     // ==========================================
 
     /** @test */
-    public function admin_can_access_homepage_settings()
+    public function admin_can_access_homepage_settings(): void
     {
         $response = $this->actingAs($this->admin)->get(route('settings.homepage'));
 
@@ -55,7 +55,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function regular_user_cannot_access_homepage_settings()
+    public function regular_user_cannot_access_homepage_settings(): void
     {
         $response = $this->actingAs($this->user)->get(route('settings.homepage'));
 
@@ -66,7 +66,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_access_homepage_settings()
+    public function guest_cannot_access_homepage_settings(): void
     {
         $response = $this->get(route('settings.homepage'));
 
@@ -74,7 +74,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function homepage_settings_returns_slides_ordered()
+    public function homepage_settings_returns_slides_ordered(): void
     {
         $slide1 = HeroSlide::factory()->create(['order' => 3]);
         $slide2 = HeroSlide::factory()->create(['order' => 1]);
@@ -98,7 +98,7 @@ class HomePageSettingsControllerTest extends TestCase
     // ==========================================
 
     /** @test */
-    public function admin_can_create_slide_with_url()
+    public function admin_can_create_slide_with_url(): void
     {
         $data = [
             'title' => 'New Slide',
@@ -123,7 +123,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_create_slide_with_file_upload()
+    public function admin_can_create_slide_with_file_upload(): void
     {
         Storage::fake('public');
 
@@ -148,7 +148,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_create_video_slide()
+    public function admin_can_create_video_slide(): void
     {
         Storage::fake('public');
 
@@ -173,7 +173,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function regular_user_cannot_create_slide()
+    public function regular_user_cannot_create_slide(): void
     {
         $data = [
             'title' => 'Test Slide',
@@ -192,7 +192,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function new_slide_gets_auto_incremented_order()
+    public function new_slide_gets_auto_incremented_order(): void
     {
         HeroSlide::factory()->create(['order' => 1]);
         HeroSlide::factory()->create(['order' => 2]);
@@ -211,7 +211,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function validation_fails_without_media()
+    public function validation_fails_without_media(): void
     {
         $data = [
             'title' => 'No Media Slide',
@@ -230,7 +230,7 @@ class HomePageSettingsControllerTest extends TestCase
     // ==========================================
 
     /** @test */
-    public function admin_can_update_slide()
+    public function admin_can_update_slide(): void
     {
         $slide = HeroSlide::factory()->create([
             'title' => 'Original Title',
@@ -257,7 +257,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_update_slide_with_new_file()
+    public function admin_can_update_slide_with_new_file(): void
     {
         Storage::fake('public');
 
@@ -282,7 +282,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function regular_user_cannot_update_slide()
+    public function regular_user_cannot_update_slide(): void
     {
         $slide = HeroSlide::factory()->create();
 
@@ -308,7 +308,7 @@ class HomePageSettingsControllerTest extends TestCase
     // ==========================================
 
     /** @test */
-    public function admin_can_delete_slide()
+    public function admin_can_delete_slide(): void
     {
         $slide = HeroSlide::factory()->create();
 
@@ -319,7 +319,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function regular_user_cannot_delete_slide()
+    public function regular_user_cannot_delete_slide(): void
     {
         $slide = HeroSlide::factory()->create();
 
@@ -337,7 +337,7 @@ class HomePageSettingsControllerTest extends TestCase
     // ==========================================
 
     /** @test */
-    public function admin_can_reorder_slides()
+    public function admin_can_reorder_slides(): void
     {
         $slide1 = HeroSlide::factory()->create(['order' => 1]);
         $slide2 = HeroSlide::factory()->create(['order' => 2]);
@@ -361,7 +361,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function regular_user_cannot_reorder_slides()
+    public function regular_user_cannot_reorder_slides(): void
     {
         $slide1 = HeroSlide::factory()->create(['order' => 1]);
         $slide2 = HeroSlide::factory()->create(['order' => 2]);
@@ -386,9 +386,9 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function reorder_validates_slide_ids()
+    public function reorder_validates_slide_ids(): void
     {
-        $slide = HeroSlide::factory()->create();
+        HeroSlide::factory()->create();
 
         $data = [
             'slides' => [
@@ -406,10 +406,10 @@ class HomePageSettingsControllerTest extends TestCase
     // ==========================================
 
     /** @test */
-    public function welcome_page_shows_active_slides()
+    public function welcome_page_shows_active_slides(): void
     {
         $activeSlide = HeroSlide::factory()->create(['is_active' => true, 'order' => 1]);
-        $inactiveSlide = HeroSlide::factory()->create(['is_active' => false, 'order' => 2]);
+        HeroSlide::factory()->create(['is_active' => false, 'order' => 2]);
 
         $response = $this->get('/');
 
@@ -427,7 +427,7 @@ class HomePageSettingsControllerTest extends TestCase
     // ==========================================
 
     /** @test */
-    public function homepage_settings_returns_global_stats()
+    public function homepage_settings_returns_global_stats(): void
     {
         $response = $this->actingAs($this->admin)->get(route('settings.homepage'));
 
@@ -448,7 +448,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_update_global_stats()
+    public function admin_can_update_global_stats(): void
     {
         $data = [
             'total_churches' => 150,
@@ -481,7 +481,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function regular_user_cannot_update_global_stats()
+    public function regular_user_cannot_update_global_stats(): void
     {
         $data = [
             'total_churches' => 999,
@@ -503,7 +503,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function global_stats_validation_rejects_negative_numbers()
+    public function global_stats_validation_rejects_negative_numbers(): void
     {
         $data = [
             'total_churches' => -5,
@@ -522,7 +522,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function global_stats_validation_requires_all_fields()
+    public function global_stats_validation_requires_all_fields(): void
     {
         $data = [
             'total_churches' => 100,
@@ -539,7 +539,7 @@ class HomePageSettingsControllerTest extends TestCase
     // ==========================================
 
     /** @test */
-    public function homepage_settings_returns_churches()
+    public function homepage_settings_returns_churches(): void
     {
         $response = $this->actingAs($this->admin)->get(route('settings.homepage'));
 
@@ -552,7 +552,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_create_church()
+    public function admin_can_create_church(): void
     {
         $data = [
             'name' => 'ICC Test',
@@ -576,7 +576,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_update_church()
+    public function admin_can_update_church(): void
     {
         $church = \App\Models\Church::create([
             'name' => 'Original Church',
@@ -607,7 +607,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_delete_church()
+    public function admin_can_delete_church(): void
     {
         $church = \App\Models\Church::create([
             'name' => 'Church to Delete',
@@ -624,7 +624,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function regular_user_cannot_create_church()
+    public function regular_user_cannot_create_church(): void
     {
         $data = [
             'name' => 'Unauthorized Church',
@@ -644,7 +644,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function church_validation_requires_name_city_country_coordinates()
+    public function church_validation_requires_name_city_country_coordinates(): void
     {
         $data = [
             // Missing all required fields
@@ -656,7 +656,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function church_auto_detects_continent()
+    public function church_auto_detects_continent(): void
     {
         $data = [
             'name' => 'ICC Paris',
@@ -674,7 +674,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_create_church_with_leader_and_category()
+    public function admin_can_create_church_with_leader_and_category(): void
     {
         $data = [
             'name' => 'ICC Lyon',
@@ -699,7 +699,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function admin_can_update_church_leader_and_category()
+    public function admin_can_update_church_leader_and_category(): void
     {
         $church = \App\Models\Church::create([
             'name' => 'ICC Marseille',
@@ -733,7 +733,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function category_validation_rejects_invalid_values()
+    public function category_validation_rejects_invalid_values(): void
     {
         $data = [
             'name' => 'ICC Test',
@@ -749,7 +749,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function leader_name_and_category_are_optional()
+    public function leader_name_and_category_are_optional(): void
     {
         $data = [
             'name' => 'ICC Minimal',
@@ -768,7 +768,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function global_stats_update_when_church_created()
+    public function global_stats_update_when_church_created(): void
     {
         // Clear any existing churches
         \App\Models\Church::query()->delete();
@@ -793,7 +793,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function global_stats_update_when_church_deleted()
+    public function global_stats_update_when_church_deleted(): void
     {
         // Clear any existing churches
         \App\Models\Church::query()->delete();
@@ -825,7 +825,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function total_countries_increases_for_new_country()
+    public function total_countries_increases_for_new_country(): void
     {
         // Clear any existing churches
         \App\Models\Church::query()->delete();
@@ -872,7 +872,7 @@ class HomePageSettingsControllerTest extends TestCase
     }
 
     /** @test */
-    public function total_members_updates_with_church_changes()
+    public function total_members_updates_with_church_changes(): void
     {
         // Clear any existing churches
         \App\Models\Church::query()->delete();

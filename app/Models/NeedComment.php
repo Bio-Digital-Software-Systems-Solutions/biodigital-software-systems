@@ -11,9 +11,48 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $need_id
+ * @property int $user_id
+ * @property string $content
+ * @property bool $is_internal
+ * @property int|null $parent_id
+ * @property array<array-key, mixed>|null $mentions
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\DepartmentNeed $need
+ * @property-read NeedComment|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, NeedComment> $replies
+ * @property-read int|null $replies_count
+ * @property-read \App\Models\User $user
+ * @method static \Database\Factories\NeedCommentFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment whereContent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment whereIsInternal($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment whereMentions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment whereNeedId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment whereParentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedComment withoutTrashed()
+ * @mixin \Eloquent
+ */
 class NeedComment extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'uuid',
@@ -34,7 +73,7 @@ class NeedComment extends Model
     {
         parent::boot();
 
-        static::creating(function (self $model) {
+        static::creating(function (self $model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
@@ -92,7 +131,7 @@ class NeedComment extends Model
     public function getMentionedUsers(): \Illuminate\Database\Eloquent\Collection
     {
         if (empty($this->mentions)) {
-            return collect();
+            return new \Illuminate\Database\Eloquent\Collection;
         }
 
         return User::whereIn('id', $this->mentions)->get();
@@ -101,7 +140,7 @@ class NeedComment extends Model
     public function addMention(int $userId): self
     {
         $mentions = $this->mentions ?? [];
-        if (!in_array($userId, $mentions)) {
+        if (! in_array($userId, $mentions)) {
             $mentions[] = $userId;
             $this->update(['mentions' => $mentions]);
         }
@@ -112,7 +151,7 @@ class NeedComment extends Model
     public function removeMention(int $userId): self
     {
         $mentions = $this->mentions ?? [];
-        $mentions = array_filter($mentions, fn($id) => $id !== $userId);
+        $mentions = array_filter($mentions, fn ($id): bool => $id !== $userId);
         $this->update(['mentions' => array_values($mentions)]);
 
         return $this;

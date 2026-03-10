@@ -29,7 +29,7 @@ class ProgramStepController extends Controller
 
         $validated['program_id'] = $program->id;
 
-        $step = ProgramStep::create($validated);
+        ProgramStep::create($validated);
 
         // Update program progress
         $program->update([

@@ -31,7 +31,7 @@ class MessageControllerTest extends TestCase
         $memberRole->givePermissionTo(['view messages', 'create messages']);
     }
 
-    public function test_authenticated_user_can_view_messages_index()
+    public function test_authenticated_user_can_view_messages_index(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -39,10 +39,10 @@ class MessageControllerTest extends TestCase
         $response = $this->actingAs($user)->get('/messages');
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page->component('Messages/Index'));
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Messages/Index'));
     }
 
-    public function test_user_can_view_only_their_messages()
+    public function test_user_can_view_only_their_messages(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -61,7 +61,7 @@ class MessageControllerTest extends TestCase
         ]);
 
         // Message not involving user1
-        $message3 = Message::factory()->create([
+        Message::factory()->create([
             'sender_id' => $user2->id,
             'receiver_id' => $user3->id,
         ]);
@@ -69,7 +69,7 @@ class MessageControllerTest extends TestCase
         $response = $this->actingAs($user1)->get('/messages');
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page->component('Messages/Index')
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Messages/Index')
             ->has('messages.data', 2)
                 // Latest message first (message2 was created after message1)
             ->where('messages.data.0.id', $message1->id)
@@ -77,7 +77,7 @@ class MessageControllerTest extends TestCase
         );
     }
 
-    public function test_authenticated_user_with_permission_can_create_message()
+    public function test_authenticated_user_with_permission_can_create_message(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -85,12 +85,12 @@ class MessageControllerTest extends TestCase
         $response = $this->actingAs($user)->get('/messages/create');
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page->component('Messages/Create')
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Messages/Create')
             ->has('users')
         );
     }
 
-    public function test_user_without_permission_cannot_create_message()
+    public function test_user_without_permission_cannot_create_message(): void
     {
         $user = User::factory()->create();
         // Not assigning any role
@@ -103,7 +103,7 @@ class MessageControllerTest extends TestCase
         );
     }
 
-    public function test_user_can_store_message()
+    public function test_user_can_store_message(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -130,7 +130,7 @@ class MessageControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_can_store_message_without_subject()
+    public function test_user_can_store_message_without_subject(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -156,7 +156,7 @@ class MessageControllerTest extends TestCase
         ]);
     }
 
-    public function test_message_creation_validates_required_fields()
+    public function test_message_creation_validates_required_fields(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -166,7 +166,7 @@ class MessageControllerTest extends TestCase
         $response->assertSessionHasErrors(['content', 'recipient_type', 'recipient_id', 'type']);
     }
 
-    public function test_message_creation_validates_receiver_exists()
+    public function test_message_creation_validates_receiver_exists(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -183,7 +183,7 @@ class MessageControllerTest extends TestCase
         $response->assertStatus(404); // The controller throws 404 for non-existent recipients
     }
 
-    public function test_message_creation_validates_type()
+    public function test_message_creation_validates_type(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -200,7 +200,7 @@ class MessageControllerTest extends TestCase
         $response->assertSessionHasErrors(['type']);
     }
 
-    public function test_user_can_view_single_message_they_sent()
+    public function test_user_can_view_single_message_they_sent(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -214,13 +214,13 @@ class MessageControllerTest extends TestCase
         $response = $this->actingAs($sender)->get(route('messages.show', $message));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page->component('Messages/Show')
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Messages/Show')
             ->has('message.subject')
             ->where('message.id', $message->id)
         );
     }
 
-    public function test_user_can_view_single_message_they_received()
+    public function test_user_can_view_single_message_they_received(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -234,7 +234,7 @@ class MessageControllerTest extends TestCase
         $response = $this->actingAs($receiver)->get(route('messages.show', $message));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page->component('Messages/Show')
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Messages/Show')
             ->where('message.id', $message->id)
         );
 
@@ -243,7 +243,7 @@ class MessageControllerTest extends TestCase
         $this->assertNotNull($message->read_at);
     }
 
-    public function test_user_cannot_view_message_they_are_not_involved_in()
+    public function test_user_cannot_view_message_they_are_not_involved_in(): void
     {
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
@@ -264,7 +264,7 @@ class MessageControllerTest extends TestCase
         );
     }
 
-    public function test_sender_can_edit_their_message()
+    public function test_sender_can_edit_their_message(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -278,14 +278,14 @@ class MessageControllerTest extends TestCase
         $response = $this->actingAs($sender)->get(route('messages.edit', $message));
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page->component('Messages/Edit')
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Messages/Edit')
             ->has('message')
             ->has('users')
             ->where('message.id', $message->id)
         );
     }
 
-    public function test_receiver_cannot_edit_message()
+    public function test_receiver_cannot_edit_message(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -304,7 +304,7 @@ class MessageControllerTest extends TestCase
         );
     }
 
-    public function test_sender_can_update_their_message()
+    public function test_sender_can_update_their_message(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -338,7 +338,7 @@ class MessageControllerTest extends TestCase
         ]);
     }
 
-    public function test_receiver_cannot_update_message()
+    public function test_receiver_cannot_update_message(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -364,7 +364,7 @@ class MessageControllerTest extends TestCase
         );
     }
 
-    public function test_sender_can_delete_their_message()
+    public function test_sender_can_delete_their_message(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -383,7 +383,7 @@ class MessageControllerTest extends TestCase
         ]);
     }
 
-    public function test_receiver_cannot_delete_message()
+    public function test_receiver_cannot_delete_message(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -402,7 +402,7 @@ class MessageControllerTest extends TestCase
         );
     }
 
-    public function test_receiver_can_mark_message_as_read()
+    public function test_receiver_can_mark_message_as_read(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -420,7 +420,7 @@ class MessageControllerTest extends TestCase
         $this->assertNotNull($message->read_at);
     }
 
-    public function test_sender_cannot_mark_message_as_read()
+    public function test_sender_cannot_mark_message_as_read(): void
     {
         $sender = User::factory()->create();
         $receiver = User::factory()->create();
@@ -439,7 +439,7 @@ class MessageControllerTest extends TestCase
         );
     }
 
-    public function test_unread_count_endpoint()
+    public function test_unread_count_endpoint(): void
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
@@ -469,7 +469,7 @@ class MessageControllerTest extends TestCase
         $response->assertJson(['count' => 3]);
     }
 
-    public function test_messages_index_with_type_filter()
+    public function test_messages_index_with_type_filter(): void
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
@@ -487,13 +487,13 @@ class MessageControllerTest extends TestCase
         $response = $this->actingAs($user)->get('/messages?type=direct');
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page->component('Messages/Index')
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Messages/Index')
             ->has('messages.data', 1)
             ->where('messages.data.0.type', 'direct')
         );
     }
 
-    public function test_messages_index_with_status_filter()
+    public function test_messages_index_with_status_filter(): void
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
@@ -511,13 +511,13 @@ class MessageControllerTest extends TestCase
         $response = $this->actingAs($user)->get('/messages?status=unread');
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page->component('Messages/Index')
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Messages/Index')
             ->has('messages.data', 1)
             ->where('messages.data.0.read_at', null)
         );
     }
 
-    public function test_messages_index_with_search_filter()
+    public function test_messages_index_with_search_filter(): void
     {
         $user = User::factory()->create();
         $otherUser = User::factory()->create();
@@ -539,19 +539,19 @@ class MessageControllerTest extends TestCase
         $response = $this->actingAs($user)->get('/messages?search=meeting');
 
         $response->assertStatus(200);
-        $response->assertInertia(fn (Assert $page) => $page->component('Messages/Index')
+        $response->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Messages/Index')
             ->has('messages.data', 1)
             ->where('messages.data.0.subject', 'Important Meeting')
         );
     }
 
-    public function test_guest_cannot_access_messages()
+    public function test_guest_cannot_access_messages(): void
     {
         $response = $this->get('/messages');
         $response->assertRedirect('/login');
     }
 
-    public function test_user_can_search_recipients()
+    public function test_user_can_search_recipients(): void
     {
         $user = User::factory()->create(['first_name' => 'John', 'last_name' => 'Doe', 'email' => 'john@example.com']);
         $user->assignRole('member');
@@ -576,13 +576,13 @@ class MessageControllerTest extends TestCase
         ]);
     }
 
-    public function test_search_recipients_returns_users_and_departments()
+    public function test_search_recipients_returns_users_and_departments(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
 
         User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Wonder']);
-        $department = \App\Models\Department::factory()->create(['name' => 'Engineering', 'code' => 'ENG', 'is_active' => true]);
+        \App\Models\Department::factory()->create(['name' => 'Engineering', 'code' => 'ENG', 'is_active' => true]);
 
         $response = $this->actingAs($user)->get('/messages-search-recipients');
 
@@ -599,7 +599,7 @@ class MessageControllerTest extends TestCase
         $this->assertGreaterThan(0, $deptResults->count());
     }
 
-    public function test_search_recipients_excludes_current_user()
+    public function test_search_recipients_excludes_current_user(): void
     {
         $user = User::factory()->create(['first_name' => 'Current', 'last_name' => 'User']);
         $user->assignRole('member');
@@ -616,7 +616,7 @@ class MessageControllerTest extends TestCase
         $this->assertFalse($userResults->contains('id', $user->id));
     }
 
-    public function test_user_can_send_message_to_another_user()
+    public function test_user_can_send_message_to_another_user(): void
     {
         $sender = User::factory()->create();
         $sender->assignRole('member');
@@ -645,7 +645,7 @@ class MessageControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_can_send_message_to_department()
+    public function test_user_can_send_message_to_department(): void
     {
         $sender = User::factory()->create();
         $sender->assignRole('member');
@@ -687,7 +687,7 @@ class MessageControllerTest extends TestCase
         }
     }
 
-    public function test_department_message_does_not_send_to_sender()
+    public function test_department_message_does_not_send_to_sender(): void
     {
         $sender = User::factory()->create();
         $sender->assignRole('member');
@@ -713,7 +713,7 @@ class MessageControllerTest extends TestCase
         $this->assertNotEquals($sender->id, $messages->first()->receiver_id);
     }
 
-    public function test_sending_message_requires_recipient_type()
+    public function test_sending_message_requires_recipient_type(): void
     {
         $sender = User::factory()->create();
         $sender->assignRole('member');
@@ -729,7 +729,7 @@ class MessageControllerTest extends TestCase
         $response->assertSessionHasErrors(['recipient_type']);
     }
 
-    public function test_sending_message_validates_recipient_exists()
+    public function test_sending_message_validates_recipient_exists(): void
     {
         $sender = User::factory()->create();
         $sender->assignRole('member');
@@ -744,7 +744,7 @@ class MessageControllerTest extends TestCase
         $response->assertStatus(404);
     }
 
-    public function test_search_recipients_only_returns_active_departments()
+    public function test_search_recipients_only_returns_active_departments(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');

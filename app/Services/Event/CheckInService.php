@@ -113,7 +113,7 @@ class CheckInService
         }
 
         // Check if already checked in for this session (if session provided)
-        if ($session) {
+        if ($session instanceof \App\Models\Event\EventSession) {
             $existingCheckin = EventCheckin::where('registration_id', $registration->id)
                 ->where('session_id', $session->id)
                 ->where('check_type', 'entry')
@@ -147,7 +147,7 @@ class CheckInService
         }
 
         // Create the check-in record
-        return DB::transaction(function () use ($registration, $checkedInBy, $session, $metadata) {
+        return DB::transaction(function () use ($registration, $checkedInBy, $session, $metadata): array {
             $checkin = EventCheckin::create([
                 'registration_id' => $registration->id,
                 'session_id' => $session?->id,
@@ -190,7 +190,7 @@ class CheckInService
             ->where('check_type', 'entry')
             ->whereNull('checked_out_at');
 
-        if ($session) {
+        if ($session instanceof \App\Models\Event\EventSession) {
             $query->where('session_id', $session->id);
         } else {
             $query->whereNull('session_id');
@@ -226,7 +226,7 @@ class CheckInService
         return Cache::remember(
             "event.{$event->id}.checkin_stats",
             now()->addMinutes(2),
-            function () use ($event) {
+            function () use ($event): array {
                 $totalConfirmed = $event->registrations()
                     ->whereIn('status', [RegistrationStatus::CONFIRMED, RegistrationStatus::CHECKED_IN])
                     ->sum('quantity');
@@ -254,7 +254,7 @@ class CheckInService
      */
     protected function getCheckInsByHour(Event $event): array
     {
-        $checkins = EventCheckin::whereHas('registration', function ($q) use ($event) {
+        $checkins = EventCheckin::whereHas('registration', function ($q) use ($event): void {
             $q->where('event_id', $event->id);
         })
             ->whereNull('session_id')
@@ -275,7 +275,7 @@ class CheckInService
             ->with('ticket')
             ->get()
             ->groupBy('ticket.name')
-            ->map(fn ($group) => [
+            ->map(fn ($group): array => [
                 'count' => $group->sum('quantity'),
                 'ticket_id' => $group->first()->ticket_id,
             ])
@@ -287,7 +287,7 @@ class CheckInService
      */
     public function getRecentCheckIns(Event $event, int $limit = 10): \Illuminate\Database\Eloquent\Collection
     {
-        return EventCheckin::whereHas('registration', function ($q) use ($event) {
+        return EventCheckin::whereHas('registration', function ($q) use ($event): void {
             $q->where('event_id', $event->id);
         })
             ->with(['registration.ticket', 'checkedInBy'])
@@ -344,7 +344,7 @@ class CheckInService
                 RegistrationStatus::CONFIRMED,
                 RegistrationStatus::CHECKED_IN,
             ])
-            ->where(function ($q) use ($search) {
+            ->where(function ($q) use ($search): void {
                 $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
@@ -371,7 +371,7 @@ class CheckInService
      */
     public function undoCheckIn(EventCheckin $checkin): bool
     {
-        return DB::transaction(function () use ($checkin) {
+        return DB::transaction(function () use ($checkin): true {
             $registration = $checkin->registration;
 
             // Delete the check-in record
@@ -411,7 +411,7 @@ class CheckInService
      */
     public function getLiveFeed(Event $event, int $since = 0): array
     {
-        $query = EventCheckin::whereHas('registration', function ($q) use ($event) {
+        $query = EventCheckin::whereHas('registration', function ($q) use ($event): void {
             $q->where('event_id', $event->id);
         })
             ->with(['registration.ticket', 'checkedInBy', 'session'])

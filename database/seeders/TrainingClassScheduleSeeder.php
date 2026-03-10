@@ -17,14 +17,14 @@ class TrainingClassScheduleSeeder extends Seeder
 
         foreach ($classes as $class) {
             // Create 1-3 schedules per training class
-            $schedulesCount = rand(1, 3);
+            $schedulesCount = random_int(1, 3);
             $usedDays = [];
 
             for ($i = 0; $i < $schedulesCount; $i++) {
                 $days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
                 $availableDays = array_diff($days, $usedDays);
 
-                if (empty($availableDays)) {
+                if ($availableDays === []) {
                     break;
                 }
 

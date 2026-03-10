@@ -57,7 +57,7 @@ class FileUploadService
                 throw new \InvalidArgumentException('Dimensions de l\'image trop grandes. Maximum : 10000x10000 pixels');
             }
         } catch (\Exception $e) {
-            throw new \InvalidArgumentException('Fichier image invalide : '.$e->getMessage());
+            throw new \InvalidArgumentException('Fichier image invalide : '.$e->getMessage(), $e->getCode(), $e);
         }
 
         // 4. Générer un nom de fichier unique et sécurisé

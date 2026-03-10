@@ -8,7 +8,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create necessary roles
     Role::create(['name' => 'pastor']);
     Role::create(['name' => 'member']);
@@ -44,7 +44,7 @@ beforeEach(function () {
 |--------------------------------------------------------------------------
 */
 
-it('can confirm a pending appointment via public API without authentication', function () {
+it('can confirm a pending appointment via public API without authentication', function (): void {
     $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/confirm");
 
     $response->assertStatus(200)
@@ -58,7 +58,7 @@ it('can confirm a pending appointment via public API without authentication', fu
     expect($this->appointment->confirmation_sent_at)->not->toBeNull();
 });
 
-it('returns 404 when confirming non-existent appointment', function () {
+it('returns 404 when confirming non-existent appointment', function (): void {
     $response = $this->postJson('/api/pastoral-care/appointments/non-existent-uuid/confirm');
 
     $response->assertStatus(404)
@@ -68,7 +68,7 @@ it('returns 404 when confirming non-existent appointment', function () {
         ]);
 });
 
-it('cannot confirm an already confirmed appointment', function () {
+it('cannot confirm an already confirmed appointment', function (): void {
     $this->appointment->update(['status' => 'confirmed']);
 
     $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/confirm");
@@ -81,7 +81,7 @@ it('cannot confirm an already confirmed appointment', function () {
     expect($response->json('message'))->toContain('confirm');
 });
 
-it('cannot confirm a cancelled appointment', function () {
+it('cannot confirm a cancelled appointment', function (): void {
     $this->appointment->update([
         'status' => 'cancelled',
         'cancelled_at' => now(),
@@ -96,7 +96,7 @@ it('cannot confirm a cancelled appointment', function () {
         ]);
 });
 
-it('cannot confirm a completed appointment', function () {
+it('cannot confirm a completed appointment', function (): void {
     $this->appointment->update([
         'status' => 'completed',
         'completed_at' => now(),
@@ -116,7 +116,7 @@ it('cannot confirm a completed appointment', function () {
 |--------------------------------------------------------------------------
 */
 
-it('can cancel a pending appointment via public API without authentication', function () {
+it('can cancel a pending appointment via public API without authentication', function (): void {
     $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/cancel", [
         'cancellation_reason' => 'Empêchement personnel',
     ]);
@@ -133,7 +133,7 @@ it('can cancel a pending appointment via public API without authentication', fun
     expect($this->appointment->cancelled_at)->not->toBeNull();
 });
 
-it('can cancel a confirmed appointment via public API', function () {
+it('can cancel a confirmed appointment via public API', function (): void {
     $this->appointment->update(['status' => 'confirmed']);
 
     $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/cancel", [
@@ -150,7 +150,7 @@ it('can cancel a confirmed appointment via public API', function () {
     expect($this->appointment->status)->toBe('cancelled');
 });
 
-it('can cancel without providing a reason', function () {
+it('can cancel without providing a reason', function (): void {
     $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/cancel", []);
 
     $response->assertStatus(200)
@@ -163,7 +163,7 @@ it('can cancel without providing a reason', function () {
     expect($this->appointment->cancellation_reason)->toBeNull();
 });
 
-it('returns 404 when cancelling non-existent appointment', function () {
+it('returns 404 when cancelling non-existent appointment', function (): void {
     $response = $this->postJson('/api/pastoral-care/appointments/non-existent-uuid/cancel', [
         'cancellation_reason' => 'Test',
     ]);
@@ -175,7 +175,7 @@ it('returns 404 when cancelling non-existent appointment', function () {
         ]);
 });
 
-it('cannot cancel an already cancelled appointment', function () {
+it('cannot cancel an already cancelled appointment', function (): void {
     $this->appointment->update([
         'status' => 'cancelled',
         'cancelled_at' => now(),
@@ -191,7 +191,7 @@ it('cannot cancel an already cancelled appointment', function () {
         ]);
 });
 
-it('cannot cancel a completed appointment', function () {
+it('cannot cancel a completed appointment', function (): void {
     $this->appointment->update([
         'status' => 'completed',
         'completed_at' => now(),
@@ -207,7 +207,7 @@ it('cannot cancel a completed appointment', function () {
         ]);
 });
 
-it('validates cancellation reason max length', function () {
+it('validates cancellation reason max length', function (): void {
     $longReason = str_repeat('A', 501);
 
     $response = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/cancel", [
@@ -218,7 +218,7 @@ it('validates cancellation reason max length', function () {
         ->assertJsonValidationErrors(['cancellation_reason']);
 });
 
-it('cannot cancel appointment within 24 hours of appointment time', function () {
+it('cannot cancel appointment within 24 hours of appointment time', function (): void {
     // Create appointment for less than 24 hours from now
     $soonAppointment = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
@@ -247,7 +247,7 @@ it('cannot cancel appointment within 24 hours of appointment time', function () 
 |--------------------------------------------------------------------------
 */
 
-it('can view appointment details via public API', function () {
+it('can view appointment details via public API', function (): void {
     $response = $this->getJson("/api/pastoral-care/appointments/{$this->appointment->uuid}");
 
     $response->assertStatus(200)
@@ -280,7 +280,7 @@ it('can view appointment details via public API', function () {
     expect($response->json('data.can_be_cancelled'))->toBeTrue();
 });
 
-it('returns correct confirmability status for different appointment states', function () {
+it('returns correct confirmability status for different appointment states', function (): void {
     // Pending - can be confirmed and cancelled
     $response = $this->getJson("/api/pastoral-care/appointments/{$this->appointment->uuid}");
     expect($response->json('data.can_be_confirmed'))->toBeTrue();
@@ -305,7 +305,7 @@ it('returns correct confirmability status for different appointment states', fun
 |--------------------------------------------------------------------------
 */
 
-it('can get confirmation status via public API', function () {
+it('can get confirmation status via public API', function (): void {
     $response = $this->getJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/confirmation-status");
 
     $response->assertStatus(200)
@@ -323,7 +323,7 @@ it('can get confirmation status via public API', function () {
     expect($response->json('data.status'))->toBe('pending');
 });
 
-it('returns 404 for confirmation status of non-existent appointment', function () {
+it('returns 404 for confirmation status of non-existent appointment', function (): void {
     $response = $this->getJson('/api/pastoral-care/appointments/fake-uuid/confirmation-status');
 
     $response->assertStatus(404)
@@ -339,7 +339,7 @@ it('returns 404 for confirmation status of non-existent appointment', function (
 |--------------------------------------------------------------------------
 */
 
-it('handles concurrent confirmation attempts gracefully', function () {
+it('handles concurrent confirmation attempts gracefully', function (): void {
     // Simulate concurrent request by confirming twice
     $response1 = $this->postJson("/api/pastoral-care/appointments/{$this->appointment->uuid}/confirm");
     $response1->assertStatus(200);
@@ -348,7 +348,7 @@ it('handles concurrent confirmation attempts gracefully', function () {
     $response2->assertStatus(400);
 });
 
-it('handles SQL injection attempts in UUID', function () {
+it('handles SQL injection attempts in UUID', function (): void {
     $maliciousUuid = "'; DROP TABLE pastoral_cares; --";
 
     $response = $this->getJson("/api/pastoral-care/appointments/{$maliciousUuid}");
@@ -356,7 +356,7 @@ it('handles SQL injection attempts in UUID', function () {
     $response->assertStatus(404);
 });
 
-it('returns proper error for empty UUID', function () {
+it('returns proper error for empty UUID', function (): void {
     $response = $this->getJson('/api/pastoral-care/appointments/');
 
     // Empty path hits the index route which requires auth, so 401 is also acceptable
@@ -369,7 +369,7 @@ it('returns proper error for empty UUID', function () {
 |--------------------------------------------------------------------------
 */
 
-it('can confirm zoom appointment', function () {
+it('can confirm zoom appointment', function (): void {
     $zoomAppointment = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Test Client',
@@ -391,7 +391,7 @@ it('can confirm zoom appointment', function () {
     expect($zoomAppointment->location_type)->toBe('zoom');
 });
 
-it('can confirm hybrid appointment', function () {
+it('can confirm hybrid appointment', function (): void {
     $hybridAppointment = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Test Client',
@@ -417,13 +417,13 @@ it('can confirm hybrid appointment', function () {
 |--------------------------------------------------------------------------
 */
 
-it('can confirm appointments with different durations', function ($duration) {
+it('can confirm appointments with different durations', function ($duration): void {
     $appointment = PastoralCare::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Test Client',
         'client_email' => 'test@example.com',
-        'appointment_date' => Carbon::tomorrow()->addDays(rand(1, 7)),
-        'appointment_time' => Carbon::tomorrow()->setHour(rand(9, 17))->setMinute(0),
+        'appointment_date' => Carbon::tomorrow()->addDays(random_int(1, 7)),
+        'appointment_time' => Carbon::tomorrow()->setHour(random_int(9, 17))->setMinute(0),
         'duration_minutes' => $duration,
         'location_type' => 'in_person',
         'status' => 'pending',

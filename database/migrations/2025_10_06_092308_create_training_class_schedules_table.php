@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('training_class_schedules', function (Blueprint $table) {
+        Schema::create('training_class_schedules', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('training_class_id')->constrained()->onDelete('cascade');
             $table->enum('day_of_week', ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']);

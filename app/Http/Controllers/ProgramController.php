@@ -21,10 +21,10 @@ class ProgramController extends Controller
     public function index()
     {
         $programs = Program::with(['user', 'tasks'])
-            ->when(request('status'), function ($query, $status) {
+            ->when(request('status'), function ($query, $status): void {
                 $query->where('status', $status);
             })
-            ->when(request('priority'), function ($query, $priority) {
+            ->when(request('priority'), function ($query, $priority): void {
                 $query->where('priority', $priority);
             })
             ->orderBy('start_date', 'desc')
@@ -70,7 +70,7 @@ class ProgramController extends Controller
 
         $validated['user_id'] = Auth::id();
 
-        $program = Program::create($validated);
+        Program::create($validated);
 
         return redirect()->route('programs.index')
             ->with('success', 'Program created successfully.');

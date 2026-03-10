@@ -8,7 +8,7 @@ use Illuminate\Http\JsonResponse;
 class CaptchaController extends Controller
 {
     public function __construct(
-        private CaptchaService $captchaService
+        private readonly CaptchaService $captchaService
     ) {}
 
     /**

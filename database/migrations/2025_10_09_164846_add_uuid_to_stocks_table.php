@@ -12,18 +12,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('stocks', function (Blueprint $table) {
+        Schema::table('stocks', function (Blueprint $table): void {
             $table->uuid('uuid')->nullable()->after('id');
         });
 
         // Generate UUIDs for existing records
-        \App\Models\Stock::whereNull('uuid')->each(function ($stock) {
+        \App\Models\Stock::whereNull('uuid')->each(function ($stock): void {
             $stock->uuid = (string) Str::uuid();
             $stock->save();
         });
 
         // Make uuid unique and not nullable
-        Schema::table('stocks', function (Blueprint $table) {
+        Schema::table('stocks', function (Blueprint $table): void {
             $table->uuid('uuid')->unique()->nullable(false)->change();
         });
     }
@@ -33,7 +33,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('stocks', function (Blueprint $table) {
+        Schema::table('stocks', function (Blueprint $table): void {
             $table->dropColumn('uuid');
         });
     }

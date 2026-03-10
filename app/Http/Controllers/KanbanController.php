@@ -25,10 +25,10 @@ class KanbanController extends Controller
         if ($request->has('project_id') && $request->project_id) {
             // Filter by project_id column OR by taskable polymorphic relation
             $projectId = $request->project_id;
-            $query->where(function ($q) use ($projectId) {
+            $query->where(function ($q) use ($projectId): void {
                 $q->where('project_id', $projectId)
-                  ->orWhere(function ($q2) use ($projectId) {
-                      $q2->where('taskable_type', 'App\Models\Project')
+                  ->orWhere(function ($q2) use ($projectId): void {
+                      $q2->where('taskable_type', \App\Models\Project::class)
                          ->where('taskable_id', $projectId);
                   });
             });
@@ -52,7 +52,7 @@ class KanbanController extends Controller
 
         // Search
         if ($request->has('search') && $request->search) {
-            $query->where(function ($q) use ($request) {
+            $query->where(function ($q) use ($request): void {
                 $q->where('title', 'like', '%'.$request->search.'%')
                     ->orWhere('description', 'like', '%'.$request->search.'%');
             });
@@ -61,40 +61,16 @@ class KanbanController extends Controller
         $tasks = $query->latest()->get();
 
         // Get status name-to-id mapping
-        $statuses = Status::all()->pluck('id', 'name');
+        Status::all()->pluck('id', 'name');
 
         // Group tasks by status name (for frontend compatibility)
         $tasksByStatus = [
-            'pending' => $tasks->filter(function ($task) {
-                return $task->status && in_array($task->status->name, ['pending', 'new']);
-            })->values()->map(function ($task) {
-                return $this->formatTaskForFrontend($task);
-            }),
-            'todo' => $tasks->filter(function ($task) {
-                return $task->status && $task->status->name === 'todo';
-            })->values()->map(function ($task) {
-                return $this->formatTaskForFrontend($task);
-            }),
-            'in_progress' => $tasks->filter(function ($task) {
-                return $task->status && $task->status->name === 'in_progress';
-            })->values()->map(function ($task) {
-                return $this->formatTaskForFrontend($task);
-            }),
-            'under_review' => $tasks->filter(function ($task) {
-                return $task->status && $task->status->name === 'under_review';
-            })->values()->map(function ($task) {
-                return $this->formatTaskForFrontend($task);
-            }),
-            'blocked' => $tasks->filter(function ($task) {
-                return $task->status && $task->status->name === 'blocked';
-            })->values()->map(function ($task) {
-                return $this->formatTaskForFrontend($task);
-            }),
-            'completed' => $tasks->filter(function ($task) {
-                return $task->status && $task->status->name === 'completed';
-            })->values()->map(function ($task) {
-                return $this->formatTaskForFrontend($task);
-            }),
+            'pending' => $tasks->filter(fn($task): bool => $task->status && in_array($task->status->name, ['pending', 'new']))->values()->map($this->formatTaskForFrontend(...)),
+            'todo' => $tasks->filter(fn($task): bool => $task->status && $task->status->name === 'todo')->values()->map($this->formatTaskForFrontend(...)),
+            'in_progress' => $tasks->filter(fn($task): bool => $task->status && $task->status->name === 'in_progress')->values()->map($this->formatTaskForFrontend(...)),
+            'under_review' => $tasks->filter(fn($task): bool => $task->status && $task->status->name === 'under_review')->values()->map($this->formatTaskForFrontend(...)),
+            'blocked' => $tasks->filter(fn($task): bool => $task->status && $task->status->name === 'blocked')->values()->map($this->formatTaskForFrontend(...)),
+            'completed' => $tasks->filter(fn($task): bool => $task->status && $task->status->name === 'completed')->values()->map($this->formatTaskForFrontend(...)),
         ];
 
         // Get filter data
@@ -147,7 +123,7 @@ class KanbanController extends Controller
     private function formatTaskForFrontend(Task $task): array
     {
         // Get project from taskable (polymorphic relation)
-        $project = $task->taskable_type === 'App\Models\Project' ? $task->taskable : null;
+        $project = $task->taskable_type === \App\Models\Project::class ? $task->taskable : null;
 
         return [
             'id' => $task->id,

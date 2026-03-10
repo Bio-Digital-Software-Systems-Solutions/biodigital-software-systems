@@ -51,14 +51,14 @@ class StarFactory extends Factory
                 'Leader formé',
                 'Mentor certifié',
                 '1 an de service',
-            ], rand(0, 3)),
+            ], random_int(0, 3)),
             'badges' => $this->faker->randomElements([
                 'Ponctualité',
                 'Fiabilité',
                 'Excellence',
                 'Créativité',
                 'Engagement',
-            ], rand(0, 2)),
+            ], random_int(0, 2)),
             'skills' => $this->faker->randomElements([
                 'Communication',
                 'Leadership',
@@ -68,7 +68,7 @@ class StarFactory extends Factory
                 'Médias',
                 'Musique',
                 'Enseignement',
-            ], rand(2, 5)),
+            ], random_int(2, 5)),
             'areas_of_service' => $this->faker->randomElements([
                 'Accueil',
                 'Technique son',
@@ -77,10 +77,10 @@ class StarFactory extends Factory
                 'Jeunesse',
                 'Louange',
                 'Administration',
-            ], rand(1, 3)),
+            ], random_int(1, 3)),
             'available_days' => $this->faker->randomElements([
                 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
-            ], rand(2, 4)),
+            ], random_int(2, 4)),
             'available_from' => '09:00',
             'available_to' => '18:00',
             'hours_per_week' => $this->faker->numberBetween(2, 10),
@@ -112,7 +112,7 @@ class StarFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => StarStatus::ACTIVE,
         ]);
     }
@@ -122,7 +122,7 @@ class StarFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => StarStatus::INACTIVE,
         ]);
     }
@@ -132,7 +132,7 @@ class StarFactory extends Factory
      */
     public function onBreak(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => StarStatus::ON_BREAK,
         ]);
     }
@@ -142,7 +142,7 @@ class StarFactory extends Factory
      */
     public function graduated(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => StarStatus::GRADUATED,
             'expiry_date' => $this->faker->dateTimeBetween('-6 months', 'now'),
         ]);
@@ -153,7 +153,7 @@ class StarFactory extends Factory
      */
     public function suspended(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => StarStatus::SUSPENDED,
         ]);
     }
@@ -163,7 +163,7 @@ class StarFactory extends Factory
      */
     public function volunteer(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'type' => StarType::VOLUNTEER,
             'level' => $this->faker->numberBetween(1, 2),
         ]);
@@ -174,7 +174,7 @@ class StarFactory extends Factory
      */
     public function leader(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'type' => StarType::LEADER,
             'level' => $this->faker->numberBetween(3, 4),
             'points' => $this->faker->numberBetween(500, 1000),
@@ -186,7 +186,7 @@ class StarFactory extends Factory
      */
     public function mentor(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'type' => StarType::MENTOR,
             'level' => $this->faker->numberBetween(4, 5),
             'points' => $this->faker->numberBetween(1000, 2000),
@@ -198,7 +198,7 @@ class StarFactory extends Factory
      */
     public function ambassador(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'type' => StarType::AMBASSADOR,
             'level' => 5,
             'points' => $this->faker->numberBetween(2000, 5000),
@@ -210,7 +210,7 @@ class StarFactory extends Factory
      */
     public function coordinator(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'type' => StarType::COORDINATOR,
             'level' => $this->faker->numberBetween(2, 3),
             'points' => $this->faker->numberBetween(250, 500),
@@ -222,7 +222,7 @@ class StarFactory extends Factory
      */
     public function featured(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'is_featured' => true,
             'is_public_profile' => true,
         ]);
@@ -233,7 +233,7 @@ class StarFactory extends Factory
      */
     public function publicProfile(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'is_public_profile' => true,
         ]);
     }
@@ -243,7 +243,7 @@ class StarFactory extends Factory
      */
     public function expiringSoon(int $days = 30): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'expiry_date' => now()->addDays($days),
         ]);
     }
@@ -253,7 +253,7 @@ class StarFactory extends Factory
      */
     public function expired(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'expiry_date' => now()->subDays($this->faker->numberBetween(1, 30)),
         ]);
     }
@@ -263,7 +263,7 @@ class StarFactory extends Factory
      */
     public function highLevel(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'level' => $this->faker->numberBetween(4, 5),
             'points' => $this->faker->numberBetween(1000, 3000),
         ]);
@@ -274,7 +274,7 @@ class StarFactory extends Factory
      */
     public function inDepartment(Department $department): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'department_id' => $department->id,
         ]);
     }
@@ -284,7 +284,7 @@ class StarFactory extends Factory
      */
     public function inCategory(StarCategory $category): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'category' => $category,
         ]);
     }
@@ -294,7 +294,7 @@ class StarFactory extends Factory
      */
     public function nominatedBy(User $user): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'nominated_by' => $user->id,
         ]);
     }
@@ -304,7 +304,7 @@ class StarFactory extends Factory
      */
     public function forUser(User $user): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'user_id' => $user->id,
         ]);
     }
@@ -314,7 +314,7 @@ class StarFactory extends Factory
      */
     public function recentlyRecognized(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'recognition_date' => now()->subDays($this->faker->numberBetween(1, 30)),
         ]);
     }

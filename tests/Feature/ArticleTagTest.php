@@ -22,7 +22,7 @@ class ArticleTagTest extends TestCase
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
     }
 
-    public function test_user_can_create_article_with_tags()
+    public function test_user_can_create_article_with_tags(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create articles');
@@ -51,7 +51,7 @@ class ArticleTagTest extends TestCase
         $this->assertTrue($article->tags->contains($tag2));
     }
 
-    public function test_user_can_create_article_with_cover_image()
+    public function test_user_can_create_article_with_cover_image(): void
     {
         Storage::fake('public');
 
@@ -79,7 +79,7 @@ class ArticleTagTest extends TestCase
         Storage::disk('public')->assertExists($article->cover_image);
     }
 
-    public function test_user_can_create_article_with_video_file()
+    public function test_user_can_create_article_with_video_file(): void
     {
         Storage::fake('public');
 
@@ -107,7 +107,7 @@ class ArticleTagTest extends TestCase
         Storage::disk('public')->assertExists($article->video_file);
     }
 
-    public function test_user_can_update_article_tags()
+    public function test_user_can_update_article_tags(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo(['create articles', 'edit articles']);
@@ -144,7 +144,7 @@ class ArticleTagTest extends TestCase
         $this->assertFalse($article->tags->contains($tag1));
     }
 
-    public function test_article_slug_is_unique()
+    public function test_article_slug_is_unique(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create articles');
@@ -176,7 +176,7 @@ class ArticleTagTest extends TestCase
         $this->assertEquals('test-article-1', $articles->last()->slug);
     }
 
-    public function test_unauthorized_user_cannot_create_articles()
+    public function test_unauthorized_user_cannot_create_articles(): void
     {
         $user = User::factory()->create(); // No permissions
         $category = Category::factory()->create();

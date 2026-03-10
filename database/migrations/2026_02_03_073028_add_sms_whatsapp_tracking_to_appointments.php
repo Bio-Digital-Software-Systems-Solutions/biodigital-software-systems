@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('appointments', function (Blueprint $table) {
+        Schema::table('appointments', function (Blueprint $table): void {
             // Notification channels preference (email, sms, whatsapp)
             $table->json('notification_channels')->nullable()->after('metadata');
 
@@ -30,7 +30,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('appointments', function (Blueprint $table) {
+        Schema::table('appointments', function (Blueprint $table): void {
             $table->dropIndex('appointments_reminder_index');
             $table->dropColumn([
                 'notification_channels',

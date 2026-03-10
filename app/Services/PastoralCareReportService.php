@@ -12,9 +12,9 @@ use PhpOffice\PhpWord\Shared\Converter;
 
 class PastoralCareReportService
 {
-    private PastoralCare $appointment;
+    private readonly PastoralCare $appointment;
 
-    private Collection $allAppointments;
+    private readonly Collection $allAppointments;
 
     public function __construct(PastoralCare $appointment)
     {
@@ -75,23 +75,21 @@ class PastoralCareReportService
                 'first_appointment_date' => $this->allAppointments->first()->appointment_date->format('d/m/Y'),
                 'last_appointment_date' => $this->allAppointments->last()->appointment_date->format('d/m/Y'),
             ],
-            'appointments' => $this->allAppointments->map(function ($apt) {
-                return [
-                    'id' => $apt->id,
-                    'date' => $apt->appointment_date->format('d/m/Y'),
-                    'time' => $apt->appointment_time->format('H:i'),
-                    'duration_minutes' => $apt->duration_minutes,
-                    'duration_formatted' => $this->formatDuration($apt->duration_minutes),
-                    'status' => $this->translateStatus($apt->status),
-                    'status_raw' => $apt->status,
-                    'location_type' => $this->translateLocationType($apt->location_type),
-                    'client_notes' => $apt->notes,
-                    'pastor_notes' => $this->formatPastorNotes($apt->pastor_notes),
-                    'is_current' => $apt->id === $this->appointment->id,
-                    'is_parent' => $apt->id === $this->appointment->parent_id,
-                    'is_follow_up' => $apt->parent_id === $this->appointment->id,
-                ];
-            })->values()->toArray(),
+            'appointments' => $this->allAppointments->map(fn($apt): array => [
+                'id' => $apt->id,
+                'date' => $apt->appointment_date->format('d/m/Y'),
+                'time' => $apt->appointment_time->format('H:i'),
+                'duration_minutes' => $apt->duration_minutes,
+                'duration_formatted' => $this->formatDuration($apt->duration_minutes),
+                'status' => $this->translateStatus($apt->status),
+                'status_raw' => $apt->status,
+                'location_type' => $this->translateLocationType($apt->location_type),
+                'client_notes' => $apt->notes,
+                'pastor_notes' => $this->formatPastorNotes($apt->pastor_notes),
+                'is_current' => $apt->id === $this->appointment->id,
+                'is_parent' => $apt->id === $this->appointment->parent_id,
+                'is_follow_up' => $apt->parent_id === $this->appointment->id,
+            ])->values()->toArray(),
             'church' => [
                 'name' => config('app.church_name', 'ICC Munich'),
                 'email' => config('app.church_email', 'contact@icc-munich.de'),
@@ -108,10 +106,11 @@ class PastoralCareReportService
     {
         $hours = intdiv($minutes, 60);
         $mins = $minutes % 60;
-
         if ($hours > 0 && $mins > 0) {
             return "{$hours}h {$mins}min";
-        } elseif ($hours > 0) {
+        }
+
+        if ($hours > 0) {
             return "{$hours}h";
         }
 
@@ -151,18 +150,16 @@ class PastoralCareReportService
      */
     private function formatPastorNotes(?array $notes): array
     {
-        if (empty($notes)) {
+        if ($notes === null || $notes === []) {
             return [];
         }
 
-        return collect($notes)->map(function ($note) {
-            return [
-                'content' => $note['note'] ?? $note['content'] ?? '',
-                'date' => isset($note['created_at'])
-                    ? \Carbon\Carbon::parse($note['created_at'])->format('d/m/Y H:i')
-                    : null,
-            ];
-        })->toArray();
+        return collect($notes)->map(fn($note): array => [
+            'content' => $note['note'] ?? $note['content'] ?? '',
+            'date' => isset($note['created_at'])
+                ? \Carbon\Carbon::parse($note['created_at'])->format('d/m/Y H:i')
+                : null,
+        ])->toArray();
     }
 
     /**
@@ -330,7 +327,7 @@ class PastoralCareReportService
         $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
         $objWriter->save($tempFile);
 
-        return response()->streamDownload(function () use ($tempFile) {
+        return response()->streamDownload(function () use ($tempFile): void {
             readfile($tempFile);
             unlink($tempFile);
         }, $filename, [

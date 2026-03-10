@@ -13,11 +13,8 @@ use Illuminate\Support\Facades\Auth;
 
 class EventBadgeController extends Controller
 {
-    protected BadgeService $badgeService;
-
-    public function __construct(BadgeService $badgeService)
+    public function __construct(protected BadgeService $badgeService)
     {
-        $this->badgeService = $badgeService;
         $this->middleware('can:view events');
         $this->middleware('can:edit events')->except(['templates', 'search']);
     }
@@ -27,7 +24,7 @@ class EventBadgeController extends Controller
      */
     public function index(Request $request, Event $event): JsonResponse
     {
-        $query = EventBadge::whereHas('registration', function ($q) use ($event) {
+        $query = EventBadge::whereHas('registration', function ($q) use ($event): void {
             $q->where('event_id', $event->id);
         })
             ->with('registration');
@@ -234,7 +231,7 @@ class EventBadgeController extends Controller
     {
         $search = $request->input('q', '');
 
-        if (strlen($search) < 2) {
+        if (strlen((string) $search) < 2) {
             return response()->json(['data' => []]);
         }
 

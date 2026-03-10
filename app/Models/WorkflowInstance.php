@@ -11,6 +11,66 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $workflow_id
+ * @property int $department_id
+ * @property int $started_by
+ * @property string|null $name
+ * @property WorkflowInstanceStatus $status
+ * @property array<array-key, mixed>|null $context
+ * @property array<array-key, mixed>|null $input_data
+ * @property array<array-key, mixed>|null $output_data
+ * @property string|null $cancellation_reason
+ * @property string|null $failure_reason
+ * @property int|null $parent_instance_id
+ * @property int|null $parent_step_instance_id
+ * @property \Illuminate\Support\Carbon|null $started_at
+ * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property \Illuminate\Support\Carbon|null $cancelled_at
+ * @property \Illuminate\Support\Carbon|null $failed_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowActivityLog> $activityLogs
+ * @property-read int|null $activity_logs_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, WorkflowInstance> $childInstances
+ * @property-read int|null $child_instances_count
+ * @property-read \App\Models\Department $department
+ * @property-read WorkflowInstance|null $parentInstance
+ * @property-read \App\Models\WorkflowStepInstance|null $parentStepInstance
+ * @property-read \App\Models\User $starter
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowStepInstance> $stepInstances
+ * @property-read int|null $step_instances_count
+ * @property-read \App\Models\DepartmentWorkflow $workflow
+ * @method static \Database\Factories\WorkflowInstanceFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereCancellationReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereCancelledAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereContext($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereFailedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereFailureReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereInputData($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereOutputData($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereParentInstanceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereParentStepInstanceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereStartedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereStartedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkflowInstance whereWorkflowId($value)
+ * @mixin \Eloquent
+ */
 class WorkflowInstance extends Model
 {
     use HasFactory, LogsActivity;
@@ -50,7 +110,7 @@ class WorkflowInstance extends Model
     {
         parent::boot();
 
-        static::creating(function (self $model) {
+        static::creating(function (self $model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }

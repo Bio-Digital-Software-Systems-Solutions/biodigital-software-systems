@@ -12,6 +12,67 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $event_id
+ * @property NotificationType $type
+ * @property string $trigger
+ * @property string $subject
+ * @property string $content
+ * @property array<array-key, mixed>|null $recipients
+ * @property string $status
+ * @property int $recipients_count
+ * @property int $sent_count
+ * @property int $failed_count
+ * @property \Illuminate\Support\Carbon|null $scheduled_at
+ * @property \Illuminate\Support\Carbon|null $sent_at
+ * @property int|null $created_by
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read User|null $creator
+ * @property-read Event $event
+ * @property-read bool $can_be_cancelled
+ * @property-read bool $can_be_sent
+ * @property-read bool $is_cancelled
+ * @property-read bool $is_failed
+ * @property-read bool $is_pending
+ * @property-read bool $is_scheduled
+ * @property-read bool $is_sent
+ * @property-read float|null $success_rate
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification byTrigger(string $trigger)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification byType(\App\Enums\Event\NotificationType $type)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification failed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification readyToSend()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification scheduled()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification sent()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereContent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereEventId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereFailedCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereRecipients($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereRecipientsCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereScheduledAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereSentAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereSentCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereSubject($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereTrigger($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventNotification whereUuid($value)
+ * @mixin \Eloquent
+ */
 class EventNotification extends Model
 {
     use HasFactory, HasUuid, LogsActivity;
@@ -57,16 +118,24 @@ class EventNotification extends Model
 
     // Constants for triggers
     public const TRIGGER_ON_REGISTRATION = 'on_registration';
+
     public const TRIGGER_BEFORE_EVENT = 'before_event';
+
     public const TRIGGER_AFTER_EVENT = 'after_event';
+
     public const TRIGGER_ON_UPDATE = 'on_update';
+
     public const TRIGGER_MANUAL = 'manual';
 
     // Constants for status
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_SCHEDULED = 'scheduled';
+
     public const STATUS_SENT = 'sent';
+
     public const STATUS_FAILED = 'failed';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     // Relationships
@@ -219,15 +288,15 @@ class EventNotification extends Model
             ->whereIn('status', ['confirmed', 'checked_in']);
 
         // Apply filters from recipients array
-        if (!empty($filters['ticket_ids'])) {
+        if (! empty($filters['ticket_ids'])) {
             $query->whereIn('ticket_id', $filters['ticket_ids']);
         }
 
-        if (!empty($filters['roles'])) {
+        if (! empty($filters['roles'])) {
             $query->whereIn('participant_role', $filters['roles']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->whereIn('status', $filters['status']);
         }
 
@@ -236,7 +305,7 @@ class EventNotification extends Model
 
     public function getRecipientEmails(): array
     {
-        return $this->getRecipientsQuery()
+        return (array) $this->getRecipientsQuery()
             ->pluck('email')
             ->unique()
             ->toArray();

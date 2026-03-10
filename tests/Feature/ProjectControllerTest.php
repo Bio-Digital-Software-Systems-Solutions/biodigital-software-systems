@@ -78,11 +78,11 @@ class ProjectControllerTest extends TestCase
         $user->assignRole('admin');
 
         // Create additional users
-        $otherUser = User::factory()->create();
+        User::factory()->create();
 
         // Create an active employee
         $employeeUser = User::factory()->create();
-        $employee = Employee::factory()->create([
+        Employee::factory()->create([
             'user_id' => $employeeUser->id,
             'status' => EmployeeStatus::ACTIVE,
             'position' => 'Developer',
@@ -90,7 +90,7 @@ class ProjectControllerTest extends TestCase
 
         // Create an active star
         $starUser = User::factory()->create();
-        $star = Star::factory()->create([
+        Star::factory()->create([
             'user_id' => $starUser->id,
             'status' => StarStatus::ACTIVE,
             'title' => 'Guest Speaker',

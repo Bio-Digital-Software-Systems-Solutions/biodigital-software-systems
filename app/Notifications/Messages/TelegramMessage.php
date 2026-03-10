@@ -4,8 +4,6 @@ namespace App\Notifications\Messages;
 
 class TelegramMessage
 {
-    protected string $content = '';
-
     protected string $parseMode = 'HTML';
 
     protected bool $disableWebPagePreview = true;
@@ -17,9 +15,8 @@ class TelegramMessage
     /**
      * Create a new telegram message instance.
      */
-    public function __construct(string $content = '')
+    public function __construct(protected string $content = '')
     {
-        $this->content = $content;
     }
 
     /**

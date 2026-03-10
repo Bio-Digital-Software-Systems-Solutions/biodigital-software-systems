@@ -10,6 +10,56 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $registration_id
+ * @property int|null $session_id
+ * @property int|null $checked_in_by
+ * @property string $check_type
+ * @property string $method
+ * @property string|null $device_id
+ * @property string|null $location
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon $checked_in_at
+ * @property \Illuminate\Support\Carbon|null $checked_out_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read User|null $checkedInByUser
+ * @property-read int|null $duration
+ * @property-read string|null $duration_for_humans
+ * @property-read bool $is_entry
+ * @property-read bool $is_exit
+ * @property-read bool $is_session
+ * @property-read \App\Models\Event\EventRegistration $registration
+ * @property-read \App\Models\Event\EventSession|null $session
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin byMethod(string $method)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin entryCheckins()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin exitCheckins()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin forEvent(int $eventId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin sessionCheckins()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin today()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereCheckType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereCheckedInAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereCheckedInBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereCheckedOutAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereDeviceId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereLocation($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereMethod($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereRegistrationId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventCheckin whereUuid($value)
+ * @mixin \Eloquent
+ */
 class EventCheckin extends Model
 {
     use HasFactory, HasUuid, LogsActivity;
@@ -85,7 +135,7 @@ class EventCheckin extends Model
 
     public function scopeForEvent($query, int $eventId)
     {
-        return $query->whereHas('registration', function ($q) use ($eventId) {
+        return $query->whereHas('registration', function ($q) use ($eventId): void {
             $q->where('event_id', $eventId);
         });
     }
@@ -118,7 +168,7 @@ class EventCheckin extends Model
             return null;
         }
 
-        return $this->checked_in_at->diffInMinutes($this->checked_out_at);
+        return (int) $this->checked_in_at->diffInMinutes($this->checked_out_at);
     }
 
     public function getDurationForHumansAttribute(): ?string
@@ -187,7 +237,7 @@ class EventCheckin extends Model
 
     public static function getHourlyDistribution(int $eventId, ?\DateTime $date = null): array
     {
-        $date = $date ?? today();
+        $date ??= today();
 
         return static::forEvent($eventId)
             ->entryCheckins()

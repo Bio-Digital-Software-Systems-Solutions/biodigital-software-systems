@@ -32,7 +32,7 @@ class BookControllerTest extends TestCase
         $memberRole->givePermissionTo(['view books', 'rent books']);
     }
 
-    public function test_authenticated_user_can_view_books_index()
+    public function test_authenticated_user_can_view_books_index(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -43,12 +43,12 @@ class BookControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Books/Index'));
     }
 
-    public function test_user_with_permission_can_create_book()
+    public function test_user_with_permission_can_create_book(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
 
-        $category = Category::factory()->create(['type' => 'book']);
+        Category::factory()->create(['type' => 'book']);
 
         $response = $this->actingAs($user)->get('/books/create');
 
@@ -56,7 +56,7 @@ class BookControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Books/Create'));
     }
 
-    public function test_user_without_permission_cannot_create_book()
+    public function test_user_without_permission_cannot_create_book(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -69,7 +69,7 @@ class BookControllerTest extends TestCase
         );
     }
 
-    public function test_user_can_store_book()
+    public function test_user_can_store_book(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -97,7 +97,7 @@ class BookControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_can_view_single_book()
+    public function test_user_can_view_single_book(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -112,7 +112,7 @@ class BookControllerTest extends TestCase
         );
     }
 
-    public function test_user_can_rent_available_book()
+    public function test_user_can_rent_available_book(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -142,7 +142,7 @@ class BookControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_cannot_rent_unavailable_book()
+    public function test_user_cannot_rent_unavailable_book(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -176,7 +176,7 @@ class BookControllerTest extends TestCase
         $response->assertSessionHas('error');
     }
 
-    public function test_user_cannot_rent_same_book_twice()
+    public function test_user_cannot_rent_same_book_twice(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -208,7 +208,7 @@ class BookControllerTest extends TestCase
         $response->assertSessionHas('error');
     }
 
-    public function test_user_can_update_own_book()
+    public function test_user_can_update_own_book(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -237,7 +237,7 @@ class BookControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_can_delete_book()
+    public function test_user_can_delete_book(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -252,13 +252,13 @@ class BookControllerTest extends TestCase
         ]);
     }
 
-    public function test_guest_cannot_access_books()
+    public function test_guest_cannot_access_books(): void
     {
         $response = $this->get('/books');
         $response->assertRedirect('/login');
     }
 
-    public function test_books_can_be_filtered_by_search()
+    public function test_books_can_be_filtered_by_search(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');
@@ -275,7 +275,7 @@ class BookControllerTest extends TestCase
         );
     }
 
-    public function test_books_can_be_filtered_by_category()
+    public function test_books_can_be_filtered_by_category(): void
     {
         $user = User::factory()->create();
         $user->assignRole('member');

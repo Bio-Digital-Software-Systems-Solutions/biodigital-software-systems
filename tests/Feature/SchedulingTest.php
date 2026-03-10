@@ -74,7 +74,7 @@ class SchedulingTest extends TestCase
 
     public function test_can_navigate_between_weeks(): void
     {
-        $currentWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
+        Carbon::now()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
         $nextWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->addWeek()->format('Y-m-d');
 
         $this->actingAs($this->admin)

@@ -31,8 +31,8 @@ class ProjectController extends Controller
             ->withCount([
                 'tasks',
                 'members',
-                'tasks as completed_tasks_count' => function ($query) {
-                    $query->whereHas('status', function ($q) {
+                'tasks as completed_tasks_count' => function ($query): void {
+                    $query->whereHas('status', function ($q): void {
                         $q->where('name', 'completed');
                     });
                 },
@@ -48,26 +48,26 @@ class ProjectController extends Controller
             'completed_projects' => $projects->where('status', 'completed')->count(),
             'on_hold_projects' => $projects->where('status', 'on_hold')->count(),
             'total_tasks' => $projects->sum('tasks_count'),
-            'completed_tasks' => \App\Models\Task::where('taskable_type', 'App\Models\Project')
+            'completed_tasks' => \App\Models\Task::where('taskable_type', \App\Models\Project::class)
                 ->whereIn('taskable_id', $projectIds)
-                ->whereHas('status', function ($q) {
+                ->whereHas('status', function ($q): void {
                     $q->where('name', 'completed');
                 })
                 ->count(),
-            'in_progress_tasks' => \App\Models\Task::where('taskable_type', 'App\Models\Project')
+            'in_progress_tasks' => \App\Models\Task::where('taskable_type', \App\Models\Project::class)
                 ->whereIn('taskable_id', $projectIds)
-                ->whereHas('status', function ($q) {
+                ->whereHas('status', function ($q): void {
                     $q->where('name', 'in_progress');
                 })
                 ->count(),
-            'overdue_tasks' => \App\Models\Task::where('taskable_type', 'App\Models\Project')
+            'overdue_tasks' => \App\Models\Task::where('taskable_type', \App\Models\Project::class)
                 ->whereIn('taskable_id', $projectIds)
                 ->where('due_date', '<', now())
-                ->whereHas('status', function ($q) {
+                ->whereHas('status', function ($q): void {
                     $q->whereNotIn('name', ['completed', 'cancelled']);
                 })
                 ->count(),
-            'total_epics' => \App\Models\Task::where('taskable_type', 'App\Models\Project')
+            'total_epics' => \App\Models\Task::where('taskable_type', \App\Models\Project::class)
                 ->whereIn('taskable_id', $projectIds)
                 ->where('type', 'epic')
                 ->count(),
@@ -85,8 +85,8 @@ class ProjectController extends Controller
             ->withCount([
                 'tasks',
                 'members',
-                'tasks as completed_tasks_count' => function ($query) {
-                    $query->whereHas('status', function ($q) {
+                'tasks as completed_tasks_count' => function ($query): void {
+                    $query->whereHas('status', function ($q): void {
                         $q->where('name', 'completed');
                     });
                 },
@@ -94,7 +94,7 @@ class ProjectController extends Controller
             ->latest()
             ->take(5)
             ->get()
-            ->map(function ($project) {
+            ->map(function ($project): \stdClass {
                 $project->progress = $project->tasks_count > 0
                     ? round(($project->completed_tasks_count / $project->tasks_count) * 100)
                     : 0;
@@ -118,16 +118,16 @@ class ProjectController extends Controller
             ->withCount([
                 'tasks',
                 'members',
-                'tasks as completed_tasks_count' => function ($query) {
-                    $query->whereHas('status', function ($q) {
+                'tasks as completed_tasks_count' => function ($query): void {
+                    $query->whereHas('status', function ($q): void {
                         $q->where('name', 'completed');
                     });
                 },
             ])
-            ->when(request('status'), function ($query, $status) {
+            ->when(request('status'), function ($query, $status): void {
                 $query->where('status', $status);
             })
-            ->when(request('sort_by'), function ($query) {
+            ->when(request('sort_by'), function ($query): void {
                 $sortBy = request('sort_by');
                 $direction = request('sort_direction', 'asc');
 
@@ -142,12 +142,12 @@ class ProjectController extends Controller
                         ->orderBy('users.first_name', $direction)
                         ->select('projects.*');
                 }
-            }, function ($query) {
+            }, function ($query): void {
                 // Default sorting when no sort specified
                 $query->latest();
             })
             ->get()
-            ->map(function ($project) {
+            ->map(function ($project): \App\Models\Project {
                 $project->progress = $project->tasks_count > 0
                     ? round(($project->completed_tasks_count / $project->tasks_count) * 100)
                     : 0;
@@ -172,7 +172,7 @@ class ProjectController extends Controller
     public function create()
     {
         // Get all users
-        $users = User::all()->map(fn ($user) => [
+        $users = User::all()->map(fn ($user): array => [
             'id' => $user->id,
             'uuid' => $user->uuid ?? null,
             'first_name' => $user->first_name,
@@ -185,7 +185,7 @@ class ProjectController extends Controller
         $employees = Employee::with('user')
             ->where('status', EmployeeStatus::ACTIVE)
             ->get()
-            ->map(fn ($employee) => [
+            ->map(fn ($employee): array => [
                 'id' => $employee->user_id,
                 'uuid' => $employee->uuid,
                 'first_name' => $employee->user->first_name ?? '',
@@ -199,7 +199,7 @@ class ProjectController extends Controller
         $stars = Star::with('user')
             ->where('status', StarStatus::ACTIVE)
             ->get()
-            ->map(fn ($star) => [
+            ->map(fn ($star): array => [
                 'id' => $star->user_id,
                 'uuid' => $star->uuid,
                 'first_name' => $star->user->first_name ?? '',
@@ -297,7 +297,7 @@ class ProjectController extends Controller
 
         // Calculate progress
         $completedTasks = $project->tasks()
-            ->whereHas('status', function ($query) {
+            ->whereHas('status', function ($query): void {
                 $query->where('name', 'completed');
             })
             ->count();
@@ -334,7 +334,7 @@ class ProjectController extends Controller
         $projectActivities = $project->activities()
             ->with('causer')
             ->get()
-            ->map(fn ($a) => $this->formatActivity($a, 'project'));
+            ->map(fn ($a): array => $this->formatActivity($a, 'project'));
 
         // Get participant activities
         $participantIds = $project->participants()->pluck('id');
@@ -343,7 +343,7 @@ class ProjectController extends Controller
             ->whereIn('subject_id', $participantIds)
             ->with('causer')
             ->get()
-            ->map(fn ($a) => $this->formatActivity($a, 'participant'));
+            ->map(fn ($a): array => $this->formatActivity($a, 'participant'));
 
         // Get attachment activities
         $attachmentIds = $project->attachments()->pluck('id');
@@ -352,7 +352,7 @@ class ProjectController extends Controller
             ->whereIn('subject_id', $attachmentIds)
             ->with('causer')
             ->get()
-            ->map(fn ($a) => $this->formatActivity($a, 'attachment'));
+            ->map(fn ($a): array => $this->formatActivity($a, 'attachment'));
 
         // Get task activities (only created/deleted for project tasks)
         $taskIds = $project->tasks()->pluck('id');
@@ -362,7 +362,7 @@ class ProjectController extends Controller
             ->whereIn('description', ['created', 'deleted'])
             ->with('causer')
             ->get()
-            ->map(fn ($a) => $this->formatActivity($a, 'task'));
+            ->map(fn ($a): array => $this->formatActivity($a, 'task'));
 
         // Merge and sort by date
         return $projectActivities
@@ -551,7 +551,7 @@ class ProjectController extends Controller
 
         // Search
         if ($request->has('search') && $request->search) {
-            $query->where(function ($q) use ($request) {
+            $query->where(function ($q) use ($request): void {
                 $q->where('title', 'like', '%'.$request->search.'%')
                     ->orWhere('description', 'like', '%'.$request->search.'%');
             });
@@ -561,18 +561,18 @@ class ProjectController extends Controller
 
         // Group tasks by status name (convert to array for JavaScript)
         $tasksByStatus = [
-            'pending' => $tasks->filter(fn ($task) => $task->status && in_array($task->status->name, ['pending', 'new']))
-                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
-            'todo' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'todo')
-                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
-            'in_progress' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'in_progress')
-                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
-            'under_review' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'under_review')
-                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
-            'blocked' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'blocked')
-                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
-            'completed' => $tasks->filter(fn ($task) => $task->status && $task->status->name === 'completed')
-                ->values()->map(fn ($task) => $this->formatTaskForKanban($task))->toArray(),
+            'pending' => $tasks->filter(fn ($task): bool => $task->status && in_array($task->status->name, ['pending', 'new']))
+                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
+            'todo' => $tasks->filter(fn ($task): bool => $task->status && $task->status->name === 'todo')
+                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
+            'in_progress' => $tasks->filter(fn ($task): bool => $task->status && $task->status->name === 'in_progress')
+                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
+            'under_review' => $tasks->filter(fn ($task): bool => $task->status && $task->status->name === 'under_review')
+                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
+            'blocked' => $tasks->filter(fn ($task): bool => $task->status && $task->status->name === 'blocked')
+                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
+            'completed' => $tasks->filter(fn ($task): bool => $task->status && $task->status->name === 'completed')
+                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
         ];
 
         // Get filter data

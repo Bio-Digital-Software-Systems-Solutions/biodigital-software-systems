@@ -44,7 +44,7 @@ class WorkflowStepInstanceFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => StepInstanceStatus::ACTIVE,
             'started_at' => now(),
         ]);
@@ -55,7 +55,7 @@ class WorkflowStepInstanceFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => StepInstanceStatus::COMPLETED,
             'started_at' => now()->subMinutes(30),
             'completed_at' => now(),
@@ -67,7 +67,7 @@ class WorkflowStepInstanceFactory extends Factory
      */
     public function waiting(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => StepInstanceStatus::WAITING,
         ]);
     }
@@ -77,7 +77,7 @@ class WorkflowStepInstanceFactory extends Factory
      */
     public function failed(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'status' => StepInstanceStatus::FAILED,
             'error_message' => $this->faker->sentence(),
         ]);
@@ -88,7 +88,7 @@ class WorkflowStepInstanceFactory extends Factory
      */
     public function assignedTo(User $user): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attributes): array => [
             'assigned_to' => $user->id,
         ]);
     }

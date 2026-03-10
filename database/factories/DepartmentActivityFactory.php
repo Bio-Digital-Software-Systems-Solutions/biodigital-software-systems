@@ -45,7 +45,7 @@ class DepartmentActivityFactory extends Factory
      */
     public function forDepartment(Department $department): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'department_id' => $department->id,
         ]);
     }
@@ -55,7 +55,7 @@ class DepartmentActivityFactory extends Factory
      */
     public function byUser(User $user): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'user_id' => $user->id,
         ]);
     }
@@ -65,7 +65,7 @@ class DepartmentActivityFactory extends Factory
      */
     public function onDate(Carbon $date): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'date' => $date,
         ]);
     }
@@ -75,7 +75,7 @@ class DepartmentActivityFactory extends Factory
      */
     public function withCategory(ActivityCategory $category): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'category' => $category,
         ]);
     }
@@ -85,7 +85,7 @@ class DepartmentActivityFactory extends Factory
      */
     public function withDuration(float $hours): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'duration_hours' => $hours,
         ]);
     }
@@ -95,7 +95,7 @@ class DepartmentActivityFactory extends Factory
      */
     public function forProject(Project $project): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'related_project_id' => $project->id,
         ]);
     }
@@ -105,7 +105,7 @@ class DepartmentActivityFactory extends Factory
      */
     public function withParticipants(array $userIds): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'participants' => $userIds,
         ]);
     }

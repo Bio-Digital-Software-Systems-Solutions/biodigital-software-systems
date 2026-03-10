@@ -13,6 +13,64 @@ use Carbon\Carbon;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $department_id
+ * @property int $user_id
+ * @property ActivityCategory $category
+ * @property string $title
+ * @property string|null $description
+ * @property \Illuminate\Support\Carbon $date
+ * @property numeric|null $duration_hours
+ * @property array<array-key, mixed>|null $participants
+ * @property string|null $outcomes
+ * @property array<array-key, mixed>|null $metrics
+ * @property int|null $related_project_id
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\Department $department
+ * @property-read string $category_color
+ * @property-read string $category_icon
+ * @property-read string $category_label
+ * @property-read int $participant_count
+ * @property-read \App\Models\Project|null $relatedProject
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity byCategory(\App\Enums\Report\ActivityCategory $category)
+ * @method static \Database\Factories\DepartmentActivityFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity forDepartment(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity forPeriod(\Carbon\Carbon $start, \Carbon\Carbon $end)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity forUser(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity recent(int $days = 30)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereCategory($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereDurationHours($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereMetrics($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereOutcomes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereParticipants($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereRelatedProjectId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentActivity withoutTrashed()
+ * @mixin \Eloquent
+ */
 class DepartmentActivity extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity, ClearsCache;
@@ -60,7 +118,7 @@ class DepartmentActivity extends Model
     protected static function boot(): void
     {
         parent::boot();
-        static::creating(fn($m) => $m->uuid = $m->uuid ?? (string) Str::uuid());
+        static::creating(fn($m) => $m->uuid ??= (string) Str::uuid());
     }
 
     public function getRouteKeyName(): string
@@ -146,7 +204,7 @@ class DepartmentActivity extends Model
     public function removeParticipant(int $userId): self
     {
         $participants = $this->participants ?? [];
-        $this->participants = array_values(array_filter($participants, fn($id) => $id !== $userId));
+        $this->participants = array_values(array_filter($participants, fn($id): bool => $id !== $userId));
         $this->save();
         return $this;
     }

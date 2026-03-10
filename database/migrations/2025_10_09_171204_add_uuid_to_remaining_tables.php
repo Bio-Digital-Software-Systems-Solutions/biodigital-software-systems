@@ -32,7 +32,7 @@ return new class extends Migration
         // Add nullable UUID columns
         foreach ($tables as $table) {
             if (Schema::hasTable($table) && ! Schema::hasColumn($table, 'uuid')) {
-                Schema::table($table, function (Blueprint $table) {
+                Schema::table($table, function (Blueprint $table): void {
                     $table->uuid('uuid')->nullable()->after('id');
                 });
             }
@@ -43,7 +43,7 @@ return new class extends Migration
             if (Schema::hasTable($table)) {
                 $modelClass = $this->getModelClass($table);
                 if (class_exists($modelClass)) {
-                    $modelClass::whereNull('uuid')->each(function ($model) {
+                    $modelClass::whereNull('uuid')->each(function ($model): void {
                         $model->uuid = (string) Str::uuid();
                         $model->save();
                     });
@@ -54,7 +54,7 @@ return new class extends Migration
         // Make UUID unique and not nullable
         foreach ($tables as $table) {
             if (Schema::hasTable($table) && Schema::hasColumn($table, 'uuid')) {
-                Schema::table($table, function (Blueprint $table) {
+                Schema::table($table, function (Blueprint $table): void {
                     $table->uuid('uuid')->unique()->nullable(false)->change();
                 });
             }
@@ -84,7 +84,7 @@ return new class extends Migration
 
         foreach ($tables as $table) {
             if (Schema::hasTable($table) && Schema::hasColumn($table, 'uuid')) {
-                Schema::table($table, function (Blueprint $table) {
+                Schema::table($table, function (Blueprint $table): void {
                     $table->dropColumn('uuid');
                 });
             }

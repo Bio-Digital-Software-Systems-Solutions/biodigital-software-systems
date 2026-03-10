@@ -4,19 +4,78 @@ namespace App\Models;
 
 use App\Enums\Report\TrendDirection;
 use App\Traits\ClearsCache;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $department_id
+ * @property string $name
+ * @property string|null $description
+ * @property string $unit
+ * @property numeric $target_value
+ * @property numeric|null $warning_threshold
+ * @property numeric|null $critical_threshold
+ * @property TrendDirection $trend_direction
+ * @property string|null $calculation_method
+ * @property string|null $data_source
+ * @property bool $is_active
+ * @property int $display_order
+ * @property array<array-key, mixed>|null $config
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\Department $department
+ * @property-read float|null $current_value
+ * @property-read string $performance_status
+ * @property-read string $trend_direction_label
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentKpiValue> $values
+ * @property-read int|null $values_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi active()
+ * @method static \Database\Factories\DepartmentKpiFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi forDepartment(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi ordered()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereCalculationMethod($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereConfig($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereCriticalThreshold($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereDataSource($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereDisplayOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereTargetValue($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereTrendDirection($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereUnit($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi whereWarningThreshold($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentKpi withoutTrashed()
+ * @mixin \Eloquent
+ */
 class DepartmentKpi extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'uuid',
@@ -63,7 +122,7 @@ class DepartmentKpi extends Model
     protected static function boot(): void
     {
         parent::boot();
-        static::creating(fn($m) => $m->uuid = $m->uuid ?? (string) Str::uuid());
+        static::creating(fn ($m) => $m->uuid ??= (string) Str::uuid());
     }
 
     public function getRouteKeyName(): string
@@ -106,7 +165,9 @@ class DepartmentKpi extends Model
 
     public function getCurrentValueAttribute(): ?float
     {
-        return $this->values()->latest('recorded_at')->first()?->value;
+        $value = $this->values()->latest('recorded_at')->first()?->value;
+
+        return $value !== null ? (float) $value : null;
     }
 
     public function getPerformanceStatusAttribute(): string
@@ -119,18 +180,12 @@ class DepartmentKpi extends Model
         $isHigherBetter = $this->trend_direction === TrendDirection::HIGHER_IS_BETTER;
         $isLowerBetter = $this->trend_direction === TrendDirection::LOWER_IS_BETTER;
 
-        if ($this->critical_threshold !== null) {
-            if (($isHigherBetter && $current < $this->critical_threshold) ||
-                ($isLowerBetter && $current > $this->critical_threshold)) {
-                return 'critical';
-            }
+        if ($this->critical_threshold !== null && ($isHigherBetter && $current < $this->critical_threshold || $isLowerBetter && $current > $this->critical_threshold)) {
+            return 'critical';
         }
 
-        if ($this->warning_threshold !== null) {
-            if (($isHigherBetter && $current < $this->warning_threshold) ||
-                ($isLowerBetter && $current > $this->warning_threshold)) {
-                return 'warning';
-            }
+        if ($this->warning_threshold !== null && ($isHigherBetter && $current < $this->warning_threshold || $isLowerBetter && $current > $this->warning_threshold)) {
+            return 'warning';
         }
 
         if ($this->trend_direction === TrendDirection::TARGET_IS_BEST) {

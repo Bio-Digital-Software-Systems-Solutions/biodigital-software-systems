@@ -40,7 +40,7 @@ class PastoralCareFactory extends Factory
             'appointment_time' => $appointmentDateTime,
             'duration_minutes' => $this->faker->randomElement([30, 45, 60, 90, 120]),
             'location_type' => $this->faker->randomElement(['in_person', 'zoom', 'hybrid']),
-            'zoom_link' => function (array $attributes) {
+            'zoom_link' => function (array $attributes): ?string {
                 if (in_array($attributes['location_type'], ['zoom', 'hybrid'])) {
                     return 'https://zoom.us/j/' . $this->faker->numerify('#########');
                 }
@@ -81,7 +81,7 @@ class PastoralCareFactory extends Factory
      */
     public function pending(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'pending',
             'cancelled_at' => null,
             'cancellation_reason' => null,
@@ -94,7 +94,7 @@ class PastoralCareFactory extends Factory
      */
     public function confirmed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'confirmed',
             'cancelled_at' => null,
             'cancellation_reason' => null,
@@ -107,7 +107,7 @@ class PastoralCareFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'completed',
             'cancelled_at' => null,
             'cancellation_reason' => null,
@@ -121,7 +121,7 @@ class PastoralCareFactory extends Factory
      */
     public function cancelled(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => 'cancelled',
             'cancelled_at' => $this->faker->dateTimeBetween('-1 week', 'now'),
             'cancellation_reason' => $this->faker->sentence(),
@@ -134,7 +134,7 @@ class PastoralCareFactory extends Factory
      */
     public function today(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'appointment_date' => Carbon::today(),
             'appointment_time' => Carbon::today()
                 ->setHour($this->faker->numberBetween(9, 16))
@@ -149,7 +149,7 @@ class PastoralCareFactory extends Factory
     {
         $pastDate = $this->faker->dateTimeBetween('-1 month', '-1 day');
 
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'appointment_date' => $pastDate->format('Y-m-d'),
             'appointment_time' => Carbon::instance($pastDate)
                 ->setHour($this->faker->numberBetween(9, 16))
@@ -162,7 +162,7 @@ class PastoralCareFactory extends Factory
      */
     public function zoom(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'location_type' => 'zoom',
             'zoom_link' => 'https://zoom.us/j/' . $this->faker->numerify('#########'),
         ]);
@@ -173,7 +173,7 @@ class PastoralCareFactory extends Factory
      */
     public function inPerson(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'location_type' => 'in_person',
             'zoom_link' => null,
         ]);
@@ -184,7 +184,7 @@ class PastoralCareFactory extends Factory
      */
     public function hybrid(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'location_type' => 'hybrid',
             'zoom_link' => 'https://zoom.us/j/' . $this->faker->numerify('#########'),
         ]);

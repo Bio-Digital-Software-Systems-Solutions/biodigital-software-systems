@@ -31,13 +31,13 @@ class EventController extends Controller
      */
     public function index(Request $request): Response
     {
-        $page = $request->get('page', 1);
+        $request->get('page', 1);
         $search = $request->get('search');
 
         $query = Event::with(['creator', 'address', 'participants']);
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhere('location', 'like', "%{$search}%");
@@ -108,7 +108,7 @@ class EventController extends Controller
         }
 
         $address = null;
-        if ($request->has('address') && ! empty(array_filter($request->address))) {
+        if ($request->has('address') && array_filter($request->address) !== []) {
             $address = Address::create($request->address);
         }
 
@@ -146,7 +146,7 @@ class EventController extends Controller
         $event->load(['creator', 'address', 'participants', 'programme', 'media' => fn ($q) => $q->ordered()]);
 
         // Filter out media without existing files
-        $mediaWithFiles = $event->media->filter(fn ($m) => $m->fileExists());
+        $mediaWithFiles = $event->media->filter(fn ($m): bool => $m->fileExists());
         $event->setRelation('media', $mediaWithFiles);
 
         $user = Auth::user();
@@ -183,7 +183,7 @@ class EventController extends Controller
         $event->load(['address', 'participants', 'programme', 'media' => fn ($q) => $q->ordered()]);
 
         // Filter out media without existing files
-        $mediaWithFiles = $event->media->filter(fn ($m) => $m->fileExists());
+        $mediaWithFiles = $event->media->filter(fn ($m): bool => $m->fileExists());
         $event->setRelation('media', $mediaWithFiles);
 
         $programme = $event->programme;
@@ -246,7 +246,7 @@ class EventController extends Controller
             $validated['avatar'] = 'events/avatars/'.$request->avatar;
         }
 
-        if ($request->has('address') && ! empty(array_filter($request->address))) {
+        if ($request->has('address') && array_filter($request->address) !== []) {
             if ($event->address) {
                 $event->address->update($request->address);
             } else {
@@ -311,7 +311,7 @@ class EventController extends Controller
 
         if ($event->participants->contains($user)) {
             // Leave the event
-            DB::transaction(function () use ($event, $user) {
+            DB::transaction(function () use ($event, $user): void {
                 $event->participants()->detach($user);
                 $this->cancelRegistration($event, $user);
             });
@@ -321,7 +321,7 @@ class EventController extends Controller
                 return back()->with('error', 'L\'événement est complet.');
             }
             // Join the event
-            DB::transaction(function () use ($event, $user) {
+            DB::transaction(function () use ($event, $user): void {
                 $event->participants()->attach($user);
                 $this->createRegistration($event, $user);
             });
@@ -359,7 +359,7 @@ class EventController extends Controller
         }
 
         // Join the event with registration
-        DB::transaction(function () use ($event, $user) {
+        DB::transaction(function () use ($event, $user): void {
             $event->participants()->attach($user);
             $this->createRegistration($event, $user);
         });
@@ -390,7 +390,7 @@ class EventController extends Controller
         }
 
         // Leave the event with registration cancellation
-        DB::transaction(function () use ($event, $user) {
+        DB::transaction(function () use ($event, $user): void {
             $event->participants()->detach($user);
             $this->cancelRegistration($event, $user);
         });

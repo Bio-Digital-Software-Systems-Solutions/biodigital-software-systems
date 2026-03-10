@@ -10,6 +10,44 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $need_id
+ * @property int $uploaded_by
+ * @property string $filename
+ * @property string $original_filename
+ * @property string $mime_type
+ * @property int $size
+ * @property string $path
+ * @property string $disk
+ * @property string $type
+ * @property string|null $description
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\DepartmentNeed $need
+ * @property-read \App\Models\User $uploader
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereDisk($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereFilename($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereMimeType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereNeedId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereOriginalFilename($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment wherePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereSize($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereUploadedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|NeedAttachment whereUuid($value)
+ * @mixin \Eloquent
+ */
 class NeedAttachment extends Model
 {
     use HasFactory, LogsActivity;
@@ -36,13 +74,13 @@ class NeedAttachment extends Model
     {
         parent::boot();
 
-        static::creating(function (self $model) {
+        static::creating(function (self $model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
         });
 
-        static::deleting(function (self $model) {
+        static::deleting(function (self $model): void {
             // Delete the file when the attachment is deleted
             $model->deleteFile();
         });

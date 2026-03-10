@@ -6,8 +6,8 @@ use App\Traits\ClearsCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -19,6 +19,8 @@ use Spatie\Activitylog\LogOptions;
  * @property int $imageable_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read float|null $aspect_ratio
  * @property-read string $dimensions
  * @property-read string $extension
@@ -44,13 +46,11 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image whereOriginalName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image whereSize($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image whereUpdatedAt($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
  * @mixin \Eloquent
  */
 class Image extends Model
 {
-    use HasFactory, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -62,6 +62,7 @@ class Image extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -114,7 +115,7 @@ class Image extends Model
     public function getFullUrlAttribute(): string
     {
         if ($this->url) {
-            return $this->url;
+            return (string) $this->url;
         }
 
         return asset('storage/'.$this->path);
@@ -126,18 +127,23 @@ class Image extends Model
     public function getFormattedSizeAttribute(): string
     {
         $bytes = $this->size;
-
         if ($bytes >= 1073741824) {
             return number_format($bytes / 1073741824, 2).' GB';
-        } elseif ($bytes >= 1048576) {
+        }
+        if ($bytes >= 1048576) {
             return number_format($bytes / 1048576, 2).' MB';
-        } elseif ($bytes >= 1024) {
+        }
+        if ($bytes >= 1024) {
             return number_format($bytes / 1024, 2).' KB';
-        } elseif ($bytes > 1) {
+        }
+        if ($bytes > 1) {
             return $bytes.' bytes';
-        } elseif ($bytes == 1) {
+        }
+
+        if ($bytes == 1) {
             return $bytes.' byte';
-        } else {
+        }
+        else {
             return '0 bytes';
         }
     }

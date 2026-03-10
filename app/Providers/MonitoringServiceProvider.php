@@ -55,17 +55,15 @@ class MonitoringServiceProvider extends ServiceProvider
         }
 
         // Track slow queries
-        DB::listen(function (QueryExecuted $query) {
+        DB::listen(function (QueryExecuted $query): void {
             $threshold = config('monitoring.newrelic.slow_sql_threshold', 0.1) * 1000;
 
             if ($query->time > $threshold && function_exists('newrelic_record_datastore_segment')) {
-                newrelic_record_datastore_segment(function () use ($query) {
-                    return [
-                        'sql' => $query->sql,
-                        'bindings' => $query->bindings,
-                        'time' => $query->time,
-                    ];
-                });
+                newrelic_record_datastore_segment(fn(): array => [
+                    'sql' => $query->sql,
+                    'bindings' => $query->bindings,
+                    'time' => $query->time,
+                ]);
             }
         });
     }
@@ -101,7 +99,7 @@ class MonitoringServiceProvider extends ServiceProvider
 
         // Track slow queries
         if (config('monitoring.metrics.track.queries')) {
-            DB::listen(function (QueryExecuted $query) {
+            DB::listen(function (QueryExecuted $query): void {
                 $threshold = config('monitoring.metrics.thresholds.slow_query', 100);
 
                 if ($query->time > $threshold) {
@@ -117,7 +115,7 @@ class MonitoringServiceProvider extends ServiceProvider
 
         // Track request performance
         if (config('monitoring.metrics.track.requests')) {
-            Event::listen(RequestHandled::class, function (RequestHandled $event) {
+            Event::listen(RequestHandled::class, function (RequestHandled $event): void {
                 $duration = microtime(true) - LARAVEL_START;
                 $durationMs = $duration * 1000;
                 $threshold = config('monitoring.metrics.thresholds.slow_request', 1000);
@@ -135,7 +133,7 @@ class MonitoringServiceProvider extends ServiceProvider
 
         // Track memory usage
         if (config('monitoring.metrics.track.memory')) {
-            register_shutdown_function(function () {
+            register_shutdown_function(function (): void {
                 $memoryMB = memory_get_peak_usage(true) / 1024 / 1024;
                 $threshold = config('monitoring.metrics.thresholds.high_memory', 128);
 

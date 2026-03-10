@@ -173,7 +173,7 @@ class SchedulingAvailabilityTest extends TestCase
         $service = app(AvailabilityService::class);
 
         // Set Monday as available
-        $availability = $service->setAvailability(
+        $service->setAvailability(
             $this->employee,
             $this->department->id,
             Carbon::parse('2026-01-19'), // Monday
@@ -488,8 +488,7 @@ class SchedulingAvailabilityTest extends TestCase
             $date,
             AvailabilityStatus::AVAILABLE,
             '09:00',
-            '17:00',
-            null
+            '17:00'
         );
 
         $this->assertNull($availability->notes);

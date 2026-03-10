@@ -94,7 +94,7 @@ class AppointmentTimezoneTest extends TestCase
 
         foreach ($slots as $slot) {
             // Extract date from start_datetime
-            $slotDate = substr($slot['start_datetime'], 0, 10);
+            $slotDate = substr((string) $slot['start_datetime'], 0, 10);
             $this->assertEquals(
                 $tomorrow,
                 $slotDate,
@@ -121,8 +121,8 @@ class AppointmentTimezoneTest extends TestCase
 
         foreach ($slots as $slot) {
             // Extract time from start_datetime (e.g., "2026-01-12T11:00:00" -> "11:00")
-            $startTime = substr($slot['start_datetime'], 11, 5);
-            $endTime = substr($slot['end_datetime'], 11, 5);
+            $startTime = substr((string) $slot['start_datetime'], 11, 5);
+            $endTime = substr((string) $slot['end_datetime'], 11, 5);
             $expectedFormattedTime = $startTime . ' - ' . $endTime;
 
             $this->assertEquals(
@@ -193,7 +193,7 @@ class AppointmentTimezoneTest extends TestCase
         foreach ($testDurations as $duration) {
             $slots = Appointment::getAvailableSlots($tomorrow, $duration, '10:00', '12:00');
 
-            if (empty($slots)) {
+            if ($slots === []) {
                 continue;
             }
 
@@ -220,8 +220,8 @@ class AppointmentTimezoneTest extends TestCase
         $this->assertNotEmpty($slots);
 
         foreach ($slots as $slot) {
-            $startTime = substr($slot['start_datetime'], 11, 5);
-            $endTime = substr($slot['end_datetime'], 11, 5);
+            $startTime = substr((string) $slot['start_datetime'], 11, 5);
+            $endTime = substr((string) $slot['end_datetime'], 11, 5);
 
             // Start time should be >= 09:00
             $this->assertGreaterThanOrEqual('09:00', $startTime);

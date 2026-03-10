@@ -15,6 +15,78 @@ use Carbon\Carbon;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $department_id
+ * @property int|null $parent_id
+ * @property int|null $assigned_to
+ * @property string $title
+ * @property string|null $description
+ * @property ObjectiveStatus $status
+ * @property Priority $priority
+ * @property int $progress_percentage
+ * @property \Illuminate\Support\Carbon|null $target_date
+ * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property \Illuminate\Support\Carbon $period_start
+ * @property \Illuminate\Support\Carbon $period_end
+ * @property array<array-key, mixed>|null $key_results
+ * @property array<array-key, mixed>|null $success_criteria
+ * @property array<array-key, mixed>|null $blockers
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\User|null $assignee
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, DepartmentObjective> $children
+ * @property-read int|null $children_count
+ * @property-read \App\Models\Department $department
+ * @property-read int|null $days_remaining
+ * @property-read bool $is_overdue
+ * @property-read string $priority_label
+ * @property-read string $status_color
+ * @property-read string $status_icon
+ * @property-read string $status_label
+ * @property-read DepartmentObjective|null $parent
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective completed()
+ * @method static \Database\Factories\DepartmentObjectiveFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective forDepartment(int $id)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective forPeriod(\Carbon\Carbon $start, \Carbon\Carbon $end)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective overdue()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective rootLevel()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereAssignedTo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereBlockers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereDepartmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereKeyResults($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereParentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective wherePeriodEnd($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective wherePeriodStart($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective wherePriority($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereProgressPercentage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereSuccessCriteria($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereTargetDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective withStatus(\App\Enums\Report\ObjectiveStatus $status)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DepartmentObjective withoutTrashed()
+ * @mixin \Eloquent
+ */
 class DepartmentObjective extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity, ClearsCache;
@@ -72,7 +144,7 @@ class DepartmentObjective extends Model
     protected static function boot(): void
     {
         parent::boot();
-        static::creating(fn($m) => $m->uuid = $m->uuid ?? (string) Str::uuid());
+        static::creating(fn($m) => $m->uuid ??= (string) Str::uuid());
     }
 
     public function getRouteKeyName(): string

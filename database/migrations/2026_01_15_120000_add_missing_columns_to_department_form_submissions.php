@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('department_form_submissions', function (Blueprint $table) {
+        Schema::table('department_form_submissions', function (Blueprint $table): void {
             if (!Schema::hasColumn('department_form_submissions', 'workflow_instance_id')) {
                 $table->foreignId('workflow_instance_id')->nullable()->after('user_id')->constrained('workflow_instances')->onDelete('set null');
             }
@@ -32,7 +32,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('department_form_submissions', function (Blueprint $table) {
+        Schema::table('department_form_submissions', function (Blueprint $table): void {
             $table->dropForeign(['workflow_instance_id']);
             $table->dropForeign(['step_instance_id']);
             $table->dropColumn([

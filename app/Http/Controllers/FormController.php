@@ -40,7 +40,7 @@ class FormController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
             });
@@ -243,7 +243,7 @@ class FormController extends Controller
         ]);
 
         try {
-            DB::transaction(function () use ($form, $rawFields) {
+            DB::transaction(function () use ($form, $rawFields): void {
                 // Delete existing fields (cascade will handle nested fields)
                 $form->fields()->delete();
 
@@ -334,7 +334,7 @@ class FormController extends Controller
             $field = FormField::create($filteredData);
 
             // Recursively create children
-            if (! empty($children)) {
+            if ($children !== []) {
                 $this->createFieldsRecursively($formId, $children, $field->id);
             }
         }
@@ -542,7 +542,7 @@ class FormController extends Controller
         } catch (\Throwable $e) {
             \Log::error('Share link generation failed: '.$e->getMessage(), [
                 'form_id' => $form->id ?? 'unknown',
-                'exception_class' => get_class($e),
+                'exception_class' => $e::class,
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -560,7 +560,7 @@ class FormController extends Controller
     {
         $shareLink = FormShareLink::findValidByToken($token);
 
-        if (! $shareLink) {
+        if (!$shareLink instanceof \App\Models\FormShareLink) {
             return Inertia::render('Forms/SharedExpired', [
                 'message' => 'Ce lien de partage est invalide ou a expiré.',
             ]);
@@ -598,7 +598,7 @@ class FormController extends Controller
             // Validate the share link
             $shareLink = FormShareLink::findValidByToken($token);
 
-            if (! $shareLink) {
+            if (!$shareLink instanceof \App\Models\FormShareLink) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Ce lien de partage est invalide ou a expiré.',

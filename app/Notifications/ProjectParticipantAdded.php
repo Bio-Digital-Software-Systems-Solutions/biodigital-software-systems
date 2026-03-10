@@ -13,18 +13,11 @@ class ProjectParticipantAdded extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public Project $project;
-    public string $role;
-    public User $addedBy;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(Project $project, string $role, User $addedBy)
+    public function __construct(public Project $project, public string $role, public User $addedBy)
     {
-        $this->project = $project;
-        $this->role = $role;
-        $this->addedBy = $addedBy;
     }
 
     /**
@@ -63,7 +56,7 @@ class ProjectParticipantAdded extends Notification implements ShouldQueue
                 $dates .= "Début : " . $this->project->start_date->format('d/m/Y');
             }
             if ($this->project->end_date) {
-                $dates .= ($dates ? ' - ' : '') . "Fin : " . $this->project->end_date->format('d/m/Y');
+                $dates .= ($dates !== '' && $dates !== '0' ? ' - ' : '') . "Fin : " . $this->project->end_date->format('d/m/Y');
             }
             $mailMessage->line("**Dates :** {$dates}");
         }

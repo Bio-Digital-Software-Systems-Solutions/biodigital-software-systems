@@ -17,6 +17,22 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property string|null $native_name
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
+ * @property-read int|null $users_count
+ * @method static \Database\Factories\SpokenLanguageFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpokenLanguage newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpokenLanguage newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpokenLanguage query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpokenLanguage whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpokenLanguage whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpokenLanguage whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpokenLanguage whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpokenLanguage whereNativeName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpokenLanguage whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SpokenLanguage whereUuid($value)
+ * @mixin \Eloquent
  */
 class SpokenLanguage extends Model
 {
@@ -38,7 +54,7 @@ class SpokenLanguage extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }

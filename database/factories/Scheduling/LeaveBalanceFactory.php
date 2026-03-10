@@ -29,28 +29,28 @@ class LeaveBalanceFactory extends Factory
 
     public function forYear(int $year): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'year' => $year,
         ]);
     }
 
     public function vacation(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'leave_type' => AbsenceType::VACATION->value,
         ]);
     }
 
     public function sick(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'leave_type' => AbsenceType::SICK->value,
         ]);
     }
 
     public function withFullEntitlement(float $days = 25): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'entitled_days' => $days,
             'taken_days' => 0,
             'pending_days' => 0,
@@ -60,7 +60,7 @@ class LeaveBalanceFactory extends Factory
 
     public function exhausted(): static
     {
-        return $this->state(function (array $attributes) {
+        return $this->state(function (array $attributes): array {
             $entitled = $attributes['entitled_days'] ?? 25;
             return [
                 'entitled_days' => $entitled,

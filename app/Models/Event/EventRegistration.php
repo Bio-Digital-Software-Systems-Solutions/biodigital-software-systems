@@ -19,9 +19,115 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property string $registration_number
+ * @property int $event_id
+ * @property int|null $user_id
+ * @property int|null $ticket_id
+ * @property int|null $promo_code_id
+ * @property string $first_name
+ * @property string $last_name
+ * @property string $email
+ * @property string|null $phone
+ * @property string|null $company
+ * @property string|null $job_title
+ * @property RegistrationStatus $status
+ * @property ParticipantRole $participant_role
+ * @property int $quantity
+ * @property numeric $unit_price
+ * @property numeric $discount_amount
+ * @property numeric $total_amount
+ * @property string $currency
+ * @property array<array-key, mixed>|null $form_answers
+ * @property array<array-key, mixed>|null $dietary_requirements
+ * @property array<array-key, mixed>|null $accessibility_needs
+ * @property string|null $special_requests
+ * @property array<array-key, mixed>|null $metadata
+ * @property string|null $qr_code
+ * @property \Illuminate\Support\Carbon|null $registered_at
+ * @property \Illuminate\Support\Carbon|null $confirmed_at
+ * @property \Illuminate\Support\Carbon|null $cancelled_at
+ * @property string|null $cancellation_reason
+ * @property int|null $cancelled_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \App\Models\Event\EventBadge|null $badge
+ * @property-read User|null $cancelledByUser
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event\EventCheckin> $checkins
+ * @property-read int|null $checkins_count
+ * @property-read Event $event
+ * @property-read string $formatted_total
+ * @property-read string $full_name
+ * @property-read bool $is_cancelled
+ * @property-read bool $is_checked_in
+ * @property-read bool $is_confirmed
+ * @property-read bool $is_pending
+ * @property-read bool $is_waitlisted
+ * @property-read \App\Models\Event\EventCheckin|null $last_checkin
+ * @property-read \App\Models\Event\RegistrationPayment|null $latestPayment
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event\RegistrationPayment> $payments
+ * @property-read int|null $payments_count
+ * @property-read \App\Models\Event\EventPromoCode|null $promoCode
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event\EventSession> $sessions
+ * @property-read int|null $sessions_count
+ * @property-read \App\Models\Event\EventTicket|null $ticket
+ * @property-read User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration checkedIn()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration confirmed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration forEvent(int $eventId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration waitlisted()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereAccessibilityNeeds($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereCancellationReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereCancelledAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereCancelledBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereCompany($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereConfirmedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereCurrency($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereDietaryRequirements($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereDiscountAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereEventId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereFirstName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereFormAnswers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereJobTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereLastName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereParticipantRole($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration wherePhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration wherePromoCodeId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereQrCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereQuantity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereRegisteredAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereRegistrationNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereSpecialRequests($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereTicketId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereTotalAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereUnitPrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration whereUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EventRegistration withoutTrashed()
+ * @mixin \Eloquent
+ */
 class EventRegistration extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache, SoftDeletes;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'registration_number',
@@ -86,7 +192,7 @@ class EventRegistration extends Model
     {
         parent::boot();
 
-        static::creating(function ($registration) {
+        static::creating(function ($registration): void {
             if (empty($registration->registration_number)) {
                 $registration->registration_number = static::generateRegistrationNumber();
             }
@@ -225,7 +331,7 @@ class EventRegistration extends Model
             return 'Gratuit';
         }
 
-        return number_format($this->total_amount, 2, ',', ' ') . ' ' . $this->currency;
+        return number_format($this->total_amount, 2, ',', ' ').' '.$this->currency;
     }
 
     public function getLastCheckinAttribute(): ?EventCheckin
@@ -237,7 +343,7 @@ class EventRegistration extends Model
 
     public function confirm(): bool
     {
-        if (!$this->status->canCheckIn() && $this->status !== RegistrationStatus::PENDING) {
+        if (! $this->status->canCheckIn() && $this->status !== RegistrationStatus::PENDING) {
             return false;
         }
 
@@ -251,7 +357,7 @@ class EventRegistration extends Model
 
     public function cancel(?string $reason = null, ?int $cancelledBy = null): bool
     {
-        if (!$this->status->canCancel()) {
+        if (! $this->status->canCancel()) {
             return false;
         }
 
@@ -298,7 +404,7 @@ class EventRegistration extends Model
 
     public function promoteFromWaitlist(): bool
     {
-        if (!$this->status->canBePromoted()) {
+        if (! $this->status->canBePromoted()) {
             return false;
         }
 
@@ -330,7 +436,7 @@ class EventRegistration extends Model
     public function generateQrCodeImage(): string
     {
         // Returns the data to be encoded in QR code
-        return json_encode([
+        return (string) json_encode([
             'type' => 'event_registration',
             'code' => $this->qr_code,
             'event_id' => $this->event_id,
@@ -343,7 +449,7 @@ class EventRegistration extends Model
     public static function generateRegistrationNumber(): string
     {
         do {
-            $number = 'REG-' . strtoupper(Str::random(8));
+            $number = 'REG-'.strtoupper(Str::random(8));
         } while (static::where('registration_number', $number)->exists());
 
         return $number;

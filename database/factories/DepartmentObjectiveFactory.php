@@ -52,7 +52,7 @@ class DepartmentObjectiveFactory extends Factory
      */
     public function forDepartment(Department $department): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'department_id' => $department->id,
         ]);
     }
@@ -62,7 +62,7 @@ class DepartmentObjectiveFactory extends Factory
      */
     public function assignedTo(User $user): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'assigned_to' => $user->id,
         ]);
     }
@@ -72,7 +72,7 @@ class DepartmentObjectiveFactory extends Factory
      */
     public function withStatus(ObjectiveStatus $status): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => $status,
             'completed_at' => $status === ObjectiveStatus::COMPLETED ? now() : null,
             'progress_percentage' => $status === ObjectiveStatus::COMPLETED ? 100 : $attributes['progress_percentage'],
@@ -84,7 +84,7 @@ class DepartmentObjectiveFactory extends Factory
      */
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ObjectiveStatus::COMPLETED,
             'progress_percentage' => 100,
             'completed_at' => now(),
@@ -96,7 +96,7 @@ class DepartmentObjectiveFactory extends Factory
      */
     public function inProgress(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ObjectiveStatus::IN_PROGRESS,
             'progress_percentage' => fake()->numberBetween(20, 80),
         ]);
@@ -107,7 +107,7 @@ class DepartmentObjectiveFactory extends Factory
      */
     public function atRisk(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'status' => ObjectiveStatus::AT_RISK,
         ]);
     }
@@ -117,7 +117,7 @@ class DepartmentObjectiveFactory extends Factory
      */
     public function overdue(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'target_date' => now()->subDays(fake()->numberBetween(1, 30)),
             'status' => ObjectiveStatus::IN_PROGRESS,
         ]);
@@ -128,7 +128,7 @@ class DepartmentObjectiveFactory extends Factory
      */
     public function forPeriod(Carbon $start, Carbon $end): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'period_start' => $start,
             'period_end' => $end,
             'target_date' => fake()->dateTimeBetween($start, $end),
@@ -140,7 +140,7 @@ class DepartmentObjectiveFactory extends Factory
      */
     public function withParent(DepartmentObjective $parent): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'parent_id' => $parent->id,
             'department_id' => $parent->department_id,
         ]);
@@ -151,7 +151,7 @@ class DepartmentObjectiveFactory extends Factory
      */
     public function withKeyResults(array $keyResults): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn (array $attributes): array => [
             'key_results' => $keyResults,
         ]);
     }

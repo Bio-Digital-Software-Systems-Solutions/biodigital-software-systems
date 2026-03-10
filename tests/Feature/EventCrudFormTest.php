@@ -35,7 +35,7 @@ class EventCrudFormTest extends TestCase
         $memberRole->givePermissionTo(['view events']);
     }
 
-    public function test_create_form_displays_correctly()
+    public function test_create_form_displays_correctly(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -43,11 +43,11 @@ class EventCrudFormTest extends TestCase
         $response = $this->actingAs($user)->get('/events/create');
 
         $response->assertStatus(200)
-            ->assertInertia(fn (Assert $page) => $page->component('Events/Create')
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Events/Create')
             );
     }
 
-    public function test_edit_form_displays_with_event_data()
+    public function test_edit_form_displays_with_event_data(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -73,7 +73,7 @@ class EventCrudFormTest extends TestCase
         $response = $this->actingAs($user)->get("/events/{$event->uuid}/edit");
 
         $response->assertStatus(200)
-            ->assertInertia(fn (Assert $page) => $page->component('Events/Edit')
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Events/Edit')
                 ->has('event')
                 ->where('event.title', 'Test Event')
                 ->where('event.description', 'Test Description')
@@ -87,7 +87,7 @@ class EventCrudFormTest extends TestCase
             );
     }
 
-    public function test_create_form_submission_with_complete_data()
+    public function test_create_form_submission_with_complete_data(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -130,7 +130,7 @@ class EventCrudFormTest extends TestCase
         ]);
     }
 
-    public function test_create_form_submission_with_minimal_data()
+    public function test_create_form_submission_with_minimal_data(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -157,7 +157,7 @@ class EventCrudFormTest extends TestCase
         ]);
     }
 
-    public function test_edit_form_submission_updates_event()
+    public function test_edit_form_submission_updates_event(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -211,7 +211,7 @@ class EventCrudFormTest extends TestCase
         ]);
     }
 
-    public function test_form_validation_errors_are_displayed()
+    public function test_form_validation_errors_are_displayed(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -238,7 +238,7 @@ class EventCrudFormTest extends TestCase
         $response->assertSessionHasErrors(['title', 'end_date', 'status']);
     }
 
-    public function test_date_time_formatting_in_forms()
+    public function test_date_time_formatting_in_forms(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -252,13 +252,13 @@ class EventCrudFormTest extends TestCase
         $response = $this->actingAs($user)->get("/events/{$event->uuid}/edit");
 
         $response->assertStatus(200)
-            ->assertInertia(fn (Assert $page) => $page->component('Events/Edit')
+            ->assertInertia(fn (Assert $page): \Inertia\Testing\AssertableInertia => $page->component('Events/Edit')
                 ->where('event.start_date', '2024-12-01T10:30:00.000000Z')
                 ->where('event.end_date', '2024-12-01T14:45:00.000000Z')
             );
     }
 
-    public function test_address_toggle_functionality()
+    public function test_address_toggle_functionality(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -310,7 +310,7 @@ class EventCrudFormTest extends TestCase
         ]);
     }
 
-    public function test_public_private_event_setting()
+    public function test_public_private_event_setting(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -348,7 +348,7 @@ class EventCrudFormTest extends TestCase
         ]);
     }
 
-    public function test_max_participants_validation()
+    public function test_max_participants_validation(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -384,7 +384,7 @@ class EventCrudFormTest extends TestCase
         $response->assertSessionHasErrors(['max_participants']);
     }
 
-    public function test_event_form_access_permissions()
+    public function test_event_form_access_permissions(): void
     {
         // Test member role cannot access create form
         $member = User::factory()->create();

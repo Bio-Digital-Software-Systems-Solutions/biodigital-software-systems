@@ -50,8 +50,6 @@ class Role extends SpatieRole
 
     /**
      * Custom cache invalidation logic
-     *
-     * @return void
      */
     public function customCacheInvalidation(): void
     {

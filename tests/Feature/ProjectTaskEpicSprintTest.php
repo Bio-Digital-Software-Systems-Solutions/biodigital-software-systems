@@ -28,7 +28,7 @@ class ProjectTaskEpicSprintTest extends TestCase
     }
 
     /** @test */
-    public function can_assign_epic_to_task()
+    public function can_assign_epic_to_task(): void
     {
         $epic = ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -54,7 +54,7 @@ class ProjectTaskEpicSprintTest extends TestCase
     }
 
     /** @test */
-    public function can_assign_both_epic_and_sprint_to_task()
+    public function can_assign_both_epic_and_sprint_to_task(): void
     {
         $epic = ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -88,7 +88,7 @@ class ProjectTaskEpicSprintTest extends TestCase
     }
 
     /** @test */
-    public function can_remove_epic_from_task()
+    public function can_remove_epic_from_task(): void
     {
         $epic = ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -115,7 +115,7 @@ class ProjectTaskEpicSprintTest extends TestCase
     }
 
     /** @test */
-    public function show_page_includes_epics_and_sprints()
+    public function show_page_includes_epics_and_sprints(): void
     {
         // Create and give user permission to view programs (tasks)
         \Spatie\Permission\Models\Permission::create(['name' => 'view programs']);
@@ -155,7 +155,7 @@ class ProjectTaskEpicSprintTest extends TestCase
     }
 
     /** @test */
-    public function epic_must_exist_in_project_tasks_table()
+    public function epic_must_exist_in_project_tasks_table(): void
     {
         $task = ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -172,7 +172,7 @@ class ProjectTaskEpicSprintTest extends TestCase
     }
 
     /** @test */
-    public function sprint_must_exist_in_sprints_table()
+    public function sprint_must_exist_in_sprints_table(): void
     {
         $task = ProjectTask::factory()->create([
             'project_id' => $this->project->id,
@@ -189,7 +189,7 @@ class ProjectTaskEpicSprintTest extends TestCase
     }
 
     /** @test */
-    public function can_create_task_with_epic_and_sprint()
+    public function can_create_task_with_epic_and_sprint(): void
     {
         $epic = ProjectTask::factory()->create([
             'project_id' => $this->project->id,

@@ -28,12 +28,12 @@ class AppointmentControllerTest extends TestCase
         Permission::firstOrCreate(['name' => 'manage appointment participants']);
     }
 
-    public function test_authenticated_user_with_permission_can_view_appointments_index()
+    public function test_authenticated_user_with_permission_can_view_appointments_index(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('view appointments');
 
-        $appointments = Appointment::factory()->count(3)->create();
+        Appointment::factory()->count(3)->create();
 
         $response = $this->actingAs($user)->get(route('appointments.index'));
 
@@ -46,7 +46,7 @@ class AppointmentControllerTest extends TestCase
         $this->assertStringContainsString('stats', $content);
     }
 
-    public function test_user_without_view_permission_cannot_access_appointments_index()
+    public function test_user_without_view_permission_cannot_access_appointments_index(): void
     {
         $user = User::factory()->create();
 
@@ -58,7 +58,7 @@ class AppointmentControllerTest extends TestCase
         $response->assertSessionHas('unauthorized');
     }
 
-    public function test_authenticated_user_with_permission_can_view_create_form()
+    public function test_authenticated_user_with_permission_can_view_create_form(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create appointments');
@@ -73,7 +73,7 @@ class AppointmentControllerTest extends TestCase
         );
     }
 
-    public function test_user_without_create_permission_cannot_access_create_form()
+    public function test_user_without_create_permission_cannot_access_create_form(): void
     {
         $user = User::factory()->create();
 
@@ -85,7 +85,7 @@ class AppointmentControllerTest extends TestCase
         $response->assertSessionHas('unauthorized');
     }
 
-    public function test_authenticated_user_can_create_appointment()
+    public function test_authenticated_user_can_create_appointment(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create appointments');
@@ -121,7 +121,7 @@ class AppointmentControllerTest extends TestCase
         $this->assertTrue($appointment->participants->contains($participant));
     }
 
-    public function test_user_cannot_create_appointment_without_permission()
+    public function test_user_cannot_create_appointment_without_permission(): void
     {
         $user = User::factory()->create();
 
@@ -138,7 +138,7 @@ class AppointmentControllerTest extends TestCase
         $this->assertDatabaseMissing('appointments', ['title' => 'Test Appointment']);
     }
 
-    public function test_appointment_creation_validates_required_fields()
+    public function test_appointment_creation_validates_required_fields(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create appointments');
@@ -148,7 +148,7 @@ class AppointmentControllerTest extends TestCase
         $response->assertSessionHasErrors(['title', 'start_datetime', 'end_datetime', 'type']);
     }
 
-    public function test_appointment_creation_validates_end_time_after_start_time()
+    public function test_appointment_creation_validates_end_time_after_start_time(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create appointments');
@@ -168,7 +168,7 @@ class AppointmentControllerTest extends TestCase
         $response->assertSessionHasErrors(['end_datetime']);
     }
 
-    public function test_authenticated_user_can_view_appointment()
+    public function test_authenticated_user_can_view_appointment(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('view appointments');
@@ -186,7 +186,7 @@ class AppointmentControllerTest extends TestCase
         );
     }
 
-    public function test_user_can_view_other_users_appointment_with_permission()
+    public function test_user_can_view_other_users_appointment_with_permission(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('view appointments');
@@ -199,7 +199,7 @@ class AppointmentControllerTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_authenticated_user_can_view_edit_form_for_own_appointment()
+    public function test_authenticated_user_can_view_edit_form_for_own_appointment(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('edit appointments');
@@ -217,7 +217,7 @@ class AppointmentControllerTest extends TestCase
         );
     }
 
-    public function test_user_cannot_edit_other_users_appointment_without_admin_permission()
+    public function test_user_cannot_edit_other_users_appointment_without_admin_permission(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('edit appointments');
@@ -230,7 +230,7 @@ class AppointmentControllerTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_admin_can_edit_any_appointment()
+    public function test_admin_can_edit_any_appointment(): void
     {
         $admin = User::factory()->create();
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
@@ -245,7 +245,7 @@ class AppointmentControllerTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_authenticated_user_can_update_own_appointment()
+    public function test_authenticated_user_can_update_own_appointment(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('edit appointments');
@@ -274,7 +274,7 @@ class AppointmentControllerTest extends TestCase
         ]);
     }
 
-    public function test_authenticated_user_can_delete_own_appointment()
+    public function test_authenticated_user_can_delete_own_appointment(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('delete appointments');
@@ -287,7 +287,7 @@ class AppointmentControllerTest extends TestCase
         $this->assertDatabaseMissing('appointments', ['id' => $appointment->id]);
     }
 
-    public function test_user_cannot_delete_other_users_appointment()
+    public function test_user_cannot_delete_other_users_appointment(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('delete appointments');
@@ -301,7 +301,7 @@ class AppointmentControllerTest extends TestCase
         $this->assertDatabaseHas('appointments', ['id' => $appointment->id]);
     }
 
-    public function test_admin_can_delete_any_appointment()
+    public function test_admin_can_delete_any_appointment(): void
     {
         $admin = User::factory()->create();
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
@@ -317,7 +317,7 @@ class AppointmentControllerTest extends TestCase
         $this->assertDatabaseMissing('appointments', ['id' => $appointment->id]);
     }
 
-    public function test_user_can_confirm_own_appointment()
+    public function test_user_can_confirm_own_appointment(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('edit appointments');
@@ -333,7 +333,7 @@ class AppointmentControllerTest extends TestCase
         ]);
     }
 
-    public function test_user_can_cancel_own_appointment()
+    public function test_user_can_cancel_own_appointment(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('edit appointments');
@@ -349,7 +349,7 @@ class AppointmentControllerTest extends TestCase
         ]);
     }
 
-    public function test_participant_can_accept_invitation()
+    public function test_participant_can_accept_invitation(): void
     {
         $organizer = User::factory()->create();
         $participant = User::factory()->create();
@@ -367,7 +367,7 @@ class AppointmentControllerTest extends TestCase
         ]);
     }
 
-    public function test_participant_can_decline_invitation()
+    public function test_participant_can_decline_invitation(): void
     {
         $organizer = User::factory()->create();
         $participant = User::factory()->create();
@@ -385,7 +385,7 @@ class AppointmentControllerTest extends TestCase
         ]);
     }
 
-    public function test_appointments_index_can_be_filtered_by_status()
+    public function test_appointments_index_can_be_filtered_by_status(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('view appointments');
@@ -402,7 +402,7 @@ class AppointmentControllerTest extends TestCase
         );
     }
 
-    public function test_appointments_index_can_be_searched()
+    public function test_appointments_index_can_be_searched(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('view appointments');
@@ -420,12 +420,12 @@ class AppointmentControllerTest extends TestCase
         );
     }
 
-    public function test_calendar_view_displays_appointments()
+    public function test_calendar_view_displays_appointments(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('view appointments');
 
-        $appointment = Appointment::factory()->today()->create();
+        Appointment::factory()->today()->create();
 
         $response = $this->actingAs($user)->get(route('appointments.calendar'));
 
@@ -436,7 +436,7 @@ class AppointmentControllerTest extends TestCase
         );
     }
 
-    public function test_create_form_passes_prefilled_data_from_query_parameters()
+    public function test_create_form_passes_prefilled_data_from_query_parameters(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create appointments');
@@ -454,7 +454,7 @@ class AppointmentControllerTest extends TestCase
         );
     }
 
-    public function test_create_form_passes_single_preselected_participant()
+    public function test_create_form_passes_single_preselected_participant(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create appointments');
@@ -475,7 +475,7 @@ class AppointmentControllerTest extends TestCase
         );
     }
 
-    public function test_create_form_passes_multiple_preselected_participants()
+    public function test_create_form_passes_multiple_preselected_participants(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create appointments');
@@ -497,7 +497,7 @@ class AppointmentControllerTest extends TestCase
         );
     }
 
-    public function test_create_form_handles_single_participant_id_as_string()
+    public function test_create_form_handles_single_participant_id_as_string(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create appointments');
@@ -517,7 +517,7 @@ class AppointmentControllerTest extends TestCase
         );
     }
 
-    public function test_create_form_with_complete_prefilled_data_from_agenda_click()
+    public function test_create_form_with_complete_prefilled_data_from_agenda_click(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create appointments');
@@ -541,7 +541,7 @@ class AppointmentControllerTest extends TestCase
         );
     }
 
-    public function test_users_list_excludes_current_user()
+    public function test_users_list_excludes_current_user(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create appointments');
@@ -554,14 +554,14 @@ class AppointmentControllerTest extends TestCase
         $response->assertInertia(fn ($page) =>
             $page->component('Appointments/Create')
                 ->has('users')
-                ->where('users', function ($users) use ($user, $otherUser) {
+                ->where('users', function ($users) use ($user, $otherUser): bool {
                     $userIds = collect($users)->pluck('id')->toArray();
                     return !in_array($user->id, $userIds) && in_array($otherUser->id, $userIds);
                 })
         );
     }
 
-    public function test_preselected_participants_excludes_current_user()
+    public function test_preselected_participants_excludes_current_user(): void
     {
         $user = User::factory()->create();
         $user->givePermissionTo('create appointments');
@@ -579,7 +579,7 @@ class AppointmentControllerTest extends TestCase
                 ->where('prefilledData.participant_ids', [$user->id, $otherUser->id])
                 ->has('preselectedParticipants', 2) // Both users in preselectedParticipants
                 ->has('users') // Current user excluded from users list
-                ->where('users', function ($users) use ($user, $otherUser) {
+                ->where('users', function ($users) use ($user, $otherUser): bool {
                     $userIds = collect($users)->pluck('id')->toArray();
                     return !in_array($user->id, $userIds) && in_array($otherUser->id, $userIds);
                 })

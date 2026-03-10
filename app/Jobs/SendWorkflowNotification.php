@@ -143,7 +143,7 @@ class SendWorkflowNotification implements ShouldQueue
         return $recipients->filter()->unique('id');
     }
 
-    private function sendCustomNotification(WorkflowStepInstance $stepInstance, $recipients, array $config): void
+    private function sendCustomNotification(WorkflowStepInstance $stepInstance, \Illuminate\Support\Collection $recipients, array $config): void
     {
         $subject = $config['subject'] ?? 'Notification Workflow';
         $message = $config['message'] ?? '';

@@ -31,60 +31,130 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $title
+ * @property EventType $type
  * @property string|null $description
+ * @property string|null $avatar
  * @property \Illuminate\Support\Carbon $start_date
  * @property \Illuminate\Support\Carbon $end_date
+ * @property string $timezone
+ * @property \Illuminate\Support\Carbon|null $registration_deadline
+ * @property \Illuminate\Support\Carbon|null $early_bird_deadline
  * @property string|null $location
+ * @property string|null $streaming_url
+ * @property string|null $streaming_platform
  * @property int|null $max_participants
+ * @property int|null $waitlist_capacity
+ * @property bool $waitlist_enabled
+ * @property bool $requires_approval
  * @property bool $is_public
- * @property string $status
+ * @property EventVisibility $visibility
+ * @property EventStatus $status
+ * @property \Illuminate\Database\Eloquent\Collection<int, EventMedia> $images
+ * @property array<array-key, mixed>|null $settings
+ * @property array<array-key, mixed>|null $metadata
+ * @property string $color
  * @property int|null $address_id
  * @property int $user_id
+ * @property int|null $category_id
+ * @property int|null $department_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property string $color
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read \App\Models\Address|null $address
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventMedia> $banners
+ * @property-read int|null $banners_count
+ * @property-read EventCategory|null $category
  * @property-read \App\Models\User $creator
+ * @property-read \App\Models\Department|null $department
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventDocument> $documents
+ * @property-read int|null $documents_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventFeedback> $feedback
+ * @property-read int|null $feedback_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventMedia> $galleryMedia
+ * @property-read int|null $gallery_media_count
  * @property-read int $available_spots
+ * @property-read int $checked_in_count
  * @property-read float $duration_in_hours
+ * @property-read bool $has_early_bird
+ * @property-read bool $is_hybrid
+ * @property-read bool $is_virtual
  * @property-read int|null $participants_count
+ * @property-read int|null $registrations_count
+ * @property-read float $total_revenue
+ * @property-read int|null $waitlist_count
+ * @property-read int|null $images_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventMedia> $media
+ * @property-read int|null $media_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventNotification> $notifications
+ * @property-read int|null $notifications_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $participants
+ * @property-read EventProgramme|null $programme
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventPromoCode> $promoCodes
+ * @property-read int|null $promo_codes_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventRegistration> $registrations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventSession> $sessions
+ * @property-read int|null $sessions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventSponsor> $sponsors
+ * @property-read int|null $sponsors_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventTicket> $tickets
+ * @property-read int|null $tickets_count
  * @property-read \App\Models\User $user
- *
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventMedia> $videos
+ * @property-read int|null $videos_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventWaitlist> $waitlist
  * @method static \Database\Factories\EventFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event inCategory(int $categoryId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event inDepartment(int $departmentId)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event ofType(\App\Enums\Event\EventType $type)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event ongoing()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event past()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event public()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event registrationOpen()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event search(string $search)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event upcoming()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereAddressId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereAvatar($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereCategoryId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereColor($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereDepartmentId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereEarlyBirdDeadline($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereEndDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereImages($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereIsPublic($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereLocation($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereMaxParticipants($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereRegistrationDeadline($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereRequiresApproval($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereSettings($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereStartDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereStreamingPlatform($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereStreamingUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereTimezone($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereUserId($value)
- *
- * @property string $uuid
- * @property string|null $avatar
- * @property array<array-key, mixed>|null $images
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- *
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereAvatar($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereImages($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereUuid($value)
- *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereVisibility($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereWaitlistCapacity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event whereWaitlistEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event withVisibility(\App\Enums\Event\EventVisibility $visibility)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Event withoutTrashed()
  * @mixin \Eloquent
  */
 class Event extends Model
@@ -383,7 +453,7 @@ class Event extends Model
      */
     public function getRegistrationsCountAttribute(): int
     {
-        return $this->registrations()->confirmed()->count();
+        return (int) $this->registrations()->confirmed()->count();
     }
 
     /**
@@ -391,7 +461,7 @@ class Event extends Model
      */
     public function getCheckedInCountAttribute(): int
     {
-        return $this->registrations()->checkedIn()->count();
+        return (int) $this->registrations()->checkedIn()->count();
     }
 
     /**
@@ -399,7 +469,7 @@ class Event extends Model
      */
     public function getWaitlistCountAttribute(): int
     {
-        return $this->waitlist()->waiting()->count();
+        return (int) $this->waitlist()->waiting()->count();
     }
 
     /**
@@ -407,7 +477,7 @@ class Event extends Model
      */
     public function getTotalRevenueAttribute(): float
     {
-        return $this->registrations()
+        return (float) $this->registrations()
             ->whereIn('status', ['confirmed', 'checked_in'])
             ->sum('total_amount');
     }
@@ -499,7 +569,7 @@ class Event extends Model
      */
     public function canBeModifiedBy(?User $user = null): bool
     {
-        if (! $user) {
+        if (!$user instanceof \App\Models\User) {
             return false;
         }
 
@@ -507,13 +577,8 @@ class Event extends Model
         if ($user->hasRole('super-admin')) {
             return true;
         }
-
         // Past events cannot be modified by non-super-admin users
-        if ($this->isPast()) {
-            return false;
-        }
-
-        return true;
+        return !$this->isPast();
     }
 
     /**
@@ -526,13 +591,8 @@ class Event extends Model
         if ($user && $user->hasRole('super-admin')) {
             return true;
         }
-
         // Past events don't allow participation changes
-        if ($this->isPast()) {
-            return false;
-        }
-
-        return true;
+        return !$this->isPast();
     }
 
     // ==================
@@ -571,12 +631,7 @@ class Event extends Model
         if (! $this->isRegistrationOpen()) {
             return false;
         }
-
-        if ($this->hasStarted()) {
-            return false;
-        }
-
-        return true;
+        return !$this->hasStarted();
     }
 
     /**
@@ -660,7 +715,7 @@ class Event extends Model
      */
     public function scopeRegistrationOpen($query)
     {
-        return $query->where(function ($q) {
+        return $query->where(function ($q): void {
             $q->whereNull('registration_deadline')
                 ->orWhere('registration_deadline', '>', now());
         });
@@ -716,7 +771,7 @@ class Event extends Model
      */
     public function scopeSearch($query, string $search)
     {
-        return $query->where(function ($q) use ($search) {
+        return $query->where(function ($q) use ($search): void {
             $q->where('title', 'like', "%{$search}%")
                 ->orWhere('description', 'like', "%{$search}%")
                 ->orWhere('location', 'like', "%{$search}%");
@@ -759,7 +814,7 @@ class Event extends Model
     {
         parent::boot();
 
-        static::creating(function ($event) {
+        static::creating(function ($event): void {
             if (! $event->color) {
                 $event->color = self::generateRandomColor();
             }

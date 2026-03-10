@@ -13,17 +13,11 @@ class TaskAssigned extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public Task $task;
-
-    public ?User $assignedBy;
-
     /**
      * Create a new notification instance.
      */
-    public function __construct(Task $task, ?User $assignedBy = null)
+    public function __construct(public Task $task, public ?User $assignedBy = null)
     {
-        $this->task = $task;
-        $this->assignedBy = $assignedBy;
     }
 
     /**
@@ -41,7 +35,7 @@ class TaskAssigned extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $assignedByName = $this->assignedBy
+        $assignedByName = $this->assignedBy instanceof \App\Models\User
             ? $this->assignedBy->first_name.' '.$this->assignedBy->last_name
             : 'Le système';
 
@@ -80,7 +74,7 @@ class TaskAssigned extends Notification implements ShouldQueue
      */
     public function toDatabase(object $notifiable): array
     {
-        $assignedByName = $this->assignedBy
+        $assignedByName = $this->assignedBy instanceof \App\Models\User
             ? $this->assignedBy->first_name.' '.$this->assignedBy->last_name
             : 'Le système';
 

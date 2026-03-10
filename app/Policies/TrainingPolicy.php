@@ -24,10 +24,11 @@ class TrainingPolicy
         if ($training->is_active) {
             return true;
         }
-
         // Les formations inactives sont visibles par les admins et enseignants
-        return $user->hasAnyRole(['admin', 'super-admin', 'teacher'])
-            || $training->teacher_id === $user->id;
+        if ($user->hasAnyRole(['admin', 'super-admin', 'teacher'])) {
+            return true;
+        }
+        return $training->teacher_id === $user->id;
     }
 
     /**
@@ -44,8 +45,10 @@ class TrainingPolicy
     public function update(User $user, Training $training): bool
     {
         // Seul le professeur assigné ou un admin peut modifier
-        return $user->hasAnyRole(['admin', 'super-admin'])
-            || $training->teacher_id === $user->id;
+        if ($user->hasAnyRole(['admin', 'super-admin'])) {
+            return true;
+        }
+        return $training->teacher_id === $user->id;
     }
 
     /**

@@ -12,7 +12,7 @@ use Spatie\Activitylog\Models\Activity;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
     $this->seed(\Database\Seeders\PastorRoleSeeder::class);
 
@@ -46,7 +46,7 @@ beforeEach(function () {
 
 // ===== Token Generation Tests =====
 
-test('appointment generates confirmation tokens on creation', function () {
+test('appointment generates confirmation tokens on creation', function (): void {
     $appointment = PastoralCare::factory()->create([
         'pastor_id' => $this->pastor->id,
         'client_email' => 'test@example.com',
@@ -61,7 +61,7 @@ test('appointment generates confirmation tokens on creation', function () {
         ->and($appointment->client_confirmation_token)->not->toBe($appointment->pastor_confirmation_token);
 });
 
-test('confirmation tokens are unique per appointment', function () {
+test('confirmation tokens are unique per appointment', function (): void {
     $appointment1 = PastoralCare::factory()->create(['pastor_id' => $this->pastor->id]);
     $appointment2 = PastoralCare::factory()->create(['pastor_id' => $this->pastor->id]);
 
@@ -71,7 +71,7 @@ test('confirmation tokens are unique per appointment', function () {
 
 // ===== Client Confirmation Tests =====
 
-test('client can confirm appointment with valid token', function () {
+test('client can confirm appointment with valid token', function (): void {
     Mail::fake();
 
     $response = $this->postJson('/api/pastoral-care/confirm-by-client', [
@@ -95,7 +95,7 @@ test('client can confirm appointment with valid token', function () {
         ->and($this->appointment->status)->toBe('pending'); // Not fully confirmed yet
 });
 
-test('client cannot confirm with invalid token', function () {
+test('client cannot confirm with invalid token', function (): void {
     // Use a valid-length token that doesn't exist in the database
     $response = $this->postJson('/api/pastoral-care/confirm-by-client', [
         'token' => str_repeat('x', 64), // 64-char token that doesn't exist
@@ -107,7 +107,7 @@ test('client cannot confirm with invalid token', function () {
         ]);
 });
 
-test('client confirmation validates token length', function () {
+test('client confirmation validates token length', function (): void {
     $response = $this->postJson('/api/pastoral-care/confirm-by-client', [
         'token' => 'short_token',
     ]);
@@ -116,7 +116,7 @@ test('client confirmation validates token length', function () {
         ->assertJsonValidationErrors(['token']);
 });
 
-test('client cannot confirm twice', function () {
+test('client cannot confirm twice', function (): void {
     $this->appointment->confirmByClient($this->appointment->client_confirmation_token);
 
     $response = $this->postJson('/api/pastoral-care/confirm-by-client', [
@@ -129,7 +129,7 @@ test('client cannot confirm twice', function () {
         ]);
 });
 
-test('client cannot confirm past appointment', function () {
+test('client cannot confirm past appointment', function (): void {
     $pastAppointment = PastoralCare::factory()->create([
         'pastor_id' => $this->pastor->id,
         'appointment_date' => now()->subDays(1),
@@ -144,7 +144,7 @@ test('client cannot confirm past appointment', function () {
     $response->assertStatus(400);
 });
 
-test('client cannot confirm cancelled appointment', function () {
+test('client cannot confirm cancelled appointment', function (): void {
     $this->appointment->update(['status' => 'cancelled']);
 
     $response = $this->postJson('/api/pastoral-care/confirm-by-client', [
@@ -156,7 +156,7 @@ test('client cannot confirm cancelled appointment', function () {
 
 // ===== Pastor Confirmation Tests =====
 
-test('pastor can confirm appointment with valid token', function () {
+test('pastor can confirm appointment with valid token', function (): void {
     Mail::fake();
 
     $response = $this->postJson('/api/pastoral-care/confirm-by-pastor', [
@@ -180,7 +180,7 @@ test('pastor can confirm appointment with valid token', function () {
         ->and($this->appointment->status)->toBe('pending'); // Not fully confirmed yet
 });
 
-test('pastor cannot confirm with invalid token', function () {
+test('pastor cannot confirm with invalid token', function (): void {
     // Use a valid-length token that doesn't exist in the database
     $response = $this->postJson('/api/pastoral-care/confirm-by-pastor', [
         'token' => str_repeat('y', 64), // 64-char token that doesn't exist
@@ -192,7 +192,7 @@ test('pastor cannot confirm with invalid token', function () {
         ]);
 });
 
-test('pastor confirmation validates token length', function () {
+test('pastor confirmation validates token length', function (): void {
     $response = $this->postJson('/api/pastoral-care/confirm-by-pastor', [
         'token' => 'short_token',
     ]);
@@ -201,7 +201,7 @@ test('pastor confirmation validates token length', function () {
         ->assertJsonValidationErrors(['token']);
 });
 
-test('pastor cannot confirm twice', function () {
+test('pastor cannot confirm twice', function (): void {
     $this->appointment->confirmByPastor($this->appointment->pastor_confirmation_token);
 
     $response = $this->postJson('/api/pastoral-care/confirm-by-pastor', [
@@ -216,7 +216,7 @@ test('pastor cannot confirm twice', function () {
 
 // ===== Dual Confirmation Tests =====
 
-test('appointment is confirmed when both parties confirm', function () {
+test('appointment is confirmed when both parties confirm', function (): void {
     Mail::fake();
 
     // Client confirms first
@@ -247,7 +247,7 @@ test('appointment is confirmed when both parties confirm', function () {
         ->and($this->appointment->is_fully_confirmed)->toBeTrue();
 });
 
-test('order of confirmation does not matter', function () {
+test('order of confirmation does not matter', function (): void {
     Mail::fake();
 
     // Pastor confirms first
@@ -269,7 +269,7 @@ test('order of confirmation does not matter', function () {
 
 // ===== Activity Logging Tests =====
 
-test('client confirmation is logged in activity', function () {
+test('client confirmation is logged in activity', function (): void {
     Mail::fake();
 
     $this->postJson('/api/pastoral-care/confirm-by-client', [
@@ -286,7 +286,7 @@ test('client confirmation is logged in activity', function () {
         ->and($activity->properties['client_name'])->toBe('Test Client');
 });
 
-test('pastor confirmation is logged in activity', function () {
+test('pastor confirmation is logged in activity', function (): void {
     Mail::fake();
 
     $this->postJson('/api/pastoral-care/confirm-by-pastor', [
@@ -302,7 +302,7 @@ test('pastor confirmation is logged in activity', function () {
         ->and($activity->properties['confirmed_by'])->toBe('pastor');
 });
 
-test('dual confirmation is logged in activity', function () {
+test('dual confirmation is logged in activity', function (): void {
     Mail::fake();
 
     // Both parties confirm
@@ -321,7 +321,7 @@ test('dual confirmation is logged in activity', function () {
 
 // ===== Notification Tests =====
 
-test('partial confirmation sends notification to other party', function () {
+test('partial confirmation sends notification to other party', function (): void {
     Mail::fake();
 
     // Client confirms - should notify pastor
@@ -329,12 +329,10 @@ test('partial confirmation sends notification to other party', function () {
         'token' => $this->appointment->client_confirmation_token,
     ]);
 
-    Mail::assertQueued(PastoralCarePartialConfirmationNotification::class, function ($mail) {
-        return $mail->hasTo($this->pastor->email) && $mail->recipientType === 'pastor';
-    });
+    Mail::assertQueued(PastoralCarePartialConfirmationNotification::class, fn($mail): bool => $mail->hasTo($this->pastor->email) && $mail->recipientType === 'pastor');
 });
 
-test('dual confirmation sends notifications to both parties', function () {
+test('dual confirmation sends notifications to both parties', function (): void {
     Mail::fake();
 
     // Both parties confirm
@@ -346,18 +344,14 @@ test('dual confirmation sends notifications to both parties', function () {
         'token' => $this->appointment->pastor_confirmation_token,
     ]);
 
-    Mail::assertQueued(PastoralCareDualConfirmationNotification::class, function ($mail) {
-        return $mail->hasTo($this->appointment->client_email);
-    });
+    Mail::assertQueued(PastoralCareDualConfirmationNotification::class, fn($mail) => $mail->hasTo($this->appointment->client_email));
 
-    Mail::assertQueued(PastoralCareDualConfirmationNotification::class, function ($mail) {
-        return $mail->hasTo($this->pastor->email);
-    });
+    Mail::assertQueued(PastoralCareDualConfirmationNotification::class, fn($mail) => $mail->hasTo($this->pastor->email));
 });
 
 // ===== Follow-up Dual Confirmation Tests =====
 
-test('follow-up sends notifications to both client and pastor', function () {
+test('follow-up sends notifications to both client and pastor', function (): void {
     Mail::fake();
 
     // Complete the parent appointment
@@ -373,16 +367,12 @@ test('follow-up sends notifications to both client and pastor', function () {
         ]);
 
     // Verify both mails are sent
-    Mail::assertQueued(PastoralCareFollowUpNotification::class, function ($mail) {
-        return $mail->hasTo($this->appointment->client_email);
-    });
+    Mail::assertQueued(PastoralCareFollowUpNotification::class, fn($mail) => $mail->hasTo($this->appointment->client_email));
 
-    Mail::assertQueued(PastoralCarePastorFollowUpNotification::class, function ($mail) {
-        return $mail->hasTo($this->pastor->email);
-    });
+    Mail::assertQueued(PastoralCarePastorFollowUpNotification::class, fn($mail) => $mail->hasTo($this->pastor->email));
 });
 
-test('follow-up creates appointment with confirmation tokens', function () {
+test('follow-up creates appointment with confirmation tokens', function (): void {
     Mail::fake();
 
     // Complete the parent appointment
@@ -408,7 +398,7 @@ test('follow-up creates appointment with confirmation tokens', function () {
 
 // ===== Confirmation Status API Tests =====
 
-test('can get confirmation status via API', function () {
+test('can get confirmation status via API', function (): void {
     // Partially confirm
     $this->appointment->update(['client_confirmed_at' => now()]);
 
@@ -427,7 +417,7 @@ test('can get confirmation status via API', function () {
         ]);
 });
 
-test('confirmation status returns 404 for invalid uuid', function () {
+test('confirmation status returns 404 for invalid uuid', function (): void {
     $response = $this->getJson('/api/pastoral-care/appointments/invalid-uuid/confirmation-status');
 
     $response->assertStatus(404);
@@ -435,7 +425,7 @@ test('confirmation status returns 404 for invalid uuid', function () {
 
 // ===== Model Accessors Tests =====
 
-test('is_fully_confirmed accessor returns correct value', function () {
+test('is_fully_confirmed accessor returns correct value', function (): void {
     expect($this->appointment->is_fully_confirmed)->toBeFalse();
 
     $this->appointment->update(['client_confirmed_at' => now()]);
@@ -445,7 +435,7 @@ test('is_fully_confirmed accessor returns correct value', function () {
     expect($this->appointment->is_fully_confirmed)->toBeTrue();
 });
 
-test('confirmation_status accessor returns correct structure', function () {
+test('confirmation_status accessor returns correct structure', function (): void {
     $status = $this->appointment->confirmation_status;
 
     expect($status)->toBeArray()
@@ -457,7 +447,7 @@ test('confirmation_status accessor returns correct structure', function () {
 
 // ===== Token Regeneration Tests =====
 
-test('confirmation tokens can be regenerated', function () {
+test('confirmation tokens can be regenerated', function (): void {
     $oldClientToken = $this->appointment->client_confirmation_token;
     $oldPastorToken = $this->appointment->pastor_confirmation_token;
 
@@ -469,21 +459,21 @@ test('confirmation tokens can be regenerated', function () {
 
 // ===== Find by Token Tests =====
 
-test('can find appointment by client token', function () {
+test('can find appointment by client token', function (): void {
     $found = PastoralCare::findByClientToken($this->appointment->client_confirmation_token);
 
     expect($found)->not->toBeNull()
         ->and($found->id)->toBe($this->appointment->id);
 });
 
-test('can find appointment by pastor token', function () {
+test('can find appointment by pastor token', function (): void {
     $found = PastoralCare::findByPastorToken($this->appointment->pastor_confirmation_token);
 
     expect($found)->not->toBeNull()
         ->and($found->id)->toBe($this->appointment->id);
 });
 
-test('returns null for non-existent token', function () {
+test('returns null for non-existent token', function (): void {
     $found = PastoralCare::findByClientToken('non_existent_token_12345678901234567890123456789012345678901234');
 
     expect($found)->toBeNull();

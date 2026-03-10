@@ -6,6 +6,34 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property int $form_id
+ * @property int $created_by
+ * @property string $token
+ * @property \Illuminate\Support\Carbon $expires_at
+ * @property int|null $max_uses
+ * @property int $use_count
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $creator
+ * @property-read \App\Models\DepartmentForm $form
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink whereExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink whereFormId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink whereMaxUses($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink whereToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FormShareLink whereUseCount($value)
+ * @mixin \Eloquent
+ */
 class FormShareLink extends Model
 {
     protected $fillable = [
@@ -61,7 +89,7 @@ class FormShareLink extends Model
         return self::where('token', $token)
             ->where('is_active', true)
             ->where('expires_at', '>', now())
-            ->where(function ($query) {
+            ->where(function ($query): void {
                 $query->whereNull('max_uses')
                     ->orWhereColumn('use_count', '<', 'max_uses');
             })

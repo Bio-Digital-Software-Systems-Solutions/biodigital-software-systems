@@ -26,7 +26,7 @@ class NotificationCountTest extends TestCase
     }
 
     /** @test */
-    public function it_returns_zero_when_user_has_no_unread_notifications()
+    public function it_returns_zero_when_user_has_no_unread_notifications(): void
     {
         $response = $this->actingAs($this->user)
             ->getJson(route('notifications.unread-count'));
@@ -40,7 +40,7 @@ class NotificationCountTest extends TestCase
     }
 
     /** @test */
-    public function it_counts_unread_chat_messages_correctly()
+    public function it_counts_unread_chat_messages_correctly(): void
     {
         // Create a chat room with both users
         $room = ChatRoom::factory()->create();
@@ -65,7 +65,7 @@ class NotificationCountTest extends TestCase
     }
 
     /** @test */
-    public function it_counts_unread_system_messages_correctly()
+    public function it_counts_unread_system_messages_correctly(): void
     {
         // Create 5 unread system messages
         Message::factory()->count(5)->create([
@@ -85,7 +85,7 @@ class NotificationCountTest extends TestCase
     }
 
     /** @test */
-    public function it_counts_both_chat_and_system_messages()
+    public function it_counts_both_chat_and_system_messages(): void
     {
         // Create chat room and messages
         $room = ChatRoom::factory()->create();
@@ -115,7 +115,7 @@ class NotificationCountTest extends TestCase
     }
 
     /** @test */
-    public function it_does_not_count_own_messages_in_chat()
+    public function it_does_not_count_own_messages_in_chat(): void
     {
         $room = ChatRoom::factory()->create();
         $room->participants()->attach([$this->user->id, $this->otherUser->id]);
@@ -139,7 +139,7 @@ class NotificationCountTest extends TestCase
     }
 
     /** @test */
-    public function it_does_not_count_chat_messages_older_than_7_days()
+    public function it_does_not_count_chat_messages_older_than_7_days(): void
     {
         $room = ChatRoom::factory()->create();
         $room->participants()->attach([$this->user->id, $this->otherUser->id]);
@@ -170,7 +170,7 @@ class NotificationCountTest extends TestCase
     }
 
     /** @test */
-    public function it_does_not_count_read_system_messages()
+    public function it_does_not_count_read_system_messages(): void
     {
         // Create read messages
         Message::factory()->count(2)->create([
@@ -196,7 +196,7 @@ class NotificationCountTest extends TestCase
     }
 
     /** @test */
-    public function it_only_counts_messages_for_authenticated_user()
+    public function it_only_counts_messages_for_authenticated_user(): void
     {
         // Create messages for other user
         Message::factory()->count(5)->create([
@@ -222,7 +222,7 @@ class NotificationCountTest extends TestCase
     }
 
     /** @test */
-    public function guest_cannot_access_notification_count()
+    public function guest_cannot_access_notification_count(): void
     {
         $response = $this->getJson(route('notifications.unread-count'));
 

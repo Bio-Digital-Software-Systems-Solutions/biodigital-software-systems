@@ -10,6 +10,46 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $user_id
+ * @property int|null $department_id
+ * @property int $year
+ * @property string $leave_type
+ * @property numeric $entitled_days
+ * @property numeric $taken_days
+ * @property numeric $pending_days
+ * @property numeric $carried_over
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read Department|null $department
+ * @property-read float $remaining_days
+ * @property-read float $total_entitled
+ * @property-read float $usage_percentage
+ * @property-read float $used_days
+ * @property-read User $user
+ * @method static Builder<static>|LeaveBalance byType(string $leaveType)
+ * @method static \Database\Factories\Scheduling\LeaveBalanceFactory factory($count = null, $state = [])
+ * @method static Builder<static>|LeaveBalance forUser(int $userId)
+ * @method static Builder<static>|LeaveBalance forYear(int $year)
+ * @method static Builder<static>|LeaveBalance newModelQuery()
+ * @method static Builder<static>|LeaveBalance newQuery()
+ * @method static Builder<static>|LeaveBalance query()
+ * @method static Builder<static>|LeaveBalance whereCarriedOver($value)
+ * @method static Builder<static>|LeaveBalance whereCreatedAt($value)
+ * @method static Builder<static>|LeaveBalance whereDepartmentId($value)
+ * @method static Builder<static>|LeaveBalance whereEntitledDays($value)
+ * @method static Builder<static>|LeaveBalance whereId($value)
+ * @method static Builder<static>|LeaveBalance whereLeaveType($value)
+ * @method static Builder<static>|LeaveBalance wherePendingDays($value)
+ * @method static Builder<static>|LeaveBalance whereTakenDays($value)
+ * @method static Builder<static>|LeaveBalance whereUpdatedAt($value)
+ * @method static Builder<static>|LeaveBalance whereUserId($value)
+ * @method static Builder<static>|LeaveBalance whereUuid($value)
+ * @method static Builder<static>|LeaveBalance whereYear($value)
+ * @mixin \Eloquent
+ */
 class LeaveBalance extends Model
 {
     use HasFactory;
@@ -38,7 +78,7 @@ class LeaveBalance extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function ($model): void {
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }

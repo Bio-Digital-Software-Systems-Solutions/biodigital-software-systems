@@ -19,16 +19,30 @@ use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $first_name
  * @property string $last_name
  * @property string $email
+ * @property string|null $phone_number
+ * @property string|null $telegram_chat_id
+ * @property string|null $telegram_username
  * @property \Illuminate\Support\Carbon|null $birth_date
  * @property string|null $avatar
+ * @property string|null $bio
+ * @property string|null $position
+ * @property string|null $address
+ * @property bool $is_calendar_public
+ * @property array<array-key, mixed>|null $privacy_settings
  * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property \Illuminate\Support\Carbon|null $last_login_at
+ * @property string|null $last_login_ip
+ * @property string|null $last_login_user_agent
+ * @property bool $is_active
+ * @property bool $is_blocked
+ * @property string|null $status_reason
+ * @property \Illuminate\Support\Carbon|null $status_changed_at
+ * @property int|null $status_changed_by
  * @property string $password
- * @property string|null $remember_token
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property string|null $two_factor_confirmed_at
@@ -36,10 +50,37 @@ use Spatie\Permission\Traits\HasRoles;
  * @property \Illuminate\Support\Carbon|null $email_two_factor_expires_at
  * @property bool $email_two_factor_enabled
  * @property string|null $preferred_two_factor_method
+ * @property string|null $remember_token
+ * @property bool $email_notifications
+ * @property bool $sms_notifications
+ * @property bool $push_notifications
+ * @property bool $telegram_notifications
+ * @property bool $newsletter
+ * @property \Illuminate\Support\Carbon|null $terms_accepted_at
+ * @property bool $event_reminders
+ * @property bool $training_updates
+ * @property bool $message_notifications
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string|null $deleted_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Absence> $absences
+ * @property-read int|null $absences_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PastorAvailability> $activeAvailability
+ * @property-read int|null $active_availability_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read int|null $activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\StepApproval> $approvals
+ * @property-read int|null $approvals_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Article> $articles
  * @property-read int|null $articles_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentNeed> $assignedNeeds
+ * @property-read int|null $assigned_needs_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowStepInstance> $assignedStepInstances
+ * @property-read int|null $assigned_step_instances_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $assignedTasks
  * @property-read int|null $assigned_tasks_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PastorAvailability> $availability
+ * @property-read int|null $availability_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BookRental> $bookRentals
  * @property-read int|null $book_rentals_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ChatMessage> $chatMessages
@@ -48,108 +89,127 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read int|null $chat_rooms_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $createdEvents
  * @property-read int|null $created_events_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentForm> $createdForms
+ * @property-read int|null $created_forms_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentWorkflow> $createdWorkflows
+ * @property-read int|null $created_workflows_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Department> $departments
  * @property-read int|null $departments_count
+ * @property-read \App\Models\Employee|null $employee
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\EmployeeAvailability> $employeeAvailabilities
+ * @property-read int|null $employee_availabilities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $events
+ * @property-read int|null $events_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentFormSubmission> $formSubmissions
+ * @property-read int|null $form_submissions_count
  * @property-read string $full_name
  * @property-read string $name
+ * @property-read \App\Models\Pivots\GroupUser|null $pivot
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Group> $groups
+ * @property-read int|null $groups_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Interest> $interests
+ * @property-read int|null $interests_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\LeaveBalance> $leaveBalances
+ * @property-read int|null $leave_balances_count
+ * @property-read \App\Models\MlrAgent|null $mlrAgent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\NeedComment> $needComments
+ * @property-read int|null $need_comments_count
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $participatedEvents
+ * @property-read int|null $participated_events_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $participatingEvents
  * @property-read int|null $participating_events_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Permission> $permissions
+ * @property-read \App\Models\Pastor|null $pastor
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\StepApproval> $pendingApprovals
+ * @property-read int|null $pending_approvals_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Permission> $permissions
  * @property-read int|null $permissions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProfileSkill> $profileSkills
+ * @property-read int|null $profile_skills_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Program> $programs
  * @property-read int|null $programs_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Message> $receivedMessages
  * @property-read int|null $received_messages_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Role> $roles
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentNeed> $requestedNeeds
+ * @property-read int|null $requested_needs_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Role> $roles
  * @property-read int|null $roles_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Message> $sentMessages
  * @property-read int|null $sent_messages_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\ShiftSwapRequest> $shiftSwapRequests
+ * @property-read int|null $shift_swap_requests_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Shift> $shifts
+ * @property-read int|null $shifts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Skill> $skills
+ * @property-read int|null $skills_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SpokenLanguage> $spokenLanguages
+ * @property-read int|null $spoken_languages_count
+ * @property-read \App\Models\Star|null $star
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowInstance> $startedWorkflowInstances
+ * @property-read int|null $started_workflow_instances_count
  * @property-read \App\Models\Student|null $student
  * @property-read \App\Models\Teacher|null $teacher
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\TimeEntry> $timeEntries
+ * @property-read int|null $time_entries_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
+ * @property-read int|null $tokens_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Training> $trainings
  * @property-read int|null $trainings_count
- *
+ * @property-read \App\Models\Scheduling\EmployeeWorkPreferences|null $workPreferences
  * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User permission($permissions, $without = false)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User role($roles, $guard = null, $without = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAddress($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAvatar($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereBio($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereBirthDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailNotifications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailTwoFactorCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailTwoFactorEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailTwoFactorExpiresAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEventReminders($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereFirstName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTwoFactorConfirmedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTwoFactorRecoveryCodes($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTwoFactorSecret($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutPermission($permissions)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutRole($roles, $guard = null)
- *
- * @property string $uuid
- * @property string|null $phone_number
- * @property \Illuminate\Support\Carbon|null $last_login_at
- * @property string|null $last_login_ip
- * @property string|null $last_login_user_agent
- * @property int $is_active
- * @property int $is_blocked
- * @property string|null $status_reason
- * @property string|null $status_changed_at
- * @property int|null $status_changed_by
- * @property bool $email_notifications
- * @property bool $sms_notifications
- * @property bool $push_notifications
- * @property bool $newsletter
- * @property bool $event_reminders
- * @property bool $training_updates
- * @property bool $message_notifications
- * @property string|null $telegram_chat_id
- * @property string|null $telegram_username
- * @property bool $telegram_notifications
- * @property string|null $deleted_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PastorAvailability> $activeAvailability
- * @property-read int|null $active_availability_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PastorAvailability> $availability
- * @property-read int|null $availability_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $events
- * @property-read int|null $events_count
- * @property-read \App\Models\Pivots\GroupUser|null $pivot
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Group> $groups
- * @property-read int|null $groups_count
- * @property-read \App\Models\MlrAgent|null $mlrAgent
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $participatedEvents
- * @property-read int|null $participated_events_count
- * @property-read \App\Models\Pastor|null $pastor
- *
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereDeletedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailNotifications($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEventReminders($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsBlocked($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsCalendarPublic($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastLoginAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastLoginIp($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastLoginUserAgent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereMessageNotifications($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereNewsletter($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePhoneNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePosition($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePreferredTwoFactorMethod($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePrivacySettings($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePushNotifications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereSmsNotifications($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStatusChangedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStatusChangedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStatusReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTelegramChatId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTelegramNotifications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTelegramUsername($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTermsAcceptedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTrainingUpdates($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTwoFactorConfirmedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTwoFactorRecoveryCodes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTwoFactorSecret($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUuid($value)
- *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutPermission($permissions)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutRole($roles, $guard = null)
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements MustVerifyEmail
