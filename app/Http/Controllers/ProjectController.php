@@ -36,41 +36,36 @@ class ProjectController extends Controller
                         $q->where('name', 'completed');
                     });
                 },
+                'tasks as in_progress_tasks_count' => function ($query) {
+                    $query->whereHas('status', function ($q) {
+                        $q->where('name', 'in_progress');
+                    });
+                },
+                'tasks as overdue_tasks_count' => function ($query) {
+                    $query->where('due_date', '<', now())
+                        ->whereHas('status', function ($q) {
+                            $q->whereNotIn('name', ['completed', 'cancelled']);
+                        });
+                },
+                'tasks as epic_tasks_count' => function ($query) {
+                    $query->where('type', 'epic');
+                },
             ])
             ->get();
 
-        // Calculate statistics
         $projectIds = $projects->pluck('id');
 
+        // Compute stats from already-loaded collection (no extra queries)
         $stats = [
             'total_projects' => $projects->count(),
             'active_projects' => $projects->where('status', 'active')->count(),
             'completed_projects' => $projects->where('status', 'completed')->count(),
             'on_hold_projects' => $projects->where('status', 'on_hold')->count(),
             'total_tasks' => $projects->sum('tasks_count'),
-            'completed_tasks' => \App\Models\Task::where('taskable_type', \App\Models\Project::class)
-                ->whereIn('taskable_id', $projectIds)
-                ->whereHas('status', function ($q): void {
-                    $q->where('name', 'completed');
-                })
-                ->count(),
-            'in_progress_tasks' => \App\Models\Task::where('taskable_type', \App\Models\Project::class)
-                ->whereIn('taskable_id', $projectIds)
-                ->whereHas('status', function ($q): void {
-                    $q->where('name', 'in_progress');
-                })
-                ->count(),
-            'overdue_tasks' => \App\Models\Task::where('taskable_type', \App\Models\Project::class)
-                ->whereIn('taskable_id', $projectIds)
-                ->where('due_date', '<', now())
-                ->whereHas('status', function ($q): void {
-                    $q->whereNotIn('name', ['completed', 'cancelled']);
-                })
-                ->count(),
-            'total_epics' => \App\Models\Task::where('taskable_type', \App\Models\Project::class)
-                ->whereIn('taskable_id', $projectIds)
-                ->where('type', 'epic')
-                ->count(),
+            'completed_tasks' => $projects->sum('completed_tasks_count'),
+            'in_progress_tasks' => $projects->sum('in_progress_tasks_count'),
+            'overdue_tasks' => $projects->sum('overdue_tasks_count'),
+            'total_epics' => $projects->sum('epic_tasks_count'),
             'active_sprints' => \App\Models\Sprint::whereIn('project_id', $projectIds)
                 ->where('start_date', '<=', now())
                 ->where('end_date', '>=', now())
@@ -80,35 +75,23 @@ class ProjectController extends Controller
                 ->count(),
         ];
 
-        // Get recent projects
-        $recentProjects = Project::with(['manager', 'members'])
-            ->withCount([
-                'tasks',
-                'members',
-                'tasks as completed_tasks_count' => function ($query): void {
-                    $query->whereHas('status', function ($q): void {
-                        $q->where('name', 'completed');
-                    });
-                },
-            ])
-            ->latest()
+        // Derive recent projects from already-loaded collection (no extra query)
+        $recentProjects = $projects->sortByDesc('created_at')
             ->take(5)
-            ->get()
-            ->map(function ($project): Project {
+            ->map(function ($project) {
                 $project->progress = $project->tasks_count > 0
                     ? round(($project->completed_tasks_count / $project->tasks_count) * 100)
                     : 0;
 
                 return $project;
-            });
-
-        $analyticsStats = (new ProjectStatisticsService)->getGlobalStatistics();
+            })
+            ->values();
 
         return Inertia::render('Projects/Dashboard', [
             'projects' => $projects,
             'stats' => $stats,
             'recentProjects' => $recentProjects,
-            'analyticsStats' => $analyticsStats,
+            'analyticsStats' => Inertia::defer(fn () => (new ProjectStatisticsService)->getGlobalStatistics()),
         ]);
     }
 

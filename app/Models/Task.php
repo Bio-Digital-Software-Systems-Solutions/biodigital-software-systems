@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -74,6 +74,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TaskAttachment> $taskAttachments
  * @property-read int|null $task_attachments_count
  * @property-read Model|\Eloquent|null $taskable
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task assignedTo($userId)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task completed()
  * @method static \Database\Factories\TaskFactory factory($count = null, $state = [])
@@ -118,11 +119,12 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereUuid($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class Task extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
 
     /**
      * The relationships that should always be loaded.
@@ -141,6 +143,17 @@ class Task extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
+    /**
+     * Clear project statistics cache when task changes.
+     */
+    protected function customCacheInvalidation(): void
+    {
+        if ($this->taskable_type === 'App\Models\Project') {
+            \App\Services\ProjectStatisticsService::clearCache($this->taskable_id);
+        }
+    }
+
     protected static function boot()
     {
         parent::boot();

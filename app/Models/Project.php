@@ -53,6 +53,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read int|null $sprints_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $tasks
  * @property-read int|null $tasks_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project active()
  * @method static \Database\Factories\ProjectFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project forUser(\App\Models\User $user)
@@ -81,6 +82,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereUuid($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class Project extends Model
@@ -96,6 +98,14 @@ class Project extends Model
             ->logFillable()
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    /**
+     * Clear project statistics cache when project changes.
+     */
+    protected function customCacheInvalidation(): void
+    {
+        \App\Services\ProjectStatisticsService::clearCache($this->id);
     }
 
     protected $fillable = [
@@ -270,7 +280,7 @@ class Project extends Model
         // Remove duplicates by user ID and optionally exclude a specific user
         return $users
             ->unique('id')
-            ->when($excludeUserId, fn($collection, $excludeUserId) => $collection->filter(fn (User $user): bool => $user->id !== $excludeUserId))
+            ->when($excludeUserId, fn ($collection, $excludeUserId) => $collection->filter(fn (User $user): bool => $user->id !== $excludeUserId))
             ->values();
     }
 }

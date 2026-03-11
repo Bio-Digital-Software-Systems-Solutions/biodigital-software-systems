@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, Deferred } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Button } from '@/Components/ui/button';
@@ -161,12 +161,29 @@ export default function ProjectsDashboard({ projects, stats, recentProjects, ana
                     </button>
                 </div>
 
-                {activeTab === 'analytics' && analyticsStats ? (
-                    <ProjectStatisticsAnalytical statistics={analyticsStats} context="dashboard" />
-                ) : activeTab === 'analytics' ? (
-                    <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                        Aucune donnée analytique disponible
-                    </div>
+                {activeTab === 'analytics' ? (
+                    <Deferred data="analyticsStats" fallback={
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                                        <div className="animate-pulse space-y-4">
+                                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
+                                            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    }>
+                        {analyticsStats ? (
+                            <ProjectStatisticsAnalytical statistics={analyticsStats} context="dashboard" />
+                        ) : (
+                            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                                Aucune donnée analytique disponible
+                            </div>
+                        )}
+                    </Deferred>
                 ) : (
                 <>
 
