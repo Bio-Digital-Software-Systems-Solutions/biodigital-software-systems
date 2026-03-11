@@ -334,12 +334,6 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
                                                     Task {getSortIcon('title')}
                                                 </th>
                                                 <th
-                                                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 hidden lg:table-cell"
-                                                    onClick={() => handleSort('program')}
-                                                >
-                                                    Program {getSortIcon('program')}
-                                                </th>
-                                                <th
                                                     className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200"
                                                     onClick={() => handleSort('status')}
                                                 >
@@ -362,6 +356,9 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
                                                     onClick={() => handleSort('assigned_to')}
                                                 >
                                                     Assigned To {getSortIcon('assigned_to')}
+                                                </th>
+                                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">
+                                                    Progression
                                                 </th>
                                                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
                                                     Actions
@@ -393,9 +390,6 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
                                                                 {task.description && task.description.length > 60 && '...'}
                                                             </div>
                                                         </div>
-                                                    </td>
-                                                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 hidden lg:table-cell">
-                                                        {task.program?.name || '-'}
                                                     </td>
                                                     <td className="px-3 py-4 whitespace-nowrap">
                                                         <EditableCell
@@ -502,6 +496,27 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
                                                                 </div>
                                                             )}
                                                         />
+                                                    </td>
+                                                    <td className="px-3 py-4 whitespace-nowrap hidden lg:table-cell">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                                                <div
+                                                                    className={`h-2 rounded-full ${
+                                                                        task.progress >= 100
+                                                                            ? 'bg-green-500'
+                                                                            : task.progress >= 50
+                                                                              ? 'bg-blue-500'
+                                                                              : task.progress > 0
+                                                                                ? 'bg-yellow-500'
+                                                                                : 'bg-gray-300 dark:bg-gray-500'
+                                                                    }`}
+                                                                    style={{ width: `${Math.min(task.progress, 100)}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-xs text-gray-600 dark:text-gray-400 min-w-[2.5rem]">
+                                                                {task.progress}%
+                                                            </span>
+                                                        </div>
                                                     </td>
                                                     <td className="px-3 py-4 whitespace-nowrap text-sm font-medium w-24">
                                                         <div className="flex items-center gap-1">
