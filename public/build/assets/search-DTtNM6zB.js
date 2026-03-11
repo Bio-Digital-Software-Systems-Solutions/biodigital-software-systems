@@ -1,5 +1,0 @@
-<<<<<<<< HEAD:public/build/assets/search-DTtNM6zB.js
-import{c}from"./createLucideIcon-CgtJeGWz.js";const e=[["path",{d:"m21 21-4.34-4.34",key:"14j7rj"}],["circle",{cx:"11",cy:"11",r:"8",key:"4ej97u"}]],o=c("search",e);export{o as S};
-========
-import{c}from"./createLucideIcon-Cz_oq0ko.js";const e=[["path",{d:"m21 21-4.34-4.34",key:"14j7rj"}],["circle",{cx:"11",cy:"11",r:"8",key:"4ej97u"}]],o=c("search",e);export{o as S};
->>>>>>>> main:public/build/assets/search-CAH_1oew.js

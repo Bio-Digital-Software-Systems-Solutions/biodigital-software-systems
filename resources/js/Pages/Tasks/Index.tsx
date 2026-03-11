@@ -1,10 +1,15 @@
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PlusIcon, FunnelIcon, EyeIcon, PencilIcon, TrashIcon, Squares2X2Icon, ListBulletIcon, TableCellsIcon, ArrowLeftIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Task, Program, Status, User, PageProps } from '@/Types';
 import { Button } from '@/Components/ui/button';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
+import { EditableCell } from '@/Components/ui/editable-cell';
+import { SearchableSelect, SelectOption } from '@/Components/ui/searchable-select';
+import { DatePicker } from '@/Components/ui/date-picker';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import { format } from 'date-fns';
 import ProjectStatisticsAnalytical, { ProjectAnalyticsData } from '@/Components/Project/ProjectStatisticsAnalytical';
 
 interface Props extends PageProps {
@@ -39,6 +44,30 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
     const [activeTab, setActiveTab] = useState<'tasks' | 'statistics'>('tasks');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+    const [localTasks, setLocalTasks] = useState<Task[]>(tasks.data);
+
+    useEffect(() => {
+        setLocalTasks(tasks.data);
+    }, [tasks.data]);
+
+    const handleInlineUpdate = useCallback((taskUuid: string, updatedTask: Record<string, unknown>) => {
+        setLocalTasks((prev) =>
+            prev.map((t) => (t.uuid === taskUuid ? { ...t, ...updatedTask as Partial<Task> } : t))
+        );
+    }, []);
+
+    const statusOptions = statuses.map((s) => ({ value: String(s.id), label: s.name }));
+    const priorityOptions = [
+        { value: 'lowest', label: 'Lowest' },
+        { value: 'low', label: 'Low' },
+        { value: 'medium', label: 'Medium' },
+        { value: 'high', label: 'High' },
+        { value: 'highest', label: 'Highest' },
+    ];
+    const userSelectOptions: SelectOption[] = users.map((u) => ({
+        value: u.id,
+        label: `${u.first_name} ${u.last_name}`,
+    }));
 
     const handleFilter = (key: string, value: string) => {
         const newFilters = { ...filters, [key]: value };
@@ -102,9 +131,11 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
+            case 'highest': return 'text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-300';
             case 'high': return 'text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400';
             case 'medium': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 dark:text-yellow-400';
             case 'low': return 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400';
+            case 'lowest': return 'text-gray-500 bg-gray-100 dark:bg-gray-700/50 dark:text-gray-400';
             default: return 'text-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-400';
         }
     };
@@ -338,7 +369,7 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                            {tasks.data.map((task: any) => (
+                                            {localTasks.map((task) => (
                                                 <tr key={task.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                                     <td className="px-2 py-4 w-16">
                                                         <input
@@ -350,36 +381,127 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
                                                     </td>
                                                     <td className="px-3 py-4">
                                                         <div className="max-w-xs lg:max-w-sm">
-                                                            <Link
-                                                                href={route('tasks.show', task.uuid)}
-                                                                className={`text-sm font-medium hover:text-primary hover:underline ${task.status?.id === completedStatus?.id ? 'line-through text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}
-                                                            >
-                                                                {task.title}
-                                                            </Link>
-                                                            <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                            <EditableCell
+                                                                value={task.title}
+                                                                field="title"
+                                                                taskUuid={task.uuid}
+                                                                onUpdate={(updated) => handleInlineUpdate(task.uuid, updated)}
+                                                                className={`text-sm font-medium ${task.status?.id === completedStatus?.id ? 'line-through text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}
+                                                            />
+                                                            <div className="text-sm text-gray-500 dark:text-gray-400 truncate mt-0.5 px-1">
                                                                 {task.description && task.description.substring(0, 60)}
                                                                 {task.description && task.description.length > 60 && '...'}
                                                             </div>
                                                         </div>
                                                     </td>
                                                     <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 hidden lg:table-cell">
-                                                        {task.program?.name}
+                                                        {task.program?.name || '-'}
                                                     </td>
                                                     <td className="px-3 py-4 whitespace-nowrap">
-                                                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(task.status?.name)}`}>
-                                                            {task.status?.name}
-                                                        </span>
+                                                        <EditableCell
+                                                            value={String(task.status_id)}
+                                                            field="status_id"
+                                                            taskUuid={task.uuid}
+                                                            onUpdate={(updated) => handleInlineUpdate(task.uuid, updated)}
+                                                            type="select"
+                                                            options={statusOptions}
+                                                            renderDisplay={() => (
+                                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(task.status?.name)}`}>
+                                                                    {task.status?.name}
+                                                                </span>
+                                                            )}
+                                                        />
                                                     </td>
                                                     <td className="px-3 py-4 whitespace-nowrap">
-                                                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
-                                                            {task.priority}
-                                                        </span>
+                                                        <EditableCell
+                                                            value={task.priority}
+                                                            field="priority"
+                                                            taskUuid={task.uuid}
+                                                            onUpdate={(updated) => handleInlineUpdate(task.uuid, updated)}
+                                                            type="select"
+                                                            options={priorityOptions}
+                                                            renderDisplay={() => (
+                                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
+                                                                    {task.priority}
+                                                                </span>
+                                                            )}
+                                                        />
                                                     </td>
                                                     <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 hidden md:table-cell">
-                                                        {task.due_date ? new Date(task.due_date).toLocaleDateString() : '-'}
+                                                        <EditableCell
+                                                            value={task.due_date ? task.due_date.split('T')[0] : ''}
+                                                            field="due_date"
+                                                            taskUuid={task.uuid}
+                                                            onUpdate={(updated) => handleInlineUpdate(task.uuid, updated)}
+                                                            type="custom"
+                                                            renderDisplay={() => (
+                                                                <span>{task.due_date ? new Date(task.due_date).toLocaleDateString() : '-'}</span>
+                                                            )}
+                                                            renderEditor={({ value: dateVal, onSave, onCancel, saving: isSaving }) => (
+                                                                <div className="flex items-center gap-1">
+                                                                    <DatePicker
+                                                                        value={dateVal || undefined}
+                                                                        onChange={(date) => {
+                                                                            const formatted = date ? format(date, 'yyyy-MM-dd') : '';
+                                                                            onSave(formatted);
+                                                                        }}
+                                                                        placeholder="Choisir une date"
+                                                                        disabled={isSaving}
+                                                                        className="h-8 text-xs"
+                                                                        portal
+                                                                    />
+                                                                    <button
+                                                                        onClick={onCancel}
+                                                                        disabled={isSaving}
+                                                                        className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-0.5"
+                                                                        title="Annuler"
+                                                                    >
+                                                                        <XMarkIcon className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        />
                                                     </td>
                                                     <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 hidden xl:table-cell">
-                                                        {task.assigned_user ? `${task.assigned_user.first_name} ${task.assigned_user.last_name}` : 'Unassigned'}
+                                                        <EditableCell
+                                                            value={task.assigned_to ? String(task.assigned_to) : ''}
+                                                            field="assigned_to"
+                                                            taskUuid={task.uuid}
+                                                            onUpdate={(updated) => handleInlineUpdate(task.uuid, updated)}
+                                                            type="custom"
+                                                            renderDisplay={() => (
+                                                                <span>
+                                                                    {task.assigned_user
+                                                                        ? `${task.assigned_user.first_name} ${task.assigned_user.last_name}`
+                                                                        : 'Non assigné'}
+                                                                </span>
+                                                            )}
+                                                            renderEditor={({ onSave, onCancel, saving: isSaving }) => (
+                                                                <div className="flex items-center gap-1 min-w-[200px]">
+                                                                    <SearchableSelect
+                                                                        options={userSelectOptions}
+                                                                        value={task.assigned_to ?? null}
+                                                                        onChange={(selected) => {
+                                                                            onSave(selected ? String(selected) : '');
+                                                                        }}
+                                                                        placeholder="Rechercher un utilisateur..."
+                                                                        isDisabled={isSaving}
+                                                                        isClearable
+                                                                        className="flex-1"
+                                                                        menuPortalTarget={document.body}
+                                                                        maxMenuHeight={150}
+                                                                    />
+                                                                    <button
+                                                                        onClick={onCancel}
+                                                                        disabled={isSaving}
+                                                                        className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-0.5 flex-shrink-0"
+                                                                        title="Annuler"
+                                                                    >
+                                                                        <XMarkIcon className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        />
                                                     </td>
                                                     <td className="px-3 py-4 whitespace-nowrap text-sm font-medium w-24">
                                                         <div className="flex items-center gap-1">
@@ -413,7 +535,7 @@ export default function Index({ tasks, programs, statuses, users, filters, taskS
                             {/* List View */}
                             {viewMode === 'list' && (
                                 <div className="space-y-3">
-                                    {tasks.data.map((task: any) => (
+                                    {localTasks.map((task) => (
                                         <div key={task.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
                                             <div className="flex items-start justify-between">
                                                 <div className="flex items-start space-x-3 flex-1">

@@ -1,5 +1,0 @@
-<<<<<<<< HEAD:public/build/assets/smartphone-Bx8_RD5J.js
-import{c as t}from"./createLucideIcon-CgtJeGWz.js";const e=[["rect",{width:"14",height:"20",x:"5",y:"2",rx:"2",ry:"2",key:"1yt0o3"}],["path",{d:"M12 18h.01",key:"mhygvu"}]],r=t("smartphone",e);export{r as S};
-========
-import{c as t}from"./createLucideIcon-Cz_oq0ko.js";const e=[["rect",{width:"14",height:"20",x:"5",y:"2",rx:"2",ry:"2",key:"1yt0o3"}],["path",{d:"M12 18h.01",key:"mhygvu"}]],r=t("smartphone",e);export{r as S};
->>>>>>>> main:public/build/assets/smartphone-DfABGJTV.js

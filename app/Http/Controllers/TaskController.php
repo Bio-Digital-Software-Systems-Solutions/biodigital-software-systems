@@ -28,7 +28,7 @@ class TaskController extends Controller
     {
         $this->middleware('can:view tasks')->only(['index', 'show']);
         $this->middleware('can:create tasks')->only(['create', 'store']);
-        $this->middleware('can:edit tasks')->only(['edit', 'update', 'updateStatus', 'toggleComplete', 'bulkToggleComplete']);
+        $this->middleware('can:edit tasks')->only(['edit', 'update', 'updateStatus', 'toggleComplete', 'bulkToggleComplete', 'inlineUpdate']);
         $this->middleware('can:delete tasks')->only(['destroy']);
     }
 
@@ -410,6 +410,41 @@ class TaskController extends Controller
         }
 
         return back()->with('success', 'Tasks updated successfully.');
+    }
+
+    /**
+     * Inline update a single field of a task.
+     */
+    public function inlineUpdate(Request $request, Task $task): \Illuminate\Http\JsonResponse
+    {
+        $field = $request->input('field');
+        $value = $request->input('value');
+
+        $allowedFields = ['title', 'description', 'due_date', 'priority', 'status_id', 'assigned_to'];
+
+        if (! in_array($field, $allowedFields, true)) {
+            return response()->json(['message' => 'Field not allowed.'], 422);
+        }
+
+        $rules = match ($field) {
+            'title' => ['value' => 'required|string|max:255'],
+            'description' => ['value' => 'nullable|string'],
+            'due_date' => ['value' => 'nullable|date'],
+            'priority' => ['value' => 'required|in:lowest,low,medium,high,highest'],
+            'status_id' => ['value' => 'required|exists:statuses,id'],
+            'assigned_to' => ['value' => 'nullable|exists:users,id'],
+            default => ['value' => 'required'],
+        };
+
+        $request->validate($rules);
+
+        $task->update([$field => $value]);
+        $task->load(['status', 'program', 'assignedUser']);
+
+        return response()->json([
+            'success' => true,
+            'task' => $task,
+        ]);
     }
 
     /**

@@ -94,7 +94,7 @@ class ProjectController extends Controller
             ->latest()
             ->take(5)
             ->get()
-            ->map(function ($project): \stdClass {
+            ->map(function ($project): Project {
                 $project->progress = $project->tasks_count > 0
                     ? round(($project->completed_tasks_count / $project->tasks_count) * 100)
                     : 0;

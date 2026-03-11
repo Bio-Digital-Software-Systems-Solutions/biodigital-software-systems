@@ -1,5 +1,0 @@
-<<<<<<<< HEAD:public/build/assets/ChevronLeftIcon-4TNU67C_.js
-import{r as e}from"./app-BRMhlVrd.js";function a({title:r,titleId:t,...o},n){return e.createElement("svg",Object.assign({xmlns:"http://www.w3.org/2000/svg",fill:"none",viewBox:"0 0 24 24",strokeWidth:1.5,stroke:"currentColor","aria-hidden":"true","data-slot":"icon",ref:n,"aria-labelledby":t},o),r?e.createElement("title",{id:t},r):null,e.createElement("path",{strokeLinecap:"round",strokeLinejoin:"round",d:"M15.75 19.5 8.25 12l7.5-7.5"}))}const i=e.forwardRef(a);export{i as F};
-========
-import{r as e}from"./app-DO1w511u.js";function a({title:r,titleId:t,...o},n){return e.createElement("svg",Object.assign({xmlns:"http://www.w3.org/2000/svg",fill:"none",viewBox:"0 0 24 24",strokeWidth:1.5,stroke:"currentColor","aria-hidden":"true","data-slot":"icon",ref:n,"aria-labelledby":t},o),r?e.createElement("title",{id:t},r):null,e.createElement("path",{strokeLinecap:"round",strokeLinejoin:"round",d:"M15.75 19.5 8.25 12l7.5-7.5"}))}const i=e.forwardRef(a);export{i as F};
->>>>>>>> main:public/build/assets/ChevronLeftIcon-DKYoUsaj.js

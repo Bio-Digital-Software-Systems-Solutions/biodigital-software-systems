@@ -234,7 +234,7 @@ export interface Task {
     title: string;
     description: string;
     due_date: string | null;
-    priority: 'low' | 'medium' | 'high';
+    priority: 'lowest' | 'low' | 'medium' | 'high' | 'highest';
     progress: number;
     estimated_hours: number | null;
     actual_hours: number | null;

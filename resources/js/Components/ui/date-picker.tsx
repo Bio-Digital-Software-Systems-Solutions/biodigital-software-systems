@@ -13,6 +13,7 @@ interface DatePickerProps {
     placeholder?: string;
     disabled?: boolean;
     className?: string;
+    portal?: boolean;
 }
 
 export function DatePicker({
@@ -21,6 +22,7 @@ export function DatePicker({
     placeholder = 'Sélectionner une date',
     disabled = false,
     className,
+    portal = false,
 }: DatePickerProps) {
     const [open, setOpen] = React.useState(false);
 
@@ -58,7 +60,7 @@ export function DatePicker({
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start" side="top">
+            <PopoverContent className="w-auto p-0" align="start" side="top" portal={portal}>
                 <Calendar
                     mode="single"
                     selected={dateValue}

@@ -20,9 +20,9 @@ Route::get('/', function () {
 });
 
 // Legal pages (public access)
-Route::get('/privacy-policy', fn() => Inertia::render('Legal/PrivacyPolicy'))->name('privacy-policy');
+Route::get('/privacy-policy', fn () => Inertia::render('Legal/PrivacyPolicy'))->name('privacy-policy');
 
-Route::get('/terms-of-service', fn() => Inertia::render('Legal/TermsOfService'))->name('terms-of-service');
+Route::get('/terms-of-service', fn () => Inertia::render('Legal/TermsOfService'))->name('terms-of-service');
 
 // CAPTCHA generation (public access for registration)
 Route::get('/captcha', [App\Http\Controllers\CaptchaController::class, 'generate'])->name('captcha.generate');
@@ -148,6 +148,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         ->name('tasks.bulk-toggle-complete');
     Route::patch('tasks/{task}/progress', [App\Http\Controllers\TaskController::class, 'updateProgress'])
         ->name('tasks.update-progress');
+    Route::patch('tasks/{task}/inline-update', [App\Http\Controllers\TaskController::class, 'inlineUpdate'])
+        ->name('tasks.inline-update');
 
     // Task Participants
     Route::post('tasks/{task}/participants', [App\Http\Controllers\TaskController::class, 'addParticipant'])

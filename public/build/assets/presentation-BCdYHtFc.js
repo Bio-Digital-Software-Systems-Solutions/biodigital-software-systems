@@ -1,5 +1,0 @@
-<<<<<<<< HEAD:public/build/assets/presentation-fNJOJgmb.js
-import{c as a}from"./createLucideIcon-CgtJeGWz.js";const e=[["path",{d:"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z",key:"1rqfz7"}],["path",{d:"M14 2v4a2 2 0 0 0 2 2h4",key:"tnqrlb"}]],o=a("file",e);const t=[["path",{d:"M2 3h20",key:"91anmk"}],["path",{d:"M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3",key:"2k9sn8"}],["path",{d:"m7 21 5-5 5 5",key:"bip4we"}]],c=a("presentation",t);export{o as F,c as P};
-========
-import{c as a}from"./createLucideIcon-Cz_oq0ko.js";const e=[["path",{d:"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z",key:"1rqfz7"}],["path",{d:"M14 2v4a2 2 0 0 0 2 2h4",key:"tnqrlb"}]],o=a("file",e);const t=[["path",{d:"M2 3h20",key:"91anmk"}],["path",{d:"M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3",key:"2k9sn8"}],["path",{d:"m7 21 5-5 5 5",key:"bip4we"}]],c=a("presentation",t);export{o as F,c as P};
->>>>>>>> main:public/build/assets/presentation-BCdYHtFc.js
