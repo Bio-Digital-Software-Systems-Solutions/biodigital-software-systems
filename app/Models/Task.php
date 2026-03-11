@@ -289,6 +289,14 @@ class Task extends Model
     }
 
     /**
+     * Get the child tasks of this epic.
+     */
+    public function childTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'epic_id');
+    }
+
+    /**
      * Get the sprint this task belongs to.
      */
     public function sprint(): BelongsTo

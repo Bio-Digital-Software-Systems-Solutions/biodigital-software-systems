@@ -32,6 +32,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read \App\Models\Project $project
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $tasks
  * @property-read int|null $tasks_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Sprint active()
  * @method static \Database\Factories\SprintFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Sprint newModelQuery()
@@ -49,6 +50,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Sprint whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Sprint whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Sprint whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 class Sprint extends Model
@@ -73,6 +75,7 @@ class Sprint extends Model
         'start_date',
         'end_date',
         'status',
+        'progress',
         'capacity',
     ];
 
@@ -80,6 +83,7 @@ class Sprint extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'capacity' => 'integer',
+        'progress' => 'integer',
     ];
 
     // Relations

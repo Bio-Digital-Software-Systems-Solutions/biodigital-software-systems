@@ -3,6 +3,8 @@
 namespace App\Observers;
 
 use App\Enums\ProjectStatus;
+use App\Enums\TaskStatus;
+use App\Models\Sprint;
 use App\Models\Status;
 use App\Models\Task;
 use App\Models\User;
@@ -17,6 +19,8 @@ class TaskObserver
     {
         $this->updateStepStatus($task);
         $this->notifyAssignedUser($task);
+        $this->syncEpicStatusAndProgress($task);
+        $this->syncSprintStatusAndProgress($task);
     }
 
     /**
@@ -29,6 +33,8 @@ class TaskObserver
             $this->updateStepStatus($task);
             $this->updateProjectStatus($task);
             $this->syncProgressFromStatus($task);
+            $this->syncEpicStatusAndProgress($task);
+            $this->syncSprintStatusAndProgress($task);
         }
 
         // Notify user if assignment changed
@@ -69,6 +75,8 @@ class TaskObserver
     public function deleted(Task $task): void
     {
         $this->updateStepStatus($task);
+        $this->syncEpicStatusAndProgress($task);
+        $this->syncSprintStatusAndProgress($task);
     }
 
     /**
@@ -77,6 +85,8 @@ class TaskObserver
     public function restored(Task $task): void
     {
         $this->updateStepStatus($task);
+        $this->syncEpicStatusAndProgress($task);
+        $this->syncSprintStatusAndProgress($task);
     }
 
     /**
@@ -202,5 +212,189 @@ class TaskObserver
         if ($progress !== (int) $task->progress) {
             $task->updateQuietly(['progress' => $progress]);
         }
+    }
+
+    /**
+     * Sync the parent epic's status and progress based on its child tasks.
+     */
+    protected function syncEpicStatusAndProgress(Task $task): void
+    {
+        if (! $task->epic_id) {
+            return;
+        }
+
+        $epic = Task::withoutGlobalScopes()->find($task->epic_id);
+
+        if (! $epic || $epic->type !== 'epic') {
+            return;
+        }
+
+        // Get all non-deleted child tasks for this epic
+        $childTasks = Task::where('epic_id', $epic->id)
+            ->whereNull('deleted_at')
+            ->with('status')
+            ->get();
+
+        // If no child tasks, keep epic as-is
+        if ($childTasks->isEmpty()) {
+            $epic->updateQuietly(['progress' => 0]);
+
+            return;
+        }
+
+        $totalTasks = $childTasks->count();
+
+        $completedTasks = $childTasks->filter(
+            fn (Task $t): bool => $t->status && $t->status->isCompleted()
+        )->count();
+
+        $inProgressTasks = $childTasks->filter(
+            fn (Task $t): bool => $t->status && $t->status->isInProgress()
+        )->count();
+
+        $underReviewTasks = $childTasks->filter(
+            fn (Task $t): bool => $t->status && in_array($t->status->name, ['under_review', 'in_review'])
+        )->count();
+
+        $cancelledTasks = $childTasks->filter(
+            fn (Task $t): bool => $t->status && $t->status->name === TaskStatus::CANCELLED->value
+        )->count();
+
+        // Calculate progress as percentage of completed tasks
+        $progress = (int) round(($completedTasks / $totalTasks) * 100);
+
+        // Determine the appropriate epic status
+        $newStatusName = $this->determineEpicStatus(
+            $totalTasks,
+            $completedTasks,
+            $inProgressTasks,
+            $underReviewTasks,
+            $cancelledTasks
+        );
+
+        $newStatus = Status::where('name', $newStatusName)->first();
+
+        $updates = ['progress' => $progress];
+
+        if ($newStatus && $epic->status_id !== $newStatus->id) {
+            $updates['status_id'] = $newStatus->id;
+        }
+
+        $epic->updateQuietly($updates);
+    }
+
+    /**
+     * Determine the epic status based on child task distribution.
+     */
+    protected function determineEpicStatus(
+        int $totalTasks,
+        int $completedTasks,
+        int $inProgressTasks,
+        int $underReviewTasks,
+        int $cancelledTasks
+    ): string {
+        // All tasks completed or cancelled → epic completed
+        if ($completedTasks + $cancelledTasks === $totalTasks) {
+            return TaskStatus::COMPLETED->value;
+        }
+
+        // Any task in progress or completed (but not all) → epic in progress
+        if ($inProgressTasks > 0 || $completedTasks > 0) {
+            return TaskStatus::IN_PROGRESS->value;
+        }
+
+        // Any task under review (none in progress or completed) → epic under review
+        if ($underReviewTasks > 0) {
+            return 'under_review';
+        }
+
+        // All tasks are pending/todo → epic pending
+        return TaskStatus::PENDING->value;
+    }
+
+    /**
+     * Sync the parent sprint's status and progress based on its tasks.
+     */
+    protected function syncSprintStatusAndProgress(Task $task): void
+    {
+        if (! $task->sprint_id) {
+            return;
+        }
+
+        $sprint = Sprint::find($task->sprint_id);
+
+        if (! $sprint) {
+            return;
+        }
+
+        // Don't override cancelled sprints
+        if ($sprint->status === 'cancelled') {
+            return;
+        }
+
+        // Get all non-deleted tasks for this sprint
+        $sprintTasks = Task::where('sprint_id', $sprint->id)
+            ->whereNull('deleted_at')
+            ->with('status')
+            ->get();
+
+        // If no tasks, reset progress
+        if ($sprintTasks->isEmpty()) {
+            $sprint->update(['progress' => 0, 'status' => 'planned']);
+
+            return;
+        }
+
+        $totalTasks = $sprintTasks->count();
+
+        $completedTasks = $sprintTasks->filter(
+            fn (Task $t): bool => $t->status && $t->status->isCompleted()
+        )->count();
+
+        $inProgressTasks = $sprintTasks->filter(
+            fn (Task $t): bool => $t->status && $t->status->isInProgress()
+        )->count();
+
+        $cancelledTasks = $sprintTasks->filter(
+            fn (Task $t): bool => $t->status && $t->status->name === TaskStatus::CANCELLED->value
+        )->count();
+
+        // Calculate progress as percentage of completed tasks
+        $progress = (int) round(($completedTasks / $totalTasks) * 100);
+
+        $newStatus = $this->determineSprintStatus(
+            $totalTasks,
+            $completedTasks,
+            $inProgressTasks,
+            $cancelledTasks
+        );
+
+        $sprint->update([
+            'progress' => $progress,
+            'status' => $newStatus,
+        ]);
+    }
+
+    /**
+     * Determine the sprint status based on task distribution.
+     */
+    protected function determineSprintStatus(
+        int $totalTasks,
+        int $completedTasks,
+        int $inProgressTasks,
+        int $cancelledTasks
+    ): string {
+        // All tasks completed or cancelled → sprint completed
+        if ($completedTasks + $cancelledTasks === $totalTasks) {
+            return 'completed';
+        }
+
+        // Any task in progress or some completed → sprint active
+        if ($inProgressTasks > 0 || $completedTasks > 0) {
+            return 'active';
+        }
+
+        // All tasks pending/todo → sprint planned
+        return 'planned';
     }
 }
