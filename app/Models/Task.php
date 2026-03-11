@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -39,6 +39,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read \App\Models\Program|null $program
  * @property-read \App\Models\ProgramStep|null $programStep
  * @property-read \App\Models\Status|null $status
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task assignedTo($userId)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task completed()
  * @method static \Database\Factories\TaskFactory factory($count = null, $state = [])
@@ -67,6 +68,7 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task withoutTrashed()
+ *
  * @property string $uuid
  * @property string|null $key
  * @property string|null $image
@@ -93,6 +95,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read \App\Models\User|null $reporter
  * @property-read \App\Models\Sprint|null $sprint
  * @property-read Model|\Eloquent|null $taskable
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereCustomFields($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereEpicId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereImage($value)
@@ -108,11 +111,12 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereTaskableType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Task whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 class Task extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
 
     /**
      * The relationships that should always be loaded.
@@ -131,6 +135,17 @@ class Task extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
+    /**
+     * Clear project statistics cache when task changes.
+     */
+    protected function customCacheInvalidation(): void
+    {
+        if ($this->taskable_type === 'App\Models\Project') {
+            \App\Services\ProjectStatisticsService::clearCache($this->taskable_id);
+        }
+    }
+
     protected static function boot()
     {
         parent::boot();

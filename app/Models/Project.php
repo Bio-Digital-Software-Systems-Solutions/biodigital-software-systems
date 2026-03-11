@@ -102,6 +102,14 @@ class Project extends Model
             ->dontSubmitEmptyLogs();
     }
 
+    /**
+     * Clear project statistics cache when project changes.
+     */
+    protected function customCacheInvalidation(): void
+    {
+        \App\Services\ProjectStatisticsService::clearCache($this->id);
+    }
+
     protected $fillable = [
         'name',
         'slug',

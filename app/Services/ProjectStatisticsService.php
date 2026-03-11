@@ -7,15 +7,33 @@ use App\Models\Sprint;
 use App\Models\Task;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class ProjectStatisticsService
 {
+    /**
+     * Cache TTL in seconds (10 minutes).
+     */
+    private const CACHE_TTL = 600;
+
     /**
      * Get global statistics across all projects (for Dashboard analytics tab).
      *
      * @return array<string, mixed>
      */
     public function getGlobalStatistics(): array
+    {
+        return Cache::remember('project_stats.global', self::CACHE_TTL, function () {
+            return $this->computeGlobalStatistics();
+        });
+    }
+
+    /**
+     * Compute global statistics (uncached).
+     *
+     * @return array<string, mixed>
+     */
+    private function computeGlobalStatistics(): array
     {
         $projectIds = Project::pluck('id');
 
@@ -57,21 +75,23 @@ class ProjectStatisticsService
      */
     public function getProjectStatistics(Project $project): array
     {
-        $tasks = $project->tasks()->with(['status', 'assignedUser'])->get();
-        $sprints = $project->sprints()->get();
-        $epics = $tasks->where('type', 'epic');
+        return Cache::remember("project_stats.{$project->id}", self::CACHE_TTL, function () use ($project) {
+            $tasks = $project->tasks()->with(['status', 'assignedUser'])->get();
+            $sprints = $project->sprints()->get();
+            $epics = $tasks->where('type', 'epic');
 
-        return [
-            'tasks_by_status' => $this->getTasksByStatus($tasks),
-            'tasks_by_priority' => $this->getTasksByPriority($tasks),
-            'sprints_by_status' => $this->getSprintsByStatus($sprints),
-            'epics_by_status' => $this->getEpicsByStatus($epics),
-            'task_evolution' => $this->getMultiPeriodTaskEvolution($tasks),
-            'completion_by_assignee' => $this->getCompletionByAssignee($tasks),
-            'tasks_by_member' => $this->getTasksByMember($tasks),
-            'global_progress' => $this->getGlobalProgress($tasks),
-            'velocity' => $this->getVelocity($tasks),
-        ];
+            return [
+                'tasks_by_status' => $this->getTasksByStatus($tasks),
+                'tasks_by_priority' => $this->getTasksByPriority($tasks),
+                'sprints_by_status' => $this->getSprintsByStatus($sprints),
+                'epics_by_status' => $this->getEpicsByStatus($epics),
+                'task_evolution' => $this->getMultiPeriodTaskEvolution($tasks),
+                'completion_by_assignee' => $this->getCompletionByAssignee($tasks),
+                'tasks_by_member' => $this->getTasksByMember($tasks),
+                'global_progress' => $this->getGlobalProgress($tasks),
+                'velocity' => $this->getVelocity($tasks),
+            ];
+        });
     }
 
     /**
@@ -81,17 +101,32 @@ class ProjectStatisticsService
      */
     public function getTaskStatistics(): array
     {
-        $tasks = Task::with(['status', 'assignedUser'])->get();
+        return Cache::remember('project_stats.tasks', self::CACHE_TTL, function () {
+            $tasks = Task::with(['status', 'assignedUser'])->get();
 
-        return [
-            'tasks_by_status' => $this->getTasksByStatus($tasks),
-            'tasks_by_priority' => $this->getTasksByPriority($tasks),
-            'task_evolution' => $this->getMultiPeriodTaskEvolution($tasks),
-            'completion_by_assignee' => $this->getCompletionByAssignee($tasks),
-            'tasks_by_member' => $this->getTasksByMember($tasks),
-            'global_progress' => $this->getGlobalProgress($tasks),
-            'velocity' => $this->getVelocity($tasks),
-        ];
+            return [
+                'tasks_by_status' => $this->getTasksByStatus($tasks),
+                'tasks_by_priority' => $this->getTasksByPriority($tasks),
+                'task_evolution' => $this->getMultiPeriodTaskEvolution($tasks),
+                'completion_by_assignee' => $this->getCompletionByAssignee($tasks),
+                'tasks_by_member' => $this->getTasksByMember($tasks),
+                'global_progress' => $this->getGlobalProgress($tasks),
+                'velocity' => $this->getVelocity($tasks),
+            ];
+        });
+    }
+
+    /**
+     * Clear all project statistics caches.
+     */
+    public static function clearCache(?int $projectId = null): void
+    {
+        Cache::forget('project_stats.global');
+        Cache::forget('project_stats.tasks');
+
+        if ($projectId) {
+            Cache::forget("project_stats.{$projectId}");
+        }
     }
 
     /**
