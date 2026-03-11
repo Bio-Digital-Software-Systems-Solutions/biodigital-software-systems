@@ -213,12 +213,15 @@ class ShiftController extends Controller
         }
 
         // Get TODOs linked to this shift
-        $shiftTodos = DepartmentTodo::forDepartment($department)
+        $shiftTodosCollection = DepartmentTodo::forDepartment($department)
             ->forShift($shift)
-            ->with(['assignee', 'creator', 'completedBy', 'shift.user'])
+            ->with(['shift.user'])
             ->ordered()
-            ->get()
-            ->map(fn ($todo): array => $todo->toArrayForApi());
+            ->get();
+
+        DepartmentTodo::eagerLoadBackupUsers($shiftTodosCollection);
+
+        $shiftTodos = $shiftTodosCollection->map(fn ($todo): array => $todo->toArrayForApi());
 
         // Get department members for assignment
         $members = $department->members()

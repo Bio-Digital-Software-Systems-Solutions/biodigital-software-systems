@@ -980,5 +980,29 @@ class RolesAndPermissionsSeeder extends Seeder
             'view appointments',
             'create appointments',
         ]);
+
+        // Accountant - Accounting and financial management
+        $accountant = Role::firstOrCreate(['name' => 'accountant']);
+        $accountant->syncPermissions([
+            // Accounting
+            'view accounting',
+            'manage accounting',
+            // Reports
+            'view reports',
+            'generate reports',
+            // Basic viewing
+            'view articles',
+            'view events',
+            'attend events',
+            'view departments',
+            'view users',
+            // Messages & Chat
+            'view messages',
+            'create messages',
+            'use chat',
+            // Appointments
+            'view appointments',
+            'create appointments',
+        ]);
     }
 }

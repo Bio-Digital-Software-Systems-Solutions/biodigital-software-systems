@@ -436,6 +436,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
             ->name('update');
         Route::delete('/{todo}', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'destroy'])
             ->name('destroy');
+        Route::patch('/{todo}/inline-update', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'inlineUpdate'])
+            ->name('inline-update');
         Route::post('/{todo}/toggle-complete', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'toggleComplete'])
             ->name('toggle-complete');
         Route::post('/{todo}/status', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'updateStatus'])

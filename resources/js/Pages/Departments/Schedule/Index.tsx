@@ -41,12 +41,17 @@ import {
     MinusIcon,
     MagnifyingGlassIcon,
     XMarkIcon,
+    ListBulletIcon,
+    TableCellsIcon,
+    Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import WeeklyCalendar from '@/Components/Scheduling/WeeklyCalendar';
 import ShiftCard from '@/Components/Scheduling/ShiftCard';
 import TodoCreateModal from '@/Components/Scheduling/TodoCreateModal';
 import TodoEditModal from '@/Components/Scheduling/TodoEditModal';
 import TodoList from '@/Components/Scheduling/TodoList';
+import type { TodoViewMode } from '@/Components/Scheduling/TodoList';
+import { cn } from '@/lib/utils';
 import { filterTodos } from '@/utils/todoFilters';
 import type {
     ScheduleIndexProps,
@@ -87,6 +92,7 @@ export default function ScheduleIndex({
     const [todoAccordionOpen, setTodoAccordionOpen] = useState(false);
     const [showAllTodos, setShowAllTodos] = useState(false);
     const [todoSearchQuery, setTodoSearchQuery] = useState('');
+    const [todoViewMode, setTodoViewMode] = useState<TodoViewMode>('table');
     const [editingTodo, setEditingTodo] = useState<DepartmentTodo | null>(null);
     const [editModalOpen, setEditModalOpen] = useState(false);
 
@@ -512,6 +518,45 @@ export default function ScheduleIndex({
                                 >
                                     {showAllTodos ? 'Toutes' : 'Actives'}
                                 </Button>
+                                {/* View mode toggle */}
+                                <div className="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-0.5">
+                                    <button
+                                        onClick={() => setTodoViewMode('list')}
+                                        className={cn(
+                                            'px-2 py-1.5 rounded-md transition-colors',
+                                            todoViewMode === 'list'
+                                                ? 'bg-icc-blue text-white'
+                                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                        )}
+                                        title="Vue liste"
+                                    >
+                                        <ListBulletIcon className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setTodoViewMode('table')}
+                                        className={cn(
+                                            'px-2 py-1.5 rounded-md transition-colors',
+                                            todoViewMode === 'table'
+                                                ? 'bg-icc-blue text-white'
+                                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                        )}
+                                        title="Vue tableau"
+                                    >
+                                        <TableCellsIcon className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setTodoViewMode('grid')}
+                                        className={cn(
+                                            'px-2 py-1.5 rounded-md transition-colors',
+                                            todoViewMode === 'grid'
+                                                ? 'bg-icc-blue text-white'
+                                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                        )}
+                                        title="Vue grille"
+                                    >
+                                        <Squares2X2Icon className="h-4 w-4" />
+                                    </button>
+                                </div>
                                 <Button size="sm" onClick={() => setTodoModalOpen(true)}>
                                     <PlusIcon className="h-4 w-4 mr-1" />
                                     Nouvelle tache
@@ -525,6 +570,7 @@ export default function ScheduleIndex({
                                     departmentUuid={department.uuid}
                                     members={members}
                                     onEdit={handleEditTodo}
+                                    viewMode={todoViewMode}
                                 />
                             </CardContent>
                         )}

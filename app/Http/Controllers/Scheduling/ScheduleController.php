@@ -49,11 +49,14 @@ class ScheduleController extends Controller
             ->get(['uuid', 'week_start', 'week_end', 'status', 'notes']);
 
         // Get department todos (all todos, filtering done on frontend)
-        $todos = DepartmentTodo::forDepartment($department)
-            ->with(['assignee', 'creator', 'completedBy', 'shift.user'])
+        $todosCollection = DepartmentTodo::forDepartment($department)
+            ->with(['shift.user'])
             ->ordered()
-            ->get()
-            ->map(fn ($todo): array => $todo->toArrayForApi());
+            ->get();
+
+        DepartmentTodo::eagerLoadBackupUsers($todosCollection);
+
+        $todos = $todosCollection->map(fn ($todo): array => $todo->toArrayForApi());
 
         // Get todo stats
         $todoStats = [

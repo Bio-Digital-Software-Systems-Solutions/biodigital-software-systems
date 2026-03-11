@@ -43,6 +43,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read bool $is_due_today
  * @property-read bool $is_overdue
  * @property-read \App\Models\Scheduling\Shift|null $shift
+ *
  * @method static Builder<static>|DepartmentTodo active()
  * @method static Builder<static>|DepartmentTodo assignedTo(\App\Models\User|int $user)
  * @method static Builder<static>|DepartmentTodo byPriority(\App\Enums\Scheduling\TodoPriority $priority)
@@ -80,12 +81,20 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static Builder<static>|DepartmentTodo whereUuid($value)
  * @method static Builder<static>|DepartmentTodo withShift()
  * @method static Builder<static>|DepartmentTodo withoutShift()
+ *
  * @mixin \Eloquent
  */
 class DepartmentTodo extends Model
 {
     use HasFactory;
     use LogsActivity;
+
+    /**
+     * Relations that should always be eager-loaded.
+     *
+     * @var array<int, string>
+     */
+    protected $with = ['assignee', 'creator', 'completedBy'];
 
     protected $fillable = [
         'uuid',
@@ -166,7 +175,22 @@ class DepartmentTodo extends Model
     }
 
     /**
-     * Get the backup assignees as User models
+     * Pre-loaded backup users cache (set via eagerLoadBackupUsers).
+     *
+     * @var \Illuminate\Support\Collection<int, User>|null
+     */
+    protected ?\Illuminate\Support\Collection $preloadedBackupUsers = null;
+
+    /**
+     * Set pre-loaded backup users to avoid N+1 queries.
+     */
+    public function setPreloadedBackupUsers(\Illuminate\Support\Collection $users): void
+    {
+        $this->preloadedBackupUsers = $users;
+    }
+
+    /**
+     * Get the backup assignees as User models.
      */
     public function getBackupUsersAttribute(): \Illuminate\Support\Collection
     {
@@ -174,7 +198,34 @@ class DepartmentTodo extends Model
             return collect();
         }
 
+        if ($this->preloadedBackupUsers !== null) {
+            return $this->preloadedBackupUsers;
+        }
+
         return User::whereIn('id', $this->backup_assignees)->get();
+    }
+
+    /**
+     * Eager-load backup users for a collection of todos in a single query.
+     *
+     * @param  \Illuminate\Support\Collection<int, self>  $todos
+     */
+    public static function eagerLoadBackupUsers(\Illuminate\Support\Collection $todos): void
+    {
+        $allIds = $todos->flatMap(fn (self $todo): array => $todo->backup_assignees ?? [])->unique()->values();
+
+        if ($allIds->isEmpty()) {
+            $todos->each(fn (self $todo) => $todo->setPreloadedBackupUsers(collect()));
+
+            return;
+        }
+
+        $users = User::whereIn('id', $allIds)->get()->keyBy('id');
+
+        $todos->each(function (self $todo) use ($users): void {
+            $ids = $todo->backup_assignees ?? [];
+            $todo->setPreloadedBackupUsers($users->only($ids)->values());
+        });
     }
 
     // Scopes

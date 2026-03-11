@@ -25,7 +25,7 @@ class DepartmentTodoController extends Controller
         $this->authorize('viewAny', [DepartmentTodo::class, $department]);
 
         $query = DepartmentTodo::forDepartment($department)
-            ->with(['assignee', 'creator', 'shift.user', 'completedBy']);
+            ->with(['shift.user']);
 
         // Filter by status
         if ($request->filled('status')) {
@@ -81,6 +81,8 @@ class DepartmentTodoController extends Controller
         }
 
         $todos = $query->ordered()->get();
+
+        DepartmentTodo::eagerLoadBackupUsers($todos);
 
         // For API requests, return JSON
         if ($request->wantsJson()) {
@@ -396,6 +398,86 @@ class DepartmentTodoController extends Controller
     }
 
     /**
+     * Inline update a single field of a todo
+     */
+    public function inlineUpdate(Request $request, Department $department, DepartmentTodo $todo): JsonResponse
+    {
+        if ($todo->department_id !== $department->id) {
+            abort(404);
+        }
+
+        $this->authorize('update', $todo);
+
+        $request->validate([
+            'field' => 'required|string',
+            'value' => 'present',
+        ]);
+
+        $field = $request->input('field');
+        $allowedFields = ['title', 'description', 'priority', 'status', 'due_date', 'assigned_to', 'backup_assignees', 'estimated_minutes'];
+
+        if (! in_array($field, $allowedFields)) {
+            return response()->json(['message' => 'Field not allowed.'], 422);
+        }
+
+        $rules = match ($field) {
+            'title' => ['value' => 'required|string|max:255'],
+            'description' => ['value' => 'nullable|string'],
+            'priority' => ['value' => 'required|string|in:low,medium,high,urgent'],
+            'status' => ['value' => 'required|string|in:todo,in_progress,completed,blocked,cancelled'],
+            'due_date' => ['value' => 'nullable|date'],
+            'assigned_to' => ['value' => 'nullable|exists:users,uuid'],
+            'backup_assignees' => ['value' => 'nullable|array', 'value.*' => 'exists:users,uuid'],
+            'estimated_minutes' => ['value' => 'nullable|integer|min:1'],
+            default => [],
+        };
+
+        $request->validate($rules);
+
+        $value = $request->input('value');
+
+        if ($field === 'assigned_to') {
+            if (empty($value)) {
+                $todo->update(['assigned_to' => null]);
+            } else {
+                $assignee = User::where('uuid', $value)->first();
+                $todo->update(['assigned_to' => $assignee->id]);
+            }
+        } elseif ($field === 'backup_assignees') {
+            if (empty($value)) {
+                $todo->update(['backup_assignees' => null]);
+            } else {
+                $backupIds = User::whereIn('uuid', $value)->pluck('id')->toArray();
+                $todo->update(['backup_assignees' => $backupIds]);
+            }
+        } elseif ($field === 'status') {
+            $newStatus = ShiftTaskStatus::from($value);
+
+            match ($newStatus) {
+                ShiftTaskStatus::COMPLETED => $todo->complete(auth()->user()),
+                ShiftTaskStatus::IN_PROGRESS => $todo->start(),
+                ShiftTaskStatus::BLOCKED => $todo->block(),
+                ShiftTaskStatus::CANCELLED => $todo->cancel(),
+                ShiftTaskStatus::TODO => $todo->status->isFinal() ? $todo->reopen() : $todo->pause(),
+            };
+        } else {
+            $todo->update([$field => $value]);
+        }
+
+        $todo->refresh();
+        $todo->load(['assignee', 'creator', 'shift.user', 'completedBy']);
+
+        $todoData = $todo->toArrayForApi();
+        DepartmentTodo::eagerLoadBackupUsers(collect([$todo]));
+        $todoData = $todo->toArrayForApi();
+
+        return response()->json([
+            'success' => true,
+            'todo' => $todoData,
+        ]);
+    }
+
+    /**
      * Assign a todo to a user
      */
     public function assign(Request $request, Department $department, DepartmentTodo $todo): JsonResponse
@@ -440,6 +522,8 @@ class DepartmentTodoController extends Controller
             ->with(['assignee', 'creator', 'completedBy', 'shift.user'])
             ->ordered()
             ->get();
+
+        DepartmentTodo::eagerLoadBackupUsers($todos);
 
         return response()->json([
             'todos' => $todos->map(fn ($todo): array => $todo->toArrayForApi()),
