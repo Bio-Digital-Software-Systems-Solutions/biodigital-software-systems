@@ -93,7 +93,7 @@ export default function HeroCarousel({ slides, autoPlayInterval = 5000 }: HeroCa
                     />
 
                     {/* Content */}
-                    <div className="absolute inset-0 flex items-center justify-center z-20">
+                    <div className="absolute inset-0 flex items-center justify-center z-20 pt-64 md:pt-72">
                         <div className="container mx-auto px-4 text-center text-white">
                             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                                 {slide.title}
