@@ -192,6 +192,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'transfer pastoral care',
             'view pastoral care statistics',
             'select pastor for pastoral care',
+            // Accounting
+            'view accounting',
+            'manage accounting',
         ];
 
         foreach ($permissions as $permission) {
@@ -364,6 +367,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage availabilities',
             // Pastor Availability
             'manage pastor availability',
+            // Accounting
+            'view accounting',
+            'manage accounting',
         ]);
 
         // Writer - Content management focused

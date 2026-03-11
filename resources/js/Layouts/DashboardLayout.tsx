@@ -30,6 +30,7 @@ import {
     ArrowPathIcon,
     DocumentTextIcon,
     ClipboardDocumentCheckIcon,
+    BanknotesIcon,
 } from '@heroicons/react/24/outline';
 import Dropdown from '@/Components/Dropdown';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
@@ -103,6 +104,7 @@ export default function DashboardLayout({ children, title, description, actions,
         { name: 'Workflows', href: '/workflows', icon: ArrowPathIcon, permission: 'view workflows' },
         { name: 'Formulaires', href: '/forms', icon: DocumentTextIcon, permission: 'view forms' },
         { name: 'Besoins', href: '/needs', icon: ClipboardDocumentCheckIcon, permission: 'view needs' },
+        { name: 'Comptabilité', href: '/accounting', icon: BanknotesIcon, permission: 'view accounting' },
     ];
 
     const hasPermission = (permission?: string) => {

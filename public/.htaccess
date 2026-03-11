@@ -5,6 +5,10 @@
 
     RewriteEngine On
 
+    # Forcer HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -23,12 +27,5 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 
-    # Optionnel: forcer HTTPS
-    RewriteCond %{HTTPS} off
-    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
     PassengerEnabled on
-    #PassengerAppRoot /icc-munich.de/httpdocs/icc-munich/public
-    #PassengerAppType rack
-    #PassengerStartupFile public/index.php
 </IfModule>

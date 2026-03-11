@@ -27,7 +27,7 @@ class DepartmentController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('can:view departments')->only(['index', 'show']);
+        $this->middleware('can:view departments')->only(['index']);
         $this->middleware('can:manage departments')->only(['create', 'store', 'edit', 'update', 'destroy', 'assignUser', 'removeUser']);
     }
 

@@ -58,6 +58,9 @@ class DatabaseSeeder extends Seeder
             DepartmentTodoSeeder::class,
             MlrPermissionsSeeder::class,
             PastoralCareThemeSeeder::class,
+            OhadaAccountSeeder::class,
+            PcgAccountSeeder::class,
+            IfrsAccountSeeder::class,
         ]);
     }
 }
