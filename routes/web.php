@@ -55,6 +55,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Accounting routes
+    Route::get('accounting', [App\Http\Controllers\AccountingController::class, 'index'])
+        ->name('accounting.index')
+        ->middleware('can:view accounting');
+
     // Event routes
     Route::resource('events', App\Http\Controllers\EventController::class);
     Route::post('events/{event}/toggle-participation', [App\Http\Controllers\EventController::class, 'toggleParticipation'])
