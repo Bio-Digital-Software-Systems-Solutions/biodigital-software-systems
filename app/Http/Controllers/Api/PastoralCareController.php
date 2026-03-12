@@ -52,7 +52,7 @@ class PastoralCareController extends Controller
             ->select('id', 'first_name', 'last_name', 'email', 'phone_number')
             ->with(['roles'])
             ->get()
-            ->map(fn($pastor): array => [
+            ->map(fn ($pastor): array => [
                 'id' => $pastor->id,
                 'name' => $pastor->first_name.' '.$pastor->last_name,
                 'email' => $pastor->email,
@@ -73,7 +73,7 @@ class PastoralCareController extends Controller
         $themes = PastoralCareTheme::active()
             ->ordered()
             ->get()
-            ->map(fn($theme): array => [
+            ->map(fn ($theme): array => [
                 'id' => $theme->id,
                 'name' => $theme->name,
                 'slug' => $theme->slug,
@@ -147,7 +147,7 @@ class PastoralCareController extends Controller
                     60 // Default duration for checking availability
                 );
 
-                if (! empty($slots)) {
+                if ($slots !== []) {
                     $availableDays[] = [
                         'date' => $current->toDateString(),
                         'day_name' => $current->locale('fr')->format('D'),
@@ -237,7 +237,7 @@ class PastoralCareController extends Controller
                         60 // Default duration for checking availability
                     );
 
-                    if (! empty($slots)) {
+                    if ($slots !== []) {
                         $totalSlotsForDay += count($slots);
                         $pastorsWithSlots[] = $pastorId;
                     }
@@ -293,18 +293,16 @@ class PastoralCareController extends Controller
                 $duration
             );
 
-            if (! empty($slots)) {
-                foreach ($slots as $time) {
-                    $allSlots[] = [
-                        'time' => $time,
-                        'pastor_id' => $pastor->id,
-                    ];
-                }
+            foreach ($slots as $time) {
+                $allSlots[] = [
+                    'time' => $time,
+                    'pastor_id' => $pastor->id,
+                ];
             }
         }
 
         // Sort by time
-        usort($allSlots, fn(array $a, array $b): int => strcmp((string) $a['time'], (string) $b['time']));
+        usort($allSlots, fn (array $a, array $b): int => strcmp((string) $a['time'], (string) $b['time']));
 
         return response()->json([
             'success' => true,
@@ -605,7 +603,7 @@ class PastoralCareController extends Controller
 
         $appointment = PastoralCare::findByClientToken($validated['token']);
 
-        if (!$appointment instanceof \App\Models\PastoralCare) {
+        if (! $appointment instanceof \App\Models\PastoralCare) {
             return response()->json([
                 'success' => false,
                 'message' => 'Rendez-vous introuvable ou token invalide',
@@ -655,7 +653,7 @@ class PastoralCareController extends Controller
 
         $appointment = PastoralCare::findByPastorToken($validated['token']);
 
-        if (!$appointment instanceof \App\Models\PastoralCare) {
+        if (! $appointment instanceof \App\Models\PastoralCare) {
             return response()->json([
                 'success' => false,
                 'message' => 'Rendez-vous introuvable ou token invalide',
@@ -1529,7 +1527,7 @@ class PastoralCareController extends Controller
 
         $proposal = PastoralCare::findByProposalToken($validated['token']);
 
-        if (!$proposal instanceof \App\Models\PastoralCare) {
+        if (! $proposal instanceof \App\Models\PastoralCare) {
             return response()->json([
                 'success' => false,
                 'message' => 'Proposition introuvable ou token invalide',
@@ -1746,7 +1744,7 @@ class PastoralCareController extends Controller
 
         $proposal = PastoralCare::findByProposalToken($validated['token']);
 
-        if (!$proposal instanceof \App\Models\PastoralCare) {
+        if (! $proposal instanceof \App\Models\PastoralCare) {
             return response()->json([
                 'success' => false,
                 'message' => 'Proposition introuvable ou token invalide',
@@ -1789,7 +1787,7 @@ class PastoralCareController extends Controller
 
         $proposal = PastoralCare::findByProposalToken($validated['token']);
 
-        if (!$proposal instanceof \App\Models\PastoralCare) {
+        if (! $proposal instanceof \App\Models\PastoralCare) {
             return response()->json([
                 'success' => false,
                 'message' => 'Proposition introuvable ou token invalide',

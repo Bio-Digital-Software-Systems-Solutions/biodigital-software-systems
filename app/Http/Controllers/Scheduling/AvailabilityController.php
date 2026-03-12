@@ -7,8 +7,10 @@ use App\Enums\Scheduling\DayOfWeek;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Scheduling\EmployeeAvailability;
+use App\Models\User;
 use App\Services\Scheduling\AvailabilityService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -74,7 +76,7 @@ class AvailabilityController extends Controller
             'weekEnd' => $weekEnd->format('Y-m-d'),
             'prevWeek' => $weekStart->copy()->subWeek()->format('Y-m-d'),
             'nextWeek' => $weekStart->copy()->addWeek()->format('Y-m-d'),
-            'availabilityStatuses' => collect(AvailabilityStatus::cases())->map(fn($s): array => [
+            'availabilityStatuses' => collect(AvailabilityStatus::cases())->map(fn ($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
@@ -131,12 +133,12 @@ class AvailabilityController extends Controller
             'weekEnd' => $weekEnd->format('Y-m-d'),
             'prevWeek' => $weekStart->copy()->subWeek()->format('Y-m-d'),
             'nextWeek' => $weekStart->copy()->addWeek()->format('Y-m-d'),
-            'availabilityStatuses' => collect(AvailabilityStatus::cases())->map(fn($s): array => [
+            'availabilityStatuses' => collect(AvailabilityStatus::cases())->map(fn ($s): array => [
                 'value' => $s->value,
                 'label' => $s->label(),
                 'color' => $s->color(),
             ]),
-            'daysOfWeek' => collect(DayOfWeek::cases())->map(fn($d): array => [
+            'daysOfWeek' => collect(DayOfWeek::cases())->map(fn ($d): array => [
                 'value' => $d->value,
                 'label' => $d->label(),
                 'short' => $d->shortLabel(),
@@ -171,7 +173,7 @@ class AvailabilityController extends Controller
         ];
 
         foreach ($validated['availability'] as $dayKey => $dayData) {
-            if (!isset($daysMapping[$dayKey])) {
+            if (! isset($daysMapping[$dayKey])) {
                 continue;
             }
 
@@ -181,7 +183,7 @@ class AvailabilityController extends Controller
             // Get first slot times if available
             $startTime = null;
             $endTime = null;
-            if ($dayData['available'] && !empty($dayData['slots'])) {
+            if ($dayData['available'] && ! empty($dayData['slots'])) {
                 $startTime = $dayData['slots'][0]['start'] ?? null;
                 $endTime = $dayData['slots'][0]['end'] ?? null;
             }
@@ -310,6 +312,53 @@ class AvailabilityController extends Controller
             ->delete();
 
         return back()->with('success', 'Disponibilité hebdomadaire supprimée.');
+    }
+
+    /**
+     * Get weekly availability for a specific member (API)
+     */
+    public function getMemberWeekAvailability(Request $request, Department $department, User $user): JsonResponse
+    {
+        $this->authorize('view', $department);
+
+        $weekStart = $request->filled('week')
+            ? Carbon::parse($request->input('week'))->startOfWeek(Carbon::MONDAY)
+            : Carbon::now()->startOfWeek(Carbon::MONDAY);
+
+        $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+
+        $dates = [];
+        $current = $weekStart->copy();
+
+        while ($current->lte($weekEnd)) {
+            $raw = $this->availabilityService->getAvailabilityForDateAndDepartment(
+                $user,
+                $current,
+                $department->id
+            );
+
+            $dates[$current->format('Y-m-d')] = [
+                'status' => $raw['status'] instanceof AvailabilityStatus ? $raw['status']->value : $raw['status'],
+                'is_available' => $raw['is_available'],
+                'is_absent' => $raw['absence'] !== null,
+                'absence_type' => $raw['absence']?->type?->label() ?? null,
+                'time_slots' => $raw['time_slots'],
+            ];
+
+            $current->addDay();
+        }
+
+        return response()->json([
+            'employee' => [
+                'id' => $user->id,
+                'full_name' => $user->full_name,
+            ],
+            'week_start' => $weekStart->format('Y-m-d'),
+            'week_end' => $weekEnd->format('Y-m-d'),
+            'prev_week' => $weekStart->copy()->subWeek()->format('Y-m-d'),
+            'next_week' => $weekStart->copy()->addWeek()->format('Y-m-d'),
+            'dates' => $dates,
+        ]);
     }
 
     /**

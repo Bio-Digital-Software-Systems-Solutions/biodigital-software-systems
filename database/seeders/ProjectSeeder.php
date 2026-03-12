@@ -125,7 +125,7 @@ class ProjectSeeder extends Seeder
             $numberOfTasks = random_int(5, 15);
 
             // Generate project key (first 3-4 letters of project name in uppercase)
-            $projectKey = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', (string) $project->name), 0, 4));
+            $projectKey = strtoupper(substr((string) preg_replace('/[^a-zA-Z]/', '', (string) $project->name), 0, 4));
 
             for ($i = 1; $i <= $numberOfTasks; $i++) {
                 $statusName = $project->status === 'completed' ? 'completed' : $taskStatusNames[array_rand($taskStatusNames)];

@@ -12,7 +12,7 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     Permission::create(['name' => 'view accounting']);
     Permission::create(['name' => 'manage accounting']);
 
@@ -22,7 +22,7 @@ beforeEach(function () {
     Role::create(['name' => 'member']);
 });
 
-it('shows accounting dashboard to authorized user', function () {
+it('shows accounting dashboard to authorized user', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -32,7 +32,7 @@ it('shows accounting dashboard to authorized user', function () {
     $response->assertInertia(fn ($page) => $page->component('Accounting/Index'));
 });
 
-it('denies access to unauthorized user', function () {
+it('denies access to unauthorized user', function (): void {
     $user = User::factory()->create();
     $user->assignRole('member');
 
@@ -43,13 +43,13 @@ it('denies access to unauthorized user', function () {
     $response->assertSessionHas('unauthorized');
 });
 
-it('denies access to unauthenticated user', function () {
+it('denies access to unauthenticated user', function (): void {
     $response = $this->get('/accounting');
 
     $response->assertRedirect('/login');
 });
 
-it('passes correct props to the page', function () {
+it('passes correct props to the page', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 
@@ -76,7 +76,7 @@ it('passes correct props to the page', function () {
     );
 });
 
-it('returns correct stats counts', function () {
+it('returns correct stats counts', function (): void {
     $user = User::factory()->create();
     $user->assignRole('admin');
 

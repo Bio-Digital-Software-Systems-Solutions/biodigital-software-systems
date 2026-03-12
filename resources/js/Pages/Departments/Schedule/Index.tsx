@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Toaster } from '@/Components/ui/toaster';
 import { Button } from '@/Components/ui/button';
@@ -84,12 +84,15 @@ export default function ScheduleIndex({
     todoStatuses = [],
     todoPriorities = [],
 }: ScheduleIndexProps) {
+    const { url } = usePage();
+    const showTasksOnLoad = new URLSearchParams(url.split('?')[1] ?? '').get('showTasks') === '1';
+
     const [isPublishing, setIsPublishing] = useState(false);
     const [isAutoAssigning, setIsAutoAssigning] = useState(false);
     const [showGlobalStats, setShowGlobalStats] = useState(false);
     const [todoModalOpen, setTodoModalOpen] = useState(false);
-    const [showTodoPanel, setShowTodoPanel] = useState(false);
-    const [todoAccordionOpen, setTodoAccordionOpen] = useState(false);
+    const [showTodoPanel, setShowTodoPanel] = useState(showTasksOnLoad);
+    const [todoAccordionOpen, setTodoAccordionOpen] = useState(showTasksOnLoad);
     const [showAllTodos, setShowAllTodos] = useState(false);
     const [todoSearchQuery, setTodoSearchQuery] = useState('');
     const [todoViewMode, setTodoViewMode] = useState<TodoViewMode>('table');
@@ -354,7 +357,13 @@ export default function ScheduleIndex({
                         <Button
                             variant={showTodoPanel ? 'default' : 'outline'}
                             size="sm"
-                            onClick={() => setShowTodoPanel(!showTodoPanel)}
+                            onClick={() => {
+                                const newValue = !showTodoPanel;
+                                setShowTodoPanel(newValue);
+                                if (newValue) {
+                                    setTodoAccordionOpen(true);
+                                }
+                            }}
                             className="relative"
                         >
                             <ClipboardDocumentListIcon className="h-4 w-4 mr-1" />

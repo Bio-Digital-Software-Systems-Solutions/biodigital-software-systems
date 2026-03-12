@@ -149,7 +149,7 @@ class Task extends Model
      */
     protected function customCacheInvalidation(): void
     {
-        if ($this->taskable_type === 'App\Models\Project') {
+        if ($this->taskable_type === \App\Models\Project::class) {
             \App\Services\ProjectStatisticsService::clearCache($this->taskable_id);
         }
     }

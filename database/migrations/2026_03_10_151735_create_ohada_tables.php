@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ohada_account_classes', function (Blueprint $table) {
+        Schema::create('ohada_account_classes', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->integer('class_number')->unique();
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('ohada_accounts', function (Blueprint $table) {
+        Schema::create('ohada_accounts', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('account_number')->unique();
@@ -41,7 +41,7 @@ return new class extends Migration
             $table->index('level');
         });
 
-        Schema::create('ohada_financial_statements', function (Blueprint $table) {
+        Schema::create('ohada_financial_statements', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('name');

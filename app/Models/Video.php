@@ -32,6 +32,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read string $full_url
  * @property-read string $resolution
  * @property-read Model|\Eloquent $videoable
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Video byDuration($minDuration, $maxDuration = null)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Video byMimeType($mimeType)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Video byOrientation($orientation)
@@ -52,6 +53,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Video whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Video whereVideoableId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Video whereVideoableType($value)
+ *
  * @mixin \Eloquent
  */
 class Video extends Model
@@ -174,9 +176,8 @@ class Video extends Model
         if ($bytes == 1) {
             return $bytes.' byte';
         }
-        else {
-            return '0 bytes';
-        }
+
+        return '0 bytes';
     }
 
     /**

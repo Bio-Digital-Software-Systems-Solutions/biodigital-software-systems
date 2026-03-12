@@ -8,7 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('belongs to an account class', function () {
+it('belongs to an account class', function (): void {
     $class = OhadaAccountClass::factory()->create();
     $account = OhadaAccount::factory()->create(['class_id' => $class->id]);
 
@@ -16,7 +16,7 @@ it('belongs to an account class', function () {
     expect($account->accountClass->id)->toBe($class->id);
 });
 
-it('can have a parent account', function () {
+it('can have a parent account', function (): void {
     $class = OhadaAccountClass::factory()->create();
     $parent = OhadaAccount::factory()->create(['class_id' => $class->id]);
     $child = OhadaAccount::factory()->create([
@@ -28,7 +28,7 @@ it('can have a parent account', function () {
     expect($child->parent->id)->toBe($parent->id);
 });
 
-it('can have children accounts', function () {
+it('can have children accounts', function (): void {
     $class = OhadaAccountClass::factory()->create();
     $parent = OhadaAccount::factory()->create(['class_id' => $class->id]);
     OhadaAccount::factory()->count(3)->create([
@@ -39,7 +39,7 @@ it('can have children accounts', function () {
     expect($parent->children)->toHaveCount(3);
 });
 
-it('scopes to root accounts', function () {
+it('scopes to root accounts', function (): void {
     $class = OhadaAccountClass::factory()->create();
     $root = OhadaAccount::factory()->create(['class_id' => $class->id, 'parent_id' => null]);
     OhadaAccount::factory()->create(['class_id' => $class->id, 'parent_id' => $root->id]);
@@ -50,7 +50,7 @@ it('scopes to root accounts', function () {
     expect($roots->first()->id)->toBe($root->id);
 });
 
-it('scopes by class number', function () {
+it('scopes by class number', function (): void {
     $class1 = OhadaAccountClass::factory()->create(['class_number' => 1]);
     $class2 = OhadaAccountClass::factory()->create(['class_number' => 2]);
     OhadaAccount::factory()->count(2)->create(['class_id' => $class1->id]);
@@ -61,21 +61,21 @@ it('scopes by class number', function () {
     expect($accounts)->toHaveCount(2);
 });
 
-it('account class has many accounts', function () {
+it('account class has many accounts', function (): void {
     $class = OhadaAccountClass::factory()->create();
     OhadaAccount::factory()->count(5)->create(['class_id' => $class->id]);
 
     expect($class->accounts)->toHaveCount(5);
 });
 
-it('accounting system has many financial statements', function () {
+it('accounting system has many financial statements', function (): void {
     $system = AccountingSystem::factory()->create();
     OhadaFinancialStatement::factory()->count(4)->create(['accounting_system_id' => $system->id]);
 
     expect($system->financialStatements)->toHaveCount(4);
 });
 
-it('financial statement belongs to accounting system', function () {
+it('financial statement belongs to accounting system', function (): void {
     $system = AccountingSystem::factory()->create();
     $statement = OhadaFinancialStatement::factory()->create(['accounting_system_id' => $system->id]);
 

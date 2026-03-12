@@ -1107,9 +1107,9 @@ export default function ShowDepartment({ department, availableUsers, availableEm
                                         </CardDescription>
                                     </div>
                                     <Button asChild>
-                                        <Link href={`/departments/${department.uuid}/schedule`}>
+                                        <Link href={`/departments/${department.uuid}/schedule?showTasks=1`}>
                                             <CalendarDaysIcon className="h-4 w-4 mr-2" />
-                                            Accéder au Planning
+                                            Accéder aux tâches
                                         </Link>
                                     </Button>
                                 </div>

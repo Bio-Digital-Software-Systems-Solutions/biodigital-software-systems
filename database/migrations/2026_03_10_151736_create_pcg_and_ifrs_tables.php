@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pcg_account_classes', function (Blueprint $table) {
+        Schema::create('pcg_account_classes', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->integer('class_number')->unique();
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('pcg_accounts', function (Blueprint $table) {
+        Schema::create('pcg_accounts', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('account_number')->unique();
@@ -40,7 +40,7 @@ return new class extends Migration
             $table->index('parent_id');
         });
 
-        Schema::create('ifrs_account_classes', function (Blueprint $table) {
+        Schema::create('ifrs_account_classes', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->integer('class_number')->unique();
@@ -51,7 +51,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('ifrs_accounts', function (Blueprint $table) {
+        Schema::create('ifrs_accounts', function (Blueprint $table): void {
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('account_number')->unique();

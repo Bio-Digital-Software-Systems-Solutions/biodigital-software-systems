@@ -36,18 +36,18 @@ class ProjectController extends Controller
                         $q->where('name', 'completed');
                     });
                 },
-                'tasks as in_progress_tasks_count' => function ($query) {
-                    $query->whereHas('status', function ($q) {
+                'tasks as in_progress_tasks_count' => function ($query): void {
+                    $query->whereHas('status', function ($q): void {
                         $q->where('name', 'in_progress');
                     });
                 },
-                'tasks as overdue_tasks_count' => function ($query) {
+                'tasks as overdue_tasks_count' => function ($query): void {
                     $query->where('due_date', '<', now())
-                        ->whereHas('status', function ($q) {
+                        ->whereHas('status', function ($q): void {
                             $q->whereNotIn('name', ['completed', 'cancelled']);
                         });
                 },
-                'tasks as epic_tasks_count' => function ($query) {
+                'tasks as epic_tasks_count' => function ($query): void {
                     $query->where('type', 'epic');
                 },
             ])
@@ -78,7 +78,7 @@ class ProjectController extends Controller
         // Derive recent projects from already-loaded collection (no extra query)
         $recentProjects = $projects->sortByDesc('created_at')
             ->take(5)
-            ->map(function ($project) {
+            ->map(function ($project): \App\Models\Project {
                 $project->progress = $project->tasks_count > 0
                     ? round(($project->completed_tasks_count / $project->tasks_count) * 100)
                     : 0;
@@ -91,7 +91,7 @@ class ProjectController extends Controller
             'projects' => $projects,
             'stats' => $stats,
             'recentProjects' => $recentProjects,
-            'analyticsStats' => Inertia::defer(fn () => (new ProjectStatisticsService)->getGlobalStatistics()),
+            'analyticsStats' => Inertia::defer(fn (): array => (new ProjectStatisticsService)->getGlobalStatistics()),
         ]);
     }
 

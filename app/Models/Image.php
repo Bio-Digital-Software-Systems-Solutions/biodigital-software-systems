@@ -29,6 +29,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read string $srcset
  * @property-read string $thumbnail_url
  * @property-read Model|\Eloquent $imageable
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image byMimeType($mimeType)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image byOrientation($orientation)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image featured()
@@ -46,6 +47,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image whereOriginalName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image whereSize($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Image whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class Image extends Model
@@ -143,9 +145,8 @@ class Image extends Model
         if ($bytes == 1) {
             return $bytes.' byte';
         }
-        else {
-            return '0 bytes';
-        }
+
+        return '0 bytes';
     }
 
     /**

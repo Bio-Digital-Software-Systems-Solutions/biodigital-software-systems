@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
+import MemberAvailabilityModal from './MemberAvailabilityModal';
 import {
     ArrowLeftIcon,
     CalendarDaysIcon,
@@ -28,10 +29,13 @@ interface Employee {
 }
 
 interface DateAvailability {
-    status: string;
+    status: string | null;
+    is_available?: boolean | null;
+    time_slots?: { start: string; end: string }[];
     slots?: { start: string; end: string }[];
     is_absent?: boolean;
-    absence_type?: string;
+    absence?: unknown;
+    absence_type?: string | null;
 }
 
 interface AvailabilityEntry {
@@ -63,18 +67,27 @@ export default function AvailabilityIndex({
     prevWeek,
     nextWeek,
 }: Props) {
+    const [selectedEntry, setSelectedEntry] = useState<AvailabilityEntry | null>(null);
+
     const formatWeekDisplay = () => {
-        const start = new Date(weekStart);
-        const end = new Date(weekEnd);
+        const start = new Date(weekStart + 'T00:00:00');
+        const end = new Date(weekEnd + 'T00:00:00');
         return `${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} - ${end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+    };
+
+    const toLocalDateKey = (date: Date): string => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
     };
 
     const getDatesOfWeek = () => {
         const dates: string[] = [];
-        const current = new Date(weekStart);
-        const end = new Date(weekEnd);
+        const current = new Date(weekStart + 'T00:00:00');
+        const end = new Date(weekEnd + 'T00:00:00');
         while (current <= end) {
-            dates.push(current.toISOString().split('T')[0]);
+            dates.push(toLocalDateKey(current));
             current.setDate(current.getDate() + 1);
         }
         return dates;
@@ -83,14 +96,14 @@ export default function AvailabilityIndex({
     const weekDates = getDatesOfWeek();
 
     const formatDayLabel = (dateStr: string) => {
-        const date = new Date(dateStr);
+        const date = new Date(dateStr + 'T00:00:00');
         return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
     };
 
     const getAvailabilityCount = (dateStr: string) => {
-        return availabilityMatrix.filter(entry => {
-            const dateAvail = entry.dates?.[dateStr];
-            return dateAvail && dateAvail.status === 'available' && !dateAvail.is_absent;
+        return availabilityMatrix.filter((entry) => {
+            const d = entry.dates?.[dateStr];
+            return d && (d.status === 'available' || d.is_available === true) && !d.is_absent && !d.absence;
         }).length;
     };
 
@@ -98,6 +111,18 @@ export default function AvailabilityIndex({
         router.get(`/departments/${department.uuid}/availability`, { week: weekDate }, {
             preserveState: true,
         });
+    };
+
+    const isEntryAvailable = (dateAvail: DateAvailability | undefined): boolean => {
+        if (!dateAvail) { return false; }
+        const isAbsent = dateAvail.is_absent ?? (dateAvail.absence !== null && dateAvail.absence !== undefined);
+        if (isAbsent) { return false; }
+        return dateAvail.status === 'available' || dateAvail.is_available === true;
+    };
+
+    const isEntryAbsent = (dateAvail: DateAvailability | undefined): boolean => {
+        if (!dateAvail) { return false; }
+        return dateAvail.is_absent === true || (dateAvail.absence !== null && dateAvail.absence !== undefined);
     };
 
     return (
@@ -190,18 +215,24 @@ export default function AvailabilityIndex({
                                     {availabilityMatrix.map((entry) => (
                                         <tr key={entry.employee.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
                                             <td className="p-4">
-                                                <div className="flex items-center gap-2">
-                                                    <UserIcon className="h-5 w-5 text-gray-400" />
-                                                    <span className="font-medium">{entry.employee.full_name}</span>
-                                                </div>
+                                                <button
+                                                    onClick={() => setSelectedEntry(entry)}
+                                                    className="flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left"
+                                                >
+                                                    <UserIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                                                    <span className="font-medium underline-offset-2 hover:underline">
+                                                        {entry.employee.full_name}
+                                                    </span>
+                                                </button>
                                             </td>
                                             {weekDates.map((dateStr) => {
                                                 const dateAvail = entry.dates?.[dateStr];
-                                                const isAvailable = dateAvail?.status === 'available' && !dateAvail?.is_absent;
-                                                const isAbsent = dateAvail?.is_absent;
+                                                const available = isEntryAvailable(dateAvail);
+                                                const absent = isEntryAbsent(dateAvail);
+                                                const slots = dateAvail?.time_slots ?? dateAvail?.slots ?? [];
                                                 return (
                                                     <td key={dateStr} className="text-center p-4">
-                                                        {isAbsent ? (
+                                                        {absent ? (
                                                             <div className="flex flex-col items-center">
                                                                 <Badge variant="outline" className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
                                                                     Absent
@@ -212,12 +243,12 @@ export default function AvailabilityIndex({
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                        ) : isAvailable ? (
+                                                        ) : available ? (
                                                             <div className="flex flex-col items-center">
                                                                 <CheckCircleIcon className="h-6 w-6 text-green-500" />
-                                                                {dateAvail?.slots && dateAvail.slots.length > 0 && (
+                                                                {slots.length > 0 && (
                                                                     <div className="text-xs text-gray-500 mt-1">
-                                                                        {dateAvail.slots.map((slot, i) => (
+                                                                        {slots.map((slot, i) => (
                                                                             <div key={i}>{slot.start}-{slot.end}</div>
                                                                         ))}
                                                                     </div>
@@ -244,6 +275,16 @@ export default function AvailabilityIndex({
                     </CardContent>
                 </Card>
             </div>
+
+            <MemberAvailabilityModal
+                entry={selectedEntry}
+                weekStart={weekStart}
+                weekEnd={weekEnd}
+                prevWeek={prevWeek ?? ''}
+                nextWeek={nextWeek ?? ''}
+                departmentUuid={department.uuid}
+                onClose={() => setSelectedEntry(null)}
+            />
         </DashboardLayout>
     );
 }

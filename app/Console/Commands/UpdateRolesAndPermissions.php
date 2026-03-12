@@ -40,7 +40,6 @@ class UpdateRolesAndPermissions extends Command
 
         // Check if dry run mode
         $dryRun = $this->option('dry-run');
-        $this->option('force');
         $resetSuperAdmin = $this->option('reset-super-admin');
 
         if ($dryRun) {
@@ -92,7 +91,7 @@ class UpdateRolesAndPermissions extends Command
     /**
      * Create missing permissions based on the seeder
      */
-    private function createMissingPermissions($dryRun = false): void
+    private function createMissingPermissions(bool $dryRun = false): void
     {
         $this->info('📋 Creating missing permissions...');
 
@@ -168,7 +167,7 @@ class UpdateRolesAndPermissions extends Command
     /**
      * Create missing roles
      */
-    private function createMissingRoles($dryRun = false): void
+    private function createMissingRoles(bool $dryRun = false): void
     {
         $this->info('👥 Creating missing roles...');
 
@@ -205,7 +204,7 @@ class UpdateRolesAndPermissions extends Command
     /**
      * Update role permissions
      */
-    private function updateRolePermissions($dryRun = false): void
+    private function updateRolePermissions(bool $dryRun = false): void
     {
         $this->info('🔧 Updating role permissions...');
 
@@ -289,7 +288,7 @@ class UpdateRolesAndPermissions extends Command
     /**
      * Reset super-admin to have all permissions
      */
-    private function resetSuperAdminPermissions($dryRun = false): void
+    private function resetSuperAdminPermissions(bool $dryRun = false): void
     {
         $this->info('🔒 Resetting super-admin permissions...');
 
@@ -304,16 +303,17 @@ class UpdateRolesAndPermissions extends Command
             }
         }
 
-        if ($superAdmin || ! $dryRun) {
+        if (! $dryRun && ! $superAdmin) {
+            $superAdmin = Role::where('name', 'super-admin')->first();
+        }
+
+        if ($superAdmin || $dryRun) {
             $allPermissions = Permission::all();
             $totalPermissions = $allPermissions->count();
 
             if ($dryRun) {
                 $this->line("  Would assign all {$totalPermissions} permissions to super-admin");
-            } else {
-                if (! $superAdmin) {
-                    $superAdmin = Role::where('name', 'super-admin')->first();
-                }
+            } elseif ($superAdmin) {
                 $superAdmin->syncPermissions($allPermissions);
                 $this->line("  ✅ super-admin now has all {$totalPermissions} permissions");
             }

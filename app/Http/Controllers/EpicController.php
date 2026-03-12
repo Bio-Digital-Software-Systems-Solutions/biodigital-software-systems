@@ -49,9 +49,9 @@ class EpicController extends Controller
             // Get child tasks (tasks that belong to this epic)
             $childTasks = Task::where('epic_id', $epic->id)->with(['status', 'assignee'])->get();
             $totalTasks = $childTasks->count();
-            $completedTasks = $childTasks->filter(fn($task): bool => $task->status && in_array($task->status->name, [
+            $completedTasks = $childTasks->filter(fn ($task): bool => $task->status && in_array($task->status->name, [
                 TaskStatus::COMPLETED->value,
-                TaskStatus::DONE->value
+                TaskStatus::DONE->value,
             ]))->count();
 
             return [
@@ -70,7 +70,7 @@ class EpicController extends Controller
                 'total_tasks' => $totalTasks,
                 'completed_tasks' => $completedTasks,
                 'progress' => $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0,
-                'child_tasks' => $childTasks->map(fn($task): array => [
+                'child_tasks' => $childTasks->map(fn ($task): array => [
                     'id' => $task->id,
                     'uuid' => $task->uuid,
                     'key' => $task->key,
@@ -81,7 +81,7 @@ class EpicController extends Controller
                     'type' => $task->type,
                     'assignee' => $task->assignee,
                 ]),
-                'attachments' => $epic->attachments->map(fn($attachment): array => [
+                'attachments' => $epic->attachments->map(fn ($attachment): array => [
                     'id' => $attachment->id,
                     'file_name' => $attachment->file_name,
                     'file_type' => $attachment->file_type,
@@ -111,7 +111,7 @@ class EpicController extends Controller
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get()
-            ->map(fn($user): array => [
+            ->map(fn ($user): array => [
                 'id' => $user->id,
                 'name' => $user->name, // Uses the name accessor
                 'email' => $user->email,
@@ -150,7 +150,7 @@ class EpicController extends Controller
 
         // Generate key
         $project = Project::find($validated['taskable_id']);
-        $projectKey = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', (string) $project->name), 0, 4));
+        $projectKey = strtoupper(substr((string) preg_replace('/[^a-zA-Z]/', '', (string) $project->name), 0, 4));
 
         // Find the highest number for this key prefix across all tasks (including soft deleted ones)
         $existingKeys = Task::withTrashed()
@@ -159,6 +159,7 @@ class EpicController extends Controller
             ->map(function ($key): int {
                 // Extract the number after the dash
                 $parts = explode('-', $key);
+
                 return isset($parts[1]) ? (int) $parts[1] : 0;
             })
             ->filter();
@@ -178,12 +179,12 @@ class EpicController extends Controller
             ->firstOrFail();
 
         // Get all valid epic status enum values
-        $validStatuses = collect(EpicStatus::cases())->map(fn($status) => $status->value)->toArray();
+        $validStatuses = collect(EpicStatus::cases())->map(fn ($status) => $status->value)->toArray();
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'required|in:' . implode(',', $validStatuses),
+            'status' => 'required|in:'.implode(',', $validStatuses),
             'priority' => 'required|in:lowest,low,medium,high,highest',
             'assignee_id' => 'nullable|exists:users,id',
             'due_date' => 'nullable|date',

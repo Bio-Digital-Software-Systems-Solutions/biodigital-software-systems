@@ -23,9 +23,7 @@ class ProjectStatisticsService
      */
     public function getGlobalStatistics(): array
     {
-        return Cache::remember('project_stats.global', self::CACHE_TTL, function () {
-            return $this->computeGlobalStatistics();
-        });
+        return Cache::remember('project_stats.global', self::CACHE_TTL, $this->computeGlobalStatistics(...));
     }
 
     /**
@@ -75,7 +73,7 @@ class ProjectStatisticsService
      */
     public function getProjectStatistics(Project $project): array
     {
-        return Cache::remember("project_stats.{$project->id}", self::CACHE_TTL, function () use ($project) {
+        return Cache::remember("project_stats.{$project->id}", self::CACHE_TTL, function () use ($project): array {
             $tasks = $project->tasks()->with(['status', 'assignedUser'])->get();
             $sprints = $project->sprints()->get();
             $epics = $tasks->where('type', 'epic');
@@ -101,7 +99,7 @@ class ProjectStatisticsService
      */
     public function getTaskStatistics(): array
     {
-        return Cache::remember('project_stats.tasks', self::CACHE_TTL, function () {
+        return Cache::remember('project_stats.tasks', self::CACHE_TTL, function (): array {
             $tasks = Task::with(['status', 'assignedUser'])->get();
 
             return [

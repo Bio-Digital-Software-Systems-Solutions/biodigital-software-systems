@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->todoStatus = Status::factory()->create(['name' => 'todo', 'color' => '#6b7280']);
     $this->pendingStatus = Status::factory()->pending()->create();
     $this->inProgressStatus = Status::factory()->inProgress()->create();
@@ -25,7 +25,7 @@ beforeEach(function () {
     ]);
 });
 
-it('syncs sprint to active when a task moves to in_progress', function () {
+it('syncs sprint to active when a task moves to in_progress', function (): void {
     $task = Task::factory()->create([
         'sprint_id' => $this->sprint->id,
         'status_id' => $this->pendingStatus->id,
@@ -40,7 +40,7 @@ it('syncs sprint to active when a task moves to in_progress', function () {
     expect($this->sprint->progress)->toBe(0);
 });
 
-it('syncs sprint progress based on completed tasks ratio', function () {
+it('syncs sprint progress based on completed tasks ratio', function (): void {
     $task1 = Task::factory()->create([
         'sprint_id' => $this->sprint->id,
         'status_id' => $this->pendingStatus->id,
@@ -70,7 +70,7 @@ it('syncs sprint progress based on completed tasks ratio', function () {
     expect($this->sprint->status)->toBe('active');
 });
 
-it('syncs sprint to completed when all tasks are completed', function () {
+it('syncs sprint to completed when all tasks are completed', function (): void {
     $task1 = Task::factory()->create([
         'sprint_id' => $this->sprint->id,
         'status_id' => $this->completedStatus->id,
@@ -92,7 +92,7 @@ it('syncs sprint to completed when all tasks are completed', function () {
     expect($this->sprint->status)->toBe('completed');
 });
 
-it('syncs sprint to completed when all tasks are completed or cancelled', function () {
+it('syncs sprint to completed when all tasks are completed or cancelled', function (): void {
     $task1 = Task::factory()->create([
         'sprint_id' => $this->sprint->id,
         'status_id' => $this->completedStatus->id,
@@ -114,7 +114,7 @@ it('syncs sprint to completed when all tasks are completed or cancelled', functi
     expect($this->sprint->status)->toBe('completed');
 });
 
-it('syncs sprint to planned when all tasks are pending', function () {
+it('syncs sprint to planned when all tasks are pending', function (): void {
     Task::factory()->create([
         'sprint_id' => $this->sprint->id,
         'status_id' => $this->pendingStatus->id,
@@ -134,7 +134,7 @@ it('syncs sprint to planned when all tasks are pending', function () {
     expect($this->sprint->progress)->toBe(0);
 });
 
-it('recalculates sprint when a task is deleted', function () {
+it('recalculates sprint when a task is deleted', function (): void {
     $task1 = Task::factory()->create([
         'sprint_id' => $this->sprint->id,
         'status_id' => $this->completedStatus->id,
@@ -161,7 +161,7 @@ it('recalculates sprint when a task is deleted', function () {
     expect($this->sprint->status)->toBe('completed');
 });
 
-it('recalculates sprint when a task is restored', function () {
+it('recalculates sprint when a task is restored', function (): void {
     $task1 = Task::factory()->create([
         'sprint_id' => $this->sprint->id,
         'status_id' => $this->completedStatus->id,
@@ -186,7 +186,7 @@ it('recalculates sprint when a task is restored', function () {
     expect($this->sprint->status)->toBe('active');
 });
 
-it('does not sync when task has no sprint', function () {
+it('does not sync when task has no sprint', function (): void {
     $task = Task::factory()->create([
         'sprint_id' => null,
         'status_id' => $this->pendingStatus->id,
@@ -201,7 +201,7 @@ it('does not sync when task has no sprint', function () {
     expect($this->sprint->progress)->toBe(0);
 });
 
-it('does not override cancelled sprint status', function () {
+it('does not override cancelled sprint status', function (): void {
     $this->sprint->update(['status' => 'cancelled']);
 
     $task = Task::factory()->create([
@@ -217,7 +217,7 @@ it('does not override cancelled sprint status', function () {
     expect($this->sprint->status)->toBe('cancelled');
 });
 
-it('resets sprint to planned when all tasks are removed', function () {
+it('resets sprint to planned when all tasks are removed', function (): void {
     $task = Task::factory()->create([
         'sprint_id' => $this->sprint->id,
         'status_id' => $this->completedStatus->id,
@@ -235,7 +235,7 @@ it('resets sprint to planned when all tasks are removed', function () {
     expect($this->sprint->status)->toBe('planned');
 });
 
-it('syncs sprint progress incrementally as tasks complete', function () {
+it('syncs sprint progress incrementally as tasks complete', function (): void {
     $tasks = [];
     for ($i = 0; $i < 4; $i++) {
         $tasks[] = Task::factory()->create([
@@ -265,7 +265,7 @@ it('syncs sprint progress incrementally as tasks complete', function () {
     expect($this->sprint->status)->toBe('completed');
 });
 
-it('keeps sprint active when mix of completed and in_progress tasks', function () {
+it('keeps sprint active when mix of completed and in_progress tasks', function (): void {
     $task1 = Task::factory()->create([
         'sprint_id' => $this->sprint->id,
         'status_id' => $this->completedStatus->id,

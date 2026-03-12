@@ -2,19 +2,18 @@
 
 namespace Tests\Feature\Security;
 
-use App\Models\User;
-use App\Models\Event;
 use App\Models\Article;
+use App\Models\Event;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
-use Tests\TestCase;
 use Tests\CreatesPermissions;
+use Tests\TestCase;
 
 class AdvancedSecurityTest extends TestCase
 {
-    use RefreshDatabase, CreatesPermissions;
+    use CreatesPermissions, RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -28,7 +27,7 @@ class AdvancedSecurityTest extends TestCase
         $user = User::factory()->create();
 
         // Get initial session ID
-        $response = $this->get('/login');
+        $this->get('/login');
         $initialSessionId = Session::getId();
 
         // Login
@@ -122,7 +121,7 @@ class AdvancedSecurityTest extends TestCase
         $user = User::factory()->create();
 
         // Attempt SQL injection in search parameter
-        $response = $this->actingAs($user)->get('/events?search=' . urlencode("' OR '1'='1"));
+        $response = $this->actingAs($user)->get('/events?search='.urlencode("' OR '1'='1"));
 
         $response->assertSuccessful();
 
@@ -180,7 +179,7 @@ class AdvancedSecurityTest extends TestCase
             'remember_token' => 'secret-token',
         ]);
 
-        $response = $this->actingAs($user)->getJson('/api/users/' . $user->id);
+        $response = $this->actingAs($user)->getJson('/api/users/'.$user->id);
 
         if ($response->isSuccessful()) {
             $data = $response->json();
@@ -460,7 +459,7 @@ class AdvancedSecurityTest extends TestCase
         // Should not process external entities
         $this->assertTrue(
             $response->status() >= 400 ||
-            !str_contains($response->getContent(), 'root:')
+            ! str_contains($response->getContent(), 'root:')
         );
     }
 

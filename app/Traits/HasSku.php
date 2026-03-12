@@ -33,7 +33,7 @@ trait HasSku
             if ($category) {
                 // Use first 3 letters of category name as prefix (uppercase, letters only)
                 $cleanName = preg_replace('/[^a-zA-Z]/', '', (string) $category->name);
-                $prefix = strtoupper(substr($cleanName, 0, 3));
+                $prefix = strtoupper(substr((string) $cleanName, 0, 3));
             }
         }
 
@@ -68,7 +68,7 @@ trait HasSku
         if ($this->category_id && $this->category) {
             $cleanName = preg_replace('/[^a-zA-Z]/', '', (string) $this->category->name);
 
-            return strtoupper(substr($cleanName, 0, 3));
+            return strtoupper(substr((string) $cleanName, 0, 3));
         }
 
         return 'GEN';

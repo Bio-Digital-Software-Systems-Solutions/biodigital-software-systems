@@ -8,7 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Create required statuses
     $this->todoStatus = Status::factory()->create(['name' => 'todo', 'color' => '#6b7280']);
     $this->pendingStatus = Status::factory()->pending()->create();
@@ -33,7 +33,7 @@ beforeEach(function () {
     ]);
 });
 
-it('syncs epic to in_progress when a child task moves to in_progress', function () {
+it('syncs epic to in_progress when a child task moves to in_progress', function (): void {
     $task = Task::factory()->create([
         'epic_id' => $this->epic->id,
         'status_id' => $this->pendingStatus->id,
@@ -49,7 +49,7 @@ it('syncs epic to in_progress when a child task moves to in_progress', function 
     expect($this->epic->progress)->toBe(0);
 });
 
-it('syncs epic progress based on completed child tasks ratio', function () {
+it('syncs epic progress based on completed child tasks ratio', function (): void {
     $task1 = Task::factory()->create([
         'epic_id' => $this->epic->id,
         'status_id' => $this->pendingStatus->id,
@@ -79,7 +79,7 @@ it('syncs epic progress based on completed child tasks ratio', function () {
     expect($this->epic->status->name)->toBe('in_progress');
 });
 
-it('syncs epic to completed when all child tasks are completed', function () {
+it('syncs epic to completed when all child tasks are completed', function (): void {
     $task1 = Task::factory()->create([
         'epic_id' => $this->epic->id,
         'status_id' => $this->completedStatus->id,
@@ -102,7 +102,7 @@ it('syncs epic to completed when all child tasks are completed', function () {
     expect($this->epic->status->name)->toBe('completed');
 });
 
-it('syncs epic to completed when all tasks are completed or cancelled', function () {
+it('syncs epic to completed when all tasks are completed or cancelled', function (): void {
     $task1 = Task::factory()->create([
         'epic_id' => $this->epic->id,
         'status_id' => $this->completedStatus->id,
@@ -126,7 +126,7 @@ it('syncs epic to completed when all tasks are completed or cancelled', function
     expect($this->epic->status->name)->toBe('completed');
 });
 
-it('syncs epic to pending when all child tasks are pending', function () {
+it('syncs epic to pending when all child tasks are pending', function (): void {
     Task::factory()->create([
         'epic_id' => $this->epic->id,
         'status_id' => $this->pendingStatus->id,
@@ -146,7 +146,7 @@ it('syncs epic to pending when all child tasks are pending', function () {
     expect($this->epic->progress)->toBe(0);
 });
 
-it('syncs epic to under_review when tasks are under review and none in progress', function () {
+it('syncs epic to under_review when tasks are under review and none in progress', function (): void {
     $task1 = Task::factory()->create([
         'epic_id' => $this->epic->id,
         'status_id' => $this->pendingStatus->id,
@@ -169,7 +169,7 @@ it('syncs epic to under_review when tasks are under review and none in progress'
     expect($this->epic->progress)->toBe(0);
 });
 
-it('recalculates epic when a child task is deleted', function () {
+it('recalculates epic when a child task is deleted', function (): void {
     $task1 = Task::factory()->create([
         'epic_id' => $this->epic->id,
         'status_id' => $this->completedStatus->id,
@@ -203,7 +203,7 @@ it('recalculates epic when a child task is deleted', function () {
     expect($this->epic->status->name)->toBe('completed');
 });
 
-it('recalculates epic when a child task is restored', function () {
+it('recalculates epic when a child task is restored', function (): void {
     $task1 = Task::factory()->create([
         'epic_id' => $this->epic->id,
         'status_id' => $this->completedStatus->id,
@@ -230,7 +230,7 @@ it('recalculates epic when a child task is restored', function () {
     expect($this->epic->status->name)->toBe('in_progress');
 });
 
-it('does not sync when the task has no epic', function () {
+it('does not sync when the task has no epic', function (): void {
     $task = Task::factory()->create([
         'epic_id' => null,
         'status_id' => $this->pendingStatus->id,
@@ -246,7 +246,7 @@ it('does not sync when the task has no epic', function () {
     expect($this->epic->progress)->toBe(0);
 });
 
-it('sets epic progress to 0 when all child tasks are removed', function () {
+it('sets epic progress to 0 when all child tasks are removed', function (): void {
     $task = Task::factory()->create([
         'epic_id' => $this->epic->id,
         'status_id' => $this->completedStatus->id,
@@ -263,7 +263,7 @@ it('sets epic progress to 0 when all child tasks are removed', function () {
     expect($this->epic->progress)->toBe(0);
 });
 
-it('keeps epic in_progress when mix of completed and in_progress tasks', function () {
+it('keeps epic in_progress when mix of completed and in_progress tasks', function (): void {
     $task1 = Task::factory()->create([
         'epic_id' => $this->epic->id,
         'status_id' => $this->completedStatus->id,
@@ -286,7 +286,7 @@ it('keeps epic in_progress when mix of completed and in_progress tasks', functio
     expect($this->epic->progress)->toBe(50);
 });
 
-it('syncs epic progress incrementally as tasks complete one by one', function () {
+it('syncs epic progress incrementally as tasks complete one by one', function (): void {
     $tasks = [];
     for ($i = 0; $i < 4; $i++) {
         $tasks[] = Task::factory()->create([

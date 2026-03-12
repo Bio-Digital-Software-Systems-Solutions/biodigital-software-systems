@@ -198,7 +198,7 @@ class DepartmentTodo extends Model
             return collect();
         }
 
-        if ($this->preloadedBackupUsers !== null) {
+        if ($this->preloadedBackupUsers instanceof \Illuminate\Support\Collection) {
             return $this->preloadedBackupUsers;
         }
 

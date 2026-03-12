@@ -360,6 +360,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
             ->name('destroy-weekly');
         Route::get('/date/{date}', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'getForDate'])
             ->name('for-date');
+        Route::get('/member/{user}', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'getMemberWeekAvailability'])
+            ->name('member-week');
         Route::get('/available-employees', [App\Http\Controllers\Scheduling\AvailabilityController::class, 'getAvailableEmployees'])
             ->name('available-employees');
     });

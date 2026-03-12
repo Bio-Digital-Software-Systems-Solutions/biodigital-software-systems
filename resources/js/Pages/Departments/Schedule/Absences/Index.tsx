@@ -259,6 +259,7 @@ export default function AbsencesIndex({
                                     from: date ? date.toISOString().split('T')[0] : undefined
                                 }))}
                                 placeholder="Du"
+                                side="bottom"
                             />
 
                             <DatePicker
@@ -268,6 +269,7 @@ export default function AbsencesIndex({
                                     to: date ? date.toISOString().split('T')[0] : undefined
                                 }))}
                                 placeholder="Au"
+                                side="bottom"
                             />
                         </div>
                         <div className="flex gap-2 mt-4">

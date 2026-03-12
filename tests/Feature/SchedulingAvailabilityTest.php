@@ -19,7 +19,9 @@ class SchedulingAvailabilityTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $employee;
+
     protected Department $department;
 
     protected function setUp(): void
@@ -114,7 +116,7 @@ class SchedulingAvailabilityTest extends TestCase
             ['2026-01-18', DayOfWeek::SUNDAY],   // Sunday
             ['2026-01-19', DayOfWeek::MONDAY],   // Monday
             ['2026-01-20', DayOfWeek::TUESDAY],  // Tuesday
-            ['2026-01-21', DayOfWeek::WEDNESDAY],// Wednesday
+            ['2026-01-21', DayOfWeek::WEDNESDAY], // Wednesday
             ['2026-01-22', DayOfWeek::THURSDAY], // Thursday
             ['2026-01-23', DayOfWeek::FRIDAY],   // Friday
             ['2026-01-24', DayOfWeek::SATURDAY], // Saturday
@@ -492,6 +494,207 @@ class SchedulingAvailabilityTest extends TestCase
         );
 
         $this->assertNull($availability->notes);
+    }
+
+    // ============================================
+    // Controller Tests - Member Week Availability API
+    // ============================================
+
+    public function test_can_get_member_week_availability(): void
+    {
+        $service = app(AvailabilityService::class);
+        $service->setAvailability(
+            $this->employee,
+            $this->department->id,
+            Carbon::parse('2026-01-19'), // Monday
+            AvailabilityStatus::AVAILABLE,
+            '09:00',
+            '17:00'
+        );
+
+        $this->actingAs($this->admin)
+            ->getJson(route('departments.availability.member-week', [
+                'department' => $this->department,
+                'user' => $this->employee,
+                'week' => '2026-01-19',
+            ]))
+            ->assertSuccessful()
+            ->assertJsonStructure([
+                'employee' => ['id', 'full_name'],
+                'week_start',
+                'week_end',
+                'prev_week',
+                'next_week',
+                'dates',
+            ]);
+    }
+
+    public function test_member_week_availability_returns_7_days(): void
+    {
+        $this->actingAs($this->admin)
+            ->getJson(route('departments.availability.member-week', [
+                'department' => $this->department,
+                'user' => $this->employee,
+                'week' => '2026-01-19',
+            ]))
+            ->assertSuccessful()
+            ->assertJsonCount(7, 'dates');
+    }
+
+    public function test_member_week_availability_returns_correct_week_bounds(): void
+    {
+        $this->actingAs($this->admin)
+            ->getJson(route('departments.availability.member-week', [
+                'department' => $this->department,
+                'user' => $this->employee,
+                'week' => '2026-01-21', // Wednesday → should resolve to Mon 19 - Sun 25
+            ]))
+            ->assertSuccessful()
+            ->assertJsonPath('week_start', '2026-01-19')
+            ->assertJsonPath('week_end', '2026-01-25');
+    }
+
+    public function test_member_week_availability_returns_correct_nav_weeks(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->getJson(route('departments.availability.member-week', [
+                'department' => $this->department,
+                'user' => $this->employee,
+                'week' => '2026-01-19',
+            ]))
+            ->assertSuccessful();
+
+        $response->assertJsonPath('prev_week', '2026-01-12');
+        $response->assertJsonPath('next_week', '2026-01-26');
+    }
+
+    public function test_member_week_availability_shows_available_status(): void
+    {
+        $service = app(AvailabilityService::class);
+        $service->setAvailability(
+            $this->employee,
+            $this->department->id,
+            Carbon::parse('2026-01-19'), // Monday
+            AvailabilityStatus::AVAILABLE,
+            '09:00',
+            '17:00'
+        );
+
+        $response = $this->actingAs($this->admin)
+            ->getJson(route('departments.availability.member-week', [
+                'department' => $this->department,
+                'user' => $this->employee,
+                'week' => '2026-01-19',
+            ]))
+            ->assertSuccessful();
+
+        $response->assertJsonPath('dates.2026-01-19.status', 'available');
+        $response->assertJsonPath('dates.2026-01-19.is_available', true);
+        $response->assertJsonPath('dates.2026-01-19.is_absent', false);
+    }
+
+    public function test_member_week_availability_shows_unavailable_status(): void
+    {
+        $service = app(AvailabilityService::class);
+        $service->setAvailability(
+            $this->employee,
+            $this->department->id,
+            Carbon::parse('2026-01-20'), // Tuesday
+            AvailabilityStatus::UNAVAILABLE
+        );
+
+        $response = $this->actingAs($this->admin)
+            ->getJson(route('departments.availability.member-week', [
+                'department' => $this->department,
+                'user' => $this->employee,
+                'week' => '2026-01-19',
+            ]))
+            ->assertSuccessful();
+
+        $response->assertJsonPath('dates.2026-01-20.status', 'unavailable');
+        $response->assertJsonPath('dates.2026-01-20.is_available', false);
+    }
+
+    public function test_member_week_availability_includes_time_slots(): void
+    {
+        $service = app(AvailabilityService::class);
+        $service->setAvailability(
+            $this->employee,
+            $this->department->id,
+            Carbon::parse('2026-01-19'), // Monday
+            AvailabilityStatus::AVAILABLE,
+            '08:00',
+            '16:00'
+        );
+
+        $response = $this->actingAs($this->admin)
+            ->getJson(route('departments.availability.member-week', [
+                'department' => $this->department,
+                'user' => $this->employee,
+                'week' => '2026-01-19',
+            ]))
+            ->assertSuccessful();
+
+        $response->assertJsonPath('dates.2026-01-19.time_slots.0.start', '08:00');
+        $response->assertJsonPath('dates.2026-01-19.time_slots.0.end', '16:00');
+    }
+
+    public function test_member_week_availability_uses_current_week_by_default(): void
+    {
+        $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
+
+        $this->actingAs($this->admin)
+            ->getJson(route('departments.availability.member-week', [
+                'department' => $this->department,
+                'user' => $this->employee,
+            ]))
+            ->assertSuccessful()
+            ->assertJsonPath('week_start', $weekStart);
+    }
+
+    public function test_member_week_availability_returns_employee_info(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->getJson(route('departments.availability.member-week', [
+                'department' => $this->department,
+                'user' => $this->employee,
+                'week' => '2026-01-19',
+            ]))
+            ->assertSuccessful();
+
+        $response->assertJsonPath('employee.id', $this->employee->id);
+        $this->assertNotEmpty($response->json('employee.full_name'));
+    }
+
+    public function test_member_week_availability_requires_authentication(): void
+    {
+        $this->getJson(route('departments.availability.member-week', [
+            'department' => $this->department,
+            'user' => $this->employee,
+        ]))
+            ->assertUnauthorized();
+    }
+
+    public function test_member_week_availability_day_structure_is_correct(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->getJson(route('departments.availability.member-week', [
+                'department' => $this->department,
+                'user' => $this->employee,
+                'week' => '2026-01-19',
+            ]))
+            ->assertSuccessful();
+
+        // Each day must have the expected fields
+        foreach (['2026-01-19', '2026-01-20', '2026-01-21', '2026-01-22', '2026-01-23', '2026-01-24', '2026-01-25'] as $date) {
+            $this->assertArrayHasKey($date, $response->json('dates'));
+            $dayData = $response->json("dates.{$date}");
+            $this->assertArrayHasKey('status', $dayData);
+            $this->assertArrayHasKey('is_available', $dayData);
+            $this->assertArrayHasKey('is_absent', $dayData);
+            $this->assertArrayHasKey('absence_type', $dayData);
+            $this->assertArrayHasKey('time_slots', $dayData);
+        }
     }
 
     public function test_availability_status_enum_values(): void

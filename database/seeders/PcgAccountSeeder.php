@@ -100,7 +100,7 @@ class PcgAccountSeeder extends Seeder
             }
 
             $parent = null;
-            if (! empty($accountData['parent'])) {
+            if (isset($accountData['parent']) && ($accountData['parent'] !== 0 && ($accountData['parent'] !== '' && $accountData['parent'] !== '0'))) {
                 $parent = PcgAccount::where('account_number', $accountData['parent'])->first();
             }
 
