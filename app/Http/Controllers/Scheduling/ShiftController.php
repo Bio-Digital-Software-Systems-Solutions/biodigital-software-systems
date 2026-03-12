@@ -277,7 +277,7 @@ class ShiftController extends Controller
                 'email' => $user->email,
             ]);
 
-        // Collect user IDs assigned to this shift and its series siblings
+        // Load this shift + series siblings for the week, with their assigned users
         $shiftDate = Carbon::parse($shift->date);
         $weekStart = $shiftDate->copy()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
         $weekEnd = $shiftDate->copy()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
@@ -289,44 +289,23 @@ class ShiftController extends Controller
             $relatedShiftIds = $relatedShiftIds->merge($seriesSiblingIds)->unique();
         }
 
-        $allowedUserIds = \DB::table('shift_user')
-            ->whereIn('shift_id', $relatedShiftIds)
-            ->pluck('user_id')
-            ->unique()
-            ->values()
-            ->all();
-
-        // Load cell assignments only for users of this shift/series
-        $weekAssignments = Shift::where('department_id', $department->id)
-            ->whereBetween('date', [$weekStart, $weekEnd])
-            ->whereHas('users', fn ($q) => $q->whereIn('users.id', $allowedUserIds))
-            ->with(['users' => fn ($q) => $q->whereIn('users.id', $allowedUserIds)])
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get()
-            ->map(fn (Shift $s): array => [
-                'date' => $s->date->format('Y-m-d'),
-                'start_time' => $s->start_time,
-                'shift_id' => $s->id,
-                'shift_uuid' => $s->uuid,
-                'users' => $s->users->map(fn (User $u): array => [
-                    'id' => $u->id,
-                    'name' => trim("{$u->first_name} {$u->last_name}") ?: 'N/A',
-                ])->values()->all(),
-            ]);
-
-        // Load series sibling shifts for calendar background coloring (only this shift + its series)
         $weekShifts = Shift::whereIn('id', $relatedShiftIds)
             ->whereBetween('date', [$weekStart, $weekEnd])
+            ->with(['users:users.id,users.first_name,users.last_name'])
             ->orderBy('date')
             ->orderBy('start_time')
             ->get()
             ->map(fn (Shift $s): array => [
                 'id' => $s->id,
+                'uuid' => $s->uuid,
                 'date' => $s->date->format('Y-m-d'),
                 'start_time' => $s->start_time,
                 'end_time' => $s->end_time,
                 'type' => $s->type->value,
+                'users' => $s->users->map(fn (User $u): array => [
+                    'id' => $u->id,
+                    'name' => trim("{$u->first_name} {$u->last_name}") ?: 'N/A',
+                ])->values()->all(),
             ]);
 
         return Inertia::render('Departments/Schedule/Shifts/Show', [
@@ -336,7 +315,6 @@ class ShiftController extends Controller
             'conflicts' => $conflicts,
             'shiftTodos' => $shiftTodos,
             'members' => $members,
-            'weekAssignments' => $weekAssignments,
             'weekShifts' => $weekShifts,
             'todoPriorities' => collect(TodoPriority::cases())->map(fn ($p): array => [
                 'value' => $p->value,
@@ -591,6 +569,38 @@ class ShiftController extends Controller
         return response()->json([
             'employees' => $available,
         ]);
+    }
+
+    /**
+     * Add a user to a shift's pivot table
+     */
+    public function addUser(Request $request, Department $department, WeeklySchedule $schedule, Shift $shift): RedirectResponse
+    {
+        $this->authorize('update', $department);
+
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $shift->users()->syncWithoutDetaching([$validated['user_id']]);
+
+        return back()->with('success', 'Utilisateur ajouté au shift.');
+    }
+
+    /**
+     * Remove a user from a shift's pivot table
+     */
+    public function removeUser(Request $request, Department $department, WeeklySchedule $schedule, Shift $shift): RedirectResponse
+    {
+        $this->authorize('update', $department);
+
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $shift->users()->detach($validated['user_id']);
+
+        return back()->with('success', 'Utilisateur retiré du shift.');
     }
 
     /**

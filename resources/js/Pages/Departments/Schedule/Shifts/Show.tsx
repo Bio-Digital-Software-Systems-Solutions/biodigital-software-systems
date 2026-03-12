@@ -48,20 +48,14 @@ interface Department {
     name: string;
 }
 
-interface WeekAssignment {
-    date: string;
-    start_time: string;
-    shift_id: number;
-    shift_uuid: string;
-    users: Array<{ id: number; name: string }>;
-}
-
 interface WeekShift {
     id: number;
+    uuid: string;
     date: string;
     start_time: string;
     end_time: string;
     type: string;
+    users: Array<{ id: number; name: string }>;
 }
 
 interface Props {
@@ -76,7 +70,6 @@ interface Props {
     } | null;
     shiftTodos?: DepartmentTodo[];
     members?: DepartmentMember[];
-    weekAssignments?: WeekAssignment[];
     weekShifts?: WeekShift[];
     todoPriorities?: EnumOption<TodoPriority>[];
 }
@@ -102,7 +95,7 @@ const STATUS_INFO: Record<ShiftStatus, { color: string; label: string; bgColor: 
     no_show: { color: 'text-red-700', label: 'Absent', bgColor: 'bg-red-200' },
 };
 
-export default function ShiftShow({ department, schedule, shift, conflicts, shiftTodos = [], members = [], weekAssignments = [], weekShifts = [], todoPriorities = [] }: Props) {
+export default function ShiftShow({ department, schedule, shift, conflicts, shiftTodos = [], members = [], weekShifts = [], todoPriorities = [] }: Props) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [todoModalOpen, setTodoModalOpen] = useState(false);
@@ -412,7 +405,6 @@ export default function ShiftShow({ department, schedule, shift, conflicts, shif
                                     <ShiftWeekCalendar
                                         shift={shift}
                                         members={members}
-                                        weekAssignments={weekAssignments}
                                         weekShifts={weekShifts}
                                         departmentUuid={department.uuid}
                                         scheduleUuid={schedule.uuid}

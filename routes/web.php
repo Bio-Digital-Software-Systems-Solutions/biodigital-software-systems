@@ -338,6 +338,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
             ->name('shifts.cancel');
         Route::get('/{schedule}/shifts/{shift}/available-employees', [App\Http\Controllers\Scheduling\ShiftController::class, 'availableEmployees'])
             ->name('shifts.available-employees');
+        Route::post('/{schedule}/shifts/{shift}/add-user', [App\Http\Controllers\Scheduling\ShiftController::class, 'addUser'])
+            ->name('shifts.add-user');
+        Route::delete('/{schedule}/shifts/{shift}/remove-user', [App\Http\Controllers\Scheduling\ShiftController::class, 'removeUser'])
+            ->name('shifts.remove-user');
     });
 
     // Availability routes (under department)

@@ -1,0 +1,1 @@
+import{j as l}from"./app-W3GbE8IV.js";function a({message:r,className:t="",...e}){return r?l.jsx("p",{...e,className:"text-sm text-red-600 dark:text-red-400 "+t,role:"alert","aria-live":"polite",children:r}):null}export{a as I};

@@ -5,26 +5,19 @@ import { router } from '@inertiajs/react';
 import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import type { Shift, DepartmentMember } from '@/Types/scheduling';
 
-interface WeekAssignment {
-    date: string;
-    start_time: string;
-    shift_id: number;
-    shift_uuid: string;
-    users: Array<{ id: number; name: string }>;
-}
-
 interface WeekShift {
     id: number;
+    uuid: string;
     date: string;
     start_time: string;
     end_time: string;
     type: string;
+    users: Array<{ id: number; name: string }>;
 }
 
 interface Props {
     shift: Shift;
     members?: DepartmentMember[];
-    weekAssignments?: WeekAssignment[];
     weekShifts?: WeekShift[];
     departmentUuid: string;
     scheduleUuid: string;
@@ -38,18 +31,9 @@ const USER_COLORS = [
     '#ec4899', '#f97316', '#14b8a6', '#a855f7', '#84cc16', '#e11d48',
 ];
 
-// Subtle background colors for shift time ranges (hex + alpha suffix applied at render)
 const SHIFT_BG_COLORS = [
-    '#6366f1', // indigo
-    '#10b981', // emerald
-    '#f59e0b', // amber
-    '#f43f5e', // rose
-    '#8b5cf6', // purple
-    '#06b6d4', // cyan
-    '#f97316', // orange
-    '#14b8a6', // teal
-    '#ec4899', // pink
-    '#84cc16', // lime
+    '#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6',
+    '#06b6d4', '#f97316', '#14b8a6', '#ec4899', '#84cc16',
 ];
 
 function timeToMinutes(time: string): number {
@@ -64,7 +48,6 @@ function cellKey(dateStr: string, hour: number): string {
 export default function ShiftWeekCalendar({
     shift,
     members = [],
-    weekAssignments = [],
     weekShifts = [],
     departmentUuid,
     scheduleUuid,
@@ -86,63 +69,71 @@ export default function ShiftWeekCalendar({
     const startMinutes = timeToMinutes(shift.start_time);
     const slotTopPx = (startMinutes / 60) * HOUR_HEIGHT;
 
-    // Build cell → background color map from all shifts in the week
-    const cellBgMap = new Map<string, string>();
+    // Build cell → { bgColor, shiftUuid, users[] } map from weekShifts
+    const cellDataMap = new Map<string, { bgColor: string; shiftUuid: string; users: Array<{ id: number; name: string }> }>();
 
-    // Helper: expand a shift's time range into cell keys and assign a color
-    const expandShiftCells = (
-        dateStr: string,
-        startTime: string,
-        endTime: string,
-        color: string,
-    ): void => {
-        const sMin = timeToMinutes(startTime);
-        const eMin = timeToMinutes(endTime);
+    // Helper: expand a shift's time range into cell keys
+    const expandShiftCells = (ws: WeekShift, color: string): void => {
+        const sMin = timeToMinutes(ws.start_time);
+        const eMin = timeToMinutes(ws.end_time);
         const sHour = Math.floor(sMin / 60);
         const eHour = Math.floor(eMin / 60);
         const overnight = eMin <= sMin;
+        const data = { bgColor: color, shiftUuid: ws.uuid, users: ws.users };
 
         if (overnight) {
             for (let h = sHour; h < 24; h++) {
-                cellBgMap.set(cellKey(dateStr, h), color);
+                cellDataMap.set(cellKey(ws.date, h), data);
             }
-            const nextDay = addDays(new Date(dateStr), 1);
+            const nextDay = addDays(new Date(ws.date), 1);
             const nextDayStr = format(nextDay, 'yyyy-MM-dd');
             for (let h = 0; h < eHour; h++) {
-                cellBgMap.set(cellKey(nextDayStr, h), color);
+                cellDataMap.set(cellKey(nextDayStr, h), data);
             }
         } else {
             for (let h = sHour; h < eHour; h++) {
-                cellBgMap.set(cellKey(dateStr, h), color);
+                cellDataMap.set(cellKey(ws.date, h), data);
             }
         }
     };
 
-    // Assign a unique color to each shift in the week
-    const allShifts: Array<{ date: string; start_time: string; end_time: string }> = [];
+    // Build the list: main shift first, then series siblings
+    const allShifts: WeekShift[] = [];
+    const mainShiftDate = format(shiftDate, 'yyyy-MM-dd');
 
-    // Include the main shift being viewed
-    allShifts.push({ date: format(shiftDate, 'yyyy-MM-dd'), start_time: shift.start_time, end_time: shift.end_time });
+    // Find the main shift in weekShifts or build from props
+    const mainWs = weekShifts.find(
+        (ws) => ws.date === mainShiftDate && ws.start_time === shift.start_time && ws.end_time === shift.end_time,
+    );
+    if (mainWs) {
+        allShifts.push(mainWs);
+    } else {
+        allShifts.push({
+            id: 0,
+            uuid: shift.uuid,
+            date: mainShiftDate,
+            start_time: shift.start_time,
+            end_time: shift.end_time,
+            type: shift.type,
+            users: [],
+        });
+    }
 
-    // Include other shifts from weekShifts (deduplicate with main shift)
     for (const ws of weekShifts) {
-        const isDuplicate = allShifts.some(
-            (s) => s.date === ws.date && s.start_time === ws.start_time && s.end_time === ws.end_time,
-        );
-        if (!isDuplicate) {
-            allShifts.push({ date: ws.date, start_time: ws.start_time, end_time: ws.end_time });
+        if (!allShifts.some((s) => s.id === ws.id)) {
+            allShifts.push(ws);
         }
     }
 
-    allShifts.forEach((s, idx) => {
-        expandShiftCells(s.date, s.start_time, s.end_time, SHIFT_BG_COLORS[idx % SHIFT_BG_COLORS.length]);
+    allShifts.forEach((ws, idx) => {
+        expandShiftCells(ws, SHIFT_BG_COLORS[idx % SHIFT_BG_COLORS.length]);
     });
 
-    // Color map
+    // User color map (from all shifts' users)
     const userColorMap = new Map<number, string>();
     let colorIdx = 0;
-    for (const assignment of weekAssignments) {
-        for (const user of assignment.users) {
+    for (const ws of allShifts) {
+        for (const user of ws.users) {
             if (!userColorMap.has(user.id)) {
                 userColorMap.set(user.id, USER_COLORS[colorIdx % USER_COLORS.length]);
                 colorIdx++;
@@ -150,16 +141,9 @@ export default function ShiftWeekCalendar({
         }
     }
 
-    // Index assignments by cell
-    const assignmentsByCell = new Map<string, WeekAssignment>();
-    for (const a of weekAssignments) {
-        const hour = Math.floor(timeToMinutes(a.start_time) / 60);
-        assignmentsByCell.set(cellKey(a.date, hour), a);
-    }
-
-    const getAvailableMembers = (dateStr: string, hour: number): DepartmentMember[] => {
-        const assignment = assignmentsByCell.get(cellKey(dateStr, hour));
-        const assignedIds = new Set(assignment?.users.map((u) => u.id) || []);
+    // Get available members for a cell (exclude already-assigned users of that shift)
+    const getAvailableMembers = (cellData: { users: Array<{ id: number }> } | undefined): DepartmentMember[] => {
+        const assignedIds = new Set(cellData?.users.map((u) => u.id) || []);
         return members.filter((m) => m.id !== undefined && !assignedIds.has(m.id!));
     };
 
@@ -170,31 +154,14 @@ export default function ShiftWeekCalendar({
         }
     }, []);
 
-    const assignUser = useCallback((userId: number, date: Date, hour: number) => {
+    // Add user to the existing shift via pivot table
+    const assignUser = useCallback((userId: number, shiftUuid: string) => {
         if (isSubmitting) return;
         setIsSubmitting(true);
 
-        const dateStr = format(date, 'yyyy-MM-dd');
-        const startTime = `${String(hour).padStart(2, '0')}:00`;
-        // For hour 23, end time wraps to 00:00
-        const endHour = (hour + 1) % 24;
-        const endTime = `${String(endHour).padStart(2, '0')}:00`;
-
         router.post(
-            `/departments/${departmentUuid}/schedule/${scheduleUuid}/shifts`,
-            {
-                creation_mode: 'single',
-                date: dateStr,
-                start_time: startTime,
-                end_time: endTime,
-                type: shift.type,
-                title: '',
-                user_ids: [userId],
-                break_duration: 0,
-                is_overtime: false,
-                requires_approval: false,
-                _from_calendar: true,
-            },
+            `/departments/${departmentUuid}/schedule/${scheduleUuid}/shifts/${shiftUuid}/add-user`,
+            { user_id: userId },
             {
                 preserveScroll: true,
                 onFinish: () => {
@@ -203,11 +170,11 @@ export default function ShiftWeekCalendar({
                 },
             },
         );
-    }, [isSubmitting, departmentUuid, scheduleUuid, shift.type]);
+    }, [isSubmitting, departmentUuid, scheduleUuid]);
 
     // Unique users for legend
-    const uniqueUsers = weekAssignments
-        .flatMap((a) => a.users)
+    const uniqueUsers = allShifts
+        .flatMap((ws) => ws.users)
         .reduce<Array<{ id: number; name: string }>>((acc, u) => {
             if (!acc.find((x) => x.id === u.id)) acc.push(u);
             return acc;
@@ -283,30 +250,30 @@ export default function ShiftWeekCalendar({
 
                     {/* Day columns */}
                     {weekDays.map((day, dayIndex) => {
-                        const isToday = isSameDay(day, today);
                         const dateStr = format(day, 'yyyy-MM-dd');
 
                         return (
                             <div key={dayIndex} className="flex-1 border-r border-gray-200 dark:border-gray-700 last:border-r-0">
-                                {/* Cells */}
                                 {visibleHours.map((hour) => {
                                     const ck = cellKey(dateStr, hour);
-                                    const cellUsers = assignmentsByCell.get(ck)?.users || [];
+                                    const cellData = cellDataMap.get(ck);
+                                    const cellUsers = cellData?.users || [];
                                     const isOpen = openCellKey === ck;
-                                    const available = getAvailableMembers(dateStr, hour);
-                                    const shiftBg = cellBgMap.get(ck);
+                                    const isInShiftRange = !!cellData;
+                                    const isCellEditable = isEditable && isInShiftRange;
+                                    const available = isCellEditable ? getAvailableMembers(cellData) : [];
 
                                     return (
                                         <div
                                             key={hour}
-                                            className={`border-b border-gray-100 dark:border-gray-700/50 relative ${isEditable ? 'cursor-pointer hover:bg-icc-blue/5 dark:hover:bg-icc-blue/10 transition-colors' : ''}`}
+                                            className={`border-b border-gray-100 dark:border-gray-700/50 relative ${isCellEditable ? 'cursor-pointer hover:bg-icc-blue/5 dark:hover:bg-icc-blue/10 transition-colors' : ''}`}
                                             style={{
                                                 height: `${HOUR_HEIGHT}px`,
-                                                ...(shiftBg ? { backgroundColor: `${shiftBg}18` } : {}),
+                                                ...(cellData ? { backgroundColor: `${cellData.bgColor}18` } : {}),
                                             }}
                                             onDoubleClick={(e) => {
                                                 e.preventDefault();
-                                                if (isEditable) setOpenCellKey(isOpen ? null : ck);
+                                                if (isCellEditable) setOpenCellKey(isOpen ? null : ck);
                                             }}
                                         >
                                             {/* Assigned users */}
@@ -330,7 +297,7 @@ export default function ShiftWeekCalendar({
                                             )}
 
                                             {/* Popover */}
-                                            {isOpen && (
+                                            {isOpen && cellData && (
                                                 <div
                                                     className="absolute left-0 top-0 z-30 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700"
                                                     onMouseDown={(e) => e.stopPropagation()}
@@ -363,7 +330,7 @@ export default function ShiftWeekCalendar({
                                                                             e.stopPropagation();
                                                                             e.preventDefault();
                                                                             if (m.id !== undefined) {
-                                                                                assignUser(m.id, day, hour);
+                                                                                assignUser(m.id, cellData.shiftUuid);
                                                                             }
                                                                         }}
                                                                     >
