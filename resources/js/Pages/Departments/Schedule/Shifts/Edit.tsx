@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/Components/ui/card';
@@ -10,12 +10,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/Components/ui/checkbox';
 import { SearchableMultiSelect, SelectOption } from '@/Components/ui/searchable-select';
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/Components/ui/dialog';
+import {
     ArrowLeftIcon,
     ClockIcon,
     UserIcon,
     BriefcaseIcon,
+    ArrowPathIcon,
 } from '@heroicons/react/24/outline';
-import type { Shift, WeeklySchedule, ShiftType, ShiftStatus, EnumOption } from '@/Types/scheduling';
+import type { Shift, WeeklySchedule, ShiftType, ShiftStatus, EnumOption, ShiftUpdateScope } from '@/Types/scheduling';
 
 interface Department {
     id: number;
@@ -74,8 +83,8 @@ export default function ShiftEdit({
     shiftStatuses,
 }: Props) {
     const [assigneeType, setAssigneeType] = useState<'all' | 'user' | 'employee' | 'star'>('all');
+    const [showScopeDialog, setShowScopeDialog] = useState(false);
 
-    // Extract user IDs from the shift's users relationship
     const initialUserIds = useMemo(() => {
         if (shift.users && Array.isArray(shift.users)) {
             return shift.users.map((u: any) => u.id);
@@ -84,6 +93,7 @@ export default function ShiftEdit({
     }, [shift.users]);
 
     const { data, setData, put, processing, errors } = useForm({
+        update_scope: 'single' as ShiftUpdateScope,
         date: shift.date,
         type: shift.type,
         status: shift.status,
@@ -103,9 +113,21 @@ export default function ShiftEdit({
         color: shift.color || '',
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmitClick = (e: React.FormEvent) => {
         e.preventDefault();
-        put(`/departments/${department.uuid}/schedule/${schedule.uuid}/shifts/${shift.uuid}`);
+        if (shift.series_id) {
+            setShowScopeDialog(true);
+        } else {
+            submitForm('single');
+        }
+    };
+
+    const submitForm = (scope: ShiftUpdateScope) => {
+        setShowScopeDialog(false);
+        router.put(
+            `/departments/${department.uuid}/schedule/${schedule.uuid}/shifts/${shift.uuid}`,
+            { ...data, update_scope: scope },
+        );
     };
 
     const formatDate = (dateStr: string) => {
@@ -118,38 +140,16 @@ export default function ShiftEdit({
     };
 
     const getAssigneeTypeLabel = (type: 'user' | 'employee' | 'star') => {
-        const labels = {
-            user: 'Membre',
-            employee: 'Employé',
-            star: 'Star',
-        };
+        const labels = { user: 'Membre', employee: 'Employé', star: 'Star' };
         return labels[type];
     };
 
-    const getAssigneeTypeBadgeColor = (type: 'user' | 'employee' | 'star') => {
-        const colors = {
-            user: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-            employee: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-            star: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-        };
-        return colors[type];
-    };
-
-    // Combine and filter assignees based on selected type
     const allAssignees = useMemo(() => {
         const combined: Assignable[] = [];
+        if (assigneeType === 'all' || assigneeType === 'user') combined.push(...users);
+        if (assigneeType === 'all' || assigneeType === 'employee') combined.push(...employees);
+        if (assigneeType === 'all' || assigneeType === 'star') combined.push(...stars);
 
-        if (assigneeType === 'all' || assigneeType === 'user') {
-            combined.push(...users);
-        }
-        if (assigneeType === 'all' || assigneeType === 'employee') {
-            combined.push(...employees);
-        }
-        if (assigneeType === 'all' || assigneeType === 'star') {
-            combined.push(...stars);
-        }
-
-        // Remove duplicates by user id
         const seen = new Set<number>();
         return combined.filter(a => {
             if (seen.has(a.id)) return false;
@@ -158,7 +158,6 @@ export default function ShiftEdit({
         });
     }, [users, employees, stars, assigneeType]);
 
-    // Transform assignees to SelectOption format for SearchableMultiSelect
     const assigneeOptions: SelectOption[] = useMemo(() => {
         return allAssignees.map(assignee => ({
             value: assignee.id,
@@ -171,7 +170,6 @@ export default function ShiftEdit({
             <Head title={`Modifier Shift - ${department.name}`} />
 
             <div className="mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                {/* Header */}
                 <div className="mb-6">
                     <Link
                         href={`/departments/${department.uuid}/schedule/${schedule.uuid}/shifts/${shift.uuid}`}
@@ -180,34 +178,33 @@ export default function ShiftEdit({
                         <ArrowLeftIcon className="h-4 w-4 mr-1" />
                         Retour aux détails
                     </Link>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        Modifier le Shift
-                    </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatDate(shift.date)}
-                    </p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Modifier le Shift</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(shift.date)}</p>
+                    {shift.series_id && (
+                        <div className="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-full px-2 py-1">
+                            <ArrowPathIcon className="h-3 w-3" />
+                            Fait partie d'une série récurrente
+                        </div>
+                    )}
                 </div>
 
-                {/* Form */}
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmitClick}>
                     <Card>
                         <CardHeader>
                             <CardTitle>Informations du Shift</CardTitle>
-                            <CardDescription>
-                                Modifiez les informations du shift
-                            </CardDescription>
+                            <CardDescription>Modifiez les informations du shift</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {/* Type and Status Row */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="type">Type de Shift</Label>
+                                    <Label>Type de Shift</Label>
                                     <Select
                                         value={data.type}
                                         onValueChange={(value) => setData('type', value as ShiftType)}
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Sélectionner un type" />
+                                            <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {shiftTypes.map((type) => (
@@ -219,19 +216,17 @@ export default function ShiftEdit({
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    {errors.type && (
-                                        <p className="text-sm text-red-600">{errors.type}</p>
-                                    )}
+                                    {errors.type && <p className="text-sm text-red-600">{errors.type}</p>}
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="status">Statut</Label>
+                                    <Label>Statut</Label>
                                     <Select
                                         value={data.status}
                                         onValueChange={(value) => setData('status', value as ShiftStatus)}
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Sélectionner un statut" />
+                                            <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {shiftStatuses.map((status) => (
@@ -241,9 +236,7 @@ export default function ShiftEdit({
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    {errors.status && (
-                                        <p className="text-sm text-red-600">{errors.status}</p>
-                                    )}
+                                    {errors.status && <p className="text-sm text-red-600">{errors.status}</p>}
                                 </div>
                             </div>
 
@@ -260,9 +253,7 @@ export default function ShiftEdit({
                                         value={data.start_time}
                                         onChange={(e) => setData('start_time', e.target.value)}
                                     />
-                                    {errors.start_time && (
-                                        <p className="text-sm text-red-600">{errors.start_time}</p>
-                                    )}
+                                    {errors.start_time && <p className="text-sm text-red-600">{errors.start_time}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -273,9 +264,7 @@ export default function ShiftEdit({
                                         value={data.end_time}
                                         onChange={(e) => setData('end_time', e.target.value)}
                                     />
-                                    {errors.end_time && (
-                                        <p className="text-sm text-red-600">{errors.end_time}</p>
-                                    )}
+                                    {errors.end_time && <p className="text-sm text-red-600">{errors.end_time}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -288,9 +277,7 @@ export default function ShiftEdit({
                                         value={data.break_duration}
                                         onChange={(e) => setData('break_duration', parseInt(e.target.value) || 0)}
                                     />
-                                    {errors.break_duration && (
-                                        <p className="text-sm text-red-600">{errors.break_duration}</p>
-                                    )}
+                                    {errors.break_duration && <p className="text-sm text-red-600">{errors.break_duration}</p>}
                                 </div>
                             </div>
 
@@ -304,9 +291,7 @@ export default function ShiftEdit({
                                         onChange={(e) => setData('title', e.target.value)}
                                         placeholder="Ex: Accueil, Service..."
                                     />
-                                    {errors.title && (
-                                        <p className="text-sm text-red-600">{errors.title}</p>
-                                    )}
+                                    {errors.title && <p className="text-sm text-red-600">{errors.title}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -317,9 +302,7 @@ export default function ShiftEdit({
                                         onChange={(e) => setData('location', e.target.value)}
                                         placeholder="Ex: Bureau A, Salle 1..."
                                     />
-                                    {errors.location && (
-                                        <p className="text-sm text-red-600">{errors.location}</p>
-                                    )}
+                                    {errors.location && <p className="text-sm text-red-600">{errors.location}</p>}
                                 </div>
                             </div>
 
@@ -341,12 +324,7 @@ export default function ShiftEdit({
                                         className="flex-1"
                                     />
                                     {data.color && (
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setData('color', '')}
-                                        >
+                                        <Button type="button" variant="ghost" size="sm" onClick={() => setData('color', '')}>
                                             Réinitialiser
                                         </Button>
                                     )}
@@ -356,50 +334,27 @@ export default function ShiftEdit({
                             {/* Assignment and Position */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                                 <div className="space-y-2">
-                                    <Label htmlFor="user_ids">
+                                    <Label>
                                         <UserIcon className="h-4 w-4 inline mr-1" />
                                         Personnes assignées
                                     </Label>
-
-                                    {/* Filter tabs */}
                                     <div className="flex flex-wrap gap-2 mb-2">
-                                        <Button
-                                            type="button"
-                                            variant={assigneeType === 'all' ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setAssigneeType('all')}
-                                        >
-                                            Tous ({users.length + employees.length + stars.length})
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant={assigneeType === 'user' ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setAssigneeType('user')}
-                                            className={assigneeType === 'user' ? '' : 'border-blue-300 text-blue-700 hover:bg-blue-50'}
-                                        >
-                                            Membres ({users.length})
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant={assigneeType === 'employee' ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setAssigneeType('employee')}
-                                            className={assigneeType === 'employee' ? '' : 'border-green-300 text-green-700 hover:bg-green-50'}
-                                        >
-                                            Employés ({employees.length})
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant={assigneeType === 'star' ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setAssigneeType('star')}
-                                            className={assigneeType === 'star' ? '' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50'}
-                                        >
-                                            Stars ({stars.length})
-                                        </Button>
+                                        {(['all', 'user', 'employee', 'star'] as const).map(type => (
+                                            <Button
+                                                key={type}
+                                                type="button"
+                                                variant={assigneeType === type ? 'default' : 'outline'}
+                                                size="sm"
+                                                onClick={() => setAssigneeType(type)}
+                                                className={assigneeType === type ? '' : type === 'user' ? 'border-blue-300 text-blue-700 hover:bg-blue-50' : type === 'employee' ? 'border-green-300 text-green-700 hover:bg-green-50' : type === 'star' ? 'border-yellow-300 text-yellow-700 hover:bg-yellow-50' : ''}
+                                            >
+                                                {type === 'all' && `Tous (${users.length + employees.length + stars.length})`}
+                                                {type === 'user' && `Membres (${users.length})`}
+                                                {type === 'employee' && `Employés (${employees.length})`}
+                                                {type === 'star' && `Stars (${stars.length})`}
+                                            </Button>
+                                        ))}
                                     </div>
-
                                     <SearchableMultiSelect
                                         id="user_ids"
                                         options={assigneeOptions}
@@ -408,13 +363,11 @@ export default function ShiftEdit({
                                         placeholder="Sélectionner les personnes..."
                                         noOptionsMessage="Aucune personne trouvée"
                                     />
-                                    {errors.user_ids && (
-                                        <p className="text-sm text-red-600">{errors.user_ids}</p>
-                                    )}
+                                    {errors.user_ids && <p className="text-sm text-red-600">{errors.user_ids}</p>}
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="position_id">
+                                    <Label>
                                         <BriefcaseIcon className="h-4 w-4 inline mr-1" />
                                         Poste
                                     </Label>
@@ -434,9 +387,7 @@ export default function ShiftEdit({
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    {errors.position_id && (
-                                        <p className="text-sm text-red-600">{errors.position_id}</p>
-                                    )}
+                                    {errors.position_id && <p className="text-sm text-red-600">{errors.position_id}</p>}
                                 </div>
                             </div>
 
@@ -451,9 +402,7 @@ export default function ShiftEdit({
                                         value={data.min_employees}
                                         onChange={(e) => setData('min_employees', parseInt(e.target.value) || 1)}
                                     />
-                                    {errors.min_employees && (
-                                        <p className="text-sm text-red-600">{errors.min_employees}</p>
-                                    )}
+                                    {errors.min_employees && <p className="text-sm text-red-600">{errors.min_employees}</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -465,9 +414,7 @@ export default function ShiftEdit({
                                         value={data.max_employees}
                                         onChange={(e) => setData('max_employees', parseInt(e.target.value) || 1)}
                                     />
-                                    {errors.max_employees && (
-                                        <p className="text-sm text-red-600">{errors.max_employees}</p>
-                                    )}
+                                    {errors.max_employees && <p className="text-sm text-red-600">{errors.max_employees}</p>}
                                 </div>
                             </div>
 
@@ -479,20 +426,15 @@ export default function ShiftEdit({
                                         checked={data.is_overtime}
                                         onCheckedChange={(checked) => setData('is_overtime', checked === true)}
                                     />
-                                    <Label htmlFor="is_overtime" className="cursor-pointer">
-                                        Heures supplémentaires
-                                    </Label>
+                                    <Label htmlFor="is_overtime" className="cursor-pointer">Heures supplémentaires</Label>
                                 </div>
-
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="requires_approval"
                                         checked={data.requires_approval}
                                         onCheckedChange={(checked) => setData('requires_approval', checked === true)}
                                     />
-                                    <Label htmlFor="requires_approval" className="cursor-pointer">
-                                        Nécessite approbation
-                                    </Label>
+                                    <Label htmlFor="requires_approval" className="cursor-pointer">Nécessite approbation</Label>
                                 </div>
                             </div>
 
@@ -506,9 +448,7 @@ export default function ShiftEdit({
                                     placeholder="Instructions, tâches spécifiques..."
                                     rows={3}
                                 />
-                                {errors.description && (
-                                    <p className="text-sm text-red-600">{errors.description}</p>
-                                )}
+                                {errors.description && <p className="text-sm text-red-600">{errors.description}</p>}
                             </div>
 
                             {/* Notes */}
@@ -521,21 +461,15 @@ export default function ShiftEdit({
                                     placeholder="Notes pour les managers..."
                                     rows={2}
                                 />
-                                {errors.notes && (
-                                    <p className="text-sm text-red-600">{errors.notes}</p>
-                                )}
+                                {errors.notes && <p className="text-sm text-red-600">{errors.notes}</p>}
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Actions */}
                     <div className="mt-6 flex justify-end space-x-4">
-                        <Link
-                            href={`/departments/${department.uuid}/schedule/${schedule.uuid}/shifts/${shift.uuid}`}
-                        >
-                            <Button type="button" variant="outline">
-                                Annuler
-                            </Button>
+                        <Link href={`/departments/${department.uuid}/schedule/${schedule.uuid}/shifts/${shift.uuid}`}>
+                            <Button type="button" variant="outline">Annuler</Button>
                         </Link>
                         <Button type="submit" disabled={processing}>
                             {processing ? 'Enregistrement...' : 'Enregistrer les modifications'}
@@ -543,6 +477,56 @@ export default function ShiftEdit({
                     </div>
                 </form>
             </div>
+
+            {/* Series scope dialog */}
+            <Dialog open={showScopeDialog} onOpenChange={setShowScopeDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <ArrowPathIcon className="h-5 w-5 text-blue-500" />
+                            Modifier la série
+                        </DialogTitle>
+                        <DialogDescription>
+                            Ce shift fait partie d'une série récurrente. Quels shifts souhaitez-vous modifier ?
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex flex-col gap-3 py-2 px-6">
+                        <button
+                            type="button"
+                            onClick={() => submitForm('single')}
+                            className="flex flex-col items-start gap-1 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-primary hover:bg-primary/5 transition-colors text-left"
+                        >
+                            <span className="font-medium text-gray-900 dark:text-white">Ce shift uniquement</span>
+                            <span className="text-sm text-gray-500">Modifier seulement ce shift ({new Date(shift.date).toLocaleDateString('fr-FR')})</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => submitForm('following')}
+                            className="flex flex-col items-start gap-1 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-primary hover:bg-primary/5 transition-colors text-left"
+                        >
+                            <span className="font-medium text-gray-900 dark:text-white">Ce shift et les suivants</span>
+                            <span className="text-sm text-gray-500">Modifier ce shift et tous les shifts suivants de la série</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => submitForm('all')}
+                            className="flex flex-col items-start gap-1 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:border-primary hover:bg-primary/5 transition-colors text-left"
+                        >
+                            <span className="font-medium text-gray-900 dark:text-white">Tous les shifts de la série</span>
+                            <span className="text-sm text-gray-500">Modifier tous les shifts de cette série (passés et futurs)</span>
+                        </button>
+                    </div>
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setShowScopeDialog(false)}>
+                            Annuler
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </DashboardLayout>
     );
 }

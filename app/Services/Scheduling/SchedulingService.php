@@ -2,8 +2,8 @@
 
 namespace App\Services\Scheduling;
 
-use App\Enums\Scheduling\ShiftStatus;
 use App\Enums\Scheduling\ScheduleStatus;
+use App\Enums\Scheduling\ShiftStatus;
 use App\Models\Department;
 use App\Models\Scheduling\DepartmentSchedulingSettings;
 use App\Models\Scheduling\Shift;
@@ -66,8 +66,9 @@ class SchedulingService
      */
     public function createShift(array $data): Shift
     {
-        return DB::transaction(fn() => Shift::create([
+        return DB::transaction(fn () => Shift::create([
             'weekly_schedule_id' => $data['weekly_schedule_id'],
+            'series_id' => $data['series_id'] ?? null,
             'department_id' => $data['department_id'],
             'position_id' => $data['position_id'] ?? null,
             'user_id' => $data['user_id'] ?? null,
@@ -197,7 +198,7 @@ class SchedulingService
             return [
                 'employee' => $employee,
                 'availability' => $availability,
-                'is_available' => $availability['is_available'] && !$conflicts['has_blocking_conflicts'],
+                'is_available' => $availability['is_available'] && ! $conflicts['has_blocking_conflicts'],
                 'conflicts' => $conflicts['conflicts'],
                 'warnings' => $conflicts['warnings'],
                 'current_hours' => $workload['total_hours'],
@@ -222,7 +223,7 @@ class SchedulingService
 
         foreach ($unassignedShifts as $shift) {
             $availableEmployees = $this->getAvailableEmployees($shift);
-            $bestMatch = $availableEmployees->first(fn($e): mixed => $e['is_available']);
+            $bestMatch = $availableEmployees->first(fn ($e): mixed => $e['is_available']);
 
             $suggestions->push([
                 'shift' => $shift,
@@ -249,13 +250,14 @@ class SchedulingService
         $results = [];
 
         foreach ($suggestions as $suggestion) {
-            if (!$suggestion['can_auto_assign']) {
+            if (! $suggestion['can_auto_assign']) {
                 $failed++;
                 $results[] = [
                     'shift' => $suggestion['shift'],
                     'success' => false,
                     'reason' => 'Aucun employé disponible',
                 ];
+
                 continue;
             }
 
@@ -344,13 +346,13 @@ class SchedulingService
         $totalShifts = $shifts->count();
 
         // A shift is assigned if it has user_id OR has users in the many-to-many relationship
-        $assignedShifts = $shifts->filter(fn($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->count();
+        $assignedShifts = $shifts->filter(fn ($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->count();
         $unassignedShifts = $totalShifts - $assignedShifts;
 
-        $totalHours = $shifts->sum(fn($shift) => $shift->duration_hours);
+        $totalHours = $shifts->sum(fn ($shift) => $shift->duration_hours);
 
         // Assigned hours = hours from shifts that have at least one user assigned
-        $assignedHours = $shifts->filter(fn($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->sum(fn($shift) => $shift->duration_hours);
+        $assignedHours = $shifts->filter(fn ($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->sum(fn ($shift) => $shift->duration_hours);
 
         // Calculate employee distribution from both relationships
         $employeeHoursMap = [];
@@ -359,7 +361,7 @@ class SchedulingService
             // Check single user relationship
             if ($shift->user_id && $shift->user) {
                 $userId = $shift->user_id;
-                if (!isset($employeeHoursMap[$userId])) {
+                if (! isset($employeeHoursMap[$userId])) {
                     $employeeHoursMap[$userId] = [
                         'employee' => $shift->user,
                         'shifts_count' => 0,
@@ -373,7 +375,7 @@ class SchedulingService
             // Check many-to-many users relationship
             foreach ($shift->users as $user) {
                 $userId = $user->id;
-                if (!isset($employeeHoursMap[$userId])) {
+                if (! isset($employeeHoursMap[$userId])) {
                     $employeeHoursMap[$userId] = [
                         'employee' => $user,
                         'shifts_count' => 0,
@@ -385,11 +387,11 @@ class SchedulingService
             }
         }
 
-        $byStatus = $shifts->groupBy(fn($s) => $s->status->value)
-            ->map(fn($group): int => $group->count());
+        $byStatus = $shifts->groupBy(fn ($s) => $s->status->value)
+            ->map(fn ($group): int => $group->count());
 
-        $byType = $shifts->groupBy(fn($s) => $s->type->value)
-            ->map(fn($group): int => $group->count());
+        $byType = $shifts->groupBy(fn ($s) => $s->type->value)
+            ->map(fn ($group): int => $group->count());
 
         return [
             'total_shifts' => $totalShifts,
@@ -417,13 +419,13 @@ class SchedulingService
         $totalShifts = $shifts->count();
 
         // A shift is assigned if it has user_id OR has users in the many-to-many relationship
-        $assignedShifts = $shifts->filter(fn($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->count();
+        $assignedShifts = $shifts->filter(fn ($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->count();
         $unassignedShifts = $totalShifts - $assignedShifts;
 
-        $totalHours = $shifts->sum(fn($shift) => $shift->duration_hours);
+        $totalHours = $shifts->sum(fn ($shift) => $shift->duration_hours);
 
         // Assigned hours = hours from shifts that have at least one user assigned
-        $assignedHours = $shifts->filter(fn($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->sum(fn($shift) => $shift->duration_hours);
+        $assignedHours = $shifts->filter(fn ($shift): bool => $shift->user_id || $shift->users->isNotEmpty())->sum(fn ($shift) => $shift->duration_hours);
 
         // Calculate employee distribution from both relationships
         $employeeHoursMap = [];
@@ -432,7 +434,7 @@ class SchedulingService
             // Check single user relationship
             if ($shift->user_id && $shift->user) {
                 $userId = $shift->user_id;
-                if (!isset($employeeHoursMap[$userId])) {
+                if (! isset($employeeHoursMap[$userId])) {
                     $employeeHoursMap[$userId] = [
                         'employee' => $shift->user,
                         'shifts_count' => 0,
@@ -446,7 +448,7 @@ class SchedulingService
             // Check many-to-many users relationship
             foreach ($shift->users as $user) {
                 $userId = $user->id;
-                if (!isset($employeeHoursMap[$userId])) {
+                if (! isset($employeeHoursMap[$userId])) {
                     $employeeHoursMap[$userId] = [
                         'employee' => $user,
                         'shifts_count' => 0,
@@ -458,11 +460,11 @@ class SchedulingService
             }
         }
 
-        $byStatus = $shifts->groupBy(fn($s) => $s->status->value)
-            ->map(fn($group) => $group->count());
+        $byStatus = $shifts->groupBy(fn ($s) => $s->status->value)
+            ->map(fn ($group) => $group->count());
 
-        $byType = $shifts->groupBy(fn($s) => $s->type->value)
-            ->map(fn($group) => $group->count());
+        $byType = $shifts->groupBy(fn ($s) => $s->type->value)
+            ->map(fn ($group) => $group->count());
 
         // Count schedules
         $totalSchedules = WeeklySchedule::where('department_id', $department->id)->count();

@@ -69,6 +69,7 @@ use Illuminate\Support\Str;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $users
  * @property-read int|null $users_count
  * @property-read \App\Models\Scheduling\WeeklySchedule $weeklySchedule
+ *
  * @method static Builder<static>|Shift active()
  * @method static Builder<static>|Shift assigned()
  * @method static Builder<static>|Shift byStatus(\App\Enums\Scheduling\ShiftStatus $status)
@@ -116,6 +117,7 @@ use Illuminate\Support\Str;
  * @method static Builder<static>|Shift whereWeeklyScheduleId($value)
  * @method static Builder<static>|Shift withTrashed(bool $withTrashed = true)
  * @method static Builder<static>|Shift withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class Shift extends Model
@@ -125,6 +127,7 @@ class Shift extends Model
     protected $fillable = [
         'uuid',
         'weekly_schedule_id',
+        'series_id',
         'department_id',
         'position_id',
         'user_id',
@@ -186,6 +189,11 @@ class Shift extends Model
     }
 
     // Relations
+    public function series(): BelongsTo
+    {
+        return $this->belongsTo(ShiftSeries::class, 'series_id');
+    }
+
     public function weeklySchedule(): BelongsTo
     {
         return $this->belongsTo(WeeklySchedule::class);
@@ -290,7 +298,7 @@ class Shift extends Model
     // Accessors
     public function getTimeRangeAttribute(): string
     {
-        return $this->start_time . ' - ' . $this->end_time;
+        return $this->start_time.' - '.$this->end_time;
     }
 
     public function getIsPastAttribute(): bool
@@ -310,12 +318,13 @@ class Shift extends Model
 
     public function getCanCheckInAttribute(): bool
     {
-        if (!$this->is_today || !$this->user_id) {
+        if (! $this->is_today || ! $this->user_id) {
             return false;
         }
         if ($this->checked_in_at) {
             return false;
         }
+
         return in_array($this->status, [ShiftStatus::PUBLISHED, ShiftStatus::CONFIRMED]);
     }
 
@@ -337,32 +346,34 @@ class Shift extends Model
 
     public function getCanCheckOutAttribute(): bool
     {
-        return $this->checked_in_at && !$this->checked_out_at;
+        return $this->checked_in_at && ! $this->checked_out_at;
     }
 
     public function getStartDateTimeAttribute(): Carbon
     {
-        return Carbon::parse($this->date->format('Y-m-d') . ' ' . $this->start_time);
+        return Carbon::parse($this->date->format('Y-m-d').' '.$this->start_time);
     }
 
     public function getEndDateTimeAttribute(): Carbon
     {
-        $end = Carbon::parse($this->date->format('Y-m-d') . ' ' . $this->end_time);
+        $end = Carbon::parse($this->date->format('Y-m-d').' '.$this->end_time);
         // Handle overnight shifts
         if ($end <= $this->start_date_time) {
             $end->addDay();
         }
+
         return $end;
     }
 
     // Methods
     public function transitionTo(ShiftStatus $newStatus): bool
     {
-        if (!$this->status->canTransitionTo($newStatus)) {
+        if (! $this->status->canTransitionTo($newStatus)) {
             return false;
         }
 
         $this->update(['status' => $newStatus]);
+
         return true;
     }
 
@@ -373,22 +384,24 @@ class Shift extends Model
         }
 
         $this->update(['user_id' => $user->id]);
+
         return true;
     }
 
     public function unassign(): bool
     {
-        if (!$this->user_id) {
+        if (! $this->user_id) {
             return false;
         }
 
         $this->update(['user_id' => null]);
+
         return true;
     }
 
     public function checkIn(): bool
     {
-        if (!$this->can_check_in) {
+        if (! $this->can_check_in) {
             return false;
         }
 
@@ -402,7 +415,7 @@ class Shift extends Model
 
     public function checkOut(): bool
     {
-        if (!$this->can_check_out) {
+        if (! $this->can_check_out) {
             return false;
         }
 
@@ -430,7 +443,7 @@ class Shift extends Model
 
     public function getActualHours(): ?float
     {
-        if (!$this->checked_in_at || !$this->checked_out_at) {
+        if (! $this->checked_in_at || ! $this->checked_out_at) {
             return null;
         }
 

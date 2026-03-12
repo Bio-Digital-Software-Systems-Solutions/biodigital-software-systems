@@ -136,10 +136,15 @@ export interface WeeklySchedule {
     week_number?: number;
 }
 
+export type ShiftCreationMode = 'single' | 'multiple_dates' | 'recurring';
+export type ShiftUpdateScope = 'single' | 'all' | 'following';
+export type ShiftDeleteScope = 'single' | 'all' | 'following';
+
 export interface Shift {
     id: number;
     uuid: string;
     weekly_schedule_id: number;
+    series_id: number | null;
     department_id: number;
     position_id: number | null;
     user_id: number | null;
@@ -268,6 +273,7 @@ export interface TodoStats {
 }
 
 export interface DepartmentMember {
+    id?: number;
     uuid: string;
     name: string;
     email: string;

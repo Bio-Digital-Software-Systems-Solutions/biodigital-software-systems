@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Scheduling;
 
 use App\Enums\Employee\EmployeeStatus;
+use App\Enums\Scheduling\ScheduleStatus;
 use App\Enums\Scheduling\ShiftStatus;
 use App\Enums\Scheduling\ShiftType;
 use App\Enums\Scheduling\TodoPriority;
@@ -12,13 +13,16 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Scheduling\DepartmentTodo;
 use App\Models\Scheduling\Shift;
+use App\Models\Scheduling\ShiftSeries;
 use App\Models\Scheduling\WeeklySchedule;
 use App\Models\Star;
 use App\Models\User;
 use App\Services\Scheduling\ConflictDetectionService;
 use App\Services\Scheduling\SchedulingService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -135,7 +139,7 @@ class ShiftController extends Controller
     }
 
     /**
-     * Store a new shift
+     * Store a new shift (or multiple shifts for series/recurring)
      */
     public function store(Request $request, Department $department, WeeklySchedule $schedule): RedirectResponse
     {
@@ -146,9 +150,14 @@ class ShiftController extends Controller
         }
 
         $validated = $request->validate([
-            'date' => 'required|date',
+            'creation_mode' => 'required|in:single,multiple_dates,recurring',
+            'date' => 'required_if:creation_mode,single,recurring|nullable|date',
+            'dates' => 'required_if:creation_mode,multiple_dates|nullable|array',
+            'dates.*' => 'date',
+            'recurrence_type' => 'required_if:creation_mode,recurring|nullable|in:daily,weekly,monthly',
+            'recurrence_end_date' => 'required_if:creation_mode,recurring|nullable|date|after:date',
             'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
+            'end_time' => 'required|date_format:H:i',
             'type' => 'required|string',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
@@ -167,27 +176,59 @@ class ShiftController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        $creationMode = $validated['creation_mode'];
         $userIds = $validated['user_ids'] ?? [];
-        unset($validated['user_ids']);
 
-        $validated['weekly_schedule_id'] = $schedule->id;
-        $validated['department_id'] = $department->id;
-        $validated['status'] = ShiftStatus::DRAFT;
+        // Build base shift data (without date/schedule)
+        $baseData = collect($validated)->except([
+            'creation_mode', 'date', 'dates', 'recurrence_type', 'recurrence_end_date', 'user_ids',
+        ])->toArray();
+        $baseData['department_id'] = $department->id;
+        $baseData['status'] = ShiftStatus::DRAFT;
 
-        $shift = $this->schedulingService->createShift($validated);
+        if ($creationMode === 'single') {
+            $baseData['date'] = $validated['date'];
+            $baseData['weekly_schedule_id'] = $schedule->id;
 
-        // Sync users to pivot table
-        if (! empty($userIds)) {
-            $shift->users()->sync($userIds);
-
-            // Check for conflicts for first user (primary assignee)
-            $firstUser = User::find($userIds[0]);
-            if ($firstUser) {
-                $conflicts = $this->conflictService->detectConflicts($shift, $firstUser);
-                if ($conflicts['has_warnings']) {
-                    session()->flash('warning', 'Shift créé avec des avertissements.');
-                }
+            $shift = $this->schedulingService->createShift($baseData);
+            $this->syncUsersAndCheckConflicts($shift, $userIds);
+            $count = 1;
+        } else {
+            // Determine dates list
+            if ($creationMode === 'multiple_dates') {
+                $dates = $validated['dates'];
+                $recurrenceType = null;
+            } else {
+                $dates = $this->generateRecurringDates(
+                    $validated['date'],
+                    $validated['recurrence_end_date'],
+                    $validated['recurrence_type']
+                );
+                $recurrenceType = $validated['recurrence_type'];
             }
+
+            $series = ShiftSeries::create(['recurrence_type' => $recurrenceType]);
+            $count = 0;
+
+            foreach ($dates as $date) {
+                $weeklySchedule = $this->findOrCreateWeeklySchedule($department, $date);
+                $shiftData = array_merge($baseData, [
+                    'date' => $date,
+                    'series_id' => $series->id,
+                    'weekly_schedule_id' => $weeklySchedule->id,
+                ]);
+
+                $shift = $this->schedulingService->createShift($shiftData);
+                $this->syncUsersAndCheckConflicts($shift, $userIds);
+                $count++;
+            }
+        }
+
+        $message = $count === 1 ? 'Shift créé avec succès.' : "{$count} shifts créés avec succès.";
+
+        // If created from the week calendar on a shift's show page, redirect back
+        if ($request->boolean('_from_calendar')) {
+            return back()->with('success', $message);
         }
 
         return redirect()
@@ -195,7 +236,7 @@ class ShiftController extends Controller
                 'department' => $department,
                 'week' => $schedule->week_start->format('Y-m-d'),
             ])
-            ->with('success', 'Shift créé avec succès.');
+            ->with('success', $message);
     }
 
     /**
@@ -225,14 +266,38 @@ class ShiftController extends Controller
 
         // Get department members for assignment
         $members = $department->members()
-            ->select('users.uuid', 'users.first_name', 'users.last_name', 'users.email')
+            ->select('users.id', 'users.uuid', 'users.first_name', 'users.last_name', 'users.email')
             ->get()
             ->map(fn ($user): array => [
+                'id' => $user->id,
                 'uuid' => $user->uuid,
                 'name' => $user->first_name && $user->last_name
                     ? "{$user->first_name} {$user->last_name}"
                     : ($user->name ?? $user->email),
                 'email' => $user->email,
+            ]);
+
+        // Load all 1h cell assignments for the week within the shift's time range
+        $shiftDate = Carbon::parse($shift->date);
+        $weekStart = $shiftDate->copy()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
+        $weekEnd = $shiftDate->copy()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
+
+        $weekAssignments = Shift::where('department_id', $department->id)
+            ->whereBetween('date', [$weekStart, $weekEnd])
+            ->whereHas('users')
+            ->with(['users:users.id,users.first_name,users.last_name'])
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->get()
+            ->map(fn (Shift $s): array => [
+                'date' => $s->date->format('Y-m-d'),
+                'start_time' => $s->start_time,
+                'shift_id' => $s->id,
+                'shift_uuid' => $s->uuid,
+                'users' => $s->users->map(fn (User $u): array => [
+                    'id' => $u->id,
+                    'name' => trim("{$u->first_name} {$u->last_name}") ?: 'N/A',
+                ])->values()->all(),
             ]);
 
         return Inertia::render('Departments/Schedule/Shifts/Show', [
@@ -242,6 +307,7 @@ class ShiftController extends Controller
             'conflicts' => $conflicts,
             'shiftTodos' => $shiftTodos,
             'members' => $members,
+            'weekAssignments' => $weekAssignments,
             'todoPriorities' => collect(TodoPriority::cases())->map(fn ($p): array => [
                 'value' => $p->value,
                 'label' => $p->label(),
@@ -333,7 +399,7 @@ class ShiftController extends Controller
     }
 
     /**
-     * Update a shift
+     * Update a shift (optionally all/following shifts in a series)
      */
     public function update(Request $request, Department $department, WeeklySchedule $schedule, Shift $shift): RedirectResponse
     {
@@ -344,6 +410,7 @@ class ShiftController extends Controller
         }
 
         $validated = $request->validate([
+            'update_scope' => 'sometimes|in:single,all,following',
             'date' => 'sometimes|date',
             'start_time' => 'sometimes|date_format:H:i',
             'end_time' => 'sometimes|date_format:H:i',
@@ -366,13 +433,31 @@ class ShiftController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        $updateScope = $validated['update_scope'] ?? 'single';
         $userIds = $validated['user_ids'] ?? [];
-        unset($validated['user_ids']);
+        $updateData = collect($validated)->except(['update_scope', 'user_ids', 'date'])->toArray();
 
-        $shift->update($validated);
+        if ($updateScope !== 'single' && $shift->series_id) {
+            $query = Shift::where('series_id', $shift->series_id);
 
-        // Sync users to pivot table
-        $shift->users()->sync($userIds);
+            if ($updateScope === 'following') {
+                $query->where('date', '>=', $shift->date);
+            }
+
+            $siblings = $query->get();
+
+            foreach ($siblings as $sibling) {
+                $sibling->update($updateData);
+                $sibling->users()->sync($userIds);
+            }
+        } else {
+            // Update date only for single shift updates
+            if (isset($validated['date'])) {
+                $updateData['date'] = $validated['date'];
+            }
+            $shift->update($updateData);
+            $shift->users()->sync($userIds);
+        }
 
         return redirect()->route('departments.schedule.shifts.show', [
             'department' => $department->uuid,
@@ -515,9 +600,9 @@ class ShiftController extends Controller
     }
 
     /**
-     * Delete a shift
+     * Delete a shift (optionally all/following shifts in a series)
      */
-    public function destroy(Department $department, WeeklySchedule $schedule, Shift $shift): RedirectResponse
+    public function destroy(Request $request, Department $department, WeeklySchedule $schedule, Shift $shift): RedirectResponse
     {
         $this->authorize('update', $department);
 
@@ -525,10 +610,113 @@ class ShiftController extends Controller
             return back()->with('error', 'Ce planning est verrouillé.');
         }
 
+        $deleteScope = $request->input('delete_scope', 'single');
+
+        if ($deleteScope !== 'single' && $shift->series_id) {
+            $query = Shift::where('series_id', $shift->series_id);
+
+            if ($deleteScope === 'following') {
+                $query->where('date', '>=', $shift->date);
+            }
+
+            $shiftsToDelete = $query->get();
+
+            foreach ($shiftsToDelete as $s) {
+                $s->tasks()->delete();
+                $s->delete();
+            }
+
+            return back()->with('success', count($shiftsToDelete).' shift(s) supprimé(s) avec succès.');
+        }
+
         $shift->tasks()->delete();
         $shift->delete();
 
         return back()->with('success', 'Shift supprimé avec succès.');
+    }
+
+    /** @var array<string, WeeklySchedule> */
+    private array $weeklyScheduleCache = [];
+
+    /**
+     * Find or create a WeeklySchedule for a given date and department.
+     */
+    private function findOrCreateWeeklySchedule(Department $department, string $date): WeeklySchedule
+    {
+        $carbonDate = Carbon::parse($date);
+        $weekStart = $carbonDate->copy()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
+        $cacheKey = $department->id.':'.$weekStart;
+
+        if (isset($this->weeklyScheduleCache[$cacheKey])) {
+            return $this->weeklyScheduleCache[$cacheKey];
+        }
+
+        $weekEnd = Carbon::parse($weekStart)->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
+
+        $schedule = WeeklySchedule::where('department_id', $department->id)
+            ->whereDate('week_start', $weekStart)
+            ->first();
+
+        if (! $schedule) {
+            $schedule = WeeklySchedule::create([
+                'uuid' => Str::uuid()->toString(),
+                'department_id' => $department->id,
+                'week_start' => $weekStart,
+                'week_end' => $weekEnd,
+                'status' => ScheduleStatus::DRAFT->value,
+            ]);
+        }
+
+        $this->weeklyScheduleCache[$cacheKey] = $schedule;
+
+        return $schedule;
+    }
+
+    /**
+     * Generate recurring dates between start and end based on frequency.
+     *
+     * @return string[]
+     */
+    private function generateRecurringDates(string $startDate, string $endDate, string $recurrenceType): array
+    {
+        $dates = [];
+        $current = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+
+        while ($current->lte($end)) {
+            $dates[] = $current->format('Y-m-d');
+
+            $current = match ($recurrenceType) {
+                'daily' => $current->copy()->addDay(),
+                'weekly' => $current->copy()->addWeek(),
+                'monthly' => $current->copy()->addMonth(),
+                default => $end->copy()->addDay(), // break loop
+            };
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Sync users to a shift and check for conflicts.
+     *
+     * @param  int[]  $userIds
+     */
+    private function syncUsersAndCheckConflicts(Shift $shift, array $userIds): void
+    {
+        if (empty($userIds)) {
+            return;
+        }
+
+        $shift->users()->sync($userIds);
+
+        $firstUser = User::find($userIds[0]);
+        if ($firstUser) {
+            $conflicts = $this->conflictService->detectConflicts($shift, $firstUser);
+            if ($conflicts['has_warnings']) {
+                session()->flash('warning', 'Shift(s) créé(s) avec des avertissements de conflits.');
+            }
+        }
     }
 
     /**

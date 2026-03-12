@@ -312,8 +312,16 @@ class DepartmentTodo extends Model
 
     public function scopeOrdered(Builder $query): Builder
     {
-        return $query->orderByRaw("FIELD(priority, 'urgent', 'high', 'medium', 'low')")
-            ->orderBy('due_date')
+        $driver = $query->getModel()->getConnection()->getDriverName();
+
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            $query->orderByRaw("FIELD(priority, 'urgent', 'high', 'medium', 'low')");
+        } else {
+            // SQLite/PostgreSQL compatible fallback using CASE WHEN
+            $query->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END");
+        }
+
+        return $query->orderBy('due_date')
             ->orderBy('sort_order');
     }
 

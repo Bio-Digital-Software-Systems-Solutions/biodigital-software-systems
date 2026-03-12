@@ -1,4 +1,4 @@
-.PHONY: phpstan phpcs phpmd pint pest test clear db quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e frontend-test backend-test docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean clean-event-media clean-event-media-preview ide-helper ide-helper-generate ide-helper-models ide-helper-meta psalm lint lint-fix format format-check knip quality-full rector rector-fix
+.PHONY: phpstan phpcs phpmd pint pest test clear db db-docker quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e frontend-test backend-test docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean clean-event-media clean-event-media-preview ide-helper ide-helper-generate ide-helper-models ide-helper-meta psalm lint lint-fix format format-check knip quality-full rector rector-fix
 
 # PHPStan static analysis (level 8)
 phpstan:
@@ -110,6 +110,11 @@ db:
 	@echo "Resetting database with fresh migrations and seeders..."
 	@php artisan migrate:fresh --seed
 	@echo "Database reset complete!"
+
+db-docker:
+	@echo "Running migrations inside Docker container..."
+	@docker-compose exec app php artisan migrate --no-interaction
+	@echo "Docker migrations complete!"
 
 # Clean orphaned event media records (files that don't exist on disk)
 clean-event-media:

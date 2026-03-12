@@ -88,7 +88,8 @@ class DepartmentTodoSeeder extends Seeder
                     $assignee = $members->random();
 
                     // Random date within the month (use midday to avoid DST issues)
-                    $randomDay = random_int(1, min($monthEnd->day, $now->day));
+                    $maxDay = $monthsAgo === 0 ? min($monthEnd->day, $now->day) : $monthEnd->day;
+                    $randomDay = random_int(1, max(1, $maxDay));
                     $createdAt = $monthStart->copy()->addDays($randomDay - 1)->setTime(12, 0, 0);
                     if ($createdAt->gt($now)) {
                         $createdAt = $now->copy()->setTime(12, 0, 0);
@@ -103,7 +104,7 @@ class DepartmentTodoSeeder extends Seeder
                     $completedBy = null;
                     if ($status === ShiftTaskStatus::COMPLETED) {
                         // Completed between 1-14 days after creation
-                        $completedAt = $createdAt->copy()->addDays(random_int(1, min(14, $daysOld ?: 1)));
+                        $completedAt = $createdAt->copy()->addDays(random_int(1, max(1, min(14, (int) $daysOld))));
                         $completedBy = $assignee->id;
                     }
 

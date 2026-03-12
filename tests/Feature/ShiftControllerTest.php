@@ -17,8 +17,11 @@ class ShiftControllerTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $member;
+
     protected Department $department;
+
     protected WeeklySchedule $schedule;
 
     protected function setUp(): void
@@ -343,5 +346,406 @@ class ShiftControllerTest extends TestCase
         $shift = $this->createShift(['status' => ShiftStatus::CANCELLED]);
 
         $this->assertTrue($shift->status->canTransitionTo(ShiftStatus::DRAFT));
+    }
+
+    // ==========================================
+    // SHIFT SHOW PAGE — WEEK CALENDAR DATA TESTS
+    // ==========================================
+
+    public function test_show_page_returns_shift_with_date_for_week_calendar(): void
+    {
+        $shift = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '08:00:00',
+            'end_time' => '16:00:00',
+        ]);
+
+        $response = $this->actingAs($this->member)->get(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shift->uuid}"
+        );
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Departments/Schedule/Shifts/Show')
+            ->has('shift')
+            ->where('shift.start_time', '08:00:00')
+            ->where('shift.end_time', '16:00:00')
+        );
+    }
+
+    public function test_show_page_returns_shift_with_title_for_week_calendar(): void
+    {
+        $shift = $this->createShift([
+            'title' => 'Morning Shift',
+            'date' => '2026-03-12',
+            'start_time' => '06:00:00',
+            'end_time' => '14:00:00',
+        ]);
+
+        $response = $this->actingAs($this->member)->get(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shift->uuid}"
+        );
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Departments/Schedule/Shifts/Show')
+            ->where('shift.title', 'Morning Shift')
+        );
+    }
+
+    public function test_show_page_returns_shift_type_for_week_calendar(): void
+    {
+        $shift = $this->createShift([
+            'type' => 'night',
+            'start_time' => '22:00:00',
+            'end_time' => '06:00:00',
+        ]);
+
+        $response = $this->actingAs($this->member)->get(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shift->uuid}"
+        );
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Departments/Schedule/Shifts/Show')
+            ->where('shift.type', 'night')
+        );
+    }
+
+    public function test_show_page_requires_authentication_for_week_calendar(): void
+    {
+        $shift = $this->createShift();
+
+        $response = $this->get(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shift->uuid}"
+        );
+
+        $response->assertRedirect('/login');
+    }
+
+    public function test_show_page_returns_members_with_id_for_calendar_assignment(): void
+    {
+        // Add admin as a department member
+        $this->department->members()->attach($this->admin->id);
+
+        $shift = $this->createShift();
+
+        $response = $this->actingAs($this->admin)->get(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shift->uuid}"
+        );
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Departments/Schedule/Shifts/Show')
+            ->has('members')
+            ->has('members.0', fn ($member) => $member
+                ->has('id')
+                ->has('uuid')
+                ->has('name')
+                ->has('email')
+            )
+        );
+    }
+
+    public function test_admin_can_create_shift_from_calendar_cell(): void
+    {
+        $shift = $this->createShift();
+
+        $response = $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts",
+            [
+                'creation_mode' => 'single',
+                'date' => '2026-03-12',
+                'start_time' => '10:00',
+                'end_time' => '11:00',
+                'type' => 'morning',
+                'user_ids' => [$this->admin->id],
+                'break_duration' => 0,
+                'is_overtime' => false,
+                'requires_approval' => false,
+            ]
+        );
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('shifts', [
+            'department_id' => $this->department->id,
+            'start_time' => '10:00',
+            'end_time' => '11:00',
+        ]);
+    }
+
+    // ==========================================
+    // CALENDAR ASSIGNMENT — SHIFT + USER PIVOT
+    // ==========================================
+
+    public function test_calendar_assignment_persists_user_in_pivot_table(): void
+    {
+        $assignee = User::factory()->create();
+
+        $response = $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts",
+            [
+                'creation_mode' => 'single',
+                'date' => '2026-03-12',
+                'start_time' => '14:00',
+                'end_time' => '15:00',
+                'type' => 'afternoon',
+                'user_ids' => [$assignee->id],
+                'break_duration' => 0,
+                'is_overtime' => false,
+                'requires_approval' => false,
+                '_from_calendar' => true,
+            ]
+        );
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $newShift = Shift::where('department_id', $this->department->id)
+            ->whereDate('date', '2026-03-12')
+            ->where('start_time', 'like', '14:00%')
+            ->first();
+
+        $this->assertNotNull($newShift);
+        $this->assertDatabaseHas('shift_user', [
+            'shift_id' => $newShift->id,
+            'user_id' => $assignee->id,
+        ]);
+    }
+
+    public function test_calendar_assignment_redirects_back_instead_of_index(): void
+    {
+        $assignee = User::factory()->create();
+
+        // Simulate coming from a shift show page
+        $response = $this->actingAs($this->admin)
+            ->from("/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/some-uuid")
+            ->post(
+                "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts",
+                [
+                    'creation_mode' => 'single',
+                    'date' => '2026-03-12',
+                    'start_time' => '09:00',
+                    'end_time' => '10:00',
+                    'type' => 'morning',
+                    'user_ids' => [$assignee->id],
+                    'break_duration' => 0,
+                    'is_overtime' => false,
+                    'requires_approval' => false,
+                    '_from_calendar' => true,
+                ]
+            );
+
+        // Should redirect back to the show page, not to the schedule index
+        $response->assertRedirect("/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/some-uuid");
+    }
+
+    public function test_calendar_assignment_without_flag_redirects_to_index(): void
+    {
+        $response = $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts",
+            [
+                'creation_mode' => 'single',
+                'date' => '2026-03-12',
+                'start_time' => '07:00',
+                'end_time' => '08:00',
+                'type' => 'morning',
+                'user_ids' => [],
+                'break_duration' => 0,
+                'is_overtime' => false,
+                'requires_approval' => false,
+            ]
+        );
+
+        $response->assertRedirect();
+        // Should redirect to schedule index (contains 'week=')
+        $this->assertStringContainsString('week=', $response->headers->get('Location') ?? '');
+    }
+
+    public function test_show_page_returns_week_assignments_with_start_time(): void
+    {
+        $mainShift = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '08:00:00',
+            'end_time' => '16:00:00',
+        ]);
+
+        // Create a 1h cell shift on another day in the same week
+        $cellShift = $this->createShift([
+            'date' => '2026-03-10',
+            'start_time' => '09:00:00',
+            'end_time' => '10:00:00',
+        ]);
+        $assignee = User::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+        $cellShift->users()->attach($assignee->id);
+
+        $response = $this->actingAs($this->member)->get(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$mainShift->uuid}"
+        );
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Departments/Schedule/Shifts/Show')
+            ->has('weekAssignments')
+            ->has('weekAssignments.0', fn ($wa) => $wa
+                ->where('date', '2026-03-10')
+                ->where('start_time', '09:00:00')
+                ->where('shift_id', $cellShift->id)
+                ->has('users')
+                ->has('users.0', fn ($u) => $u
+                    ->where('id', $assignee->id)
+                    ->where('name', 'Jean Dupont')
+                )
+                ->etc()
+            )
+        );
+    }
+
+    public function test_show_page_returns_independent_cell_assignments(): void
+    {
+        $mainShift = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '08:00:00',
+            'end_time' => '16:00:00',
+        ]);
+
+        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Martin']);
+        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Durand']);
+
+        // Two different 1h cells on the same day
+        $cell1 = $this->createShift([
+            'date' => '2026-03-10',
+            'start_time' => '09:00:00',
+            'end_time' => '10:00:00',
+        ]);
+        $cell1->users()->attach($user1->id);
+
+        $cell2 = $this->createShift([
+            'date' => '2026-03-10',
+            'start_time' => '10:00:00',
+            'end_time' => '11:00:00',
+        ]);
+        $cell2->users()->attach($user2->id);
+
+        $response = $this->actingAs($this->member)->get(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$mainShift->uuid}"
+        );
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Departments/Schedule/Shifts/Show')
+            ->has('weekAssignments', 2)
+        );
+    }
+
+    public function test_show_page_excludes_assignments_from_other_weeks(): void
+    {
+        $mainShift = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '08:00:00',
+            'end_time' => '16:00:00',
+        ]);
+
+        $otherWeek = $this->createShift([
+            'date' => '2026-03-20',
+            'start_time' => '09:00:00',
+            'end_time' => '10:00:00',
+        ]);
+        $assignee = User::factory()->create();
+        $otherWeek->users()->attach($assignee->id);
+
+        $response = $this->actingAs($this->member)->get(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$mainShift->uuid}"
+        );
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Departments/Schedule/Shifts/Show')
+            ->has('weekAssignments', 0)
+        );
+    }
+
+    public function test_show_page_excludes_unassigned_shifts_from_week_assignments(): void
+    {
+        $mainShift = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '08:00:00',
+            'end_time' => '16:00:00',
+        ]);
+
+        // Shift with no users — should not appear
+        $this->createShift([
+            'date' => '2026-03-10',
+            'start_time' => '09:00:00',
+            'end_time' => '10:00:00',
+        ]);
+
+        $response = $this->actingAs($this->member)->get(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$mainShift->uuid}"
+        );
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Departments/Schedule/Shifts/Show')
+            ->has('weekAssignments', 0)
+        );
+    }
+
+    public function test_calendar_assignment_with_multiple_users(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        $response = $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts",
+            [
+                'creation_mode' => 'single',
+                'date' => '2026-03-12',
+                'start_time' => '16:00',
+                'end_time' => '17:00',
+                'type' => 'afternoon',
+                'user_ids' => [$user1->id, $user2->id],
+                'break_duration' => 0,
+                'is_overtime' => false,
+                'requires_approval' => false,
+                '_from_calendar' => true,
+            ]
+        );
+
+        $response->assertRedirect();
+
+        $newShift = Shift::where('department_id', $this->department->id)
+            ->whereDate('date', '2026-03-12')
+            ->where('start_time', 'like', '16:00%')
+            ->first();
+
+        $this->assertNotNull($newShift);
+        $this->assertEquals(2, $newShift->users()->count());
+        $this->assertDatabaseHas('shift_user', [
+            'shift_id' => $newShift->id,
+            'user_id' => $user1->id,
+        ]);
+        $this->assertDatabaseHas('shift_user', [
+            'shift_id' => $newShift->id,
+            'user_id' => $user2->id,
+        ]);
+    }
+
+    public function test_member_cannot_create_shift_from_calendar(): void
+    {
+        $response = $this->actingAs($this->member)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts",
+            [
+                'creation_mode' => 'single',
+                'date' => '2026-03-12',
+                'start_time' => '10:00',
+                'end_time' => '11:00',
+                'type' => 'morning',
+                'user_ids' => [$this->member->id],
+                'break_duration' => 0,
+                'is_overtime' => false,
+                'requires_approval' => false,
+                '_from_calendar' => true,
+            ]
+        );
+
+        $this->assertTrue($response->isForbidden() || $response->isRedirect());
+        $this->assertDatabaseMissing('shifts', [
+            'department_id' => $this->department->id,
+            'start_time' => '10:00',
+            'date' => '2026-03-12',
+        ]);
     }
 }

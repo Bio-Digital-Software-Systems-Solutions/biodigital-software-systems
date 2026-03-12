@@ -38,11 +38,22 @@ import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-di
 import TodoCreateModal from '@/Components/Scheduling/TodoCreateModal';
 import TodoEditModal from '@/Components/Scheduling/TodoEditModal';
 import TodoList from '@/Components/Scheduling/TodoList';
+import ShiftWeekCalendar from '@/Components/Scheduling/ShiftWeekCalendar';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/Components/ui/accordion';
+import { CalendarIcon } from '@heroicons/react/24/outline';
 
 interface Department {
     id: number;
     uuid: string;
     name: string;
+}
+
+interface WeekAssignment {
+    date: string;
+    start_time: string;
+    shift_id: number;
+    shift_uuid: string;
+    users: Array<{ id: number; name: string }>;
 }
 
 interface Props {
@@ -57,6 +68,7 @@ interface Props {
     } | null;
     shiftTodos?: DepartmentTodo[];
     members?: DepartmentMember[];
+    weekAssignments?: WeekAssignment[];
     todoPriorities?: EnumOption<TodoPriority>[];
 }
 
@@ -81,7 +93,7 @@ const STATUS_INFO: Record<ShiftStatus, { color: string; label: string; bgColor: 
     no_show: { color: 'text-red-700', label: 'Absent', bgColor: 'bg-red-200' },
 };
 
-export default function ShiftShow({ department, schedule, shift, conflicts, shiftTodos = [], members = [], todoPriorities = [] }: Props) {
+export default function ShiftShow({ department, schedule, shift, conflicts, shiftTodos = [], members = [], weekAssignments = [], todoPriorities = [] }: Props) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [todoModalOpen, setTodoModalOpen] = useState(false);
@@ -377,6 +389,28 @@ export default function ShiftShow({ department, schedule, shift, conflicts, shif
                                 </CardContent>
                             </Card>
                         )}
+
+                        {/* Week Calendar Accordion */}
+                        <Accordion>
+                            <AccordionItem value="week-calendar">
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-2 text-sm font-medium">
+                                        <CalendarIcon className="h-4 w-4 text-gray-500" />
+                                        Vue calendrier de la semaine
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="p-0 border-t-0">
+                                    <ShiftWeekCalendar
+                                        shift={shift}
+                                        members={members}
+                                        weekAssignments={weekAssignments}
+                                        departmentUuid={department.uuid}
+                                        scheduleUuid={schedule.uuid}
+                                        isEditable={isEditable}
+                                    />
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
 
                         {/* Shift TODOs */}
                         <Card>
