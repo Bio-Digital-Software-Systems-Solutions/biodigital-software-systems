@@ -560,11 +560,15 @@ class ShiftControllerTest extends TestCase
 
     public function test_show_page_returns_week_assignments_with_start_time(): void
     {
+        $assignee = User::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+
         $mainShift = $this->createShift([
             'date' => '2026-03-12',
             'start_time' => '08:00:00',
             'end_time' => '16:00:00',
         ]);
+        // Assign the user to the main shift so they're visible in the calendar
+        $mainShift->users()->attach($assignee->id);
 
         // Create a 1h cell shift on another day in the same week
         $cellShift = $this->createShift([
@@ -572,7 +576,6 @@ class ShiftControllerTest extends TestCase
             'start_time' => '09:00:00',
             'end_time' => '10:00:00',
         ]);
-        $assignee = User::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
         $cellShift->users()->attach($assignee->id);
 
         $response = $this->actingAs($this->member)->get(
@@ -598,14 +601,16 @@ class ShiftControllerTest extends TestCase
 
     public function test_show_page_returns_independent_cell_assignments(): void
     {
+        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Martin']);
+        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Durand']);
+
         $mainShift = $this->createShift([
             'date' => '2026-03-12',
             'start_time' => '08:00:00',
             'end_time' => '16:00:00',
         ]);
-
-        $user1 = User::factory()->create(['first_name' => 'Alice', 'last_name' => 'Martin']);
-        $user2 = User::factory()->create(['first_name' => 'Bob', 'last_name' => 'Durand']);
+        // Assign both users to the main shift so they appear in the calendar
+        $mainShift->users()->attach([$user1->id, $user2->id]);
 
         // Two different 1h cells on the same day
         $cell1 = $this->createShift([
@@ -626,9 +631,10 @@ class ShiftControllerTest extends TestCase
             "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$mainShift->uuid}"
         );
 
+        // mainShift (with both users) + cell1 + cell2 = 3 assignments
         $response->assertInertia(fn ($page) => $page
             ->component('Departments/Schedule/Shifts/Show')
-            ->has('weekAssignments', 2)
+            ->has('weekAssignments', 3)
         );
     }
 
@@ -655,6 +661,41 @@ class ShiftControllerTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->component('Departments/Schedule/Shifts/Show')
             ->has('weekAssignments', 0)
+        );
+    }
+
+    public function test_show_page_excludes_assignments_from_users_not_in_shift(): void
+    {
+        $mainShift = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '08:00:00',
+            'end_time' => '16:00:00',
+        ]);
+        $shiftUser = User::factory()->create();
+        $mainShift->users()->attach($shiftUser->id);
+
+        // A different user assigned to a cell shift — should NOT appear in weekAssignments
+        $outsideUser = User::factory()->create();
+        $cellShift = $this->createShift([
+            'date' => '2026-03-10',
+            'start_time' => '09:00:00',
+            'end_time' => '10:00:00',
+        ]);
+        $cellShift->users()->attach($outsideUser->id);
+
+        $response = $this->actingAs($this->member)->get(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$mainShift->uuid}"
+        );
+
+        // Only the main shift appears (with shiftUser), NOT the cellShift (outsideUser)
+        $response->assertInertia(fn ($page) => $page
+            ->component('Departments/Schedule/Shifts/Show')
+            ->has('weekAssignments', 1)
+            ->has('weekAssignments.0', fn ($wa) => $wa
+                ->where('shift_id', $mainShift->id)
+                ->where('users.0.id', $shiftUser->id)
+                ->etc()
+            )
         );
     }
 

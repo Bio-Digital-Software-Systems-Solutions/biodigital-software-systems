@@ -264,7 +264,7 @@ class ShiftController extends Controller
 
         $shiftTodos = $shiftTodosCollection->map(fn ($todo): array => $todo->toArrayForApi());
 
-        // Get department members for assignment
+        // Get department members for calendar assignment popover
         $members = $department->members()
             ->select('users.id', 'users.uuid', 'users.first_name', 'users.last_name', 'users.email')
             ->get()
@@ -277,15 +277,30 @@ class ShiftController extends Controller
                 'email' => $user->email,
             ]);
 
-        // Load all 1h cell assignments for the week within the shift's time range
+        // Collect user IDs assigned to this shift and its series siblings
         $shiftDate = Carbon::parse($shift->date);
         $weekStart = $shiftDate->copy()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
         $weekEnd = $shiftDate->copy()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
 
+        $relatedShiftIds = collect([$shift->id]);
+        if ($shift->series_id) {
+            $seriesSiblingIds = Shift::where('series_id', $shift->series_id)
+                ->pluck('id');
+            $relatedShiftIds = $relatedShiftIds->merge($seriesSiblingIds)->unique();
+        }
+
+        $allowedUserIds = \DB::table('shift_user')
+            ->whereIn('shift_id', $relatedShiftIds)
+            ->pluck('user_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        // Load cell assignments only for users of this shift/series
         $weekAssignments = Shift::where('department_id', $department->id)
             ->whereBetween('date', [$weekStart, $weekEnd])
-            ->whereHas('users')
-            ->with(['users:users.id,users.first_name,users.last_name'])
+            ->whereHas('users', fn ($q) => $q->whereIn('users.id', $allowedUserIds))
+            ->with(['users' => fn ($q) => $q->whereIn('users.id', $allowedUserIds)])
             ->orderBy('date')
             ->orderBy('start_time')
             ->get()
@@ -300,6 +315,20 @@ class ShiftController extends Controller
                 ])->values()->all(),
             ]);
 
+        // Load series sibling shifts for calendar background coloring (only this shift + its series)
+        $weekShifts = Shift::whereIn('id', $relatedShiftIds)
+            ->whereBetween('date', [$weekStart, $weekEnd])
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->get()
+            ->map(fn (Shift $s): array => [
+                'id' => $s->id,
+                'date' => $s->date->format('Y-m-d'),
+                'start_time' => $s->start_time,
+                'end_time' => $s->end_time,
+                'type' => $s->type->value,
+            ]);
+
         return Inertia::render('Departments/Schedule/Shifts/Show', [
             'department' => $department,
             'schedule' => $schedule,
@@ -308,6 +337,7 @@ class ShiftController extends Controller
             'shiftTodos' => $shiftTodos,
             'members' => $members,
             'weekAssignments' => $weekAssignments,
+            'weekShifts' => $weekShifts,
             'todoPriorities' => collect(TodoPriority::cases())->map(fn ($p): array => [
                 'value' => $p->value,
                 'label' => $p->label(),

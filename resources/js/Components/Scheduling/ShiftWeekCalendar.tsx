@@ -13,10 +13,19 @@ interface WeekAssignment {
     users: Array<{ id: number; name: string }>;
 }
 
+interface WeekShift {
+    id: number;
+    date: string;
+    start_time: string;
+    end_time: string;
+    type: string;
+}
+
 interface Props {
     shift: Shift;
     members?: DepartmentMember[];
     weekAssignments?: WeekAssignment[];
+    weekShifts?: WeekShift[];
     departmentUuid: string;
     scheduleUuid: string;
     isEditable?: boolean;
@@ -27,6 +36,20 @@ const HOUR_HEIGHT = 64;
 const USER_COLORS = [
     '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4',
     '#ec4899', '#f97316', '#14b8a6', '#a855f7', '#84cc16', '#e11d48',
+];
+
+// Subtle background colors for shift time ranges (hex + alpha suffix applied at render)
+const SHIFT_BG_COLORS = [
+    '#6366f1', // indigo
+    '#10b981', // emerald
+    '#f59e0b', // amber
+    '#f43f5e', // rose
+    '#8b5cf6', // purple
+    '#06b6d4', // cyan
+    '#f97316', // orange
+    '#14b8a6', // teal
+    '#ec4899', // pink
+    '#84cc16', // lime
 ];
 
 function timeToMinutes(time: string): number {
@@ -42,6 +65,7 @@ export default function ShiftWeekCalendar({
     shift,
     members = [],
     weekAssignments = [],
+    weekShifts = [],
     departmentUuid,
     scheduleUuid,
     isEditable = false,
@@ -61,6 +85,58 @@ export default function ShiftWeekCalendar({
 
     const startMinutes = timeToMinutes(shift.start_time);
     const slotTopPx = (startMinutes / 60) * HOUR_HEIGHT;
+
+    // Build cell → background color map from all shifts in the week
+    const cellBgMap = new Map<string, string>();
+
+    // Helper: expand a shift's time range into cell keys and assign a color
+    const expandShiftCells = (
+        dateStr: string,
+        startTime: string,
+        endTime: string,
+        color: string,
+    ): void => {
+        const sMin = timeToMinutes(startTime);
+        const eMin = timeToMinutes(endTime);
+        const sHour = Math.floor(sMin / 60);
+        const eHour = Math.floor(eMin / 60);
+        const overnight = eMin <= sMin;
+
+        if (overnight) {
+            for (let h = sHour; h < 24; h++) {
+                cellBgMap.set(cellKey(dateStr, h), color);
+            }
+            const nextDay = addDays(new Date(dateStr), 1);
+            const nextDayStr = format(nextDay, 'yyyy-MM-dd');
+            for (let h = 0; h < eHour; h++) {
+                cellBgMap.set(cellKey(nextDayStr, h), color);
+            }
+        } else {
+            for (let h = sHour; h < eHour; h++) {
+                cellBgMap.set(cellKey(dateStr, h), color);
+            }
+        }
+    };
+
+    // Assign a unique color to each shift in the week
+    const allShifts: Array<{ date: string; start_time: string; end_time: string }> = [];
+
+    // Include the main shift being viewed
+    allShifts.push({ date: format(shiftDate, 'yyyy-MM-dd'), start_time: shift.start_time, end_time: shift.end_time });
+
+    // Include other shifts from weekShifts (deduplicate with main shift)
+    for (const ws of weekShifts) {
+        const isDuplicate = allShifts.some(
+            (s) => s.date === ws.date && s.start_time === ws.start_time && s.end_time === ws.end_time,
+        );
+        if (!isDuplicate) {
+            allShifts.push({ date: ws.date, start_time: ws.start_time, end_time: ws.end_time });
+        }
+    }
+
+    allShifts.forEach((s, idx) => {
+        expandShiftCells(s.date, s.start_time, s.end_time, SHIFT_BG_COLORS[idx % SHIFT_BG_COLORS.length]);
+    });
 
     // Color map
     const userColorMap = new Map<number, string>();
@@ -218,12 +294,16 @@ export default function ShiftWeekCalendar({
                                     const cellUsers = assignmentsByCell.get(ck)?.users || [];
                                     const isOpen = openCellKey === ck;
                                     const available = getAvailableMembers(dateStr, hour);
+                                    const shiftBg = cellBgMap.get(ck);
 
                                     return (
                                         <div
                                             key={hour}
                                             className={`border-b border-gray-100 dark:border-gray-700/50 relative ${isEditable ? 'cursor-pointer hover:bg-icc-blue/5 dark:hover:bg-icc-blue/10 transition-colors' : ''}`}
-                                            style={{ height: `${HOUR_HEIGHT}px` }}
+                                            style={{
+                                                height: `${HOUR_HEIGHT}px`,
+                                                ...(shiftBg ? { backgroundColor: `${shiftBg}18` } : {}),
+                                            }}
                                             onDoubleClick={(e) => {
                                                 e.preventDefault();
                                                 if (isEditable) setOpenCellKey(isOpen ? null : ck);
