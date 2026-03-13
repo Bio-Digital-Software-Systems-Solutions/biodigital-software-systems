@@ -162,12 +162,25 @@ export default function ShiftWeekCalendar({
 
     // Add cells for users assigned outside shift time ranges (users_by_slot may contain
     // time slots that fall outside start_time–end_time). These get a transparent background.
+    // For overnight shifts, time slots before end_time belong to the next calendar day.
     for (const ws of [...allShifts, ...otherWeekShifts]) {
         const isOther = otherWeekShifts.includes(ws as OtherWeekShift);
+        const wsStartMin = timeToMinutes(ws.start_time);
+        const wsEndMin = timeToMinutes(ws.end_time);
+        const isOvernight = wsEndMin <= wsStartMin;
+
         for (const [timeSlot, slotUsers] of Object.entries(ws.users_by_slot)) {
             if (slotUsers.length === 0) continue;
             const hour = parseInt(timeSlot.split(':')[0], 10);
-            const ck = cellKey(ws.date, hour);
+            const slotMin = hour * 60;
+
+            // For overnight shifts, slots before end_time belong to the next day
+            let dateStr = ws.date;
+            if (isOvernight && slotMin < wsEndMin) {
+                dateStr = format(addDays(new Date(ws.date), 1), 'yyyy-MM-dd');
+            }
+
+            const ck = cellKey(dateStr, hour);
             if (!cellDataMap.has(ck)) {
                 cellDataMap.set(ck, {
                     bgColor: 'transparent',

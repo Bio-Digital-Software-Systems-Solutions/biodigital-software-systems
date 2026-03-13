@@ -764,4 +764,202 @@ class ShiftControllerTest extends TestCase
             'date' => '2026-03-12',
         ]);
     }
+
+    // ==========================================
+    // NIGHT SHIFT (OVERNIGHT) — TIME SLOT TESTS
+    // ==========================================
+
+    public function test_add_user_to_night_shift_early_morning_slot(): void
+    {
+        $nightShift = $this->createShift([
+            'date' => '2026-03-13',
+            'start_time' => '22:00:00',
+            'end_time' => '06:00:00',
+            'type' => 'night',
+        ]);
+        $assignee = User::factory()->create();
+
+        // Assign user to 00:00 slot (belongs to next day but stored on the shift)
+        $response = $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$nightShift->uuid}/add-user",
+            ['user_id' => $assignee->id, 'time_slot' => '00:00']
+        );
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('shift_user', [
+            'shift_id' => $nightShift->id,
+            'user_id' => $assignee->id,
+            'time_slot' => '00:00',
+        ]);
+    }
+
+    public function test_add_user_to_night_shift_multiple_overnight_slots(): void
+    {
+        $nightShift = $this->createShift([
+            'date' => '2026-03-13',
+            'start_time' => '22:00:00',
+            'end_time' => '06:00:00',
+            'type' => 'night',
+        ]);
+        $assignee = User::factory()->create();
+
+        // Assign to slots spanning both days of the overnight shift
+        $slots = ['22:00', '23:00', '00:00', '01:00', '02:00', '03:00', '04:00', '05:00'];
+
+        foreach ($slots as $slot) {
+            $this->actingAs($this->admin)->post(
+                "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$nightShift->uuid}/add-user",
+                ['user_id' => $assignee->id, 'time_slot' => $slot]
+            );
+        }
+
+        // All 8 slots should be attached to the same shift
+        $this->assertEquals(8, $nightShift->users()->where('users.id', $assignee->id)->count());
+
+        foreach ($slots as $slot) {
+            $this->assertDatabaseHas('shift_user', [
+                'shift_id' => $nightShift->id,
+                'user_id' => $assignee->id,
+                'time_slot' => $slot,
+            ]);
+        }
+    }
+
+    public function test_remove_user_from_night_shift_overnight_slot(): void
+    {
+        $nightShift = $this->createShift([
+            'date' => '2026-03-13',
+            'start_time' => '22:00:00',
+            'end_time' => '06:00:00',
+            'type' => 'night',
+        ]);
+        $assignee = User::factory()->create();
+
+        // Attach user to overnight slots
+        $nightShift->users()->attach($assignee->id, ['time_slot' => '22:00']);
+        $nightShift->users()->attach($assignee->id, ['time_slot' => '01:00']);
+        $nightShift->users()->attach($assignee->id, ['time_slot' => '03:00']);
+
+        // Remove only the 01:00 slot
+        $response = $this->actingAs($this->admin)->delete(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$nightShift->uuid}/remove-user",
+            ['user_id' => $assignee->id, 'time_slot' => '01:00']
+        );
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // 01:00 removed, 22:00 and 03:00 remain
+        $this->assertDatabaseMissing('shift_user', [
+            'shift_id' => $nightShift->id,
+            'user_id' => $assignee->id,
+            'time_slot' => '01:00',
+        ]);
+        $this->assertDatabaseHas('shift_user', [
+            'shift_id' => $nightShift->id,
+            'user_id' => $assignee->id,
+            'time_slot' => '22:00',
+        ]);
+        $this->assertDatabaseHas('shift_user', [
+            'shift_id' => $nightShift->id,
+            'user_id' => $assignee->id,
+            'time_slot' => '03:00',
+        ]);
+    }
+
+    public function test_show_page_returns_night_shift_users_by_slot_without_duplication(): void
+    {
+        $assignee = User::factory()->create(['first_name' => 'Colin', 'last_name' => 'Reilly']);
+
+        $nightShift = $this->createShift([
+            'date' => '2026-03-13',
+            'start_time' => '22:00:00',
+            'end_time' => '06:00:00',
+            'type' => 'night',
+        ]);
+
+        // Assign user to overnight slots (these belong visually to March 14)
+        $nightShift->users()->attach($assignee->id, ['time_slot' => '00:00']);
+        $nightShift->users()->attach($assignee->id, ['time_slot' => '01:00']);
+        $nightShift->users()->attach($assignee->id, ['time_slot' => '22:00']);
+
+        $response = $this->actingAs($this->member)->get(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$nightShift->uuid}"
+        );
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Departments/Schedule/Shifts/Show')
+            ->has('weekShifts', 1)
+            ->has('weekShifts.0', fn ($ws) => $ws
+                ->where('id', $nightShift->id)
+                ->where('date', '2026-03-13')
+                ->where('start_time', '22:00:00')
+                ->where('end_time', '06:00:00')
+                // Users should be grouped by their time_slot on the shift record
+                ->has('users_by_slot.22:00', 1)
+                ->has('users_by_slot.00:00', 1)
+                ->has('users_by_slot.01:00', 1)
+                ->where('users_by_slot.00:00.0.id', $assignee->id)
+                ->where('users_by_slot.00:00.0.name', 'Colin Reilly')
+                ->etc()
+            )
+        );
+    }
+
+    public function test_night_shift_does_not_duplicate_users_on_separate_day_shifts(): void
+    {
+        $assignee = User::factory()->create(['first_name' => 'Colin', 'last_name' => 'Reilly']);
+
+        // Night shift on March 13 (22:00-06:00)
+        $nightShift = $this->createShift([
+            'date' => '2026-03-13',
+            'start_time' => '22:00:00',
+            'end_time' => '06:00:00',
+            'type' => 'night',
+        ]);
+        $nightShift->users()->attach($assignee->id, ['time_slot' => '00:00']);
+        $nightShift->users()->attach($assignee->id, ['time_slot' => '01:00']);
+
+        // A separate day shift on March 14 should NOT have the night shift's users
+        $dayShift = $this->createShift([
+            'date' => '2026-03-14',
+            'start_time' => '08:00:00',
+            'end_time' => '16:00:00',
+            'type' => 'morning',
+        ]);
+
+        // The day shift has no users assigned
+        $this->assertEquals(0, $dayShift->users()->count());
+
+        // The night shift's users are only on the night shift
+        $this->assertEquals(2, $nightShift->users()->where('users.id', $assignee->id)->count());
+    }
+
+    public function test_add_user_to_night_shift_does_not_duplicate_across_shifts(): void
+    {
+        $assignee = User::factory()->create();
+
+        // Night shift on March 13
+        $nightShift = $this->createShift([
+            'date' => '2026-03-13',
+            'start_time' => '22:00:00',
+            'end_time' => '06:00:00',
+            'type' => 'night',
+        ]);
+
+        // Add user to the 00:00 slot of the night shift
+        $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$nightShift->uuid}/add-user",
+            ['user_id' => $assignee->id, 'time_slot' => '00:00']
+        );
+
+        // Only one pivot row should exist for this user+slot combination
+        $count = \DB::table('shift_user')
+            ->where('user_id', $assignee->id)
+            ->where('time_slot', '00:00')
+            ->count();
+
+        $this->assertEquals(1, $count);
+    }
 }
