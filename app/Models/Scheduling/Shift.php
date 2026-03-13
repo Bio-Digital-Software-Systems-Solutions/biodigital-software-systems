@@ -212,6 +212,7 @@ class Shift extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'shift_user')
+            ->withPivot('time_slot')
             ->withTimestamps();
     }
 

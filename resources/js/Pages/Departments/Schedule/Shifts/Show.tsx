@@ -55,7 +55,7 @@ interface WeekShift {
     start_time: string;
     end_time: string;
     type: string;
-    users: Array<{ id: number; name: string }>;
+    users_by_slot: Record<string, Array<{ id: number; name: string }>>;
 }
 
 interface Props {
@@ -71,6 +71,7 @@ interface Props {
     shiftTodos?: DepartmentTodo[];
     members?: DepartmentMember[];
     weekShifts?: WeekShift[];
+    otherWeekShifts?: WeekShift[];
     todoPriorities?: EnumOption<TodoPriority>[];
 }
 
@@ -95,7 +96,7 @@ const STATUS_INFO: Record<ShiftStatus, { color: string; label: string; bgColor: 
     no_show: { color: 'text-red-700', label: 'Absent', bgColor: 'bg-red-200' },
 };
 
-export default function ShiftShow({ department, schedule, shift, conflicts, shiftTodos = [], members = [], weekShifts = [], todoPriorities = [] }: Props) {
+export default function ShiftShow({ department, schedule, shift, conflicts, shiftTodos = [], members = [], weekShifts = [], otherWeekShifts = [], todoPriorities = [] }: Props) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showCancelDialog, setShowCancelDialog] = useState(false);
     const [todoModalOpen, setTodoModalOpen] = useState(false);
@@ -406,6 +407,7 @@ export default function ShiftShow({ department, schedule, shift, conflicts, shif
                                         shift={shift}
                                         members={members}
                                         weekShifts={weekShifts}
+                                        otherWeekShifts={otherWeekShifts}
                                         departmentUuid={department.uuid}
                                         scheduleUuid={schedule.uuid}
                                         isEditable={isEditable}
@@ -459,17 +461,20 @@ export default function ShiftShow({ department, schedule, shift, conflicts, shif
                                 <CardTitle className="text-base">
                                     <UserIcon className="h-4 w-4 inline mr-2" />
                                     Personnes assignées
-                                    {shift.users && shift.users.length > 0 && (
-                                        <Badge variant="secondary" className="ml-2">
-                                            {shift.users.length}
-                                        </Badge>
-                                    )}
+                                    {(() => {
+                                        const unique = shift.users?.filter((u, i, arr) => arr.findIndex((x) => x.id === u.id) === i) || [];
+                                        return unique.length > 0 ? (
+                                            <Badge variant="secondary" className="ml-2">
+                                                {unique.length}
+                                            </Badge>
+                                        ) : null;
+                                    })()}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 {shift.users && shift.users.length > 0 ? (
                                     <div className="space-y-3">
-                                        {shift.users.map((user) => (
+                                        {shift.users.filter((u, i, arr) => arr.findIndex((x) => x.id === u.id) === i).map((user) => (
                                             <div key={user.id} className="flex items-center gap-3">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarFallback className="bg-blue-100 text-blue-600">

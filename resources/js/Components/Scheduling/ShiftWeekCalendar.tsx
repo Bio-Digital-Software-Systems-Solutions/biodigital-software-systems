@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { format, startOfWeek, addDays, isSameDay, startOfDay, addWeeks, subWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { router } from '@inertiajs/react';
-import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { Switch } from '@/Components/ui/switch';
 import type { Shift, DepartmentMember } from '@/Types/scheduling';
 
 interface WeekShift {
@@ -12,13 +13,26 @@ interface WeekShift {
     start_time: string;
     end_time: string;
     type: string;
+    users_by_slot: Record<string, Array<{ id: number; name: string }>>;
+}
+
+interface OtherWeekShift extends WeekShift {
+    title?: string;
+}
+
+interface CellData {
+    bgColor: string;
+    shiftUuid: string;
+    timeSlot: string;
     users: Array<{ id: number; name: string }>;
+    isOther?: boolean;
 }
 
 interface Props {
     shift: Shift;
     members?: DepartmentMember[];
     weekShifts?: WeekShift[];
+    otherWeekShifts?: OtherWeekShift[];
     departmentUuid: string;
     scheduleUuid: string;
     isEditable?: boolean;
@@ -45,10 +59,15 @@ function cellKey(dateStr: string, hour: number): string {
     return `${dateStr}|${String(hour).padStart(2, '0')}`;
 }
 
+function hourToTimeSlot(hour: number): string {
+    return `${String(hour).padStart(2, '0')}:00`;
+}
+
 export default function ShiftWeekCalendar({
     shift,
     members = [],
     weekShifts = [],
+    otherWeekShifts = [],
     departmentUuid,
     scheduleUuid,
     isEditable = false,
@@ -58,6 +77,7 @@ export default function ShiftWeekCalendar({
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const [currentDate, setCurrentDate] = useState<Date>(shiftDate);
+    const [editMode, setEditMode] = useState(false);
     const [openCellKey, setOpenCellKey] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -69,31 +89,38 @@ export default function ShiftWeekCalendar({
     const startMinutes = timeToMinutes(shift.start_time);
     const slotTopPx = (startMinutes / 60) * HOUR_HEIGHT;
 
-    // Build cell → { bgColor, shiftUuid, users[] } map from weekShifts
-    const cellDataMap = new Map<string, { bgColor: string; shiftUuid: string; users: Array<{ id: number; name: string }> }>();
+    // Build cell → CellData map from weekShifts (per-slot users)
+    const cellDataMap = new Map<string, CellData>();
 
-    // Helper: expand a shift's time range into cell keys
-    const expandShiftCells = (ws: WeekShift, color: string): void => {
+    const expandShiftCells = (ws: WeekShift, color: string, isOther = false): void => {
         const sMin = timeToMinutes(ws.start_time);
         const eMin = timeToMinutes(ws.end_time);
         const sHour = Math.floor(sMin / 60);
         const eHour = Math.floor(eMin / 60);
         const overnight = eMin <= sMin;
-        const data = { bgColor: color, shiftUuid: ws.uuid, users: ws.users };
+
+        const setCell = (dateStr: string, h: number) => {
+            const ck = cellKey(dateStr, h);
+            // Don't overwrite main shift cells with "other" shift data
+            if (isOther && cellDataMap.has(ck)) return;
+            const timeSlot = hourToTimeSlot(h);
+            const slotUsers = ws.users_by_slot[timeSlot] || [];
+            cellDataMap.set(ck, {
+                bgColor: color,
+                shiftUuid: ws.uuid,
+                timeSlot,
+                users: slotUsers,
+                isOther,
+            });
+        };
 
         if (overnight) {
-            for (let h = sHour; h < 24; h++) {
-                cellDataMap.set(cellKey(ws.date, h), data);
-            }
+            for (let h = sHour; h < 24; h++) setCell(ws.date, h);
             const nextDay = addDays(new Date(ws.date), 1);
             const nextDayStr = format(nextDay, 'yyyy-MM-dd');
-            for (let h = 0; h < eHour; h++) {
-                cellDataMap.set(cellKey(nextDayStr, h), data);
-            }
+            for (let h = 0; h < eHour; h++) setCell(nextDayStr, h);
         } else {
-            for (let h = sHour; h < eHour; h++) {
-                cellDataMap.set(cellKey(ws.date, h), data);
-            }
+            for (let h = sHour; h < eHour; h++) setCell(ws.date, h);
         }
     };
 
@@ -101,7 +128,6 @@ export default function ShiftWeekCalendar({
     const allShifts: WeekShift[] = [];
     const mainShiftDate = format(shiftDate, 'yyyy-MM-dd');
 
-    // Find the main shift in weekShifts or build from props
     const mainWs = weekShifts.find(
         (ws) => ws.date === mainShiftDate && ws.start_time === shift.start_time && ws.end_time === shift.end_time,
     );
@@ -115,7 +141,7 @@ export default function ShiftWeekCalendar({
             start_time: shift.start_time,
             end_time: shift.end_time,
             type: shift.type,
-            users: [],
+            users_by_slot: {},
         });
     }
 
@@ -129,20 +155,48 @@ export default function ShiftWeekCalendar({
         expandShiftCells(ws, SHIFT_BG_COLORS[idx % SHIFT_BG_COLORS.length]);
     });
 
-    // User color map (from all shifts' users)
-    const userColorMap = new Map<number, string>();
-    let colorIdx = 0;
-    for (const ws of allShifts) {
-        for (const user of ws.users) {
-            if (!userColorMap.has(user.id)) {
-                userColorMap.set(user.id, USER_COLORS[colorIdx % USER_COLORS.length]);
-                colorIdx++;
+    // Expand other department shifts (grey, non-editable)
+    for (const ws of otherWeekShifts) {
+        expandShiftCells(ws, '#4b5563', true);
+    }
+
+    // Add cells for users assigned outside shift time ranges (users_by_slot may contain
+    // time slots that fall outside start_time–end_time). These get a transparent background.
+    for (const ws of [...allShifts, ...otherWeekShifts]) {
+        const isOther = otherWeekShifts.includes(ws as OtherWeekShift);
+        for (const [timeSlot, slotUsers] of Object.entries(ws.users_by_slot)) {
+            if (slotUsers.length === 0) continue;
+            const hour = parseInt(timeSlot.split(':')[0], 10);
+            const ck = cellKey(ws.date, hour);
+            if (!cellDataMap.has(ck)) {
+                cellDataMap.set(ck, {
+                    bgColor: 'transparent',
+                    shiftUuid: ws.uuid,
+                    timeSlot,
+                    users: slotUsers,
+                    isOther,
+                });
             }
         }
     }
 
-    // Get available members for a cell (exclude already-assigned users of that shift)
-    const getAvailableMembers = (cellData: { users: Array<{ id: number }> } | undefined): DepartmentMember[] => {
+    // User color map (from all slots' users, including other shifts)
+    const userColorMap = new Map<number, string>();
+    let colorIdx = 0;
+    const allShiftSources = [...allShifts, ...otherWeekShifts];
+    for (const ws of allShiftSources) {
+        for (const slotUsers of Object.values(ws.users_by_slot)) {
+            for (const user of slotUsers) {
+                if (!userColorMap.has(user.id)) {
+                    userColorMap.set(user.id, USER_COLORS[colorIdx % USER_COLORS.length]);
+                    colorIdx++;
+                }
+            }
+        }
+    }
+
+    // Get available members for a cell (exclude already-assigned users in this cell)
+    const getAvailableMembers = (cellData: CellData | undefined): DepartmentMember[] => {
         const assignedIds = new Set(cellData?.users.map((u) => u.id) || []);
         return members.filter((m) => m.id !== undefined && !assignedIds.has(m.id!));
     };
@@ -154,14 +208,14 @@ export default function ShiftWeekCalendar({
         }
     }, []);
 
-    // Add user to the existing shift via pivot table
-    const assignUser = useCallback((userId: number, shiftUuid: string) => {
+    // Add user to a specific time slot
+    const assignUser = useCallback((userId: number, shiftUuid: string, timeSlot: string) => {
         if (isSubmitting) return;
         setIsSubmitting(true);
 
         router.post(
             `/departments/${departmentUuid}/schedule/${scheduleUuid}/shifts/${shiftUuid}/add-user`,
-            { user_id: userId },
+            { user_id: userId, time_slot: timeSlot },
             {
                 preserveScroll: true,
                 onFinish: () => {
@@ -172,9 +226,26 @@ export default function ShiftWeekCalendar({
         );
     }, [isSubmitting, departmentUuid, scheduleUuid]);
 
-    // Unique users for legend
-    const uniqueUsers = allShifts
-        .flatMap((ws) => ws.users)
+    // Remove user from a specific time slot
+    const removeUser = useCallback((userId: number, shiftUuid: string, timeSlot: string) => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+
+        router.delete(
+            `/departments/${departmentUuid}/schedule/${scheduleUuid}/shifts/${shiftUuid}/remove-user`,
+            {
+                data: { user_id: userId, time_slot: timeSlot },
+                preserveScroll: true,
+                onFinish: () => {
+                    setIsSubmitting(false);
+                },
+            },
+        );
+    }, [isSubmitting, departmentUuid, scheduleUuid]);
+
+    // Unique users for legend (including other shifts)
+    const uniqueUsers = allShiftSources
+        .flatMap((ws) => Object.values(ws.users_by_slot).flat())
         .reduce<Array<{ id: number; name: string }>>((acc, u) => {
             if (!acc.find((x) => x.id === u.id)) acc.push(u);
             return acc;
@@ -193,23 +264,30 @@ export default function ShiftWeekCalendar({
                             <ChevronRightIcon className="h-5 w-5" />
                         </button>
                     </div>
-                    <h2 className="text-sm font-normal text-gray-900 dark:text-white capitalize">
-                        {format(currentDate, 'MMMM yyyy', { locale: fr })}
-                    </h2>
+                    <div className="flex items-center gap-4">
+                        {isEditable && (
+                            <div className="flex items-center gap-2">
+                                <PencilIcon className={`h-4 w-4 ${editMode ? 'text-icc-blue' : 'text-gray-400'}`} />
+                                <Switch
+                                    checked={editMode}
+                                    onCheckedChange={(checked) => {
+                                        setEditMode(checked);
+                                        if (!checked) setOpenCellKey(null);
+                                    }}
+                                />
+                                <span className={`text-xs font-medium ${editMode ? 'text-icc-blue' : 'text-gray-400'}`}>
+                                    Édition
+                                </span>
+                            </div>
+                        )}
+                        <h2 className="text-sm font-normal text-gray-900 dark:text-white capitalize">
+                            {format(currentDate, 'MMMM yyyy', { locale: fr })}
+                        </h2>
+                    </div>
                 </div>
             </div>
 
-            {/* Legend */}
-            {uniqueUsers.length > 0 && (
-                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
-                    {uniqueUsers.map((user) => (
-                        <div key={user.id} className="flex items-center gap-1.5">
-                            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: userColorMap.get(user.id) }} />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">{user.name}</span>
-                        </div>
-                    ))}
-                </div>
-            )}
+            {/* Legend removed — user names with colors are shown directly in cells */}
 
             {/* Day headers (fixed) */}
             <div className="flex border-b border-gray-200 dark:border-gray-700">
@@ -260,7 +338,12 @@ export default function ShiftWeekCalendar({
                                     const cellUsers = cellData?.users || [];
                                     const isOpen = openCellKey === ck;
                                     const isInShiftRange = !!cellData;
-                                    const isCellEditable = isEditable && isInShiftRange;
+                                    const isOtherShift = cellData?.isOther === true;
+                                    // In edit mode, all cells are editable (including other shifts)
+                                    const isCellEditable = editMode;
+                                    // For cells without shift data, use the main shift as fallback
+                                    const effectiveShiftUuid = cellData?.shiftUuid || shift.uuid;
+                                    const effectiveTimeSlot = cellData?.timeSlot || hourToTimeSlot(hour);
                                     const available = isCellEditable ? getAvailableMembers(cellData) : [];
 
                                     return (
@@ -269,14 +352,18 @@ export default function ShiftWeekCalendar({
                                             className={`border-b border-gray-100 dark:border-gray-700/50 relative ${isCellEditable ? 'cursor-pointer hover:bg-icc-blue/5 dark:hover:bg-icc-blue/10 transition-colors' : ''}`}
                                             style={{
                                                 height: `${HOUR_HEIGHT}px`,
-                                                ...(cellData ? { backgroundColor: `${cellData.bgColor}18` } : {}),
+                                                ...(cellData
+                                                    ? { backgroundColor: isOtherShift ? '#9ca3af0d' : `${cellData.bgColor}18` }
+                                                    : {}),
                                             }}
-                                            onDoubleClick={(e) => {
-                                                e.preventDefault();
-                                                if (isCellEditable) setOpenCellKey(isOpen ? null : ck);
+                                            onClick={(e) => {
+                                                if (isCellEditable) {
+                                                    e.preventDefault();
+                                                    setOpenCellKey(isOpen ? null : ck);
+                                                }
                                             }}
                                         >
-                                            {/* Assigned users */}
+                                            {/* Assigned users for this specific slot */}
                                             {cellUsers.length > 0 && (
                                                 <div className="flex flex-wrap gap-0.5 p-1">
                                                     {cellUsers.map((user) => {
@@ -284,12 +371,31 @@ export default function ShiftWeekCalendar({
                                                         return (
                                                             <div
                                                                 key={user.id}
-                                                                className="flex items-center gap-1 rounded-full px-1.5 py-0.5 max-w-full"
+                                                                className={`flex items-center gap-1 rounded-full px-1.5 py-0.5 max-w-full ${isOtherShift ? 'opacity-75' : ''}`}
                                                                 style={{ backgroundColor: `${color}18`, border: `1px solid ${color}40` }}
                                                                 title={user.name}
                                                             >
                                                                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                                                                 <span className="text-[10px] font-medium truncate leading-none" style={{ color }}>{user.name}</span>
+                                                                {isCellEditable && (
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={isSubmitting}
+                                                                        className="ml-0.5 p-0 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 disabled:opacity-50"
+                                                                        title={`Retirer ${user.name}`}
+                                                                        onMouseDown={(e) => {
+                                                                            e.stopPropagation();
+                                                                            e.preventDefault();
+                                                                        }}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            e.preventDefault();
+                                                                            removeUser(user.id, effectiveShiftUuid, effectiveTimeSlot);
+                                                                        }}
+                                                                    >
+                                                                        <XMarkIcon className="h-3 w-3 text-gray-400 hover:text-red-500" />
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         );
                                                     })}
@@ -297,9 +403,10 @@ export default function ShiftWeekCalendar({
                                             )}
 
                                             {/* Popover */}
-                                            {isOpen && cellData && (
+                                            {isOpen && isCellEditable && (
                                                 <div
                                                     className="absolute left-0 top-0 z-30 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700"
+                                                    onClick={(e) => e.stopPropagation()}
                                                     onMouseDown={(e) => e.stopPropagation()}
                                                 >
                                                     <div className="flex items-center justify-between px-2.5 pt-2 pb-1">
@@ -330,7 +437,7 @@ export default function ShiftWeekCalendar({
                                                                             e.stopPropagation();
                                                                             e.preventDefault();
                                                                             if (m.id !== undefined) {
-                                                                                assignUser(m.id, cellData.shiftUuid);
+                                                                                assignUser(m.id, effectiveShiftUuid, effectiveTimeSlot);
                                                                             }
                                                                         }}
                                                                     >

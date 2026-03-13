@@ -302,10 +302,36 @@ class ShiftController extends Controller
                 'start_time' => $s->start_time,
                 'end_time' => $s->end_time,
                 'type' => $s->type->value,
-                'users' => $s->users->map(fn (User $u): array => [
-                    'id' => $u->id,
-                    'name' => trim("{$u->first_name} {$u->last_name}") ?: 'N/A',
-                ])->values()->all(),
+                'users_by_slot' => $s->users->groupBy(fn (User $u): string => $u->pivot->time_slot)
+                    ->map(fn ($group) => $group->map(fn (User $u): array => [
+                        'id' => $u->id,
+                        'name' => trim("{$u->first_name} {$u->last_name}") ?: 'N/A',
+                    ])->values()->all())
+                    ->all(),
+            ]);
+
+        // Load OTHER department shifts for the same week (not in relatedShiftIds)
+        $otherWeekShifts = Shift::where('department_id', $department->id)
+            ->whereNotIn('id', $relatedShiftIds)
+            ->whereBetween('date', [$weekStart, $weekEnd])
+            ->with(['users:users.id,users.first_name,users.last_name'])
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->get()
+            ->map(fn (Shift $s): array => [
+                'id' => $s->id,
+                'uuid' => $s->uuid,
+                'date' => $s->date->format('Y-m-d'),
+                'start_time' => $s->start_time,
+                'end_time' => $s->end_time,
+                'type' => $s->type->value,
+                'title' => $s->title,
+                'users_by_slot' => $s->users->groupBy(fn (User $u): string => $u->pivot->time_slot)
+                    ->map(fn ($group) => $group->map(fn (User $u): array => [
+                        'id' => $u->id,
+                        'name' => trim("{$u->first_name} {$u->last_name}") ?: 'N/A',
+                    ])->values()->all())
+                    ->all(),
             ]);
 
         return Inertia::render('Departments/Schedule/Shifts/Show', [
@@ -316,6 +342,7 @@ class ShiftController extends Controller
             'shiftTodos' => $shiftTodos,
             'members' => $members,
             'weekShifts' => $weekShifts,
+            'otherWeekShifts' => $otherWeekShifts,
             'todoPriorities' => collect(TodoPriority::cases())->map(fn ($p): array => [
                 'value' => $p->value,
                 'label' => $p->label(),
@@ -454,9 +481,14 @@ class ShiftController extends Controller
 
             $siblings = $query->get();
 
+            $syncData = [];
+            foreach ($userIds as $uid) {
+                $syncData[$uid] = ['time_slot' => '00:00'];
+            }
+
             foreach ($siblings as $sibling) {
                 $sibling->update($updateData);
-                $sibling->users()->sync($userIds);
+                $sibling->users()->sync($syncData);
             }
         } else {
             // Update date only for single shift updates
@@ -464,7 +496,12 @@ class ShiftController extends Controller
                 $updateData['date'] = $validated['date'];
             }
             $shift->update($updateData);
-            $shift->users()->sync($userIds);
+
+            $syncData = [];
+            foreach ($userIds as $uid) {
+                $syncData[$uid] = ['time_slot' => '00:00'];
+            }
+            $shift->users()->sync($syncData);
         }
 
         return redirect()->route('departments.schedule.shifts.show', [
@@ -580,15 +617,26 @@ class ShiftController extends Controller
 
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
+            'time_slot' => 'required|string|size:5',
         ]);
 
-        $shift->users()->syncWithoutDetaching([$validated['user_id']]);
+        // Prevent duplicate: same user + same time_slot
+        $exists = $shift->users()
+            ->wherePivot('user_id', $validated['user_id'])
+            ->wherePivot('time_slot', $validated['time_slot'])
+            ->exists();
 
-        return back()->with('success', 'Utilisateur ajouté au shift.');
+        if (! $exists) {
+            $shift->users()->attach($validated['user_id'], [
+                'time_slot' => $validated['time_slot'],
+            ]);
+        }
+
+        return back()->with('success', 'Utilisateur ajouté au créneau.');
     }
 
     /**
-     * Remove a user from a shift's pivot table
+     * Remove a user from a specific time slot in a shift
      */
     public function removeUser(Request $request, Department $department, WeeklySchedule $schedule, Shift $shift): RedirectResponse
     {
@@ -596,11 +644,16 @@ class ShiftController extends Controller
 
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
+            'time_slot' => 'required|string|size:5',
         ]);
 
-        $shift->users()->detach($validated['user_id']);
+        \DB::table('shift_user')
+            ->where('shift_id', $shift->id)
+            ->where('user_id', $validated['user_id'])
+            ->where('time_slot', $validated['time_slot'])
+            ->delete();
 
-        return back()->with('success', 'Utilisateur retiré du shift.');
+        return back()->with('success', 'Utilisateur retiré du créneau.');
     }
 
     /**
@@ -748,7 +801,11 @@ class ShiftController extends Controller
             return;
         }
 
-        $shift->users()->sync($userIds);
+        $syncData = [];
+        foreach ($userIds as $userId) {
+            $syncData[$userId] = ['time_slot' => '00:00'];
+        }
+        $shift->users()->sync($syncData);
 
         $firstUser = User::find($userIds[0]);
         if ($firstUser) {

@@ -567,7 +567,7 @@ class ShiftControllerTest extends TestCase
             'start_time' => '08:00:00',
             'end_time' => '16:00:00',
         ]);
-        $mainShift->users()->attach($assignee->id);
+        $mainShift->users()->attach($assignee->id, ['time_slot' => '10:00']);
 
         $response = $this->actingAs($this->member)->get(
             "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$mainShift->uuid}"
@@ -582,11 +582,9 @@ class ShiftControllerTest extends TestCase
                 ->where('date', '2026-03-12')
                 ->where('start_time', '08:00:00')
                 ->where('end_time', '16:00:00')
-                ->has('users', 1)
-                ->has('users.0', fn ($u) => $u
-                    ->where('id', $assignee->id)
-                    ->where('name', 'Jean Dupont')
-                )
+                ->has('users_by_slot.10:00', 1)
+                ->where('users_by_slot.10:00.0.id', $assignee->id)
+                ->where('users_by_slot.10:00.0.name', 'Jean Dupont')
                 ->etc()
             )
         );
@@ -633,7 +631,7 @@ class ShiftControllerTest extends TestCase
 
         $response = $this->actingAs($this->admin)->post(
             "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shiftToAssign->uuid}/add-user",
-            ['user_id' => $assignee->id]
+            ['user_id' => $assignee->id, 'time_slot' => '14:00']
         );
 
         $response->assertRedirect();
@@ -641,6 +639,7 @@ class ShiftControllerTest extends TestCase
         $this->assertDatabaseHas('shift_user', [
             'shift_id' => $shiftToAssign->id,
             'user_id' => $assignee->id,
+            'time_slot' => '14:00',
         ]);
     }
 
@@ -648,26 +647,46 @@ class ShiftControllerTest extends TestCase
     {
         $shiftToAssign = $this->createShift();
         $assignee = User::factory()->create();
-        $shiftToAssign->users()->attach($assignee->id);
+        $shiftToAssign->users()->attach($assignee->id, ['time_slot' => '08:00']);
 
         $response = $this->actingAs($this->admin)->post(
             "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shiftToAssign->uuid}/add-user",
-            ['user_id' => $assignee->id]
+            ['user_id' => $assignee->id, 'time_slot' => '08:00']
         );
 
         $response->assertRedirect();
-        $this->assertEquals(1, $shiftToAssign->users()->count());
+        $this->assertEquals(1, $shiftToAssign->users()->wherePivot('time_slot', '08:00')->count());
+    }
+
+    public function test_add_user_to_different_slots(): void
+    {
+        $shiftToAssign = $this->createShift([
+            'start_time' => '08:00:00',
+            'end_time' => '16:00:00',
+        ]);
+        $assignee = User::factory()->create();
+
+        $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shiftToAssign->uuid}/add-user",
+            ['user_id' => $assignee->id, 'time_slot' => '08:00']
+        );
+        $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shiftToAssign->uuid}/add-user",
+            ['user_id' => $assignee->id, 'time_slot' => '10:00']
+        );
+
+        $this->assertEquals(2, $shiftToAssign->users()->where('users.id', $assignee->id)->count());
     }
 
     public function test_remove_user_from_shift(): void
     {
         $shiftToModify = $this->createShift();
         $assignee = User::factory()->create();
-        $shiftToModify->users()->attach($assignee->id);
+        $shiftToModify->users()->attach($assignee->id, ['time_slot' => '08:00']);
 
         $response = $this->actingAs($this->admin)->delete(
             "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shiftToModify->uuid}/remove-user",
-            ['user_id' => $assignee->id]
+            ['user_id' => $assignee->id, 'time_slot' => '08:00']
         );
 
         $response->assertRedirect();
@@ -675,6 +694,31 @@ class ShiftControllerTest extends TestCase
         $this->assertDatabaseMissing('shift_user', [
             'shift_id' => $shiftToModify->id,
             'user_id' => $assignee->id,
+            'time_slot' => '08:00',
+        ]);
+    }
+
+    public function test_remove_user_from_one_slot_keeps_other_slots(): void
+    {
+        $shiftToModify = $this->createShift();
+        $assignee = User::factory()->create();
+        $shiftToModify->users()->attach($assignee->id, ['time_slot' => '08:00']);
+        $shiftToModify->users()->attach($assignee->id, ['time_slot' => '09:00']);
+
+        $this->actingAs($this->admin)->delete(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shiftToModify->uuid}/remove-user",
+            ['user_id' => $assignee->id, 'time_slot' => '08:00']
+        );
+
+        $this->assertDatabaseMissing('shift_user', [
+            'shift_id' => $shiftToModify->id,
+            'user_id' => $assignee->id,
+            'time_slot' => '08:00',
+        ]);
+        $this->assertDatabaseHas('shift_user', [
+            'shift_id' => $shiftToModify->id,
+            'user_id' => $assignee->id,
+            'time_slot' => '09:00',
         ]);
     }
 
@@ -685,7 +729,7 @@ class ShiftControllerTest extends TestCase
 
         $response = $this->actingAs($this->member)->post(
             "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shiftToAssign->uuid}/add-user",
-            ['user_id' => $assignee->id]
+            ['user_id' => $assignee->id, 'time_slot' => '08:00']
         );
 
         $this->assertTrue($response->isForbidden() || $response->isRedirect());
