@@ -394,7 +394,7 @@ export default function ShiftShow({ department, schedule, shift, conflicts, shif
                         )}
 
                         {/* Week Calendar Accordion */}
-                        <Accordion>
+                        <Accordion defaultValue="week-calendar">
                             <AccordionItem value="week-calendar">
                                 <AccordionTrigger>
                                     <div className="flex items-center gap-2 text-sm font-medium">

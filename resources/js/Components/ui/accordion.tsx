@@ -3,6 +3,7 @@ import { PlusIcon, MinusIcon } from '@heroicons/react/24/outline'
 
 interface AccordionProps {
   children: React.ReactNode
+  defaultValue?: string | null
 }
 
 interface AccordionItemProps {
@@ -26,8 +27,8 @@ const AccordionContext = React.createContext<{
   setOpenItem: (value: string | null) => void
 } | null>(null)
 
-const Accordion = ({ children }: AccordionProps) => {
-  const [openItem, setOpenItem] = React.useState<string | null>(null)
+const Accordion = ({ children, defaultValue = null }: AccordionProps) => {
+  const [openItem, setOpenItem] = React.useState<string | null>(defaultValue)
 
   return (
     <AccordionContext.Provider value={{ openItem, setOpenItem }}>

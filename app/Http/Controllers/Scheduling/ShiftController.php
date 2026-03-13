@@ -620,17 +620,39 @@ class ShiftController extends Controller
             'time_slot' => 'required|string|size:5',
         ]);
 
-        // Prevent duplicate: same user + same time_slot
-        $exists = $shift->users()
-            ->wherePivot('user_id', $validated['user_id'])
-            ->wherePivot('time_slot', $validated['time_slot'])
+        $userId = $validated['user_id'];
+        $timeSlot = $validated['time_slot'];
+
+        // Prevent duplicate: same user + same time_slot on this shift
+        $existsOnShift = $shift->users()
+            ->wherePivot('user_id', $userId)
+            ->wherePivot('time_slot', $timeSlot)
             ->exists();
 
-        if (! $exists) {
-            $shift->users()->attach($validated['user_id'], [
-                'time_slot' => $validated['time_slot'],
-            ]);
+        if ($existsOnShift) {
+            return back()->with('error', 'Cet utilisateur est déjà assigné à ce créneau.');
         }
+
+        // Check if user is already assigned to another shift with identical time on the same day
+        $duplicateShift = Shift::where('department_id', $shift->department_id)
+            ->where('id', '!=', $shift->id)
+            ->where('date', $shift->date)
+            ->where('start_time', $shift->start_time)
+            ->where('end_time', $shift->end_time)
+            ->whereNotIn('status', [ShiftStatus::CANCELLED])
+            ->whereHas('users', fn ($q) => $q->where('users.id', $userId))
+            ->first();
+
+        if ($duplicateShift) {
+            $user = User::find($userId);
+            $name = $user ? trim("{$user->first_name} {$user->last_name}") : 'Cet utilisateur';
+
+            return back()->with('error', "{$name} est déjà attribué(e) à un shift identique ({$shift->start_time} - {$shift->end_time}) le même jour.");
+        }
+
+        $shift->users()->attach($userId, [
+            'time_slot' => $timeSlot,
+        ]);
 
         return back()->with('success', 'Utilisateur ajouté au créneau.');
     }

@@ -962,4 +962,145 @@ class ShiftControllerTest extends TestCase
 
         $this->assertEquals(1, $count);
     }
+
+    // ==========================================
+    // DUPLICATE SHIFT DETECTION — ERROR TOAST
+    // ==========================================
+
+    public function test_add_user_already_on_identical_shift_same_day_returns_error(): void
+    {
+        $assignee = User::factory()->create(['first_name' => 'Jean', 'last_name' => 'Dupont']);
+
+        // Two identical shifts on the same day (same times)
+        $shiftA = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '06:00:00',
+            'end_time' => '14:00:00',
+            'type' => 'morning',
+            'status' => ShiftStatus::PUBLISHED,
+        ]);
+        $shiftB = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '06:00:00',
+            'end_time' => '14:00:00',
+            'type' => 'morning',
+            'status' => ShiftStatus::PUBLISHED,
+        ]);
+
+        // Assign user to shift A
+        $shiftA->users()->attach($assignee->id, ['time_slot' => '08:00']);
+
+        // Try to assign same user to shift B (identical shift, same day)
+        $response = $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shiftB->uuid}/add-user",
+            ['user_id' => $assignee->id, 'time_slot' => '08:00']
+        );
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertStringContainsString('Jean Dupont', session('error'));
+        $this->assertStringContainsString('shift identique', session('error'));
+
+        // User should NOT be on shift B
+        $this->assertDatabaseMissing('shift_user', [
+            'shift_id' => $shiftB->id,
+            'user_id' => $assignee->id,
+        ]);
+    }
+
+    public function test_add_user_to_different_shift_same_day_is_allowed(): void
+    {
+        $assignee = User::factory()->create();
+
+        // Two different shifts on the same day (different times)
+        $morningShift = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '06:00:00',
+            'end_time' => '14:00:00',
+            'type' => 'morning',
+        ]);
+        $afternoonShift = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '14:00:00',
+            'end_time' => '22:00:00',
+            'type' => 'afternoon',
+        ]);
+
+        // Assign user to morning shift
+        $morningShift->users()->attach($assignee->id, ['time_slot' => '08:00']);
+
+        // Assign same user to afternoon shift — should succeed (different times)
+        $response = $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$afternoonShift->uuid}/add-user",
+            ['user_id' => $assignee->id, 'time_slot' => '14:00']
+        );
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('shift_user', [
+            'shift_id' => $afternoonShift->id,
+            'user_id' => $assignee->id,
+            'time_slot' => '14:00',
+        ]);
+    }
+
+    public function test_add_user_already_on_same_slot_returns_error(): void
+    {
+        $assignee = User::factory()->create();
+
+        $shift = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '08:00:00',
+            'end_time' => '16:00:00',
+        ]);
+
+        // Assign user to a slot
+        $shift->users()->attach($assignee->id, ['time_slot' => '10:00']);
+
+        // Try to assign same user to same slot on same shift
+        $response = $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$shift->uuid}/add-user",
+            ['user_id' => $assignee->id, 'time_slot' => '10:00']
+        );
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+
+        // Still only one entry
+        $this->assertEquals(1, $shift->users()->wherePivot('time_slot', '10:00')->count());
+    }
+
+    public function test_cancelled_shift_does_not_block_duplicate_detection(): void
+    {
+        $assignee = User::factory()->create();
+
+        // A cancelled shift
+        $cancelledShift = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '06:00:00',
+            'end_time' => '14:00:00',
+            'status' => ShiftStatus::CANCELLED,
+        ]);
+        $cancelledShift->users()->attach($assignee->id, ['time_slot' => '08:00']);
+
+        // An identical active shift — should NOT be blocked by the cancelled one
+        $activeShift = $this->createShift([
+            'date' => '2026-03-12',
+            'start_time' => '06:00:00',
+            'end_time' => '14:00:00',
+            'status' => ShiftStatus::PUBLISHED,
+        ]);
+
+        $response = $this->actingAs($this->admin)->post(
+            "/departments/{$this->department->uuid}/schedule/{$this->schedule->uuid}/shifts/{$activeShift->uuid}/add-user",
+            ['user_id' => $assignee->id, 'time_slot' => '08:00']
+        );
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('shift_user', [
+            'shift_id' => $activeShift->id,
+            'user_id' => $assignee->id,
+        ]);
+    }
 }
