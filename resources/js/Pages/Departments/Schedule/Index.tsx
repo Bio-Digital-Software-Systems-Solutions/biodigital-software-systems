@@ -46,6 +46,8 @@ import {
     Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 import WeeklyCalendar from '@/Components/Scheduling/WeeklyCalendar';
+import ScheduleWeekCalendar from '@/Components/Scheduling/ScheduleWeekCalendar';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/Components/ui/accordion';
 import ShiftCard from '@/Components/Scheduling/ShiftCard';
 import TodoCreateModal from '@/Components/Scheduling/TodoCreateModal';
 import TodoEditModal from '@/Components/Scheduling/TodoEditModal';
@@ -594,6 +596,27 @@ export default function ScheduleIndex({
                     scheduleUuid={schedule.uuid}
                     isEditable={schedule.status === 'draft'}
                 />
+
+                {/* Week Calendar View */}
+                <Accordion>
+                    <AccordionItem value="week-calendar">
+                        <AccordionTrigger>
+                            <div className="flex items-center gap-2">
+                                <CalendarDaysIcon className="h-5 w-5 text-gray-500" />
+                                <span>Vue calendrier de la semaine</span>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                            <ScheduleWeekCalendar
+                                shifts={schedule.shifts || []}
+                                members={members}
+                                weekStart={currentWeek}
+                                departmentUuid={department.uuid}
+                                scheduleUuid={schedule.uuid}
+                            />
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
 
                 {/* Quick Actions */}
                 <Card>

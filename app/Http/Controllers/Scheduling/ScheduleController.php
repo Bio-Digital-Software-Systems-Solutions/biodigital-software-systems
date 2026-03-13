@@ -73,6 +73,7 @@ class ScheduleController extends Controller
             ->orderBy('first_name')
             ->get()
             ->map(fn ($user): array => [
+                'id' => $user->id,
                 'uuid' => $user->uuid,
                 'name' => $user->full_name ?? $user->name,
                 'email' => $user->email,

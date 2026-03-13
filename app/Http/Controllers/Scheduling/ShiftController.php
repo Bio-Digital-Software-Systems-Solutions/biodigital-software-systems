@@ -17,6 +17,9 @@ use App\Models\Scheduling\ShiftSeries;
 use App\Models\Scheduling\WeeklySchedule;
 use App\Models\Star;
 use App\Models\User;
+use App\Notifications\Scheduling\ShiftAssigned;
+use App\Notifications\Scheduling\ShiftUnassigned;
+use App\Notifications\Scheduling\ShiftUpdated;
 use App\Services\Scheduling\ConflictDetectionService;
 use App\Services\Scheduling\SchedulingService;
 use Carbon\Carbon;
@@ -472,6 +475,8 @@ class ShiftController extends Controller
         $userIds = $validated['user_ids'] ?? [];
         $updateData = collect($validated)->except(['update_scope', 'user_ids', 'date'])->toArray();
 
+        $trackedFields = ['start_time', 'end_time', 'date', 'title', 'description', 'location', 'status', 'type', 'notes'];
+
         if ($updateScope !== 'single' && $shift->series_id) {
             $query = Shift::where('series_id', $shift->series_id);
 
@@ -479,7 +484,7 @@ class ShiftController extends Controller
                 $query->where('date', '>=', $shift->date);
             }
 
-            $siblings = $query->get();
+            $siblings = $query->with('users')->get();
 
             $syncData = [];
             foreach ($userIds as $uid) {
@@ -487,14 +492,23 @@ class ShiftController extends Controller
             }
 
             foreach ($siblings as $sibling) {
+                $changes = $this->detectChanges($sibling, $updateData, $trackedFields);
+                $previousUserIds = $sibling->users->pluck('id')->toArray();
+
                 $sibling->update($updateData);
                 $sibling->users()->sync($syncData);
+
+                $this->notifyShiftChanges($sibling, $changes, $previousUserIds, $userIds, $request->user());
             }
         } else {
             // Update date only for single shift updates
             if (isset($validated['date'])) {
                 $updateData['date'] = $validated['date'];
             }
+
+            $changes = $this->detectChanges($shift, $updateData, $trackedFields);
+            $previousUserIds = $shift->users()->pluck('users.id')->toArray();
+
             $shift->update($updateData);
 
             $syncData = [];
@@ -502,6 +516,8 @@ class ShiftController extends Controller
                 $syncData[$uid] = ['time_slot' => '00:00'];
             }
             $shift->users()->sync($syncData);
+
+            $this->notifyShiftChanges($shift, $changes, $previousUserIds, $userIds, $request->user());
         }
 
         return redirect()->route('departments.schedule.shifts.show', [
@@ -654,6 +670,12 @@ class ShiftController extends Controller
             'time_slot' => $timeSlot,
         ]);
 
+        $assignedUser = User::find($userId);
+        if ($assignedUser) {
+            $shift->loadMissing(['department', 'weeklySchedule']);
+            $assignedUser->notify(new ShiftAssigned($shift, $timeSlot, $request->user()));
+        }
+
         return back()->with('success', 'Utilisateur ajouté au créneau.');
     }
 
@@ -669,11 +691,18 @@ class ShiftController extends Controller
             'time_slot' => 'required|string|size:5',
         ]);
 
+        $removedUser = User::find($validated['user_id']);
+
         \DB::table('shift_user')
             ->where('shift_id', $shift->id)
             ->where('user_id', $validated['user_id'])
             ->where('time_slot', $validated['time_slot'])
             ->delete();
+
+        if ($removedUser) {
+            $shift->loadMissing(['department', 'weeklySchedule']);
+            $removedUser->notify(new ShiftUnassigned($shift, $validated['time_slot'], $request->user()));
+        }
 
         return back()->with('success', 'Utilisateur retiré du créneau.');
     }
@@ -892,5 +921,84 @@ class ShiftController extends Controller
             ->delete();
 
         return back()->with('success', "{$deleted} shift(s) supprimé(s).");
+    }
+
+    /**
+     * Detect meaningful changes between current model and update data.
+     *
+     * @param  array<string, mixed>  $updateData
+     * @param  array<int, string>  $trackedFields
+     * @return array<string, array{old: mixed, new: mixed}>
+     */
+    private function detectChanges(Shift $shift, array $updateData, array $trackedFields): array
+    {
+        $changes = [];
+
+        foreach ($trackedFields as $field) {
+            if (! array_key_exists($field, $updateData)) {
+                continue;
+            }
+
+            $oldValue = $shift->getAttribute($field);
+            $newValue = $updateData[$field];
+
+            // Normalize enum values for comparison
+            if ($oldValue instanceof \BackedEnum) {
+                $oldValue = $oldValue->value;
+            }
+
+            if ((string) $oldValue !== (string) $newValue) {
+                $changes[$field] = [
+                    'old' => (string) $oldValue,
+                    'new' => (string) $newValue,
+                ];
+            }
+        }
+
+        return $changes;
+    }
+
+    /**
+     * Notify users about shift changes (updates, new assignments, removals).
+     *
+     * @param  array<string, array{old: mixed, new: mixed}>  $changes
+     * @param  array<int, int>  $previousUserIds
+     * @param  array<int, int>  $newUserIds
+     */
+    private function notifyShiftChanges(Shift $shift, array $changes, array $previousUserIds, array $newUserIds, ?User $actor): void
+    {
+        $shift->loadMissing(['department', 'weeklySchedule']);
+
+        $newUserIds = array_map('intval', $newUserIds);
+        $previousUserIds = array_map('intval', $previousUserIds);
+
+        // Users who were added
+        $addedIds = array_diff($newUserIds, $previousUserIds);
+        if (! empty($addedIds)) {
+            $addedUsers = User::whereIn('id', $addedIds)->get();
+            foreach ($addedUsers as $user) {
+                $user->notify(new ShiftAssigned($shift, '00:00', $actor));
+            }
+        }
+
+        // Users who were removed
+        $removedIds = array_diff($previousUserIds, $newUserIds);
+        if (! empty($removedIds)) {
+            $removedUsers = User::whereIn('id', $removedIds)->get();
+            foreach ($removedUsers as $user) {
+                $user->notify(new ShiftUnassigned($shift, '00:00', $actor));
+            }
+        }
+
+        // Users who remain assigned — notify of field changes
+        if (! empty($changes)) {
+            $remainingIds = array_intersect($previousUserIds, $newUserIds);
+            if (! empty($remainingIds)) {
+                $remainingUsers = User::whereIn('id', $remainingIds)->get();
+                foreach ($remainingUsers as $user) {
+                    $user->notify(new ShiftUpdated($shift, $changes, $actor));
+                }
+            }
+        }
     }
 }
