@@ -180,6 +180,14 @@ export default function ShiftWeekCalendar({
         }
     }
 
+    // Map date → shift UUID so clicking outside shift hours uses the correct day's shift
+    const dateToShiftUuid = new Map<string, string>();
+    for (const ws of allShifts) {
+        if (!dateToShiftUuid.has(ws.date)) {
+            dateToShiftUuid.set(ws.date, ws.uuid);
+        }
+    }
+
     // User color map (from all slots' users, including other shifts)
     const userColorMap = new Map<number, string>();
     let colorIdx = 0;
@@ -339,10 +347,11 @@ export default function ShiftWeekCalendar({
                                     const isOpen = openCellKey === ck;
                                     const isInShiftRange = !!cellData;
                                     const isOtherShift = cellData?.isOther === true;
-                                    // In edit mode, all cells are editable (including other shifts)
-                                    const isCellEditable = editMode;
-                                    // For cells without shift data, use the main shift as fallback
-                                    const effectiveShiftUuid = cellData?.shiftUuid || shift.uuid;
+                                    // In edit mode, cells are editable if a shift exists for that day
+                                    const dayShiftUuid = dateToShiftUuid.get(dateStr);
+                                    const isCellEditable = editMode && !!(cellData?.shiftUuid || dayShiftUuid);
+                                    // Use the cell's shift, or fall back to the correct shift for this day
+                                    const effectiveShiftUuid = cellData?.shiftUuid || dayShiftUuid || shift.uuid;
                                     const effectiveTimeSlot = cellData?.timeSlot || hourToTimeSlot(hour);
                                     const available = isCellEditable ? getAvailableMembers(cellData) : [];
 
