@@ -8,7 +8,19 @@ import { Checkbox } from '@/Components/ui/checkbox';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Separator } from '@/Components/ui/separator';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/Components/ui/alert-dialog';
 import QuizTimer from '@/Components/Quiz/QuizTimer';
+import QuizTimerBadge from '@/Components/Quiz/QuizTimerBadge';
+import { useQuizTimer } from '@/Hooks/useQuizTimer';
 import { AlertCircle, CheckCircle2, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -47,6 +59,8 @@ interface Props {
 export default function TakeQuiz({ quiz, attempt }: Props) {
     const [answers, setAnswers] = useState<Record<number, any>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [unansweredCount, setUnansweredCount] = useState(0);
 
     // Auto-save answers to localStorage
     useEffect(() => {
@@ -88,6 +102,12 @@ export default function TakeQuiz({ quiz, attempt }: Props) {
         submitQuiz();
     };
 
+    const timer = useQuizTimer({
+        startedAt: attempt.started_at,
+        durationMinutes: quiz.duration_minutes,
+        onTimeUp: handleTimeUp,
+    });
+
     const submitQuiz = () => {
         if (isSubmitting) return;
 
@@ -118,13 +138,12 @@ export default function TakeQuiz({ quiz, attempt }: Props) {
         e.preventDefault();
 
         // Check if all questions are answered
-        const unansweredCount = quiz.questions.filter(q => !isQuestionAnswered(q.id)).length;
+        const count = quiz.questions.filter(q => !isQuestionAnswered(q.id)).length;
 
-        if (unansweredCount > 0) {
-            const confirmSubmit = window.confirm(
-                `Vous n'avez pas répondu à ${unansweredCount} question(s). Voulez-vous quand même soumettre le quiz?`
-            );
-            if (!confirmSubmit) return;
+        if (count > 0) {
+            setUnansweredCount(count);
+            setShowConfirmDialog(true);
+            return;
         }
 
         submitQuiz();
@@ -141,15 +160,20 @@ export default function TakeQuiz({ quiz, attempt }: Props) {
     const answeredCount = quiz.questions.filter(q => isQuestionAnswered(q.id)).length;
 
     return (
-        <DashboardLayout>
+        <>
+        <DashboardLayout
+            toolbarExtra={
+                <QuizTimerBadge formatted={timer.formatted} urgency={timer.urgency} />
+            }
+        >
             <Head title={`Quiz: ${quiz.title}`} />
 
             <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Timer */}
                 <QuizTimer
-                    startedAt={attempt.started_at}
-                    durationMinutes={quiz.duration_minutes}
-                    onTimeUp={handleTimeUp}
+                    formatted={timer.formatted}
+                    urgency={timer.urgency}
+                    timeRemaining={timer.timeRemaining}
                     className="mb-6"
                 />
 
@@ -335,5 +359,23 @@ export default function TakeQuiz({ quiz, attempt }: Props) {
                 </form>
             </div>
         </DashboardLayout>
+
+        <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Questions sans réponse</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Vous n'avez pas répondu à {unansweredCount} question(s). Voulez-vous quand même soumettre le quiz ?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => submitQuiz()}>
+                        Soumettre quand même
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
 }

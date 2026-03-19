@@ -57,9 +57,10 @@ interface DashboardLayoutProps extends PropsWithChildren {
     description?: string;
     actions?: ReactNode;
     header?: ReactNode;
+    toolbarExtra?: ReactNode;
 }
 
-export default function DashboardLayout({ children, title, description, actions, header }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, title, description, actions, header, toolbarExtra }: DashboardLayoutProps) {
     const { auth, flash } = usePage<PageProps>().props;
     const { t } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -258,6 +259,12 @@ export default function DashboardLayout({ children, title, description, actions,
                                 />
                             </div>
                         </div>
+
+                        {toolbarExtra && (
+                            <div className="hidden sm:flex items-center">
+                                {toolbarExtra}
+                            </div>
+                        )}
 
                         {/* Right side icons */}
                         <div className="flex items-center space-x-4">
