@@ -243,22 +243,22 @@ export default function TakeQuiz({ quiz, attempt }: Props) {
                                                     className={`flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer ${
                                                         isChecked ? 'border-blue-300 bg-blue-50/50 dark:border-blue-700 dark:bg-blue-900/20' : ''
                                                     }`}
-                                                    onClick={() => handleCheckboxToggle(question.id, option, !isChecked)}
+                                                    onClick={(e) => {
+                                                        // Ignore synthetic clicks from Radix Checkbox BubbleInput
+                                                        if (e.target instanceof HTMLInputElement) return;
+                                                        handleCheckboxToggle(question.id, option, !isChecked);
+                                                    }}
                                                 >
                                                     <Checkbox
-                                                        id={`q${question.id}-opt${optionIndex}`}
                                                         checked={isChecked}
                                                         onCheckedChange={(checked) =>
                                                             handleCheckboxToggle(question.id, option, checked === true)
                                                         }
                                                         onClick={(e) => e.stopPropagation()}
                                                     />
-                                                    <Label
-                                                        htmlFor={`q${question.id}-opt${optionIndex}`}
-                                                        className="flex-1 cursor-pointer"
-                                                    >
+                                                    <span className="flex-1 cursor-pointer">
                                                         {option}
-                                                    </Label>
+                                                    </span>
                                                 </div>
                                             );
                                         })}

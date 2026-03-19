@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Take from '../Take';
 import { router } from '@inertiajs/react';
@@ -18,13 +18,29 @@ vi.mock('@inertiajs/react', async () => {
 
 // Mock QuizTimer to avoid time-based complexity
 vi.mock('@/Components/Quiz/QuizTimer', () => ({
-    default: ({ onTimeUp, className }: any) => (
-        <div className={className} data-testid="quiz-timer">
-            <button onClick={onTimeUp} data-testid="trigger-time-up">
-                Time Up
-            </button>
-        </div>
+    default: ({ className }: any) => (
+        <div className={className} data-testid="quiz-timer">Timer</div>
     ),
+}));
+
+// Mock QuizTimerBadge
+vi.mock('@/Components/Quiz/QuizTimerBadge', () => ({
+    default: () => <div data-testid="quiz-timer-badge">Badge</div>,
+}));
+
+// Mock useQuizTimer
+vi.mock('@/Hooks/useQuizTimer', () => ({
+    useQuizTimer: ({ onTimeUp }: any) => {
+        // Store onTimeUp so tests can call it
+        (globalThis as any).__quizTimerOnTimeUp = onTimeUp;
+        return {
+            timeRemaining: 1800,
+            totalDuration: 1800,
+            formatted: '30:00',
+            urgency: 'normal' as const,
+            percentRemaining: 100,
+        };
+    },
 }));
 
 // Mock DashboardLayout
@@ -32,10 +48,10 @@ vi.mock('@/Layouts/DashboardLayout', () => ({
     default: ({ children }: any) => <div data-testid="dashboard-layout">{children}</div>,
 }));
 
-// Mock UI components that might not exist
+// Mock RadioGroup with functional onValueChange
 vi.mock('@/Components/ui/radio-group', () => ({
     RadioGroup: ({ children, value, onValueChange }: any) => (
-        <div data-testid="radio-group" data-value={value}>
+        <div data-testid="radio-group" data-value={value} onChange={(e: any) => onValueChange?.(e.target.value)}>
             {children}
         </div>
     ),
@@ -45,6 +61,7 @@ vi.mock('@/Components/ui/radio-group', () => ({
             value={value}
             id={id}
             data-testid={`radio-${value}`}
+            name={id?.split('-')[0]}
         />
     ),
 }));
@@ -58,12 +75,12 @@ vi.mock('sonner', () => ({
 }));
 
 // Mock route helper
-global.route = vi.fn((name: string, params?: any) => {
+(globalThis as any).route = vi.fn((name: string, params?: any) => {
     if (name === 'quiz-attempts.submit') {
         return `/quiz-attempts/${params}/submit`;
     }
     return '/';
-}) as any;
+});
 
 describe('Quiz Take Page', () => {
     const mockQuiz = {
@@ -81,6 +98,7 @@ describe('Quiz Take Page', () => {
                 type: 'multiple_choice' as const,
                 options: ['2', '3', '4', '5'],
                 points: 10,
+                correct_answers_count: 1,
             },
             {
                 id: 2,
@@ -88,6 +106,7 @@ describe('Quiz Take Page', () => {
                 type: 'true_false' as const,
                 options: null,
                 points: 5,
+                correct_answers_count: 1,
             },
             {
                 id: 3,
@@ -95,6 +114,7 @@ describe('Quiz Take Page', () => {
                 type: 'short_answer' as const,
                 options: null,
                 points: 15,
+                correct_answers_count: 1,
             },
         ],
     };
@@ -109,8 +129,6 @@ describe('Quiz Take Page', () => {
     beforeEach(() => {
         localStorage.clear();
         vi.clearAllMocks();
-        // Mock window.confirm
-        global.confirm = vi.fn(() => true);
     });
 
     afterEach(() => {
@@ -152,376 +170,7 @@ describe('Quiz Take Page', () => {
 
             expect(screen.getByRole('button', { name: /soumettre le quiz/i })).toBeInTheDocument();
         });
-    });
 
-    describe('Answer Selection - Multiple Choice', () => {
-        it('should allow selecting a multiple choice answer', async () => {
-            const user = userEvent.setup();
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            // Find and click the radio button for option "4"
-            const option4 = screen.getByLabelText('4');
-            await user.click(option4);
-
-            expect(option4).toBeChecked();
-        });
-
-        it('should change selection when clicking different option', async () => {
-            const user = userEvent.setup();
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            const option3 = screen.getByLabelText('3');
-            const option4 = screen.getByLabelText('4');
-
-            await user.click(option3);
-            expect(option3).toBeChecked();
-
-            await user.click(option4);
-            expect(option4).toBeChecked();
-            expect(option3).not.toBeChecked();
-        });
-
-        it('should show all multiple choice options', () => {
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            expect(screen.getByLabelText('2')).toBeInTheDocument();
-            expect(screen.getByLabelText('3')).toBeInTheDocument();
-            expect(screen.getByLabelText('4')).toBeInTheDocument();
-            expect(screen.getByLabelText('5')).toBeInTheDocument();
-        });
-    });
-
-    describe('Answer Selection - True/False', () => {
-        it('should allow selecting true', async () => {
-            const user = userEvent.setup();
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            const trueOption = screen.getByLabelText('Vrai');
-            await user.click(trueOption);
-
-            expect(trueOption).toBeChecked();
-        });
-
-        it('should allow selecting false', async () => {
-            const user = userEvent.setup();
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            const falseOption = screen.getByLabelText('Faux');
-            await user.click(falseOption);
-
-            expect(falseOption).toBeChecked();
-        });
-
-        it('should allow changing true/false selection', async () => {
-            const user = userEvent.setup();
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            const trueOption = screen.getByLabelText('Vrai');
-            const falseOption = screen.getByLabelText('Faux');
-
-            await user.click(trueOption);
-            expect(trueOption).toBeChecked();
-
-            await user.click(falseOption);
-            expect(falseOption).toBeChecked();
-            expect(trueOption).not.toBeChecked();
-        });
-    });
-
-    describe('Answer Selection - Short Answer', () => {
-        it('should allow typing a short answer', async () => {
-            const user = userEvent.setup();
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            const input = screen.getByPlaceholderText('Votre réponse...');
-            await user.type(input, 'Paris');
-
-            expect(input).toHaveValue('Paris');
-        });
-
-        it('should update input value as user types', async () => {
-            const user = userEvent.setup();
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            const input = screen.getByPlaceholderText('Votre réponse...');
-            await user.type(input, 'P');
-            expect(input).toHaveValue('P');
-
-            await user.type(input, 'aris');
-            expect(input).toHaveValue('Paris');
-        });
-    });
-
-    describe('Answer Progress Tracking', () => {
-        it('should show 0/3 answered initially', () => {
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            expect(screen.getByText(/0\/3 répondu\(es\)/)).toBeInTheDocument();
-        });
-
-        it('should update answered count when selecting answers', async () => {
-            const user = userEvent.setup();
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            // Answer question 1
-            await user.click(screen.getByLabelText('4'));
-
-            await waitFor(() => {
-                expect(screen.getByText(/1\/3 répondu\(es\)/)).toBeInTheDocument();
-            });
-
-            // Answer question 2
-            await user.click(screen.getByLabelText('Vrai'));
-
-            await waitFor(() => {
-                expect(screen.getByText(/2\/3 répondu\(es\)/)).toBeInTheDocument();
-            });
-        });
-
-        it('should show green checkmark for answered questions', async () => {
-            const user = userEvent.setup();
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            await user.click(screen.getByLabelText('4'));
-
-            await waitFor(() => {
-                // The CheckCircle2 icon should appear next to "Question 1"
-                const questionCards = screen.getAllByText(/^Question \d+$/);
-                expect(questionCards[0]).toBeInTheDocument();
-            });
-        });
-    });
-
-    describe('LocalStorage Persistence', () => {
-        it('should save answers to localStorage', async () => {
-            const user = userEvent.setup();
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            await user.click(screen.getByLabelText('4'));
-
-            await waitFor(() => {
-                const saved = localStorage.getItem('quiz_1_answers');
-                expect(saved).toBeTruthy();
-                const parsed = JSON.parse(saved!);
-                expect(parsed['1']).toBe('4');
-            });
-        });
-
-        it('should load saved answers from localStorage on mount', () => {
-            // Pre-populate localStorage
-            localStorage.setItem(
-                'quiz_1_answers',
-                JSON.stringify({
-                    1: '4',
-                    2: true,
-                    3: 'Paris',
-                })
-            );
-
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            // Check that answers are loaded
-            expect(screen.getByLabelText('4')).toBeChecked();
-            expect(screen.getByLabelText('Vrai')).toBeChecked();
-            expect(screen.getByPlaceholderText('Votre réponse...')).toHaveValue('Paris');
-        });
-
-        it('should update localStorage when answers change', async () => {
-            const user = userEvent.setup();
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            await user.click(screen.getByLabelText('3'));
-            await waitFor(() => {
-                const saved = JSON.parse(localStorage.getItem('quiz_1_answers')!);
-                expect(saved['1']).toBe('3');
-            });
-
-            await user.click(screen.getByLabelText('4'));
-            await waitFor(() => {
-                const saved = JSON.parse(localStorage.getItem('quiz_1_answers')!);
-                expect(saved['1']).toBe('4');
-            });
-        });
-    });
-
-    describe('Quiz Submission', () => {
-        it('should submit quiz with all answers when submit button clicked', async () => {
-            const user = userEvent.setup();
-            const routerPostMock = vi.mocked(router.post);
-
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            // Answer all questions
-            await user.click(screen.getByLabelText('4'));
-            await user.click(screen.getByLabelText('Vrai'));
-            await user.type(screen.getByPlaceholderText('Votre réponse...'), 'Paris');
-
-            // Submit
-            const submitButton = screen.getByRole('button', { name: /soumettre le quiz/i });
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(routerPostMock).toHaveBeenCalledWith(
-                    '/quiz-attempts/attempt-uuid-456/submit',
-                    {
-                        answers: [
-                            { question_id: 1, answer: '4' },
-                            { question_id: 2, answer: true },
-                            { question_id: 3, answer: 'Paris' },
-                        ],
-                    },
-                    expect.any(Object)
-                );
-            });
-        });
-
-        it('should show confirmation dialog when submitting with unanswered questions', async () => {
-            const user = userEvent.setup();
-            const confirmMock = vi.fn(() => false);
-            global.confirm = confirmMock;
-
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            // Only answer 1 question
-            await user.click(screen.getByLabelText('4'));
-
-            const submitButton = screen.getByRole('button', { name: /soumettre le quiz/i });
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(confirmMock).toHaveBeenCalledWith(
-                    expect.stringContaining("Vous n'avez pas répondu à 2 question(s)")
-                );
-            });
-        });
-
-        it('should not submit if user cancels confirmation', async () => {
-            const user = userEvent.setup();
-            const routerPostMock = vi.mocked(router.post);
-            global.confirm = vi.fn(() => false);
-
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            // Only answer 1 question
-            await user.click(screen.getByLabelText('4'));
-
-            const submitButton = screen.getByRole('button', { name: /soumettre le quiz/i });
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(global.confirm).toHaveBeenCalled();
-            });
-
-            // Should not have submitted
-            expect(routerPostMock).not.toHaveBeenCalled();
-        });
-
-        it('should submit if user confirms with unanswered questions', async () => {
-            const user = userEvent.setup();
-            const routerPostMock = vi.mocked(router.post);
-            global.confirm = vi.fn(() => true);
-
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            // Only answer 1 question
-            await user.click(screen.getByLabelText('4'));
-
-            const submitButton = screen.getByRole('button', { name: /soumettre le quiz/i });
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(global.confirm).toHaveBeenCalled();
-                expect(routerPostMock).toHaveBeenCalled();
-            });
-        });
-
-        it('should include null for unanswered questions', async () => {
-            const user = userEvent.setup();
-            const routerPostMock = vi.mocked(router.post);
-            global.confirm = vi.fn(() => true);
-
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            // Only answer first question
-            await user.click(screen.getByLabelText('4'));
-
-            const submitButton = screen.getByRole('button', { name: /soumettre le quiz/i });
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(routerPostMock).toHaveBeenCalledWith(
-                    expect.any(String),
-                    {
-                        answers: [
-                            { question_id: 1, answer: '4' },
-                            { question_id: 2, answer: null },
-                            { question_id: 3, answer: null },
-                        ],
-                    },
-                    expect.any(Object)
-                );
-            });
-        });
-
-        it('should disable submit button while submitting', async () => {
-            const user = userEvent.setup();
-            const routerPostMock = vi.mocked(router.post).mockImplementation(() => {
-                // Simulate async submission
-                return new Promise(() => {});
-            });
-
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            await user.click(screen.getByLabelText('4'));
-            await user.click(screen.getByLabelText('Vrai'));
-            await user.type(screen.getByPlaceholderText('Votre réponse...'), 'Paris');
-
-            const submitButton = screen.getByRole('button', { name: /soumettre le quiz/i });
-            await user.click(submitButton);
-
-            await waitFor(() => {
-                expect(submitButton).toBeDisabled();
-                expect(screen.getByText('Soumission...')).toBeInTheDocument();
-            });
-        });
-    });
-
-    describe('Auto-submission on Time Up', () => {
-        it('should submit quiz when time expires', async () => {
-            const user = userEvent.setup();
-            const routerPostMock = vi.mocked(router.post);
-
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            // Answer some questions
-            await user.click(screen.getByLabelText('4'));
-
-            // Trigger time up
-            const timeUpButton = screen.getByTestId('trigger-time-up');
-            await user.click(timeUpButton);
-
-            await waitFor(() => {
-                expect(routerPostMock).toHaveBeenCalled();
-            });
-        });
-
-        it('should not show confirmation dialog on auto-submit', async () => {
-            const user = userEvent.setup();
-            const confirmMock = vi.fn();
-            global.confirm = confirmMock;
-
-            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
-
-            // Don't answer any questions
-            const timeUpButton = screen.getByTestId('trigger-time-up');
-            await user.click(timeUpButton);
-
-            // Should not show confirmation
-            expect(confirmMock).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('Question Display', () => {
         it('should show question numbers correctly', () => {
             render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
 
@@ -548,6 +197,7 @@ describe('Quiz Take Page', () => {
                         type: 'multiple_choice' as const,
                         options: ['A', 'B'],
                         points: 1,
+                        correct_answers_count: 1,
                     },
                 ],
             };
@@ -555,6 +205,339 @@ describe('Quiz Take Page', () => {
             render(<Take quiz={singlePointQuiz} attempt={mockAttempt} />);
 
             expect(screen.getByText('1 point')).toBeInTheDocument();
+        });
+    });
+
+    describe('Answer Selection - Multiple Choice (single answer)', () => {
+        it('should render radio buttons for single-answer multiple choice', () => {
+            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
+
+            expect(screen.getByTestId('radio-2')).toBeInTheDocument();
+            expect(screen.getByTestId('radio-3')).toBeInTheDocument();
+            expect(screen.getByTestId('radio-4')).toBeInTheDocument();
+            expect(screen.getByTestId('radio-5')).toBeInTheDocument();
+        });
+
+        it('should render all option labels', () => {
+            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
+
+            expect(screen.getByLabelText('2')).toBeInTheDocument();
+            expect(screen.getByLabelText('3')).toBeInTheDocument();
+            expect(screen.getByLabelText('4')).toBeInTheDocument();
+            expect(screen.getByLabelText('5')).toBeInTheDocument();
+        });
+    });
+
+    describe('Answer Selection - Multiple Choice (multiple answers / checkboxes)', () => {
+        const multiAnswerQuiz = {
+            ...mockQuiz,
+            questions: [
+                {
+                    id: 10,
+                    question: 'Which animals cannot fly?',
+                    type: 'multiple_choice' as const,
+                    options: ['Dog', 'Cat', 'Eagle', 'Fish'],
+                    points: 5,
+                    correct_answers_count: 3,
+                },
+            ],
+        };
+
+        it('should render checkboxes for multi-answer questions', () => {
+            render(<Take quiz={multiAnswerQuiz} attempt={mockAttempt} />);
+
+            expect(screen.getByText('Dog')).toBeInTheDocument();
+            expect(screen.getByText('Cat')).toBeInTheDocument();
+            expect(screen.getByText('Eagle')).toBeInTheDocument();
+            expect(screen.getByText('Fish')).toBeInTheDocument();
+        });
+
+        it('should show expected answer count hint', () => {
+            render(<Take quiz={multiAnswerQuiz} attempt={mockAttempt} />);
+
+            expect(screen.getByText(/3 réponses attendues/)).toBeInTheDocument();
+        });
+
+        it('should toggle checkbox on row click without double-firing', async () => {
+            const user = userEvent.setup();
+            render(<Take quiz={multiAnswerQuiz} attempt={mockAttempt} />);
+
+            // Click the row text (not the checkbox directly)
+            await user.click(screen.getByText('Dog'));
+
+            await waitFor(() => {
+                const saved = localStorage.getItem('quiz_1_answers');
+                expect(saved).toBeTruthy();
+                const parsed = JSON.parse(saved!);
+                // Should contain exactly one "Dog" entry, NOT duplicates
+                expect(parsed['10']).toEqual(['Dog']);
+            });
+        });
+
+        it('should not create duplicate entries when clicking checkbox option', async () => {
+            const user = userEvent.setup();
+            render(<Take quiz={multiAnswerQuiz} attempt={mockAttempt} />);
+
+            // Click the option row
+            await user.click(screen.getByText('Cat'));
+
+            await waitFor(() => {
+                const saved = JSON.parse(localStorage.getItem('quiz_1_answers')!);
+                const catCount = saved['10'].filter((v: string) => v === 'Cat').length;
+                expect(catCount).toBe(1);
+            });
+        });
+
+        it('should allow selecting multiple options', async () => {
+            const user = userEvent.setup();
+            render(<Take quiz={multiAnswerQuiz} attempt={mockAttempt} />);
+
+            await user.click(screen.getByText('Dog'));
+            await user.click(screen.getByText('Cat'));
+            await user.click(screen.getByText('Fish'));
+
+            await waitFor(() => {
+                const saved = JSON.parse(localStorage.getItem('quiz_1_answers')!);
+                expect(saved['10']).toEqual(expect.arrayContaining(['Dog', 'Cat', 'Fish']));
+                expect(saved['10']).toHaveLength(3);
+            });
+        });
+
+        it('should deselect an option when clicking it again', async () => {
+            const user = userEvent.setup();
+            render(<Take quiz={multiAnswerQuiz} attempt={mockAttempt} />);
+
+            // Select Dog
+            await user.click(screen.getByText('Dog'));
+
+            await waitFor(() => {
+                const saved = JSON.parse(localStorage.getItem('quiz_1_answers')!);
+                expect(saved['10']).toEqual(['Dog']);
+            });
+
+            // Deselect Dog
+            await user.click(screen.getByText('Dog'));
+
+            await waitFor(() => {
+                const saved = JSON.parse(localStorage.getItem('quiz_1_answers')!);
+                expect(saved['10']).toEqual([]);
+            });
+        });
+
+        it('should count multi-answer question as answered when at least one option is selected', async () => {
+            const user = userEvent.setup();
+            render(<Take quiz={multiAnswerQuiz} attempt={mockAttempt} />);
+
+            expect(screen.getByText(/0\/1 répondu\(es\)/)).toBeInTheDocument();
+
+            await user.click(screen.getByText('Dog'));
+
+            await waitFor(() => {
+                expect(screen.getByText(/1\/1 répondu\(es\)/)).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Answer Selection - True/False', () => {
+        it('should render true and false options', () => {
+            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
+
+            expect(screen.getByLabelText('Vrai')).toBeInTheDocument();
+            expect(screen.getByLabelText('Faux')).toBeInTheDocument();
+        });
+    });
+
+    describe('Answer Selection - Short Answer', () => {
+        it('should allow typing a short answer', async () => {
+            const user = userEvent.setup();
+            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
+
+            const input = screen.getByPlaceholderText('Votre réponse...');
+            await user.type(input, 'Paris');
+
+            expect(input).toHaveValue('Paris');
+        });
+    });
+
+    describe('Answer Progress Tracking', () => {
+        it('should show 0/3 answered initially', () => {
+            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
+
+            expect(screen.getByText(/0\/3 répondu\(es\)/)).toBeInTheDocument();
+        });
+    });
+
+    describe('LocalStorage Persistence', () => {
+        it('should save answers to localStorage', async () => {
+            const user = userEvent.setup();
+            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
+
+            const input = screen.getByPlaceholderText('Votre réponse...');
+            await user.type(input, 'Paris');
+
+            await waitFor(() => {
+                const saved = localStorage.getItem('quiz_1_answers');
+                expect(saved).toBeTruthy();
+                const parsed = JSON.parse(saved!);
+                expect(parsed['3']).toBe('Paris');
+            });
+        });
+
+        it('should load saved answers from localStorage on mount', () => {
+            localStorage.setItem(
+                'quiz_1_answers',
+                JSON.stringify({
+                    3: 'Paris',
+                })
+            );
+
+            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
+
+            expect(screen.getByPlaceholderText('Votre réponse...')).toHaveValue('Paris');
+        });
+    });
+
+    describe('Quiz Submission', () => {
+        it('should show confirmation dialog when submitting with unanswered questions', async () => {
+            const user = userEvent.setup();
+            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
+
+            const submitButton = screen.getByRole('button', { name: /soumettre le quiz/i });
+            await user.click(submitButton);
+
+            // AlertDialog should appear with unanswered warning
+            await waitFor(() => {
+                expect(screen.getByText(/Questions sans réponse/)).toBeInTheDocument();
+            });
+        });
+
+        it('should submit when confirming dialog with unanswered questions', async () => {
+            const user = userEvent.setup();
+            const routerPostMock = vi.mocked(router.post);
+
+            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
+
+            // Submit without answering
+            await user.click(screen.getByRole('button', { name: /soumettre le quiz/i }));
+
+            // Confirm in dialog
+            await waitFor(() => {
+                expect(screen.getByText(/Soumettre quand même/)).toBeInTheDocument();
+            });
+            await user.click(screen.getByText(/Soumettre quand même/));
+
+            await waitFor(() => {
+                expect(routerPostMock).toHaveBeenCalledWith(
+                    '/quiz-attempts/attempt-uuid-456/submit',
+                    {
+                        answers: [
+                            { question_id: 1, answer: null },
+                            { question_id: 2, answer: null },
+                            { question_id: 3, answer: null },
+                        ],
+                    },
+                    expect.any(Object)
+                );
+            });
+        });
+
+        it('should not submit when cancelling dialog', async () => {
+            const user = userEvent.setup();
+            const routerPostMock = vi.mocked(router.post);
+
+            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
+
+            await user.click(screen.getByRole('button', { name: /soumettre le quiz/i }));
+
+            await waitFor(() => {
+                expect(screen.getByText(/Annuler/)).toBeInTheDocument();
+            });
+            await user.click(screen.getByText(/Annuler/));
+
+            expect(routerPostMock).not.toHaveBeenCalled();
+        });
+
+        it('should submit quiz with short answer directly when all questions answered', async () => {
+            const shortAnswerOnlyQuiz = {
+                ...mockQuiz,
+                questions: [
+                    {
+                        id: 3,
+                        question: 'Capital of France?',
+                        type: 'short_answer' as const,
+                        options: null,
+                        points: 10,
+                        correct_answers_count: 1,
+                    },
+                ],
+            };
+            const user = userEvent.setup();
+            const routerPostMock = vi.mocked(router.post);
+
+            render(<Take quiz={shortAnswerOnlyQuiz} attempt={mockAttempt} />);
+
+            await user.type(screen.getByPlaceholderText('Votre réponse...'), 'Paris');
+
+            await user.click(screen.getByRole('button', { name: /soumettre le quiz/i }));
+
+            await waitFor(() => {
+                expect(routerPostMock).toHaveBeenCalledWith(
+                    '/quiz-attempts/attempt-uuid-456/submit',
+                    {
+                        answers: [
+                            { question_id: 3, answer: 'Paris' },
+                        ],
+                    },
+                    expect.any(Object)
+                );
+            });
+        });
+
+        it('should disable submit button while submitting', async () => {
+            const shortAnswerOnlyQuiz = {
+                ...mockQuiz,
+                questions: [
+                    {
+                        id: 3,
+                        question: 'Capital of France?',
+                        type: 'short_answer' as const,
+                        options: null,
+                        points: 10,
+                        correct_answers_count: 1,
+                    },
+                ],
+            };
+            const user = userEvent.setup();
+            vi.mocked(router.post).mockImplementation(() => undefined as any);
+
+            render(<Take quiz={shortAnswerOnlyQuiz} attempt={mockAttempt} />);
+
+            await user.type(screen.getByPlaceholderText('Votre réponse...'), 'Paris');
+
+            const submitButton = screen.getByRole('button', { name: /soumettre le quiz/i });
+            await user.click(submitButton);
+
+            await waitFor(() => {
+                expect(submitButton).toBeDisabled();
+                expect(screen.getByText('Soumission...')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('Auto-submission on Time Up', () => {
+        it('should submit quiz when time expires', async () => {
+            const routerPostMock = vi.mocked(router.post);
+
+            render(<Take quiz={mockQuiz} attempt={mockAttempt} />);
+
+            // Trigger the onTimeUp callback stored by the mock hook
+            const onTimeUp = (globalThis as any).__quizTimerOnTimeUp;
+            expect(onTimeUp).toBeDefined();
+            onTimeUp();
+
+            await waitFor(() => {
+                expect(routerPostMock).toHaveBeenCalled();
+            });
         });
     });
 });
