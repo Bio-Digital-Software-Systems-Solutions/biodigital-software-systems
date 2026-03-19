@@ -127,10 +127,11 @@ class TrainingController extends Controller
                 $attempt = $quiz->attempts->first();
 
                 if ($attempt) {
+                    $percentage = $quiz->max_score > 0 ? round(($attempt->score / $quiz->max_score) * 100, 2) : 0;
                     $userAttempt = [
                         'score' => $attempt->score,
                         'max_score' => $quiz->max_score,
-                        'passed' => $attempt->score >= $quiz->passing_score,
+                        'passed' => $percentage >= $quiz->passing_score,
                         'completed_at' => $attempt->completed_at->toISOString(),
                     ];
                 }
@@ -762,9 +763,9 @@ class TrainingController extends Controller
                     'passing_score' => $quiz->passing_score,
                     'total_attempts' => $totalAttempts,
                     'average_score' => $totalAttempts > 0 ? round($attempts->avg('score'), 2) : 0,
-                    'passed_count' => $attempts->where('score', '>=', $quiz->passing_score)->count(),
-                    'failed_count' => $attempts->where('score', '<', $quiz->passing_score)->count(),
-                    'pass_rate' => $totalAttempts > 0 ? round(($attempts->where('score', '>=', $quiz->passing_score)->count() / $totalAttempts) * 100, 2) : 0,
+                    'passed_count' => $attempts->filter(fn ($a) => $quiz->max_score > 0 && round(($a->score / $quiz->max_score) * 100, 2) >= $quiz->passing_score)->count(),
+                    'failed_count' => $attempts->filter(fn ($a) => $quiz->max_score <= 0 || round(($a->score / $quiz->max_score) * 100, 2) < $quiz->passing_score)->count(),
+                    'pass_rate' => $totalAttempts > 0 ? round(($attempts->filter(fn ($a) => $quiz->max_score > 0 && round(($a->score / $quiz->max_score) * 100, 2) >= $quiz->passing_score)->count() / $totalAttempts) * 100, 2) : 0,
                 ];
             });
 

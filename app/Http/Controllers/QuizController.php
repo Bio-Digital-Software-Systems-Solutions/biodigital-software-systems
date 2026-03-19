@@ -443,8 +443,8 @@ class QuizController extends Controller
                 ],
                 'score' => $attempt->score,
                 'max_score' => $quiz->max_score,
-                'percentage' => $quiz->max_score > 0 ? round(($attempt->score / $quiz->max_score) * 100, 2) : 0,
-                'passed' => $attempt->score >= $quiz->passing_score,
+                'percentage' => $percentage = $quiz->max_score > 0 ? round(($attempt->score / $quiz->max_score) * 100, 2) : 0,
+                'passed' => $percentage >= $quiz->passing_score,
                 'started_at' => $attempt->started_at->format('Y-m-d H:i:s'),
                 'completed_at' => $attempt->completed_at?->format('Y-m-d H:i:s'),
                 'time_taken' => $attempt->started_at->diff($attempt->completed_at)->format('%H:%I:%S'),
@@ -633,14 +633,15 @@ class QuizController extends Controller
             'answers' => $answersWithResults,
         ]);
 
-        $passed = $totalScore >= $quiz->passing_score;
+        $percentage = $quiz->max_score > 0 ? round(($totalScore / $quiz->max_score) * 100, 2) : 0;
+        $passed = $percentage >= $quiz->passing_score;
 
         // Redirect to results page with feedback
         return redirect()->route('quiz-attempts.show', $attempt)
             ->with('success',
                 $passed
                     ? "Quiz terminé avec succès! Score: {$totalScore}/{$quiz->max_score} - Vous avez réussi!"
-                    : "Quiz terminé. Score: {$totalScore}/{$quiz->max_score} - Score minimum requis: {$quiz->passing_score}"
+                    : "Quiz terminé. Score: {$totalScore}/{$quiz->max_score} - Score minimum requis: {$quiz->passing_score}%"
             );
     }
 
@@ -658,7 +659,8 @@ class QuizController extends Controller
 
         $attempt->load(['quiz.training', 'quiz.questions', 'student']);
 
-        $passed = $attempt->score >= $attempt->quiz->passing_score;
+        $percentage = $attempt->quiz->max_score > 0 ? round(($attempt->score / $attempt->quiz->max_score) * 100, 2) : 0;
+        $passed = $percentage >= $attempt->quiz->passing_score;
 
         // Prepare questions with student answers and feedback
         $questionsWithAnswers = collect($attempt->answers)->map(function (array $answer) use ($attempt): array {
@@ -751,7 +753,7 @@ class QuizController extends Controller
             // Data rows
             foreach ($attempts as $attempt) {
                 $percentage = $quiz->max_score > 0 ? round(($attempt->score / $quiz->max_score) * 100, 2) : 0;
-                $passed = $attempt->score >= $quiz->passing_score;
+                $passed = $percentage >= $quiz->passing_score;
                 $timeTaken = $attempt->started_at->diff($attempt->completed_at)->format('%H:%I:%S');
 
                 fputcsv($file, [
@@ -815,7 +817,7 @@ class QuizController extends Controller
                     'score' => $attempt->score,
                     'max_score' => $quiz->max_score,
                     'passing_score' => $quiz->passing_score,
-                    'passed' => $attempt->score >= $quiz->passing_score,
+                    'passed' => $quiz->max_score > 0 ? round(($attempt->score / $quiz->max_score) * 100, 2) >= $quiz->passing_score : false,
                 ]);
             }
         }
@@ -848,15 +850,15 @@ class QuizController extends Controller
                 'training_name' => $attempt->quiz->training->title,
                 'score' => $attempt->score,
                 'max_score' => $attempt->quiz->max_score,
-                'percentage' => $attempt->quiz->max_score > 0 ? round(($attempt->score / $attempt->quiz->max_score) * 100, 2) : 0,
-                'passed' => $attempt->score >= $attempt->quiz->passing_score,
+                'percentage' => $percentage = $attempt->quiz->max_score > 0 ? round(($attempt->score / $attempt->quiz->max_score) * 100, 2) : 0,
+                'passed' => $percentage >= $attempt->quiz->passing_score,
                 'completed_at' => $attempt->completed_at->format('Y-m-d H:i'),
             ]);
 
         // Quiz performance breakdown
         $quizPerformance = $allQuizzes->map(function ($quiz): array {
             $completedAttempts = $quiz->attempts->where('status', 'completed');
-            $passedAttempts = $completedAttempts->where(fn ($a): bool => $a->score >= $quiz->passing_score);
+            $passedAttempts = $completedAttempts->filter(fn ($a): bool => $quiz->max_score > 0 && round(($a->score / $quiz->max_score) * 100, 2) >= $quiz->passing_score);
 
             return [
                 'uuid' => $quiz->uuid,
