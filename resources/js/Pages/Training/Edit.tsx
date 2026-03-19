@@ -17,6 +17,7 @@ interface Training {
     image: string;
     image_url?: string;
     is_active: boolean;
+    visibility: 'public' | 'private';
     teacher_id?: number;
     topics?: Topic[];
 }
@@ -43,6 +44,7 @@ export default function Edit({ training, teachers = [] }: Props) {
         category: string;
         image: File | string;
         is_active: boolean;
+        visibility: 'public' | 'private';
         teacher_id: number | null;
         topics: Topic[];
         _method?: string;
@@ -55,6 +57,7 @@ export default function Edit({ training, teachers = [] }: Props) {
         category: training.category,
         image: training.image,
         is_active: training.is_active,
+        visibility: training.visibility || 'public',
         teacher_id: training.teacher_id || null,
         topics: training.topics || [],
         _method: 'PUT',
@@ -288,6 +291,51 @@ export default function Edit({ training, teachers = [] }: Props) {
                                             </span>
                                         </label>
                                         {errors.is_active && <p className="text-red-500 text-sm mt-1">{errors.is_active}</p>}
+                                    </div>
+
+                                    {/* Visibility */}
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Visibilit&eacute;
+                                        </label>
+                                        <div className="flex gap-6">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="visibility"
+                                                    value="public"
+                                                    checked={data.visibility === 'public'}
+                                                    onChange={() => setData('visibility', 'public')}
+                                                    className="w-4 h-4 text-violet-600 focus:ring-violet-500"
+                                                />
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">Public</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="visibility"
+                                                    value="private"
+                                                    checked={data.visibility === 'private'}
+                                                    onChange={() => setData('visibility', 'private')}
+                                                    className="w-4 h-4 text-violet-600 focus:ring-violet-500"
+                                                />
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">Priv&eacute;</span>
+                                            </label>
+                                        </div>
+                                        {data.visibility === 'private' && (
+                                            <div className="mt-2 flex items-center gap-3">
+                                                <p className="text-sm text-amber-600 dark:text-amber-400">
+                                                    Formation priv&eacute;e &mdash; seuls les utilisateurs autoris&eacute;s y ont acc&egrave;s.
+                                                </p>
+                                                <Link
+                                                    href={route('trainings.access', training.uuid)}
+                                                    className="text-sm font-medium text-violet-600 dark:text-violet-400 hover:underline"
+                                                >
+                                                    G&eacute;rer les acc&egrave;s &rarr;
+                                                </Link>
+                                            </div>
+                                        )}
+                                        {errors.visibility && <p className="text-red-500 text-sm mt-1">{errors.visibility}</p>}
                                     </div>
                                 </div>
 

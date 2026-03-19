@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Task, Program, Status, User, TaskParticipant, TaskComment, TaskAttachment, PageProps } from '@/Types';
+import { Form } from '@inertiajs/react';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import { useToast } from '@/Components/ui/toast';
 import { useConfirm } from '@/Components/ui/confirm-dialog';
@@ -45,6 +46,8 @@ interface Activity {
     description: string;
     old_status: ActivityStatus | null;
     new_status: ActivityStatus | null;
+    event: string | null;
+    properties: Record<string, unknown>;
     causer: {
         id: number;
         first_name: string;
@@ -62,12 +65,15 @@ interface Props extends PageProps {
         participants?: TaskParticipant[];
         comments?: TaskComment[];
         task_attachments?: TaskAttachment[];
+        subtasks?: Task[];
+        parent?: Task | null;
     };
     users: User[];
+    statuses: Status[];
     activities: Activity[];
 }
 
-export default function Show({ task, users, activities }: Props) {
+export default function Show({ task, users, statuses, activities }: Props) {
     const { auth, flash } = usePage<PageProps & { flash?: { success?: string; error?: string } }>().props;
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -83,6 +89,9 @@ export default function Show({ task, users, activities }: Props) {
     const [progressValue, setProgressValue] = useState(task.progress || 0);
     const [historyExpanded, setHistoryExpanded] = useState(false);
     const [calendarExpanded, setCalendarExpanded] = useState(true);
+    const [subtasksExpanded, setSubtasksExpanded] = useState(true);
+    const [showSubtaskForm, setShowSubtaskForm] = useState(false);
+    const [deleteSubtaskId, setDeleteSubtaskId] = useState<string | null>(null);
     const { showSuccess, showError } = useToast();
     const confirm = useConfirm();
 
@@ -208,6 +217,26 @@ export default function Show({ task, users, activities }: Props) {
         } catch (error) {
             showError('Échec de la mise à jour de la progression');
         }
+    };
+
+    const handleDeleteSubtask = (subtaskUuid: string) => {
+        setDeleteSubtaskId(subtaskUuid);
+    };
+
+    const confirmDeleteSubtask = () => {
+        if (!deleteSubtaskId) return;
+        const subtask = task.subtasks?.find(s => s.uuid === deleteSubtaskId);
+        if (!subtask) return;
+
+        router.delete(route('tasks.subtasks.destroy', { task: task.uuid, subtask: subtask.uuid }), {
+            onSuccess: () => {
+                setDeleteSubtaskId(null);
+                showSuccess('Sous-tâche supprimée avec succès');
+            },
+            onError: () => {
+                showError('Échec de la suppression de la sous-tâche');
+            },
+        });
     };
 
     const handleAddParticipant = async () => {
@@ -420,14 +449,25 @@ export default function Show({ task, users, activities }: Props) {
                 <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div className="p-6 text-gray-900 dark:text-gray-100">
                         <div className="flex justify-between items-start mb-6">
-                            <div className="flex items-center">
-                                <Link
-                                    href={route('tasks.index')}
-                                    className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 mr-4"
-                                >
-                                    <ArrowLeftIcon className="w-4 h-4 mr-1" />
-                                    Retour aux tâches
-                                </Link>
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-4">
+                                    <Link
+                                        href={route('tasks.index')}
+                                        className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                                    >
+                                        <ArrowLeftIcon className="w-4 h-4 mr-1" />
+                                        Retour aux tâches
+                                    </Link>
+                                    {task.parent && (
+                                        <Link
+                                            href={route('tasks.show', task.parent.uuid)}
+                                            className="flex items-center text-primary hover:text-primary/80 text-sm font-medium"
+                                        >
+                                            <ArrowUturnLeftIcon className="w-4 h-4 mr-1" />
+                                            Tâche parente : {task.parent.title}
+                                        </Link>
+                                    )}
+                                </div>
                                 <h1 className="text-2xl font-semibold">{task.title}</h1>
                             </div>
 
@@ -619,6 +659,234 @@ export default function Show({ task, users, activities }: Props) {
                                     <dd className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                         {task.notes}
                                     </dd>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Subtasks Section */}
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+                            <button
+                                type="button"
+                                onClick={() => setSubtasksExpanded(!subtasksExpanded)}
+                                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-t-lg"
+                            >
+                                <h2 className="text-xl font-semibold dark:text-white flex items-center gap-2">
+                                    Sous-tâches
+                                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                                        ({task.subtasks?.length || 0})
+                                    </span>
+                                </h2>
+                                {subtasksExpanded ? (
+                                    <MinusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                ) : (
+                                    <PlusIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                )}
+                            </button>
+
+                            {subtasksExpanded && (
+                                <div className="px-6 pb-6">
+                                    {/* Add subtask button */}
+                                    <div className="mb-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowSubtaskForm(!showSubtaskForm)}
+                                            className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-primary border border-primary rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                                        >
+                                            <PlusIcon className="h-4 w-4" />
+                                            Ajouter une sous-tâche
+                                        </button>
+                                    </div>
+
+                                    {/* Subtask creation form */}
+                                    {showSubtaskForm && (
+                                        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <Form
+                                                action={route('tasks.subtasks.store', task.uuid)}
+                                                method="post"
+                                            >
+                                                {({ errors, processing }) => (
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                                Titre <span className="text-red-500">*</span>
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                name="title"
+                                                                required
+                                                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-white focus:ring-primary focus:border-primary"
+                                                                placeholder="Titre de la sous-tâche"
+                                                            />
+                                                            {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+                                                        </div>
+
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                                Description
+                                                            </label>
+                                                            <textarea
+                                                                name="description"
+                                                                rows={2}
+                                                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-white focus:ring-primary focus:border-primary"
+                                                                placeholder="Description (optionnelle)"
+                                                            />
+                                                            {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
+                                                        </div>
+
+                                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                                    Priorité <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    name="priority"
+                                                                    required
+                                                                    defaultValue="medium"
+                                                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-white focus:ring-primary focus:border-primary"
+                                                                >
+                                                                    <option value="low">Low</option>
+                                                                    <option value="medium">Medium</option>
+                                                                    <option value="high">High</option>
+                                                                </select>
+                                                                {errors.priority && <p className="mt-1 text-sm text-red-600">{errors.priority}</p>}
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                                    Statut <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    name="status_id"
+                                                                    required
+                                                                    defaultValue={statuses[0]?.id}
+                                                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-white focus:ring-primary focus:border-primary"
+                                                                >
+                                                                    {statuses.map((status) => (
+                                                                        <option key={status.id} value={status.id}>
+                                                                            {status.name}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {errors.status_id && <p className="mt-1 text-sm text-red-600">{errors.status_id}</p>}
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                                    Échéance
+                                                                </label>
+                                                                <input
+                                                                    type="date"
+                                                                    name="due_date"
+                                                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-white focus:ring-primary focus:border-primary"
+                                                                />
+                                                                {errors.due_date && <p className="mt-1 text-sm text-red-600">{errors.due_date}</p>}
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                                    Assigné à
+                                                                </label>
+                                                                <select
+                                                                    name="assigned_to"
+                                                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-white focus:ring-primary focus:border-primary"
+                                                                >
+                                                                    <option value="">Non assigné</option>
+                                                                    {users.map((user) => (
+                                                                        <option key={user.id} value={user.id}>
+                                                                            {user.first_name} {user.last_name}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {errors.assigned_to && <p className="mt-1 text-sm text-red-600">{errors.assigned_to}</p>}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                type="submit"
+                                                                disabled={processing}
+                                                                className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary disabled:opacity-50"
+                                                            >
+                                                                {processing ? 'Création...' : 'Créer la sous-tâche'}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowSubtaskForm(false)}
+                                                                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+                                                            >
+                                                                Annuler
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </Form>
+                                        </div>
+                                    )}
+
+                                    {/* Subtasks list */}
+                                    {task.subtasks && task.subtasks.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {task.subtasks.map((subtask) => (
+                                                <div
+                                                    key={subtask.id}
+                                                    className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+                                                >
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <Link
+                                                                href={route('tasks.show', subtask.uuid)}
+                                                                className="text-sm font-medium text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary truncate"
+                                                            >
+                                                                {subtask.title}
+                                                            </Link>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                                            <span className={`inline-flex px-2 py-0.5 rounded-full font-medium ${getStatusColor(subtask.status?.name)}`}>
+                                                                {subtask.status?.name}
+                                                            </span>
+                                                            <span className={`inline-flex px-2 py-0.5 rounded-full font-medium ${getPriorityColor(subtask.priority)}`}>
+                                                                {subtask.priority}
+                                                            </span>
+                                                            {subtask.due_date && (
+                                                                <span>
+                                                                    {new Date(subtask.due_date).toLocaleDateString('fr-FR')}
+                                                                </span>
+                                                            )}
+                                                            {subtask.assigned_user && (
+                                                                <span>
+                                                                    {subtask.assigned_user.first_name} {subtask.assigned_user.last_name}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                                        <Link
+                                                            href={route('tasks.show', subtask.uuid)}
+                                                            className="p-1 text-gray-400 hover:text-primary"
+                                                            title="Voir"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                            </svg>
+                                                        </Link>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteSubtask(subtask.uuid)}
+                                                            className="p-1 text-gray-400 hover:text-red-600"
+                                                            title="Supprimer"
+                                                        >
+                                                            <TrashIcon className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                                            Aucune sous-tâche pour le moment
+                                        </p>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -1048,6 +1316,9 @@ export default function Show({ task, users, activities }: Props) {
                                                     const isCreated = activity.description === 'created';
                                                     const isCompleted = activity.new_status?.name?.toLowerCase() === 'completed';
                                                     const isInProgress = activity.new_status?.name?.toLowerCase() === 'in_progress';
+                                                    const isSubtaskAdded = activity.event === 'subtask_added';
+                                                    const isSubtaskRemoved = activity.event === 'subtask_removed';
+                                                    const isSubtaskEvent = isSubtaskAdded || isSubtaskRemoved;
 
                                                     // Function to determine if a color is light and needs dark text
                                                     const getContrastTextColor = (hexColor: string): string => {
@@ -1072,10 +1343,18 @@ export default function Show({ task, users, activities }: Props) {
                                                                         ? 'bg-blue-100 border-blue-500 dark:bg-blue-900/30'
                                                                         : isCreated
                                                                             ? 'bg-purple-100 border-purple-500 dark:bg-purple-900/30'
-                                                                            : 'bg-gray-100 border-gray-300 dark:bg-gray-700 dark:border-gray-600'
+                                                                            : isSubtaskAdded
+                                                                                ? 'bg-teal-100 border-teal-500 dark:bg-teal-900/30'
+                                                                                : isSubtaskRemoved
+                                                                                    ? 'bg-orange-100 border-orange-500 dark:bg-orange-900/30'
+                                                                                    : 'bg-gray-100 border-gray-300 dark:bg-gray-700 dark:border-gray-600'
                                                             }`}>
                                                                 {isCompleted ? (
                                                                     <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                                                                ) : isSubtaskAdded ? (
+                                                                    <PlusIcon className="w-4 h-4 text-teal-600" />
+                                                                ) : isSubtaskRemoved ? (
+                                                                    <MinusIcon className="w-4 h-4 text-orange-600" />
                                                                 ) : (
                                                                     <span className={`text-xs font-semibold ${
                                                                         isInProgress
@@ -1094,6 +1373,20 @@ export default function Show({ task, users, activities }: Props) {
                                                                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                                     {isCreated ? (
                                                                         'Tâche créée'
+                                                                    ) : isSubtaskEvent ? (
+                                                                        <>
+                                                                            {isSubtaskAdded ? 'Sous-tâche ajoutée : ' : 'Sous-tâche supprimée : '}
+                                                                            {activity.properties.subtask_uuid && isSubtaskAdded ? (
+                                                                                <Link
+                                                                                    href={route('tasks.show', activity.properties.subtask_uuid as string)}
+                                                                                    className="text-primary hover:text-primary/80 underline"
+                                                                                >
+                                                                                    {activity.properties.subtask_title as string}
+                                                                                </Link>
+                                                                            ) : (
+                                                                                <span className="font-semibold">{activity.properties.subtask_title as string}</span>
+                                                                            )}
+                                                                        </>
                                                                     ) : activity.new_status ? (
                                                                         <>
                                                                             Statut changé
@@ -1157,6 +1450,14 @@ export default function Show({ task, users, activities }: Props) {
                 onConfirm={confirmDelete}
                 title="Supprimer la tâche"
                 description={`Êtes-vous sûr de vouloir supprimer la tâche "${task.title}" ? Cette action est irréversible.`}
+            />
+
+            <DeleteConfirmationDialog
+                open={deleteSubtaskId !== null}
+                onOpenChange={(open) => { if (!open) setDeleteSubtaskId(null); }}
+                onConfirm={confirmDeleteSubtask}
+                title="Supprimer la sous-tâche"
+                description="Êtes-vous sûr de vouloir supprimer cette sous-tâche ? Cette action est irréversible."
             />
 
             {/* Create Appointment Modal */}

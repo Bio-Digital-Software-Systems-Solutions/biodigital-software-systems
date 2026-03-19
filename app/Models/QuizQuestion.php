@@ -7,8 +7,8 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -27,6 +27,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
  * @property-read int|null $activities_count
  * @property-read \App\Models\Quiz $quiz
+ *
  * @method static \Database\Factories\QuizQuestionFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion newQuery()
@@ -44,11 +45,12 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|QuizQuestion whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 class QuizQuestion extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -84,19 +86,36 @@ class QuizQuestion extends Model
     }
 
     /**
-     * Check if a given answer is correct
+     * Check if a given answer is correct.
+     *
+     * For multiple_choice with multiple correct answers, the student must
+     * select ALL correct answers and NO wrong answers to earn the point.
      */
     public function isCorrectAnswer($answer): bool
     {
         if ($this->type === 'multiple_choice') {
-            // For multiple choice, answer could be a single value or array
-            if (is_array($answer)) {
-                sort($answer);
-                $correctAnswers = $this->correct_answers;
-                sort($correctAnswers);
-                return $answer === $correctAnswers;
+            $correctAnswers = $this->correct_answers;
+
+            if (count($correctAnswers) > 1) {
+                // Multiple correct answers: answer MUST be an array with all correct values
+                if (! is_array($answer) || $answer === []) {
+                    return false;
+                }
+
+                $sorted = $answer;
+                sort($sorted);
+                $sortedCorrect = $correctAnswers;
+                sort($sortedCorrect);
+
+                return $sorted === $sortedCorrect;
             }
-            return in_array($answer, $this->correct_answers);
+
+            // Single correct answer: accept string or single-element array
+            if (is_array($answer)) {
+                return count($answer) === 1 && in_array($answer[0], $correctAnswers);
+            }
+
+            return in_array($answer, $correctAnswers);
         }
 
         if ($this->type === 'true_false') {
@@ -105,11 +124,22 @@ class QuizQuestion extends Model
 
         if ($this->type === 'short_answer') {
             // Case-insensitive comparison for short answers
-            $answer = strtolower(trim((string) $answer));
-            $correctAnswers = array_map(fn($a) => strtolower(trim((string) $a)), $this->correct_answers);
-            return in_array($answer, $correctAnswers);
+            /** @var string $answerStr */
+            $answerStr = $answer;
+            $normalizedAnswer = strtolower(trim((string) $answerStr));
+            $correctAnswers = array_map(fn (string $a): string => strtolower(trim($a)), $this->correct_answers);
+
+            return in_array($normalizedAnswer, $correctAnswers);
         }
 
         return false;
+    }
+
+    /**
+     * Whether this question has multiple correct answers.
+     */
+    public function hasMultipleCorrectAnswers(): bool
+    {
+        return $this->type === 'multiple_choice' && count($this->correct_answers) > 1;
     }
 }

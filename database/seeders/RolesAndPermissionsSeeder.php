@@ -109,6 +109,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit trainings',
             'delete trainings',
             'manage trainings',
+            'manage training access',
             // Quiz & Evaluations
             'view quizzes',
             'create quizzes',
@@ -292,6 +293,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit trainings',
             'delete trainings',
             'manage trainings',
+            'manage training access',
             // Quiz & Evaluations
             'view quizzes',
             'create quizzes',
@@ -902,6 +904,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'create trainings',
             'edit trainings',
             'manage trainings',
+            'manage training access',
             // Quiz & Evaluations
             'view quizzes',
             'create quizzes',

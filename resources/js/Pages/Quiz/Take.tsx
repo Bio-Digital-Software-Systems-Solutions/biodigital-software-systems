@@ -4,6 +4,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
+import { Checkbox } from '@/Components/ui/checkbox';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Separator } from '@/Components/ui/separator';
@@ -17,6 +18,7 @@ interface Question {
     type: 'multiple_choice' | 'true_false' | 'short_answer';
     options: string[] | null;
     points: number;
+    correct_answers_count: number;
 }
 
 interface Quiz {
@@ -62,11 +64,21 @@ export default function TakeQuiz({ quiz, attempt }: Props) {
         localStorage.setItem(`quiz_${quiz.id}_answers`, JSON.stringify(answers));
     }, [answers, quiz.id]);
 
-    const handleAnswerChange = (questionId: number, answer: any) => {
+    const handleAnswerChange = (questionId: number, answer: string | boolean | string[]) => {
         setAnswers(prev => ({
             ...prev,
             [questionId]: answer
         }));
+    };
+
+    const handleCheckboxToggle = (questionId: number, option: string, checked: boolean) => {
+        setAnswers(prev => {
+            const current: string[] = Array.isArray(prev[questionId]) ? prev[questionId] : [];
+            const updated = checked
+                ? [...current, option]
+                : current.filter((v: string) => v !== option);
+            return { ...prev, [questionId]: updated };
+        });
     };
 
     const handleTimeUp = () => {
@@ -106,10 +118,7 @@ export default function TakeQuiz({ quiz, attempt }: Props) {
         e.preventDefault();
 
         // Check if all questions are answered
-        const unansweredCount = quiz.questions.filter(q => {
-            const answer = answers[q.id];
-            return answer === undefined || answer === null || answer === '';
-        }).length;
+        const unansweredCount = quiz.questions.filter(q => !isQuestionAnswered(q.id)).length;
 
         if (unansweredCount > 0) {
             const confirmSubmit = window.confirm(
@@ -123,6 +132,9 @@ export default function TakeQuiz({ quiz, attempt }: Props) {
 
     const isQuestionAnswered = (questionId: number) => {
         const answer = answers[questionId];
+        if (Array.isArray(answer)) {
+            return answer.length > 0;
+        }
         return answer !== undefined && answer !== null && answer !== '';
     };
 
@@ -132,7 +144,7 @@ export default function TakeQuiz({ quiz, attempt }: Props) {
         <DashboardLayout>
             <Head title={`Quiz: ${quiz.title}`} />
 
-            <div className="max-w-4xl mx-auto px-4 py-8">
+            <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Timer */}
                 <QuizTimer
                     startedAt={attempt.started_at}
@@ -193,7 +205,43 @@ export default function TakeQuiz({ quiz, attempt }: Props) {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                {question.type === 'multiple_choice' && question.options && (
+                                {question.type === 'multiple_choice' && question.options && question.correct_answers_count > 1 && (
+                                    <div className="space-y-3">
+                                        <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                                            Sélectionnez toutes les bonnes réponses ({question.correct_answers_count} réponses attendues)
+                                        </p>
+                                        {question.options.map((option, optionIndex) => {
+                                            const selected: string[] = Array.isArray(answers[question.id]) ? answers[question.id] : [];
+                                            const isChecked = selected.includes(option);
+                                            return (
+                                                <div
+                                                    key={optionIndex}
+                                                    className={`flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer ${
+                                                        isChecked ? 'border-blue-300 bg-blue-50/50 dark:border-blue-700 dark:bg-blue-900/20' : ''
+                                                    }`}
+                                                    onClick={() => handleCheckboxToggle(question.id, option, !isChecked)}
+                                                >
+                                                    <Checkbox
+                                                        id={`q${question.id}-opt${optionIndex}`}
+                                                        checked={isChecked}
+                                                        onCheckedChange={(checked) =>
+                                                            handleCheckboxToggle(question.id, option, checked === true)
+                                                        }
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                    <Label
+                                                        htmlFor={`q${question.id}-opt${optionIndex}`}
+                                                        className="flex-1 cursor-pointer"
+                                                    >
+                                                        {option}
+                                                    </Label>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+                                {question.type === 'multiple_choice' && question.options && question.correct_answers_count <= 1 && (
                                     <RadioGroup
                                         value={answers[question.id]?.toString() || ''}
                                         onValueChange={(value) => handleAnswerChange(question.id, value)}

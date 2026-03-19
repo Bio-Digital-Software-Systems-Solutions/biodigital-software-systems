@@ -185,8 +185,10 @@ export default function QuizEdit({ training, quiz, trainingClasses, assignedClas
     const removeOption = (questionId: string | number, index: number) => {
         setQuestions(questions.map(q => {
             if (q.id === questionId) {
+                const removedOption = q.options[index];
                 const newOptions = q.options.filter((_, i) => i !== index);
-                return { ...q, options: newOptions };
+                const newCorrectAnswers = q.correct_answers.filter(a => a !== removedOption);
+                return { ...q, options: newOptions, correct_answers: newCorrectAnswers };
             }
             return q;
         }));
@@ -195,9 +197,14 @@ export default function QuizEdit({ training, quiz, trainingClasses, assignedClas
     const updateOption = (questionId: string | number, index: number, value: string) => {
         setQuestions(questions.map(q => {
             if (q.id === questionId) {
+                const oldValue = q.options[index];
                 const newOptions = [...q.options];
                 newOptions[index] = value;
-                return { ...q, options: newOptions };
+
+                // Sync correct_answers: replace old option text with new one
+                const newCorrectAnswers = q.correct_answers.map(a => a === oldValue ? value : a);
+
+                return { ...q, options: newOptions, correct_answers: newCorrectAnswers };
             }
             return q;
         }));
@@ -252,16 +259,24 @@ export default function QuizEdit({ training, quiz, trainingClasses, assignedClas
 
         setIsSubmitting(true);
 
-        const formattedQuestions = questions.map(q => ({
+        const formattedQuestions = questions.map(q => {
+            const validOptions = q.type === 'multiple_choice' ? q.options.filter(opt => opt.trim() !== '') : null;
+            // Sanitize correct_answers: only keep values matching valid options
+            const sanitizedCorrectAnswers = q.type === 'multiple_choice' && validOptions
+                ? q.correct_answers.filter(a => validOptions.includes(a))
+                : q.correct_answers;
+
+            return {
             id: typeof q.id === 'number' ? q.id : undefined, // Only send numeric IDs (existing questions)
             question: q.question,
             type: q.type,
-            options: q.type === 'multiple_choice' ? q.options.filter(opt => opt.trim() !== '') : null,
-            correct_answers: q.correct_answers,
+            options: validOptions,
+            correct_answers: sanitizedCorrectAnswers,
             feedback_correct: q.feedback_correct || null,
             feedback_incorrect: q.feedback_incorrect || null,
             points: q.points
-        }));
+            };
+        });
 
         router.put(route('trainings.quizzes.update', [training.uuid, quiz.uuid]), {
             title,
@@ -297,7 +312,7 @@ export default function QuizEdit({ training, quiz, trainingClasses, assignedClas
         <DashboardLayout>
             <Head title={`Modifier le quiz - ${quiz.title}`} />
 
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <Link

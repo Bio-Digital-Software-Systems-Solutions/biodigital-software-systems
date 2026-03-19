@@ -113,8 +113,8 @@ db:
 
 db-docker:
 	@echo "Running migrations inside Docker container..."
-	@docker-compose exec app php artisan migrate --no-interaction
-	@echo "Docker migrations complete!"
+	@docker-compose exec app php artisan migrate:fresh --seed --no-interaction
+	@echo "Docker migrations and seeding complete!"
 
 # Clean orphaned event media records (files that don't exist on disk)
 clean-event-media:

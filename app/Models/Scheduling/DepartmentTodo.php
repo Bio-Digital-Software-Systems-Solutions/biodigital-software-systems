@@ -39,7 +39,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read User|null $completedBy
  * @property-read User $creator
  * @property-read Department $department
- * @property-read \Illuminate\Support\Collection $backup_users
+ * @property-read \Illuminate\Support\Collection<int, \App\Models\User> $backup_users
  * @property-read bool $is_due_today
  * @property-read bool $is_overdue
  * @property-read \App\Models\Scheduling\Shift|null $shift
@@ -183,6 +183,8 @@ class DepartmentTodo extends Model
 
     /**
      * Set pre-loaded backup users to avoid N+1 queries.
+     *
+     * @param  \Illuminate\Support\Collection<int, User>  $users
      */
     public function setPreloadedBackupUsers(\Illuminate\Support\Collection $users): void
     {
@@ -215,7 +217,9 @@ class DepartmentTodo extends Model
         $allIds = $todos->flatMap(fn (self $todo): array => $todo->backup_assignees ?? [])->unique()->values();
 
         if ($allIds->isEmpty()) {
-            $todos->each(fn (self $todo) => $todo->setPreloadedBackupUsers(collect()));
+            /** @var \Illuminate\Support\Collection<int, User> $empty */
+            $empty = collect();
+            $todos->each(fn (self $todo) => $todo->setPreloadedBackupUsers($empty));
 
             return;
         }
@@ -224,7 +228,9 @@ class DepartmentTodo extends Model
 
         $todos->each(function (self $todo) use ($users): void {
             $ids = $todo->backup_assignees ?? [];
-            $todo->setPreloadedBackupUsers($users->only($ids)->values());
+            /** @var \Illuminate\Support\Collection<int, User> $backupUsers */
+            $backupUsers = $users->only($ids)->values();
+            $todo->setPreloadedBackupUsers($backupUsers);
         });
     }
 
@@ -484,8 +490,8 @@ class DepartmentTodo extends Model
                 'uuid' => $this->completedBy->uuid,
                 'name' => $this->completedBy->full_name ?? $this->completedBy->name,
             ] : null,
-            'created_at' => $this->created_at->format('Y-m-d H:i'),
-            'updated_at' => $this->updated_at->format('Y-m-d H:i'),
+            'created_at' => $this->created_at?->format('Y-m-d H:i'),
+            'updated_at' => $this->updated_at?->format('Y-m-d H:i'),
         ];
     }
 }

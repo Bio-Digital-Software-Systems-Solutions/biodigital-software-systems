@@ -167,6 +167,12 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::delete('tasks/{task}/comments/{comment}', [App\Http\Controllers\TaskController::class, 'deleteComment'])
         ->name('tasks.comments.delete');
 
+    // Subtasks
+    Route::post('tasks/{task}/subtasks', [App\Http\Controllers\TaskController::class, 'storeSubtask'])
+        ->name('tasks.subtasks.store');
+    Route::delete('tasks/{task}/subtasks/{subtask}', [App\Http\Controllers\TaskController::class, 'destroySubtask'])
+        ->name('tasks.subtasks.destroy');
+
     // Task Attachments
     Route::post('tasks/{task}/attachments', [App\Http\Controllers\TaskController::class, 'addAttachment'])
         ->name('tasks.attachments.add');
@@ -430,6 +436,66 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
             ->name('pending-count');
     });
 
+    // Routine routes (under department)
+    Route::prefix('departments/{department}/routines')->name('departments.routines.')->group(function (): void {
+        Route::get('/', [App\Http\Controllers\RoutineController::class, 'index'])
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\RoutineController::class, 'create'])
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\RoutineController::class, 'store'])
+            ->name('store');
+        Route::get('/{routine}', [App\Http\Controllers\RoutineController::class, 'show'])
+            ->name('show');
+        Route::get('/{routine}/edit', [App\Http\Controllers\RoutineController::class, 'edit'])
+            ->name('edit');
+        Route::put('/{routine}', [App\Http\Controllers\RoutineController::class, 'update'])
+            ->name('update');
+        Route::delete('/{routine}', [App\Http\Controllers\RoutineController::class, 'destroy'])
+            ->name('destroy');
+
+        // Status transitions
+        Route::post('/{routine}/submit', [App\Http\Controllers\RoutineController::class, 'submitForApproval'])
+            ->name('submit');
+        Route::post('/{routine}/approve', [App\Http\Controllers\RoutineController::class, 'approve'])
+            ->name('approve');
+        Route::post('/{routine}/reject', [App\Http\Controllers\RoutineController::class, 'reject'])
+            ->name('reject');
+        Route::post('/{routine}/activate', [App\Http\Controllers\RoutineController::class, 'activate'])
+            ->name('activate');
+        Route::post('/{routine}/archive', [App\Http\Controllers\RoutineController::class, 'archive'])
+            ->name('archive');
+
+        // Steps
+        Route::post('/{routine}/steps', [App\Http\Controllers\RoutineStepController::class, 'store'])
+            ->name('steps.store');
+        Route::put('/{routine}/steps/{step}', [App\Http\Controllers\RoutineStepController::class, 'update'])
+            ->name('steps.update');
+        Route::delete('/{routine}/steps/{step}', [App\Http\Controllers\RoutineStepController::class, 'destroy'])
+            ->name('steps.destroy');
+        Route::post('/{routine}/steps/reorder', [App\Http\Controllers\RoutineStepController::class, 'reorder'])
+            ->name('steps.reorder');
+        Route::post('/{routine}/steps/{step}/validate', [App\Http\Controllers\RoutineStepController::class, 'validateStep'])
+            ->name('steps.validate');
+        Route::post('/{routine}/steps/{step}/reject', [App\Http\Controllers\RoutineStepController::class, 'rejectStep'])
+            ->name('steps.reject');
+
+        // SOPs
+        Route::post('/{routine}/sops', [App\Http\Controllers\RoutineController::class, 'storeSop'])
+            ->name('sops.store');
+        Route::get('/{routine}/sops/{sop}/download', [App\Http\Controllers\RoutineController::class, 'downloadSop'])
+            ->name('sops.download');
+        Route::put('/{routine}/sops/{sop}/status', [App\Http\Controllers\RoutineController::class, 'updateSopStatus'])
+            ->name('sops.update-status');
+        Route::delete('/{routine}/sops/{sop}', [App\Http\Controllers\RoutineController::class, 'destroySop'])
+            ->name('sops.destroy');
+
+        // Assignees
+        Route::post('/{routine}/assignees', [App\Http\Controllers\RoutineController::class, 'addAssignee'])
+            ->name('assignees.store');
+        Route::delete('/{routine}/assignees/{assignee}', [App\Http\Controllers\RoutineController::class, 'removeAssignee'])
+            ->name('assignees.destroy');
+    });
+
     // Department TODOs routes
     Route::prefix('departments/{department}/todos')->name('departments.todos.')->group(function (): void {
         Route::get('/', [App\Http\Controllers\Scheduling\DepartmentTodoController::class, 'index'])
@@ -595,6 +661,35 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::delete('trainings/{training}', [App\Http\Controllers\TrainingController::class, 'destroy'])
         ->middleware('restrict.member')
         ->name('trainings.destroy');
+
+    // Training Access Management routes
+    Route::get('trainings/{training}/access', [App\Http\Controllers\TrainingController::class, 'accessIndex'])
+        ->middleware('restrict.member')
+        ->name('trainings.access');
+    Route::post('trainings/{training}/access/users', [App\Http\Controllers\TrainingController::class, 'grantUserAccess'])
+        ->middleware('restrict.member')
+        ->name('trainings.access.grant-users');
+    Route::delete('trainings/{training}/access/users', [App\Http\Controllers\TrainingController::class, 'revokeUserAccess'])
+        ->middleware('restrict.member')
+        ->name('trainings.access.revoke-users');
+    Route::post('trainings/{training}/access/roles', [App\Http\Controllers\TrainingController::class, 'grantRoleAccess'])
+        ->middleware('restrict.member')
+        ->name('trainings.access.grant-roles');
+    Route::delete('trainings/{training}/access/roles', [App\Http\Controllers\TrainingController::class, 'revokeRoleAccess'])
+        ->middleware('restrict.member')
+        ->name('trainings.access.revoke-roles');
+
+    // Training Share Link routes
+    Route::post('trainings/{training}/share-link', [App\Http\Controllers\TrainingController::class, 'generateShareLink'])
+        ->middleware('restrict.member')
+        ->name('trainings.generate-share-link');
+    Route::post('trainings/{training}/revoke-link', [App\Http\Controllers\TrainingController::class, 'revokeShareLink'])
+        ->middleware('restrict.member')
+        ->name('trainings.revoke-share-link');
+
+    // Public shared training routes (no auth required)
+    Route::get('/t/{token}', [App\Http\Controllers\TrainingController::class, 'showShared'])->name('trainings.shared')->withoutMiddleware(['auth', 'verified']);
+    Route::post('/t/{token}/enroll', [App\Http\Controllers\TrainingController::class, 'enrollViaShareLink'])->name('trainings.shared.enroll')->withoutMiddleware(['auth', 'verified']);
 
     // Student Training routes (authenticated)
     Route::get('student/dashboard', [App\Http\Controllers\TrainingController::class, 'studentDashboard'])

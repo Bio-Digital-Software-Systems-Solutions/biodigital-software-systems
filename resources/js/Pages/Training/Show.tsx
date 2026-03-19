@@ -11,9 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Separator } from '@/Components/ui/separator';
 import { Progress } from '@/Components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import {
+  LinkIcon,
+  ClipboardDocumentIcon,
+  ArrowDownTrayIcon,
+} from '@heroicons/react/24/outline';
 import {
   Calendar,
   Clock,
@@ -32,7 +38,8 @@ import {
   ClipboardList,
   Play,
   Settings,
-  Target
+  Target,
+  Share2,
 } from 'lucide-react';
 
 interface Topic {
@@ -91,6 +98,13 @@ interface Training {
   evaluations?: any[];
 }
 
+interface ShareLinkData {
+  url: string;
+  token: string;
+  expires_at: string;
+  qr_code: string | null;
+}
+
 interface Props {
   auth?: {
     user: {
@@ -103,6 +117,7 @@ interface Props {
     };
   };
   training: Training;
+  canManageAccess?: boolean;
 }
 
 // Composant modal d'inscription
@@ -660,13 +675,83 @@ const EnrollmentModal = ({ isOpen, onClose, training, auth }: EnrollmentModalPro
   );
 };
 
-const TrainingShow: React.FC<Props> = ({ auth, training }) => {
+const TrainingShow: React.FC<Props> = ({ auth, training, canManageAccess }) => {
   // Modal is closed by default, only opens when user clicks enroll button
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareData, setShareData] = useState<ShareLinkData | null>(null);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 
   // Helper function to check if user has a permission
   const hasPermission = (permission: string): boolean => {
     return auth?.user?.permissions?.includes(permission) || false;
+  };
+
+  const handleGenerateShareLink = async () => {
+    setIsGeneratingLink(true);
+    try {
+      const response = await fetch(route('trainings.generate-share-link', training.uuid), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+        body: JSON.stringify({
+          expires_in_hours: 24,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || 'Erreur lors de la génération du lien');
+      }
+
+      const data: ShareLinkData = await response.json();
+      setShareData(data);
+      setShareModalOpen(true);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de la génération du lien');
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!shareData) return;
+    try {
+      await navigator.clipboard.writeText(shareData.url);
+      toast.success('Lien copié dans le presse-papiers');
+    } catch {
+      const textArea = document.createElement('textarea');
+      textArea.value = shareData.url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      toast.success('Lien copié dans le presse-papiers');
+    }
+  };
+
+  const handleDownloadQrCode = () => {
+    if (!shareData || !shareData.qr_code) return;
+    const link = document.createElement('a');
+    link.href = shareData.qr_code;
+    link.download = `qr-code-${training.title}.svg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('QR Code téléchargé');
+  };
+
+  const formatExpirationDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const getLevelLabel = (level: string) => {
@@ -692,15 +777,29 @@ const TrainingShow: React.FC<Props> = ({ auth, training }) => {
       <Head title={training.title} />
 
       <div className="space-y-6 px-6 py-8">
-        {/* Bouton retour */}
-        <Button
-          variant="ghost"
-          onClick={() => window.history.back()}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour
-        </Button>
+        {/* Header actions */}
+        <div className="flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </Button>
+
+          {canManageAccess && (
+            <Button
+              variant="outline"
+              onClick={handleGenerateShareLink}
+              disabled={isGeneratingLink}
+              className="flex items-center gap-2"
+            >
+              <Share2 className="h-4 w-4" />
+              {isGeneratingLink ? 'Génération...' : 'Partager'}
+            </Button>
+          )}
+        </div>
 
         {/* En-tête de la formation */}
         <Card>
@@ -1005,6 +1104,88 @@ const TrainingShow: React.FC<Props> = ({ auth, training }) => {
           auth={auth}
         />
       )}
+
+      {/* Share Link Modal */}
+      <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LinkIcon className="h-5 w-5" />
+              Lien de partage
+            </DialogTitle>
+          </DialogHeader>
+
+          {shareData && (
+            <div className="px-3 pb-3 space-y-4">
+              {/* QR Code */}
+              {shareData.qr_code && (
+                <div className="flex justify-center">
+                  <div className="bg-white p-3 rounded-lg shadow-sm">
+                    <img
+                      src={shareData.qr_code}
+                      alt="QR Code de la formation"
+                      className="w-48 h-48"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Link */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Lien de partage
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={shareData.url}
+                    aria-label="Lien de partage de la formation"
+                    className="flex-1 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-gray-600 dark:text-gray-400"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyLink}
+                    title="Copier le lien"
+                  >
+                    <ClipboardDocumentIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Expiration info */}
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                <p>
+                  <span className="font-medium">Expire le:</span>{' '}
+                  {formatExpirationDate(shareData.expires_at)}
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                {shareData.qr_code && (
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={handleDownloadQrCode}
+                  >
+                    <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                    Télécharger QR Code
+                  </Button>
+                )}
+                <Button
+                  className="flex-1"
+                  onClick={handleCopyLink}
+                >
+                  <ClipboardDocumentIcon className="h-4 w-4 mr-2" />
+                  Copier le lien
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 

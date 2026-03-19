@@ -19,11 +19,16 @@ class EmployeeSeeder extends Seeder
         $defaultDepartment = $departments->first();
 
         // Create a manager first (to use as manager for other employees)
-        $managerUser = User::factory()->create([
-            'first_name' => 'Marie',
-            'last_name' => 'Schmidt',
-            'email' => 'marie.schmidt@example.com',
-        ]);
+        $managerUser = User::firstOrCreate(
+            ['email' => 'marie.schmidt@example.com'],
+            [
+                'first_name' => 'Marie',
+                'last_name' => 'Schmidt',
+                'email' => 'marie.schmidt@example.com',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
 
         $manager = Employee::factory()
             ->forUser($managerUser)

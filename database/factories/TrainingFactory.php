@@ -30,6 +30,23 @@ class TrainingFactory extends Factory
             'rating' => fake()->randomFloat(2, 3.5, 5.0),
             'students_count' => fake()->numberBetween(0, 500),
             'is_active' => fake()->boolean(80),
+            'visibility' => 'public',
         ];
+    }
+
+    /**
+     * Set the training as public.
+     */
+    public function public(): static
+    {
+        return $this->state(fn (array $attributes): array => ['visibility' => 'public']);
+    }
+
+    /**
+     * Set the training as private.
+     */
+    public function private(): static
+    {
+        return $this->state(fn (array $attributes): array => ['visibility' => 'private']);
     }
 }

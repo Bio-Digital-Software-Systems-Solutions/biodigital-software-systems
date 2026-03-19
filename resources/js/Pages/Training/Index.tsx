@@ -1,7 +1,7 @@
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Button } from '@/Components/ui/button';
-import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon, XMarkIcon, Squares2X2Icon, ListBulletIcon, TableCellsIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon, XMarkIcon, Squares2X2Icon, ListBulletIcon, TableCellsIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { useState, useEffect } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { PageProps } from '@/Types';
@@ -22,6 +22,7 @@ interface Training {
     rating: string;
     students_count: number;
     is_active: boolean;
+    visibility: 'public' | 'private';
     created_at: string;
 }
 
@@ -37,6 +38,7 @@ interface Props extends PageProps {
         search?: string;
         level?: string;
         category?: string;
+        visibility?: string;
     };
 }
 
@@ -45,6 +47,7 @@ export default function Index({ trainings, filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [level, setLevel] = useState(filters.level || '');
     const [category, setCategory] = useState(filters.category || '');
+    const [visibility, setVisibility] = useState(filters.visibility || '');
     const [viewMode, setViewMode] = useState<'table' | 'list' | 'grid'>('table');
     const [trainingToDelete, setTrainingToDelete] = useState<Training | null>(null);
 
@@ -55,7 +58,7 @@ export default function Index({ trainings, filters }: Props) {
 
     const debouncedSearch = useDebouncedCallback((value: string) => {
         router.get('/trainings',
-            { search: value, level, category },
+            { search: value, level, category, visibility },
             { preserveState: true, replace: true }
         );
     }, 300);
@@ -68,7 +71,7 @@ export default function Index({ trainings, filters }: Props) {
     const handleLevelChange = (value: string) => {
         setLevel(value);
         router.get('/trainings',
-            { search, level: value, category },
+            { search, level: value, category, visibility },
             { preserveState: true, replace: true }
         );
     };
@@ -76,7 +79,15 @@ export default function Index({ trainings, filters }: Props) {
     const handleCategoryChange = (value: string) => {
         setCategory(value);
         router.get('/trainings',
-            { search, level, category: value },
+            { search, level, category: value, visibility },
+            { preserveState: true, replace: true }
+        );
+    };
+
+    const handleVisibilityChange = (value: string) => {
+        setVisibility(value);
+        router.get('/trainings',
+            { search, level, category, visibility: value },
             { preserveState: true, replace: true }
         );
     };
@@ -85,10 +96,11 @@ export default function Index({ trainings, filters }: Props) {
         setSearch('');
         setLevel('');
         setCategory('');
+        setVisibility('');
         router.get('/trainings', {}, { preserveState: true, replace: true });
     };
 
-    const hasActiveFilters = search || level || category;
+    const hasActiveFilters = search || level || category || visibility;
 
     const handleDelete = (training: Training) => {
         setTrainingToDelete(training);
@@ -172,6 +184,18 @@ export default function Index({ trainings, filters }: Props) {
                                         className="w-full sm:w-[180px] flex-shrink-0 px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm sm:text-base"
                                     />
 
+                                    {/* Visibility Filter */}
+                                    <select
+                                        value={visibility}
+                                        onChange={(e) => handleVisibilityChange(e.target.value)}
+                                        title="Filtrer par visibilit&eacute;"
+                                        className="w-full sm:w-[160px] flex-shrink-0 px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm sm:text-base"
+                                    >
+                                        <option value="">Toutes</option>
+                                        <option value="public">Public</option>
+                                        <option value="private">Priv&eacute;</option>
+                                    </select>
+
                                     <div className="flex items-center gap-2">
                                         {/* Clear Filters */}
                                         {hasActiveFilters && (
@@ -241,8 +265,16 @@ export default function Index({ trainings, filters }: Props) {
                                         )}
                                         {category && (
                                             <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full">
-                                                Catégorie: {category}
+                                                Cat&eacute;gorie: {category}
                                                 <button onClick={() => handleCategoryChange('')} className="hover:bg-green-200 dark:hover:bg-green-800/50 rounded-full p-0.5">
+                                                    <XMarkIcon className="h-3 w-3" />
+                                                </button>
+                                            </span>
+                                        )}
+                                        {visibility && (
+                                            <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-full">
+                                                Visibilit&eacute;: {visibility === 'public' ? 'Public' : 'Priv\u00e9'}
+                                                <button onClick={() => handleVisibilityChange('')} className="hover:bg-amber-200 dark:hover:bg-amber-800/50 rounded-full p-0.5">
                                                     <XMarkIcon className="h-3 w-3" />
                                                 </button>
                                             </span>
@@ -303,13 +335,23 @@ export default function Index({ trainings, filters }: Props) {
                                                         {training.students_count}
                                                     </td>
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                            training.is_active
-                                                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                                                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                                        }`}>
-                                                            {training.is_active ? 'Actif' : 'Inactif'}
-                                                        </span>
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full w-fit ${
+                                                                training.is_active
+                                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                                            }`}>
+                                                                {training.is_active ? 'Actif' : 'Inactif'}
+                                                            </span>
+                                                            <span className={`px-2 inline-flex items-center gap-1 text-xs leading-5 font-semibold rounded-full w-fit ${
+                                                                training.visibility === 'private'
+                                                                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+                                                                    : 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200'
+                                                            }`}>
+                                                                {training.visibility === 'private' && <LockClosedIcon className="h-3 w-3" />}
+                                                                {training.visibility === 'private' ? 'Priv\u00e9' : 'Public'}
+                                                            </span>
+                                                        </div>
                                                     </td>
                                                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                         <div className="flex justify-end items-center gap-2 sm:gap-3">
@@ -320,6 +362,15 @@ export default function Index({ trainings, filters }: Props) {
                                                             >
                                                                 <EyeIcon className="h-5 w-5" />
                                                             </Link>
+                                                            {canEditTrainings && training.visibility === 'private' && (
+                                                                <Link
+                                                                    href={route('trainings.access', training.uuid)}
+                                                                    className="text-amber-600 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300"
+                                                                    title="G&eacute;rer les acc&egrave;s"
+                                                                >
+                                                                    <LockClosedIcon className="h-5 w-5" />
+                                                                </Link>
+                                                            )}
                                                             {canEditTrainings && (
                                                                 <Link
                                                                     href={route('trainings.edit', training.uuid)}

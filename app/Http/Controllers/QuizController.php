@@ -20,7 +20,7 @@ class QuizController extends Controller
         $this->authorize('manage quizzes');
 
         // Récupérer TOUS les quiz pour les enseignants/admins (pas seulement les actifs)
-        $quizzes = Quiz::where('training_id', $training->id)->with('attempts')->get()->map(fn($quiz): array => [
+        $quizzes = Quiz::where('training_id', $training->id)->with('attempts')->get()->map(fn ($quiz): array => [
             'id' => $quiz->id,
             'uuid' => $quiz->uuid,
             'title' => $quiz->title,
@@ -54,7 +54,7 @@ class QuizController extends Controller
         // Load training classes with their materials and student counts
         $training->load(['classes.materials', 'classes.students']);
 
-        $trainingClasses = $training->classes->map(fn($class): array => [
+        $trainingClasses = $training->classes->map(fn ($class): array => [
             'id' => $class->id,
             'uuid' => $class->uuid,
             'name' => $class->name,
@@ -63,7 +63,7 @@ class QuizController extends Controller
             'end_time' => $class->end_time,
             'room' => $class->room,
             'students_count' => $class->students->count(),
-            'materials' => $class->materials->map(fn($material): array => [
+            'materials' => $class->materials->map(fn ($material): array => [
                 'id' => $material->id,
                 'uuid' => $material->uuid,
                 'title' => $material->title,
@@ -142,7 +142,7 @@ class QuizController extends Controller
         }
 
         // Assign to training classes if specified
-        if (!empty($validated['assigned_classes'])) {
+        if (! empty($validated['assigned_classes'])) {
             $classAssignments = [];
             foreach ($validated['assigned_classes'] as $classId) {
                 $classAssignments[$classId] = [
@@ -156,7 +156,7 @@ class QuizController extends Controller
         }
 
         // Assign to training class materials if specified
-        if (!empty($validated['assigned_materials'])) {
+        if (! empty($validated['assigned_materials'])) {
             $materialAssignments = [];
             foreach ($validated['assigned_materials'] as $index => $materialId) {
                 $materialAssignments[$materialId] = [
@@ -195,7 +195,7 @@ class QuizController extends Controller
         // Load training classes with their materials and student counts
         $training->load(['classes.materials', 'classes.students']);
 
-        $trainingClasses = $training->classes->map(fn($class): array => [
+        $trainingClasses = $training->classes->map(fn ($class): array => [
             'id' => $class->id,
             'uuid' => $class->uuid,
             'name' => $class->name,
@@ -204,7 +204,7 @@ class QuizController extends Controller
             'end_time' => $class->end_time,
             'room' => $class->room,
             'students_count' => $class->students->count(),
-            'materials' => $class->materials->map(fn($material): array => [
+            'materials' => $class->materials->map(fn ($material): array => [
                 'id' => $material->id,
                 'uuid' => $material->uuid,
                 'title' => $material->title,
@@ -387,20 +387,20 @@ class QuizController extends Controller
         $assignmentChanges = [];
 
         if ($classesToAdd !== []) {
-            $assignmentChanges[] = count($classesToAdd) . ' classe(s) ajoutée(s)';
+            $assignmentChanges[] = count($classesToAdd).' classe(s) ajoutée(s)';
         }
         if ($classesToRemove !== []) {
-            $assignmentChanges[] = count($classesToRemove) . ' classe(s) retirée(s)';
+            $assignmentChanges[] = count($classesToRemove).' classe(s) retirée(s)';
         }
         if ($materialsToAdd !== []) {
-            $assignmentChanges[] = count($materialsToAdd) . ' support(s) ajouté(s)';
+            $assignmentChanges[] = count($materialsToAdd).' support(s) ajouté(s)';
         }
         if ($materialsToRemove !== []) {
-            $assignmentChanges[] = count($materialsToRemove) . ' support(s) retiré(s)';
+            $assignmentChanges[] = count($materialsToRemove).' support(s) retiré(s)';
         }
 
         if ($assignmentChanges !== []) {
-            $successMessage .= ' (' . implode(', ', $assignmentChanges) . ')';
+            $successMessage .= ' ('.implode(', ', $assignmentChanges).')';
         }
 
         return redirect()->route('trainings.quizzes.index', $training)
@@ -438,7 +438,7 @@ class QuizController extends Controller
                 'id' => $attempt->id,
                 'student' => [
                     'id' => $attempt->student->id,
-                    'name' => $attempt->student->first_name . ' ' . $attempt->student->last_name,
+                    'name' => $attempt->student->first_name.' '.$attempt->student->last_name,
                     'email' => $attempt->student->email,
                 ],
                 'score' => $attempt->score,
@@ -488,7 +488,7 @@ class QuizController extends Controller
         }
 
         // Check if quiz is available
-        if (!$quiz->is_active) {
+        if (! $quiz->is_active) {
             return back()->with('error', 'Ce quiz n\'est pas disponible actuellement.');
         }
 
@@ -516,7 +516,7 @@ class QuizController extends Controller
             ->where('status', 'in_progress')
             ->first();
 
-        if (!$existingAttempt) {
+        if (! $existingAttempt) {
             // Create new attempt
             $existingAttempt = QuizAttempt::create([
                 'quiz_id' => $quiz->id,
@@ -559,6 +559,7 @@ class QuizController extends Controller
                     'type' => $q->type,
                     'options' => $q->options,
                     'points' => $q->points,
+                    'correct_answers_count' => count($q->correct_answers),
                     // Don't send correct_answers to frontend
                 ]),
             ],
@@ -603,7 +604,7 @@ class QuizController extends Controller
 
         foreach ($validated['answers'] as $answerData) {
             $question = $quiz->questions->find($answerData['question_id']);
-            if (!$question) {
+            if (! $question) {
                 continue;
             }
 
@@ -651,7 +652,7 @@ class QuizController extends Controller
         $user = auth()->user();
 
         // Verify it's the user's attempt or user has permission to view all results
-        if ($attempt->student_id !== $user->id && !$user->can('grade quizzes')) {
+        if ($attempt->student_id !== $user->id && ! $user->can('grade quizzes')) {
             abort(403, 'Accès non autorisé.');
         }
 
@@ -700,7 +701,7 @@ class QuizController extends Controller
                 'title' => $attempt->quiz->training->title,
             ],
             'student' => [
-                'name' => $attempt->student->first_name . ' ' . $attempt->student->last_name,
+                'name' => $attempt->student->first_name.' '.$attempt->student->last_name,
             ],
             'questionsWithAnswers' => $questionsWithAnswers,
         ]);
@@ -721,11 +722,11 @@ class QuizController extends Controller
             ->orderBy('completed_at', 'desc')
             ->get();
 
-        $filename = 'quiz_results_' . $quiz->title . '_' . now()->format('Y-m-d') . '.csv';
+        $filename = 'quiz_results_'.$quiz->title.'_'.now()->format('Y-m-d').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $callback = function () use ($attempts, $quiz): void {
@@ -754,7 +755,7 @@ class QuizController extends Controller
                 $timeTaken = $attempt->started_at->diff($attempt->completed_at)->format('%H:%I:%S');
 
                 fputcsv($file, [
-                    $attempt->student->first_name . ' ' . $attempt->student->last_name,
+                    $attempt->student->first_name.' '.$attempt->student->last_name,
                     $attempt->student->email,
                     $attempt->score,
                     $quiz->max_score,
@@ -785,7 +786,7 @@ class QuizController extends Controller
         $allQuizzes = Quiz::with(['training', 'attempts', 'questions'])
             ->whereHas('training', function ($query) use ($user): void {
                 // If user can't manage all trainings, filter by trainings they can access
-                if (!$user->can('manage system settings')) {
+                if (! $user->can('manage system settings')) {
                     $query->whereHas('students', function ($q) use ($user): void {
                         $q->where('users.id', $user->id);
                     });
@@ -799,8 +800,8 @@ class QuizController extends Controller
             'draft_quizzes' => $allQuizzes->where('status', 'draft')->count(),
             'published_quizzes' => $allQuizzes->where('status', 'published')->count(),
             'archived_quizzes' => $allQuizzes->where('status', 'archived')->count(),
-            'total_questions' => $allQuizzes->sum(fn($q) => $q->questions->count()),
-            'total_attempts' => $allQuizzes->sum(fn($q) => $q->attempts->where('status', 'completed')->count()),
+            'total_questions' => $allQuizzes->sum(fn ($q) => $q->questions->count()),
+            'total_attempts' => $allQuizzes->sum(fn ($q) => $q->attempts->where('status', 'completed')->count()),
             'average_score' => 0,
             'pass_rate' => 0,
         ];
@@ -820,8 +821,7 @@ class QuizController extends Controller
         }
 
         if ($allAttempts->count() > 0) {
-            $stats['average_score'] = round($allAttempts->avg(fn($a): int|float =>
-                $a['max_score'] > 0 ? ($a['score'] / $a['max_score']) * 100 : 0
+            $stats['average_score'] = round($allAttempts->avg(fn ($a): int|float => $a['max_score'] > 0 ? ($a['score'] / $a['max_score']) * 100 : 0
             ), 2);
             $stats['pass_rate'] = round(($allAttempts->where('passed', true)->count() / $allAttempts->count()) * 100, 2);
         }
@@ -830,7 +830,7 @@ class QuizController extends Controller
         $recentAttempts = QuizAttempt::with(['quiz.training', 'student'])
             ->whereHas('quiz', function ($query) use ($user): void {
                 $query->whereHas('training', function ($q) use ($user): void {
-                    if (!$user->can('manage system settings')) {
+                    if (! $user->can('manage system settings')) {
                         $q->whereHas('students', function ($u) use ($user): void {
                             $u->where('users.id', $user->id);
                         });
@@ -841,9 +841,9 @@ class QuizController extends Controller
             ->orderBy('completed_at', 'desc')
             ->limit(10)
             ->get()
-            ->map(fn($attempt): array => [
+            ->map(fn ($attempt): array => [
                 'id' => $attempt->id,
-                'student_name' => $attempt->student->first_name . ' ' . $attempt->student->last_name,
+                'student_name' => $attempt->student->first_name.' '.$attempt->student->last_name,
                 'quiz_title' => $attempt->quiz->title,
                 'training_name' => $attempt->quiz->training->title,
                 'score' => $attempt->score,
@@ -856,7 +856,7 @@ class QuizController extends Controller
         // Quiz performance breakdown
         $quizPerformance = $allQuizzes->map(function ($quiz): array {
             $completedAttempts = $quiz->attempts->where('status', 'completed');
-            $passedAttempts = $completedAttempts->where(fn($a): bool => $a->score >= $quiz->passing_score);
+            $passedAttempts = $completedAttempts->where(fn ($a): bool => $a->score >= $quiz->passing_score);
 
             return [
                 'uuid' => $quiz->uuid,
@@ -869,8 +869,7 @@ class QuizController extends Controller
                     ? round(($passedAttempts->count() / $completedAttempts->count()) * 100, 2)
                     : 0,
                 'average_score' => $completedAttempts->count() > 0
-                    ? round($completedAttempts->avg(fn($a): int|float =>
-                        $quiz->max_score > 0 ? ($a->score / $quiz->max_score) * 100 : 0
+                    ? round($completedAttempts->avg(fn ($a): int|float => $quiz->max_score > 0 ? ($a->score / $quiz->max_score) * 100 : 0
                     ), 2)
                     : 0,
             ];
@@ -891,7 +890,7 @@ class QuizController extends Controller
         $this->authorize('edit quizzes');
 
         $quiz->update([
-            'is_active' => !$quiz->is_active
+            'is_active' => ! $quiz->is_active,
         ]);
 
         return back()->with('success', $quiz->is_active

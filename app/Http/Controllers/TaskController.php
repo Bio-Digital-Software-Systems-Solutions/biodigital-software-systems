@@ -17,6 +17,7 @@ use App\Notifications\TaskCreated;
 use App\Notifications\UserMentionedInComment;
 use App\Services\Comment\MentionService;
 use App\Services\ProjectStatisticsService;
+use App\Services\TaskActivityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -27,9 +28,9 @@ class TaskController extends Controller
     public function __construct()
     {
         $this->middleware('can:view tasks')->only(['index', 'show']);
-        $this->middleware('can:create tasks')->only(['create', 'store']);
+        $this->middleware('can:create tasks')->only(['create', 'store', 'storeSubtask']);
         $this->middleware('can:edit tasks')->only(['edit', 'update', 'updateStatus', 'toggleComplete', 'bulkToggleComplete', 'inlineUpdate']);
-        $this->middleware('can:delete tasks')->only(['destroy']);
+        $this->middleware('can:delete tasks')->only(['destroy', 'destroySubtask']);
     }
 
     public function index()
@@ -226,8 +227,11 @@ class TaskController extends Controller
             'program',
             'project',
             'assignedUser',
+            'parent',
             'participants.user',
             'taskAttachments.user',
+            'subtasks.status',
+            'subtasks.assignedUser',
         ]);
 
         // Load comments separately to properly eager-load nested relations
@@ -247,10 +251,16 @@ class TaskController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->filter(function ($activity): bool {
-                // Include created events or status_id changes
+                // Include created events, status_id changes, and subtask events
                 if ($activity->description === 'created') {
                     return true;
                 }
+
+                $eventType = $activity->properties['type'] ?? null;
+                if (in_array($eventType, ['subtask_added', 'subtask_removed'])) {
+                    return true;
+                }
+
                 $attributes = $activity->properties['attributes'] ?? [];
 
                 return isset($attributes['status_id']);
@@ -265,6 +275,8 @@ class TaskController extends Controller
                 return [
                     'id' => $activity->id,
                     'description' => $activity->description,
+                    'event' => $activity->event ?? null,
+                    'properties' => $activity->properties ?? [],
                     'old_status' => $oldStatus ? ['id' => $oldStatus->id, 'name' => $oldStatus->name, 'color' => $oldStatus->color] : null,
                     'new_status' => $newStatus ? ['id' => $newStatus->id, 'name' => $newStatus->name, 'color' => $newStatus->color] : null,
                     'causer' => $activity->causer ? [
@@ -278,10 +290,12 @@ class TaskController extends Controller
             ->values();
 
         $users = User::all();
+        $statuses = Status::all();
 
         return Inertia::render('Tasks/Show', [
             'task' => $task,
             'users' => $users,
+            'statuses' => $statuses,
             'activities' => $activities,
         ]);
     }
@@ -467,6 +481,55 @@ class TaskController extends Controller
         }
 
         return back()->with('success', 'Task progress updated successfully.');
+    }
+
+    // ==========================================
+    // Subtasks
+    // ==========================================
+
+    /**
+     * Create a subtask for a given task.
+     */
+    public function storeSubtask(Request $request, Task $task)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'due_date' => 'nullable|date',
+            'priority' => 'required|in:low,medium,high',
+            'status_id' => 'required|exists:statuses,id',
+            'assigned_to' => 'nullable|exists:users,id',
+        ]);
+
+        $validated['parent_id'] = $task->id;
+        $validated['taskable_type'] = $task->taskable_type;
+        $validated['taskable_id'] = $task->taskable_id;
+        $validated['project_id'] = $task->project_id;
+        $validated['program_id'] = $task->program_id;
+
+        $subtask = Task::create($validated);
+
+        (new TaskActivityService)->logSubtaskAdded($task, $subtask);
+
+        return back()->with('success', 'Sous-tâche créée avec succès.');
+    }
+
+    /**
+     * Delete a subtask.
+     */
+    public function destroySubtask(Task $task, string $subtask)
+    {
+        $subtask = Task::where('uuid', $subtask)->firstOrFail();
+
+        if ($subtask->parent_id !== $task->id) {
+            abort(403, 'This subtask does not belong to the specified task.');
+        }
+
+        (new TaskActivityService)->logSubtaskRemoved($task, $subtask);
+
+        $subtask->delete();
+
+        return back()->with('success', 'Sous-tâche supprimée avec succès.');
     }
 
     // ==========================================

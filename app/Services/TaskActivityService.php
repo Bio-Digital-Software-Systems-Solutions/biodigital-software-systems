@@ -174,6 +174,40 @@ class TaskActivityService
     }
 
     /**
+     * Log a subtask added activity.
+     */
+    public function logSubtaskAdded(Task $parentTask, Task $subtask, ?User $causer = null): Activity
+    {
+        return activity()
+            ->performedOn($parentTask)
+            ->causedBy($causer ?? auth()->user())
+            ->withProperties([
+                'type' => 'subtask_added',
+                'subtask_id' => $subtask->id,
+                'subtask_uuid' => $subtask->uuid,
+                'subtask_title' => $subtask->title,
+            ])
+            ->event('subtask_added')
+            ->log("Sous-tâche ajoutée : {$subtask->title}");
+    }
+
+    /**
+     * Log a subtask removed activity.
+     */
+    public function logSubtaskRemoved(Task $parentTask, Task $subtask, ?User $causer = null): Activity
+    {
+        return activity()
+            ->performedOn($parentTask)
+            ->causedBy($causer ?? auth()->user())
+            ->withProperties([
+                'type' => 'subtask_removed',
+                'subtask_title' => $subtask->title,
+            ])
+            ->event('subtask_removed')
+            ->log("Sous-tâche supprimée : {$subtask->title}");
+    }
+
+    /**
      * Get all activities for a task.
      *
      * @return \Illuminate\Database\Eloquent\Collection<int, Activity>

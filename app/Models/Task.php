@@ -281,6 +281,16 @@ class Task extends Model
     }
 
     /**
+     * Get the subtasks (children) of this task.
+     *
+     * @return HasMany<Task, $this>
+     */
+    public function subtasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'parent_id');
+    }
+
+    /**
      * Get the epic task.
      */
     public function epic(): BelongsTo
@@ -290,6 +300,9 @@ class Task extends Model
 
     /**
      * Get the child tasks of this epic.
+     */
+    /**
+     * @return HasMany<Task, $this>
      */
     public function childTasks(): HasMany
     {

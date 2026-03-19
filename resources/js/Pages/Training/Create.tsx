@@ -26,6 +26,7 @@ export default function Create({ teachers = [] }: Props) {
         category: string;
         image: File | null;
         is_active: boolean;
+        visibility: 'public' | 'private';
         teacher_id: number | null;
         topics: Topic[];
     }>({
@@ -37,6 +38,7 @@ export default function Create({ teachers = [] }: Props) {
         category: '',
         image: null,
         is_active: true,
+        visibility: 'public',
         teacher_id: null,
         topics: [],
     });
@@ -265,6 +267,43 @@ export default function Create({ teachers = [] }: Props) {
                                             </span>
                                         </label>
                                         {errors.is_active && <p className="text-red-500 text-sm mt-1">{errors.is_active}</p>}
+                                    </div>
+
+                                    {/* Visibility */}
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Visibilit&eacute;
+                                        </label>
+                                        <div className="flex gap-6">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="visibility"
+                                                    value="public"
+                                                    checked={data.visibility === 'public'}
+                                                    onChange={() => setData('visibility', 'public')}
+                                                    className="w-4 h-4 text-violet-600 focus:ring-violet-500"
+                                                />
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">Public</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="visibility"
+                                                    value="private"
+                                                    checked={data.visibility === 'private'}
+                                                    onChange={() => setData('visibility', 'private')}
+                                                    className="w-4 h-4 text-violet-600 focus:ring-violet-500"
+                                                />
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">Priv&eacute;</span>
+                                            </label>
+                                        </div>
+                                        {data.visibility === 'private' && (
+                                            <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                                                Cette formation ne sera visible que pour les utilisateurs autoris&eacute;s. Vous pourrez configurer les acc&egrave;s apr&egrave;s la cr&eacute;ation.
+                                            </p>
+                                        )}
+                                        {errors.visibility && <p className="text-red-500 text-sm mt-1">{errors.visibility}</p>}
                                     </div>
                                 </div>
 

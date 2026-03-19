@@ -242,6 +242,7 @@ export interface Task {
     status_id: number;
     program_id: number | null;
     project_id?: number | null;
+    parent_id?: number | null;
     assigned_to: number;
     status: Status;
     program?: Program;
@@ -249,6 +250,7 @@ export interface Task {
     participants?: TaskParticipant[];
     comments?: TaskComment[];
     task_attachments?: TaskAttachment[];
+    subtasks?: Task[];
     created_at: string;
     updated_at: string;
 }
@@ -302,6 +304,86 @@ export interface Group {
     members_count: number;
     created_at: string;
     updated_at: string;
+}
+
+// Routine types
+
+export interface Routine {
+    id: number;
+    uuid: string;
+    department_id: number;
+    name: string;
+    description: string | null;
+    status: 'draft' | 'pending_approval' | 'approved' | 'active' | 'archived';
+    frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'on_demand';
+    responsible: User | null;
+    creator: User;
+    approver: User | null;
+    approved_at: string | null;
+    activated_at: string | null;
+    estimated_duration_minutes: number | null;
+    is_active: boolean;
+    is_editable: boolean;
+    sort_order: number;
+    steps: RoutineStep[];
+    assignees: RoutineAssignee[];
+    sops: RoutineSop[];
+    all_steps_count?: number;
+    all_sops_count?: number;
+    total_estimated_duration: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface RoutineStep {
+    id: number;
+    uuid: string;
+    routine_id: number;
+    parent_id: number | null;
+    name: string;
+    description: string | null;
+    instructions: string | null;
+    duration_minutes: number | null;
+    sort_order: number;
+    is_required: boolean;
+    requires_validation: boolean;
+    validation_status: 'pending' | 'validated' | 'rejected';
+    validator: User | null;
+    validated_at: string | null;
+    validation_notes: string | null;
+    children: RoutineStep[];
+    assignees: RoutineAssignee[];
+    sops: RoutineSop[];
+}
+
+export interface RoutineAssignee {
+    id: number;
+    routine_id: number | null;
+    routine_step_id: number | null;
+    user_id: number;
+    user: User;
+    role: 'assignee' | 'validator' | 'observer';
+    assigned_by_user: User | null;
+    assigned_at: string | null;
+}
+
+export interface RoutineSop {
+    id: number;
+    uuid: string;
+    routine_id: number;
+    routine_step_id: number | null;
+    title: string;
+    description: string | null;
+    original_name: string;
+    file_name: string;
+    file_url: string;
+    mime_type: string;
+    file_size: number;
+    formatted_file_size: string;
+    extension: string;
+    file_type: string;
+    uploader: User | null;
+    sort_order: number;
 }
 
 // Re-export all types from Project.ts

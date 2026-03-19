@@ -85,7 +85,7 @@ export default function AttemptResults({ attempt, quiz, training, student, quest
         <DashboardLayout>
             <Head title={`Résultats - ${quiz.title}`} />
 
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <Link

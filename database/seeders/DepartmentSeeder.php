@@ -168,16 +168,20 @@ class DepartmentSeeder extends Seeder
         $startDate = Carbon::now()->startOfWeek();
         $creator = $departmentMembers->first();
 
-        $weeklySchedule = WeeklySchedule::create([
-            'uuid' => Str::uuid(),
-            'department_id' => $department->id,
-            'week_start' => $startDate->toDateString(),
-            'week_end' => $startDate->copy()->endOfWeek()->toDateString(),
-            'status' => 'published',
-            'created_by' => $creator->id,
-            'published_by' => $creator->id,
-            'published_at' => now(),
-        ]);
+        $weeklySchedule = WeeklySchedule::firstOrCreate(
+            [
+                'department_id' => $department->id,
+                'week_start' => $startDate->toDateString(),
+            ],
+            [
+                'uuid' => Str::uuid(),
+                'week_end' => $startDate->copy()->endOfWeek()->toDateString(),
+                'status' => 'published',
+                'created_by' => $creator->id,
+                'published_by' => $creator->id,
+                'published_at' => now(),
+            ]
+        );
 
         foreach ($shiftConfigs as $i => $config) {
             $user = $departmentMembers->random();
@@ -454,29 +458,37 @@ class DepartmentSeeder extends Seeder
         $now = Carbon::now();
 
         // Create document categories
-        DepartmentDocumentCategory::create([
-            'uuid' => Str::uuid(),
-            'department_id' => $department->id,
-            'name' => 'Berichte',
-            'slug' => 'berichte',
-            'year' => $now->year,
-            'month' => $now->month,
-            'is_system' => false,
-            'sort_order' => 0,
-            'created_by' => $uploader->id,
-        ]);
+        DepartmentDocumentCategory::firstOrCreate(
+            [
+                'department_id' => $department->id,
+                'year' => $now->year,
+                'month' => $now->month,
+                'slug' => 'berichte',
+            ],
+            [
+                'uuid' => Str::uuid(),
+                'name' => 'Berichte',
+                'is_system' => false,
+                'sort_order' => 0,
+                'created_by' => $uploader->id,
+            ]
+        );
 
-        DepartmentDocumentCategory::create([
-            'uuid' => Str::uuid(),
-            'department_id' => $department->id,
-            'name' => 'Vorlagen',
-            'slug' => 'vorlagen',
-            'year' => $now->year,
-            'month' => $now->month,
-            'is_system' => false,
-            'sort_order' => 1,
-            'created_by' => $uploader->id,
-        ]);
+        DepartmentDocumentCategory::firstOrCreate(
+            [
+                'department_id' => $department->id,
+                'year' => $now->year,
+                'month' => $now->month,
+                'slug' => 'vorlagen',
+            ],
+            [
+                'uuid' => Str::uuid(),
+                'name' => 'Vorlagen',
+                'is_system' => false,
+                'sort_order' => 1,
+                'created_by' => $uploader->id,
+            ]
+        );
 
         // Seed placeholder documents (no actual files)
         $documents = [

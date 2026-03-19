@@ -1172,6 +1172,25 @@ export default function ShowDepartment({ department, availableUsers, availableEm
                                             </Button>
                                         </CardContent>
                                     </Card>
+
+                                    <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
+                                        <CardContent className="pt-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                                                    <ArrowPathIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">Routines</p>
+                                                    <p className="text-lg font-bold text-purple-900 dark:text-purple-100">Processus standards</p>
+                                                </div>
+                                            </div>
+                                            <Button variant="outline" size="sm" className="w-full mt-4" asChild>
+                                                <Link href={`/departments/${department.uuid}/routines`}>
+                                                    Voir les routines
+                                                </Link>
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
                                 </div>
 
                                 {canManage && (
@@ -1191,6 +1210,11 @@ export default function ShowDepartment({ department, availableUsers, availableEm
                                             <Button variant="outline" asChild>
                                                 <Link href={`/departments/${department.uuid}/swap-requests`}>
                                                     Échanges de shifts
+                                                </Link>
+                                            </Button>
+                                            <Button variant="outline" asChild>
+                                                <Link href={`/departments/${department.uuid}/routines`}>
+                                                    Gérer les routines
                                                 </Link>
                                             </Button>
                                         </div>

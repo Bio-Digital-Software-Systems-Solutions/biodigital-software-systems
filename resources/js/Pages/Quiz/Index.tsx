@@ -16,7 +16,8 @@ import {
     Calendar,
     Target,
     Power,
-    PowerOff
+    PowerOff,
+    Play
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
@@ -104,6 +105,14 @@ export default function QuizIndex({ training, quizzes }: Props) {
         });
     };
 
+    const isQuizAvailable = (quiz: Quiz): boolean => {
+        if (!quiz.is_active || quiz.status !== 'published') return false;
+        const now = new Date();
+        if (quiz.available_from && new Date(quiz.available_from) > now) return false;
+        if (quiz.available_until && new Date(quiz.available_until) < now) return false;
+        return true;
+    };
+
     const getStatusBadge = (quiz: Quiz) => {
         switch (quiz.status) {
             case 'draft':
@@ -150,7 +159,7 @@ export default function QuizIndex({ training, quizzes }: Props) {
         <DashboardLayout>
             <Head title={`Quiz - ${training.name}`} />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-4">
@@ -284,6 +293,16 @@ export default function QuizIndex({ training, quizzes }: Props) {
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2 ml-4">
+                                            {isQuizAvailable(quiz) && (
+                                                <Link
+                                                    href={route('quizzes.start', quiz.uuid)}
+                                                >
+                                                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                                                        <Play className="h-4 w-4 mr-1" />
+                                                        Démarrer
+                                                    </Button>
+                                                </Link>
+                                            )}
                                             <Link
                                                 href={route('trainings.quizzes.results', [training.uuid, quiz.uuid])}
                                             >

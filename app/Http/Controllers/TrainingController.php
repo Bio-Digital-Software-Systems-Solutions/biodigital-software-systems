@@ -6,6 +6,8 @@ use App\Mail\TrainingEnrollmentSubmitted;
 use App\Models\Training;
 use App\Services\CacheService;
 use App\Services\FileUploadService;
+use App\Services\QrCodeService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -27,6 +29,10 @@ class TrainingController extends Controller
 
         if ($request->filled('category')) {
             $query->byCategory($request->category);
+        }
+
+        if ($request->filled('visibility')) {
+            $query->where('visibility', $request->visibility);
         }
 
         if ($request->filled('search')) {
@@ -53,7 +59,7 @@ class TrainingController extends Controller
                     'to' => $trainings->lastItem(),
                 ],
             ],
-            'filters' => $request->only(['level', 'category', 'search']),
+            'filters' => $request->only(['level', 'category', 'search', 'visibility']),
         ]);
     }
 
@@ -64,7 +70,7 @@ class TrainingController extends Controller
     {
         $query = Training::with(['topics', 'classes' => function ($query): void {
             $query->where('date', '>=', now()->toDateString())->orderBy('date')->orderBy('start_time');
-        }])->active();
+        }])->active()->publicVisibility();
 
         if ($request->filled('level')) {
             $query->byLevel($request->level);
@@ -101,6 +107,8 @@ class TrainingController extends Controller
 
     public function show(Training $training, Request $request)
     {
+        $this->authorize('view', $training);
+
         $training->load(['topics', 'materials', 'evaluations', 'classes']);
 
         $user = $request->user();
@@ -144,10 +152,16 @@ class TrainingController extends Controller
             ];
         });
 
+        $canManageAccess = $user && (
+            $user->can('manage trainings')
+            || $training->teacher_id === $user->id
+        );
+
         return Inertia::render('Training/Show', [
             'training' => array_merge($training->toArray(), [
                 'quizzes' => $quizzes,
             ]),
+            'canManageAccess' => $canManageAccess,
         ]);
     }
 
@@ -178,6 +192,7 @@ class TrainingController extends Controller
             'category' => 'required|string|max:100',
             'image' => 'nullable',
             'is_active' => 'boolean',
+            'visibility' => 'sometimes|in:public,private',
             'teacher_id' => 'nullable|exists:users,id',
             'topics' => 'nullable|array',
             'topics.*.name' => 'required|string|max:255',
@@ -260,6 +275,7 @@ class TrainingController extends Controller
             'category' => 'required|string|max:100',
             'image' => 'nullable',
             'is_active' => 'boolean',
+            'visibility' => 'sometimes|in:public,private',
             'teacher_id' => 'nullable|exists:users,id',
             'topics' => 'nullable|array',
             'topics.*.id' => 'nullable|exists:training_topics,id',
@@ -431,7 +447,7 @@ class TrainingController extends Controller
         $training->increment('students_count');
 
         // Send enrollment submission confirmation email
-        Mail::to($user->email)->send(new TrainingEnrollmentSubmitted(
+        Mail::to($user->email)->queue(new TrainingEnrollmentSubmitted(
             userName: $user->first_name.' '.$user->last_name,
             trainingName: $training->title,
             paymentMethod: $validated['paymentMethod'],
@@ -582,18 +598,18 @@ class TrainingController extends Controller
             ->get();
 
         // Current period stats
-        $totalStudents = $trainings->sum(fn($training) => $training->students->count());
+        $totalStudents = $trainings->sum(fn ($training) => $training->students->count());
 
-        $averageAttendance = $trainings->avg(fn($training) => $training->students->avg('attendance_rate') ?? 0);
+        $averageAttendance = $trainings->avg(fn ($training) => $training->students->avg('attendance_rate') ?? 0);
 
-        $atRiskStudents = $trainings->sum(fn($training) => $training->students->filter(fn($student): bool => $student->pivot->grade < 10 || $student->pivot->attendance_rate < 70)->count());
+        $atRiskStudents = $trainings->sum(fn ($training) => $training->students->filter(fn ($student): bool => $student->pivot->grade < 10 || $student->pivot->attendance_rate < 70)->count());
 
         // Previous period stats (30 days ago)
         // For simplicity, we'll calculate based on enrollments from 30 days ago
         // In a real scenario, you'd want to track historical snapshots
         $thirtyDaysAgo = now()->subDays(30);
 
-        $previousPeriodStudents = $trainings->sum(fn($training) => $training->students->filter(fn($student): bool => $student->pivot->enrolled_at <= $thirtyDaysAgo)->count());
+        $previousPeriodStudents = $trainings->sum(fn ($training) => $training->students->filter(fn ($student): bool => $student->pivot->enrolled_at <= $thirtyDaysAgo)->count());
 
         // For average attendance and at-risk students, we use the same current values
         // as previous period data (in production, you'd store historical data)
@@ -693,7 +709,7 @@ class TrainingController extends Controller
         }
 
         // Sort by most recent
-        usort($recentActivities, fn(array $a, array $b): int => strcmp((string) $b['time'], (string) $a['time']));
+        usort($recentActivities, fn (array $a, array $b): int => strcmp((string) $b['time'], (string) $a['time']));
 
         // Limit to 5 most recent
         $recentActivities = array_slice($recentActivities, 0, 5);
@@ -712,7 +728,7 @@ class TrainingController extends Controller
                 $query->where('teacher_id', $user->id);
             })
             ->get()
-            ->map(fn($training): array => [
+            ->map(fn ($training): array => [
                 'id' => $training->id,
                 'uuid' => $training->uuid,
                 'title' => $training->title,
@@ -817,7 +833,7 @@ class TrainingController extends Controller
                 $query->where('teacher_id', $user->id);
             })
             ->get()
-            ->map(fn($training): array => [
+            ->map(fn ($training): array => [
                 'id' => $training->id,
                 'uuid' => $training->uuid,
                 'title' => $training->title,
@@ -873,7 +889,7 @@ class TrainingController extends Controller
             ->orderBy('date', 'desc')
             ->orderBy('start_time', 'desc')
             ->get()
-            ->map(fn($class): array => [
+            ->map(fn ($class): array => [
                 'id' => $class->id,
                 'training' => $class->training->title,
                 'date' => $class->date,
@@ -922,7 +938,7 @@ class TrainingController extends Controller
             })
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn($evaluation): array => [
+            ->map(fn ($evaluation): array => [
                 'id' => $evaluation->id,
                 'student_name' => $evaluation->student->first_name.' '.$evaluation->student->last_name,
                 'training' => $evaluation->training->title,
@@ -960,5 +976,272 @@ class TrainingController extends Controller
         ]);
 
         return response()->json($evaluation);
+    }
+
+    /**
+     * Show access management page for a private training.
+     */
+    public function accessIndex(Training $training, QrCodeService $qrCodeService): Response
+    {
+        $this->authorize('manageAccess', $training);
+
+        $training->load(['accessUsers:id,first_name,last_name,email', 'accessRoles']);
+
+        $users = \App\Models\User::select('id', 'first_name', 'last_name', 'email')
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get();
+
+        $roles = \Spatie\Permission\Models\Role::all();
+
+        $shareData = null;
+        if ($training->isShareTokenValid()) {
+            $shareUrl = route('trainings.shared', $training->share_token);
+            try {
+                $qrCode = $qrCodeService->generateBase64($shareUrl);
+            } catch (\Throwable $e) {
+                \Log::error('QR Code generation failed', ['training_id' => $training->id, 'error' => $e->getMessage()]);
+                $qrCode = null;
+            }
+            $shareData = [
+                'url' => $shareUrl,
+                'token' => $training->share_token,
+                'expires_at' => $training->share_token_expires_at->toISOString(),
+                'qr_code' => $qrCode,
+            ];
+        }
+
+        return Inertia::render('Training/Access', [
+            'training' => $training,
+            'allUsers' => $users,
+            'allRoles' => $roles,
+            'shareData' => $shareData,
+        ]);
+    }
+
+    /**
+     * Generate a share link for a private training.
+     */
+    public function generateShareLink(Training $training, QrCodeService $qrCodeService): JsonResponse
+    {
+        $this->authorize('manageAccess', $training);
+
+        $training->generateShareToken(24);
+        $training->refresh();
+
+        $shareUrl = route('trainings.shared', $training->share_token);
+
+        try {
+            $qrCode = $qrCodeService->generateBase64($shareUrl);
+        } catch (\Throwable $e) {
+            \Log::error('QR Code generation failed for training share link', [
+                'training_id' => $training->id,
+                'error' => $e->getMessage(),
+            ]);
+            $qrCode = null;
+        }
+
+        return response()->json([
+            'url' => $shareUrl,
+            'token' => $training->share_token,
+            'expires_at' => $training->share_token_expires_at->toISOString(),
+            'qr_code' => $qrCode,
+        ]);
+    }
+
+    /**
+     * Revoke the share link for a training.
+     */
+    public function revokeShareLink(Training $training): JsonResponse
+    {
+        $this->authorize('manageAccess', $training);
+
+        $training->revokeShareToken();
+
+        return response()->json(['message' => 'Lien de partage révoqué.']);
+    }
+
+    /**
+     * Display the shared training page (public, no auth required).
+     */
+    public function showShared(string $token): Response
+    {
+        $training = Training::findByValidToken($token);
+
+        if (! $training) {
+            return Inertia::render('Training/SharedExpired', [
+                'message' => 'Ce lien d\'inscription a expiré ou n\'est plus valide. Veuillez demander un nouveau lien.',
+            ]);
+        }
+
+        $training->load(['topics', 'classes' => function ($query): void {
+            $query->where('date', '>=', now()->toDateString())->orderBy('date')->orderBy('start_time');
+        }, 'teacher:id,first_name,last_name']);
+
+        return Inertia::render('Training/SharedView', [
+            'training' => [
+                'uuid' => $training->uuid,
+                'title' => $training->title,
+                'description' => $training->description,
+                'duration' => $training->duration,
+                'level' => $training->level,
+                'price' => $training->price,
+                'category' => $training->category,
+                'image_url' => $training->image_url,
+                'topics' => $training->topics,
+                'classes' => $training->classes,
+                'teacher' => $training->teacher ? [
+                    'name' => $training->teacher->first_name.' '.$training->teacher->last_name,
+                ] : null,
+            ],
+            'token' => $token,
+        ]);
+    }
+
+    /**
+     * Enroll a user via share link (public, auth required for enrollment).
+     */
+    public function enrollViaShareLink(Request $request, string $token): \Illuminate\Http\RedirectResponse
+    {
+        $training = Training::findByValidToken($token);
+
+        if (! $training) {
+            return redirect()->route('trainings.shared', $token)
+                ->with('error', 'Ce lien d\'inscription a expiré ou n\'est plus valide.');
+        }
+
+        $user = $request->user();
+        if (! $user) {
+            return redirect()->route('login')->with('error', 'Veuillez vous connecter pour vous inscrire.');
+        }
+
+        if (! $training->is_active) {
+            return back()->with('error', 'Cette formation n\'est plus disponible.');
+        }
+
+        if ($training->students()->where('user_id', $user->id)->exists()) {
+            return back()->with('error', 'Vous êtes déjà inscrit à cette formation.');
+        }
+
+        $validated = $request->validate([
+            'selectedClassId' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('training_classes', 'id')->where('training_id', $training->id),
+            ],
+            'motivation' => ['required', 'string', 'min:50', 'max:2000'],
+            'paymentMethod' => 'required|string|in:monthly,quarterly,full,card',
+            'hasReadTerms' => 'required|accepted',
+            'hasReadPrivacyPolicy' => 'required|accepted',
+        ]);
+
+        $validated['motivation'] = htmlspecialchars(
+            strip_tags((string) $validated['motivation']),
+            ENT_QUOTES | ENT_HTML5,
+            'UTF-8'
+        );
+
+        $training->students()->attach($user->id, [
+            'status' => 'pending',
+            'enrolled_at' => now(),
+            'training_class_id' => $validated['selectedClassId'],
+            'motivation' => $validated['motivation'],
+            'payment_method' => $validated['paymentMethod'],
+        ]);
+
+        $training->increment('students_count');
+
+        Mail::to($user->email)->queue(new TrainingEnrollmentSubmitted(
+            userName: $user->first_name.' '.$user->last_name,
+            trainingName: $training->title,
+            paymentMethod: $validated['paymentMethod'],
+        ));
+
+        CacheService::forgetPattern('trainings');
+
+        return back()->with('success', 'Votre demande d\'inscription a été enregistrée.');
+    }
+
+    /**
+     * Grant user access to a private training.
+     */
+    public function grantUserAccess(Request $request, Training $training): \Illuminate\Http\RedirectResponse
+    {
+        $this->authorize('manageAccess', $training);
+
+        $validated = $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        $pivotData = collect($validated['user_ids'])->mapWithKeys(
+            fn ($id) => [$id => ['granted_by' => $request->user()->id]]
+        )->all();
+
+        $training->accessUsers()->syncWithoutDetaching($pivotData);
+
+        CacheService::forgetPattern('trainings');
+
+        return back()->with('success', 'Accès utilisateurs mis à jour.');
+    }
+
+    /**
+     * Revoke user access from a private training.
+     */
+    public function revokeUserAccess(Request $request, Training $training): \Illuminate\Http\RedirectResponse
+    {
+        $this->authorize('manageAccess', $training);
+
+        $validated = $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        $training->accessUsers()->detach($validated['user_ids']);
+
+        CacheService::forgetPattern('trainings');
+
+        return back()->with('success', 'Accès utilisateurs révoqués.');
+    }
+
+    /**
+     * Grant role access to a private training.
+     */
+    public function grantRoleAccess(Request $request, Training $training): \Illuminate\Http\RedirectResponse
+    {
+        $this->authorize('manageAccess', $training);
+
+        $validated = $request->validate([
+            'role_ids' => 'required|array',
+            'role_ids.*' => 'exists:roles,id',
+        ]);
+
+        $pivotData = collect($validated['role_ids'])->mapWithKeys(
+            fn ($id) => [$id => ['granted_by' => $request->user()->id]]
+        )->all();
+
+        $training->accessRoles()->syncWithoutDetaching($pivotData);
+
+        CacheService::forgetPattern('trainings');
+
+        return back()->with('success', 'Accès rôles mis à jour.');
+    }
+
+    /**
+     * Revoke role access from a private training.
+     */
+    public function revokeRoleAccess(Request $request, Training $training): \Illuminate\Http\RedirectResponse
+    {
+        $this->authorize('manageAccess', $training);
+
+        $validated = $request->validate([
+            'role_ids' => 'required|array',
+            'role_ids.*' => 'exists:roles,id',
+        ]);
+
+        $training->accessRoles()->detach($validated['role_ids']);
+
+        CacheService::forgetPattern('trainings');
+
+        return back()->with('success', 'Accès rôles révoqués.');
     }
 }

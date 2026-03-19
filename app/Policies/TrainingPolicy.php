@@ -12,7 +12,7 @@ class TrainingPolicy
      */
     public function viewAny(User $user): bool
     {
-        return true; // Les formations sont visibles par tous les utilisateurs authentifiés
+        return true;
     }
 
     /**
@@ -20,15 +20,27 @@ class TrainingPolicy
      */
     public function view(User $user, Training $training): bool
     {
-        // Les formations actives sont visibles par tous
-        if ($training->is_active) {
-            return true;
-        }
-        // Les formations inactives sont visibles par les admins et enseignants
+        // Admins and teachers see everything
         if ($user->hasAnyRole(['admin', 'super-admin', 'teacher'])) {
             return true;
         }
-        return $training->teacher_id === $user->id;
+
+        // Training teacher always sees their own training
+        if ($training->teacher_id === $user->id) {
+            return true;
+        }
+
+        // Active public trainings are visible to all
+        if ($training->is_active && $training->visibility === 'public') {
+            return true;
+        }
+
+        // Active private trainings require access check
+        if ($training->is_active && $training->visibility === 'private') {
+            return $training->isAccessibleBy($user);
+        }
+
+        return false;
     }
 
     /**
@@ -44,10 +56,10 @@ class TrainingPolicy
      */
     public function update(User $user, Training $training): bool
     {
-        // Seul le professeur assigné ou un admin peut modifier
         if ($user->hasAnyRole(['admin', 'super-admin'])) {
             return true;
         }
+
         return $training->teacher_id === $user->id;
     }
 
@@ -56,7 +68,6 @@ class TrainingPolicy
      */
     public function delete(User $user, Training $training): bool
     {
-        // Seuls les admins peuvent supprimer
         return $user->hasAnyRole(['admin', 'super-admin']);
     }
 
@@ -65,10 +76,23 @@ class TrainingPolicy
      */
     public function enroll(User $user, Training $training): bool
     {
-        // Tous les utilisateurs authentifiés peuvent tenter de s'inscrire
-        // Les vérifications spécifiques (déjà inscrit, formation active, etc.)
-        // sont gérées dans le contrôleur
+        if ($training->visibility === 'private') {
+            return $training->isAccessibleBy($user);
+        }
+
         return true;
+    }
+
+    /**
+     * Determine whether the user can manage access for the training.
+     */
+    public function manageAccess(User $user, Training $training): bool
+    {
+        if ($user->hasAnyRole(['admin', 'super-admin'])) {
+            return true;
+        }
+
+        return $training->teacher_id === $user->id && $user->can('manage training access');
     }
 
     /**
