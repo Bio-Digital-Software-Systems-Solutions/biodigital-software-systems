@@ -627,12 +627,12 @@ export default function Show({ class: trainingClass, students: initialStudents, 
                                                             )}
                                                             {quiz.available_from && (
                                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                                    Du {new Date(quiz.available_from).toLocaleDateString('fr-FR')}
+                                                                    Du {new Date(quiz.available_from).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                                 </span>
                                                             )}
                                                             {quiz.available_until && (
                                                                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                                    au {new Date(quiz.available_until).toLocaleDateString('fr-FR')}
+                                                                    au {new Date(quiz.available_until).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                                 </span>
                                                             )}
                                                         </div>

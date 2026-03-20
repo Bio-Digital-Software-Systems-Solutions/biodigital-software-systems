@@ -378,7 +378,7 @@ export default function QuizCreate({ training, trainingClasses }: Props) {
                                     <Label htmlFor="available_from">Disponible à partir de</Label>
                                     <Input
                                         id="available_from"
-                                        type="date"
+                                        type="datetime-local"
                                         value={availableFrom}
                                         onChange={(e) => setAvailableFrom(e.target.value)}
                                     />
@@ -389,7 +389,7 @@ export default function QuizCreate({ training, trainingClasses }: Props) {
                                     <Label htmlFor="available_until">Disponible jusqu'au</Label>
                                     <Input
                                         id="available_until"
-                                        type="date"
+                                        type="datetime-local"
                                         value={availableUntil}
                                         onChange={(e) => setAvailableUntil(e.target.value)}
                                     />

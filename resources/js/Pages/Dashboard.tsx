@@ -434,7 +434,7 @@ export default function Dashboard() {
                                                     </span>
                                                     <span className="flex items-center gap-1">
                                                         <AcademicCapIcon className="h-3 w-3" />
-                                                        {quiz.passing_score}/{quiz.max_score} pts requis
+                                                        {quiz.passing_score}% soit {Math.ceil(quiz.max_score * quiz.passing_score / 100)}/{quiz.max_score} pts requis
                                                     </span>
                                                 </div>
 

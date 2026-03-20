@@ -40,6 +40,7 @@ import {
   Settings,
   Target,
   Share2,
+  RotateCcw,
 } from 'lucide-react';
 
 interface Topic {
@@ -66,10 +67,14 @@ interface Quiz {
   duration_minutes: number;
   max_score: number;
   passing_score: number;
+  required_points: number;
   available_from: string | null;
   available_until: string | null;
   is_active: boolean;
   status: 'draft' | 'published' | 'archived';
+  max_attempts: number;
+  completed_attempts_count: number;
+  can_retry: boolean;
   user_attempt?: {
     score: number;
     max_score: number;
@@ -974,6 +979,8 @@ const TrainingShow: React.FC<Props> = ({ auth, training, canManageAccess }) => {
                       (!quiz.available_until || new Date(quiz.available_until) >= new Date());
 
                     const hasCompleted = !!quiz.user_attempt;
+                    const hasReachedMaxAttempts = quiz.completed_attempts_count >= quiz.max_attempts;
+                    const canStartOrRetry = isAvailable && !hasReachedMaxAttempts;
 
                     return (
                       <Card key={quiz.id} className="border-2">
@@ -1019,15 +1026,15 @@ const TrainingShow: React.FC<Props> = ({ auth, training, canManageAccess }) => {
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <Target className="h-4 w-4" />
-                                  {quiz.passing_score}/{quiz.max_score} pts pour réussir
+                                  {quiz.passing_score}% soit {quiz.required_points}/{quiz.max_score} pts pour réussir
                                 </span>
                               </div>
 
                               {quiz.available_from && quiz.available_until && (
                                 <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                                  Disponible du {format(new Date(quiz.available_from), 'd MMMM yyyy', { locale: fr })}
+                                  Disponible du {format(new Date(quiz.available_from), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
                                   {' au '}
-                                  {format(new Date(quiz.available_until), 'd MMMM yyyy', { locale: fr })}
+                                  {format(new Date(quiz.available_until), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
                                 </div>
                               )}
 
@@ -1052,13 +1059,33 @@ const TrainingShow: React.FC<Props> = ({ auth, training, canManageAccess }) => {
                               )}
                             </div>
 
-                            {auth?.user && !hasCompleted && isAvailable && hasPermission('take quizzes') && (
-                              <Link href={route('quizzes.start', quiz.uuid)}>
-                                <Button className="bg-blue-600 hover:bg-blue-700">
-                                  <Play className="h-4 w-4 mr-2" />
-                                  Commencer
-                                </Button>
-                              </Link>
+                            {auth?.user && canStartOrRetry && hasPermission('take quizzes') && (
+                              <div className="flex flex-col items-end gap-2">
+                                <Link href={route('quizzes.start', quiz.uuid)}>
+                                  {quiz.completed_attempts_count === 0 ? (
+                                    <Button className="bg-blue-600 hover:bg-blue-700">
+                                      <Play className="h-4 w-4 mr-2" />
+                                      Démarrer
+                                    </Button>
+                                  ) : (
+                                    <Button className="bg-purple-600 hover:bg-purple-700">
+                                      <RotateCcw className="h-4 w-4 mr-2" />
+                                      Réessayer
+                                    </Button>
+                                  )}
+                                </Link>
+                                {quiz.max_attempts > 1 && (
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    {quiz.completed_attempts_count}/{quiz.max_attempts} tentative{quiz.max_attempts > 1 ? 's' : ''}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {auth?.user && hasReachedMaxAttempts && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
+                                {quiz.completed_attempts_count}/{quiz.max_attempts} tentative{quiz.max_attempts > 1 ? 's' : ''} utilisée{quiz.max_attempts > 1 ? 's' : ''}
+                              </div>
                             )}
 
                             {!auth?.user && (

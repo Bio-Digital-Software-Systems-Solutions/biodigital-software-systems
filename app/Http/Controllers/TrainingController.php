@@ -122,9 +122,12 @@ class TrainingController extends Controller
             }
         }])->get()->map(function ($quiz) use ($user): array {
             $userAttempt = null;
+            $completedAttemptsCount = 0;
 
             if ($user) {
-                $attempt = $quiz->attempts->first();
+                $completedAttempts = $quiz->attempts;
+                $completedAttemptsCount = $completedAttempts->count();
+                $attempt = $completedAttempts->first();
 
                 if ($attempt) {
                     $percentage = $quiz->max_score > 0 ? round(($attempt->score / $quiz->max_score) * 100, 2) : 0;
@@ -137,6 +140,8 @@ class TrainingController extends Controller
                 }
             }
 
+            $maxAttempts = $quiz->max_attempts ?? 1;
+
             return [
                 'id' => $quiz->id,
                 'uuid' => $quiz->uuid,
@@ -145,11 +150,15 @@ class TrainingController extends Controller
                 'duration_minutes' => $quiz->duration_minutes,
                 'max_score' => $quiz->max_score,
                 'passing_score' => $quiz->passing_score,
-                'available_from' => $quiz->available_from?->format('Y-m-d'),
-                'available_until' => $quiz->available_until?->format('Y-m-d'),
+                'required_points' => (int) ceil($quiz->max_score * $quiz->passing_score / 100),
+                'available_from' => $quiz->available_from?->format('Y-m-d\TH:i'),
+                'available_until' => $quiz->available_until?->format('Y-m-d\TH:i'),
                 'is_active' => $quiz->is_active,
                 'status' => $quiz->status,
                 'user_attempt' => $userAttempt,
+                'max_attempts' => $maxAttempts,
+                'completed_attempts_count' => $completedAttemptsCount,
+                'can_retry' => $completedAttemptsCount > 0 && $completedAttemptsCount < $maxAttempts,
             ];
         });
 

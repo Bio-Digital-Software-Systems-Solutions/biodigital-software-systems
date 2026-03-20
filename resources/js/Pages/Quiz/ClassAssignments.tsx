@@ -401,10 +401,10 @@ export default function ClassAssignments({ quiz, availableClasses }: Props) {
                                             <div className="text-xs text-gray-500 dark:text-gray-400">
                                                 Assigné le {new Date(trainingClass.assignment_data.assigned_at).toLocaleDateString('fr-FR')}
                                                 {trainingClass.assignment_data.available_from && (
-                                                    <span> • Disponible à partir du {new Date(trainingClass.assignment_data.available_from).toLocaleDateString('fr-FR')}</span>
+                                                    <span> • Disponible à partir du {new Date(trainingClass.assignment_data.available_from).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                                                 )}
                                                 {trainingClass.assignment_data.available_until && (
-                                                    <span> • Jusqu'au {new Date(trainingClass.assignment_data.available_until).toLocaleDateString('fr-FR')}</span>
+                                                    <span> • Jusqu'au {new Date(trainingClass.assignment_data.available_until).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                                                 )}
                                             </div>
                                         )}

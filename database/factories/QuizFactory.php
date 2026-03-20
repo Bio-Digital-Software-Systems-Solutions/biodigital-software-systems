@@ -33,8 +33,8 @@ class QuizFactory extends Factory
             'duration_minutes' => 30,
             'max_score' => 100,
             'passing_score' => 60,
-            'available_from' => now()->subDays(7),
-            'available_until' => now()->addDays(30),
+            'available_from' => now()->subDays(7)->startOfDay(),
+            'available_until' => now()->addDays(30)->endOfDay()->startOfMinute(),
             'is_active' => true,
         ];
     }

@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -42,6 +42,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read int|null $training_class_materials_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TrainingClass> $trainingClasses
  * @property-read int|null $training_classes_count
+ *
  * @method static \Database\Factories\QuizFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz newQuery()
@@ -62,11 +63,12 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereTrainingId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 class Quiz extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -78,6 +80,7 @@ class Quiz extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     protected $fillable = [
         'training_id',
         'title',
@@ -94,8 +97,8 @@ class Quiz extends Model
     ];
 
     protected $casts = [
-        'available_from' => 'date',
-        'available_until' => 'date',
+        'available_from' => 'datetime',
+        'available_until' => 'datetime',
         'is_active' => 'boolean',
     ];
 

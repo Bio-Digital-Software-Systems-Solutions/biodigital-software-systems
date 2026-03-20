@@ -151,7 +151,9 @@ export default function QuizIndex({ training, quizzes }: Props) {
         return new Date(dateString).toLocaleDateString('fr-FR', {
             day: '2-digit',
             month: '2-digit',
-            year: 'numeric'
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
     };
 
@@ -354,7 +356,7 @@ export default function QuizIndex({ training, quizzes }: Props) {
                                         <div className="flex items-center gap-2 text-sm">
                                             <Target className="h-4 w-4 text-gray-500" />
                                             <span className="text-gray-600 dark:text-gray-400">
-                                                {quiz.passing_score}/{quiz.max_score} pts
+                                                {quiz.passing_score}% soit {Math.ceil(quiz.max_score * quiz.passing_score / 100)}/{quiz.max_score} pts
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2 text-sm">
