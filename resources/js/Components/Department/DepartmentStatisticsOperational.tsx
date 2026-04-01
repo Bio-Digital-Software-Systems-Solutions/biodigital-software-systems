@@ -3,6 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Com
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import {
+    BarChart, Bar, AreaChart, Area, ScatterChart, Scatter,
+    XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
+import {
     ChartBarIcon,
     ClockIcon,
     PresentationChartLineIcon,
@@ -22,6 +26,13 @@ interface TaskEvolutionPeriod {
     period: string;
     created: number;
     completed: number;
+}
+
+interface MemberGrowthPeriod {
+    label: string;
+    period: string;
+    new_members: number;
+    total_members: number;
 }
 
 interface TaskByMember {
@@ -59,6 +70,7 @@ export interface DepartmentStatistics {
         by_priority: { critical: number; high: number; medium: number; low: number };
     };
     task_evolution?: { weekly: TaskEvolutionPeriod[]; monthly: TaskEvolutionPeriod[]; quarterly: TaskEvolutionPeriod[]; semester: TaskEvolutionPeriod[] };
+    member_growth?: { quarterly: MemberGrowthPeriod[]; semester: MemberGrowthPeriod[]; yearly: MemberGrowthPeriod[] };
     tasks_by_member?: TaskByMember[];
     performance?: {
         collective: {
@@ -77,6 +89,8 @@ interface Props {
 
 export default function DepartmentStatisticsOperational({ statistics }: Props) {
     const [evolutionPeriod, setEvolutionPeriod] = useState<'weekly' | 'monthly' | 'quarterly' | 'semester'>('weekly');
+    const [growthPeriod, setGrowthPeriod] = useState<'quarterly' | 'semester' | 'yearly'>('quarterly');
+    const [growthChartType, setGrowthChartType] = useState<'bar' | 'area' | 'scatter'>('bar');
 
     return (
         <div className="space-y-6">
@@ -146,6 +160,149 @@ export default function DepartmentStatisticsOperational({ statistics }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Member Growth */}
+            <Card>
+                <CardHeader>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <UserGroupIcon className="h-5 w-5" />
+                                Croissance des Membres
+                            </CardTitle>
+                            <CardDescription>Nouveaux membres et total cumulé par période</CardDescription>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {/* Chart type toggle */}
+                            <div className="flex gap-0.5 rounded-lg border border-gray-200 dark:border-gray-700 p-0.5">
+                                {[
+                                    { value: 'bar', label: 'Barres', icon: '▮' },
+                                    { value: 'area', label: 'Aire', icon: '▲' },
+                                    { value: 'scatter', label: 'Points', icon: '●' },
+                                ].map((type) => (
+                                    <button
+                                        key={type.value}
+                                        onClick={() => setGrowthChartType(type.value as typeof growthChartType)}
+                                        className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                                            growthChartType === type.value
+                                                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                        }`}
+                                        title={type.label}
+                                    >
+                                        {type.icon}
+                                    </button>
+                                ))}
+                            </div>
+                            {/* Period toggle */}
+                            <div className="flex gap-1">
+                                {[
+                                    { value: 'quarterly', label: 'Trimestre' },
+                                    { value: 'semester', label: 'Semestre' },
+                                    { value: 'yearly', label: 'Année' },
+                                ].map((period) => (
+                                    <Button
+                                        key={period.value}
+                                        variant={growthPeriod === period.value ? 'default' : 'outline'}
+                                        size="sm"
+                                        onClick={() => setGrowthPeriod(period.value as typeof growthPeriod)}
+                                    >
+                                        {period.label}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {(() => {
+                        const data = statistics?.member_growth?.[growthPeriod] || [];
+
+                        if (data.length === 0) {
+                            return (
+                                <div className="h-72 flex items-center justify-center text-muted-foreground">
+                                    Aucune donnée disponible pour cette période
+                                </div>
+                            );
+                        }
+
+                        const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; dataKey: string; color: string }>; label?: string }) => {
+                            if (!active || !payload?.length) return null;
+                            const item = data.find(d => d.label === label);
+                            return (
+                                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 text-sm">
+                                    <p className="font-medium text-gray-900 dark:text-white">{item?.period || label}</p>
+                                    {payload.map((entry, i) => (
+                                        <p key={i} style={{ color: entry.color }}>
+                                            {entry.dataKey === 'new_members' ? 'Nouveaux' : 'Total'}: {entry.value}
+                                        </p>
+                                    ))}
+                                </div>
+                            );
+                        };
+
+                        return (
+                            <ResponsiveContainer width="100%" height={280}>
+                                {growthChartType === 'bar' ? (
+                                    <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                                        <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                                        <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Legend
+                                            formatter={(value: string) => value === 'new_members' ? 'Nouveaux membres' : 'Total cumulé'}
+                                        />
+                                        <Bar dataKey="new_members" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="new_members" />
+                                        <Bar dataKey="total_members" fill="#c4b5fd" radius={[4, 4, 0, 0]} name="total_members" />
+                                    </BarChart>
+                                ) : growthChartType === 'area' ? (
+                                    <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="gradNew" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                            </linearGradient>
+                                            <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#c4b5fd" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#c4b5fd" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                                        <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                                        <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Legend
+                                            formatter={(value: string) => value === 'new_members' ? 'Nouveaux membres' : 'Total cumulé'}
+                                        />
+                                        <Area type="monotone" dataKey="total_members" stroke="#c4b5fd" fill="url(#gradTotal)" strokeWidth={2} name="total_members" dot={{ r: 4, fill: '#c4b5fd' }} />
+                                        <Area type="monotone" dataKey="new_members" stroke="#8b5cf6" fill="url(#gradNew)" strokeWidth={2} name="new_members" dot={{ r: 4, fill: '#8b5cf6' }} />
+                                    </AreaChart>
+                                ) : (
+                                    <ScatterChart margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                                        <XAxis dataKey="label" type="category" allowDuplicatedCategory={false} tick={{ fontSize: 12 }} />
+                                        <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Legend
+                                            formatter={(value: string) => value === 'Nouveaux membres' ? 'Nouveaux membres' : 'Total cumulé'}
+                                        />
+                                        <Scatter name="Nouveaux membres" data={data} fill="#8b5cf6" dataKey="new_members">
+                                            {data.map((_, index) => (
+                                                <circle key={index} r={8} />
+                                            ))}
+                                        </Scatter>
+                                        <Scatter name="Total cumulé" data={data} fill="#c4b5fd" dataKey="total_members">
+                                            {data.map((_, index) => (
+                                                <circle key={index} r={8} />
+                                            ))}
+                                        </Scatter>
+                                    </ScatterChart>
+                                )}
+                            </ResponsiveContainer>
+                        );
+                    })()}
+                </CardContent>
+            </Card>
 
             {/* Task Distribution by Status and Priority */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

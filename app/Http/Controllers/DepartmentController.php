@@ -558,6 +558,9 @@ class DepartmentController extends Controller
         // Performance metrics
         $performanceMetrics = $this->getPerformanceMetrics($todos, $department);
 
+        // Member growth over time
+        $memberGrowth = $this->getMemberGrowth($departmentId);
+
         return [
             'members' => [
                 'total' => $department->users()->count(),
@@ -572,6 +575,7 @@ class DepartmentController extends Controller
             'task_evolution' => $taskEvolution,
             'tasks_by_member' => $tasksByMember,
             'performance' => $performanceMetrics,
+            'member_growth' => $memberGrowth,
         ];
     }
 
@@ -835,6 +839,111 @@ class DepartmentController extends Controller
                 'avg_completion_days' => $avgCompletionDays,
             ],
             'individual' => $individualPerformance,
+        ];
+    }
+
+    /**
+     * Get member growth data over different time periods.
+     */
+    private function getMemberGrowth(int $departmentId): array
+    {
+        $now = now();
+
+        // Get all membership dates for this department
+        $memberships = \DB::table('department_user')
+            ->where('department_id', $departmentId)
+            ->pluck('created_at')
+            ->map(fn ($date) => \Carbon\Carbon::parse($date));
+
+        // Quarterly data (last 4 quarters)
+        $quarterlyData = [];
+        $runningTotal = 0;
+
+        // Count members who joined before the first quarter in scope
+        $firstQuarterStart = $now->copy()->subQuarters(3)->startOfQuarter();
+        $runningTotal = $memberships->filter(fn ($date) => $date->lt($firstQuarterStart))->count();
+
+        for ($i = 3; $i >= 0; $i--) {
+            $quarterStart = $now->copy()->subQuarters($i)->startOfQuarter();
+            $quarterEnd = $now->copy()->subQuarters($i)->endOfQuarter();
+
+            $newMembers = $memberships->filter(
+                fn ($date) => $date->between($quarterStart, $quarterEnd)
+            )->count();
+
+            $runningTotal += $newMembers;
+
+            $quarterlyData[] = [
+                'label' => 'T'.$quarterStart->quarter.' '.$quarterStart->year,
+                'period' => $quarterStart->translatedFormat('M').' - '.$quarterEnd->translatedFormat('M Y'),
+                'new_members' => $newMembers,
+                'total_members' => $runningTotal,
+            ];
+        }
+
+        // Semester data (last 4 semesters)
+        $semesterData = [];
+        $firstSemesterStart = $now->copy()->subMonths(23)->startOfMonth();
+        if ($firstSemesterStart->month <= 6) {
+            $firstSemesterStart = $firstSemesterStart->copy()->startOfYear();
+        } else {
+            $firstSemesterStart = $firstSemesterStart->copy()->setMonth(7)->startOfMonth();
+        }
+        $runningTotal = $memberships->filter(fn ($date) => $date->lt($firstSemesterStart))->count();
+
+        for ($i = 3; $i >= 0; $i--) {
+            $semesterStart = $now->copy()->subMonths($i * 6);
+            if ($semesterStart->month <= 6) {
+                $semesterStart = $semesterStart->copy()->startOfYear();
+                $semesterEnd = $semesterStart->copy()->addMonths(5)->endOfMonth();
+                $label = 'S1 '.$semesterStart->year;
+            } else {
+                $semesterStart = $semesterStart->copy()->setMonth(7)->startOfMonth();
+                $semesterEnd = $semesterStart->copy()->addMonths(5)->endOfMonth();
+                $label = 'S2 '.$semesterStart->year;
+            }
+
+            $newMembers = $memberships->filter(
+                fn ($date) => $date->between($semesterStart, $semesterEnd)
+            )->count();
+
+            $runningTotal += $newMembers;
+
+            $semesterData[] = [
+                'label' => $label,
+                'period' => $semesterStart->translatedFormat('M').' - '.$semesterEnd->translatedFormat('M Y'),
+                'new_members' => $newMembers,
+                'total_members' => $runningTotal,
+            ];
+        }
+
+        // Yearly data (last 4 years)
+        $yearlyData = [];
+        $firstYearStart = $now->copy()->subYears(3)->startOfYear();
+        $runningTotal = $memberships->filter(fn ($date) => $date->lt($firstYearStart))->count();
+
+        for ($i = 3; $i >= 0; $i--) {
+            $yearStart = $now->copy()->subYears($i)->startOfYear();
+            $yearEnd = $now->copy()->subYears($i)->endOfYear();
+
+            $newMembers = $memberships->filter(
+                fn ($date) => $date->between($yearStart, $yearEnd)
+            )->count();
+
+            $runningTotal += $newMembers;
+
+            $yearlyData[] = [
+                'label' => (string) $yearStart->year,
+                'period' => $yearStart->translatedFormat('Y'),
+                'new_members' => $newMembers,
+                'total_members' => $runningTotal,
+            ];
+        }
+
+        return [
+            'quarterly' => $quarterlyData,
+            'semester' => $semesterData,
+            'yearly' => $yearlyData,
         ];
     }
 

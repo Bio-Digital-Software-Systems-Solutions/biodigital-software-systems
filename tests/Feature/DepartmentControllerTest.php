@@ -1528,4 +1528,31 @@ class DepartmentControllerTest extends TestCase
             ->has('departments.data', 2)
         );
     }
+
+    public function test_statistics_member_growth_is_present(): void
+    {
+        $department = Department::factory()->create(['code' => 'GRW']);
+        $department->users()->attach($this->user);
+
+        // Add members at different times
+        $member1 = User::factory()->create();
+        $member2 = User::factory()->create();
+        $department->users()->attach($member1->id, ['created_at' => now()->subMonths(2)]);
+        $department->users()->attach($member2->id, ['created_at' => now()->subMonths(5)]);
+
+        $this->user->givePermissionTo(['view departments', 'manage departments']);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $department));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert->component('Departments/Show')
+            ->has('statistics.member_growth.quarterly', 4)
+            ->has('statistics.member_growth.semester', 4)
+            ->has('statistics.member_growth.yearly', 4)
+            ->where('statistics.member_growth.quarterly.0.label', fn ($val) => str_starts_with($val, 'T'))
+            ->has('statistics.member_growth.quarterly.0.new_members')
+            ->has('statistics.member_growth.quarterly.0.total_members')
+        );
+    }
 }
