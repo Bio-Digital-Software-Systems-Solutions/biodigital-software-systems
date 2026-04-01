@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/Types';
@@ -12,6 +12,14 @@ interface User {
     email: string;
 }
 
+interface DepartmentOption {
+    id: number;
+    uuid: string;
+    name: string;
+    code: string;
+    parent_id: number | null;
+}
+
 interface Department {
     id: number;
     uuid: string;
@@ -22,15 +30,21 @@ interface Department {
     head_of_department?: number;
     first_deputy_id?: number;
     second_deputy_id?: number;
+    parent_id?: number | null;
     is_active: boolean;
 }
 
 interface Props extends PageProps {
     department: Department;
     users: User[];
+    departments: DepartmentOption[];
 }
 
-export default function Edit({ department, users }: Props) {
+export default function Edit({ department, users, departments }: Props) {
+    const [departmentType, setDepartmentType] = useState<'department' | 'sub-department'>(
+        department.parent_id ? 'sub-department' : 'department'
+    );
+
     const { data, setData, put, processing, errors } = useForm({
         name: department.name || '',
         code: department.code || '',
@@ -40,7 +54,15 @@ export default function Edit({ department, users }: Props) {
         second_deputy_id: department.second_deputy_id || '',
         budget: department.budget || '',
         is_active: department.is_active ?? true,
+        parent_id: (department.parent_id || '') as string | number,
     });
+
+    // Reset parent_id when switching to department type
+    useEffect(() => {
+        if (departmentType === 'department') {
+            setData('parent_id', '');
+        }
+    }, [departmentType]);
 
     // Convert users to options for SearchableSelect
     const userOptions = useMemo(() =>
@@ -49,6 +71,15 @@ export default function Edit({ department, users }: Props) {
             label: `${user.first_name} ${user.last_name} (${user.email})`,
         })),
         [users]
+    );
+
+    // Convert departments to options for SearchableSelect
+    const departmentOptions = useMemo(() =>
+        departments.map(dept => ({
+            value: dept.id,
+            label: `${dept.name} (${dept.code})`,
+        })),
+        [departments]
     );
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -80,6 +111,44 @@ export default function Edit({ department, users }: Props) {
                         </div>
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                            {/* Department Type Selection */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label htmlFor="department_type" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Type *
+                                    </label>
+                                    <select
+                                        id="department_type"
+                                        value={departmentType}
+                                        onChange={(e) => setDepartmentType(e.target.value as 'department' | 'sub-department')}
+                                        className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                                    >
+                                        <option value="department">Département</option>
+                                        <option value="sub-department">Sous-département</option>
+                                    </select>
+                                </div>
+
+                                {departmentType === 'sub-department' && (
+                                    <div>
+                                        <label htmlFor="parent_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Département parent *
+                                        </label>
+                                        <div className="mt-1">
+                                            <SearchableSelect
+                                                id="parent_id"
+                                                options={departmentOptions}
+                                                value={data.parent_id ? Number(data.parent_id) : null}
+                                                onChange={(value) => setData('parent_id', value ? Number(value) : '')}
+                                                placeholder="Rechercher un département parent..."
+                                                isClearable={true}
+                                                noOptionsMessage="Aucun département trouvé"
+                                            />
+                                        </div>
+                                        {errors.parent_id && <p className="mt-1 text-sm text-red-600">{errors.parent_id}</p>}
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Basic Information */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>

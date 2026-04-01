@@ -140,6 +140,14 @@ interface Nomination {
     created_at: string;
 }
 
+interface DepartmentChild {
+    id: number;
+    uuid: string;
+    name: string;
+    code: string;
+    is_active: boolean;
+}
+
 interface Department {
     id: number;
     uuid: string;
@@ -148,6 +156,9 @@ interface Department {
     description: string | null;
     budget: number | null;
     is_active: boolean;
+    parent_id: number | null;
+    parent: { id: number; uuid: string; name: string } | null;
+    children: DepartmentChild[];
     head_of_department: User | null;
     first_deputy: User | null;
     second_deputy: User | null;
@@ -539,6 +550,17 @@ export default function ShowDepartment({ department, availableUsers, availableEm
                     <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Code: {department.code}
                     </p>
+                    {department.parent && (
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            Département parent :{' '}
+                            <Link
+                                href={`/departments/${department.parent.uuid}`}
+                                className="text-primary hover:underline font-medium"
+                            >
+                                {department.parent.name}
+                            </Link>
+                        </p>
+                    )}
                 </div>
                     </div>
 
@@ -714,6 +736,48 @@ export default function ShowDepartment({ department, availableUsers, availableEm
 
                     {/* Members Tab */}
                     <TabsContent value="overview">
+                {/* Sub-departments section */}
+                {department.children && department.children.length > 0 && (
+                    <Card className="mb-4">
+                        <CardHeader>
+                            <CardTitle>Sous-départements</CardTitle>
+                            <CardDescription>
+                                {department.children.length} sous-département(s)
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                {department.children.map((child) => (
+                                    <div
+                                        key={child.id}
+                                        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-medium">
+                                                {child.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <Link
+                                                    href={`/departments/${child.uuid}`}
+                                                    className="font-medium text-primary dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+                                                >
+                                                    {child.name}
+                                                </Link>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                    Code: {child.code}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Badge className={child.is_active ? 'bg-green-500' : 'bg-gray-500'}>
+                                            {child.is_active ? 'Actif' : 'Inactif'}
+                                        </Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 <Card>
                     <CardHeader>
                 <div className="flex items-center justify-between">

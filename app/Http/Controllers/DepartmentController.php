@@ -35,8 +35,8 @@ class DepartmentController extends Controller
     {
         $user = auth()->user();
 
-        $departments = Department::with(['headOfDepartment', 'users:users.id'])
-            ->withCount('users')
+        $departments = Department::with(['headOfDepartment', 'users:users.id', 'parent:id,uuid,name'])
+            ->withCount(['users', 'children'])
             ->when(request('status'), function ($query, $status): void {
                 if ($status === 'active') {
                     $query->active();
@@ -47,7 +47,7 @@ class DepartmentController extends Controller
             ->appends(request()->query());
 
         // Map departments to include head_of_department_user and is_accessible for frontend
-        $data = collect($departments->items())->map(fn($department): array => [
+        $data = collect($departments->items())->map(fn ($department): array => [
             'id' => $department->id,
             'uuid' => $department->uuid,
             'name' => $department->name,
@@ -55,6 +55,12 @@ class DepartmentController extends Controller
             'description' => $department->description,
             'budget' => $department->budget,
             'is_active' => $department->is_active,
+            'parent_id' => $department->parent_id,
+            'parent' => $department->parent ? [
+                'id' => $department->parent->id,
+                'uuid' => $department->parent->uuid,
+                'name' => $department->parent->name,
+            ] : null,
             'head_of_department' => $department->head_of_department,
             'head_of_department_user' => $department->relationLoaded('headOfDepartment') && $department->headOfDepartment ? [
                 'id' => $department->headOfDepartment->id,
@@ -62,6 +68,7 @@ class DepartmentController extends Controller
                 'last_name' => $department->headOfDepartment->last_name,
             ] : null,
             'users_count' => $department->users_count,
+            'children_count' => $department->children_count,
             'is_accessible' => $department->isAccessibleBy($user),
             'created_at' => $department->created_at,
             'updated_at' => $department->updated_at,
@@ -87,9 +94,11 @@ class DepartmentController extends Controller
     public function create()
     {
         $users = User::all();
+        $departments = Department::active()->ordered()->get(['id', 'uuid', 'name', 'code', 'parent_id']);
 
         return Inertia::render('Departments/Create', [
             'users' => $users,
+            'departments' => $departments,
         ]);
     }
 
@@ -105,6 +114,7 @@ class DepartmentController extends Controller
             'budget' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
             'image' => 'nullable',
+            'parent_id' => 'nullable|exists:departments,id',
         ]);
 
         // Handle image upload
@@ -128,7 +138,7 @@ class DepartmentController extends Controller
         // Check if user can access this department (member, head, deputy, or has manage permission)
         $this->authorize('access', $department);
 
-        $department->load(['users', 'headOfDepartment', 'firstDeputy', 'secondDeputy']);
+        $department->load(['users', 'headOfDepartment', 'firstDeputy', 'secondDeputy', 'parent', 'children']);
 
         // Check if user can view statistics
         $user = auth()->user();
@@ -142,7 +152,7 @@ class DepartmentController extends Controller
             ->whereNotIn('id', $existingUserIds)
             ->orderBy('first_name')
             ->get()
-            ->map(fn($user): array => [
+            ->map(fn ($user): array => [
                 'id' => $user->id,
                 'uuid' => $user->uuid,
                 'name' => $user->name,
@@ -187,6 +197,19 @@ class DepartmentController extends Controller
                 'description' => $department->description,
                 'budget' => $department->budget,
                 'is_active' => $department->is_active,
+                'parent_id' => $department->parent_id,
+                'parent' => $department->parent ? [
+                    'id' => $department->parent->id,
+                    'uuid' => $department->parent->uuid,
+                    'name' => $department->parent->name,
+                ] : null,
+                'children' => $department->children->map(fn ($child): array => [
+                    'id' => $child->id,
+                    'uuid' => $child->uuid,
+                    'name' => $child->name,
+                    'code' => $child->code,
+                    'is_active' => $child->is_active,
+                ]),
                 'head_of_department' => $department->headOfDepartment ? [
                     'id' => $department->headOfDepartment->id,
                     'name' => $department->headOfDepartment->name,
@@ -202,7 +225,7 @@ class DepartmentController extends Controller
                     'name' => $department->secondDeputy->name,
                     'email' => $department->secondDeputy->email,
                 ] : null,
-                'users' => $department->users->map(fn($user): array => [
+                'users' => $department->users->map(fn ($user): array => [
                     'id' => $user->id,
                     'uuid' => $user->uuid,
                     'name' => $user->name,
@@ -233,7 +256,7 @@ class DepartmentController extends Controller
                 ->withCount('participants')
                 ->orderBy('start_datetime')
                 ->get()
-                ->map(fn($appointment): array => [
+                ->map(fn ($appointment): array => [
                     'uuid' => $appointment->uuid,
                     'title' => $appointment->title,
                     'description' => $appointment->description,
@@ -342,12 +365,20 @@ class DepartmentController extends Controller
 
     public function edit(Department $department)
     {
-        $department->load(['users', 'firstDeputy', 'secondDeputy']);
+        $department->load(['users', 'firstDeputy', 'secondDeputy', 'parent']);
         $users = User::all();
+
+        // Exclude the department itself and its descendants to prevent circular references
+        $descendantIds = $this->getDescendantIds($department);
+        $departments = Department::active()
+            ->ordered()
+            ->whereNotIn('id', array_merge([$department->id], $descendantIds))
+            ->get(['id', 'uuid', 'name', 'code', 'parent_id']);
 
         return Inertia::render('Departments/Edit', [
             'department' => $department,
             'users' => $users,
+            'departments' => $departments,
         ]);
     }
 
@@ -363,6 +394,7 @@ class DepartmentController extends Controller
             'budget' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
             'image' => 'nullable',
+            'parent_id' => 'nullable|exists:departments,id',
         ]);
 
         // Handle image upload
@@ -413,6 +445,23 @@ class DepartmentController extends Controller
         $department->users()->detach($user->id);
 
         return back()->with('success', 'User removed from department successfully.');
+    }
+
+    /**
+     * Get all descendant IDs of a department recursively.
+     *
+     * @return array<int>
+     */
+    private function getDescendantIds(Department $department): array
+    {
+        $ids = [];
+        $children = Department::where('parent_id', $department->id)->get(['id']);
+        foreach ($children as $child) {
+            $ids[] = $child->id;
+            $ids = array_merge($ids, $this->getDescendantIds($child));
+        }
+
+        return $ids;
     }
 
     /**
@@ -728,7 +777,7 @@ class DepartmentController extends Controller
 
         $avgCompletionDays = 0;
         if ($completedWithTimes->count() > 0) {
-            $totalDays = $completedWithTimes->sum(fn($todo) => $todo->created_at->diffInDays($todo->completed_at));
+            $totalDays = $completedWithTimes->sum(fn ($todo) => $todo->created_at->diffInDays($todo->completed_at));
             $avgCompletionDays = round($totalDays / $completedWithTimes->count(), 1);
         }
 
@@ -747,7 +796,7 @@ class DepartmentController extends Controller
 
             $memberAvgDays = 0;
             if ($memberCompletedWithTimes->count() > 0) {
-                $memberTotalDays = $memberCompletedWithTimes->sum(fn($todo) => $todo->created_at->diffInDays($todo->completed_at));
+                $memberTotalDays = $memberCompletedWithTimes->sum(fn ($todo) => $todo->created_at->diffInDays($todo->completed_at));
                 $memberAvgDays = round($memberTotalDays / $memberCompletedWithTimes->count(), 1);
             }
 
@@ -824,6 +873,7 @@ class DepartmentController extends Controller
         if ($department->head_of_department === $user->id) {
             return true;
         }
+
         // Member of the department can view
         return $department->users->contains('id', $user->id);
     }

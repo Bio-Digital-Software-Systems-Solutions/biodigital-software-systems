@@ -80,4 +80,14 @@ class DepartmentFactory extends Factory
             'budget' => $budget,
         ]);
     }
+
+    /**
+     * Indicate that the department is a sub-department of a given parent.
+     */
+    public function withParent(Department $parent): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'parent_id' => $parent->id,
+        ]);
+    }
 }

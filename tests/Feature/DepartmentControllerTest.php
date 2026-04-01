@@ -11,7 +11,9 @@ use Tests\TestCase;
 class DepartmentControllerTest extends TestCase
 {
     public $user;
+
     public $headUser;
+
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -1270,5 +1272,260 @@ class DepartmentControllerTest extends TestCase
 
         // Should be denied access (403 or redirect)
         $this->assertContains($response->status(), [403, 302]);
+    }
+
+    // ==================== Sub-department (parent_id) Tests ====================
+
+    public function test_store_creates_sub_department_with_parent(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+
+        $parentDepartment = Department::factory()->create(['code' => 'PARENT']);
+
+        $response = $this->actingAs($this->user)
+            ->post(route('departments.store'), [
+                'name' => 'Sub Department',
+                'code' => 'SUB-DEPT',
+                'description' => 'A sub-department',
+                'is_active' => true,
+                'parent_id' => $parentDepartment->id,
+            ]);
+
+        $response->assertRedirect(route('departments.index'));
+
+        $this->assertDatabaseHas('departments', [
+            'name' => 'Sub Department',
+            'code' => 'SUB-DEPT',
+            'parent_id' => $parentDepartment->id,
+        ]);
+    }
+
+    public function test_store_creates_department_without_parent(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+
+        $response = $this->actingAs($this->user)
+            ->post(route('departments.store'), [
+                'name' => 'Root Department',
+                'code' => 'ROOT',
+                'is_active' => true,
+            ]);
+
+        $response->assertRedirect(route('departments.index'));
+
+        $this->assertDatabaseHas('departments', [
+            'name' => 'Root Department',
+            'code' => 'ROOT',
+            'parent_id' => null,
+        ]);
+    }
+
+    public function test_store_validates_parent_id_exists(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+
+        $response = $this->actingAs($this->user)
+            ->post(route('departments.store'), [
+                'name' => 'Sub Department',
+                'code' => 'SUB',
+                'parent_id' => 99999,
+            ]);
+
+        $response->assertSessionHasErrors(['parent_id']);
+    }
+
+    public function test_update_sets_parent_id(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+
+        $parent = Department::factory()->create(['code' => 'PAR']);
+        $department = Department::factory()->create(['code' => 'CHILD']);
+
+        $response = $this->actingAs($this->user)
+            ->put(route('departments.update', $department), [
+                'name' => $department->name,
+                'code' => $department->code,
+                'is_active' => true,
+                'parent_id' => $parent->id,
+            ]);
+
+        $response->assertRedirect(route('departments.index'));
+
+        $department->refresh();
+        $this->assertEquals($parent->id, $department->parent_id);
+    }
+
+    public function test_update_removes_parent_id(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+
+        $parent = Department::factory()->create(['code' => 'PAR2']);
+        $department = Department::factory()->create([
+            'code' => 'CHILD2',
+            'parent_id' => $parent->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->put(route('departments.update', $department), [
+                'name' => $department->name,
+                'code' => $department->code,
+                'is_active' => true,
+                'parent_id' => null,
+            ]);
+
+        $response->assertRedirect(route('departments.index'));
+
+        $department->refresh();
+        $this->assertNull($department->parent_id);
+    }
+
+    public function test_show_displays_parent_department(): void
+    {
+        $parent = Department::factory()->create(['code' => 'PAR3']);
+        $child = Department::factory()->create([
+            'code' => 'CHD3',
+            'parent_id' => $parent->id,
+        ]);
+        $child->users()->attach($this->user);
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $child));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert->component('Departments/Show')
+            ->where('department.parent_id', $parent->id)
+            ->where('department.parent.uuid', $parent->uuid)
+            ->where('department.parent.name', $parent->name)
+        );
+    }
+
+    public function test_show_displays_children_departments(): void
+    {
+        $parent = Department::factory()->create(['code' => 'PAR4']);
+        Department::factory()->create([
+            'code' => 'CHD4A',
+            'name' => 'Child A',
+            'parent_id' => $parent->id,
+        ]);
+        Department::factory()->create([
+            'code' => 'CHD4B',
+            'name' => 'Child B',
+            'parent_id' => $parent->id,
+        ]);
+        $parent->users()->attach($this->user);
+        $this->user->givePermissionTo('view departments');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.show', $parent));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert->component('Departments/Show')
+            ->has('department.children', 2)
+        );
+    }
+
+    public function test_create_form_includes_departments_list(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+        Department::factory()->count(3)->create();
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.create'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert->component('Departments/Create')
+            ->has('departments', 3)
+        );
+    }
+
+    public function test_edit_form_excludes_self_and_descendants_from_departments_list(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+
+        $parent = Department::factory()->create(['code' => 'P5']);
+        $child = Department::factory()->create(['code' => 'C5', 'parent_id' => $parent->id]);
+        $grandchild = Department::factory()->create(['code' => 'GC5', 'parent_id' => $child->id]);
+        $other = Department::factory()->create(['code' => 'OTH']);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.edit', $parent));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert->component('Departments/Edit')
+            ->has('departments', 1) // Only $other should be in the list
+            ->where('departments.0.id', $other->id)
+        );
+    }
+
+    public function test_department_model_parent_relationship(): void
+    {
+        $parent = Department::factory()->create(['code' => 'MP']);
+        $child = Department::factory()->create([
+            'code' => 'MC',
+            'parent_id' => $parent->id,
+        ]);
+
+        $this->assertEquals($parent->id, $child->parent->id);
+        $this->assertTrue($child->isSubDepartment());
+        $this->assertFalse($parent->isSubDepartment());
+    }
+
+    public function test_department_model_children_relationship(): void
+    {
+        $parent = Department::factory()->create(['code' => 'MP2']);
+        $child1 = Department::factory()->create([
+            'code' => 'MC2A',
+            'parent_id' => $parent->id,
+        ]);
+        $child2 = Department::factory()->create([
+            'code' => 'MC2B',
+            'parent_id' => $parent->id,
+        ]);
+
+        $this->assertCount(2, $parent->children);
+        $this->assertTrue($parent->children->contains($child1));
+        $this->assertTrue($parent->children->contains($child2));
+    }
+
+    public function test_nested_sub_departments(): void
+    {
+        $this->user->givePermissionTo('manage departments');
+
+        $grandparent = Department::factory()->create(['code' => 'GP']);
+        $parent = Department::factory()->create([
+            'code' => 'PR',
+            'parent_id' => $grandparent->id,
+        ]);
+        $child = Department::factory()->create([
+            'code' => 'CH',
+            'parent_id' => $parent->id,
+        ]);
+
+        $this->assertEquals($grandparent->id, $parent->parent_id);
+        $this->assertEquals($parent->id, $child->parent_id);
+        $this->assertCount(1, $grandparent->children);
+        $this->assertCount(1, $parent->children);
+        $this->assertCount(0, $child->children);
+    }
+
+    public function test_index_displays_parent_information(): void
+    {
+        $this->user->givePermissionTo('view departments');
+
+        $parent = Department::factory()->create(['code' => 'IDX-P', 'name' => 'Parent Dept']);
+        Department::factory()->create([
+            'code' => 'IDX-C',
+            'name' => 'Child Dept',
+            'parent_id' => $parent->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('departments.index'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($assert) => $assert->component('Departments/Index')
+            ->has('departments.data', 2)
+        );
     }
 }

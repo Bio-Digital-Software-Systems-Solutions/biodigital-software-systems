@@ -74,12 +74,15 @@ export interface Department {
     head_of_department?: number;
     first_deputy_id?: number;
     second_deputy_id?: number;
+    parent_id?: number;
     budget?: number;
     is_active: boolean;
     users: User[];
     headOfDepartmentUser?: User;
     firstDeputy?: User;
     secondDeputy?: User;
+    parent?: { id: number; uuid: string; name: string } | null;
+    children?: { id: number; uuid: string; name: string; code: string; is_active: boolean }[];
     created_at: string;
     updated_at: string;
 }

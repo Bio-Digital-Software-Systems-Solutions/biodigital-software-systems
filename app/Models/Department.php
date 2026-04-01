@@ -25,6 +25,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int|null $first_deputy_id
  * @property int|null $second_deputy_id
  * @property numeric|null $budget
+ * @property int|null $parent_id
  * @property bool $is_active
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -73,6 +74,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read int|null $workflow_instances_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentWorkflow> $workflows
  * @property-read int|null $workflows_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department active()
  * @method static \Database\Factories\DepartmentFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department newModelQuery()
@@ -96,6 +98,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department whereUuid($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Department withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class Department extends Model
@@ -140,6 +143,7 @@ class Department extends Model
         'budget',
         'is_active',
         'image',
+        'parent_id',
     ];
 
     /**
@@ -202,6 +206,30 @@ class Department extends Model
     public function secondDeputy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'second_deputy_id');
+    }
+
+    /**
+     * Get the parent department.
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'parent_id');
+    }
+
+    /**
+     * Get the direct children (sub-departments).
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(Department::class, 'parent_id');
+    }
+
+    /**
+     * Check if this department is a sub-department.
+     */
+    public function isSubDepartment(): bool
+    {
+        return $this->parent_id !== null;
     }
 
     /**
