@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { SearchableSelect } from '@/Components/ui/searchable-select';
 import { Badge } from '@/Components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/Components/ui/accordion';
 import { useConfirm } from '@/Components/ui/confirm-dialog';
 import { useToast } from '@/Components/ui/toast';
 import {
@@ -736,46 +737,50 @@ export default function ShowDepartment({ department, availableUsers, availableEm
 
                     {/* Members Tab */}
                     <TabsContent value="overview">
-                {/* Sub-departments section */}
+                {/* Sub-departments accordion */}
                 {department.children && department.children.length > 0 && (
-                    <Card className="mb-4">
-                        <CardHeader>
-                            <CardTitle>Sous-départements</CardTitle>
-                            <CardDescription>
-                                {department.children.length} sous-département(s)
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-2">
-                                {department.children.map((child) => (
-                                    <div
-                                        key={child.id}
-                                        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-medium">
-                                                {child.name.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <Link
-                                                    href={`/departments/${child.uuid}`}
-                                                    className="font-medium text-primary dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
-                                                >
-                                                    {child.name}
-                                                </Link>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    Code: {child.code}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <Badge className={child.is_active ? 'bg-green-500' : 'bg-gray-500'}>
-                                            {child.is_active ? 'Actif' : 'Inactif'}
-                                        </Badge>
+                    <div className="mb-4">
+                        <Accordion>
+                            <AccordionItem value="sub-departments">
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-2">
+                                        <span>Sous-départements</span>
+                                        <Badge variant="outline" className="ml-1">{department.children.length}</Badge>
                                     </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <div className="space-y-2">
+                                        {department.children.map((child) => (
+                                            <div
+                                                key={child.id}
+                                                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-medium">
+                                                        {child.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <Link
+                                                            href={`/departments/${child.uuid}`}
+                                                            className="font-medium text-primary dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+                                                        >
+                                                            {child.name}
+                                                        </Link>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                            Code: {child.code}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Badge className={child.is_active ? 'bg-green-500' : 'bg-gray-500'}>
+                                                    {child.is_active ? 'Actif' : 'Inactif'}
+                                                </Badge>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </div>
                 )}
 
                 <Card>
