@@ -55,6 +55,21 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        // Agile domain exceptions render as HTTP 422 with the translated message
+        $exceptions->render(function (
+            \App\Exceptions\Agile\CannotCompleteStoryException
+            |\App\Exceptions\Agile\ActiveSprintAlreadyExistsException
+            |\App\Exceptions\Agile\ClosedSprintCannotAcceptStoriesException
+            |\App\Exceptions\Agile\AcceptanceCriterionHasPassedTestsException $e,
+            \Illuminate\Http\Request $request,
+        ) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+
+            return back()->withErrors(['agile' => $e->getMessage()]);
+        });
+
         $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response) {
             if ($response->getStatusCode() === 419) {
                 return back()->with([
