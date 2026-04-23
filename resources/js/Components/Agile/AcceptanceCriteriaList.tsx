@@ -3,6 +3,23 @@ import axios from 'axios';
 import { router, useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import {
+    DndContext,
+    DragEndEvent,
+    PointerSensor,
+    KeyboardSensor,
+    closestCenter,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    arrayMove,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/Components/ui/button';
 import {
     Dialog,
@@ -25,8 +42,7 @@ import {
     TrashIcon,
     CheckCircleIcon,
     XCircleIcon,
-    ArrowUpIcon,
-    ArrowDownIcon,
+    Bars3Icon,
 } from '@heroicons/react/24/outline';
 
 interface Props {
@@ -35,6 +51,43 @@ interface Props {
 }
 
 type Modal = 'create' | 'edit' | 'validate' | 'reject' | null;
+
+interface SortableItemProps {
+    id: number;
+    children: (handle: React.ReactNode) => React.ReactNode;
+}
+
+const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
+    const { t } = useTranslation();
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+    const style: React.CSSProperties = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    const handle = (
+        <button
+            {...attributes}
+            {...listeners}
+            type="button"
+            aria-label={t('agile.actions.move_up')}
+            className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 touch-none"
+        >
+            <Bars3Icon className="h-4 w-4" />
+        </button>
+    );
+
+    return (
+        <li
+            ref={setNodeRef}
+            style={style}
+            className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+        >
+            {children(handle)}
+        </li>
+    );
+};
 
 export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => {
     const { t } = useTranslation();
@@ -146,12 +199,24 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
         }
     };
 
-    const swap = async (index: number, direction: -1 | 1): Promise<void> => {
-        const targetIndex = index + direction;
-        if (targetIndex < 0 || targetIndex >= criteria.length) return;
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    );
 
-        const orderedIds = criteria.map((c) => c.id);
-        [orderedIds[index], orderedIds[targetIndex]] = [orderedIds[targetIndex], orderedIds[index]];
+    const handleDragEnd = async (event: DragEndEvent): Promise<void> => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = criteria.findIndex((c) => c.id === active.id);
+        const newIndex = criteria.findIndex((c) => c.id === over.id);
+        if (oldIndex < 0 || newIndex < 0) return;
+
+        const orderedIds = arrayMove(
+            criteria.map((c) => c.id),
+            oldIndex,
+            newIndex,
+        );
 
         try {
             await axios.post(route('api.agile.acceptance-criteria.reorder', story.uuid), {
@@ -180,31 +245,17 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                     {t('agile.ac.none_cta')}
                 </p>
             ) : (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={criteria.map((c) => c.id)} strategy={verticalListSortingStrategy}>
                 <ul className="space-y-3">
-                    {criteria.map((ac, index) => (
-                        <li
-                            key={ac.id}
-                            className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
-                        >
+                    {criteria.map((ac) => (
+                        <SortableItem key={ac.id} id={ac.id}>
+                            {(handle) => (
+                            <>
                             <div className="flex items-start gap-3">
                                 <div className="flex flex-col items-center gap-1 pt-1">
-                                    <button
-                                        onClick={() => swap(index, -1)}
-                                        disabled={index === 0}
-                                        className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                                        aria-label={t('agile.actions.move_up')}
-                                    >
-                                        <ArrowUpIcon className="h-4 w-4" />
-                                    </button>
+                                    {handle}
                                     <span className="text-xs text-gray-500 font-mono">{ac.position}</span>
-                                    <button
-                                        onClick={() => swap(index, 1)}
-                                        disabled={index === criteria.length - 1}
-                                        className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                                        aria-label={t('agile.actions.move_down')}
-                                    >
-                                        <ArrowDownIcon className="h-4 w-4" />
-                                    </button>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
@@ -269,9 +320,13 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                                 criterion={ac}
                                 scenarios={ac.test_scenarios ?? []}
                             />
-                        </li>
+                            </>
+                            )}
+                        </SortableItem>
                     ))}
                 </ul>
+                    </SortableContext>
+                </DndContext>
             )}
 
             {/* Create */}
