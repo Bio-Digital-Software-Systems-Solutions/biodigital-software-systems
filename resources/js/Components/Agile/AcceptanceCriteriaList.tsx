@@ -16,6 +16,7 @@ import { Label } from '@/Components/ui/label';
 import { Textarea } from '@/Components/ui/textarea';
 import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-dialog';
 import { StatusBadge } from '@/Components/Agile/StatusBadge';
+import { TestScenariosList } from '@/Components/Agile/TestScenariosList';
 import { AcceptanceCriterion, AcceptanceCriterionStatus, UserStory } from '@/Types/Agile';
 import {
     PlusIcon,
@@ -219,11 +220,6 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                                             {ac.validator && ` — ${ac.validator.name}`}
                                         </p>
                                     )}
-                                    {(ac.test_scenarios_count ?? 0) > 0 && (
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            {ac.test_scenarios_count} scénario(s) de test
-                                        </p>
-                                    )}
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     {ac.status !== AcceptanceCriterionStatus.VALIDATED && (
@@ -266,6 +262,11 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                                     </Button>
                                 </div>
                             </div>
+
+                            <TestScenariosList
+                                criterion={ac}
+                                scenarios={ac.test_scenarios ?? []}
+                            />
                         </li>
                     ))}
                 </ul>

@@ -110,6 +110,7 @@ export interface AcceptanceCriterion {
     validated_at: string | null;
     validation_notes: string | null;
     test_scenarios_count?: number;
+    test_scenarios?: TestScenario[];
     validator?: AgileUserLite | null;
     created_at: string;
     updated_at: string;

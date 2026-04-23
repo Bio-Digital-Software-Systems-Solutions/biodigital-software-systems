@@ -25,6 +25,7 @@ class AcceptanceCriterionResource extends JsonResource
             'validated_at' => $this->validated_at?->toIso8601String(),
             'validation_notes' => $this->validation_notes,
             'test_scenarios_count' => $this->whenCounted('testScenarios'),
+            'test_scenarios' => TestScenarioResource::collection($this->whenLoaded('testScenarios')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
             'validator' => $this->whenLoaded('validatedBy', fn () => $this->validatedBy ? [
