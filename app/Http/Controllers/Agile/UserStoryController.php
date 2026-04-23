@@ -6,7 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Agile\StoreUserStoryRequest;
 use App\Http\Requests\Agile\UpdateUserStoryRequest;
 use App\Http\Resources\Agile\UserStoryResource;
+use App\Models\Agile\Epic;
 use App\Models\Agile\UserStory;
+use App\Models\Sprint;
+use App\Models\Status;
+use App\Models\User;
 use App\Services\Agile\UserStoryCompletionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -38,6 +42,9 @@ class UserStoryController extends Controller
 
         return Inertia::render('Agile/UserStories/Index', [
             'stories' => UserStoryResource::collection($stories),
+            'epics' => Epic::query()->orderBy('title')->get(['id', 'title']),
+            'sprints' => Sprint::query()->orderBy('start_date', 'desc')->get(['id', 'name', 'status']),
+            'users' => User::query()->where('is_active', true)->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'email']),
             'filters' => $request->only(['epic_id', 'sprint_id', 'assignee_id', 'status']),
         ]);
     }
@@ -58,6 +65,12 @@ class UserStoryController extends Controller
 
         return Inertia::render('Agile/UserStories/Show', [
             'story' => new UserStoryResource($userStory),
+            'sprints' => Sprint::query()
+                ->where('project_id', $userStory->epic?->project_id)
+                ->orderBy('start_date', 'desc')
+                ->get(['id', 'name', 'status', 'start_date', 'end_date']),
+            'users' => User::query()->where('is_active', true)->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'email']),
+            'statuses' => Status::query()->orderBy('name')->get(['id', 'name', 'color']),
         ]);
     }
 
