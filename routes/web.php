@@ -1425,4 +1425,37 @@ Route::middleware(['auth'])->group(function (): void {
         ->name('sentry.test-breadcrumbs');
 });
 
+// Agile module — Epic / UserStory / AcceptanceCriterion / TestScenario / StoryTask
+Route::middleware(['auth', 'verified'])->prefix('agile')->name('agile.')->group(function (): void {
+    Route::resource('epics', \App\Http\Controllers\Agile\EpicController::class)
+        ->parameters(['epics' => 'epic']);
+
+    Route::resource('user-stories', \App\Http\Controllers\Agile\UserStoryController::class)
+        ->parameters(['user-stories' => 'userStory']);
+
+    Route::get('user-stories/{userStory}/acceptance-criteria', [\App\Http\Controllers\Agile\AcceptanceCriterionController::class, 'index'])
+        ->name('user-stories.acceptance-criteria.index');
+    Route::post('user-stories/{userStory}/acceptance-criteria', [\App\Http\Controllers\Agile\AcceptanceCriterionController::class, 'store'])
+        ->name('user-stories.acceptance-criteria.store');
+    Route::resource('acceptance-criteria', \App\Http\Controllers\Agile\AcceptanceCriterionController::class)
+        ->only(['show', 'update', 'destroy'])
+        ->parameters(['acceptance-criteria' => 'acceptanceCriterion']);
+
+    Route::get('acceptance-criteria/{acceptanceCriterion}/test-scenarios', [\App\Http\Controllers\Agile\TestScenarioController::class, 'index'])
+        ->name('acceptance-criteria.test-scenarios.index');
+    Route::post('acceptance-criteria/{acceptanceCriterion}/test-scenarios', [\App\Http\Controllers\Agile\TestScenarioController::class, 'store'])
+        ->name('acceptance-criteria.test-scenarios.store');
+    Route::resource('test-scenarios', \App\Http\Controllers\Agile\TestScenarioController::class)
+        ->only(['show', 'update', 'destroy'])
+        ->parameters(['test-scenarios' => 'testScenario']);
+
+    Route::get('user-stories/{userStory}/story-tasks', [\App\Http\Controllers\Agile\StoryTaskController::class, 'index'])
+        ->name('user-stories.story-tasks.index');
+    Route::post('user-stories/{userStory}/story-tasks', [\App\Http\Controllers\Agile\StoryTaskController::class, 'store'])
+        ->name('user-stories.story-tasks.store');
+    Route::resource('story-tasks', \App\Http\Controllers\Agile\StoryTaskController::class)
+        ->only(['show', 'update', 'destroy'])
+        ->parameters(['story-tasks' => 'storyTask']);
+});
+
 require __DIR__.'/auth.php';
