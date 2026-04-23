@@ -8,7 +8,7 @@ class UpdateAcceptanceCriterionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->route('acceptance_criterion'));
+        return $this->user()->can('update', $this->route('acceptanceCriterion'));
     }
 
     public function rules(): array

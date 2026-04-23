@@ -8,7 +8,7 @@ class UpdateTestScenarioRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->route('test_scenario'));
+        return $this->user()->can('update', $this->route('testScenario'));
     }
 
     public function rules(): array

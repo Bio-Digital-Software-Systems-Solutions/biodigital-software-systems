@@ -8,7 +8,7 @@ class MoveUserStoryToSprintRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('moveToSprint', $this->route('user_story'));
+        return $this->user()->can('moveToSprint', $this->route('userStory'));
     }
 
     public function rules(): array

@@ -8,7 +8,7 @@ class ReorderAcceptanceCriteriaRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->route('user_story'));
+        return $this->user()->can('update', $this->route('userStory'));
     }
 
     public function rules(): array

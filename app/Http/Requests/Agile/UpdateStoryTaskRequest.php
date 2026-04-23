@@ -10,7 +10,7 @@ class UpdateStoryTaskRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->route('story_task'));
+        return $this->user()->can('update', $this->route('storyTask'));
     }
 
     public function rules(): array
