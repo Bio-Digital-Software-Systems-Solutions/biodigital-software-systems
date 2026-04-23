@@ -27,6 +27,7 @@ class EpicResource extends JsonResource
             'target_date' => $this->target_date?->toDateString(),
             'labels' => $this->labels ?? [],
             'user_stories_count' => $this->whenCounted('userStories'),
+            'user_stories' => UserStoryResource::collection($this->whenLoaded('userStories')),
             'completion_percentage' => $this->completionPercentage(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

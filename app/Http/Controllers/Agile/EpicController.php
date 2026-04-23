@@ -7,6 +7,8 @@ use App\Http\Requests\Agile\StoreEpicRequest;
 use App\Http\Requests\Agile\UpdateEpicRequest;
 use App\Http\Resources\Agile\EpicResource;
 use App\Models\Agile\Epic;
+use App\Models\Project;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -35,6 +37,13 @@ class EpicController extends Controller
 
         return Inertia::render('Agile/Epics/Index', [
             'epics' => EpicResource::collection($epics),
+            'projects' => Project::query()
+                ->orderBy('name')
+                ->get(['id', 'name']),
+            'users' => User::query()
+                ->where('is_active', true)
+                ->orderBy('first_name')
+                ->get(['id', 'first_name', 'last_name', 'email']),
             'filters' => $request->only(['project_id', 'status', 'owner_id']),
         ]);
     }
