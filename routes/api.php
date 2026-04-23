@@ -389,3 +389,30 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/events/compare', [EventAnalyticsController::class, 'compare'])
         ->name('api.events.compare');
 });
+
+// Agile module — action endpoints returning JsonResources
+Route::middleware(['auth:sanctum'])->prefix('agile')->name('api.agile.')->group(function (): void {
+    // Sprint lifecycle
+    Route::post('sprints/{sprint}/start', [\App\Http\Controllers\SprintController::class, 'start'])
+        ->name('sprints.start');
+    Route::post('sprints/{sprint}/close', [\App\Http\Controllers\SprintController::class, 'close'])
+        ->name('sprints.close');
+
+    // User story lifecycle
+    Route::post('user-stories/{userStory}/complete', [\App\Http\Controllers\Agile\UserStoryController::class, 'complete'])
+        ->name('user-stories.complete');
+    Route::post('user-stories/{userStory}/move-to-sprint', [\App\Http\Controllers\SprintController::class, 'moveStoryToSprint'])
+        ->name('user-stories.move');
+
+    // Acceptance criteria validation workflow
+    Route::post('acceptance-criteria/{criterion}/validate', [\App\Http\Controllers\Agile\AcceptanceCriterionController::class, 'validateCriterion'])
+        ->name('acceptance-criteria.validate');
+    Route::post('acceptance-criteria/{criterion}/reject', [\App\Http\Controllers\Agile\AcceptanceCriterionController::class, 'reject'])
+        ->name('acceptance-criteria.reject');
+    Route::post('user-stories/{userStory}/acceptance-criteria/reorder', [\App\Http\Controllers\Agile\AcceptanceCriterionController::class, 'reorder'])
+        ->name('acceptance-criteria.reorder');
+
+    // Test scenario execution
+    Route::post('test-scenarios/{scenario}/record-run', [\App\Http\Controllers\Agile\TestScenarioController::class, 'recordRun'])
+        ->name('test-scenarios.record');
+});

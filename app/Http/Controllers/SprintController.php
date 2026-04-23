@@ -44,7 +44,7 @@ class SprintController extends Controller
 
         $sprints = $query->latest('start_date')->get()->map(function ($sprint): array {
             $totalTasks = $sprint->tasks->count();
-            $completedTasks = $sprint->tasks->filter(fn($task): bool => $task->status && $task->status->name === 'completed')->count();
+            $completedTasks = $sprint->tasks->filter(fn ($task): bool => $task->status && $task->status->name === 'completed')->count();
 
             $now = now();
             $status = 'upcoming';
@@ -67,7 +67,7 @@ class SprintController extends Controller
                 'completed_tasks' => $completedTasks,
                 'progress' => $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0,
                 'tasks' => $sprint->tasks,
-                'attachments' => $sprint->attachments->map(fn($attachment): array => [
+                'attachments' => $sprint->attachments->map(fn ($attachment): array => [
                     'id' => $attachment->id,
                     'file_name' => $attachment->file_name,
                     'file_type' => $attachment->file_type,
@@ -131,5 +131,54 @@ class SprintController extends Controller
         $sprint->delete();
 
         return redirect()->route('sprints.index')->with('success', 'Sprint supprimé avec succès.');
+    }
+
+    /**
+     * Agile action endpoint: start the sprint.
+     * Refuses if another sprint is already active on the same project.
+     */
+    public function start(Sprint $sprint, \App\Services\Agile\SprintLifecycleService $service): \Illuminate\Http\JsonResponse
+    {
+        $this->authorize('start', $sprint);
+
+        $updated = $service->start($sprint);
+
+        return (new \App\Http\Resources\Agile\SprintResource($updated))
+            ->response()
+            ->setStatusCode(200);
+    }
+
+    /**
+     * Agile action endpoint: close the sprint.
+     */
+    public function close(Sprint $sprint, \App\Services\Agile\SprintLifecycleService $service): \Illuminate\Http\JsonResponse
+    {
+        $this->authorize('close', $sprint);
+
+        $updated = $service->close($sprint);
+
+        return (new \App\Http\Resources\Agile\SprintResource($updated))
+            ->response()
+            ->setStatusCode(200);
+    }
+
+    /**
+     * Agile action endpoint: move a user story into this sprint (or detach it when sprint_id=null).
+     * Refuses if the target sprint is completed.
+     */
+    public function moveStoryToSprint(
+        \App\Http\Requests\Agile\MoveUserStoryToSprintRequest $request,
+        \App\Models\Agile\UserStory $userStory,
+        \App\Services\Agile\SprintLifecycleService $service,
+    ): \Illuminate\Http\JsonResponse {
+        $target = $request->filled('sprint_id')
+            ? Sprint::findOrFail($request->integer('sprint_id'))
+            : null;
+
+        $story = $service->moveStoryToSprint($userStory, $target);
+
+        return (new \App\Http\Resources\Agile\UserStoryResource($story))
+            ->response()
+            ->setStatusCode(200);
     }
 }
