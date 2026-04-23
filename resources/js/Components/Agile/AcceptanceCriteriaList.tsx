@@ -137,6 +137,41 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
         setSelected(null);
     };
 
+    // --- Inline edit (title-only shortcut; the full Edit dialog still covers description) ---
+    const [inlineEditId, setInlineEditId] = useState<number | null>(null);
+    const [inlineTitle, setInlineTitle] = useState('');
+    const [inlineSaving, setInlineSaving] = useState(false);
+
+    const startInlineEdit = (ac: AcceptanceCriterion) => {
+        setInlineEditId(ac.id);
+        setInlineTitle(ac.title);
+    };
+
+    const cancelInlineEdit = () => {
+        setInlineEditId(null);
+        setInlineTitle('');
+    };
+
+    const saveInlineEdit = async (ac: AcceptanceCriterion): Promise<void> => {
+        const trimmed = inlineTitle.trim();
+        if (trimmed === '' || trimmed === ac.title) {
+            cancelInlineEdit();
+            return;
+        }
+        setInlineSaving(true);
+        try {
+            await axios.patch(route('agile.acceptance-criteria.update', ac.id), {
+                title: trimmed,
+            });
+            cancelInlineEdit();
+            router.reload({ only: ['story'] });
+        } catch {
+            toast.error(t('agile.errors.generic'));
+        } finally {
+            setInlineSaving(false);
+        }
+    };
+
     const submitCreate = (e: React.FormEvent) => {
         e.preventDefault();
         createForm.post(
@@ -259,9 +294,41 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
-                                        <p className="font-medium text-gray-900 dark:text-gray-100">
-                                            {ac.title}
-                                        </p>
+                                        {inlineEditId === ac.id ? (
+                                            <Input
+                                                autoFocus
+                                                value={inlineTitle}
+                                                onChange={(e) => setInlineTitle(e.target.value)}
+                                                onBlur={() => saveInlineEdit(ac)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        saveInlineEdit(ac);
+                                                    } else if (e.key === 'Escape') {
+                                                        e.preventDefault();
+                                                        cancelInlineEdit();
+                                                    }
+                                                }}
+                                                disabled={inlineSaving}
+                                                className="font-medium"
+                                            />
+                                        ) : (
+                                            <p
+                                                onClick={() => startInlineEdit(ac)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        startInlineEdit(ac);
+                                                    }
+                                                }}
+                                                className="font-medium text-gray-900 dark:text-gray-100 cursor-text rounded px-1 -mx-1 hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                                                title={t('agile.actions.edit')}
+                                            >
+                                                {ac.title}
+                                            </p>
+                                        )}
                                         <StatusBadge status={ac.status} label={ac.status_label} />
                                     </div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-wrap">
