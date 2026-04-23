@@ -35,6 +35,12 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\PastoralCare::class => \App\Policies\PastoralCarePolicy::class,
         \App\Models\Department::class => \App\Policies\DepartmentPolicy::class,
         \App\Models\Scheduling\DepartmentTodo::class => \App\Policies\DepartmentTodoPolicy::class,
+        \App\Models\Task::class => \App\Policies\TaskPolicy::class,
+        \App\Models\Agile\Epic::class => \App\Policies\Agile\EpicPolicy::class,
+        \App\Models\Agile\UserStory::class => \App\Policies\Agile\UserStoryPolicy::class,
+        \App\Models\Agile\AcceptanceCriterion::class => \App\Policies\Agile\AcceptanceCriterionPolicy::class,
+        \App\Models\Agile\TestScenario::class => \App\Policies\Agile\TestScenarioPolicy::class,
+        \App\Models\Sprint::class => \App\Policies\Agile\SprintPolicy::class,
     ];
 
     /**

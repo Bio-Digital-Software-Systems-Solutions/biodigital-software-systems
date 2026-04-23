@@ -26,7 +26,7 @@ pest()->extend(Tests\TestCase::class)
 |
 */
 
-expect()->extend('toBeOne', fn() => $this->toBe(1));
+expect()->extend('toBeOne', fn () => $this->toBe(1));
 
 /*
 |--------------------------------------------------------------------------
@@ -42,4 +42,12 @@ expect()->extend('toBeOne', fn() => $this->toBe(1));
 function something(): void
 {
     // ..
+}
+
+function asRole(string $role): \App\Models\User
+{
+    $user = \App\Models\User::factory()->create();
+    $user->assignRole($role);
+
+    return $user;
 }
