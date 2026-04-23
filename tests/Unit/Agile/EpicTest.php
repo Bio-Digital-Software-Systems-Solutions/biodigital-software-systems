@@ -15,4 +15,24 @@ it('persists an epic with enum cast status', function (): void {
         ->and($epic->priority)->toBeBetween(1, 5);
 });
 
-// completionPercentage() coverage is deferred to Step 4 once UserStory exists.
+it('returns zero completion percentage when no user stories exist', function (): void {
+    $epic = Epic::factory()->create();
+
+    expect($epic->completionPercentage())->toBe(0);
+});
+
+it('computes completion percentage from done stories only', function (): void {
+    $epic = Epic::factory()->create();
+    \App\Models\Agile\UserStory::factory()->for($epic)->done()->count(2)->create();
+    \App\Models\Agile\UserStory::factory()->for($epic)->inProgress()->count(3)->create();
+
+    expect($epic->completionPercentage())->toBe(40);
+});
+
+it('rounds completion percentage to the nearest integer', function (): void {
+    $epic = Epic::factory()->create();
+    \App\Models\Agile\UserStory::factory()->for($epic)->done()->count(1)->create();
+    \App\Models\Agile\UserStory::factory()->for($epic)->inProgress()->count(2)->create();
+
+    expect($epic->completionPercentage())->toBe(33);
+});
