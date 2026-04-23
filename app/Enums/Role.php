@@ -21,4 +21,5 @@ enum Role: string
     case STAR = 'star';
     case MLR_AGENT = 'mlr-agent';
     case ACCOUNTANT = 'accountant';
+    case PRODUCT_OWNER = 'product-owner';
 }

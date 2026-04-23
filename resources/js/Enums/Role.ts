@@ -20,6 +20,7 @@ export enum Role {
     STAR = 'star',
     MLR_AGENT = 'mlr-agent',
     ACCOUNTANT = 'accountant',
+    PRODUCT_OWNER = 'product-owner',
 }
 
 /**
