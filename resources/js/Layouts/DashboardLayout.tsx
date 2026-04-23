@@ -31,6 +31,8 @@ import {
     DocumentTextIcon,
     ClipboardDocumentCheckIcon,
     BanknotesIcon,
+    RocketLaunchIcon,
+    BookmarkIcon,
 } from '@heroicons/react/24/outline';
 import Dropdown from '@/Components/Dropdown';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
@@ -95,6 +97,8 @@ export default function DashboardLayout({ children, title, description, actions,
         { name: 'Espace étudiant', href: '/student/dashboard', icon: UserCircleIcon, permission: 'access student dashboard' },
         { name: t('chat'), href: '/chat', icon: ChatBubbleLeftRightIcon, permission: 'use chat' },
         { name: 'Projets', href: '/projects', icon: FolderIcon, permission: 'view projects' },
+        { name: t('agile.epics.nav'), href: '/agile/epics', icon: RocketLaunchIcon, permission: 'view epics' },
+        { name: t('agile.user_stories.nav'), href: '/agile/user-stories', icon: BookmarkIcon, permission: 'view user stories' },
         { name: 'Départements', href: '/departments', icon: UserGroupIcon, permission: 'view departments' },
         { name: 'Rapports', href: '/reports', icon: DocumentTextIcon, permission: 'view reports' },
         { name: 'Groupes', href: '/groups', icon: UsersIcon, permission: 'view groups' },
