@@ -396,6 +396,11 @@ class Department extends Model
         return $this->morphMany(Appointment::class, 'appointmentable');
     }
 
+    public function visitorVisits(): MorphMany
+    {
+        return $this->morphMany(VisitorVisit::class, 'visitable');
+    }
+
     /**
      * Get upcoming appointments for this department.
      */

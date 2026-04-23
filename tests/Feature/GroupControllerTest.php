@@ -5,14 +5,17 @@ namespace Tests\Feature;
 use App\Models\Group;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Illuminate\Testing\TestResponse;
 use Tests\CreatesPermissions;
+use Tests\TestCase;
 
 class GroupControllerTest extends TestCase
 {
     public $user;
+
     public $leader;
-    use RefreshDatabase, CreatesPermissions;
+
+    use CreatesPermissions, RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -107,6 +110,18 @@ class GroupControllerTest extends TestCase
         $response->assertSessionHasErrors(['code']);
     }
 
+    /**
+     * Extract Inertia page data from HTML response when viewData is unavailable.
+     */
+    protected function getInertiaPageData(TestResponse $response): array
+    {
+        $content = $response->content();
+        preg_match('/data-page="([^"]*)"/', $content, $matches);
+        $this->assertNotEmpty($matches, 'No Inertia data-page found in response');
+
+        return json_decode(html_entity_decode($matches[1]), true);
+    }
+
     public function test_show_displays_group(): void
     {
         $group = Group::factory()->create();
@@ -117,10 +132,228 @@ class GroupControllerTest extends TestCase
             ->get(route('groups.show', $group));
 
         $response->assertOk();
-        $response->assertInertia(fn ($assert) => $assert->component('Groups/Show')
-            ->where('group.id', $group->id)
-            ->where('group.name', $group->name)
-        );
+
+        $page = $this->getInertiaPageData($response);
+        $this->assertEquals('Groups/Show', $page['component']);
+        $this->assertEquals($group->id, $page['props']['group']['id']);
+        $this->assertEquals($group->name, $page['props']['group']['name']);
+    }
+
+    public function test_show_includes_tab_data(): void
+    {
+        $group = Group::factory()->create();
+
+        $this->user->givePermissionTo('view groups');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('groups.show', $group));
+
+        $response->assertOk();
+
+        $page = $this->getInertiaPageData($response);
+        $props = $page['props'];
+        $this->assertArrayHasKey('meetings', $props);
+        $this->assertArrayHasKey('appointments', $props);
+        $this->assertArrayHasKey('activities', $props);
+        $this->assertArrayHasKey('statistics', $props);
+        $this->assertArrayHasKey('todos', $props['statistics']);
+        $this->assertArrayHasKey('performance', $props['statistics']);
+        $this->assertArrayHasKey('members', $props['statistics']);
+    }
+
+    public function test_show_includes_statistics_with_todos(): void
+    {
+        $group = Group::factory()->create();
+
+        \App\Models\GroupTodo::factory()->count(5)->create([
+            'group_id' => $group->id,
+            'status' => 'completed',
+            'completed_at' => now(),
+            'completed_by' => $this->user->id,
+        ]);
+        \App\Models\GroupTodo::factory()->count(3)->create([
+            'group_id' => $group->id,
+            'status' => 'pending',
+        ]);
+
+        $this->user->givePermissionTo('view groups');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('groups.show', $group));
+
+        $response->assertOk();
+
+        $page = $this->getInertiaPageData($response);
+        $stats = $page['props']['statistics'];
+        $this->assertEquals(8, $stats['todos']['total']);
+        $this->assertEquals(5, $stats['todos']['completed']);
+        $this->assertEquals(3, $stats['todos']['pending']);
+    }
+
+    public function test_statistics_include_available_years(): void
+    {
+        $group = Group::factory()->create();
+
+        $this->user->givePermissionTo('view groups');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('groups.show', $group));
+
+        $response->assertOk();
+
+        $page = $this->getInertiaPageData($response);
+        $stats = $page['props']['statistics'];
+        $this->assertArrayHasKey('available_years', $stats);
+        $this->assertIsArray($stats['available_years']);
+        $this->assertContains(now()->year, $stats['available_years']);
+    }
+
+    public function test_task_evolution_has_all_granularities(): void
+    {
+        $group = Group::factory()->create();
+
+        $this->user->givePermissionTo('view groups');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('groups.show', $group));
+
+        $response->assertOk();
+
+        $page = $this->getInertiaPageData($response);
+        $stats = $page['props']['statistics'];
+        $currentYear = (string) now()->year;
+
+        $this->assertArrayHasKey('task_evolution', $stats);
+        $this->assertArrayHasKey($currentYear, $stats['task_evolution']);
+
+        $yearData = $stats['task_evolution'][$currentYear];
+        $this->assertArrayHasKey('weekly', $yearData);
+        $this->assertArrayHasKey('monthly', $yearData);
+        $this->assertArrayHasKey('quarterly', $yearData);
+        $this->assertArrayHasKey('semester', $yearData);
+        $this->assertArrayHasKey('yearly', $yearData);
+    }
+
+    public function test_member_growth_has_all_granularities(): void
+    {
+        $group = Group::factory()->create();
+
+        $this->user->givePermissionTo('view groups');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('groups.show', $group));
+
+        $response->assertOk();
+
+        $page = $this->getInertiaPageData($response);
+        $stats = $page['props']['statistics'];
+        $currentYear = (string) now()->year;
+
+        $this->assertArrayHasKey('member_growth', $stats);
+        $this->assertArrayHasKey($currentYear, $stats['member_growth']);
+
+        $yearData = $stats['member_growth'][$currentYear];
+        $this->assertArrayHasKey('weekly', $yearData);
+        $this->assertArrayHasKey('monthly', $yearData);
+        $this->assertArrayHasKey('quarterly', $yearData);
+        $this->assertArrayHasKey('semester', $yearData);
+        $this->assertArrayHasKey('yearly', $yearData);
+    }
+
+    public function test_monthly_view_always_shows_12_months(): void
+    {
+        $group = Group::factory()->create();
+
+        $this->user->givePermissionTo('view groups');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('groups.show', $group));
+
+        $response->assertOk();
+
+        $page = $this->getInertiaPageData($response);
+        $currentYear = (string) now()->year;
+        $monthly = $page['props']['statistics']['task_evolution'][$currentYear]['monthly'];
+
+        $this->assertCount(12, $monthly);
+        $this->assertArrayHasKey('label', $monthly[0]);
+        $this->assertArrayHasKey('period', $monthly[0]);
+        $this->assertArrayHasKey('created', $monthly[0]);
+        $this->assertArrayHasKey('completed', $monthly[0]);
+    }
+
+    public function test_weekly_view_contains_weeks_with_7_days_each(): void
+    {
+        $group = Group::factory()->create();
+
+        $this->user->givePermissionTo('view groups');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('groups.show', $group));
+
+        $response->assertOk();
+
+        $page = $this->getInertiaPageData($response);
+        $currentYear = (string) now()->year;
+        $weekly = $page['props']['statistics']['task_evolution'][$currentYear]['weekly'];
+
+        $this->assertNotEmpty($weekly);
+
+        $firstWeek = $weekly[0];
+        $this->assertArrayHasKey('week_number', $firstWeek);
+        $this->assertArrayHasKey('label', $firstWeek);
+        $this->assertArrayHasKey('start_date', $firstWeek);
+        $this->assertArrayHasKey('end_date', $firstWeek);
+        $this->assertArrayHasKey('days', $firstWeek);
+        $this->assertCount(7, $firstWeek['days']);
+
+        $firstDay = $firstWeek['days'][0];
+        $this->assertArrayHasKey('label', $firstDay);
+        $this->assertArrayHasKey('created', $firstDay);
+        $this->assertArrayHasKey('completed', $firstDay);
+    }
+
+    public function test_member_growth_monthly_always_shows_12_months(): void
+    {
+        $group = Group::factory()->create();
+        $member = User::factory()->create();
+        $group->users()->attach($member, ['joined_at' => now()]);
+
+        $this->user->givePermissionTo('view groups');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('groups.show', $group));
+
+        $response->assertOk();
+
+        $page = $this->getInertiaPageData($response);
+        $currentYear = (string) now()->year;
+        $monthly = $page['props']['statistics']['member_growth'][$currentYear]['monthly'];
+
+        $this->assertCount(12, $monthly);
+        $lastEntry = end($monthly);
+        $this->assertArrayHasKey('new_members', $lastEntry);
+        $this->assertArrayHasKey('total_members', $lastEntry);
+    }
+
+    public function test_member_growth_weekly_contains_7_days(): void
+    {
+        $group = Group::factory()->create();
+
+        $this->user->givePermissionTo('view groups');
+
+        $response = $this->actingAs($this->user)
+            ->get(route('groups.show', $group));
+
+        $response->assertOk();
+
+        $page = $this->getInertiaPageData($response);
+        $currentYear = (string) now()->year;
+        $weekly = $page['props']['statistics']['member_growth'][$currentYear]['weekly'];
+
+        $this->assertNotEmpty($weekly);
+        $firstWeek = $weekly[0];
+        $this->assertCount(7, $firstWeek['days']);
     }
 
     public function test_edit_displays_form(): void

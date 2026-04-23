@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\Event\EventBadgeController;
 use App\Http\Controllers\Api\Event\EventCheckInController;
 use App\Http\Controllers\Api\Event\EventRegistrationController;
 use App\Http\Controllers\Api\Event\EventTicketController;
+use App\Http\Controllers\Api\GroupActivityController;
+use App\Http\Controllers\Api\GroupMeetingController;
 use App\Http\Controllers\Api\PastoralCareController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProjectAppointmentController;
@@ -19,10 +21,10 @@ use App\Http\Controllers\TusUploadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', fn(Request $request) => $request->user())->middleware('auth:sanctum');
+Route::get('/user', fn (Request $request) => $request->user())->middleware('auth:sanctum');
 
 // CSRF token refresh endpoint
-Route::get('/csrf-token', fn() => response()->json(['csrf_token' => csrf_token()]))->middleware('auth:sanctum');
+Route::get('/csrf-token', fn () => response()->json(['csrf_token' => csrf_token()]))->middleware('auth:sanctum');
 
 // TUS protocol file upload endpoints (authenticated)
 Route::middleware('auth:sanctum')->group(function (): void {
@@ -204,6 +206,21 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/{meeting:uuid}', [DepartmentMeetingController::class, 'show'])->name('show');
         Route::patch('/{meeting:uuid}', [DepartmentMeetingController::class, 'update'])->name('update');
         Route::delete('/{meeting:uuid}', [DepartmentMeetingController::class, 'destroy'])->name('destroy');
+    });
+
+    // Group Meetings API
+    Route::prefix('groups/{group:uuid}/meetings')->name('api.groups.meetings.')->group(function (): void {
+        Route::get('/', [GroupMeetingController::class, 'index'])->name('index');
+        Route::post('/', [GroupMeetingController::class, 'store'])->name('store');
+        Route::delete('/{meeting:uuid}', [GroupMeetingController::class, 'destroy'])->name('destroy');
+    });
+
+    // Group Activities API
+    Route::prefix('groups/{group:uuid}/activities')->name('api.groups.activities.')->group(function (): void {
+        Route::get('/', [GroupActivityController::class, 'index'])->name('index');
+        Route::post('/', [GroupActivityController::class, 'store'])->name('store');
+        Route::patch('/{groupActivity:uuid}', [GroupActivityController::class, 'update'])->name('update');
+        Route::delete('/{groupActivity:uuid}', [GroupActivityController::class, 'destroy'])->name('destroy');
     });
 
     // Department Documents API

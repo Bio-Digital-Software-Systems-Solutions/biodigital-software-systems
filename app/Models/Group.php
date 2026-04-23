@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Str;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * @property int $id
@@ -30,6 +32,7 @@ use Spatie\Activitylog\LogOptions;
  * @property-read \App\Models\Pivots\GroupUser|null $pivot
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
  * @property-read int|null $users_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group active()
  * @method static \Database\Factories\GroupFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group newModelQuery()
@@ -47,11 +50,12 @@ use Spatie\Activitylog\LogOptions;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereUuid($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group withSpace()
+ *
  * @mixin \Eloquent
  */
 class Group extends Model
 {
-    use HasFactory, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, LogsActivity;
 
     /**
      * Configure activity log options.
@@ -63,6 +67,7 @@ class Group extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
     protected static function boot()
     {
         parent::boot();
@@ -112,9 +117,14 @@ class Group extends Model
 
     public function getMembersCountAttribute(): int
     {
-        // Use users_count from withCount() if available, otherwise fall back to querying
+        // Use users_count from withCount() if available
         if (isset($this->attributes['users_count'])) {
             return (int) $this->attributes['users_count'];
+        }
+
+        // Use already-loaded relation if available
+        if ($this->relationLoaded('users')) {
+            return $this->users->count();
         }
 
         return $this->users()->count();
@@ -151,6 +161,26 @@ class Group extends Model
             $q->whereNull('max_members')
                 ->orWhereRaw('(SELECT COUNT(*) FROM group_user WHERE group_id = groups.id) < max_members');
         });
+    }
+
+    public function meetings(): HasMany
+    {
+        return $this->hasMany(GroupMeeting::class);
+    }
+
+    public function groupActivities(): HasMany
+    {
+        return $this->hasMany(GroupActivity::class);
+    }
+
+    public function todos(): HasMany
+    {
+        return $this->hasMany(GroupTodo::class);
+    }
+
+    public function visitorVisits(): MorphMany
+    {
+        return $this->morphMany(VisitorVisit::class, 'visitable');
     }
 
     public function getRouteKeyName(): string

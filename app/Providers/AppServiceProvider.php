@@ -8,12 +8,14 @@ use App\Models\Project;
 use App\Models\Quiz;
 use App\Models\Scheduling\DepartmentTodo;
 use App\Models\Task;
+use App\Models\VisitorAttendance;
 use App\Observers\AppointmentObserver;
 use App\Observers\DepartmentTodoObserver;
 use App\Observers\PastoralCareObserver;
 use App\Observers\ProjectObserver;
 use App\Observers\QuizObserver;
 use App\Observers\TaskObserver;
+use App\Observers\VisitorAttendanceObserver;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -57,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
         DepartmentTodo::observe(DepartmentTodoObserver::class);
         Appointment::observe(AppointmentObserver::class);
         PastoralCare::observe(PastoralCareObserver::class);
+        VisitorAttendance::observe(VisitorAttendanceObserver::class);
 
         // Register policies
         foreach ($this->policies as $model => $policy) {
@@ -72,14 +75,14 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting(): void
     {
-        \Illuminate\Support\Facades\RateLimiter::for('api', fn(\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
+        \Illuminate\Support\Facades\RateLimiter::for('api', fn (\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->user()?->id ?: $request->ip()));
 
-        \Illuminate\Support\Facades\RateLimiter::for('login', fn(\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(5)->by($request->ip()));
+        \Illuminate\Support\Facades\RateLimiter::for('login', fn (\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(5)->by($request->ip()));
 
-        \Illuminate\Support\Facades\RateLimiter::for('register', fn(\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perHour(3)->by($request->ip()));
+        \Illuminate\Support\Facades\RateLimiter::for('register', fn (\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perHour(3)->by($request->ip()));
 
-        \Illuminate\Support\Facades\RateLimiter::for('uploads', fn(\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
+        \Illuminate\Support\Facades\RateLimiter::for('uploads', fn (\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()));
 
-        \Illuminate\Support\Facades\RateLimiter::for('chat', fn(\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(30)->by($request->user()->id));
+        \Illuminate\Support\Facades\RateLimiter::for('chat', fn (\Illuminate\Http\Request $request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(30)->by($request->user()->id));
     }
 }

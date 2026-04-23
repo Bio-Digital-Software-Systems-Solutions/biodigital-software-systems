@@ -77,6 +77,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit groups',
             'delete groups',
             'manage group members',
+            // Visitors
+            'view visitors',
+            'create visitors',
+            'edit visitors',
+            'delete visitors',
+            'manage integration pathways',
+            'view integration scores',
+            'respond integration suggestions',
             // Users & Departments
             'view users',
             'create users',
@@ -264,6 +272,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit groups',
             'delete groups',
             'manage group members',
+            // Visitors
+            'view visitors',
+            'create visitors',
+            'edit visitors',
+            'delete visitors',
+            'manage integration pathways',
+            'view integration scores',
+            'respond integration suggestions',
             // Users & Departments
             'view users',
             'edit users',
@@ -610,6 +626,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'view videos',
             'view users',
             'view departments',
+            // Visitors
+            'view visitors',
+            'create visitors',
+            'edit visitors',
+            'view integration scores',
+            'respond integration suggestions',
         ]);
 
         // Department Leader - Manage department
@@ -679,6 +701,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit needs',
             'approve needs',
             'manage needs',
+            // Visitors
+            'view visitors',
+            'create visitors',
+            'edit visitors',
+            'view integration scores',
+            'respond integration suggestions',
         ]);
 
         // Impact Family Leader - Manage impact families and related activities

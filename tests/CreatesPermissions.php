@@ -41,6 +41,13 @@ trait CreatesPermissions
             'manage programs',
             'view stocks',
             'manage stocks',
+            'view visitors',
+            'create visitors',
+            'edit visitors',
+            'delete visitors',
+            'manage integration pathways',
+            'view integration scores',
+            'respond integration suggestions',
         ];
 
         foreach ($permissions as $permission) {
@@ -82,7 +89,7 @@ trait CreatesPermissions
             foreach ($permissions as $permission) {
                 $permissionModels[] = Permission::firstOrCreate([
                     'name' => $permission,
-                    'guard_name' => 'web'
+                    'guard_name' => 'web',
                 ]);
             }
             $role->syncPermissions($permissionModels);

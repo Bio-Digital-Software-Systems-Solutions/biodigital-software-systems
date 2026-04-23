@@ -61,6 +61,8 @@ class DatabaseSeeder extends Seeder
             OhadaAccountSeeder::class,
             PcgAccountSeeder::class,
             IfrsAccountSeeder::class,
+            GroupMemberSeeder::class,
+            VisitorSeeder::class,
         ]);
     }
 }

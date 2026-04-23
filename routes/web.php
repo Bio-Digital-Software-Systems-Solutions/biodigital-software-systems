@@ -265,6 +265,38 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::delete('groups/{group}/users/{user}', [App\Http\Controllers\GroupController::class, 'removeMember'])
         ->name('groups.remove-member');
 
+    // Group Visitors routes
+    Route::prefix('groups/{group:uuid}/visitors')->name('groups.visitors.')->group(function (): void {
+        Route::get('/', [App\Http\Controllers\GroupVisitorController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\GroupVisitorController::class, 'store'])->name('store');
+        Route::post('/attendance', [App\Http\Controllers\GroupVisitorController::class, 'bulkRecordAttendance'])->name('bulk-attendance');
+        Route::post('/{visitor:uuid}/attendance', [App\Http\Controllers\GroupVisitorController::class, 'recordAttendance'])->name('record-attendance')->withoutScopedBindings();
+        Route::delete('/{visitor:uuid}', [App\Http\Controllers\GroupVisitorController::class, 'removeVisitor'])->name('remove')->withoutScopedBindings();
+        Route::get('/dashboard', [App\Http\Controllers\GroupVisitorController::class, 'integrationDashboard'])->name('dashboard');
+    });
+
+    // Visitor CRUD routes
+    Route::resource('visitors', App\Http\Controllers\VisitorController::class);
+
+    // Integration Pathways routes
+    Route::prefix('integration-pathways')->name('integration-pathways.')->group(function (): void {
+        Route::get('/', [App\Http\Controllers\IntegrationPathwayController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\IntegrationPathwayController::class, 'store'])->name('store');
+        Route::get('/{template:uuid}', [App\Http\Controllers\IntegrationPathwayController::class, 'show'])->name('show');
+        Route::put('/{template:uuid}', [App\Http\Controllers\IntegrationPathwayController::class, 'update'])->name('update');
+        Route::delete('/{template:uuid}', [App\Http\Controllers\IntegrationPathwayController::class, 'destroy'])->name('destroy');
+        Route::post('/{template:uuid}/steps', [App\Http\Controllers\IntegrationPathwayController::class, 'addStep'])->name('steps.store');
+        Route::put('/{template:uuid}/steps/{step:uuid}', [App\Http\Controllers\IntegrationPathwayController::class, 'updateStep'])->name('steps.update');
+        Route::delete('/{template:uuid}/steps/{step:uuid}', [App\Http\Controllers\IntegrationPathwayController::class, 'removeStep'])->name('steps.destroy');
+        Route::post('/{template:uuid}/steps/reorder', [App\Http\Controllers\IntegrationPathwayController::class, 'reorderSteps'])->name('steps.reorder');
+    });
+
+    // Integration Suggestions routes
+    Route::get('/integration-suggestions', [App\Http\Controllers\IntegrationSuggestionController::class, 'index'])
+        ->name('integration-suggestions.index');
+    Route::post('/integration-suggestions/{suggestion:uuid}/respond', [App\Http\Controllers\IntegrationSuggestionController::class, 'respond'])
+        ->name('integration-suggestions.respond');
+
     // Department routes
     Route::resource('departments', App\Http\Controllers\DepartmentController::class);
     Route::post('departments/{department}/assign-user', [App\Http\Controllers\DepartmentController::class, 'assignUser'])
