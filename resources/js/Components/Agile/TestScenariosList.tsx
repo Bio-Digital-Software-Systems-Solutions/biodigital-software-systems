@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { router, useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/Components/ui/button';
 import {
     Dialog,
@@ -28,6 +29,7 @@ type Mode = 'gherkin' | 'free_form';
 type Modal = 'create' | 'edit' | 'run' | null;
 
 export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => {
+    const { t } = useTranslation();
     const [modal, setModal] = useState<Modal>(null);
     const [selected, setSelected] = useState<TestScenario | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<TestScenario | null>(null);
@@ -153,7 +155,7 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
     const submitRun = async (): Promise<void> => {
         if (!selected) return;
         if (runStatus === 'failed' && runNotes.trim() === '') {
-            toast.error('Notes obligatoires pour un échec.');
+            toast.error(t('agile.scenarios.failed_notes_required'));
             return;
         }
         setPending(true);
@@ -162,11 +164,11 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
                 status: runStatus,
                 failure_notes: runStatus === 'failed' ? runNotes : runNotes || null,
             });
-            toast.success('Exécution enregistrée.');
+            toast.success(t('agile.scenarios.recorded'));
             close();
             router.reload({ only: ['story'] });
         } catch (e: unknown) {
-            toast.error(axios.isAxiosError(e) ? e.response?.data?.message ?? 'Erreur.' : 'Erreur.');
+            toast.error(axios.isAxiosError(e) ? e.response?.data?.message ?? t('agile.errors.generic') : t('agile.errors.generic'));
         } finally {
             setPending(false);
         }
@@ -176,16 +178,16 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
         <div className="mt-3 ml-10 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
             <div className="flex items-center justify-between mb-2">
                 <h4 className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-                    Scénarios de test
+                    {t('agile.scenarios.heading')}
                 </h4>
                 <Button size="sm" variant="outline" onClick={openCreate}>
                     <PlusIcon className="mr-1 h-3 w-3" />
-                    Scénario
+                    {t('agile.scenarios.add_short')}
                 </Button>
             </div>
 
             {scenarios.length === 0 ? (
-                <p className="text-xs text-gray-400 italic">Aucun scénario pour l'instant.</p>
+                <p className="text-xs text-gray-400 italic">{t('agile.scenarios.none')}</p>
             ) : (
                 <ul className="space-y-2">
                     {scenarios.map((s) => (
@@ -225,13 +227,13 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
                                     )}
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <Button size="sm" variant="ghost" onClick={() => openRun(s)} aria-label="Exécuter">
+                                    <Button size="sm" variant="ghost" onClick={() => openRun(s)} aria-label={t('agile.actions.execute')}>
                                         <PlayIcon className="h-3 w-3" />
                                     </Button>
-                                    <Button size="sm" variant="ghost" onClick={() => openEdit(s)} aria-label="Modifier">
+                                    <Button size="sm" variant="ghost" onClick={() => openEdit(s)} aria-label={t('agile.actions.edit')}>
                                         <PencilIcon className="h-3 w-3" />
                                     </Button>
-                                    <Button size="sm" variant="ghost" onClick={() => setDeleteTarget(s)} aria-label="Supprimer">
+                                    <Button size="sm" variant="ghost" onClick={() => setDeleteTarget(s)} aria-label={t('agile.actions.delete')}>
                                         <TrashIcon className="h-3 w-3 text-red-500" />
                                     </Button>
                                 </div>
@@ -249,13 +251,13 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            {modal === 'edit' ? 'Modifier le scénario' : 'Nouveau scénario'}
+                            {modal === 'edit' ? t('agile.scenarios.edit_title') : t('agile.scenarios.create_title')}
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={modal === 'edit' ? submitEdit : submitCreate} className="space-y-4">
                         {/* Mode toggle */}
                         <div>
-                            <Label className="text-xs mr-4">Type</Label>
+                            <Label className="text-xs mr-4">{t('agile.common.type')}</Label>
                             <label className="mr-4 inline-flex items-center text-sm">
                                 <input
                                     type="radio"
@@ -263,7 +265,7 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
                                     checked={mode === 'gherkin'}
                                     onChange={() => setMode('gherkin')}
                                 />
-                                Gherkin
+                                {t('agile.scenarios.type_gherkin')}
                             </label>
                             <label className="inline-flex items-center text-sm">
                                 <input
@@ -272,12 +274,12 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
                                     checked={mode === 'free_form'}
                                     onChange={() => setMode('free_form')}
                                 />
-                                Libre
+                                {t('agile.scenarios.type_freeform')}
                             </label>
                         </div>
 
                         <div>
-                            <Label htmlFor="ts-title">Titre <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="ts-title">{t('agile.common.title')} <span className="text-red-500">*</span></Label>
                             <Input
                                 id="ts-title"
                                 value={modal === 'edit' ? editForm.data.title : createForm.data.title}
@@ -316,7 +318,7 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
                             </div>
                         ) : (
                             <div>
-                                <Label htmlFor="ts-freeform">Description libre <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="ts-freeform">{t('agile.scenarios.freeform_label')} <span className="text-red-500">*</span></Label>
                                 <Textarea
                                     id="ts-freeform"
                                     rows={5}
@@ -336,7 +338,7 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
                         )}
 
                         <div>
-                            <Label htmlFor="ts-ref">Test automatisé (optionnel)</Label>
+                            <Label htmlFor="ts-ref">{t('agile.scenarios.automated_ref')}</Label>
                             <Input
                                 id="ts-ref"
                                 placeholder="Tests\\Feature\\XxxTest::test_yyy"
@@ -355,14 +357,14 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={close}>Annuler</Button>
+                            <Button type="button" variant="outline" onClick={close}>{t('agile.actions.cancel')}</Button>
                             <Button
                                 type="submit"
                                 disabled={
                                     modal === 'edit' ? editForm.processing : createForm.processing
                                 }
                             >
-                                Enregistrer
+                                {t('agile.actions.save')}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -373,14 +375,12 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
             <Dialog open={modal === 'run'} onOpenChange={(o) => (!o ? close() : undefined)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Enregistrer une exécution</DialogTitle>
-                        <DialogDescription>
-                            Notes obligatoires si l'exécution a échoué.
-                        </DialogDescription>
+                        <DialogTitle>{t('agile.scenarios.run_title')}</DialogTitle>
+                        <DialogDescription>{t('agile.scenarios.run_description')}</DialogDescription>
                     </DialogHeader>
                     <div className="py-2 space-y-3">
                         <div>
-                            <Label className="mr-4">Résultat</Label>
+                            <Label className="mr-4">{t('agile.scenarios.result')}</Label>
                             {(['passed', 'failed', 'blocked'] as const).map((s) => (
                                 <label key={s} className="mr-4 inline-flex items-center text-sm">
                                     <input
@@ -389,13 +389,13 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
                                         checked={runStatus === s}
                                         onChange={() => setRunStatus(s)}
                                     />
-                                    {s === 'passed' ? 'Réussi' : s === 'failed' ? 'Échoué' : 'Bloqué'}
+                                    {t(`agile.scenarios.result.${s}`)}
                                 </label>
                             ))}
                         </div>
                         <div>
                             <Label htmlFor="run-notes">
-                                Notes {runStatus === 'failed' && <span className="text-red-500">*</span>}
+                                {t('agile.ac.notes_label')} {runStatus === 'failed' && <span className="text-red-500">*</span>}
                             </Label>
                             <Textarea
                                 id="run-notes"
@@ -407,10 +407,10 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={close}>Annuler</Button>
+                        <Button variant="outline" onClick={close}>{t('agile.actions.cancel')}</Button>
                         <Button onClick={submitRun} disabled={pending}>
                             <PlayIcon className="mr-2 h-4 w-4" />
-                            Enregistrer
+                            {t('agile.actions.save')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -421,7 +421,7 @@ export const TestScenariosList: React.FC<Props> = ({ criterion, scenarios }) => 
                 onOpenChange={(o) => (!o ? setDeleteTarget(null) : undefined)}
                 onConfirm={handleDelete}
                 title={deleteTarget?.title ?? ''}
-                description="Ce scénario sera supprimé définitivement."
+                description={t('agile.scenarios.delete_desc')}
             />
         </div>
     );

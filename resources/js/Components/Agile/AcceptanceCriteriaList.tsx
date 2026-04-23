@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { router, useForm } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/Components/ui/button';
 import {
     Dialog,
@@ -36,6 +37,7 @@ interface Props {
 type Modal = 'create' | 'edit' | 'validate' | 'reject' | null;
 
 export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => {
+    const { t } = useTranslation();
     const [modal, setModal] = useState<Modal>(null);
     const [selected, setSelected] = useState<AcceptanceCriterion | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<AcceptanceCriterion | null>(null);
@@ -117,11 +119,11 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
             await axios.post(route('api.agile.acceptance-criteria.validate', selected.id), {
                 notes: validateNotes || null,
             });
-            toast.success('Critère validé.');
+            toast.success(t('agile.ac.validated'));
             closeModal();
             router.reload({ only: ['story'] });
         } catch (e: unknown) {
-            toast.error(axios.isAxiosError(e) ? e.response?.data?.message ?? 'Erreur.' : 'Erreur.');
+            toast.error(axios.isAxiosError(e) ? e.response?.data?.message ?? t('agile.errors.generic') : t('agile.errors.generic'));
         } finally {
             setPending(false);
         }
@@ -134,11 +136,11 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
             await axios.post(route('api.agile.acceptance-criteria.reject', selected.id), {
                 notes: rejectNotes,
             });
-            toast.success('Critère rejeté.');
+            toast.success(t('agile.ac.rejected'));
             closeModal();
             router.reload({ only: ['story'] });
         } catch (e: unknown) {
-            toast.error(axios.isAxiosError(e) ? e.response?.data?.message ?? 'Erreur.' : 'Erreur.');
+            toast.error(axios.isAxiosError(e) ? e.response?.data?.message ?? t('agile.errors.generic') : t('agile.errors.generic'));
         } finally {
             setPending(false);
         }
@@ -157,7 +159,7 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
             });
             router.reload({ only: ['story'] });
         } catch {
-            toast.error('Réordonnancement impossible.');
+            toast.error(t('agile.ac.reorder_fail'));
         }
     };
 
@@ -165,17 +167,17 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
         <div>
             <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Critères d'acceptation
+                    {t('agile.ac.heading')}
                 </h3>
                 <Button size="sm" onClick={openCreate}>
                     <PlusIcon className="mr-1 h-4 w-4" />
-                    Ajouter
+                    {t('agile.actions.add')}
                 </Button>
             </div>
 
             {criteria.length === 0 ? (
                 <p className="text-center text-gray-500 py-10 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                    Aucun critère d'acceptation. Ajoutez-en un pour pouvoir terminer cette story.
+                    {t('agile.ac.none_cta')}
                 </p>
             ) : (
                 <ul className="space-y-3">
@@ -190,7 +192,7 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                                         onClick={() => swap(index, -1)}
                                         disabled={index === 0}
                                         className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                                        aria-label="Monter"
+                                        aria-label={t('agile.actions.move_up')}
                                     >
                                         <ArrowUpIcon className="h-4 w-4" />
                                     </button>
@@ -199,7 +201,7 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                                         onClick={() => swap(index, 1)}
                                         disabled={index === criteria.length - 1}
                                         className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                                        aria-label="Descendre"
+                                        aria-label={t('agile.actions.move_down')}
                                     >
                                         <ArrowDownIcon className="h-4 w-4" />
                                     </button>
@@ -227,8 +229,8 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => openValidate(ac)}
-                                            aria-label="Valider"
-                                            title="Valider"
+                                            aria-label={t('agile.actions.validate')}
+                                            title={t('agile.actions.validate')}
                                         >
                                             <CheckCircleIcon className="h-4 w-4 text-green-500" />
                                         </Button>
@@ -238,8 +240,8 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => openReject(ac)}
-                                            aria-label="Rejeter"
-                                            title="Rejeter"
+                                            aria-label={t('agile.actions.reject')}
+                                            title={t('agile.actions.reject')}
                                         >
                                             <XCircleIcon className="h-4 w-4 text-red-500" />
                                         </Button>
@@ -248,7 +250,7 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                                         size="sm"
                                         variant="ghost"
                                         onClick={() => openEdit(ac)}
-                                        aria-label="Modifier"
+                                        aria-label={t('agile.actions.edit')}
                                     >
                                         <PencilIcon className="h-4 w-4" />
                                     </Button>
@@ -256,7 +258,7 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                                         size="sm"
                                         variant="ghost"
                                         onClick={() => setDeleteTarget(ac)}
-                                        aria-label="Supprimer"
+                                        aria-label={t('agile.actions.delete')}
                                     >
                                         <TrashIcon className="h-4 w-4 text-red-500" />
                                     </Button>
@@ -276,11 +278,11 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
             <Dialog open={modal === 'create'} onOpenChange={(o) => (!o ? closeModal() : undefined)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Nouveau critère</DialogTitle>
+                        <DialogTitle>{t('agile.ac.create_title')}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={submitCreate} className="space-y-4">
                         <div>
-                            <Label htmlFor="ac-create-title">Titre <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="ac-create-title">{t('agile.common.title')} <span className="text-red-500">*</span></Label>
                             <Input
                                 id="ac-create-title"
                                 value={createForm.data.title}
@@ -292,7 +294,7 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                             )}
                         </div>
                         <div>
-                            <Label htmlFor="ac-create-desc">Description <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="ac-create-desc">{t('agile.common.description')} <span className="text-red-500">*</span></Label>
                             <Textarea
                                 id="ac-create-desc"
                                 rows={4}
@@ -305,8 +307,8 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                             )}
                         </div>
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={closeModal}>Annuler</Button>
-                            <Button type="submit" disabled={createForm.processing}>Créer</Button>
+                            <Button type="button" variant="outline" onClick={closeModal}>{t('agile.actions.cancel')}</Button>
+                            <Button type="submit" disabled={createForm.processing}>{t('agile.actions.create')}</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
@@ -316,11 +318,11 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
             <Dialog open={modal === 'edit'} onOpenChange={(o) => (!o ? closeModal() : undefined)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Modifier le critère</DialogTitle>
+                        <DialogTitle>{t('agile.ac.edit_title')}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={submitEdit} className="space-y-4">
                         <div>
-                            <Label htmlFor="ac-edit-title">Titre</Label>
+                            <Label htmlFor="ac-edit-title">{t('agile.common.title')}</Label>
                             <Input
                                 id="ac-edit-title"
                                 value={editForm.data.title}
@@ -328,7 +330,7 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                             />
                         </div>
                         <div>
-                            <Label htmlFor="ac-edit-desc">Description</Label>
+                            <Label htmlFor="ac-edit-desc">{t('agile.common.description')}</Label>
                             <Textarea
                                 id="ac-edit-desc"
                                 rows={4}
@@ -337,8 +339,8 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                             />
                         </div>
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={closeModal}>Annuler</Button>
-                            <Button type="submit" disabled={editForm.processing}>Enregistrer</Button>
+                            <Button type="button" variant="outline" onClick={closeModal}>{t('agile.actions.cancel')}</Button>
+                            <Button type="submit" disabled={editForm.processing}>{t('agile.actions.save')}</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
@@ -348,13 +350,11 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
             <Dialog open={modal === 'validate'} onOpenChange={(o) => (!o ? closeModal() : undefined)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Valider le critère</DialogTitle>
-                        <DialogDescription>
-                            Les notes sont optionnelles mais recommandées.
-                        </DialogDescription>
+                        <DialogTitle>{t('agile.ac.validate_title')}</DialogTitle>
+                        <DialogDescription>{t('agile.ac.validate_description')}</DialogDescription>
                     </DialogHeader>
                     <div className="py-2">
-                        <Label htmlFor="validate-notes">Notes</Label>
+                        <Label htmlFor="validate-notes">{t('agile.ac.notes_label')}</Label>
                         <Textarea
                             id="validate-notes"
                             rows={3}
@@ -363,10 +363,10 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                         />
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={closeModal}>Annuler</Button>
+                        <Button variant="outline" onClick={closeModal}>{t('agile.actions.cancel')}</Button>
                         <Button onClick={submitValidate} disabled={pending}>
                             <CheckCircleIcon className="mr-2 h-4 w-4" />
-                            Valider
+                            {t('agile.actions.validate')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -376,13 +376,11 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
             <Dialog open={modal === 'reject'} onOpenChange={(o) => (!o ? closeModal() : undefined)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Rejeter le critère</DialogTitle>
-                        <DialogDescription>
-                            Les notes sont obligatoires — elles expliquent pourquoi.
-                        </DialogDescription>
+                        <DialogTitle>{t('agile.ac.reject_title')}</DialogTitle>
+                        <DialogDescription>{t('agile.ac.reject_description')}</DialogDescription>
                     </DialogHeader>
                     <div className="py-2">
-                        <Label htmlFor="reject-notes">Notes <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="reject-notes">{t('agile.ac.notes_label')} <span className="text-red-500">*</span></Label>
                         <Textarea
                             id="reject-notes"
                             rows={4}
@@ -392,14 +390,14 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                         />
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={closeModal}>Annuler</Button>
+                        <Button variant="outline" onClick={closeModal}>{t('agile.actions.cancel')}</Button>
                         <Button
                             onClick={submitReject}
                             disabled={pending || rejectNotes.trim() === ''}
                             variant="destructive"
                         >
                             <XCircleIcon className="mr-2 h-4 w-4" />
-                            Rejeter
+                            {t('agile.actions.reject')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -410,7 +408,7 @@ export const AcceptanceCriteriaList: React.FC<Props> = ({ story, criteria }) => 
                 onOpenChange={(o) => (!o ? setDeleteTarget(null) : undefined)}
                 onConfirm={handleDelete}
                 title={deleteTarget?.title ?? ''}
-                description="La suppression est bloquée si un scénario de test est passé."
+                description={t('agile.ac.delete_desc')}
             />
         </div>
     );

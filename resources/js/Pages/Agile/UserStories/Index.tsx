@@ -184,7 +184,7 @@ export default function Index({ stories, epics, sprints, users, filters }: Props
                 <FunnelIcon className="h-5 w-5 text-gray-400" />
 
                 <div className="flex-1 min-w-[180px]">
-                    <Label className="text-xs">Epic</Label>
+                    <Label className="text-xs">{t('agile.common.epic')}</Label>
                     <Select
                         value={(filters.epic_id as string | undefined) ?? '__all__'}
                         onValueChange={(v) => applyFilter('epic_id', v)}
@@ -200,7 +200,7 @@ export default function Index({ stories, epics, sprints, users, filters }: Props
                 </div>
 
                 <div className="flex-1 min-w-[180px]">
-                    <Label className="text-xs">Sprint</Label>
+                    <Label className="text-xs">{t('agile.common.sprint')}</Label>
                     <Select
                         value={(filters.sprint_id as string | undefined) ?? '__all__'}
                         onValueChange={(v) => applyFilter('sprint_id', v)}
@@ -254,14 +254,14 @@ export default function Index({ stories, epics, sprints, users, filters }: Props
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>{t('agile.form.title')}</TableHead>
-                            <TableHead>Epic</TableHead>
-                            <TableHead>Sprint</TableHead>
-                            <TableHead>{t('agile.form.status')}</TableHead>
-                            <TableHead>{t('agile.form.owner')}</TableHead>
-                            <TableHead>Points</TableHead>
-                            <TableHead>AC</TableHead>
-                            <TableHead className="text-right">{t('view')}</TableHead>
+                            <TableHead>{t('agile.common.title')}</TableHead>
+                            <TableHead>{t('agile.common.epic')}</TableHead>
+                            <TableHead>{t('agile.common.sprint')}</TableHead>
+                            <TableHead>{t('agile.common.status')}</TableHead>
+                            <TableHead>{t('agile.common.assignee')}</TableHead>
+                            <TableHead>{t('agile.common.points')}</TableHead>
+                            <TableHead>{t('agile.common.ac_short')}</TableHead>
+                            <TableHead className="text-right">{t('agile.actions.view')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -341,25 +341,25 @@ export default function Index({ stories, epics, sprints, users, filters }: Props
 
                         <div className="grid grid-cols-3 gap-4">
                             <div>
-                                <Label htmlFor="as_a">En tant que <span className="text-red-500">*</span></Label>
-                                <Input id="as_a" value={data.as_a} onChange={(e) => setData('as_a', e.target.value)} placeholder="utilisateur" required />
+                                <Label htmlFor="as_a">{t('agile.narrative.as_a')} <span className="text-red-500">*</span></Label>
+                                <Input id="as_a" value={data.as_a} onChange={(e) => setData('as_a', e.target.value)} required />
                                 {errors.as_a && <p className="text-xs text-red-600 mt-1">{errors.as_a}</p>}
                             </div>
                             <div>
-                                <Label htmlFor="i_want">je veux <span className="text-red-500">*</span></Label>
-                                <Input id="i_want" value={data.i_want} onChange={(e) => setData('i_want', e.target.value)} placeholder="pouvoir faire X" required />
+                                <Label htmlFor="i_want">{t('agile.narrative.i_want')} <span className="text-red-500">*</span></Label>
+                                <Input id="i_want" value={data.i_want} onChange={(e) => setData('i_want', e.target.value)} required />
                                 {errors.i_want && <p className="text-xs text-red-600 mt-1">{errors.i_want}</p>}
                             </div>
                             <div>
-                                <Label htmlFor="so_that">afin de <span className="text-red-500">*</span></Label>
-                                <Input id="so_that" value={data.so_that} onChange={(e) => setData('so_that', e.target.value)} placeholder="obtenir Y" required />
+                                <Label htmlFor="so_that">{t('agile.narrative.so_that')} <span className="text-red-500">*</span></Label>
+                                <Input id="so_that" value={data.so_that} onChange={(e) => setData('so_that', e.target.value)} required />
                                 {errors.so_that && <p className="text-xs text-red-600 mt-1">{errors.so_that}</p>}
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="epic_id">Epic</Label>
+                                <Label htmlFor="epic_id">{t('agile.common.epic')}</Label>
                                 <Select
                                     value={data.epic_id ? String(data.epic_id) : '__none__'}
                                     onValueChange={(v) => setData('epic_id', v === '__none__' ? null : Number(v))}
@@ -374,7 +374,7 @@ export default function Index({ stories, epics, sprints, users, filters }: Props
                                 </Select>
                             </div>
                             <div>
-                                <Label htmlFor="assignee_id">{t('agile.form.owner')}</Label>
+                                <Label htmlFor="assignee_id">{t('agile.common.assignee')}</Label>
                                 <Select
                                     value={data.assignee_id ? String(data.assignee_id) : '__none__'}
                                     onValueChange={(v) => setData('assignee_id', v === '__none__' ? null : Number(v))}
@@ -392,7 +392,7 @@ export default function Index({ stories, epics, sprints, users, filters }: Props
 
                         <div className="grid grid-cols-3 gap-4">
                             <div>
-                                <Label htmlFor="reporter_id">Reporter <span className="text-red-500">*</span></Label>
+                                <Label htmlFor="reporter_id">{t('agile.common.reporter')} <span className="text-red-500">*</span></Label>
                                 <Select
                                     value={data.reporter_id ? String(data.reporter_id) : ''}
                                     onValueChange={(v) => setData('reporter_id', Number(v))}
@@ -407,7 +407,7 @@ export default function Index({ stories, epics, sprints, users, filters }: Props
                                 {errors.reporter_id && <p className="text-xs text-red-600 mt-1">{errors.reporter_id}</p>}
                             </div>
                             <div>
-                                <Label htmlFor="story_points">Points</Label>
+                                <Label htmlFor="story_points">{t('agile.common.points')}</Label>
                                 <Input
                                     id="story_points"
                                     type="number"
@@ -443,7 +443,7 @@ export default function Index({ stories, epics, sprints, users, filters }: Props
                 onOpenChange={(open) => (!open ? setDeleteTarget(null) : undefined)}
                 onConfirm={handleDelete}
                 title={deleteTarget?.title ?? ''}
-                description="Cette action est irréversible."
+                description={t('agile.delete.irreversible')}
             />
         </DashboardLayout>
     );

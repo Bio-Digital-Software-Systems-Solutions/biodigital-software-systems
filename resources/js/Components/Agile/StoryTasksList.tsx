@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { router, useForm } from '@inertiajs/react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/Components/ui/button';
 import {
     Dialog,
@@ -47,6 +48,7 @@ const workTypeColor: Record<StoryTaskType, string> = {
 };
 
 export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statuses }) => {
+    const { t } = useTranslation();
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<StoryTask | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<StoryTask | null>(null);
@@ -135,65 +137,65 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
         <div>
             <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Tâches techniques
+                    {t('agile.story_tasks.heading')}
                 </h3>
                 <Button size="sm" onClick={openCreate}>
                     <PlusIcon className="mr-1 h-4 w-4" />
-                    Ajouter
+                    {t('agile.actions.add')}
                 </Button>
             </div>
 
             {tasks.length === 0 ? (
                 <p className="text-center text-gray-500 py-10 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                    Aucune tâche technique.
+                    {t('agile.story_tasks.none')}
                 </p>
             ) : (
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Titre</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Statut</TableHead>
-                                <TableHead>Assignation</TableHead>
-                                <TableHead className="text-right">Heures</TableHead>
+                                <TableHead>{t('agile.common.title')}</TableHead>
+                                <TableHead>{t('agile.common.type')}</TableHead>
+                                <TableHead>{t('agile.common.status')}</TableHead>
+                                <TableHead>{t('agile.story_tasks.assignment')}</TableHead>
+                                <TableHead className="text-right">{t('agile.common.hours')}</TableHead>
                                 <TableHead />
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {tasks.map((t) => (
-                                <TableRow key={t.id}>
-                                    <TableCell className="font-medium">{t.title}</TableCell>
+                            {tasks.map((task) => (
+                                <TableRow key={task.id}>
+                                    <TableCell className="font-medium">{task.title}</TableCell>
                                     <TableCell>
-                                        {t.work_type ? (
+                                        {task.work_type ? (
                                             <span
-                                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${workTypeColor[t.work_type]}`}
+                                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${workTypeColor[task.work_type]}`}
                                             >
-                                                {t.work_type_label ?? t.work_type}
+                                                {task.work_type_label ?? task.work_type}
                                             </span>
                                         ) : '—'}
                                     </TableCell>
-                                    <TableCell>{statusName(t.status_id)}</TableCell>
-                                    <TableCell>{assigneeName(t.assigned_to)}</TableCell>
+                                    <TableCell>{statusName(task.status_id)}</TableCell>
+                                    <TableCell>{assigneeName(task.assigned_to)}</TableCell>
                                     <TableCell className="text-right text-sm text-gray-600 dark:text-gray-400">
-                                        {t.actual_hours ?? 0}
-                                        {t.estimated_hours !== null ? ` / ${t.estimated_hours}` : ''}
+                                        {task.actual_hours ?? 0}
+                                        {task.estimated_hours !== null ? ` / ${task.estimated_hours}` : ''}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="inline-flex gap-1">
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                onClick={() => openEdit(t)}
-                                                aria-label="Modifier"
+                                                onClick={() => openEdit(task)}
+                                                aria-label={t('agile.actions.edit')}
                                             >
                                                 <PencilIcon className="h-4 w-4" />
                                             </Button>
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                onClick={() => setDeleteTarget(t)}
-                                                aria-label="Supprimer"
+                                                onClick={() => setDeleteTarget(task)}
+                                                aria-label={t('agile.actions.delete')}
                                             >
                                                 <TrashIcon className="h-4 w-4 text-red-500" />
                                             </Button>
@@ -210,12 +212,12 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
                 <DialogContent className="max-w-xl">
                     <DialogHeader>
                         <DialogTitle>
-                            {editing ? 'Modifier la tâche' : 'Nouvelle tâche technique'}
+                            {editing ? t('agile.story_tasks.edit_title') : t('agile.story_tasks.create_title')}
                         </DialogTitle>
                     </DialogHeader>
                     <form onSubmit={submit} className="space-y-4">
                         <div>
-                            <Label htmlFor="st-title">Titre <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="st-title">{t('agile.common.title')} <span className="text-red-500">*</span></Label>
                             <Input
                                 id="st-title"
                                 value={form.data.title}
@@ -228,7 +230,7 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
                         </div>
 
                         <div>
-                            <Label htmlFor="st-desc">Description</Label>
+                            <Label htmlFor="st-desc">{t('agile.common.description')}</Label>
                             <Textarea
                                 id="st-desc"
                                 rows={3}
@@ -240,7 +242,7 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <Label htmlFor="st-work-type">
-                                    Type <span className="text-red-500">*</span>
+                                    {t('agile.common.type')} <span className="text-red-500">*</span>
                                 </Label>
                                 <Select
                                     value={form.data.work_type}
@@ -257,7 +259,7 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
                                 </Select>
                             </div>
                             <div>
-                                <Label htmlFor="st-priority">Priorité</Label>
+                                <Label htmlFor="st-priority">{t('agile.common.priority')}</Label>
                                 <Select
                                     value={form.data.priority}
                                     onValueChange={(v) => form.setData('priority', v as 'low' | 'medium' | 'high')}
@@ -266,9 +268,9 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="low">Basse</SelectItem>
-                                        <SelectItem value="medium">Moyenne</SelectItem>
-                                        <SelectItem value="high">Haute</SelectItem>
+                                        <SelectItem value="low">{t('agile.priority.low')}</SelectItem>
+                                        <SelectItem value="medium">{t('agile.priority.medium')}</SelectItem>
+                                        <SelectItem value="high">{t('agile.priority.high')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -276,7 +278,7 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
 
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <Label htmlFor="st-assignee">Assignation</Label>
+                                <Label htmlFor="st-assignee">{t('agile.story_tasks.assignment')}</Label>
                                 <Select
                                     value={form.data.assigned_to ? String(form.data.assigned_to) : '__none__'}
                                     onValueChange={(v) =>
@@ -295,7 +297,7 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
                                 </Select>
                             </div>
                             <div>
-                                <Label htmlFor="st-status">Statut</Label>
+                                <Label htmlFor="st-status">{t('agile.common.status')}</Label>
                                 <Select
                                     value={form.data.status_id ? String(form.data.status_id) : '__none__'}
                                     onValueChange={(v) =>
@@ -317,7 +319,7 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
 
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <Label htmlFor="st-est">Heures estimées</Label>
+                                <Label htmlFor="st-est">{t('agile.story_tasks.estimated_hours')}</Label>
                                 <Input
                                     id="st-est"
                                     type="number"
@@ -334,7 +336,7 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
                             </div>
                             {editing && (
                                 <div>
-                                    <Label htmlFor="st-actual">Heures réelles</Label>
+                                    <Label htmlFor="st-actual">{t('agile.story_tasks.actual_hours')}</Label>
                                     <Input
                                         id="st-actual"
                                         type="number"
@@ -353,9 +355,9 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={close}>Annuler</Button>
+                            <Button type="button" variant="outline" onClick={close}>{t('agile.actions.cancel')}</Button>
                             <Button type="submit" disabled={form.processing}>
-                                {editing ? 'Enregistrer' : 'Créer'}
+                                {editing ? t('agile.actions.save') : t('agile.actions.create')}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -367,7 +369,7 @@ export const StoryTasksList: React.FC<Props> = ({ storyUuid, tasks, users, statu
                 onOpenChange={(o) => (!o ? setDeleteTarget(null) : undefined)}
                 onConfirm={handleDelete}
                 title={deleteTarget?.title ?? ''}
-                description="Cette tâche technique sera supprimée."
+                description={t('agile.story_tasks.delete_desc')}
             />
         </div>
     );

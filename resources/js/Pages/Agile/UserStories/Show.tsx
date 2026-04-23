@@ -67,13 +67,13 @@ export default function Show({ story, sprints, users, statuses }: Props) {
         setCompleting(true);
         try {
             await axios.post(route('api.agile.user-stories.complete', story.uuid));
-            toast.success('Story terminée.');
+            toast.success(t('agile.user_stories.show.complete_success'));
             router.reload({ only: ['story'] });
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.status === 422) {
-                toast.error(e.response.data?.message ?? 'Impossible de terminer la story.');
+                toast.error(e.response.data?.message ?? t('agile.user_stories.show.complete_fail'));
             } else {
-                toast.error('Erreur inattendue.');
+                toast.error(t('agile.errors.unexpected'));
             }
         } finally {
             setCompleting(false);
@@ -93,12 +93,12 @@ export default function Show({ story, sprints, users, statuses }: Props) {
                     </Link>
                     <Button variant="outline" size="sm" onClick={() => setMoveOpen(true)}>
                         <ArrowsRightLeftIcon className="mr-2 h-4 w-4" />
-                        Sprint
+                        {t('agile.common.sprint')}
                     </Button>
                     {story.can_be_completed && story.status !== 'done' && (
                         <Button size="sm" onClick={complete} disabled={completing}>
                             <CheckCircleIcon className="mr-2 h-4 w-4" />
-                            {completing ? '…' : 'Terminer'}
+                            {completing ? '…' : t('agile.actions.complete')}
                         </Button>
                     )}
                 </div>
@@ -127,18 +127,18 @@ export default function Show({ story, sprints, users, statuses }: Props) {
                     {/* Narrative */}
                     <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-6">
                         <p className="italic text-gray-500 text-xs mb-2">
-                            {t('agile.user_stories.description')}
+                            {t('agile.narrative.hint')}
                         </p>
                         <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
-                            <span className="font-semibold">En tant que</span> {story.as_a},{' '}
-                            <span className="font-semibold">je veux</span> {story.i_want},{' '}
-                            <span className="font-semibold">afin de</span> {story.so_that}.
+                            <span className="font-semibold">{t('agile.narrative.as_a')}</span> {story.as_a},{' '}
+                            <span className="font-semibold">{t('agile.narrative.i_want')}</span> {story.i_want},{' '}
+                            <span className="font-semibold">{t('agile.narrative.so_that')}</span> {story.so_that}.
                         </p>
                     </div>
 
                     <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                            <dt className="text-gray-500 dark:text-gray-400">Epic</dt>
+                            <dt className="text-gray-500 dark:text-gray-400">{t('agile.common.epic')}</dt>
                             <dd className="font-medium">
                                 {story.epic ? (
                                     <Link
@@ -151,15 +151,15 @@ export default function Show({ story, sprints, users, statuses }: Props) {
                             </dd>
                         </div>
                         <div>
-                            <dt className="text-gray-500 dark:text-gray-400">Sprint</dt>
+                            <dt className="text-gray-500 dark:text-gray-400">{t('agile.common.sprint')}</dt>
                             <dd className="font-medium">{story.sprint?.name ?? '—'}</dd>
                         </div>
                         <div>
-                            <dt className="text-gray-500 dark:text-gray-400">{t('agile.form.owner')}</dt>
+                            <dt className="text-gray-500 dark:text-gray-400">{t('agile.common.assignee')}</dt>
                             <dd className="font-medium">{story.assignee?.name ?? '—'}</dd>
                         </div>
                         <div>
-                            <dt className="text-gray-500 dark:text-gray-400">Reporter</dt>
+                            <dt className="text-gray-500 dark:text-gray-400">{t('agile.common.reporter')}</dt>
                             <dd className="font-medium">{story.reporter?.name ?? '—'}</dd>
                         </div>
                     </dl>
@@ -170,10 +170,10 @@ export default function Show({ story, sprints, users, statuses }: Props) {
             <Tabs defaultValue="ac">
                 <TabsList>
                     <TabsTrigger value="ac">
-                        Critères d'acceptation ({criteria.length})
+                        {t('agile.user_stories.show.ac_tab')} ({criteria.length})
                     </TabsTrigger>
                     <TabsTrigger value="tasks">
-                        Tâches techniques ({tasks.length})
+                        {t('agile.user_stories.show.tasks_tab')} ({tasks.length})
                     </TabsTrigger>
                 </TabsList>
                 <TabsContent value="ac" className="mt-4">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/Components/ui/button';
 import {
     Dialog,
@@ -41,6 +42,7 @@ export const MoveToSprintDialog: React.FC<Props> = ({
     currentSprintId,
     sprints,
 }) => {
+    const { t } = useTranslation();
     const [target, setTarget] = useState<string>(
         currentSprintId !== null ? String(currentSprintId) : '__none__',
     );
@@ -52,14 +54,14 @@ export const MoveToSprintDialog: React.FC<Props> = ({
             await axios.post(route('api.agile.user-stories.move', storyUuid), {
                 sprint_id: target === '__none__' ? null : Number(target),
             });
-            toast.success('Sprint mis à jour.');
+            toast.success(t('agile.sprint.moved'));
             onOpenChange(false);
             router.reload({ only: ['story'] });
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.status === 422) {
-                toast.error(e.response.data?.message ?? 'Déplacement impossible.');
+                toast.error(e.response.data?.message ?? t('agile.sprint.move_fail'));
             } else {
-                toast.error('Erreur inattendue.');
+                toast.error(t('agile.errors.unexpected'));
             }
         } finally {
             setSaving(false);
@@ -74,19 +76,17 @@ export const MoveToSprintDialog: React.FC<Props> = ({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Déplacer vers un sprint</DialogTitle>
-                    <DialogDescription>
-                        Choisissez un sprint ou détachez la story du sprint actuel.
-                    </DialogDescription>
+                    <DialogTitle>{t('agile.sprint.move_title')}</DialogTitle>
+                    <DialogDescription>{t('agile.sprint.move_description')}</DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-2">
-                    <Label htmlFor="sprint">Sprint cible</Label>
+                    <Label htmlFor="sprint">{t('agile.sprint.target_label')}</Label>
                     <Select value={target} onValueChange={setTarget}>
                         <SelectTrigger id="sprint">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="__none__">— (détacher)</SelectItem>
+                            <SelectItem value="__none__">{t('agile.sprint.detach')}</SelectItem>
                             {eligibleSprints.map((s) => (
                                 <SelectItem key={s.id} value={String(s.id)}>
                                     {s.name} · {s.status}
@@ -97,10 +97,10 @@ export const MoveToSprintDialog: React.FC<Props> = ({
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Annuler
+                        {t('agile.actions.cancel')}
                     </Button>
                     <Button onClick={submit} disabled={saving}>
-                        {saving ? '…' : 'Confirmer'}
+                        {saving ? '…' : t('agile.actions.confirm')}
                     </Button>
                 </DialogFooter>
             </DialogContent>
