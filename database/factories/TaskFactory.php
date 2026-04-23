@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\Agile\StoryTaskType;
+use App\Models\Agile\UserStory;
 use App\Models\Program;
 use App\Models\Status;
 use App\Models\Task;
@@ -61,6 +63,27 @@ class TaskFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'assigned_to' => $user->id,
+        ]);
+    }
+
+    /**
+     * Attach the task to a UserStory via the polymorphic taskable relation.
+     * Sets type='task' to distinguish from epic/story discriminators used
+     * by the legacy task controllers.
+     */
+    public function asStoryTask(UserStory $story): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'taskable_type' => UserStory::class,
+            'taskable_id' => $story->id,
+            'type' => 'task',
+        ]);
+    }
+
+    public function withWorkType(StoryTaskType $type): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'work_type' => $type,
         ]);
     }
 }

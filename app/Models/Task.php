@@ -192,6 +192,7 @@ class Task extends Model
         'parent_id',
         'reporter_id',
         'type',
+        'work_type',
         'story_points',
         'sprint_id',
         'epic_id',
@@ -213,6 +214,7 @@ class Task extends Model
             'actual_hours' => 'decimal:2',
             'labels' => 'array',
             'custom_fields' => 'array',
+            'work_type' => \App\Enums\Agile\StoryTaskType::class,
         ];
     }
 
