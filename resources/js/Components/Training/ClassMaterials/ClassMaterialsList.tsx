@@ -13,6 +13,8 @@ import axios from 'axios';
 interface Material {
   id: number;
   uuid: string;
+  training_material_id?: number;
+  training_material_uuid?: string;
   title: string;
   type: string;
   file_url?: string | null;
@@ -101,6 +103,21 @@ export default function ClassMaterialsList({ trainingClass }: ClassMaterialsList
     window.open(route('training-class-materials.download', material.uuid), '_blank');
   };
 
+  const handleToggleActive = (material: Material) => {
+    router.patch(
+      route('training-classes.materials.toggle-active', [trainingClass.uuid, material.uuid]),
+      {},
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          toast.success(material.is_active ? 'Support masqué pour cette classe' : 'Support visible pour cette classe');
+          fetchMaterials();
+        },
+        onError: () => toast.error('Erreur lors du changement de visibilité'),
+      }
+    );
+  };
+
   const handleModalClose = () => {
     setIsAddModalOpen(false);
     setIsEditModalOpen(false);
@@ -171,6 +188,7 @@ export default function ClassMaterialsList({ trainingClass }: ClassMaterialsList
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onDownload={handleDownload}
+                  onToggleActive={handleToggleActive}
                   isTeacher={true}
                 />
               ))}

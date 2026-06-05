@@ -533,10 +533,13 @@ start: docker-check
 	@echo ""
 	@echo "✅ All services started!"
 	@echo ""
-	@echo "📱 Application:  http://localhost:8000"
-	@echo "📧 Mailhog:      http://localhost:8025"
-	@echo "🗄️  phpMyAdmin:   http://localhost:8080"
-	@echo "⚡ Vite HMR:     http://localhost:5173"
+	@echo "📱 Application:  http://template.localhost"
+	@echo "📧 Mailhog:      http://mail.template.localhost"
+	@echo "🗄️  phpMyAdmin:   http://pma.template.localhost"
+	@echo "⚡ Vite HMR:     http://vite.template.localhost"
+	@echo ""
+	@echo "ℹ️  Tous les services sont routés via Traefik (port 80) — aucun port host n'est exposé pour mysql/redis/node."
+	@echo "   Assurez-vous d'avoir Traefik en cours d'exécution avec le réseau 'traefik-public'."
 	@echo ""
 	@echo "Use 'make docker-logs' to view logs"
 	@echo "Use 'make stop' to stop all services"
@@ -559,10 +562,10 @@ docker-up:
 	@docker-compose up -d
 	@echo ""
 	@echo "Services are starting..."
-	@echo "Application: http://localhost:8000"
-	@echo "Mailhog:     http://localhost:8025"
-	@echo "phpMyAdmin:  http://localhost:8080"
-	@echo "Vite HMR:    http://localhost:5173"
+	@echo "Application: http://template.localhost"
+	@echo "Mailhog:     http://mail.template.localhost"
+	@echo "phpMyAdmin:  http://pma.template.localhost"
+	@echo "Vite HMR:    http://vite.template.localhost"
 
 # Stop Docker containers
 docker-down:
@@ -603,7 +606,7 @@ docker-fresh:
 	@docker-compose exec app php artisan storage:link
 	@echo ""
 	@echo "Fresh installation complete!"
-	@echo "Application: http://localhost:8000"
+	@echo "Application: http://template.localhost"
 
 # Build production Docker image
 docker-prod-build:

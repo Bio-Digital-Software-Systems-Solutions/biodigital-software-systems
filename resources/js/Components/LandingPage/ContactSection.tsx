@@ -14,12 +14,31 @@ import {
     MapPinIcon,
 } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
+import { resolveDesign, type DesignSettings } from '@/lib/sectionDesign';
+
+export interface ContactContent {
+    badge?: string;
+    heading?: string;
+    subtitle?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+}
 
 interface ContactSectionProps {
     isAuthenticated: boolean;
+    content?: ContactContent;
+    design?: DesignSettings | null;
 }
 
-export default function ContactSection({ isAuthenticated }: ContactSectionProps) {
+export default function ContactSection({ isAuthenticated, content, design }: ContactSectionProps) {
+    const resolved = resolveDesign(design);
+    const badge = content?.badge ?? 'Contact';
+    const heading = content?.heading ?? 'Contactez-nous';
+    const subtitle = content?.subtitle ?? "Une question, une suggestion ou besoin d'aide ? N'hésitez pas à nous contacter.";
+    const email = content?.email ?? 'contact@icc-munich.de';
+    const phone = content?.phone ?? '+49 (0) 17673200275';
+    const address = content?.address ?? "Kapellenstraße 22\n82008 Unterhaching\nAllemagne";
     const [contactData, setContactData] = useState({
         name: '',
         email: '',
@@ -55,18 +74,22 @@ export default function ContactSection({ isAuthenticated }: ContactSectionProps)
     };
 
     return (
-        <section id="contact" className="py-20 bg-gradient-to-br from-icc-blue/5 via-icc-purple/5 to-icc-red/5">
+        <section
+            id="contact"
+            className={`bg-gradient-to-br from-icc-blue/5 via-icc-purple/5 to-icc-red/5 ${resolved.sectionClass} ${resolved.hasPadding ? '' : 'py-20'}`}
+            style={resolved.sectionStyle}
+        >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="max-w-6xl mx-auto">
-                    <div className="text-center space-y-4 mb-12">
+                    <div className={`space-y-4 mb-12 ${resolved.alignmentClass || 'text-center'}`}>
                         <Badge variant="secondary" className="mb-2">
-                            Contact
+                            {badge}
                         </Badge>
-                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-                            Contactez-nous
+                        <h2 className={`font-bold tracking-tight ${resolved.headingClass || 'text-3xl sm:text-4xl md:text-5xl'}`}>
+                            {heading}
                         </h2>
-                        <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-                            Une question, une suggestion ou besoin d'aide ? N'hésitez pas à nous contacter.
+                        <p className={`mx-auto max-w-2xl text-muted-foreground ${resolved.paragraphClass || 'text-lg'}`}>
+                            {subtitle}
                         </p>
                     </div>
 
@@ -85,8 +108,8 @@ export default function ContactSection({ isAuthenticated }: ContactSectionProps)
                                         <EnvelopeIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
                                         <div>
                                             <p className="font-medium">Email</p>
-                                            <a href="mailto:contact@icc-munich.de" className="text-sm text-icc-blue hover:underline">
-                                                contact@icc-munich.de
+                                            <a href={`mailto:${email}`} className="text-sm text-icc-blue hover:underline">
+                                                {email}
                                             </a>
                                         </div>
                                     </div>
@@ -94,8 +117,8 @@ export default function ContactSection({ isAuthenticated }: ContactSectionProps)
                                         <PhoneIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
                                         <div>
                                             <p className="font-medium">Téléphone</p>
-                                            <a href="tel:+4917673200275" className="text-sm text-icc-blue hover:underline">
-                                                +49 (0) 17673200275
+                                            <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="text-sm text-icc-blue hover:underline">
+                                                {phone}
                                             </a>
                                         </div>
                                     </div>
@@ -115,10 +138,8 @@ export default function ContactSection({ isAuthenticated }: ContactSectionProps)
                                         <MapPinIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
                                         <div>
                                             <p className="font-medium">Adresse</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Kapellenstraße 22<br />
-                                                82008 Unterhaching<br />
-                                                Allemagne
+                                            <p className="text-sm text-muted-foreground whitespace-pre-line">
+                                                {address}
                                             </p>
                                         </div>
                                     </div>

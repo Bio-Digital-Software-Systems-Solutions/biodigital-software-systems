@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class PastorRoleSeeder extends Seeder
 {
@@ -19,9 +18,9 @@ class PastorRoleSeeder extends Seeder
 
         // Create pastor-specific permissions if they don't exist
         $permissions = [
-            'manage pastor availability',
-            'view pastoral care',
-            'manage pastoral appointments',
+            'manage care service availability',
+            'view care service',
+            'manage care service appointments',
         ];
 
         foreach ($permissions as $permission) {

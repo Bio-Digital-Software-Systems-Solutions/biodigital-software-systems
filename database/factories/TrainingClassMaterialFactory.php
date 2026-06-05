@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\TrainingClass;
+use App\Models\TrainingMaterial;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -10,26 +13,36 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class TrainingClassMaterialFactory extends Factory
 {
     /**
-     * Define the model's default state.
-     *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
-        $types = ['pdf', 'video', 'audio', 'powerpoint', 'document'];
-        $type = fake()->randomElement($types);
-
         return [
-            'training_class_id' => \App\Models\TrainingClass::factory(),
-            'teacher_id' => \App\Models\User::factory(),
-            'title' => fake()->sentence(4),
-            'type' => $type,
-            'file_path' => null,
-            'url' => fake()->url(),
-            'duration' => $type === 'video' || $type === 'audio' ? fake()->randomElement(['5 min', '15 min', '30 min', '1h']) : null,
-            'description' => fake()->optional()->paragraph(),
-            'order' => fake()->numberBetween(1, 10),
+            'training_class_id' => TrainingClass::factory(),
+            'training_material_id' => TrainingMaterial::factory(),
+            'teacher_id' => null,
             'is_active' => true,
+            'order' => fake()->numberBetween(0, 10),
         ];
+    }
+
+    public function inactive(): self
+    {
+        return $this->state(fn () => ['is_active' => false]);
+    }
+
+    public function forClass(TrainingClass $class): self
+    {
+        return $this->state(fn () => ['training_class_id' => $class->id]);
+    }
+
+    public function forMaterial(TrainingMaterial $material): self
+    {
+        return $this->state(fn () => ['training_material_id' => $material->id]);
+    }
+
+    public function assignedBy(User $user): self
+    {
+        return $this->state(fn () => ['teacher_id' => $user->id]);
     }
 }

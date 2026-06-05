@@ -117,7 +117,9 @@ export default function EditMaterialModal({ isOpen, onClose, material, classUuid
         <DialogHeader>
           <DialogTitle>Modifier le support de cours</DialogTitle>
           <DialogDescription>
-            Modifiez les informations du support de cours.
+            Le titre, le type, le fichier et la description sont partagés avec
+            toutes les classes utilisant ce support. La case « Visible pour
+            les étudiants » n'affecte que cette classe.
           </DialogDescription>
         </DialogHeader>
 

@@ -73,10 +73,10 @@ it('migrates users from duplicate PascalCase roles to kebab-case equivalents', f
     expect(Role::where('name', 'ProjectManager')->exists())->toBeFalse();
 });
 
-it('renames mlr_agent to mlr-agent', function (): void {
-    // Create snake_case role
-    $mlrAgent = Role::firstOrCreate(['name' => 'mlr_agent']);
-    $mlrAgent->givePermissionTo(['view articles']);
+it('renames mlr_agent to care-service-agent', function (): void {
+    // Create snake_case legacy role
+    $agent = Role::firstOrCreate(['name' => 'mlr_agent']);
+    $agent->givePermissionTo(['view articles']);
 
     // Create a user with the role
     $user = User::factory()->create();
@@ -85,13 +85,30 @@ it('renames mlr_agent to mlr-agent', function (): void {
     $this->artisan('roles:unify', ['--force' => true])
         ->assertSuccessful();
 
-    // Verify role was renamed
+    // Verify role was renamed to current standard name
     expect(Role::where('name', 'mlr_agent')->exists())->toBeFalse();
-    expect(Role::where('name', 'mlr-agent')->exists())->toBeTrue();
+    expect(Role::where('name', 'care-service-agent')->exists())->toBeTrue();
 
     // Verify user still has the role
     $user->refresh();
-    expect($user->hasRole('mlr-agent'))->toBeTrue();
+    expect($user->hasRole('care-service-agent'))->toBeTrue();
+});
+
+it('renames legacy mlr-agent to care-service-agent', function (): void {
+    $agent = Role::firstOrCreate(['name' => 'mlr-agent']);
+    $agent->givePermissionTo(['view articles']);
+
+    $user = User::factory()->create();
+    $user->assignRole('mlr-agent');
+
+    $this->artisan('roles:unify', ['--force' => true])
+        ->assertSuccessful();
+
+    expect(Role::where('name', 'mlr-agent')->exists())->toBeFalse();
+    expect(Role::where('name', 'care-service-agent')->exists())->toBeTrue();
+
+    $user->refresh();
+    expect($user->hasRole('care-service-agent'))->toBeTrue();
 });
 
 it('reports success when roles are already standardized', function (): void {

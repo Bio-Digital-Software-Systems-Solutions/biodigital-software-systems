@@ -1,8 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
-import { ForwardRefExoticComponent, SVGProps } from 'react';
+import { ComponentType, SVGProps } from 'react';
 
 interface FeatureSectionItemProps {
-    icon: ForwardRefExoticComponent<SVGProps<SVGSVGElement>>;
+    icon: ComponentType<SVGProps<SVGSVGElement>>;
     iconColor: string;
     title: string;
     description: string;

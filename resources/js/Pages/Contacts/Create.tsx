@@ -30,10 +30,12 @@ interface Errors {
 }
 
 export default function Create() {
-    const { errors: serverErrors, flash } = usePage().props as {
+    const { errors: serverErrors, flash, app } = usePage().props as {
         errors: Errors;
         flash: { success?: string };
+        app: { name: string };
     };
+    const appName = app.name;
 
     const [data, setData] = useState<FormData>({
         name: '',
@@ -69,9 +71,9 @@ export default function Create() {
                         <div className="flex justify-between h-16">
                             <div className="flex items-center">
                                 <div className="flex-shrink-0 flex items-center gap-3">
-                                    <img src="/Logo.png" alt="ICC München" className="h-10 w-10 object-contain" />
+                                    <img src="/Logo.png" alt={appName} className="h-10 w-10 object-contain" />
                                     <h1 className="text-2xl font-bold bg-gradient-to-r from-icc-blue via-icc-purple to-icc-red bg-clip-text text-transparent">
-                                        ICC München
+                                        {appName}
                                     </h1>
                                 </div>
                             </div>

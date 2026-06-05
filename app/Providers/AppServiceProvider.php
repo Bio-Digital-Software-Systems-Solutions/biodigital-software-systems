@@ -3,15 +3,15 @@
 namespace App\Providers;
 
 use App\Models\Appointment;
-use App\Models\PastoralCare;
+use App\Models\CareService;
 use App\Models\Project;
 use App\Models\Quiz;
 use App\Models\Scheduling\DepartmentTodo;
 use App\Models\Task;
 use App\Models\VisitorAttendance;
 use App\Observers\AppointmentObserver;
+use App\Observers\CareServiceObserver;
 use App\Observers\DepartmentTodoObserver;
-use App\Observers\PastoralCareObserver;
 use App\Observers\ProjectObserver;
 use App\Observers\QuizObserver;
 use App\Observers\TaskObserver;
@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Training::class => \App\Policies\TrainingPolicy::class,
         \App\Models\BookRental::class => \App\Policies\BookRentalPolicy::class,
         \App\Models\ChatRoom::class => \App\Policies\ChatRoomPolicy::class,
-        \App\Models\PastoralCare::class => \App\Policies\PastoralCarePolicy::class,
+        \App\Models\CareService::class => \App\Policies\CareServicePolicy::class,
         \App\Models\Department::class => \App\Policies\DepartmentPolicy::class,
         \App\Models\Scheduling\DepartmentTodo::class => \App\Policies\DepartmentTodoPolicy::class,
         \App\Models\Task::class => \App\Policies\TaskPolicy::class,
@@ -64,7 +64,7 @@ class AppServiceProvider extends ServiceProvider
         Project::observe(ProjectObserver::class);
         DepartmentTodo::observe(DepartmentTodoObserver::class);
         Appointment::observe(AppointmentObserver::class);
-        PastoralCare::observe(PastoralCareObserver::class);
+        CareService::observe(CareServiceObserver::class);
         VisitorAttendance::observe(VisitorAttendanceObserver::class);
 
         // Register policies

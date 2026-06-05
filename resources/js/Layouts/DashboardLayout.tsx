@@ -63,7 +63,8 @@ interface DashboardLayoutProps extends PropsWithChildren {
 }
 
 export default function DashboardLayout({ children, title, description, actions, header, toolbarExtra }: DashboardLayoutProps) {
-    const { auth, flash } = usePage<PageProps>().props;
+    const { auth, flash, app } = usePage<PageProps>().props;
+    const appName = app.name;
     const { t } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { notificationCount } = useNotifications();
@@ -85,9 +86,9 @@ export default function DashboardLayout({ children, title, description, actions,
         { name: t('dashboard'), href: '/dashboard', icon: HomeIcon, current: true },
         { name: t('events'), href: '/events', icon: CalendarDaysIcon, permission: 'view events' },
         { name: t('appointments'), href: '/appointments', icon: CalendarDaysIcon, permission: 'view appointments' },
-        { name: 'Soins Pastoraux', href: '/pastoral-care/appointments', icon: HeartIcon, permission: 'view pastoral care' },
-        //{ name: 'Prendre RDV Pastoral', href: '/pastoral-care/book', icon: CalendarDaysIcon },
-        { name: 'Mes Disponibilités', href: '/pastoral-availability', icon: ClockIcon, permission: 'manage pastor availability' },
+        { name: 'Care Services', href: '/care-service/appointments', icon: HeartIcon, permission: 'view care service' },
+        //{ name: 'Prendre RDV Pastoral', href: '/care-service/book', icon: CalendarDaysIcon },
+        { name: 'Mes Disponibilités', href: '/care-service-availability', icon: ClockIcon, permission: 'manage care service availability' },
         { name: t('articles'), href: '/articles', icon: PencilSquareIcon, permission: 'view articles' },
         { name: t('books'), href: '/books', icon: BookOpenIcon, permission: 'view books' },
         { name: t('books.rent'), href: '/my-rentals', icon: BuildingLibraryIcon, permission: 'view books' },
@@ -148,7 +149,7 @@ export default function DashboardLayout({ children, title, description, actions,
         <div className={`flex flex-col h-full ${mobile ? 'w-full' : 'w-64'}`}>
             <div className="flex items-center h-16 px-4 bg-primary">
                 <Link href="/" className="flex items-center">
-                    <img src="/Logo.svg" alt="AIG-App Logo" className="h-10 w-auto" />
+                    <img src="/Logo.png" alt={appName} className="h-10 w-auto object-contain" />
                 </Link>
             </div>
             <nav

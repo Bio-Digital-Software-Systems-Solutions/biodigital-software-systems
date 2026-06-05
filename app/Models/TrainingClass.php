@@ -46,6 +46,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read int|null $students_count
  * @property-read \App\Models\User|null $teacher
  * @property-read \App\Models\Training $training
+ *
  * @method static Builder<static>|TrainingClass active()
  * @method static Builder<static>|TrainingClass archived()
  * @method static \Database\Factories\TrainingClassFactory factory($count = null, $state = [])
@@ -68,6 +69,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @method static Builder<static>|TrainingClass whereTrainingId($value)
  * @method static Builder<static>|TrainingClass whereUpdatedAt($value)
  * @method static Builder<static>|TrainingClass whereUuid($value)
+ *
  * @mixin \Eloquent
  */
 class TrainingClass extends Model
@@ -130,9 +132,40 @@ class TrainingClass extends Model
         return $this->hasMany(TrainingClassSchedule::class);
     }
 
-    public function materials(): HasMany
+    /**
+     * The TrainingMaterials attached to this class, with per-class pivot
+     * state (is_active, order, teacher_id) accessible via $material->pivot.
+     * Returns ALL attached materials regardless of pivot is_active — use
+     * activeMaterials() for the student-facing filtered list.
+     */
+    public function materials(): BelongsToMany
     {
-        return $this->hasMany(TrainingClassMaterial::class)->ordered();
+        return $this->belongsToMany(
+            TrainingMaterial::class,
+            'training_class_materials',
+            'training_class_id',
+            'training_material_id'
+        )
+            ->withPivot(['uuid', 'is_active', 'order', 'teacher_id'])
+            ->withTimestamps()
+            ->orderBy('pivot_order');
+    }
+
+    /**
+     * Same as materials() but only those active for this class.
+     */
+    public function activeMaterials(): BelongsToMany
+    {
+        return $this->materials()->wherePivot('is_active', true);
+    }
+
+    /**
+     * Raw access to the pivot rows themselves — useful when you need to
+     * mutate is_active/order without going through the related material.
+     */
+    public function materialPivots(): HasMany
+    {
+        return $this->hasMany(TrainingClassMaterial::class)->orderBy('order');
     }
 
     /**
@@ -289,11 +322,17 @@ class TrainingClass extends Model
             $newSchedule->save();
         }
 
-        // Duplicate materials
-        foreach ($this->materials as $material) {
-            $newMaterial = $material->replicate(['uuid']);
-            $newMaterial->training_class_id = $copy->id;
-            $newMaterial->save();
+        // Duplicate material attachments (pivot rows only — the content
+        // TrainingMaterial is shared, so we re-link the same materials with
+        // the same per-class state).
+        foreach ($this->materialPivots as $pivot) {
+            TrainingClassMaterial::create([
+                'training_class_id' => $copy->id,
+                'training_material_id' => $pivot->training_material_id,
+                'teacher_id' => $pivot->teacher_id,
+                'is_active' => $pivot->is_active,
+                'order' => $pivot->order,
+            ]);
         }
 
         // Duplicate quiz associations (pivot data only, not quiz content)

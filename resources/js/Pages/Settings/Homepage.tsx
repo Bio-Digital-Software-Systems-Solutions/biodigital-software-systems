@@ -68,6 +68,8 @@ import {
     MapPin,
 } from 'lucide-react';
 import { Link } from '@inertiajs/react';
+import HomepageSectionsCard from './components/HomepageSectionsCard';
+import type { HomepageSection } from './components/HomepageSectionEditorDialog';
 
 interface HeroSlide {
     id: number;
@@ -94,6 +96,7 @@ interface Props {
     slides: HeroSlide[];
     globalStats: GlobalStats;
     churches: Church[];
+    sections: HomepageSection[];
 }
 
 interface Church {
@@ -247,7 +250,7 @@ function SortableSlide({ slide, onEdit, onDelete, onView }: SortableSlideProps) 
     );
 }
 
-export default function Homepage({ auth, slides: initialSlides, globalStats: initialGlobalStats, churches: initialChurches }: Props) {
+export default function Homepage({ auth, slides: initialSlides, globalStats: initialGlobalStats, churches: initialChurches, sections = [] }: Props) {
     const [slides, setSlides] = useState<HeroSlide[]>(initialSlides);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingSlide, setEditingSlide] = useState<HeroSlide | null>(null);
@@ -649,6 +652,11 @@ export default function Homepage({ auth, slides: initialSlides, globalStats: ini
                         )}
                     </CardContent>
                 </Card>
+            </div>
+
+            {/* Homepage Sections Builder */}
+            <div className="mt-8">
+                <HomepageSectionsCard sections={sections} />
             </div>
 
             {/* Global Stats Section */}

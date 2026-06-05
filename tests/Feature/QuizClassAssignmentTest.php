@@ -6,6 +6,7 @@ use App\Models\Quiz;
 use App\Models\Training;
 use App\Models\TrainingClass;
 use App\Models\TrainingClassMaterial;
+use App\Models\TrainingMaterial;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
@@ -17,13 +18,21 @@ class QuizClassAssignmentTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $teacher;
+
     protected User $student;
+
     protected Training $training;
+
     protected TrainingClass $trainingClass1;
+
     protected TrainingClass $trainingClass2;
+
     protected TrainingClassMaterial $material1;
+
     protected TrainingClassMaterial $material2;
+
     protected Quiz $quiz;
 
     protected function setUp(): void
@@ -75,19 +84,33 @@ class QuizClassAssignmentTest extends TestCase
             'end_time' => '17:00:00',
         ]);
 
-        // Create training class materials
-        $this->material1 = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass1->id,
+        // Create the underlying TrainingMaterials (content) and attach each
+        // to its class through the pivot.
+        $content1 = TrainingMaterial::factory()->create([
+            'training_id' => $this->training->id,
             'teacher_id' => $this->teacher->id,
             'title' => 'Material 1',
             'type' => 'pdf',
         ]);
-
-        $this->material2 = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass2->id,
+        $content2 = TrainingMaterial::factory()->create([
+            'training_id' => $this->training->id,
             'teacher_id' => $this->teacher->id,
             'title' => 'Material 2',
             'type' => 'video',
+        ]);
+
+        $this->material1 = TrainingClassMaterial::create([
+            'training_class_id' => $this->trainingClass1->id,
+            'training_material_id' => $content1->id,
+            'teacher_id' => $this->teacher->id,
+            'is_active' => true,
+        ]);
+
+        $this->material2 = TrainingClassMaterial::create([
+            'training_class_id' => $this->trainingClass2->id,
+            'training_material_id' => $content2->id,
+            'teacher_id' => $this->teacher->id,
+            'is_active' => true,
         ]);
 
         // Create quiz
@@ -106,7 +129,7 @@ class QuizClassAssignmentTest extends TestCase
             ->post(route('trainings.quizzes.assign-to-class', [
                 $this->training->uuid,
                 $this->quiz->uuid,
-                $this->trainingClass1->uuid
+                $this->trainingClass1->uuid,
             ]), [
                 'available_from' => now()->format('Y-m-d H:i:s'),
                 'available_until' => now()->addDays(7)->format('Y-m-d H:i:s'),
@@ -139,7 +162,7 @@ class QuizClassAssignmentTest extends TestCase
             ->post(route('trainings.quizzes.assign-to-class', [
                 $this->training->uuid,
                 $this->quiz->uuid,
-                $this->trainingClass1->uuid
+                $this->trainingClass1->uuid,
             ]));
 
         $response->assertStatus(422)
@@ -159,7 +182,7 @@ class QuizClassAssignmentTest extends TestCase
             ->delete(route('trainings.quizzes.remove-from-class', [
                 $this->training->uuid,
                 $this->quiz->uuid,
-                $this->trainingClass1->uuid
+                $this->trainingClass1->uuid,
             ]));
 
         $response->assertStatus(200)
@@ -177,7 +200,7 @@ class QuizClassAssignmentTest extends TestCase
             ->post(route('trainings.quizzes.assign-to-material', [
                 $this->training->uuid,
                 $this->quiz->uuid,
-                $this->material1->uuid
+                $this->material1->uuid,
             ]), [
                 'order' => 1,
             ]);
@@ -200,13 +223,13 @@ class QuizClassAssignmentTest extends TestCase
     public function test_quiz_assignment_assignment_dates_are_validated(): void
     {
         $response = $this->actingAs($this->admin)
-            ->post(route('trainings.quizzes.assign-to-class', [
+            ->postJson(route('trainings.quizzes.assign-to-class', [
                 $this->training->uuid,
                 $this->quiz->uuid,
-                $this->trainingClass1->uuid
+                $this->trainingClass1->uuid,
             ]), [
                 'available_from' => now()->addDays(7)->format('Y-m-d H:i:s'),
-                'available_until' => now()->format('Y-m-d H:i:s'), // Invalid: until is before from
+                'available_until' => now()->format('Y-m-d H:i:s'),
             ]);
 
         $response->assertStatus(422);
@@ -217,7 +240,7 @@ class QuizClassAssignmentTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->post(route('trainings.quizzes.bulk-assign-classes', [
                 $this->training->uuid,
-                $this->quiz->uuid
+                $this->quiz->uuid,
             ]), [
                 'class_ids' => [$this->trainingClass1->id, $this->trainingClass2->id],
                 'available_from' => now()->format('Y-m-d H:i:s'),
@@ -246,7 +269,7 @@ class QuizClassAssignmentTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->get(route('trainings.quizzes.class-assignments', [
                 $this->training->uuid,
-                $this->quiz->uuid
+                $this->quiz->uuid,
             ]));
 
         $response->assertStatus(200)
@@ -312,7 +335,7 @@ class QuizClassAssignmentTest extends TestCase
                     'options' => ['3', '4', '5'],
                     'correct_answers' => [1], // Index of correct answer
                     'points' => 10,
-                ]
+                ],
             ],
             'assigned_classes' => [$this->trainingClass1->id, $this->trainingClass2->id],
             'assigned_materials' => [$this->material1->id],
@@ -349,10 +372,10 @@ class QuizClassAssignmentTest extends TestCase
     public function test_unauthorized_users_cannot_manage_quiz_assignments(): void
     {
         $response = $this->actingAs($this->student)
-            ->post(route('trainings.quizzes.assign-to-class', [
+            ->postJson(route('trainings.quizzes.assign-to-class', [
                 $this->training->uuid,
                 $this->quiz->uuid,
-                $this->trainingClass1->uuid
+                $this->trainingClass1->uuid,
             ]));
 
         $response->assertStatus(403);
@@ -375,7 +398,7 @@ class QuizClassAssignmentTest extends TestCase
         $response = $this->actingAs($this->admin)
             ->get(route('trainings.quizzes.stats', [
                 $this->training->uuid,
-                $this->quiz->uuid
+                $this->quiz->uuid,
             ]));
 
         $response->assertStatus(200)
@@ -408,7 +431,7 @@ class QuizClassAssignmentTest extends TestCase
             ->post(route('trainings.quizzes.assign-to-class', [
                 $this->training->uuid,
                 $this->quiz->uuid,
-                $otherClass->uuid
+                $otherClass->uuid,
             ]));
 
         $response->assertStatus(422)
@@ -430,7 +453,7 @@ class QuizClassAssignmentTest extends TestCase
             ->put(route('trainings.quizzes.update-class-assignment', [
                 $this->training->uuid,
                 $this->quiz->uuid,
-                $this->trainingClass1->uuid
+                $this->trainingClass1->uuid,
             ]), [
                 'available_from' => now()->addDays(1)->format('Y-m-d H:i:s'),
                 'available_until' => now()->addDays(14)->format('Y-m-d H:i:s'),
@@ -444,6 +467,6 @@ class QuizClassAssignmentTest extends TestCase
             ->where('training_class_id', $this->trainingClass1->id)
             ->first();
 
-        $this->assertFalse((bool)$assignment->pivot->is_active);
+        $this->assertFalse((bool) $assignment->pivot->is_active);
     }
 }

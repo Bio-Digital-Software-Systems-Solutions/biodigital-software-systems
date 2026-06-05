@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\HeroSlide;
-use App\Models\SiteSetting;
 use App\Models\Church;
+use App\Models\HeroSlide;
+use App\Models\HomepageSection;
+use App\Models\SiteSetting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -68,11 +68,13 @@ class SettingsController extends Controller
         $slides = HeroSlide::orderBy('order')->get();
         $globalStats = SiteSetting::getGlobalStats();
         $churches = Church::orderBy('name')->get();
+        $sections = HomepageSection::with('subsections')->orderBy('order')->get();
 
         return Inertia::render('Settings/Homepage', [
             'slides' => $slides,
             'globalStats' => $globalStats,
             'churches' => $churches,
+            'sections' => $sections,
         ]);
     }
 

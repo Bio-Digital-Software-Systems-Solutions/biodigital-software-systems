@@ -22,9 +22,7 @@ class TwoFactorCodeNotification extends Notification
          * The expiration time in minutes
          */
         protected int $expirationMinutes
-    )
-    {
-    }
+    ) {}
 
     /**
      * Get the notification's delivery channels.
@@ -41,7 +39,7 @@ class TwoFactorCodeNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
         $formattedCode = implode(' ', str_split($this->code, 4));
 
         return (new MailMessage)

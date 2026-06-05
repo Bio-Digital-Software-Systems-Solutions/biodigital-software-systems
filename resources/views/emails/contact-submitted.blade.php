@@ -16,7 +16,7 @@
                     <!-- Header with Gradient -->
                     <tr>
                         <td style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ef4444 100%); padding: 40px 30px; text-align: center;">
-                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">ICC-Munich</h1>
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">{{ config('app.name') }}</h1>
                         </td>
                     </tr>
 
@@ -146,9 +146,9 @@
                     <tr>
                         <td style="background-color: #f9fafb; padding: 30px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
                             <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">Merci de votre attention,</p>
-                            <p style="margin: 0 0 15px 0; color: #111827; font-size: 16px; font-weight: 700;">ICC-Munich</p>
+                            <p style="margin: 0 0 15px 0; color: #111827; font-size: 16px; font-weight: 700;">{{ config('app.name') }}</p>
                             <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                                © {{ date('Y') }} ICC-Munich. Tous droits réservés.
+                                © {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.
                             </p>
                         </td>
                     </tr>

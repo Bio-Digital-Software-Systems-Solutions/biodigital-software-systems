@@ -4,12 +4,15 @@ import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
 import UnauthorizedModal from '@/Components/UnauthorizedModal';
+import type { PageProps } from '@/Types';
 
 export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
-    const user = usePage().props.auth.user;
+    const { auth, app } = usePage<PageProps>().props;
+    const user = auth.user;
+    const appName = app.name;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -26,7 +29,7 @@ export default function Authenticated({
                         <div className="flex">
                             <div className="flex shrink-0 items-center">
                                 <Link href="/">
-                                    <img src="/Logo.png" alt="Logo" className="block h-9 w-auto" />
+                                    <img src="/Logo.png" alt={appName} className="block h-9 w-auto object-contain" />
                                 </Link>
                             </div>
 

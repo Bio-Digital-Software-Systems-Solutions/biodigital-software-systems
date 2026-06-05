@@ -8,6 +8,10 @@ use Inertia\Inertia;
 Route::get('/', function () {
     $heroSlides = \App\Models\HeroSlide::active()->get();
     $globalStats = \App\Models\SiteSetting::getGlobalStats();
+    $sections = \App\Models\HomepageSection::with(['subsections' => fn ($q) => $q->where('is_active', true)->orderBy('order')])
+        ->active()
+        ->get();
+    $hasConfiguredSections = \App\Models\HomepageSection::query()->exists();
 
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -16,6 +20,8 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
         'heroSlides' => $heroSlides,
         'globalStats' => $globalStats,
+        'sections' => $sections,
+        'hasConfiguredSections' => $hasConfiguredSections,
     ]);
 });
 
@@ -606,6 +612,38 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         ->name('settings.homepage.churches.destroy')
         ->middleware('can:manage hero slides');
 
+    // Homepage Sections management
+    Route::get('settings/homepage/sections', [App\Http\Controllers\HomepageSectionController::class, 'index'])
+        ->name('settings.homepage.sections.index')
+        ->middleware('can:manage homepage sections');
+    Route::post('settings/homepage/sections', [App\Http\Controllers\HomepageSectionController::class, 'store'])
+        ->name('settings.homepage.sections.store')
+        ->middleware('can:manage homepage sections');
+    // Reorder must come BEFORE parameterized routes to avoid {homepageSection} matching "reorder"
+    Route::post('settings/homepage/sections/reorder', [App\Http\Controllers\HomepageSectionController::class, 'reorder'])
+        ->name('settings.homepage.sections.reorder')
+        ->middleware('can:manage homepage sections');
+    Route::put('settings/homepage/sections/{homepageSection}', [App\Http\Controllers\HomepageSectionController::class, 'update'])
+        ->name('settings.homepage.sections.update')
+        ->middleware('can:manage homepage sections');
+    Route::delete('settings/homepage/sections/{homepageSection}', [App\Http\Controllers\HomepageSectionController::class, 'destroy'])
+        ->name('settings.homepage.sections.destroy')
+        ->middleware('can:manage homepage sections');
+
+    // Nested subsections (reorder before parameterized)
+    Route::post('settings/homepage/sections/{homepageSection}/subsections/reorder', [App\Http\Controllers\HomepageSectionController::class, 'reorderSubsections'])
+        ->name('settings.homepage.sections.subsections.reorder')
+        ->middleware('can:manage homepage sections');
+    Route::post('settings/homepage/sections/{homepageSection}/subsections', [App\Http\Controllers\HomepageSectionController::class, 'storeSubsection'])
+        ->name('settings.homepage.sections.subsections.store')
+        ->middleware('can:manage homepage sections');
+    Route::put('settings/homepage/sections/{homepageSection}/subsections/{homepageSubsection}', [App\Http\Controllers\HomepageSectionController::class, 'updateSubsection'])
+        ->name('settings.homepage.sections.subsections.update')
+        ->middleware('can:manage homepage sections');
+    Route::delete('settings/homepage/sections/{homepageSection}/subsections/{homepageSubsection}', [App\Http\Controllers\HomepageSectionController::class, 'destroySubsection'])
+        ->name('settings.homepage.sections.subsections.destroy')
+        ->middleware('can:manage homepage sections');
+
     // Chat routes
     Route::get('chat', [App\Http\Controllers\ChatController::class, 'index'])
         ->name('chat.index');
@@ -845,6 +883,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
             ->name('training-classes.materials.destroy');
         Route::post('/reorder', [App\Http\Controllers\TrainingClassMaterialController::class, 'reorder'])
             ->name('training-classes.materials.reorder');
+        Route::post('/attach', [App\Http\Controllers\TrainingClassMaterialController::class, 'attach'])
+            ->name('training-classes.materials.attach');
+        Route::patch('/{material}/toggle-active', [App\Http\Controllers\TrainingClassMaterialController::class, 'toggleActive'])
+            ->name('training-classes.materials.toggle-active');
     });
 
     // Student access to class materials
@@ -1018,9 +1060,9 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('api/users/{user:uuid}/schedule', [App\Http\Controllers\PublicAgendaController::class, 'schedule'])
         ->name('api.users.schedule');
 
-    // Pastoral Care routes (authenticated pastors)
-    Route::prefix('pastoral-care')->name('pastoral-care.')->group(function (): void {
-        Route::resource('appointments', App\Http\Controllers\PastoralCareController::class)
+    // Care Service routes (authenticated pastors)
+    Route::prefix('care-service')->name('care-service.')->group(function (): void {
+        Route::resource('appointments', App\Http\Controllers\CareServiceController::class)
             ->names([
                 'index' => 'index',
                 'create' => 'create',
@@ -1030,36 +1072,36 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
                 'update' => 'update',
                 'destroy' => 'destroy',
             ])
-            ->parameters(['appointments' => 'pastoralCare:uuid']);
+            ->parameters(['appointments' => 'careService:uuid']);
 
-        // Additional pastoral care actions
-        Route::post('appointments/{pastoralCare:uuid}/confirm', [App\Http\Controllers\PastoralCareController::class, 'confirm'])
+        // Additional care service actions
+        Route::post('appointments/{careService:uuid}/confirm', [App\Http\Controllers\CareServiceController::class, 'confirm'])
             ->name('confirm');
-        Route::post('appointments/{pastoralCare:uuid}/cancel', [App\Http\Controllers\PastoralCareController::class, 'cancel'])
+        Route::post('appointments/{careService:uuid}/cancel', [App\Http\Controllers\CareServiceController::class, 'cancel'])
             ->name('cancel');
-        Route::post('appointments/{pastoralCare:uuid}/complete', [App\Http\Controllers\PastoralCareController::class, 'complete'])
+        Route::post('appointments/{careService:uuid}/complete', [App\Http\Controllers\CareServiceController::class, 'complete'])
             ->name('complete');
-        Route::post('appointments/{pastoralCare:uuid}/no-show', [App\Http\Controllers\PastoralCareController::class, 'noShow'])
+        Route::post('appointments/{careService:uuid}/no-show', [App\Http\Controllers\CareServiceController::class, 'noShow'])
             ->name('no-show');
 
         // Transfer appointment to another pastor/agent
-        Route::post('appointments/{pastoralCare:uuid}/transfer', [App\Http\Controllers\PastoralCareController::class, 'transfer'])
+        Route::post('appointments/{careService:uuid}/transfer', [App\Http\Controllers\CareServiceController::class, 'transfer'])
             ->name('transfer');
 
-        // MLR Dashboard routes
-        Route::get('mlr', [App\Http\Controllers\PastoralCareController::class, 'mlr'])
-            ->name('mlr');
-        Route::get('mlr/statistics', [App\Http\Controllers\PastoralCareController::class, 'mlrStatistics'])
-            ->name('mlr.statistics');
+        // Care Service Dashboard routes
+        Route::get('dashboard', [App\Http\Controllers\CareServiceController::class, 'dashboard'])
+            ->name('dashboard');
+        Route::get('dashboard/statistics', [App\Http\Controllers\CareServiceController::class, 'dashboardStatistics'])
+            ->name('dashboard.statistics');
 
         // AJAX endpoint for available time slots
-        Route::get('available-slots', [App\Http\Controllers\PastoralCareController::class, 'getAvailableSlots'])
+        Route::get('available-slots', [App\Http\Controllers\CareServiceController::class, 'getAvailableSlots'])
             ->name('available-slots');
     });
 
-    // Pastor Availability Management routes
-    Route::prefix('pastoral-availability')->name('pastoral-availability.')->middleware('can:manage pastor availability')->group(function (): void {
-        Route::resource('', App\Http\Controllers\PastorAvailabilityController::class)
+    // Care Service Availability Management routes
+    Route::prefix('care-service-availability')->name('care-service-availability.')->middleware('can:manage care service availability')->group(function (): void {
+        Route::resource('', App\Http\Controllers\CareServiceAvailabilityController::class)
             ->names([
                 'index' => 'index',
                 'create' => 'create',
@@ -1072,26 +1114,26 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
             ->parameters(['' => 'availability']);
 
         // Additional availability actions
-        Route::post('{availability}/toggle-status', [App\Http\Controllers\PastorAvailabilityController::class, 'toggleStatus'])
+        Route::post('{availability}/toggle-status', [App\Http\Controllers\CareServiceAvailabilityController::class, 'toggleStatus'])
             ->name('toggle-status');
 
         // AJAX endpoint for time slot preview
-        Route::post('preview-slots', [App\Http\Controllers\PastorAvailabilityController::class, 'previewSlots'])
+        Route::post('preview-slots', [App\Http\Controllers\CareServiceAvailabilityController::class, 'previewSlots'])
             ->name('preview-slots');
     });
 
-    // Pastoral Care booking for authenticated users
-    Route::get('pastoral-care/book', function () {
+    // Care Service booking for authenticated users
+    Route::get('care-service/book', function () {
         $user = auth()->user();
-        $canSelectPastor = $user->can('select pastor for pastoral care');
+        $canSelectPastor = $user->can('select pastor for care service');
 
         // Debug log
-        \Log::info('Pastoral Care Book - User: '.$user->email.', canSelectPastor: '.($canSelectPastor ? 'true' : 'false'));
+        \Log::info('Care Service Book - User: '.$user->email.', canSelectPastor: '.($canSelectPastor ? 'true' : 'false'));
 
-        return \Inertia\Inertia::render('PastoralCare/PublicBook', [
+        return \Inertia\Inertia::render('CareService/PublicBook', [
             'canSelectPastor' => $canSelectPastor,
         ]);
-    })->name('pastoral-care.book');
+    })->name('care-service.book');
 
     // ============================================
     // Workflow Builder Routes
@@ -1332,9 +1374,9 @@ Route::post('appointments/{appointment:uuid}/decline/{token}', [App\Http\Control
         ]);
     });
 
-// Public Pastoral Care routes (accessible without authentication)
-Route::get('pastoral-care/appointments/{uuid}/confirm', function ($uuid) {
-    $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
+// Public Care Service routes (accessible without authentication)
+Route::get('care-service/appointments/{uuid}/confirm', function ($uuid) {
+    $appointment = \App\Models\CareService::where('uuid', $uuid)->first();
 
     if (! $appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
@@ -1342,13 +1384,13 @@ Route::get('pastoral-care/appointments/{uuid}/confirm', function ($uuid) {
         ]);
     }
 
-    return \Inertia\Inertia::render('PastoralCare/PublicConfirm', [
+    return \Inertia\Inertia::render('CareService/PublicConfirm', [
         'appointment' => $appointment->load('pastor'),
     ]);
-})->name('pastoral-care.public.confirm');
+})->name('care-service.public.confirm');
 
-Route::post('pastoral-care/appointments/{uuid}/confirm', function (\Illuminate\Http\Request $request, $uuid) {
-    $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
+Route::post('care-service/appointments/{uuid}/confirm', function (\Illuminate\Http\Request $request, $uuid) {
+    $appointment = \App\Models\CareService::where('uuid', $uuid)->first();
 
     if (! $appointment) {
         return response()->json(['success' => false, 'message' => 'Rendez-vous introuvable'], 404);
@@ -1357,15 +1399,15 @@ Route::post('pastoral-care/appointments/{uuid}/confirm', function (\Illuminate\H
     try {
         $appointment->confirm();
 
-        return redirect()->route('pastoral-care.public.success', ['uuid' => $uuid])
+        return redirect()->route('care-service.public.success', ['uuid' => $uuid])
             ->with('success', 'Rendez-vous confirmé avec succès.');
     } catch (\Exception $e) {
         return back()->with('error', $e->getMessage());
     }
-})->name('pastoral-care.public.confirm.submit');
+})->name('care-service.public.confirm.submit');
 
-Route::get('pastoral-care/appointments/{uuid}/cancel', function ($uuid) {
-    $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
+Route::get('care-service/appointments/{uuid}/cancel', function ($uuid) {
+    $appointment = \App\Models\CareService::where('uuid', $uuid)->first();
 
     if (! $appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
@@ -1373,13 +1415,13 @@ Route::get('pastoral-care/appointments/{uuid}/cancel', function ($uuid) {
         ]);
     }
 
-    return \Inertia\Inertia::render('PastoralCare/PublicCancel', [
+    return \Inertia\Inertia::render('CareService/PublicCancel', [
         'appointment' => $appointment->load('pastor'),
     ]);
-})->name('pastoral-care.public.cancel');
+})->name('care-service.public.cancel');
 
-Route::post('pastoral-care/appointments/{uuid}/cancel', function (\Illuminate\Http\Request $request, $uuid) {
-    $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
+Route::post('care-service/appointments/{uuid}/cancel', function (\Illuminate\Http\Request $request, $uuid) {
+    $appointment = \App\Models\CareService::where('uuid', $uuid)->first();
 
     if (! $appointment) {
         return response()->json(['success' => false, 'message' => 'Rendez-vous introuvable'], 404);
@@ -1392,15 +1434,15 @@ Route::post('pastoral-care/appointments/{uuid}/cancel', function (\Illuminate\Ht
     try {
         $appointment->cancel($validated['cancellation_reason'] ?? null);
 
-        return redirect()->route('pastoral-care.public.success', ['uuid' => $uuid])
+        return redirect()->route('care-service.public.success', ['uuid' => $uuid])
             ->with('success', 'Rendez-vous annulé avec succès.');
     } catch (\Exception $e) {
         return back()->with('error', $e->getMessage());
     }
-})->name('pastoral-care.public.cancel.submit');
+})->name('care-service.public.cancel.submit');
 
-Route::get('pastoral-care/appointments/{uuid}/success', function ($uuid) {
-    $appointment = \App\Models\PastoralCare::where('uuid', $uuid)->first();
+Route::get('care-service/appointments/{uuid}/success', function ($uuid) {
+    $appointment = \App\Models\CareService::where('uuid', $uuid)->first();
 
     if (! $appointment) {
         return \Inertia\Inertia::render('Appointments/AppointmentNotFound', [
@@ -1408,12 +1450,12 @@ Route::get('pastoral-care/appointments/{uuid}/success', function ($uuid) {
         ]);
     }
 
-    return \Inertia\Inertia::render('PastoralCare/PublicSuccess', [
+    return \Inertia\Inertia::render('CareService/PublicSuccess', [
         'appointment' => $appointment->load('pastor'),
     ]);
-})->name('pastoral-care.public.success');
+})->name('care-service.public.success');
 
-// Public Pastoral Care booking interface (moved to authenticated section)
+// Public Care Service booking interface (moved to authenticated section)
 
 // Sentry test routes (only available in local/development environments)
 Route::middleware(['auth'])->group(function (): void {

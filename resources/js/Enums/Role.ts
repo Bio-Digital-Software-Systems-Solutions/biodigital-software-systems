@@ -18,7 +18,7 @@ export enum Role {
     TEACHER = 'teacher',
     EMPLOYEE = 'employee',
     STAR = 'star',
-    MLR_AGENT = 'mlr-agent',
+    CARE_SERVICE_AGENT = 'care-service-agent',
     ACCOUNTANT = 'accountant',
     PRODUCT_OWNER = 'product-owner',
 }

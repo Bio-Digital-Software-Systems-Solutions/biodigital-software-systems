@@ -1,11 +1,12 @@
 import { PageProps } from '@/Types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import HeroCarousel, { HeroSlide } from '@/Components/HeroCarousel';
 import AboutSection from '@/Components/LandingPage/AboutSection';
 import OurValues from '@/Components/LandingPage/OurValues';
 import FeaturesSection from '@/Components/LandingPage/FeaturesSection';
 import TrainingBrowseSection from '@/Components/LandingPage/TrainingBrowseSection';
 import ContactSection from '@/Components/LandingPage/ContactSection';
+import SectionRenderer, { type HomepageSectionData } from '@/Components/LandingPage/SectionRenderer';
 import Footer from '@/Components/LandingPage/Footer';
 import { Button } from '@/Components/ui/button';
 import { Toaster } from 'sonner';
@@ -28,6 +29,8 @@ interface WelcomeProps extends PageProps {
     phpVersion: string;
     heroSlides: HeroSlide[];
     globalStats: GlobalStats;
+    sections?: HomepageSectionData[];
+    hasConfiguredSections?: boolean;
 }
 
 export default function Welcome({
@@ -36,7 +39,10 @@ export default function Welcome({
     phpVersion,
     heroSlides,
     globalStats,
+    sections = [],
+    hasConfiguredSections = false,
 }: WelcomeProps) {
+    const appName = usePage<PageProps>().props.app.name;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Fallback slides if no hero slides in database
@@ -137,7 +143,7 @@ export default function Welcome({
 
     return (
         <>
-            <Head title="Bienvenue - ICC München" />
+            <Head title={`Bienvenue - ${appName}`} />
             <div className="min-h-screen bg-background">
                 {/* Navigation Header */}
                 <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50 sticky top-0 z-50">
@@ -145,9 +151,9 @@ export default function Welcome({
                         <div className="flex justify-between h-16">
                             <div className="flex items-center">
                                 <Link className="flex-shrink-0 flex items-center gap-2 sm:gap-3" href="/">
-                                    <img src="/Logo.png" alt="ICC München" className="h-8 w-8 sm:h-10 sm:w-10 object-contain" />
+                                    <img src="/Logo.png" alt={appName} className="h-8 w-8 sm:h-10 sm:w-10 object-contain" />
                                     <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-icc-blue via-icc-purple to-icc-red bg-clip-text text-transparent">
-                                        ICC München
+                                        {appName}
                                     </h1>
                                 </Link>
                                 {/* Desktop Navigation */}
@@ -276,20 +282,29 @@ export default function Welcome({
                 {/* Hero Section with Carousel */}
                 <HeroCarousel slides={slides} />
 
-                {/* About Section */}
-                <AboutSection globalStats={globalStats} />
-
-                {/* Our Values Section */}
+                {/* Our Values Section (always rendered above dynamic sections) */}
                 <OurValues />
 
-                {/* Features Section */}
-                <FeaturesSection />
-
-                {/* Formations Section */}
-                <TrainingBrowseSection />
-
-                {/* Contact Section */}
-                <ContactSection isAuthenticated={!!auth.user} />
+                {/* Dynamic sections from DB.
+                    - If the admin has configured sections (even if all inactive), respect that — render only the active ones.
+                    - Only fall back to hard-coded defaults when the DB has zero sections at all (e.g. fresh install before seeding). */}
+                {hasConfiguredSections ? (
+                    sections.map((section) => (
+                        <SectionRenderer
+                            key={section.id}
+                            section={section}
+                            globalStats={globalStats}
+                            isAuthenticated={!!auth.user}
+                        />
+                    ))
+                ) : (
+                    <>
+                        <AboutSection globalStats={globalStats} />
+                        <FeaturesSection />
+                        <TrainingBrowseSection />
+                        <ContactSection isAuthenticated={!!auth.user} />
+                    </>
+                )}
 
                 {/* Footer */}
                 <Footer />

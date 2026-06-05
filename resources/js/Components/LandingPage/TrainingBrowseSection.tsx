@@ -31,6 +31,7 @@ import {
   Calendar,
   MapPin
 } from 'lucide-react';
+import { resolveDesign, type DesignSettings } from '@/lib/sectionDesign';
 
 interface Topic {
   id: string;
@@ -312,7 +313,22 @@ const TrainingListItem: React.FC<TrainingCardProps> = ({ training, onEnroll, onV
   );
 };
 
-const TrainingBrowseSection: React.FC = () => {
+export interface TrainingContent {
+  badge?: string;
+  heading?: string;
+  subtitle?: string;
+}
+
+interface TrainingBrowseSectionProps {
+  content?: TrainingContent;
+  design?: DesignSettings | null;
+}
+
+const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, design } = {}) => {
+  const resolvedDesign = resolveDesign(design);
+  const headerBadge = content?.badge ?? 'Formations';
+  const headerHeading = content?.heading ?? 'Nos Formations';
+  const headerSubtitle = content?.subtitle ?? 'Se construire par la parole de Dieu et des formations.';
   const { auth } = usePage().props as { auth: { user?: any } };
   const [searchTerm, setSearchTerm] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
@@ -581,12 +597,16 @@ const TrainingBrowseSection: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div id="trainings" className="bg-gray-50 dark:bg-gray-900 py-16 px-6 md:px-12">
+      <div
+        id="trainings"
+        className={`bg-gray-50 dark:bg-gray-900 px-6 md:px-12 ${resolvedDesign.sectionClass} ${resolvedDesign.hasPadding ? '' : 'py-16'}`}
+        style={resolvedDesign.sectionStyle}
+      >
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <Badge variant="secondary" className="mb-4">Formations</Badge>
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Nos Formations
+          <div className={`mb-12 ${resolvedDesign.alignmentClass || 'text-center'}`}>
+            <Badge variant="secondary" className="mb-4">{headerBadge}</Badge>
+            <h2 className={`font-bold text-gray-900 dark:text-white mb-4 ${resolvedDesign.headingClass || 'text-4xl'}`}>
+              {headerHeading}
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -600,15 +620,19 @@ const TrainingBrowseSection: React.FC = () => {
   }
 
   return (
-    <div id="trainings" className="bg-gray-50 dark:bg-gray-900 py-16 px-6 md:px-12">
+    <div
+      id="trainings"
+      className={`bg-gray-50 dark:bg-gray-900 px-6 md:px-12 ${resolvedDesign.sectionClass} ${design?.padding ? '' : 'py-16'}`}
+      style={resolvedDesign.sectionStyle}
+    >
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <Badge variant="secondary" className="mb-4">Formations</Badge>
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Nos Formations
+        <div className={`mb-12 ${resolvedDesign.alignmentClass || 'text-center'}`}>
+          <Badge variant="secondary" className="mb-4">{headerBadge}</Badge>
+          <h2 className={`font-bold text-gray-900 dark:text-white mb-4 ${resolvedDesign.headingClass || 'text-4xl'}`}>
+            {headerHeading}
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 text-lg max-w-3xl mx-auto">
-            Se contruire par la parole de Dieu et des formations
+          <p className={`text-gray-600 dark:text-gray-400 max-w-3xl mx-auto ${resolvedDesign.paragraphClass || 'text-lg'}`}>
+            {headerSubtitle}
           </p>
         </div>
 

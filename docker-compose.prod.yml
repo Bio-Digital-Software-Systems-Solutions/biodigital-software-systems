@@ -10,7 +10,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: icc-app
+    container_name: template-app
     restart: always
     working_dir: /var/www/html
     env_file: .env
@@ -26,7 +26,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - icc-network
+      - template-network
     deploy:
       resources:
         limits:
@@ -38,7 +38,7 @@ services:
   # ==========================================
   nginx:
     image: nginx:1.25-alpine
-    container_name: icc-nginx
+    container_name: template-nginx
     restart: always
     ports:
       - "80:80"
@@ -54,7 +54,7 @@ services:
     depends_on:
       - app
     networks:
-      - icc-network
+      - template-network
     deploy:
       resources:
         limits:
@@ -66,7 +66,7 @@ services:
   # ==========================================
   mysql:
     image: mysql:8.0
-    container_name: icc-mysql
+    container_name: template-mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
@@ -84,7 +84,7 @@ services:
       retries: 5
       start_period: 60s
     networks:
-      - icc-network
+      - template-network
     deploy:
       resources:
         limits:
@@ -96,7 +96,7 @@ services:
   # ==========================================
   redis:
     image: redis:7-alpine
-    container_name: icc-redis
+    container_name: template-redis
     restart: always
     volumes:
       - redis-data:/data
@@ -107,7 +107,7 @@ services:
       timeout: 10s
       retries: 5
     networks:
-      - icc-network
+      - template-network
     deploy:
       resources:
         limits:
@@ -122,7 +122,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: icc-queue
+    container_name: template-queue
     restart: always
     working_dir: /var/www/html
     env_file: .env
@@ -136,7 +136,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - icc-network
+      - template-network
     deploy:
       resources:
         limits:
@@ -151,7 +151,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: icc-scheduler
+    container_name: template-scheduler
     restart: always
     working_dir: /var/www/html
     env_file: .env
@@ -163,7 +163,7 @@ services:
       mysql:
         condition: service_healthy
     networks:
-      - icc-network
+      - template-network
     deploy:
       resources:
         limits:
@@ -189,5 +189,5 @@ volumes:
 # Networks
 # ==========================================
 networks:
-  icc-network:
+  template-network:
     driver: bridge

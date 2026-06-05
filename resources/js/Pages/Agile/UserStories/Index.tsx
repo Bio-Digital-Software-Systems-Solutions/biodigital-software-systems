@@ -332,101 +332,103 @@ export default function Index({ stories, epics, sprints, users, filters }: Props
                         </DialogTitle>
                         <DialogDescription>{t('agile.user_stories.description')}</DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={submit} className="space-y-4">
-                        <div>
-                            <Label htmlFor="title">{t('agile.form.title')} <span className="text-red-500">*</span></Label>
-                            <Input id="title" value={data.title} onChange={(e) => setData('title', e.target.value)} required />
-                            {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title}</p>}
-                        </div>
+                    <form onSubmit={submit}>
+                        <div className="space-y-4 py-4">
+                            <div>
+                                <Label htmlFor="title">{t('agile.form.title')} <span className="text-red-500">*</span></Label>
+                                <Input id="title" value={data.title} onChange={(e) => setData('title', e.target.value)} required />
+                                {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title}</p>}
+                            </div>
 
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <Label htmlFor="as_a">{t('agile.narrative.as_a')} <span className="text-red-500">*</span></Label>
-                                <Input id="as_a" value={data.as_a} onChange={(e) => setData('as_a', e.target.value)} required />
-                                {errors.as_a && <p className="text-xs text-red-600 mt-1">{errors.as_a}</p>}
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <Label htmlFor="as_a">{t('agile.narrative.as_a')} <span className="text-red-500">*</span></Label>
+                                    <Textarea id="as_a" rows={3} value={data.as_a} onChange={(e) => setData('as_a', e.target.value)} required />
+                                    {errors.as_a && <p className="text-xs text-red-600 mt-1">{errors.as_a}</p>}
+                                </div>
+                                <div>
+                                    <Label htmlFor="i_want">{t('agile.narrative.i_want')} <span className="text-red-500">*</span></Label>
+                                    <Textarea id="i_want" rows={3} value={data.i_want} onChange={(e) => setData('i_want', e.target.value)} required />
+                                    {errors.i_want && <p className="text-xs text-red-600 mt-1">{errors.i_want}</p>}
+                                </div>
+                                <div>
+                                    <Label htmlFor="so_that">{t('agile.narrative.so_that')} <span className="text-red-500">*</span></Label>
+                                    <Textarea id="so_that" rows={3} value={data.so_that} onChange={(e) => setData('so_that', e.target.value)} required />
+                                    {errors.so_that && <p className="text-xs text-red-600 mt-1">{errors.so_that}</p>}
+                                </div>
                             </div>
-                            <div>
-                                <Label htmlFor="i_want">{t('agile.narrative.i_want')} <span className="text-red-500">*</span></Label>
-                                <Input id="i_want" value={data.i_want} onChange={(e) => setData('i_want', e.target.value)} required />
-                                {errors.i_want && <p className="text-xs text-red-600 mt-1">{errors.i_want}</p>}
-                            </div>
-                            <div>
-                                <Label htmlFor="so_that">{t('agile.narrative.so_that')} <span className="text-red-500">*</span></Label>
-                                <Input id="so_that" value={data.so_that} onChange={(e) => setData('so_that', e.target.value)} required />
-                                {errors.so_that && <p className="text-xs text-red-600 mt-1">{errors.so_that}</p>}
-                            </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="epic_id">{t('agile.common.epic')}</Label>
-                                <Select
-                                    value={data.epic_id ? String(data.epic_id) : '__none__'}
-                                    onValueChange={(v) => setData('epic_id', v === '__none__' ? null : Number(v))}
-                                >
-                                    <SelectTrigger id="epic_id"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="__none__">—</SelectItem>
-                                        {epics.map((e) => (
-                                            <SelectItem key={e.id} value={String(e.id)}>{e.title}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="epic_id">{t('agile.common.epic')}</Label>
+                                    <Select
+                                        value={data.epic_id ? String(data.epic_id) : '__none__'}
+                                        onValueChange={(v) => setData('epic_id', v === '__none__' ? null : Number(v))}
+                                    >
+                                        <SelectTrigger id="epic_id"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__none__">—</SelectItem>
+                                            {epics.map((e) => (
+                                                <SelectItem key={e.id} value={String(e.id)}>{e.title}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label htmlFor="assignee_id">{t('agile.common.assignee')}</Label>
+                                    <Select
+                                        value={data.assignee_id ? String(data.assignee_id) : '__none__'}
+                                        onValueChange={(v) => setData('assignee_id', v === '__none__' ? null : Number(v))}
+                                    >
+                                        <SelectTrigger id="assignee_id"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__none__">—</SelectItem>
+                                            {users.map((u) => (
+                                                <SelectItem key={u.id} value={String(u.id)}>{displayName(u)}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
-                            <div>
-                                <Label htmlFor="assignee_id">{t('agile.common.assignee')}</Label>
-                                <Select
-                                    value={data.assignee_id ? String(data.assignee_id) : '__none__'}
-                                    onValueChange={(v) => setData('assignee_id', v === '__none__' ? null : Number(v))}
-                                >
-                                    <SelectTrigger id="assignee_id"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="__none__">—</SelectItem>
-                                        {users.map((u) => (
-                                            <SelectItem key={u.id} value={String(u.id)}>{displayName(u)}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
 
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <Label htmlFor="reporter_id">{t('agile.common.reporter')} <span className="text-red-500">*</span></Label>
-                                <Select
-                                    value={data.reporter_id ? String(data.reporter_id) : ''}
-                                    onValueChange={(v) => setData('reporter_id', Number(v))}
-                                >
-                                    <SelectTrigger id="reporter_id"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        {users.map((u) => (
-                                            <SelectItem key={u.id} value={String(u.id)}>{displayName(u)}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.reporter_id && <p className="text-xs text-red-600 mt-1">{errors.reporter_id}</p>}
-                            </div>
-                            <div>
-                                <Label htmlFor="story_points">{t('agile.common.points')}</Label>
-                                <Input
-                                    id="story_points"
-                                    type="number"
-                                    min="0"
-                                    max="999"
-                                    value={data.story_points ?? ''}
-                                    onChange={(e) => setData('story_points', e.target.value === '' ? null : Number(e.target.value))}
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="priority">{t('agile.form.priority')}</Label>
-                                <Select value={String(data.priority)} onValueChange={(v) => setData('priority', Number(v))}>
-                                    <SelectTrigger id="priority"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        {[1, 2, 3, 4, 5].map((p) => (
-                                            <SelectItem key={p} value={String(p)}>{p}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <Label htmlFor="reporter_id">{t('agile.common.reporter')} <span className="text-red-500">*</span></Label>
+                                    <Select
+                                        value={data.reporter_id ? String(data.reporter_id) : ''}
+                                        onValueChange={(v) => setData('reporter_id', Number(v))}
+                                    >
+                                        <SelectTrigger id="reporter_id"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {users.map((u) => (
+                                                <SelectItem key={u.id} value={String(u.id)}>{displayName(u)}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.reporter_id && <p className="text-xs text-red-600 mt-1">{errors.reporter_id}</p>}
+                                </div>
+                                <div>
+                                    <Label htmlFor="story_points">{t('agile.common.points')}</Label>
+                                    <Input
+                                        id="story_points"
+                                        type="number"
+                                        min="0"
+                                        max="999"
+                                        value={data.story_points ?? ''}
+                                        onChange={(e) => setData('story_points', e.target.value === '' ? null : Number(e.target.value))}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="priority">{t('agile.form.priority')}</Label>
+                                    <Select value={String(data.priority)} onValueChange={(v) => setData('priority', Number(v))}>
+                                        <SelectTrigger id="priority"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {[1, 2, 3, 4, 5].map((p) => (
+                                                <SelectItem key={p} value={String(p)}>{p}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                         </div>
 

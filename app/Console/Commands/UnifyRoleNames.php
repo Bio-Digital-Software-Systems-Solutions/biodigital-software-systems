@@ -42,7 +42,8 @@ class UnifyRoleNames extends Command
         'Star' => 'star',             // Keep as lowercase (already exists)
 
         // snake_case to kebab-case conversions
-        'mlr_agent' => 'mlr-agent',
+        'mlr_agent' => 'care-service-agent',
+        'mlr-agent' => 'care-service-agent',
     ];
 
     /**
@@ -77,8 +78,9 @@ class UnifyRoleNames extends Command
         }
 
         // Step 3: Confirm changes
-        if (! $dryRun && !$force && ! $this->confirm('Do you want to proceed with these changes?')) {
+        if (! $dryRun && ! $force && ! $this->confirm('Do you want to proceed with these changes?')) {
             $this->warn('Operation cancelled.');
+
             return Command::FAILURE;
         }
 

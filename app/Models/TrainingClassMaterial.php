@@ -8,63 +8,40 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
+ * Pivot row between a TrainingClass and a TrainingMaterial.
+ *
+ * The same TrainingMaterial can be linked to multiple TrainingClasses; each
+ * pivot row stores the per-class state: is_active (visible in that class),
+ * order (display order within that class), teacher_id (who attached it).
+ *
+ * Modeled as a plain Model rather than a Pivot subclass so that other code
+ * (like Quiz::trainingClassMaterials) can target it from belongsToMany — the
+ * Pivot base class breaks foreign-key inference when used as a relation
+ * target.
+ *
  * @property int $id
  * @property string $uuid
  * @property int $training_class_id
- * @property int $teacher_id
- * @property string $title
- * @property string $type
- * @property string|null $file_path
- * @property string|null $url
- * @property string|null $duration
- * @property string|null $description
- * @property int $order
+ * @property int $training_material_id
+ * @property int|null $teacher_id
  * @property bool $is_active
+ * @property int $order
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
- * @property-read int|null $activities_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quiz> $allQuizzes
- * @property-read int|null $all_quizzes_count
- * @property-read string|null $file_url
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quiz> $quizzes
- * @property-read int|null $quizzes_count
  * @property-read \App\Models\TrainingClass $trainingClass
- * @property-read \App\Models\User $uploadedBy
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial active()
- * @method static \Database\Factories\TrainingClassMaterialFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial ordered()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereDescription($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereDuration($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereFilePath($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereIsActive($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereOrder($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereTeacherId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereTitle($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereTrainingClassId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereType($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereUrl($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|TrainingClassMaterial whereUuid($value)
- * @mixin \Eloquent
+ * @property-read \App\Models\TrainingMaterial $material
+ * @property-read \App\Models\User|null $assignedBy
  */
 class TrainingClassMaterial extends Model
 {
-    use HasFactory, HasUuid, LogsActivity, ClearsCache;
+    use ClearsCache, HasFactory, HasUuid, LogsActivity;
 
-    /**
-     * Configure activity log options.
-     */
+    protected $table = 'training_class_materials';
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -75,75 +52,36 @@ class TrainingClassMaterial extends Model
 
     protected $fillable = [
         'training_class_id',
+        'training_material_id',
         'teacher_id',
-        'title',
-        'type',
-        'file_path',
-        'url',
-        'duration',
-        'description',
-        'order',
         'is_active',
+        'order',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'order' => 'integer',
     ];
 
-    protected $appends = [
-        'file_url',
-    ];
-
-    /**
-     * Get the training class this material belongs to.
-     */
     public function trainingClass(): BelongsTo
     {
         return $this->belongsTo(TrainingClass::class);
     }
 
-    /**
-     * Get the teacher who uploaded this material.
-     */
-    public function uploadedBy(): BelongsTo
+    public function material(): BelongsTo
+    {
+        return $this->belongsTo(TrainingMaterial::class, 'training_material_id');
+    }
+
+    public function assignedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'teacher_id');
     }
 
     /**
-     * Get the full URL to the file.
-     */
-    public function getFileUrlAttribute(): ?string
-    {
-        if ($this->url) {
-            return $this->url;
-        }
-
-        if ($this->file_path) {
-            return Storage::disk('public')->url($this->file_path);
-        }
-
-        return null;
-    }
-
-    /**
-     * Scope to get only active materials.
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    /**
-     * Scope to order materials by their order column.
-     */
-    public function scopeOrdered($query)
-    {
-        return $query->orderBy('order', 'asc');
-    }
-
-    /**
-     * Get the quizzes associated with this material.
+     * Quizzes attached to this specific class/material assignment. Quizzes
+     * keep targeting the pivot row so the same TrainingMaterial can carry
+     * different quizzes in different classes.
      */
     public function quizzes(): BelongsToMany
     {
@@ -154,9 +92,6 @@ class TrainingClassMaterial extends Model
             ->orderBy('pivot_order');
     }
 
-    /**
-     * Get all quizzes (including inactive associations).
-     */
     public function allQuizzes(): BelongsToMany
     {
         return $this->belongsToMany(Quiz::class, 'quiz_training_class_material')
@@ -164,11 +99,18 @@ class TrainingClassMaterial extends Model
             ->withTimestamps();
     }
 
-    /**
-     * Check if this material has a specific quiz associated.
-     */
     public function hasQuiz(Quiz $quiz): bool
     {
         return $this->quizzes()->where('quiz_id', $quiz->id)->exists();
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('order', 'asc');
     }
 }

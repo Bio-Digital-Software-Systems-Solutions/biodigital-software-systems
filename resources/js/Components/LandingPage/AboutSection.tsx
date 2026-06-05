@@ -1,6 +1,7 @@
 import React from 'react';
 import { Badge } from '../ui/badge';
 import WorldMap from './WorldMap';
+import { resolveDesign, type DesignSettings } from '@/lib/sectionDesign';
 
 interface GlobalStats {
   total_churches: number;
@@ -13,16 +14,41 @@ interface GlobalStats {
   oceania: number;
 }
 
-interface AboutSectionProps {
-  globalStats: GlobalStats;
+export interface AboutContent {
+  badge?: string;
+  heading?: string;
+  paragraphs?: string[];
+  image_url?: string;
+  mission_blocks?: Array<{ title: string; body: string; color?: string }>;
+  stats?: Array<{ value: string; label: string; color?: string }>;
+  affiliations?: Array<{ label: string; color?: string }>;
 }
 
-const AboutSection: React.FC<AboutSectionProps> = ({ globalStats }) => {
+interface AboutSectionProps {
+  globalStats: GlobalStats;
+  content?: AboutContent;
+  design?: DesignSettings | null;
+}
+
+const AboutSection: React.FC<AboutSectionProps> = ({ globalStats, content, design }) => {
+  const resolved = resolveDesign(design);
+  const badge = content?.badge ?? 'À propos';
+  const heading = content?.heading ?? "Une famille d'églises qui transforme des vies";
+  const paragraphs = content?.paragraphs ?? [
+    "L'Impact Centre Chrétien (ICC) est une famille d'églises charismatiques fondées en France en 2002 par les pasteurs Yves et Yvan Castanou, qui vise à former des disciples pour qu'ils exercent une influence positive dans la société.",
+    "L'ICC diffuse son message par les médias et les nouvelles technologies, propose des formations pour le développement spirituel et met en œuvre des actions humanitaires via sa branche Impact Sans Frontières (ISF).",
+  ];
+  const imageUrl = content?.image_url ?? '/vision_missions_icc.png';
+
   return (
-    <div id="about" className="bg-gray-50 dark:bg-gray-900 py-16 px-6 md:px-12">
-      <div className="text-center space-y-4 mb-16">
+    <div
+      id="about"
+      className={`bg-gray-50 dark:bg-gray-900 px-6 md:px-12 ${resolved.sectionClass} ${resolved.hasPadding ? '' : 'py-16'}`}
+      style={resolved.sectionStyle}
+    >
+      <div className={`space-y-4 mb-16 ${resolved.alignmentClass || 'text-center'}`}>
         <Badge variant="secondary" className="mb-2">
-          À propos
+          {badge}
         </Badge>
       </div>
       <div className="max-w-7xl mx-auto">
@@ -31,22 +57,21 @@ const AboutSection: React.FC<AboutSectionProps> = ({ globalStats }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-24">
           {/* Left side - Text content */}
           <div className="space-y-6">
-            <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white leading-tight">
-              Une famille d'églises qui transforme des vies
+            <h1 className={`font-bold text-gray-900 dark:text-white leading-tight ${resolved.headingClass || 'text-5xl lg:text-6xl'}`}>
+              {heading}
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed">
-              L'Impact Centre Chrétien (ICC) est une famille d'églises charismatiques fondées en France en 2002 par les pasteurs Yves et Yvan Castanou, qui vise à former des disciples pour qu'ils exercent une influence positive dans la société.
-            </p>
-            <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed">
-              L'ICC diffuse son message par les médias et les nouvelles technologies, propose des formations pour le développement spirituel et met en œuvre des actions humanitaires via sa branche Impact Sans Frontières (ISF).
-            </p>
+            {paragraphs.map((p, i) => (
+              <p key={i} className={`text-gray-500 dark:text-gray-400 leading-relaxed ${resolved.paragraphClass || 'text-lg'}`}>
+                {p}
+              </p>
+            ))}
           </div>
 
           {/* Right side - ICC Pillars Image */}
           <div className="flex items-center justify-center">
             <img
-              src="/vision_missions_icc.png"
-              alt="Impact Centre Chrétien - Les 12 Piliers"
+              src={imageUrl}
+              alt={heading}
               className="w-full h-auto max-h-[32rem] object-contain rounded-lg"
             />
           </div>

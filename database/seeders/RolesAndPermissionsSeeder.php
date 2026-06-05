@@ -44,12 +44,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit appointments',
             'delete appointments',
             'manage appointment participants',
-            // Pastoral Care
-            'view pastoral care',
-            'create pastoral care',
-            'edit pastoral care',
-            'delete pastoral care',
-            'manage pastoral care',
+            // Care Service
+            'view care service',
+            'create care service',
+            'edit care service',
+            'delete care service',
+            'manage care service',
             // Tasks & Programs
             'view tasks',
             'create tasks',
@@ -172,6 +172,8 @@ class RolesAndPermissionsSeeder extends Seeder
             // Hero Slides
             'view hero slides',
             'manage hero slides',
+            // Homepage Sections
+            'manage homepage sections',
             // Dashboard Access
             'access student dashboard',
             'access teacher dashboard',
@@ -220,14 +222,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit availabilities',
             'delete availabilities',
             'manage availabilities',
-            // Pastor Availability (specific for pastoral care scheduling)
-            'manage pastor availability',
-            // MLR permissions
-            'view mlr dashboard',
-            'view all pastoral care',
-            'transfer pastoral care',
-            'view pastoral care statistics',
-            'select pastor for pastoral care',
+            // Care Service Availability (specific for care service scheduling)
+            'manage care service availability',
+            // Care service dashboard permissions
+            'view care service dashboard',
+            'view all care service',
+            'transfer care service',
+            'view care service statistics',
+            'select pastor for care service',
             // Accounting
             'view accounting',
             'manage accounting',
@@ -266,12 +268,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit appointments',
             'delete appointments',
             'manage appointment participants',
-            // Pastoral Care
-            'view pastoral care',
-            'create pastoral care',
-            'edit pastoral care',
-            'delete pastoral care',
-            'manage pastoral care',
+            // Care Service
+            'view care service',
+            'create care service',
+            'edit care service',
+            'delete care service',
+            'manage care service',
             // Tasks & Programs
             'view tasks',
             'create tasks',
@@ -391,6 +393,8 @@ class RolesAndPermissionsSeeder extends Seeder
             // Hero Slides
             'view hero slides',
             'manage hero slides',
+            // Homepage Sections
+            'manage homepage sections',
             // Dashboard Access
             'access student dashboard',
             'access teacher dashboard',
@@ -437,8 +441,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit availabilities',
             'delete availabilities',
             'manage availabilities',
-            // Pastor Availability
-            'manage pastor availability',
+            // Care Service Availability
+            'manage care service availability',
             // Accounting
             'view accounting',
             'manage accounting',
@@ -468,11 +472,11 @@ class RolesAndPermissionsSeeder extends Seeder
             // Appointments
             'view appointments',
             'create appointments',
-            // Pastoral Care
-            'view pastoral care',
-            'create pastoral care',
-            'edit pastoral care',
-            'manage pastoral care',
+            // Care Service
+            'view care service',
+            'create care service',
+            'edit care service',
+            'manage care service',
             // Messages & Chat
             'view messages',
             'create messages',
@@ -553,12 +557,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'create appointments',
             'edit appointments',
             'manage appointment participants',
-            // Pastoral Care
-            'view pastoral care',
-            'create pastoral care',
-            'edit pastoral care',
-            'delete pastoral care',
-            'manage pastoral care',
+            // Care Service
+            'view care service',
+            'create care service',
+            'edit care service',
+            'delete care service',
+            'manage care service',
             // Articles
             'view articles',
             'create articles',
@@ -863,9 +867,9 @@ class RolesAndPermissionsSeeder extends Seeder
             // Appointments
             'view appointments',
             'create appointments',
-            // Pastoral Care
-            'view pastoral care',
-            'create pastoral care',
+            // Care Service
+            'view care service',
+            'create care service',
             // Needs (basic submission)
             'view needs',
             'create needs',
@@ -902,9 +906,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'view appointments',
             'create appointments',
             'edit appointments',
-            // Pastoral Care
-            'view pastoral care',
-            'create pastoral care',
+            // Care Service
+            'view care service',
+            'create care service',
             // Tasks
             'view tasks',
             'create tasks',
@@ -948,9 +952,9 @@ class RolesAndPermissionsSeeder extends Seeder
             // Appointments
             'view appointments',
             'create appointments',
-            // Pastoral Care
-            'view pastoral care',
-            'create pastoral care',
+            // Care Service
+            'view care service',
+            'create care service',
             // Tasks (can view and work on assigned tasks)
             'view tasks',
             // Needs (can submit needs)
@@ -1044,7 +1048,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view reports',
         ]);
 
-        // Pastor - Pastoral care management
+        // Pastor - Care service management
         $pastor = Role::firstOrCreate(['name' => 'pastor']);
         $pastor->syncPermissions([
             // Viewing permissions
@@ -1061,14 +1065,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit appointments',
             'delete appointments',
             'manage appointment participants',
-            // Pastoral Care
-            'view pastoral care',
-            'create pastoral care',
-            'edit pastoral care',
-            'delete pastoral care',
-            'manage pastoral care',
-            // Pastor Availability (for scheduling pastoral care appointments)
-            'manage pastor availability',
+            // Care Service
+            'view care service',
+            'create care service',
+            'edit care service',
+            'delete care service',
+            'manage care service',
+            // Care Service Availability (for scheduling care service appointments)
+            'manage care service availability',
             // Messages & Chat
             'view messages',
             'create messages',
@@ -1086,14 +1090,14 @@ class RolesAndPermissionsSeeder extends Seeder
         $superAdmin = Role::firstOrCreate(['name' => 'super-admin']);
         $superAdmin->syncPermissions(Permission::all());
 
-        // MLR Agent - Pastoral care focused role
-        $mlrAgent = Role::firstOrCreate(['name' => 'mlr-agent']);
-        $mlrAgent->syncPermissions([
-            'view pastoral care',
-            'create pastoral care',
-            'edit pastoral care',
-            'select pastor for pastoral care',
-            'view mlr dashboard',
+        // Care Service Agent - Care service focused role
+        $careServiceAgent = Role::firstOrCreate(['name' => 'care-service-agent']);
+        $careServiceAgent->syncPermissions([
+            'view care service',
+            'create care service',
+            'edit care service',
+            'select pastor for care service',
+            'view care service dashboard',
             'view appointments',
             'create appointments',
         ]);

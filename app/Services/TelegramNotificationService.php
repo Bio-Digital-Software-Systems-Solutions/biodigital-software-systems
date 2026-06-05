@@ -209,7 +209,7 @@ class TelegramNotificationService
         $time = $appointment->start_datetime->format('H:i');
         $endTime = $appointment->end_datetime->format('H:i');
         $organizer = $appointment->organizer->first_name.' '.$appointment->organizer->last_name;
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         $locationType = match ($appointment->meeting_mode ?? 'in_person') {
             'online' => 'En ligne',
@@ -237,7 +237,7 @@ class TelegramNotificationService
 
         $message .= "\nEn cas d'empechement, veuillez prevenir l'organisateur.\n\n";
 
-        return $message . 'A bientot !';
+        return $message.'A bientot !';
     }
 
     /**
@@ -248,7 +248,7 @@ class TelegramNotificationService
         $date = $appointment->start_datetime->format('d/m/Y');
         $time = $appointment->start_datetime->format('H:i');
         $participantsCount = $appointment->confirmedParticipants()->count();
-        config('app.name', 'ICC Munich');
+        config('app.name');
 
         $message = "<b>Rappel - Votre rendez-vous de demain</b>\n\n";
         $message .= "<b>{$appointment->title}</b>\n\n";
@@ -260,7 +260,7 @@ class TelegramNotificationService
             $message .= "Lieu: {$appointment->location}\n";
         }
 
-        return $message . "\nConsultez vos emails pour plus de details.";
+        return $message."\nConsultez vos emails pour plus de details.";
     }
 
     /**
@@ -271,7 +271,7 @@ class TelegramNotificationService
         $date = $appointment->start_datetime->format('d/m/Y');
         $time = $appointment->start_datetime->format('H:i');
         $organizer = $appointment->organizer->first_name.' '.$appointment->organizer->last_name;
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         $message = "<b>Confirmation de rendez-vous - {$appName}</b>\n\n";
         $message .= "Bonjour {$participant->first_name},\n\n";
@@ -282,7 +282,7 @@ class TelegramNotificationService
         $message .= "Organisateur: {$organizer}\n\n";
         $message .= "Vous recevrez un rappel 24h avant le rendez-vous.\n\n";
 
-        return $message . 'A bientot !';
+        return $message.'A bientot !';
     }
 
     /**
@@ -292,7 +292,7 @@ class TelegramNotificationService
     {
         $date = $appointment->start_datetime->format('d/m/Y');
         $time = $appointment->start_datetime->format('H:i');
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         $message = "<b>Annulation de rendez-vous - {$appName}</b>\n\n";
         $message .= "Bonjour {$participant->first_name},\n\n";
@@ -300,7 +300,7 @@ class TelegramNotificationService
         $message .= "<b>{$appointment->title}</b>\n";
         $message .= "Date prevue: {$date} a {$time}\n\n";
 
-        return $message . 'Nous vous prions de nous excuser pour ce desagrement.';
+        return $message.'Nous vous prions de nous excuser pour ce desagrement.';
     }
 
     /**
@@ -312,7 +312,7 @@ class TelegramNotificationService
         $time = $appointment->start_datetime->format('H:i');
         $endTime = $appointment->end_datetime->format('H:i');
         $organizer = $appointment->organizer->first_name.' '.$appointment->organizer->last_name;
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         $locationType = match ($appointment->meeting_mode ?? 'in_person') {
             'online' => 'En ligne',
@@ -341,7 +341,7 @@ class TelegramNotificationService
         $message .= "\nPour repondre a cette invitation, cliquez sur les liens ci-dessous :\n";
         $message .= "Accepter: {$confirmUrl}\n";
 
-        return $message . "Decliner: {$declineUrl}\n";
+        return $message."Decliner: {$declineUrl}\n";
     }
 
     /**
@@ -351,7 +351,7 @@ class TelegramNotificationService
     {
         $date = $appointment->start_datetime->format('d/m/Y');
         $time = $appointment->start_datetime->format('H:i');
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         $message = "<b>Mise a jour de rendez-vous - {$appName}</b>\n\n";
         $message .= "Bonjour {$participant->first_name},\n\n";
@@ -368,7 +368,7 @@ class TelegramNotificationService
             }
         }
 
-        return $message . "\nConsultez vos emails pour plus de details.";
+        return $message."\nConsultez vos emails pour plus de details.";
     }
 
     /**

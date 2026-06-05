@@ -108,7 +108,7 @@ php artisan optimize
 - **member**: Accès de base (voir, participer, louer)
 - **employee**: Employé
 - **star**: Membre star
-- **mlr-agent**: Agent MLR
+- **care-service-agent**: Agent du service de soin
 
 ### Key Permissions
 - **Events**: view, create, edit, delete events

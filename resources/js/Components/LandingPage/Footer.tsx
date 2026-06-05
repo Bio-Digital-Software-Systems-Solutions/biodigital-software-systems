@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
+import type { PageProps } from '@/Types';
 
 const navigation = {
   formations: [
@@ -87,6 +88,8 @@ const navigation = {
 };
 
 const Footer: React.FC = () => {
+  const appName = usePage<PageProps>().props.app.name;
+
   return (
     <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
       <div className="mx-auto max-w-7xl px-6 pt-16 pb-8 sm:pt-24 lg:px-8 lg:pt-32">
@@ -94,11 +97,8 @@ const Footer: React.FC = () => {
           <div className="space-y-8">
             <div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Impact Centre Chrétien
+                {appName}
               </h3>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                ICC München
-              </p>
             </div>
             <p className="text-sm leading-6 text-balance text-gray-600 dark:text-gray-400">
               Former et équiper les leaders de demain pour transformer le monde par l'excellence et l'intégrité chrétienne.

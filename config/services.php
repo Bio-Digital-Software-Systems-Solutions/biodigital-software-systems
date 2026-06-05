@@ -41,7 +41,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Credentials for Twilio SMS and WhatsApp messaging service.
-    | Used for pastoral care appointment reminders and notifications.
+    | Used for care service appointment reminders and notifications.
     |
     */
 

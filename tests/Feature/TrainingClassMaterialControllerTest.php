@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Training;
 use App\Models\TrainingClass;
 use App\Models\TrainingClassMaterial;
+use App\Models\TrainingMaterial;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -31,36 +32,31 @@ class TrainingClassMaterialControllerTest extends TestCase
     {
         parent::setUp();
 
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
         Storage::fake('public');
 
-        // Create teacher
         $this->teacher = User::factory()->create();
         $this->teacher->assignRole('teacher');
 
-        // Create other teacher
         $this->otherTeacher = User::factory()->create();
         $this->otherTeacher->assignRole('teacher');
 
-        // Create student
         $this->student = User::factory()->create();
         $this->student->assignRole('student');
 
-        // Create training
         $this->training = Training::factory()->create();
 
-        // Create class for teacher
         $this->trainingClass = TrainingClass::factory()->create([
             'training_id' => $this->training->id,
             'teacher_id' => $this->teacher->id,
         ]);
 
-        // Create class for other teacher
         $this->otherClass = TrainingClass::factory()->create([
             'training_id' => $this->training->id,
             'teacher_id' => $this->otherTeacher->id,
         ]);
 
-        // Enroll student in the class
         $this->training->students()->attach($this->student->id, [
             'training_class_id' => $this->trainingClass->id,
             'status' => 'approved',
@@ -68,14 +64,31 @@ class TrainingClassMaterialControllerTest extends TestCase
         ]);
     }
 
+    protected function attachMaterial(
+        TrainingClass $class,
+        ?User $teacher = null,
+        array $materialAttributes = [],
+        array $pivotAttributes = []
+    ): TrainingClassMaterial {
+        $material = TrainingMaterial::factory()->create(array_merge([
+            'training_id' => $class->training_id,
+        ], $materialAttributes));
+
+        return TrainingClassMaterial::create(array_merge([
+            'training_class_id' => $class->id,
+            'training_material_id' => $material->id,
+            'teacher_id' => $teacher?->id ?? $class->teacher_id,
+            'is_active' => true,
+            'order' => 0,
+        ], $pivotAttributes));
+    }
+
     /** @test */
     public function teacher_can_list_their_class_materials(): void
     {
-        // Create materials for this class
-        TrainingClassMaterial::factory()->count(3)->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-        ]);
+        for ($i = 0; $i < 3; $i++) {
+            $this->attachMaterial($this->trainingClass, $this->teacher);
+        }
 
         $response = $this->actingAs($this->teacher)
             ->getJson(route('training-classes.materials.index', $this->trainingClass));
@@ -84,7 +97,7 @@ class TrainingClassMaterialControllerTest extends TestCase
             ->assertJsonCount(3, 'materials')
             ->assertJsonStructure([
                 'materials' => [
-                    '*' => ['id', 'uuid', 'title', 'type', 'file_url', 'order'],
+                    '*' => ['id', 'uuid', 'title', 'type', 'file_url', 'order', 'is_active'],
                 ],
                 'class' => ['id', 'name'],
             ]);
@@ -106,14 +119,21 @@ class TrainingClassMaterialControllerTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseHas('training_class_materials', [
-            'training_class_id' => $this->trainingClass->id,
+        $this->assertDatabaseHas('training_materials', [
+            'training_id' => $this->training->id,
             'teacher_id' => $this->teacher->id,
             'title' => 'Guide de référence',
             'type' => 'pdf',
         ]);
 
-        Storage::disk('public')->assertExists('class-materials/'.$this->trainingClass->id.'/'.$file->hashName());
+        $material = TrainingMaterial::where('title', 'Guide de référence')->firstOrFail();
+        $this->assertDatabaseHas('training_class_materials', [
+            'training_class_id' => $this->trainingClass->id,
+            'training_material_id' => $material->id,
+            'teacher_id' => $this->teacher->id,
+        ]);
+
+        Storage::disk('public')->assertExists($material->file_path);
     }
 
     /** @test */
@@ -131,8 +151,8 @@ class TrainingClassMaterialControllerTest extends TestCase
 
         $response->assertRedirect();
 
-        $this->assertDatabaseHas('training_class_materials', [
-            'training_class_id' => $this->trainingClass->id,
+        $this->assertDatabaseHas('training_materials', [
+            'training_id' => $this->training->id,
             'title' => 'Introduction vidéo',
             'type' => 'video',
             'duration' => '15 min',
@@ -152,53 +172,76 @@ class TrainingClassMaterialControllerTest extends TestCase
 
         $response->assertRedirect();
 
-        $this->assertDatabaseHas('training_class_materials', [
-            'training_class_id' => $this->trainingClass->id,
+        $this->assertDatabaseHas('training_materials', [
+            'training_id' => $this->training->id,
             'title' => 'Cours en ligne',
             'url' => 'https://youtube.com/watch?v=example',
         ]);
     }
 
     /** @test */
-    public function teacher_can_update_material(): void
+    public function teacher_can_update_material_title_which_propagates_to_the_content(): void
     {
-        $material = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-            'title' => 'Old Title',
-        ]);
+        $pivot = $this->attachMaterial(
+            $this->trainingClass,
+            $this->teacher,
+            ['title' => 'Old Title']
+        );
 
         $response = $this->actingAs($this->teacher)
-            ->putJson(route('training-classes.materials.update', [$this->trainingClass, $material]), [
+            ->putJson(route('training-classes.materials.update', [$this->trainingClass, $pivot]), [
                 'title' => 'New Title',
                 'description' => 'Updated description',
             ]);
 
         $response->assertRedirect();
 
-        $this->assertDatabaseHas('training_class_materials', [
-            'id' => $material->id,
+        $this->assertDatabaseHas('training_materials', [
+            'id' => $pivot->training_material_id,
             'title' => 'New Title',
             'description' => 'Updated description',
         ]);
     }
 
     /** @test */
-    public function teacher_can_delete_material(): void
+    public function teacher_can_toggle_pivot_is_active_without_touching_content(): void
     {
-        $material = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
+        $pivot = $this->attachMaterial(
+            $this->trainingClass,
+            $this->teacher,
+            ['title' => 'Stable'],
+            ['is_active' => true]
+        );
+
+        $this->actingAs($this->teacher)
+            ->putJson(route('training-classes.materials.update', [$this->trainingClass, $pivot]), [
+                'is_active' => false,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('training_class_materials', [
+            'id' => $pivot->id,
+            'is_active' => false,
         ]);
+        $this->assertDatabaseHas('training_materials', [
+            'id' => $pivot->training_material_id,
+            'title' => 'Stable',
+        ]);
+    }
+
+    /** @test */
+    public function teacher_can_delete_material_assignment_keeping_the_content(): void
+    {
+        $pivot = $this->attachMaterial($this->trainingClass, $this->teacher);
+        $materialId = $pivot->training_material_id;
 
         $response = $this->actingAs($this->teacher)
-            ->deleteJson(route('training-classes.materials.destroy', [$this->trainingClass, $material]));
+            ->deleteJson(route('training-classes.materials.destroy', [$this->trainingClass, $pivot]));
 
         $response->assertRedirect();
 
-        $this->assertDatabaseMissing('training_class_materials', [
-            'id' => $material->id,
-        ]);
+        $this->assertDatabaseMissing('training_class_materials', ['id' => $pivot->id]);
+        $this->assertDatabaseHas('training_materials', ['id' => $materialId]);
     }
 
     /** @test */
@@ -217,13 +260,10 @@ class TrainingClassMaterialControllerTest extends TestCase
     /** @test */
     public function teacher_cannot_update_other_teacher_material(): void
     {
-        $material = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->otherClass->id,
-            'teacher_id' => $this->otherTeacher->id,
-        ]);
+        $pivot = $this->attachMaterial($this->otherClass, $this->otherTeacher);
 
         $response = $this->actingAs($this->teacher)
-            ->putJson(route('training-classes.materials.update', [$this->otherClass, $material]), [
+            ->putJson(route('training-classes.materials.update', [$this->otherClass, $pivot]), [
                 'title' => 'Hacked Title',
             ]);
 
@@ -231,35 +271,23 @@ class TrainingClassMaterialControllerTest extends TestCase
     }
 
     /** @test */
-    public function student_can_view_their_class_materials(): void
+    public function student_can_view_only_active_materials_of_their_class(): void
     {
-        TrainingClassMaterial::factory()->count(2)->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-            'is_active' => true,
-        ]);
-
-        // Create inactive material (should not be visible to student)
-        TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-            'is_active' => false,
-        ]);
+        $this->attachMaterial($this->trainingClass, $this->teacher, [], ['is_active' => true]);
+        $this->attachMaterial($this->trainingClass, $this->teacher, [], ['is_active' => true]);
+        $this->attachMaterial($this->trainingClass, $this->teacher, [], ['is_active' => false]);
 
         $response = $this->actingAs($this->student)
             ->getJson(route('student.training-classes.materials.index', $this->trainingClass));
 
-        $response->assertOk()
-            ->assertJsonCount(2, 'materials'); // Only active materials
+        $response->assertOk()->assertJsonCount(2, 'materials');
     }
 
     /** @test */
     public function student_cannot_view_other_class_materials(): void
     {
-        TrainingClassMaterial::factory()->count(2)->create([
-            'training_class_id' => $this->otherClass->id,
-            'teacher_id' => $this->otherTeacher->id,
-        ]);
+        $this->attachMaterial($this->otherClass, $this->otherTeacher);
+        $this->attachMaterial($this->otherClass, $this->otherTeacher);
 
         $response = $this->actingAs($this->student)
             ->getJson(route('student.training-classes.materials.index', $this->otherClass));
@@ -283,13 +311,10 @@ class TrainingClassMaterialControllerTest extends TestCase
     /** @test */
     public function student_cannot_update_material(): void
     {
-        $material = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-        ]);
+        $pivot = $this->attachMaterial($this->trainingClass, $this->teacher);
 
         $response = $this->actingAs($this->student)
-            ->putJson(route('training-classes.materials.update', [$this->trainingClass, $material]), [
+            ->putJson(route('training-classes.materials.update', [$this->trainingClass, $pivot]), [
                 'title' => 'Hacked Title',
             ]);
 
@@ -299,49 +324,26 @@ class TrainingClassMaterialControllerTest extends TestCase
     /** @test */
     public function student_cannot_delete_material(): void
     {
-        $material = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-        ]);
+        $pivot = $this->attachMaterial($this->trainingClass, $this->teacher);
 
         $response = $this->actingAs($this->student)
-            ->deleteJson(route('training-classes.materials.destroy', [$this->trainingClass, $material]));
+            ->deleteJson(route('training-classes.materials.destroy', [$this->trainingClass, $pivot]));
 
         $response->assertForbidden();
     }
 
     /** @test */
-    public function materials_are_ordered_correctly(): void
+    public function materials_are_ordered_by_pivot_order(): void
     {
-        TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-            'title' => 'Third',
-            'order' => 3,
-        ]);
-
-        TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-            'title' => 'First',
-            'order' => 1,
-        ]);
-
-        TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-            'title' => 'Second',
-            'order' => 2,
-        ]);
+        $this->attachMaterial($this->trainingClass, $this->teacher, ['title' => 'Third'], ['order' => 3]);
+        $this->attachMaterial($this->trainingClass, $this->teacher, ['title' => 'First'], ['order' => 1]);
+        $this->attachMaterial($this->trainingClass, $this->teacher, ['title' => 'Second'], ['order' => 2]);
 
         $response = $this->actingAs($this->teacher)
             ->getJson(route('training-classes.materials.index', $this->trainingClass));
 
-        $materials = $response->json('materials');
-
-        $this->assertEquals('First', $materials[0]['title']);
-        $this->assertEquals('Second', $materials[1]['title']);
-        $this->assertEquals('Third', $materials[2]['title']);
+        $titles = array_column($response->json('materials'), 'title');
+        $this->assertSame(['First', 'Second', 'Third'], $titles);
     }
 
     /** @test */
@@ -351,7 +353,6 @@ class TrainingClassMaterialControllerTest extends TestCase
             ->postJson(route('training-classes.materials.store', $this->trainingClass), [
                 'title' => 'Test Material',
                 'type' => 'pdf',
-                // No file or URL
             ]);
 
         $response->assertSessionHasErrors('file');
@@ -369,20 +370,20 @@ class TrainingClassMaterialControllerTest extends TestCase
                 'file' => $invalidFile,
             ]);
 
-        $response->assertSessionHasErrors('file');
+        $response->assertJsonValidationErrors('file');
     }
 
     /** @test */
     public function teacher_can_download_material(): void
     {
-        $material = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-            'url' => 'https://example.com/doc.pdf',
-        ]);
+        $pivot = $this->attachMaterial(
+            $this->trainingClass,
+            $this->teacher,
+            ['url' => 'https://example.com/doc.pdf']
+        );
 
         $response = $this->actingAs($this->teacher)
-            ->get(route('training-class-materials.download', $material));
+            ->get(route('training-class-materials.download', $pivot));
 
         $response->assertRedirect('https://example.com/doc.pdf');
     }
@@ -390,15 +391,15 @@ class TrainingClassMaterialControllerTest extends TestCase
     /** @test */
     public function student_can_download_active_material(): void
     {
-        $material = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-            'url' => 'https://example.com/doc.pdf',
-            'is_active' => true,
-        ]);
+        $pivot = $this->attachMaterial(
+            $this->trainingClass,
+            $this->teacher,
+            ['url' => 'https://example.com/doc.pdf'],
+            ['is_active' => true]
+        );
 
         $response = $this->actingAs($this->student)
-            ->get(route('training-class-materials.download', $material));
+            ->get(route('training-class-materials.download', $pivot));
 
         $response->assertRedirect('https://example.com/doc.pdf');
     }
@@ -406,15 +407,18 @@ class TrainingClassMaterialControllerTest extends TestCase
     /** @test */
     public function student_cannot_download_inactive_material(): void
     {
-        $material = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-            'url' => 'https://example.com/doc.pdf',
-            'is_active' => false,
-        ]);
+        $pivot = $this->attachMaterial(
+            $this->trainingClass,
+            $this->teacher,
+            ['url' => 'https://example.com/doc.pdf'],
+            ['is_active' => false]
+        );
 
+        // The app's global exception handler converts 403 to a back()-redirect
+        // for non-JSON requests, so we have to ask for JSON to surface the
+        // real 403 here.
         $response = $this->actingAs($this->student)
-            ->get(route('training-class-materials.download', $material));
+            ->getJson(route('training-class-materials.download', $pivot));
 
         $response->assertForbidden();
     }
@@ -425,7 +429,6 @@ class TrainingClassMaterialControllerTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        Storage::fake('public');
         $file = UploadedFile::fake()->create('document.pdf', 1024);
 
         $response = $this->actingAs($admin)
@@ -437,8 +440,8 @@ class TrainingClassMaterialControllerTest extends TestCase
             ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('training_class_materials', [
-            'training_class_id' => $this->trainingClass->id,
+        $this->assertDatabaseHas('training_materials', [
+            'training_id' => $this->training->id,
             'title' => 'Admin Added Material',
             'type' => 'pdf',
         ]);
@@ -460,8 +463,8 @@ class TrainingClassMaterialControllerTest extends TestCase
             ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('training_class_materials', [
-            'training_class_id' => $this->trainingClass->id,
+        $this->assertDatabaseHas('training_materials', [
+            'training_id' => $this->training->id,
             'title' => 'SuperAdmin Added Material',
             'type' => 'video',
         ]);
@@ -473,22 +476,22 @@ class TrainingClassMaterialControllerTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $material = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-            'title' => 'Original Title',
-        ]);
+        $pivot = $this->attachMaterial(
+            $this->trainingClass,
+            $this->teacher,
+            ['title' => 'Original Title']
+        );
 
         $response = $this->actingAs($admin)
-            ->put(route('training-classes.materials.update', [$this->trainingClass, $material]), [
+            ->put(route('training-classes.materials.update', [$this->trainingClass, $pivot]), [
                 'title' => 'Admin Updated Title',
-                'type' => $material->type,
+                'type' => $pivot->material->type,
                 'is_active' => true,
             ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('training_class_materials', [
-            'id' => $material->id,
+        $this->assertDatabaseHas('training_materials', [
+            'id' => $pivot->training_material_id,
             'title' => 'Admin Updated Title',
         ]);
     }
@@ -499,18 +502,13 @@ class TrainingClassMaterialControllerTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $material = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-        ]);
+        $pivot = $this->attachMaterial($this->trainingClass, $this->teacher);
 
         $response = $this->actingAs($admin)
-            ->delete(route('training-classes.materials.destroy', [$this->trainingClass, $material]));
+            ->delete(route('training-classes.materials.destroy', [$this->trainingClass, $pivot]));
 
         $response->assertRedirect();
-        $this->assertDatabaseMissing('training_class_materials', [
-            'id' => $material->id,
-        ]);
+        $this->assertDatabaseMissing('training_class_materials', ['id' => $pivot->id]);
     }
 
     /** @test */
@@ -519,34 +517,33 @@ class TrainingClassMaterialControllerTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole('super-admin');
 
-        TrainingClassMaterial::factory()->count(3)->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-        ]);
+        for ($i = 0; $i < 3; $i++) {
+            $this->attachMaterial($this->trainingClass, $this->teacher);
+        }
 
         $response = $this->actingAs($admin)
-            ->get(route('training-classes.materials.index', $this->trainingClass));
+            ->getJson(route('training-classes.materials.index', $this->trainingClass));
 
-        $response->assertOk();
-        $response->assertJsonCount(3, 'materials');
+        $response->assertOk()->assertJsonCount(3, 'materials');
     }
 
     /** @test */
-    public function admin_can_view_inactive_materials(): void
+    public function admin_can_download_inactive_material(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
-        $inactiveMaterial = TrainingClassMaterial::factory()->create([
-            'training_class_id' => $this->trainingClass->id,
-            'teacher_id' => $this->teacher->id,
-            'is_active' => false,
-        ]);
+        $pivot = $this->attachMaterial(
+            $this->trainingClass,
+            $this->teacher,
+            ['url' => 'https://example.com/doc.pdf'],
+            ['is_active' => false]
+        );
 
         $response = $this->actingAs($admin)
-            ->get(route('training-class-materials.download', $inactiveMaterial));
+            ->get(route('training-class-materials.download', $pivot));
 
-        // Admin can access inactive materials
-        $response->assertSuccessful();
+        // External URL → 302 redirect, gated by `view` policy (admin OK).
+        $response->assertRedirect('https://example.com/doc.pdf');
     }
 }

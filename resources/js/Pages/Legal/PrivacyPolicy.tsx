@@ -1,8 +1,11 @@
 import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Shield, Eye, Database, Users, Mail, Phone, MapPin } from 'lucide-react';
+import type { PageProps } from '@/Types';
 
 export default function PrivacyPolicy() {
+    const appName = usePage<PageProps>().props.app.name;
+
     return (
         <>
             <Head title="Politique de confidentialité" />
@@ -39,7 +42,7 @@ export default function PrivacyPolicy() {
                                 Introduction
                             </h2>
                             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                                Cette politique de confidentialité décrit comment ICC Munich collecte, utilise et protège
+                                Cette politique de confidentialité décrit comment {appName} collecte, utilise et protège
                                 vos informations personnelles lorsque vous utilisez notre plateforme de gestion organisationnelle.
                                 Nous nous engageons à protéger votre vie privée et à traiter vos données personnelles de manière
                                 transparente et sécurisée.

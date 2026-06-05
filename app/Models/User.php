@@ -65,7 +65,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $deleted_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Absence> $absences
  * @property-read int|null $absences_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PastorAvailability> $activeAvailability
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CareServiceAvailability> $activeAvailability
  * @property-read int|null $active_availability_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
  * @property-read int|null $activities_count
@@ -79,7 +79,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read int|null $assigned_step_instances_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $assignedTasks
  * @property-read int|null $assigned_tasks_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PastorAvailability> $availability
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CareServiceAvailability> $availability
  * @property-read int|null $availability_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BookRental> $bookRentals
  * @property-read int|null $book_rentals_count
@@ -111,7 +111,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read int|null $interests_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\LeaveBalance> $leaveBalances
  * @property-read int|null $leave_balances_count
- * @property-read \App\Models\MlrAgent|null $mlrAgent
+ * @property-read \App\Models\CareServiceAgent|null $careServiceAgent
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\NeedComment> $needComments
  * @property-read int|null $need_comments_count
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
@@ -590,11 +590,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * User's MLR agent profile.
+     * User's care service agent profile.
      */
-    public function mlrAgent(): HasOne
+    public function careServiceAgent(): HasOne
     {
-        return $this->hasOne(MlrAgent::class);
+        return $this->hasOne(CareServiceAgent::class);
     }
 
     /**
@@ -622,7 +622,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function availability(): HasMany
     {
-        return $this->hasMany(PastorAvailability::class, 'pastor_id');
+        return $this->hasMany(CareServiceAvailability::class, 'pastor_id');
     }
 
     /**

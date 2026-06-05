@@ -33,7 +33,7 @@ class BlockedLoginAttemptNotification extends Notification implements ShouldQueu
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         return (new MailMessage)
             ->subject("⚠️ Tentative de connexion bloquée - {$appName}")

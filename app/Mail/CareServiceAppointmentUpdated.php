@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Mail;
+
+use App\Models\CareService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+
+class CareServiceAppointmentUpdated extends Mailable implements ShouldQueue
+{
+    use Queueable, SerializesModels;
+
+    /**
+     * Create a new message instance.
+     */
+    public function __construct(
+        public CareService $appointment,
+        public array $changes,
+        public string $recipientType = 'client'
+    ) {
+        $this->appointment->load(['pastor', 'user']);
+    }
+
+    /**
+     * Get the message envelope.
+     */
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            from: config('mail.from.address', 'noreply@icc-munich.de'),
+            subject: 'Rendez-vous de soin pastoral modifie - '.config('app.name'),
+        );
+    }
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            markdown: 'emails.care-service.appointment-updated',
+            with: [
+                'appointment' => $this->appointment,
+                'changes' => $this->changes,
+                'recipientType' => $this->recipientType,
+                'pastor' => $this->appointment->pastor,
+                'fieldLabels' => $this->getFieldLabels(),
+                'dashboardUrl' => route('care-service.index'),
+                'appointmentUrl' => route('care-service.show', ['careService' => $this->appointment->uuid]),
+                'churchName' => config('app.name'),
+                'churchEmail' => 'info@icc-munich.de',
+            ],
+        );
+    }
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [];
+    }
+
+    /**
+     * Get human-readable field labels.
+     */
+    protected function getFieldLabels(): array
+    {
+        return [
+            'appointment_date' => 'Date du rendez-vous',
+            'appointment_time' => 'Heure du rendez-vous',
+            'duration_minutes' => 'Duree (minutes)',
+            'location_type' => 'Type de lieu',
+            'zoom_link' => 'Lien Zoom',
+            'pastor_id' => 'Pasteur/Conseiller',
+            'status' => 'Statut',
+        ];
+    }
+}

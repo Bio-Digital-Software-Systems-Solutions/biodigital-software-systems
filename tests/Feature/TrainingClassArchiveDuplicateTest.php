@@ -6,6 +6,7 @@ use App\Models\Training;
 use App\Models\TrainingClass;
 use App\Models\TrainingClassMaterial;
 use App\Models\TrainingClassSchedule;
+use App\Models\TrainingMaterial;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -266,14 +267,21 @@ it('duplicates schedules', function (): void {
     expect($copy->schedules)->toHaveCount(2);
 });
 
-it('duplicates materials', function (): void {
+it('duplicates material pivot rows pointing at the same TrainingMaterials', function (): void {
     $class = TrainingClass::factory()->create([
         'training_id' => $this->training->id,
     ]);
 
-    TrainingClassMaterial::factory()->count(3)->create([
-        'training_class_id' => $class->id,
+    $materials = TrainingMaterial::factory()->count(3)->create([
+        'training_id' => $this->training->id,
     ]);
+    foreach ($materials as $material) {
+        TrainingClassMaterial::create([
+            'training_class_id' => $class->id,
+            'training_material_id' => $material->id,
+            'is_active' => true,
+        ]);
+    }
 
     $response = $this->actingAs($this->admin)
         ->postJson(route('training-classes.duplicate', $class->uuid));
@@ -282,6 +290,8 @@ it('duplicates materials', function (): void {
 
     $copy = TrainingClass::where('id', '!=', $class->id)->first();
     expect($copy->materials)->toHaveCount(3);
+    expect($copy->materials->pluck('id')->all())
+        ->toEqualCanonicalizing($materials->pluck('id')->all());
 });
 
 it('duplicates quiz associations', function (): void {

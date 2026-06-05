@@ -9,13 +9,14 @@ interface GuestLayoutProps extends PropsWithChildren {
     title?: string;
 }
 
-export default function GuestLayout({ children, title = 'ICC München' }: GuestLayoutProps) {
-    const { auth } = usePage<PageProps>().props;
+export default function GuestLayout({ children, title }: GuestLayoutProps) {
+    const { auth, app } = usePage<PageProps>().props;
+    const appName = app.name;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     return (
         <>
-            <Head title={title} />
+            <Head title={title ?? appName} />
             <div className="min-h-screen bg-background flex flex-col">
                 {/* Navigation Header */}
                 <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50 sticky top-0 z-50">
@@ -23,9 +24,9 @@ export default function GuestLayout({ children, title = 'ICC München' }: GuestL
                         <div className="flex justify-between h-16">
                             <div className="flex items-center">
                                 <Link className="flex-shrink-0 flex items-center gap-2 sm:gap-3" href="/">
-                                    <img src="/Logo.png" alt="ICC München" className="h-8 w-8 sm:h-10 sm:w-10 object-contain" />
+                                    <img src="/Logo.png" alt={appName} className="h-8 w-8 sm:h-10 sm:w-10 object-contain" />
                                     <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-icc-blue via-icc-purple to-icc-red bg-clip-text text-transparent">
-                                        ICC München
+                                        {appName}
                                     </h1>
                                 </Link>
                                 {/* Desktop Navigation */}

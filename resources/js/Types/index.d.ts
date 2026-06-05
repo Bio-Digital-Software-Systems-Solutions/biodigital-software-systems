@@ -12,4 +12,7 @@ export type PageProps<
         user: User;
     };
     csrf_token?: string;
+    app: {
+        name: string;
+    };
 };

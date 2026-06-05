@@ -2,11 +2,13 @@ import React from 'react';
 import { Card, CardContent } from '@/Components/ui/card';
 import { Button } from '@/Components/ui/button';
 import { Badge } from '@/Components/ui/badge';
-import { FileText, PlayCircle, File, Presentation, Pencil, Trash2, Download } from 'lucide-react';
+import { FileText, PlayCircle, File, Presentation, Pencil, Trash2, Download, Eye, EyeOff } from 'lucide-react';
 
 interface Material {
   id: number;
   uuid: string;
+  training_material_id?: number;
+  training_material_uuid?: string;
   title: string;
   type: string;
   file_url?: string | null;
@@ -27,10 +29,11 @@ interface MaterialCardProps {
   onEdit?: (material: Material) => void;
   onDelete?: (material: Material) => void;
   onDownload?: (material: Material) => void;
+  onToggleActive?: (material: Material) => void;
   isTeacher?: boolean;
 }
 
-export default function MaterialCard({ material, onEdit, onDelete, onDownload, isTeacher = false }: MaterialCardProps) {
+export default function MaterialCard({ material, onEdit, onDelete, onDownload, onToggleActive, isTeacher = false }: MaterialCardProps) {
   const getTypeIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case 'pdf':
@@ -139,6 +142,17 @@ export default function MaterialCard({ material, onEdit, onDelete, onDownload, i
               >
                 <Download className="w-4 h-4 mr-1" />
                 {material.type === 'video' || material.type === 'audio' ? 'Lire' : 'Ouvrir'}
+              </Button>
+            )}
+            {isTeacher && onToggleActive && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onToggleActive(material)}
+                className="shrink-0"
+                title={material.is_active ? 'Masquer dans cette classe' : 'Afficher dans cette classe'}
+              >
+                {material.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
               </Button>
             )}
             {isTeacher && onEdit && (

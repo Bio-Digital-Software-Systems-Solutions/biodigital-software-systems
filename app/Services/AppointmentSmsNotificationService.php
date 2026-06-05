@@ -105,7 +105,7 @@ class AppointmentSmsNotificationService
         $date = $appointment->start_datetime->format('d/m/Y');
         $time = $appointment->start_datetime->format('H:i');
         $organizer = $appointment->organizer->first_name.' '.$appointment->organizer->last_name;
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         $locationType = match ($appointment->meeting_mode ?? 'in_person') {
             'online' => 'en ligne',
@@ -126,7 +126,7 @@ class AppointmentSmsNotificationService
         $time = $appointment->start_datetime->format('H:i');
         $endTime = $appointment->end_datetime->format('H:i');
         $organizer = $appointment->organizer->first_name.' '.$appointment->organizer->last_name;
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         $locationType = match ($appointment->meeting_mode ?? 'in_person') {
             'online' => 'En ligne',
@@ -154,7 +154,7 @@ class AppointmentSmsNotificationService
 
         $message .= "\nEn cas d'empêchement, veuillez prévenir l'organisateur.\n\n";
 
-        return $message . 'À bientôt !';
+        return $message.'À bientôt !';
     }
 
     /**
@@ -318,7 +318,7 @@ class AppointmentSmsNotificationService
     {
         $date = $appointment->start_datetime->format('d/m/Y');
         $time = $appointment->start_datetime->format('H:i');
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         return "{$appName}: Votre RDV \"{$appointment->title}\" du {$date} à {$time} est confirmé. Merci !";
     }
@@ -331,7 +331,7 @@ class AppointmentSmsNotificationService
         $date = $appointment->start_datetime->format('d/m/Y');
         $time = $appointment->start_datetime->format('H:i');
         $organizer = $appointment->organizer->first_name.' '.$appointment->organizer->last_name;
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         $message = "Confirmation de rendez-vous - {$appName}\n\n";
         $message .= "Bonjour {$participant->first_name},\n\n";
@@ -342,7 +342,7 @@ class AppointmentSmsNotificationService
         $message .= "Organisateur: {$organizer}\n\n";
         $message .= "Vous recevrez un rappel 24h avant le rendez-vous.\n\n";
 
-        return $message . 'À bientôt !';
+        return $message.'À bientôt !';
     }
 
     /**
@@ -380,7 +380,7 @@ class AppointmentSmsNotificationService
     {
         $date = $appointment->start_datetime->format('d/m/Y');
         $time = $appointment->start_datetime->format('H:i');
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         return "{$appName}: Le RDV \"{$appointment->title}\" du {$date} à {$time} a été annulé.";
     }
@@ -392,7 +392,7 @@ class AppointmentSmsNotificationService
     {
         $date = $appointment->start_datetime->format('d/m/Y');
         $time = $appointment->start_datetime->format('H:i');
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         $message = "Annulation de rendez-vous - {$appName}\n\n";
         $message .= "Bonjour {$participant->first_name},\n\n";
@@ -400,7 +400,7 @@ class AppointmentSmsNotificationService
         $message .= "*{$appointment->title}*\n";
         $message .= "Date prévue: {$date} à {$time}\n\n";
 
-        return $message . 'Nous vous prions de nous excuser pour ce désagrément.';
+        return $message.'Nous vous prions de nous excuser pour ce désagrément.';
     }
 
     /**

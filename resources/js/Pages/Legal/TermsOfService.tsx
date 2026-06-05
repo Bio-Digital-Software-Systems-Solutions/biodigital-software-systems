@@ -1,8 +1,11 @@
 import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, FileText, User, Shield, AlertTriangle, CheckCircle, Mail, Scale } from 'lucide-react';
+import type { PageProps } from '@/Types';
 
 export default function TermsOfService() {
+    const appName = usePage<PageProps>().props.app.name;
+
     return (
         <>
             <Head title="Conditions d'utilisation" />
@@ -36,11 +39,11 @@ export default function TermsOfService() {
                         {/* Introduction */}
                         <section>
                             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-                                Bienvenue sur ICC Munich
+                                Bienvenue sur {appName}
                             </h2>
                             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                                 Ces conditions d'utilisation régissent votre accès et utilisation de la plateforme
-                                de gestion organisationnelle ICC Munich. En utilisant nos services, vous acceptez
+                                de gestion organisationnelle {appName}. En utilisant nos services, vous acceptez
                                 ces conditions dans leur intégralité. Veuillez les lire attentivement.
                             </p>
                         </section>
@@ -187,7 +190,7 @@ export default function TermsOfService() {
                                         Propriété de la plateforme
                                     </h3>
                                     <p className="text-gray-700 dark:text-gray-300">
-                                        La plateforme ICC Munich, incluant son code, design, logos et fonctionnalités,
+                                        La plateforme {appName}, incluant son code, design, logos et fonctionnalités,
                                         est protégée par les droits d'auteur et autres droits de propriété intellectuelle.
                                     </p>
                                 </div>
@@ -243,7 +246,7 @@ export default function TermsOfService() {
 
                                 <div>
                                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                                        Par ICC Munich
+                                        Par {appName}
                                     </h3>
                                     <ul className="list-disc list-inside text-gray-700 dark:text-gray-300 space-y-1">
                                         <li>Violation des conditions d'utilisation</li>
@@ -315,7 +318,7 @@ export default function TermsOfService() {
                         {/* Footer */}
                         <section className="border-t pt-6">
                             <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                                En continuant à utiliser ICC Munich, vous acceptez la version la plus récente
+                                En continuant à utiliser {appName}, vous acceptez la version la plus récente
                                 de ces conditions d'utilisation.
                             </p>
                         </section>

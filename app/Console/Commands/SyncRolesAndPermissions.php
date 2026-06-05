@@ -38,12 +38,12 @@ class SyncRolesAndPermissions extends Command
             'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
             // Appointments
             'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
-            // Pastoral Care
-            'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
-            'select pastor for pastoral care', 'manage pastor availability', 'manage pastoral appointments',
-            'view pastoral care client notes',
-            // MLR (Pastoral Care Dashboard)
-            'view mlr dashboard', 'view all pastoral care', 'transfer pastoral care', 'view pastoral care statistics',
+            // Care Service
+            'view care service', 'create care service', 'edit care service', 'delete care service', 'manage care service',
+            'select pastor for care service', 'manage care service availability', 'manage care service appointments',
+            'view care service client notes',
+            // Care Service Dashboard
+            'view care service dashboard', 'view all care service', 'transfer care service', 'view care service statistics',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs', 'create program steps',
@@ -75,6 +75,8 @@ class SyncRolesAndPermissions extends Command
             'view contacts', 'manage contacts',
             // Hero Slides
             'view hero slides', 'manage hero slides',
+            // Homepage Sections
+            'manage homepage sections',
             // Dashboard Access
             'access student dashboard', 'access teacher dashboard',
             // System
@@ -109,11 +111,11 @@ class SyncRolesAndPermissions extends Command
                 'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
                 // Appointments
                 'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
-                // Pastoral Care
-                'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
-                'select pastor for pastoral care', 'view pastoral care client notes',
-                // MLR
-                'view mlr dashboard', 'view all pastoral care', 'transfer pastoral care', 'view pastoral care statistics',
+                // Care Service
+                'view care service', 'create care service', 'edit care service', 'delete care service', 'manage care service',
+                'select pastor for care service', 'view care service client notes',
+                // Care Service Dashboard
+                'view care service dashboard', 'view all care service', 'transfer care service', 'view care service statistics',
                 // Tasks & Programs
                 'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
                 'view programs', 'create programs', 'edit programs', 'delete programs', 'create program steps',
@@ -144,6 +146,8 @@ class SyncRolesAndPermissions extends Command
                 'view contacts', 'manage contacts',
                 // Hero Slides
                 'view hero slides', 'manage hero slides',
+                // Homepage Sections
+                'manage homepage sections',
                 // Dashboard Access
                 'access student dashboard', 'access teacher dashboard',
                 // Reports
@@ -168,7 +172,7 @@ class SyncRolesAndPermissions extends Command
                 'view hero slides', 'manage hero slides',
                 'view books', 'create books', 'edit books',
                 'view appointments', 'create appointments',
-                'view pastoral care', 'create pastoral care', 'edit pastoral care', 'manage pastoral care',
+                'view care service', 'create care service', 'edit care service', 'manage care service',
                 'view messages', 'create messages', 'edit messages', 'delete messages',
                 'use chat',
                 'view events', 'attend events', 'view departments', 'view groups',
@@ -184,8 +188,8 @@ class SyncRolesAndPermissions extends Command
                 'view events', 'create events', 'edit events', 'attend events', 'manage event participants',
                 'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
                 'view appointments', 'create appointments', 'edit appointments', 'manage appointment participants',
-                'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
-                'select pastor for pastoral care',
+                'view care service', 'create care service', 'edit care service', 'delete care service', 'manage care service',
+                'select pastor for care service',
                 'view articles', 'create articles', 'edit articles',
                 'view messages', 'create messages', 'edit messages', 'delete messages',
                 'use chat',
@@ -206,7 +210,7 @@ class SyncRolesAndPermissions extends Command
                 'use chat',
                 'view articles', 'create articles',
                 'view books', 'view videos', 'view stocks',
-                'view pastoral care', 'create pastoral care', 'edit pastoral care',
+                'view care service', 'create care service', 'edit care service',
             ],
 
             'library-manager' => [
@@ -270,7 +274,7 @@ class SyncRolesAndPermissions extends Command
                 'view messages', 'create messages', 'edit messages', 'delete messages',
                 'use chat',
                 'view appointments', 'create appointments',
-                'view pastoral care', 'create pastoral care', 'view pastoral care client notes',
+                'view care service', 'create care service', 'view care service client notes',
                 'view needs', 'create needs', 'submit forms',
                 // Availabilities (own availabilities)
                 'view availabilities', 'create availabilities', 'edit availabilities', 'delete availabilities',
@@ -305,11 +309,11 @@ class SyncRolesAndPermissions extends Command
             'pastor' => [
                 'view articles', 'view events', 'attend events', 'view videos', 'view books', 'view users', 'view departments',
                 'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
-                'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
-                'select pastor for pastoral care', 'manage pastor availability', 'manage pastoral appointments',
-                'view pastoral care client notes',
-                // MLR (limited access)
-                'view mlr dashboard', 'view pastoral care statistics',
+                'view care service', 'create care service', 'edit care service', 'delete care service', 'manage care service',
+                'select pastor for care service', 'manage care service availability', 'manage care service appointments',
+                'view care service client notes',
+                // Care Service Dashboard (limited access)
+                'view care service dashboard', 'view care service statistics',
                 'view messages', 'create messages', 'edit messages', 'delete messages',
                 'use chat',
                 'view groups', 'manage group members',
@@ -326,8 +330,8 @@ class SyncRolesAndPermissions extends Command
                 'view messages', 'create messages', 'edit messages', 'delete messages', 'use chat',
                 // Appointments
                 'view appointments', 'create appointments', 'edit appointments',
-                // Pastoral Care
-                'view pastoral care', 'create pastoral care',
+                // Care Service
+                'view care service', 'create care service',
                 // Tasks
                 'view tasks', 'create tasks', 'edit tasks',
                 // Projects
@@ -350,8 +354,8 @@ class SyncRolesAndPermissions extends Command
                 'view messages', 'create messages', 'edit messages', 'delete messages', 'use chat',
                 // Appointments
                 'view appointments', 'create appointments',
-                // Pastoral Care
-                'view pastoral care', 'create pastoral care',
+                // Care Service
+                'view care service', 'create care service',
                 // Tasks (can view and work on assigned tasks)
                 'view tasks',
                 // Needs (can submit needs)
@@ -360,12 +364,12 @@ class SyncRolesAndPermissions extends Command
                 'view availabilities', 'create availabilities', 'edit availabilities', 'delete availabilities',
             ],
 
-            'mlr-agent' => [
-                // MLR-specific permissions
-                'view mlr dashboard', 'view all pastoral care', 'transfer pastoral care', 'view pastoral care statistics',
-                // Base pastoral care permissions
-                'view pastoral care', 'create pastoral care', 'edit pastoral care', 'manage pastoral care',
-                'select pastor for pastoral care',
+            'care-service-agent' => [
+                // Care service dashboard permissions
+                'view care service dashboard', 'view all care service', 'transfer care service', 'view care service statistics',
+                // Base care service permissions
+                'view care service', 'create care service', 'edit care service', 'manage care service',
+                'select pastor for care service',
                 // Basic viewing
                 'view users', 'view departments', 'view groups',
                 // Messages & Chat
@@ -396,8 +400,9 @@ class SyncRolesAndPermissions extends Command
         $isForce = $this->option('force');
 
         // Safety check for production
-        if (app()->environment('production') && ! $isDryRun && !$isForce && ! $this->confirm('You are about to modify roles and permissions in PRODUCTION. Are you sure?')) {
+        if (app()->environment('production') && ! $isDryRun && ! $isForce && ! $this->confirm('You are about to modify roles and permissions in PRODUCTION. Are you sure?')) {
             $this->info('Operation cancelled.');
+
             return self::SUCCESS;
         }
 

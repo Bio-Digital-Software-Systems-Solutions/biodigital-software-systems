@@ -1170,7 +1170,7 @@ export default function EpicsIndex({ epicsByStatus, projects, users, filters }: 
                                                                 <tr
                                                                     key={task.id}
                                                                     className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                                                                    onClick={() => window.open(`/tasks/${task.id}`, '_blank')}
+                                                                    onClick={() => window.open(`/tasks/${task.uuid}`, '_blank')}
                                                                 >
                                                                     <td className="px-6 py-4">
                                                                         <div className="text-sm font-medium text-gray-900 dark:text-white">

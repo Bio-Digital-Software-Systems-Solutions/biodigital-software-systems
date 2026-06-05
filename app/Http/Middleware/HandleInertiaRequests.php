@@ -33,6 +33,9 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'cspNonce' => $request->attributes->get('csp_nonce'),
             'csrf_token' => csrf_token(), // Share fresh CSRF token with frontend
+            'app' => [
+                'name' => config('app.name'),
+            ],
             'auth' => [
                 'user' => $request->user() ? [
                     'id' => $request->user()->id,

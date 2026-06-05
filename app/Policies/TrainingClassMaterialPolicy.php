@@ -8,23 +8,16 @@ use App\Models\User;
 
 class TrainingClassMaterialPolicy
 {
-    /**
-     * Determine whether the user can view any models for a specific class.
-     * Admins, teachers of the class, or enrolled students can view materials.
-     */
     public function viewAny(User $user, TrainingClass $trainingClass): bool
     {
-        // Admins and super-admins can view all materials
         if ($user->hasRole(['admin', 'super-admin'])) {
             return true;
         }
 
-        // Check if user is the teacher of this class
         if ($trainingClass->teacher_id === $user->id) {
             return true;
         }
 
-        // Check if user is an enrolled student in this class (approved status)
         return $trainingClass->training->students()
             ->where('user_id', $user->id)
             ->where('status', 'approved')
@@ -32,30 +25,22 @@ class TrainingClassMaterialPolicy
             ->exists();
     }
 
-    /**
-     * Determine whether the user can view the model.
-     * Admins, teachers, or enrolled students can view.
-     */
-    public function view(User $user, TrainingClassMaterial $trainingClassMaterial): bool
+    public function view(User $user, TrainingClassMaterial $pivot): bool
     {
-        $trainingClass = $trainingClassMaterial->trainingClass;
+        $trainingClass = $pivot->trainingClass;
 
-        // Admins and super-admins can view all materials (even inactive ones)
         if ($user->hasRole(['admin', 'super-admin'])) {
             return true;
         }
 
-        // Check if user is the teacher of this class
         if ($trainingClass->teacher_id === $user->id) {
             return true;
         }
 
-        // Check if material is active for students
-        if (! $trainingClassMaterial->is_active) {
+        if (! $pivot->is_active) {
             return false;
         }
 
-        // Check if user is an enrolled student in this class (approved status)
         return $trainingClass->training->students()
             ->where('user_id', $user->id)
             ->where('status', 'approved')
@@ -63,13 +48,8 @@ class TrainingClassMaterialPolicy
             ->exists();
     }
 
-    /**
-     * Determine whether the user can create models for a specific class.
-     * Admins and the teacher of the class can create materials.
-     */
     public function create(User $user, TrainingClass $trainingClass): bool
     {
-        // Admins and super-admins can create materials for any class
         if ($user->hasRole(['admin', 'super-admin'])) {
             return true;
         }
@@ -78,67 +58,40 @@ class TrainingClassMaterialPolicy
     }
 
     /**
-     * Determine whether the user can update the model.
-     * Admins and the teacher who uploaded it can update.
+     * Update / delete authorisation. A teacher who assigned the material to
+     * this class can manage that assignment; the class's own teacher can
+     * too. Admins always can.
      */
-    public function update(User $user, TrainingClassMaterial $trainingClassMaterial): bool
+    public function update(User $user, TrainingClassMaterial $pivot): bool
     {
-        // Admins and super-admins can update any material
         if ($user->hasRole(['admin', 'super-admin'])) {
             return true;
         }
 
-        return $trainingClassMaterial->teacher_id === $user->id;
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     * Admins and the teacher who uploaded it can delete.
-     */
-    public function delete(User $user, TrainingClassMaterial $trainingClassMaterial): bool
-    {
-        // Admins and super-admins can delete any material
-        if ($user->hasRole(['admin', 'super-admin'])) {
+        if ($pivot->teacher_id === $user->id) {
             return true;
         }
 
-        return $trainingClassMaterial->teacher_id === $user->id;
+        return $pivot->trainingClass?->teacher_id === $user->id;
     }
 
-    /**
-     * Determine whether the user can download the model.
-     * Students enrolled in the class or the teacher can download.
-     */
-    public function download(User $user, TrainingClassMaterial $trainingClassMaterial): bool
+    public function delete(User $user, TrainingClassMaterial $pivot): bool
     {
-        return $this->view($user, $trainingClassMaterial);
+        return $this->update($user, $pivot);
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     * Admins and the original uploader can restore.
-     */
-    public function restore(User $user, TrainingClassMaterial $trainingClassMaterial): bool
+    public function download(User $user, TrainingClassMaterial $pivot): bool
     {
-        // Admins and super-admins can restore any material
-        if ($user->hasRole(['admin', 'super-admin'])) {
-            return true;
-        }
-
-        return $trainingClassMaterial->teacher_id === $user->id;
+        return $this->view($user, $pivot);
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     * Admins and the original uploader can force delete.
-     */
-    public function forceDelete(User $user, TrainingClassMaterial $trainingClassMaterial): bool
+    public function restore(User $user, TrainingClassMaterial $pivot): bool
     {
-        // Admins and super-admins can force delete any material
-        if ($user->hasRole(['admin', 'super-admin'])) {
-            return true;
-        }
+        return $this->update($user, $pivot);
+    }
 
-        return $trainingClassMaterial->teacher_id === $user->id;
+    public function forceDelete(User $user, TrainingClassMaterial $pivot): bool
+    {
+        return $this->update($user, $pivot);
     }
 }

@@ -9,7 +9,39 @@ import {
     HeartIcon,
     UserGroupIcon,
 } from '@heroicons/react/24/outline';
+import { usePage } from '@inertiajs/react';
+import type { PageProps } from '@/Types';
 import FeatureSectionItem from './FeatureSectionItem';
+import { resolveDesign, type DesignSettings } from '@/lib/sectionDesign';
+import type { ComponentType, SVGProps } from 'react';
+
+const ICON_MAP: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+    CalendarDaysIcon,
+    SunIcon,
+    HomeModernIcon,
+    SparklesIcon,
+    MegaphoneIcon,
+    AcademicCapIcon,
+    HeartIcon,
+    UserGroupIcon,
+};
+
+export interface FeaturesContent {
+    badge?: string;
+    heading?: string;
+    subtitle?: string;
+    items?: Array<{
+        icon: string;
+        iconColor?: string;
+        title: string;
+        description: string;
+    }>;
+}
+
+interface FeaturesSectionProps {
+    content?: FeaturesContent;
+    design?: DesignSettings | null;
+}
 
 const features = [
     {
@@ -51,8 +83,8 @@ const features = [
     {
         icon: HeartIcon,
         iconColor: 'bg-icc-purple/10 text-icc-purple',
-        title: 'Soins pastoraux',
-        description: 'Bénéficiez de conseils et d\'accompagnement spirituel personnalisé par notre équipe pastorale pour vous aider dans votre marche avec Dieu.'
+        title: 'Care Services',
+        description: 'Bénéficiez de conseils et d\'accompagnement spirituel personnalisé par notre équipe care service pour vous aider dans votre marche avec Dieu.'
     },
     {
         icon: UserGroupIcon,
@@ -62,24 +94,54 @@ const features = [
     }
 ];
 
-export default function FeaturesSection() {
+export default function FeaturesSection({ content, design }: FeaturesSectionProps = {}) {
+    const appName = usePage<PageProps>().props.app.name;
+    const resolved = resolveDesign(design);
+
+    const badge = content?.badge ?? 'Activités';
+    const heading = content?.heading ?? `Nos Activitités á ${appName}`;
+    const subtitle =
+        content?.subtitle ??
+        `Découvrez les diverses activités et ministères qui font de ${appName} une communauté vivante et engagée.`;
+
+    const items = content?.items
+        ? content.items.map((item) => ({
+              icon: ICON_MAP[item.icon] ?? CalendarDaysIcon,
+              iconColor: item.iconColor ?? 'bg-icc-blue/10 text-icc-blue',
+              title: item.title,
+              description: item.description,
+          }))
+        : features;
+
     return (
-        <section id="features" className="py-16 bg-muted/50">
+        <section
+            id="features"
+            className={`bg-muted/50 ${resolved.sectionClass} ${resolved.hasPadding ? '' : 'py-16'}`}
+            style={resolved.sectionStyle}
+        >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center space-y-4">
+                <div className={`space-y-4 ${resolved.alignmentClass || 'text-center'}`}>
                     <Badge variant="secondary" className="mb-2">
-                        Activités
+                        {badge}
                     </Badge>
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-                        Nos Activitités á ICC München
+                    <h2
+                        className={`font-bold tracking-tight ${
+                            resolved.headingClass || 'text-3xl sm:text-4xl md:text-5xl'
+                        }`}
+                    >
+                        {heading}
                     </h2>
-                    <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-                        Découvrez les diverses activités et ministères qui font d'ICC München une communauté vivante et engagée.
+                    <p
+                        className={`mx-auto max-w-2xl text-muted-foreground ${
+                            resolved.paragraphClass || 'text-lg'
+                        }`}
+                    >
+                        {subtitle}
                     </p>
                 </div>
 
                 <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                    {features.map((feature, index) => (
+                    {items.map((feature, index) => (
                         <FeatureSectionItem
                             key={index}
                             icon={feature.icon}

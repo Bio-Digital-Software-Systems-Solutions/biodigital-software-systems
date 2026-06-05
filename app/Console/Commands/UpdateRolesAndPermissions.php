@@ -104,11 +104,11 @@ class UpdateRolesAndPermissions extends Command
             'view event gallery', 'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
             // Appointments
             'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
-            // Pastoral Care
-            'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
+            // Care Service
+            'view care service', 'create care service', 'edit care service', 'delete care service', 'manage care service',
             // Pastor specific (from PastorRoleSeeder)
-            'manage pastor availability', 'manage pastoral appointments',
-            'view pastoral care client notes',
+            'manage care service availability', 'manage care service appointments',
+            'view care service client notes',
             // Tasks & Programs
             'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
             'view programs', 'create programs', 'edit programs', 'delete programs',
@@ -176,7 +176,7 @@ class UpdateRolesAndPermissions extends Command
             'group-leader', 'department-leader', 'impact-family-leader', 'member',
             'student', 'teacher', 'pastor', 'employee', 'star',
             // Standardized kebab-case roles
-            'super-admin', 'mlr-agent',
+            'super-admin', 'care-service-agent',
         ];
 
         $created = 0;
@@ -215,8 +215,8 @@ class UpdateRolesAndPermissions extends Command
                 'view events', 'create events', 'edit events', 'delete events', 'attend events', 'manage event participants',
                 'view event gallery', 'manage tickets', 'view registrations', 'manage registrations', 'checkin events', 'view event analytics',
                 'view appointments', 'create appointments', 'edit appointments', 'delete appointments', 'manage appointment participants',
-                'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
-                'view pastoral care client notes',
+                'view care service', 'create care service', 'edit care service', 'delete care service', 'manage care service',
+                'view care service client notes',
                 'view tasks', 'create tasks', 'edit tasks', 'delete tasks', 'assign tasks',
                 'view programs', 'create programs', 'edit programs', 'delete programs',
                 'view stocks', 'manage stocks', 'approve stock requests',
@@ -236,9 +236,9 @@ class UpdateRolesAndPermissions extends Command
                 'view reports', 'generate reports',
             ],
             'pastor' => [
-                'view pastoral care', 'create pastoral care', 'edit pastoral care', 'delete pastoral care', 'manage pastoral care',
-                'manage pastor availability', 'manage pastoral appointments',
-                'view pastoral care client notes',
+                'view care service', 'create care service', 'edit care service', 'delete care service', 'manage care service',
+                'manage care service availability', 'manage care service appointments',
+                'view care service client notes',
                 'view appointments', 'create appointments', 'edit appointments',
                 'view events', 'attend events',
                 'view articles', 'use chat',

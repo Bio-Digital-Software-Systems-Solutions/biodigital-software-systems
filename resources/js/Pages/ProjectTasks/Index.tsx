@@ -350,7 +350,7 @@ export default function Index({ tasks, projects, users, filters }: Props) {
                                             />
                                         </div>
                                         <Link
-                                            href={`/tasks/${task.id}?from=/tasks`}
+                                            href={`/tasks/${task.uuid}?from=/tasks`}
                                             className="flex-1 min-w-0"
                                         >
                                         <div className="flex items-start justify-between gap-4">
@@ -475,7 +475,7 @@ export default function Index({ tasks, projects, users, filters }: Props) {
                                                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 cursor-pointer"
                                             />
                                         </td>
-                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.id}?from=/tasks`}>
+                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.uuid}?from=/tasks`}>
                                             <div className="flex items-center gap-2">
                                                 <div
                                                     className="w-3 h-3 rounded-full"
@@ -486,37 +486,37 @@ export default function Index({ tasks, projects, users, filters }: Props) {
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 cursor-pointer" onClick={() => window.location.href = `/tasks/${task.id}?from=/tasks`}>
+                                        <td className="px-4 py-3 cursor-pointer" onClick={() => window.location.href = `/tasks/${task.uuid}?from=/tasks`}>
                                             <span className="text-sm text-gray-900 dark:text-white">
                                                 {task.title}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.id}?from=/tasks`}>
+                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.uuid}?from=/tasks`}>
                                             <span className="text-sm text-gray-600 dark:text-gray-400">
                                                 {task.project?.name}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.id}?from=/tasks`}>
+                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.uuid}?from=/tasks`}>
                                             <span className={`text-xs px-2 py-1 rounded-full ${statusConfig[task.status?.name as TaskStatus]?.color}`}>
                                                 {statusConfig[task.status?.name as TaskStatus]?.label}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.id}?from=/tasks`}>
+                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.uuid}?from=/tasks`}>
                                             <span className={`text-xs px-2 py-1 rounded-full ${priorityConfig[task.priority]?.color}`}>
                                                 {priorityConfig[task.priority]?.label}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.id}?from=/tasks`}>
+                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.uuid}?from=/tasks`}>
                                             <span className={`text-xs px-2 py-1 rounded-full ${typeConfig[task.type]?.color}`}>
                                                 {typeConfig[task.type]?.label}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.id}?from=/tasks`}>
+                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.uuid}?from=/tasks`}>
                                             <span className="text-sm text-gray-600 dark:text-gray-400">
                                                 {task.assignee ? `${task.assignee.first_name} ${task.assignee.last_name}` : '-'}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.id}?from=/tasks`}>
+                                        <td className="px-4 py-3 whitespace-nowrap cursor-pointer" onClick={() => window.location.href = `/tasks/${task.uuid}?from=/tasks`}>
                                             <span className="text-sm text-gray-600 dark:text-gray-400">
                                                 {task.due_date ? new Date(task.due_date).toLocaleDateString('fr-FR') : '-'}
                                             </span>
@@ -550,7 +550,7 @@ export default function Index({ tasks, projects, users, filters }: Props) {
                                                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 cursor-pointer mt-1"
                                             />
                                             <Link
-                                                href={`/tasks/${task.id}?from=/tasks`}
+                                                href={`/tasks/${task.uuid}?from=/tasks`}
                                                 className="flex-1"
                                             >
                                         <div className="flex items-start justify-between mb-3">

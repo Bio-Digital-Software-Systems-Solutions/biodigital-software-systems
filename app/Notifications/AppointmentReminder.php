@@ -17,9 +17,7 @@ class AppointmentReminder extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      */
-    public function __construct(public Appointment $appointment, public bool $isOrganizer = false)
-    {
-    }
+    public function __construct(public Appointment $appointment, public bool $isOrganizer = false) {}
 
     /**
      * Get the notification's delivery channels.
@@ -109,7 +107,7 @@ class AppointmentReminder extends Notification implements ShouldQueue
     {
         $startDate = \Carbon\Carbon::parse($this->appointment->start_datetime);
         $endDate = \Carbon\Carbon::parse($this->appointment->end_datetime);
-        $appName = config('app.name', 'ICC Munich');
+        $appName = config('app.name');
 
         $locationType = match ($this->appointment->meeting_mode ?? 'in_person') {
             'online' => 'En ligne',

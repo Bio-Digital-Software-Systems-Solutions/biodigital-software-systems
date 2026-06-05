@@ -6,6 +6,7 @@ import TermsOfService from './TermsOfService';
 vi.mock('@inertiajs/react', () => ({
     Head: ({ children }: any) => <>{children}</>,
     Link: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a>,
+    usePage: () => ({ props: { app: { name: 'ICC Munich' } } }),
 }));
 
 describe('TermsOfService Page', () => {

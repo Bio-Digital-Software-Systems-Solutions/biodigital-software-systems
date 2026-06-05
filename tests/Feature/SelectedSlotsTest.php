@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\CareServiceAvailability;
 use App\Models\User;
-use App\Models\PastorAvailability;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Spatie\Permission\Models\Role;
 
 class SelectedSlotsTest extends TestCase
 {
@@ -29,7 +28,7 @@ class SelectedSlotsTest extends TestCase
         $specificDate = Carbon::now()->addDays(7);
 
         // Create availability with specific selected slots
-        $availability = PastorAvailability::create([
+        $availability = CareServiceAvailability::create([
             'pastor_id' => $pastor->id,
             'type' => 'specific_date',
             'specific_date' => $specificDate->format('Y-m-d'),
@@ -38,7 +37,7 @@ class SelectedSlotsTest extends TestCase
             'slot_duration' => 60,
             'is_active' => true,
             'consultation_mode' => 'in_person',
-            'selected_slots' => ['10:00'] // Only 10:00 is selected
+            'selected_slots' => ['10:00'], // Only 10:00 is selected
         ]);
 
         // Test the getTimeSlotsForDate method directly (this is the core functionality)
@@ -56,7 +55,7 @@ class SelectedSlotsTest extends TestCase
         $specificDate = Carbon::now()->addDays(7);
 
         // Create availability with multiple selected slots
-        $availability = PastorAvailability::create([
+        $availability = CareServiceAvailability::create([
             'pastor_id' => $pastor->id,
             'type' => 'specific_date',
             'specific_date' => $specificDate->format('Y-m-d'),
@@ -65,7 +64,7 @@ class SelectedSlotsTest extends TestCase
             'slot_duration' => 60,
             'is_active' => true,
             'consultation_mode' => 'in_person',
-            'selected_slots' => ['14:00', '10:00', '11:00'] // Unordered selected slots
+            'selected_slots' => ['14:00', '10:00', '11:00'], // Unordered selected slots
         ]);
 
         // Test the getTimeSlotsForDate method directly (this is the core functionality)
@@ -85,7 +84,7 @@ class SelectedSlotsTest extends TestCase
         $appointmentDate = Carbon::now()->next(Carbon::MONDAY);
 
         // Create availability WITHOUT selected_slots (should use default generation)
-        PastorAvailability::create([
+        CareServiceAvailability::create([
             'pastor_id' => $pastor->id,
             'type' => 'weekly',
             'day_of_week' => 1, // Monday
@@ -93,14 +92,14 @@ class SelectedSlotsTest extends TestCase
             'end_time' => '12:00',
             'slot_duration' => 60,
             'is_active' => true,
-            'consultation_mode' => 'in_person'
+            'consultation_mode' => 'in_person',
             // No selected_slots - should generate default slots
         ]);
 
-        $response = $this->getJson('/api/pastoral-care/available-slots?' . http_build_query([
+        $response = $this->getJson('/api/care-service/available-slots?'.http_build_query([
             'pastor_id' => $pastor->id,
             'date' => $appointmentDate->format('Y-m-d'),
-            'duration' => 60
+            'duration' => 60,
         ]));
 
         $response->assertStatus(200);
@@ -119,7 +118,7 @@ class SelectedSlotsTest extends TestCase
         $appointmentDate = Carbon::now()->next(Carbon::MONDAY);
 
         // Create availability with empty selected_slots array
-        PastorAvailability::create([
+        CareServiceAvailability::create([
             'pastor_id' => $pastor->id,
             'type' => 'weekly',
             'day_of_week' => 1,
@@ -128,13 +127,13 @@ class SelectedSlotsTest extends TestCase
             'slot_duration' => 30,
             'is_active' => true,
             'consultation_mode' => 'in_person',
-            'selected_slots' => [] // Empty array - should use default generation
+            'selected_slots' => [], // Empty array - should use default generation
         ]);
 
-        $response = $this->getJson('/api/pastoral-care/available-slots?' . http_build_query([
+        $response = $this->getJson('/api/care-service/available-slots?'.http_build_query([
             'pastor_id' => $pastor->id,
             'date' => $appointmentDate->format('Y-m-d'),
-            'duration' => 30
+            'duration' => 30,
         ]));
 
         $response->assertStatus(200);
@@ -152,7 +151,7 @@ class SelectedSlotsTest extends TestCase
 
         $specificDate = Carbon::now()->addDays(7);
 
-        $availability = PastorAvailability::create([
+        $availability = CareServiceAvailability::create([
             'pastor_id' => $pastor->id,
             'type' => 'specific_date',
             'specific_date' => $specificDate->format('Y-m-d'),
@@ -161,7 +160,7 @@ class SelectedSlotsTest extends TestCase
             'slot_duration' => 60,
             'is_active' => true,
             'consultation_mode' => 'in_person',
-            'selected_slots' => ['15:00', '09:00', '12:00', '21:00', '10:00'] // Unordered
+            'selected_slots' => ['15:00', '09:00', '12:00', '21:00', '10:00'], // Unordered
         ]);
 
         // Test the model's getTimeSlotsForDate method which should sort them

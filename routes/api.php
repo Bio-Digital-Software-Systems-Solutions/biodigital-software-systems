@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CareServiceController;
 use App\Http\Controllers\Api\DepartmentDocumentCategoryController;
 use App\Http\Controllers\Api\DepartmentDocumentController;
 use App\Http\Controllers\Api\DepartmentMeetingController;
@@ -10,7 +11,6 @@ use App\Http\Controllers\Api\Event\EventRegistrationController;
 use App\Http\Controllers\Api\Event\EventTicketController;
 use App\Http\Controllers\Api\GroupActivityController;
 use App\Http\Controllers\Api\GroupMeetingController;
-use App\Http\Controllers\Api\PastoralCareController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProjectAppointmentController;
 use App\Http\Controllers\Api\ProjectController;
@@ -36,70 +36,70 @@ Route::middleware('auth:sanctum')->group(function (): void {
 Route::get('/trainings', [App\Http\Controllers\TrainingController::class, 'index'])
     ->name('api.trainings.index');
 
-// Public Pastoral Care API endpoints (for public booking interface)
-Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function (): void {
+// Public Care Service API endpoints (for public booking interface)
+Route::prefix('care-service')->name('api.care-service.')->group(function (): void {
     // Get list of available pastors
-    Route::get('/pastors', [PastoralCareController::class, 'getPastors'])
+    Route::get('/pastors', [CareServiceController::class, 'getPastors'])
         ->name('pastors');
 
     // Get list of available themes for booking
-    Route::get('/themes', [PastoralCareController::class, 'getThemes'])
+    Route::get('/themes', [CareServiceController::class, 'getThemes'])
         ->name('themes');
 
     // Get available days for a pastor within a date range
-    Route::get('/available-days', [PastoralCareController::class, 'getAvailableDays'])
+    Route::get('/available-days', [CareServiceController::class, 'getAvailableDays'])
         ->name('available-days');
 
     // Get available days from ALL pastors (for users who cannot select a pastor)
-    Route::get('/all-available-days', [PastoralCareController::class, 'getAllAvailableDays'])
+    Route::get('/all-available-days', [CareServiceController::class, 'getAllAvailableDays'])
         ->name('all-available-days');
 
     // Get available time slots for a pastor on a specific date
-    Route::get('/available-slots', [PastoralCareController::class, 'getAvailableSlots'])
+    Route::get('/available-slots', [CareServiceController::class, 'getAvailableSlots'])
         ->name('available-slots');
 
     // Get available time slots from ALL pastors on a specific date (for users who cannot select a pastor)
-    Route::get('/all-available-slots', [PastoralCareController::class, 'getAllAvailableSlots'])
+    Route::get('/all-available-slots', [CareServiceController::class, 'getAllAvailableSlots'])
         ->name('all-available-slots');
 
     // Book a new appointment (public endpoint)
-    Route::post('/appointments', [PastoralCareController::class, 'store'])
+    Route::post('/appointments', [CareServiceController::class, 'store'])
         ->name('appointments.store');
 
     // Show appointment details by UUID (for confirmation emails)
-    Route::get('/appointments/{uuid}', [PastoralCareController::class, 'show'])
+    Route::get('/appointments/{uuid}', [CareServiceController::class, 'show'])
         ->name('appointments.show');
 
     // Confirm appointment via UUID (public endpoint)
-    Route::post('/appointments/{uuid}/confirm', [PastoralCareController::class, 'confirm'])
+    Route::post('/appointments/{uuid}/confirm', [CareServiceController::class, 'confirm'])
         ->name('appointments.confirm');
 
     // Cancel appointment via UUID (public endpoint)
-    Route::post('/appointments/{uuid}/cancel', [PastoralCareController::class, 'cancel'])
+    Route::post('/appointments/{uuid}/cancel', [CareServiceController::class, 'cancel'])
         ->name('appointments.cancel');
 
     // Get confirmation status by UUID (public endpoint)
-    Route::get('/appointments/{uuid}/confirmation-status', [PastoralCareController::class, 'getConfirmationStatus'])
+    Route::get('/appointments/{uuid}/confirmation-status', [CareServiceController::class, 'getConfirmationStatus'])
         ->name('appointments.confirmation-status');
 
     // Dual confirmation endpoints (token-based, public)
-    Route::post('/confirm-by-client', [PastoralCareController::class, 'confirmByClient'])
+    Route::post('/confirm-by-client', [CareServiceController::class, 'confirmByClient'])
         ->name('confirm-by-client');
 
-    Route::post('/confirm-by-pastor', [PastoralCareController::class, 'confirmByPastor'])
+    Route::post('/confirm-by-pastor', [CareServiceController::class, 'confirmByPastor'])
         ->name('confirm-by-pastor');
 
     // Proposal system public endpoints
-    Route::post('/proposals', [PastoralCareController::class, 'submitProposal'])
+    Route::post('/proposals', [CareServiceController::class, 'submitProposal'])
         ->name('proposals.submit');
 
-    Route::get('/proposals/show', [PastoralCareController::class, 'showProposal'])
+    Route::get('/proposals/show', [CareServiceController::class, 'showProposal'])
         ->name('proposals.show');
 
-    Route::post('/proposals/accept-counter', [PastoralCareController::class, 'acceptCounterProposal'])
+    Route::post('/proposals/accept-counter', [CareServiceController::class, 'acceptCounterProposal'])
         ->name('proposals.accept-counter');
 
-    Route::post('/proposals/reject-counter', [PastoralCareController::class, 'rejectCounterProposal'])
+    Route::post('/proposals/reject-counter', [CareServiceController::class, 'rejectCounterProposal'])
         ->name('proposals.reject-counter');
 });
 
@@ -245,47 +245,47 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::delete('/{category:uuid}', [DepartmentDocumentCategoryController::class, 'destroy'])->name('destroy');
     });
 
-    // Authenticated Pastoral Care API endpoints (for pastors)
-    Route::prefix('pastoral-care')->name('api.pastoral-care.')->group(function (): void {
+    // Authenticated Care Service API endpoints (for pastors)
+    Route::prefix('care-service')->name('api.care-service.')->group(function (): void {
         // List appointments for authenticated pastor
-        Route::get('/appointments', [PastoralCareController::class, 'index'])
+        Route::get('/appointments', [CareServiceController::class, 'index'])
             ->name('appointments.index');
 
         // Update appointment (authenticated pastor only)
-        Route::patch('/appointments/{uuid}', [PastoralCareController::class, 'update'])
+        Route::patch('/appointments/{uuid}', [CareServiceController::class, 'update'])
             ->name('appointments.update');
 
         // Delete appointment (authenticated pastor only)
-        Route::delete('/appointments/{uuid}', [PastoralCareController::class, 'destroy'])
+        Route::delete('/appointments/{uuid}', [CareServiceController::class, 'destroy'])
             ->name('appointments.destroy');
 
         // Mark appointment as completed (authenticated pastor only)
-        Route::post('/appointments/{uuid}/complete', [PastoralCareController::class, 'complete'])
+        Route::post('/appointments/{uuid}/complete', [CareServiceController::class, 'complete'])
             ->name('appointments.complete');
 
         // Mark appointment as no-show (authenticated pastor only)
-        Route::post('/appointments/{uuid}/no-show', [PastoralCareController::class, 'noShow'])
+        Route::post('/appointments/{uuid}/no-show', [CareServiceController::class, 'noShow'])
             ->name('appointments.no-show');
 
         // Note: confirm and cancel routes are defined in the PUBLIC section above (lines 70-76)
         // to allow unauthenticated access from confirmation emails
 
         // Create follow-up appointment (authenticated pastor only)
-        Route::post('/appointments/{uuid}/follow-up', [PastoralCareController::class, 'createFollowUp'])
+        Route::post('/appointments/{uuid}/follow-up', [CareServiceController::class, 'createFollowUp'])
             ->name('appointments.follow-up');
 
         // Generate report for appointment (authenticated pastor only)
-        Route::get('/appointments/{uuid}/report', [PastoralCareController::class, 'generateReport'])
+        Route::get('/appointments/{uuid}/report', [CareServiceController::class, 'generateReport'])
             ->name('appointments.report');
 
         // Proposal management endpoints (MLR/Admin only)
-        Route::get('/proposals', [PastoralCareController::class, 'getPendingProposals'])
+        Route::get('/proposals', [CareServiceController::class, 'getPendingProposals'])
             ->name('proposals.index');
 
-        Route::post('/proposals/{uuid}/accept', [PastoralCareController::class, 'acceptProposal'])
+        Route::post('/proposals/{uuid}/accept', [CareServiceController::class, 'acceptProposal'])
             ->name('proposals.accept');
 
-        Route::post('/proposals/{uuid}/reject', [PastoralCareController::class, 'rejectProposal'])
+        Route::post('/proposals/{uuid}/reject', [CareServiceController::class, 'rejectProposal'])
             ->name('proposals.reject');
     });
 

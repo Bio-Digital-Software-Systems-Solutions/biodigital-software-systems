@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
         // First: Roles and Permissions
         $this->call([
             RolesAndPermissionsSeeder::class,
-            PastoralCarePermissionsSeeder::class,
+            CareServicePermissionsSeeder::class,
             PastorRoleSeeder::class,
         ]);
 
@@ -53,16 +53,17 @@ class DatabaseSeeder extends Seeder
             TrainingClassScheduleSeeder::class,
             QuizSeeder::class,
             QuizAttemptSeeder::class,
-            PastorAvailabilitySeeder::class,
-            PastoralCareSeeder::class,
+            CareServiceAvailabilitySeeder::class,
+            CareServiceSeeder::class,
             DepartmentTodoSeeder::class,
-            MlrPermissionsSeeder::class,
-            PastoralCareThemeSeeder::class,
+            CareServiceDashboardPermissionsSeeder::class,
+            CareServiceThemeSeeder::class,
             OhadaAccountSeeder::class,
             PcgAccountSeeder::class,
             IfrsAccountSeeder::class,
             GroupMemberSeeder::class,
             VisitorSeeder::class,
+            HomepageSectionSeeder::class,
         ]);
     }
 }

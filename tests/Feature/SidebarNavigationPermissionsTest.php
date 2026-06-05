@@ -50,7 +50,7 @@ it('admin user has all navigation permissions', function (): void {
     $requiredPermissions = [
         'view events',
         'view appointments',
-        'view pastoral care',
+        'view care service',
         'view articles',
         'view books',
         'view trainings',
@@ -68,7 +68,7 @@ it('admin user has all navigation permissions', function (): void {
         'view workflows',
         'view forms',
         'view needs',
-        'manage pastor availability',
+        'manage care service availability',
     ];
 
     foreach ($requiredPermissions as $permission) {
@@ -125,7 +125,7 @@ it('member role has correct limited navigation permissions', function (): void {
         'view messages',
         'use chat',
         'view appointments',
-        'view pastoral care',
+        'view care service',
         'view needs',
     ];
 
@@ -146,7 +146,7 @@ it('member role has correct limited navigation permissions', function (): void {
         'view workflows',
         'view forms',
         'view reports',
-        'manage pastor availability',
+        'manage care service availability',
     ];
 
     foreach ($shouldNotHave as $permission) {
@@ -236,7 +236,7 @@ it('teacher role has teacher dashboard and training management access', function
 // Pastor Role Tests
 // ============================================
 
-it('pastor role has pastoral care and availability management access', function (): void {
+it('pastor role has care service and availability management access', function (): void {
     $user = User::factory()->create();
     $user->assignRole('pastor');
 
@@ -245,12 +245,12 @@ it('pastor role has pastoral care and availability management access', function 
 
     // Pastor specific permissions
     $shouldHave = [
-        'view pastoral care',
-        'create pastoral care',
-        'edit pastoral care',
-        'delete pastoral care',
-        'manage pastoral care',
-        'manage pastor availability',
+        'view care service',
+        'create care service',
+        'edit care service',
+        'delete care service',
+        'manage care service',
+        'manage care service availability',
         'view appointments',
         'create appointments',
         'edit appointments',
@@ -592,20 +592,20 @@ it('super admin can access user management route', function (): void {
     $response->assertStatus(200);
 });
 
-it('member cannot access pastoral availability route', function (): void {
+it('member cannot access care service availability route', function (): void {
     $user = User::factory()->create();
     $user->assignRole('member');
 
-    $response = $this->actingAs($user)->get('/pastoral-availability');
+    $response = $this->actingAs($user)->get('/care-service-availability');
     // Should be forbidden or redirected
     expect($response->status())->toBeIn([302, 403]);
 });
 
-it('pastor can access pastoral availability route', function (): void {
+it('pastor can access care service availability route', function (): void {
     $user = User::factory()->create();
     $user->assignRole('pastor');
 
-    $response = $this->actingAs($user)->get('/pastoral-availability');
+    $response = $this->actingAs($user)->get('/care-service-availability');
     // Should be accessible (200) or redirect to specific area
     expect($response->status())->toBeIn([200, 302]);
 });

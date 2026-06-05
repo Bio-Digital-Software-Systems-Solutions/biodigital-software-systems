@@ -39,7 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/files',
             'api/files/*',
-            'api/pastoral-care/*',
+            'api/care-service/*',
         ]);
 
         $middleware->alias([
@@ -100,8 +100,8 @@ return Application::configure(basePath: dirname(__DIR__))
             ->dailyAt('09:00')
             ->timezone('Europe/Paris');
 
-        // Send pastoral care reminders every hour (checks for appointments 24h ahead)
-        $schedule->command('pastoral-care:send-reminders')
+        // Send care service reminders every hour (checks for appointments 24h ahead)
+        $schedule->command('care-service:send-reminders')
             ->hourly()
             ->timezone('Europe/Paris')
             ->withoutOverlapping()

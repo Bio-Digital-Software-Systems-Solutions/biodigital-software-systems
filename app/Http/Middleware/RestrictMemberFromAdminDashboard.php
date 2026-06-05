@@ -27,7 +27,7 @@ class RestrictMemberFromAdminDashboard
                 'projects.' => 'view projects',
                 'departments.' => 'view departments',
                 'student.dashboard' => 'access student dashboard',
-                'pastoral-care.' => 'view pastoral care',
+                'care-service.' => 'view care service',
             ];
 
             foreach ($routePermissionMap as $routePrefix => $permission) {

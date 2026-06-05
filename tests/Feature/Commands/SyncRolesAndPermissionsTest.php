@@ -50,10 +50,10 @@ class SyncRolesAndPermissionsTest extends TestCase
             'manage departments',
             'view workflows',
             'manage workflows',
-            'view pastoral care',
-            'manage pastoral care',
-            'select pastor for pastoral care',
-            'manage pastor availability',
+            'view care service',
+            'manage care service',
+            'select pastor for care service',
+            'manage care service availability',
             'teach',
         ];
 
@@ -90,7 +90,7 @@ class SyncRolesAndPermissionsTest extends TestCase
             'pastor',
             'employee',
             'star',
-            'mlr-agent',
+            'care-service-agent',
         ];
 
         foreach ($expectedRoles as $role) {
@@ -193,12 +193,12 @@ class SyncRolesAndPermissionsTest extends TestCase
 
         $pastor = Role::findByName('pastor');
 
-        // Pastor should have pastoral care permissions
-        $this->assertTrue($pastor->hasPermissionTo('view pastoral care'));
-        $this->assertTrue($pastor->hasPermissionTo('manage pastoral care'));
-        $this->assertTrue($pastor->hasPermissionTo('select pastor for pastoral care'));
-        $this->assertTrue($pastor->hasPermissionTo('manage pastor availability'));
-        $this->assertTrue($pastor->hasPermissionTo('manage pastoral appointments'));
+        // Pastor should have care service permissions
+        $this->assertTrue($pastor->hasPermissionTo('view care service'));
+        $this->assertTrue($pastor->hasPermissionTo('manage care service'));
+        $this->assertTrue($pastor->hasPermissionTo('select pastor for care service'));
+        $this->assertTrue($pastor->hasPermissionTo('manage care service availability'));
+        $this->assertTrue($pastor->hasPermissionTo('manage care service appointments'));
     }
 
     /** @test */
@@ -224,7 +224,7 @@ class SyncRolesAndPermissionsTest extends TestCase
         $this->assertTrue(Role::where('name', 'member')->exists(), 'member should exist');
         $this->assertTrue(Role::where('name', 'project-manager')->exists(), 'project-manager should exist');
         $this->assertTrue(Role::where('name', 'event-manager')->exists(), 'event-manager should exist');
-        $this->assertTrue(Role::where('name', 'mlr-agent')->exists(), 'mlr-agent should exist');
+        $this->assertTrue(Role::where('name', 'care-service-agent')->exists(), 'care-service-agent should exist');
     }
 
     /** @test */
@@ -470,7 +470,7 @@ class SyncRolesAndPermissionsTest extends TestCase
             'super-admin', 'admin', 'writer', 'project-manager', 'event-manager',
             'library-manager', 'group-leader', 'department-leader',
             'impact-family-leader', 'member', 'student', 'teacher', 'pastor',
-            'employee', 'star', 'mlr-agent',
+            'employee', 'star', 'care-service-agent',
         ];
 
         foreach ($standardizedRoles as $role) {
