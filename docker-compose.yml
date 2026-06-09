@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: development
-    container_name: template-app
+    container_name: bio-digital-software-systems-app
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
@@ -19,8 +19,8 @@ services:
       - PHP_IDE_CONFIG=serverName=icc-munich
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_DATABASE=icc_munich
-      - DB_USERNAME=icc_user
+      - DB_DATABASE=bio_digital_software_systems
+      - DB_USERNAME=root
       - DB_PASSWORD=secret
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -32,14 +32,14 @@ services:
       redis:
         condition: service_started
     networks:
-      - template-network
+      - bio-digital-software-systems-network
 
   # ==========================================
   # Nginx Web Server
   # ==========================================
   nginx:
     image: nginx:1.25-alpine
-    container_name: template-nginx
+    container_name: bio-digital-software-systems-nginx
     restart: unless-stopped
     volumes:
       - .:/var/www/html:ro
@@ -49,13 +49,13 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.template-app.rule=Host(`template.localhost`)
-      - traefik.http.routers.template-app.entrypoints=web
-      - traefik.http.services.template-app.loadbalancer.server.port=80
+      - traefik.http.routers.bio-digital-software-systems-app.rule=Host(`bio-digital-software-systems.localhost`)
+      - traefik.http.routers.bio-digital-software-systems-app.entrypoints=web
+      - traefik.http.services.bio-digital-software-systems-app.loadbalancer.server.port=80
     depends_on:
       - app
     networks:
-      - template-network
+      - bio-digital-software-systems-network
       - traefik-public
 
   # ==========================================
@@ -63,13 +63,11 @@ services:
   # ==========================================
   mysql:
     image: mysql:8.0
-    container_name: template-mysql
+    container_name: bio-digital-software-systems-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: secret
-      MYSQL_DATABASE: ${DB_DATABASE:-icc_munich}
-      MYSQL_USER: icc_user
-      MYSQL_PASSWORD: secret
+      MYSQL_DATABASE: ${DB_DATABASE:-bio_digital_software_systems}
     volumes:
       - mysql-data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -80,14 +78,14 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - template-network
+      - bio-digital-software-systems-network
 
   # ==========================================
   # Redis Cache
   # ==========================================
   redis:
     image: redis:7-alpine
-    container_name: template-redis
+    container_name: bio-digital-software-systems-redis
     restart: unless-stopped
     volumes:
       - redis-data:/data
@@ -98,28 +96,30 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - template-network
+      - bio-digital-software-systems-network
 
   # ==========================================
   # Node.js for Vite Dev Server
   # ==========================================
   node:
     image: node:20-alpine
-    container_name: template-node
+    container_name: bio-digital-software-systems-node
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
       - node-modules:/var/www/html/node_modules
     command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.template-vite.rule=Host(`vite.template.localhost`)
-      - traefik.http.routers.template-vite.entrypoints=web
-      - traefik.http.services.template-vite.loadbalancer.server.port=5173
+      - traefik.http.routers.bio-digital-software-systems-vite.rule=Host(`vite.bio-digital-software-systems.localhost`)
+      - traefik.http.routers.bio-digital-software-systems-vite.entrypoints=web
+      - traefik.http.services.bio-digital-software-systems-vite.loadbalancer.server.port=5173
     networks:
-      - template-network
+      - bio-digital-software-systems-network
       - traefik-public
 
   # ==========================================
@@ -130,7 +130,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: development
-    container_name: template-queue
+    container_name: bio-digital-software-systems-queue
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
@@ -139,8 +139,8 @@ services:
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_DATABASE=icc_munich
-      - DB_USERNAME=icc_user
+      - DB_DATABASE=bio_digital_software_systems
+      - DB_USERNAME=root
       - DB_PASSWORD=secret
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -153,7 +153,7 @@ services:
       redis:
         condition: service_started
     networks:
-      - template-network
+      - bio-digital-software-systems-network
 
   # ==========================================
   # Laravel Scheduler (Cron)
@@ -163,7 +163,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: development
-    container_name: template-scheduler
+    container_name: bio-digital-software-systems-scheduler
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
@@ -172,8 +172,8 @@ services:
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_DATABASE=icc_munich
-      - DB_USERNAME=icc_user
+      - DB_DATABASE=bio_digital_software_systems
+      - DB_USERNAME=root
       - DB_PASSWORD=secret
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -184,22 +184,22 @@ services:
       mysql:
         condition: service_healthy
     networks:
-      - template-network
+      - bio-digital-software-systems-network
 
   # ==========================================
   # Mailhog (Development Email Testing)
   # ==========================================
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: template-mailhog
+    container_name: bio-digital-software-systems-mailhog
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.template-mail.rule=Host(`mail.template.localhost`)
-      - traefik.http.routers.template-mail.entrypoints=web
-      - traefik.http.services.template-mail.loadbalancer.server.port=8025
+      - traefik.http.routers.bio-digital-software-systems-mail.rule=Host(`mail.bio-digital-software-systems.localhost`)
+      - traefik.http.routers.bio-digital-software-systems-mail.entrypoints=web
+      - traefik.http.services.bio-digital-software-systems-mail.loadbalancer.server.port=8025
     networks:
-      - template-network
+      - bio-digital-software-systems-network
       - traefik-public
 
   # ==========================================
@@ -207,7 +207,7 @@ services:
   # ==========================================
   phpmyadmin:
     image: phpmyadmin:5
-    container_name: template-phpmyadmin
+    container_name: bio-digital-software-systems-phpmyadmin
     restart: unless-stopped
     environment:
       PMA_HOST: mysql
@@ -217,14 +217,14 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik-public
-      - traefik.http.routers.template-pma.rule=Host(`pma.template.localhost`)
-      - traefik.http.routers.template-pma.entrypoints=web
-      - traefik.http.services.template-pma.loadbalancer.server.port=80
+      - traefik.http.routers.bio-digital-software-systems-pma.rule=Host(`pma.bio-digital-software-systems.localhost`)
+      - traefik.http.routers.bio-digital-software-systems-pma.entrypoints=web
+      - traefik.http.services.bio-digital-software-systems-pma.loadbalancer.server.port=80
     depends_on:
       mysql:
         condition: service_healthy
     networks:
-      - template-network
+      - bio-digital-software-systems-network
       - traefik-public
 
   # ==========================================
@@ -234,7 +234,7 @@ services:
     build:
       context: .
       dockerfile: docker/robot/Dockerfile
-    container_name: template-robot
+    container_name: bio-digital-software-systems-robot
     working_dir: /robot
     volumes:
       - ./robot-tests:/robot/tests
@@ -244,8 +244,8 @@ services:
       - API_URL=http://nginx/api
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_NAME=icc_munich
-      - DB_USER=icc_user
+      - DB_NAME=bio_digital_software_systems
+      - DB_USER=root
       - DB_PASSWORD=secret
       - BROWSER=chromium
       - HEADLESS=true
@@ -255,7 +255,7 @@ services:
       mysql:
         condition: service_healthy
     networks:
-      - template-network
+      - bio-digital-software-systems-network
     profiles:
       - testing
 
@@ -278,7 +278,7 @@ volumes:
 # Networks
 # ==========================================
 networks:
-  template-network:
+  bio-digital-software-systems-network:
     driver: bridge
   traefik-public:
     external: true

@@ -1,4 +1,4 @@
-.PHONY: phpstan phpcs phpmd pint pest test clear db db-docker quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e frontend-test backend-test docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean clean-event-media clean-event-media-preview ide-helper ide-helper-generate ide-helper-models ide-helper-meta psalm lint lint-fix format format-check knip quality-full rector rector-fix
+.PHONY: setup phpstan phpcs phpmd pint pest test clear db db-docker quality fix help test-front test-coverage test-wcag test-all test-coverage-back test-e2e frontend-test backend-test docs schema-docs er-diagram class-diagram uml-diagram ts-uml-diagram use-case-diagrams convert-diagrams-png docs-full docs-serve docs-clean start stop docker-build docker-up docker-down docker-restart docker-logs docker-shell docker-mysql docker-redis docker-fresh docker-prod-build docker-prod-up robot-build robot-test robot-api robot-ui robot-e2e robot-smoke robot-critical robot-health robot-clean robot-report robot-tag robot-debug robot-rerun robot-shell jenkins-start jenkins-stop jenkins-restart jenkins-logs jenkins-shell jenkins-build jenkins-clean gitlab-start gitlab-stop gitlab-restart gitlab-logs gitlab-shell gitlab-runner-register gitlab-clean clean-event-media clean-event-media-preview ide-helper ide-helper-generate ide-helper-models ide-helper-meta psalm lint lint-fix format format-check knip quality-full rector rector-fix
 
 # PHPStan static analysis (level 8)
 phpstan:
@@ -113,7 +113,7 @@ db:
 
 db-docker:
 	@echo "Running migrations inside Docker container..."
-	@docker-compose exec app php artisan migrate:fresh --seed --no-interaction
+	@docker-compose exec -e XDEBUG_MODE=off -e TELESCOPE_ENABLED=false app php artisan migrate:fresh --seed --no-interaction
 	@echo "Docker migrations and seeding complete!"
 
 # Clean orphaned event media records (files that don't exist on disk)
@@ -433,6 +433,7 @@ help:
 	@echo "  make gitlab-clean       - Clean all GitLab data"
 	@echo ""
 	@echo "🚀 Quick Start:"
+	@echo "  make setup              - Setup project from scratch (clean, build, install, migrate, seed)"
 	@echo "  make start              - Start application with all services"
 	@echo "  make jenkins-start      - Start Jenkins CI/CD server"
 	@echo "  make gitlab-start       - Start GitLab CI/CD server"
@@ -519,6 +520,29 @@ docker-check:
 		echo "✅ Docker daemon is running"; \
 	fi
 
+# Terminal colors
+GREEN := \033[0;32m
+RESET := \033[0m
+
+# Setup project from scratch (clean, build, install, migrate, seed, link, start node)
+setup: docker-check docker-clean docker-build
+	cp .env.docker .env
+	docker-compose up -d mysql redis
+	@echo "Waiting for MySQL to be ready..."
+	@docker-compose exec -T mysql sh -c "while ! mysqladmin ping -h localhost -u root -psecret --silent; do echo 'Waiting for MySQL...'; sleep 2; done"
+	@echo "Installing dependencies (app + nginx only, workers stay down to avoid load spikes)..."
+	docker-compose up -d app nginx
+	docker-compose exec -e XDEBUG_MODE=off app composer install
+	docker-compose exec app php artisan key:generate
+	docker-compose exec -e XDEBUG_MODE=off -e TELESCOPE_ENABLED=false app php artisan migrate --seed
+	docker-compose exec app php artisan storage:link
+	@echo "Starting remaining services (queue, scheduler, ...)..."
+	docker-compose up -d
+	docker-compose --profile dev up -d node
+	@echo ""
+	@echo "${GREEN}Setup complete!${RESET}"
+	@echo ""
+
 # Start application with all services (main command)
 start: docker-check
 	@echo "Starting ICC Munich application..."
@@ -528,15 +552,15 @@ start: docker-check
 	@echo "Waiting for MySQL to be ready..."
 	@docker-compose exec -T mysql sh -c "while ! mysqladmin ping -h localhost -u root -psecret --silent; do echo 'Waiting for MySQL...'; sleep 2; done"
 	@echo "Resetting database with fresh migrations and seeders..."
-	@docker-compose exec -T app php artisan migrate:fresh --seed --force
+	@docker-compose exec -T -e XDEBUG_MODE=off -e TELESCOPE_ENABLED=false app php artisan migrate:fresh --seed --force
 	@docker-compose restart queue
 	@echo ""
 	@echo "✅ All services started!"
 	@echo ""
-	@echo "📱 Application:  http://template.localhost"
-	@echo "📧 Mailhog:      http://mail.template.localhost"
-	@echo "🗄️  phpMyAdmin:   http://pma.template.localhost"
-	@echo "⚡ Vite HMR:     http://vite.template.localhost"
+	@echo "📱 Application:  http://bio-digital-software-systems.localhost"
+	@echo "📧 Mailhog:      http://mail.bio-digital-software-systems.localhost"
+	@echo "🗄️  phpMyAdmin:   http://pma.bio-digital-software-systems.localhost"
+	@echo "⚡ Vite HMR:     http://vite.bio-digital-software-systems.localhost"
 	@echo ""
 	@echo "ℹ️  Tous les services sont routés via Traefik (port 80) — aucun port host n'est exposé pour mysql/redis/node."
 	@echo "   Assurez-vous d'avoir Traefik en cours d'exécution avec le réseau 'traefik-public'."
@@ -562,10 +586,10 @@ docker-up:
 	@docker-compose up -d
 	@echo ""
 	@echo "Services are starting..."
-	@echo "Application: http://template.localhost"
-	@echo "Mailhog:     http://mail.template.localhost"
-	@echo "phpMyAdmin:  http://pma.template.localhost"
-	@echo "Vite HMR:    http://vite.template.localhost"
+	@echo "Application: http://bio-digital-software-systems.localhost"
+	@echo "Mailhog:     http://mail.bio-digital-software-systems.localhost"
+	@echo "phpMyAdmin:  http://pma.bio-digital-software-systems.localhost"
+	@echo "Vite HMR:    http://vite.bio-digital-software-systems.localhost"
 
 # Stop Docker containers
 docker-down:
@@ -602,11 +626,11 @@ docker-fresh:
 	@echo "Waiting for MySQL to be ready..."
 	@docker-compose exec -T mysql sh -c "while ! mysqladmin ping -h localhost -u root -psecret --silent; do echo 'Waiting for MySQL...'; sleep 2; done"
 	@docker-compose exec app php artisan key:generate --force
-	@docker-compose exec app php artisan migrate:fresh --seed
+	@docker-compose exec -e XDEBUG_MODE=off -e TELESCOPE_ENABLED=false app php artisan migrate:fresh --seed
 	@docker-compose exec app php artisan storage:link
 	@echo ""
 	@echo "Fresh installation complete!"
-	@echo "Application: http://template.localhost"
+	@echo "Application: http://bio-digital-software-systems.localhost"
 
 # Build production Docker image
 docker-prod-build:
