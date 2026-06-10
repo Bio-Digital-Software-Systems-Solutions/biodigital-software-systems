@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
+import { useTranslation } from 'react-i18next';
 import { apiLogger } from '@/utils/logger';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
@@ -76,21 +77,23 @@ interface TrainingCardProps {
   onViewDetails: (trainingId: string) => void;
 }
 
+const getLevelColor = (level: string) => {
+  switch (level) {
+    case 'beginner': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
+    case 'intermediate': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300';
+    case 'advanced': return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300';
+    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+  }
+};
+
 const TrainingCard: React.FC<TrainingCardProps> = ({ training, onEnroll, onViewDetails }) => {
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'beginner': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300';
-      case 'advanced': return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-  };
+  const { t } = useTranslation();
 
   const getLevelLabel = (level: string) => {
     switch (level) {
-      case 'beginner': return 'Débutant';
-      case 'intermediate': return 'Intermédiaire';
-      case 'advanced': return 'Avancé';
+      case 'beginner': return t('home.training.level.beginner');
+      case 'intermediate': return t('home.training.level.intermediate');
+      case 'advanced': return t('home.training.level.advanced');
       default: return level;
     }
   };
@@ -142,7 +145,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ training, onEnroll, onViewD
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
-            <span>{training.studentsCount || 0} étudiants</span>
+            <span>{training.studentsCount || 0} {t('home.training.students')}</span>
           </div>
         </div>
 
@@ -150,7 +153,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ training, onEnroll, onViewD
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Thèmes abordés ({training.topics.length})
+              {t('home.training.topicsCovered')} ({training.topics.length})
             </span>
           </div>
 
@@ -174,7 +177,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ training, onEnroll, onViewD
             ))}
             {training.topics.length > 3 && (
               <div className="text-sm text-gray-500 dark:text-gray-400 pl-6">
-                +{training.topics.length - 3} autres thèmes
+                +{training.topics.length - 3} {t('home.training.moreTopics')}
               </div>
             )}
           </div>
@@ -183,7 +186,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ training, onEnroll, onViewD
 
       <div className="flex items-center justify-between p-4 border-t bg-gray-50/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className={`text-xl font-bold ${training.price === 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
-          {training.price === 0 ? 'Gratuit' : `${training.price.toLocaleString('fr-FR')}€`}
+          {training.price === 0 ? t('home.training.free') : `${training.price.toLocaleString('fr-FR')}€`}
         </div>
 
         <div className="flex gap-2">
@@ -193,7 +196,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ training, onEnroll, onViewD
             onClick={() => onViewDetails(training.id)}
             className="hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            Détails
+            {t('home.training.details')}
           </Button>
 
           <Button
@@ -201,7 +204,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ training, onEnroll, onViewD
             onClick={() => onEnroll(training.id)}
             className="bg-primary hover:bg-primary dark:bg-primary dark:hover:bg-primary"
           >
-            S'inscrire
+            {t('home.training.enroll')}
           </Button>
         </div>
       </div>
@@ -210,20 +213,13 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ training, onEnroll, onViewD
 };
 
 const TrainingListItem: React.FC<TrainingCardProps> = ({ training, onEnroll, onViewDetails }) => {
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'beginner': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300';
-      case 'advanced': return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-  };
+  const { t } = useTranslation();
 
   const getLevelLabel = (level: string) => {
     switch (level) {
-      case 'beginner': return 'Débutant';
-      case 'intermediate': return 'Intermédiaire';
-      case 'advanced': return 'Avancé';
+      case 'beginner': return t('home.training.level.beginner');
+      case 'intermediate': return t('home.training.level.intermediate');
+      case 'advanced': return t('home.training.level.advanced');
       default: return level;
     }
   };
@@ -275,18 +271,18 @@ const TrainingListItem: React.FC<TrainingCardProps> = ({ training, onEnroll, onV
             </div>
             <div className="flex items-center gap-1">
               <Users className="h-4 w-4" />
-              <span>{training.studentsCount || 0} étudiants</span>
+              <span>{training.studentsCount || 0} {t('home.training.students')}</span>
             </div>
             <div className="flex items-center gap-1">
               <BookOpen className="h-4 w-4" />
-              <span>{training.topics.length} thèmes</span>
+              <span>{training.topics.length} {t('home.training.topicsCovered').toLowerCase()}</span>
             </div>
           </div>
         </div>
 
         <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-3 pt-3 md:pt-0 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 md:pl-4">
           <div className={`text-2xl font-bold ${training.price === 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
-            {training.price === 0 ? 'Gratuit' : `${training.price.toLocaleString('fr-FR')}€`}
+            {training.price === 0 ? t('home.training.free') : `${training.price.toLocaleString('fr-FR')}€`}
           </div>
 
           <div className="flex gap-2">
@@ -296,7 +292,7 @@ const TrainingListItem: React.FC<TrainingCardProps> = ({ training, onEnroll, onV
               onClick={() => onViewDetails(training.id)}
               className="hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              Détails
+              {t('home.training.details')}
             </Button>
 
             <Button
@@ -304,7 +300,7 @@ const TrainingListItem: React.FC<TrainingCardProps> = ({ training, onEnroll, onV
               onClick={() => onEnroll(training.id)}
               className="bg-primary hover:bg-primary dark:bg-primary dark:hover:bg-primary"
             >
-              S'inscrire
+              {t('home.training.enroll')}
             </Button>
           </div>
         </div>
@@ -325,10 +321,11 @@ interface TrainingBrowseSectionProps {
 }
 
 const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, design } = {}) => {
+  const { t } = useTranslation();
   const resolvedDesign = resolveDesign(design);
-  const headerBadge = content?.badge ?? 'Formations';
-  const headerHeading = content?.heading ?? 'Nos Formations';
-  const headerSubtitle = content?.subtitle ?? 'Se construire par la parole de Dieu et des formations.';
+  const headerBadge = content?.badge ?? t('home.training.badge');
+  const headerHeading = content?.heading ?? t('home.training.heading');
+  const headerSubtitle = content?.subtitle ?? t('home.training.subtitle');
   const { auth } = usePage().props as { auth: { user?: any } };
   const [searchTerm, setSearchTerm] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
@@ -641,7 +638,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               type="text"
-              placeholder="Rechercher une formation, un thème..."
+              placeholder={t('home.training.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 dark:bg-gray-700 dark:border-gray-600"
@@ -651,28 +648,28 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1.5">
               <Filter className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtres:</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('home.training.filters')}</span>
             </div>
 
             <Select value={levelFilter} onValueChange={setLevelFilter}>
               <SelectTrigger className="h-8 w-[140px] text-xs dark:bg-gray-700 dark:border-gray-600">
-                <SelectValue placeholder="Niveau" />
+                <SelectValue placeholder={t('home.training.levelLabel')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="beginner">Débutant</SelectItem>
-                <SelectItem value="intermediate">Intermédiaire</SelectItem>
-                <SelectItem value="advanced">Avancé</SelectItem>
+                <SelectItem value="all">{t('home.training.all')}</SelectItem>
+                <SelectItem value="beginner">{t('home.training.level.beginner')}</SelectItem>
+                <SelectItem value="intermediate">{t('home.training.level.intermediate')}</SelectItem>
+                <SelectItem value="advanced">{t('home.training.level.advanced')}</SelectItem>
               </SelectContent>
             </Select>
 
             {categories.length > 0 && (
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="h-8 w-[160px] text-xs dark:bg-gray-700 dark:border-gray-600">
-                  <SelectValue placeholder="Catégorie" />
+                  <SelectValue placeholder={t('home.training.category')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes</SelectItem>
+                  <SelectItem value="all">{t('home.training.allFem')}</SelectItem>
                   {categories.map(category => (
                     <SelectItem key={category} value={category || ''}>
                       {category}
@@ -684,14 +681,14 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
 
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="h-8 w-[150px] text-xs dark:bg-gray-700 dark:border-gray-600">
-                <SelectValue placeholder="Tri" />
+                <SelectValue placeholder={t('home.training.sort')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="title">Titre</SelectItem>
+                <SelectItem value="title">{t('home.training.sortTitle')}</SelectItem>
                 {/* <SelectItem value="price-asc">Prix ↑</SelectItem>
                 <SelectItem value="price-desc">Prix ↓</SelectItem>
                 <SelectItem value="rating">Note</SelectItem> */}
-                <SelectItem value="students">Popularité</SelectItem>
+                <SelectItem value="students">{t('home.training.sortPopularity')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -702,7 +699,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                 onClick={resetFilters}
                 className="h-8 text-xs px-2.5 dark:bg-gray-700 dark:border-gray-600"
               >
-                Réinitialiser
+                {t('home.training.reset')}
               </Button>
             )}
 
@@ -712,7 +709,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                 size="sm"
                 onClick={() => setViewMode('grid')}
                 className="h-7 w-7 p-0"
-                title="Vue grille"
+                title={t('home.training.viewGrid')}
               >
                 <Grid className="h-3.5 w-3.5" />
               </Button>
@@ -721,7 +718,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                 size="sm"
                 onClick={() => setViewMode('list')}
                 className="h-7 w-7 p-0"
-                title="Vue liste"
+                title={t('home.training.viewList')}
               >
                 <List className="h-3.5 w-3.5" />
               </Button>
@@ -730,7 +727,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                 size="sm"
                 onClick={() => setViewMode('table')}
                 className="h-7 w-7 p-0"
-                title="Vue tableau"
+                title={t('home.training.viewTable')}
               >
                 <TableIcon className="h-3.5 w-3.5" />
               </Button>
@@ -740,11 +737,11 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
 
         {filteredTrainings.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-400 text-lg mb-2">Aucune formation trouvée</div>
+            <div className="text-gray-400 text-lg mb-2">{t('home.training.none')}</div>
             <p className="text-gray-600 dark:text-gray-400">
-              Essayez de modifier vos critères de recherche ou
+              {t('home.training.noneHint')}
               <button onClick={resetFilters} className="text-primary hover:underline ml-1">
-                réinitialisez les filtres
+                {t('home.training.resetFilters')}
               </button>
             </p>
           </div>
@@ -775,13 +772,13 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[40%]">Formation</TableHead>
-                  <TableHead>Niveau</TableHead>
-                  <TableHead>Durée</TableHead>
-                  <TableHead>Étudiants</TableHead>
-                  <TableHead>Note</TableHead>
-                  <TableHead className="text-right">Prix</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[40%]">{t('home.training.col.training')}</TableHead>
+                  <TableHead>{t('home.training.levelLabel')}</TableHead>
+                  <TableHead>{t('home.training.col.duration')}</TableHead>
+                  <TableHead>{t('home.training.col.students')}</TableHead>
+                  <TableHead>{t('home.training.col.rating')}</TableHead>
+                  <TableHead className="text-right">{t('home.training.col.price')}</TableHead>
+                  <TableHead className="text-right">{t('home.training.col.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -811,8 +808,8 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                           'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
                         }
                       >
-                        {training.level === 'beginner' ? 'Débutant' :
-                         training.level === 'intermediate' ? 'Intermédiaire' : 'Avancé'}
+                        {training.level === 'beginner' ? t('home.training.level.beginner') :
+                         training.level === 'intermediate' ? t('home.training.level.intermediate') : t('home.training.level.advanced')}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -835,7 +832,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                     </TableCell>
                     <TableCell className="text-right">
                       <div className={`font-bold ${training.price === 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                        {training.price === 0 ? 'Gratuit' : `${training.price.toLocaleString('fr-FR')}€`}
+                        {training.price === 0 ? t('home.training.free') : `${training.price.toLocaleString('fr-FR')}€`}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -846,14 +843,14 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                           onClick={() => handleViewDetails(training.id)}
                           className="hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                          Détails
+                          {t('home.training.details')}
                         </Button>
                         <Button
                           size="sm"
                           onClick={() => handleViewDetails(training.id)}
                           className="bg-primary hover:bg-primary dark:bg-primary dark:hover:bg-primary"
                         >
-                          S'inscrire
+                          {t('home.training.enroll')}
                         </Button>
                       </div>
                     </TableCell>
@@ -884,8 +881,8 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                   selectedTraining.level === 'intermediate' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' :
                   'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
                 }>
-                  {selectedTraining.level === 'beginner' ? 'Débutant' :
-                   selectedTraining.level === 'intermediate' ? 'Intermédiaire' : 'Avancé'}
+                  {selectedTraining.level === 'beginner' ? t('home.training.level.beginner') :
+                   selectedTraining.level === 'intermediate' ? t('home.training.level.intermediate') : t('home.training.level.advanced')}
                 </Badge>
                 {selectedTraining.category && <Badge variant="outline">{selectedTraining.category}</Badge>}
                 <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
@@ -898,7 +895,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                 </span>
                 <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
                   <Users className="h-4 w-4" />
-                  {selectedTraining.studentsCount} étudiants
+                  {selectedTraining.studentsCount} {t('home.training.students')}
                 </span>
               </div>
 
@@ -907,7 +904,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                 <div>
                   <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-100">
                     <BookOpen className="h-6 w-6" />
-                    Thèmes abordés ({selectedTraining.topics.length})
+                    {t('home.training.topicsCovered')} ({selectedTraining.topics.length})
                   </h3>
                   <div className="space-y-3">
                     {selectedTraining.topics.map((topic) => (
@@ -937,7 +934,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                 <div>
                   <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-100">
                     <Calendar className="h-6 w-6" />
-                    Sessions à venir ({selectedTraining.sessions.filter(s => s.status === 'upcoming').length})
+                    {t('home.training.upcomingSessions')} ({selectedTraining.sessions.filter(s => s.status === 'upcoming').length})
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {selectedTraining.sessions
@@ -976,7 +973,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                                       })}
                                     </div>
                                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                                      au {endDate.toLocaleDateString('fr-FR', {
+                                      {t('home.training.toDate')} {endDate.toLocaleDateString('fr-FR', {
                                         day: 'numeric',
                                         month: 'long',
                                         year: 'numeric'
@@ -988,7 +985,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                                   variant={isDisabled ? 'destructive' : availableSpots > 5 ? 'default' : 'secondary'}
                                   className="shrink-0"
                                 >
-                                  {isDisabled ? 'Complet' : `${availableSpots} places`}
+                                  {isDisabled ? t('home.training.full') : `${availableSpots} ${t('home.training.spots')}`}
                                 </Badge>
                               </div>
 
@@ -1001,12 +998,12 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
 
                               <div className="flex items-center justify-between pt-2 border-t border-blue-200 dark:border-gray-700">
                                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                                  <span className="font-medium">{session.enrolled_count || 0}</span> / {session.max_participants || 0} inscrits
+                                  <span className="font-medium">{session.enrolled_count || 0}</span> / {session.max_participants || 0} {t('home.training.enrolledOf')}
                                 </div>
                                 {isSelected && !isDisabled && (
                                   <div className="flex items-center gap-1 text-primary dark:text-blue-400 font-medium text-sm">
                                     <CheckCircle className="h-4 w-4 fill-current" />
-                                    <span>Sélectionnée</span>
+                                    <span>{t('home.training.selected')}</span>
                                   </div>
                                 )}
                               </div>
@@ -1023,7 +1020,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
               <div>
                 <div className={`text-3xl font-bold ${selectedTraining.price === 0 ? 'text-green-600 dark:text-green-400' : 'text-primary dark:text-blue-400'}`}>
-                  {selectedTraining.price === 0 ? 'Gratuit' : `${selectedTraining.price.toLocaleString('fr-FR')}€`}
+                  {selectedTraining.price === 0 ? t('home.training.free') : `${selectedTraining.price.toLocaleString('fr-FR')}€`}
                 </div>
                 {selectedTraining.price > 0 && (
                   <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1051,7 +1048,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                 size="lg"
                 className="bg-primary hover:bg-primary text-lg px-8"
               >
-                S'inscrire maintenant
+                {t('home.training.enrollNow')}
               </Button>
             </div>
           </DialogContent>
@@ -1064,9 +1061,9 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
           <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
             {/* Fixed Header */}
             <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-              <DialogTitle>Inscription - {selectedTraining.title}</DialogTitle>
+              <DialogTitle>{t('home.training.enrollTitle')} - {selectedTraining.title}</DialogTitle>
               <DialogDescription>
-                Remplissez le formulaire ci-dessous pour vous inscrire à cette formation
+                {t('home.training.enrollDescription')}
               </DialogDescription>
             </DialogHeader>
 
@@ -1100,7 +1097,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Prénom
+                    {t('home.training.firstName')}
                   </label>
                   <input
                     type="text"
@@ -1111,7 +1108,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Nom
+                    {t('home.training.lastName')}
                   </label>
                   <input
                     type="text"
@@ -1125,7 +1122,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email
+                    {t('home.contact.email')}
                   </label>
                   <input
                     type="email"
@@ -1136,7 +1133,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Téléphone
+                    {t('home.contact.phone')}
                   </label>
                   <input
                     type="tel"
@@ -1149,8 +1146,8 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Motivation <span className="text-red-500">*</span>
-                  <span className="text-xs text-gray-500 ml-2">(minimum 50 caractères)</span>
+                  {t('home.training.motivation')} <span className="text-red-500">*</span>
+                  <span className="text-xs text-gray-500 ml-2">{t('home.training.motivationHint')}</span>
                 </label>
                 <textarea
                   value={enrollmentForm.motivation}
@@ -1159,10 +1156,10 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                   required
                   minLength={50}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
-                  placeholder="Expliquez pourquoi vous souhaitez suivre cette formation..."
+                  placeholder={t('home.training.motivationPlaceholder')}
                 />
                 <div className="text-xs text-gray-500 mt-1">
-                  {enrollmentForm.motivation.length}/50 caractères
+                  {t('home.training.charsCount', { count: enrollmentForm.motivation.length })}
                 </div>
               </div>
 
@@ -1170,7 +1167,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
               {selectedTraining.sessions && selectedTraining.sessions.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Choisir une session <span className="text-red-500">*</span>
+                    {t('home.training.chooseSession')} <span className="text-red-500">*</span>
                   </label>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {selectedTraining.sessions
@@ -1212,7 +1209,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                                   </span>
                                 </div>
                                 <Badge variant={isDisabled ? 'destructive' : 'default'} className="text-xs">
-                                  {availableSpots > 0 ? `${availableSpots} places` : 'Complet'}
+                                  {availableSpots > 0 ? `${availableSpots} ${t('home.training.spots')}` : t('home.training.full')}
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
@@ -1231,7 +1228,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Mode de paiement <span className="text-red-500">*</span>
+                  {t('home.training.payment')} <span className="text-red-500">*</span>
                 </label>
                 <div className="space-y-2">
                   <label className="flex items-center">
@@ -1244,7 +1241,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                       className="mr-2"
                     />
                     <span className="text-gray-700 dark:text-gray-300">
-                      Mensuel - 3 versements de {selectedTraining.price > 0 ? `${Math.round(selectedTraining.price / 3)}€` : '0€'}
+                      {t('home.training.paymentMonthly', { amount: selectedTraining.price > 0 ? `${Math.round(selectedTraining.price / 3)}€` : '0€' })}
                     </span>
                   </label>
                   <label className="flex items-center">
@@ -1257,7 +1254,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                       className="mr-2"
                     />
                     <span className="text-gray-700 dark:text-gray-300">
-                      Trimestriel - Paiement unique par trimestre
+                      {t('home.training.paymentQuarterly')}
                     </span>
                   </label>
                   <label className="flex items-center">
@@ -1270,7 +1267,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                       className="mr-2"
                     />
                     <span className="text-gray-700 dark:text-gray-300">
-                      Paiement complet - {selectedTraining.price > 0 ? `${selectedTraining.price.toLocaleString('fr-FR')}€` : 'Gratuit'}
+                      {t('home.training.paymentFull', { amount: selectedTraining.price > 0 ? `${selectedTraining.price.toLocaleString('fr-FR')}€` : t('home.training.free') })}
                     </span>
                   </label>
                 </div>
@@ -1286,7 +1283,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                     className="mt-1 mr-2"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
-                    J'ai lu et j'accepte les <a href="#" className="text-primary hover:underline">conditions générales</a> <span className="text-red-500">*</span>
+                    {t('home.training.acceptTermsPrefix')} <a href="#" className="text-primary hover:underline">{t('home.training.terms')}</a> <span className="text-red-500">*</span>
                   </span>
                 </label>
                 <label className="flex items-start">
@@ -1298,7 +1295,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                     className="mt-1 mr-2"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
-                    J'ai lu et j'accepte la <a href="#" className="text-primary hover:underline">politique de confidentialité</a> <span className="text-red-500">*</span>
+                    {t('home.training.acceptPrivacyPrefix')} <a href="#" className="text-primary hover:underline">{t('home.training.privacy')}</a> <span className="text-red-500">*</span>
                   </span>
                 </label>
               </div>
@@ -1311,7 +1308,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                   onClick={() => setIsEnrollmentModalOpen(false)}
                   className="bg-gray-300 hover:bg-gray-400 text-gray-800"
                 >
-                  Annuler
+                  {t('home.training.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -1324,7 +1321,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                     (selectedTraining.sessions && selectedTraining.sessions.length > 0 && !enrollmentForm.selectedSessionId)
                   }
                 >
-                  Confirmer l'inscription
+                  {t('home.training.confirmEnroll')}
                 </Button>
               </div>
             </form>

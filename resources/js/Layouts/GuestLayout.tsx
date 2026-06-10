@@ -1,6 +1,8 @@
 import { PropsWithChildren, useState } from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/Components/ui/button';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import Footer from '@/Components/LandingPage/Footer';
 import { PageProps } from '@/Types';
 import { Menu, X } from 'lucide-react';
@@ -11,6 +13,7 @@ interface GuestLayoutProps extends PropsWithChildren {
 
 export default function GuestLayout({ children, title }: GuestLayoutProps) {
     const { auth, app } = usePage<PageProps>().props;
+    const { t } = useTranslation();
     const appName = app.name;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -32,49 +35,51 @@ export default function GuestLayout({ children, title }: GuestLayoutProps) {
                                 {/* Desktop Navigation */}
                                 <div className="hidden lg:ml-10 lg:flex lg:space-x-2">
                                     <Button variant="ghost" asChild>
-                                        <Link href="/#about">À propos</Link>
+                                        <Link href="/#about">{t('home.nav.about')}</Link>
                                     </Button>
                                     <Button variant="ghost" asChild>
-                                        <Link href="/#features">Activitités</Link>
+                                        <Link href="/#features">{t('home.nav.activities')}</Link>
                                     </Button>
                                     <Button variant="ghost" asChild>
-                                        <Link href="/#trainings">Formations</Link>
+                                        <Link href="/#trainings">{t('home.nav.trainings')}</Link>
                                     </Button>
                                     <Button variant="ghost" asChild>
-                                        <Link href="/#contact">Contact</Link>
+                                        <Link href="/#contact">{t('home.nav.contact')}</Link>
                                     </Button>
                                 </div>
                             </div>
                             {/* Desktop Auth Buttons */}
                             <div className="hidden md:flex items-center gap-3">
+                                <LanguageSwitcher />
                                 {auth?.user ? (
                                     <Button asChild>
                                         <Link href={route('dashboard')}>
-                                            Dashboard
+                                            {t('home.nav.dashboard')}
                                         </Link>
                                     </Button>
                                 ) : (
                                     <>
                                         <Button variant="ghost" asChild>
                                             <Link href={route('login')}>
-                                                Se connecter
+                                                {t('home.nav.login')}
                                             </Link>
                                         </Button>
                                         <Button asChild>
                                             <Link href={route('register')}>
-                                                S'inscrire
+                                                {t('home.nav.register')}
                                             </Link>
                                         </Button>
                                     </>
                                 )}
                             </div>
                             {/* Mobile Menu Button */}
-                            <div className="flex md:hidden items-center">
+                            <div className="flex md:hidden items-center gap-2">
+                                <LanguageSwitcher />
                                 <Button
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                    aria-label="Toggle menu"
+                                    aria-label={t('home.nav.toggleMenu')}
                                 >
                                     {mobileMenuOpen ? (
                                         <X className="h-6 w-6" />
@@ -95,7 +100,7 @@ export default function GuestLayout({ children, title }: GuestLayoutProps) {
                                     asChild
                                 >
                                     <Link href="/#about" onClick={() => setMobileMenuOpen(false)}>
-                                        À propos
+                                        {t('home.nav.about')}
                                     </Link>
                                 </Button>
                                 <Button
@@ -104,7 +109,7 @@ export default function GuestLayout({ children, title }: GuestLayoutProps) {
                                     asChild
                                 >
                                     <Link href="/#features" onClick={() => setMobileMenuOpen(false)}>
-                                        Activitités
+                                        {t('home.nav.activities')}
                                     </Link>
                                 </Button>
                                 <Button
@@ -113,7 +118,7 @@ export default function GuestLayout({ children, title }: GuestLayoutProps) {
                                     asChild
                                 >
                                     <Link href="/#trainings" onClick={() => setMobileMenuOpen(false)}>
-                                        Formations
+                                        {t('home.nav.trainings')}
                                     </Link>
                                 </Button>
                                 <Button
@@ -122,26 +127,26 @@ export default function GuestLayout({ children, title }: GuestLayoutProps) {
                                     asChild
                                 >
                                     <Link href="/#contact" onClick={() => setMobileMenuOpen(false)}>
-                                        Contact
+                                        {t('home.nav.contact')}
                                     </Link>
                                 </Button>
                                 <div className="pt-4 border-t mt-2 space-y-2">
                                     {auth?.user ? (
                                         <Button className="w-full" asChild>
                                             <Link href={route('dashboard')}>
-                                                Dashboard
+                                                {t('home.nav.dashboard')}
                                             </Link>
                                         </Button>
                                     ) : (
                                         <>
                                             <Button variant="outline" className="w-full" asChild>
                                                 <Link href={route('login')}>
-                                                    Se connecter
+                                                    {t('home.nav.login')}
                                                 </Link>
                                             </Button>
                                             <Button className="w-full" asChild>
                                                 <Link href={route('register')}>
-                                                    S'inscrire
+                                                    {t('home.nav.register')}
                                                 </Link>
                                             </Button>
                                         </>

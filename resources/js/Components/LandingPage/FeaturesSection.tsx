@@ -1,29 +1,30 @@
 import { Badge } from '@/Components/ui/badge';
 import {
-    CalendarDaysIcon,
-    SunIcon,
-    HomeModernIcon,
-    SparklesIcon,
-    MegaphoneIcon,
-    AcademicCapIcon,
-    HeartIcon,
-    UserGroupIcon,
+    ChatBubbleLeftRightIcon,
+    ShieldCheckIcon,
+    CurrencyEuroIcon,
+    BoltIcon,
+    GlobeEuropeAfricaIcon,
+    HandRaisedIcon,
+    CheckBadgeIcon,
+    MapPinIcon,
 } from '@heroicons/react/24/outline';
 import { usePage } from '@inertiajs/react';
+import { useTranslation } from 'react-i18next';
 import type { PageProps } from '@/Types';
 import FeatureSectionItem from './FeatureSectionItem';
 import { resolveDesign, type DesignSettings } from '@/lib/sectionDesign';
 import type { ComponentType, SVGProps } from 'react';
 
 const ICON_MAP: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
-    CalendarDaysIcon,
-    SunIcon,
-    HomeModernIcon,
-    SparklesIcon,
-    MegaphoneIcon,
-    AcademicCapIcon,
-    HeartIcon,
-    UserGroupIcon,
+    ChatBubbleLeftRightIcon,
+    ShieldCheckIcon,
+    CurrencyEuroIcon,
+    BoltIcon,
+    GlobeEuropeAfricaIcon,
+    HandRaisedIcon,
+    CheckBadgeIcon,
+    MapPinIcon,
 };
 
 export interface FeaturesContent {
@@ -43,75 +44,41 @@ interface FeaturesSectionProps {
     design?: DesignSettings | null;
 }
 
-const features = [
-    {
-        icon: CalendarDaysIcon,
-        iconColor: 'bg-icc-blue/10 text-icc-blue',
-        title: "Cultes dominicaux",
-        description: "Rejoignez-nous chaque dimanche à 10h pour un temps de louange, d'adoration et d'enseignement biblique inspirant."
-    },
-    {
-        icon: SunIcon,
-        iconColor: 'bg-icc-purple/10 text-icc-purple',
-        title: 'Matinales de prière',
-        description: 'Commencez votre journée avec  Dieu par des prieres matinales du lundi au vendredi de 05:00 á 06:00'
-    },
-    {
-        icon: HomeModernIcon,
-        iconColor: 'bg-icc-red/10 text-icc-red',
-        title: "Famille d'Impact (FI)",
-        description: 'Participez aux réunions de prière et d\'étude biblique en petits groupes chaque semaine dans nos différentes FI.'
-    },
-    {
-        icon: SparklesIcon,
-        iconColor: 'bg-icc-yellow/10 text-icc-yellow',
-        title: 'Atmosphère de Gloire (ADG)',
-        description: 'Vivez une expérience de louange et d\'adoration intense chaque vendredi de 19h00 á 21h00 dans une ADG.'
-    },
-    {
-        icon: MegaphoneIcon,
-        iconColor: 'bg-icc-lime/10 text-icc-lime',
-        title: "Sortie d'evangélisation",
-        description: 'Participez à nos sorties d\'évangélisation hebdomadaire seul ou en groupe pour partager l\'évangile et gagner des âmes á Christ.'
-    },
-    {
-        icon: AcademicCapIcon,
-        iconColor: 'bg-icc-blue/10 text-icc-blue',
-        title: 'Formations Bibliques',
-        description: 'Inscrivez-vous à nos parcours de croissance de la nouvelle creation (PCNC) en ligne ou en présentiel pour approfondir votre connaissance de la Bible et grandir dans votre foi.'
-    },
-    {
-        icon: HeartIcon,
-        iconColor: 'bg-icc-purple/10 text-icc-purple',
-        title: 'Care Services',
-        description: 'Bénéficiez de conseils et d\'accompagnement spirituel personnalisé par notre équipe care service pour vous aider dans votre marche avec Dieu.'
-    },
-    {
-        icon: UserGroupIcon,
-        iconColor: 'bg-icc-red/10 text-icc-red',
-        title: "Groupe d'Impact (GI)",
-        description: "des cadres d'echange et de partage pour des  hommes, des femmes et des jeunes adultes visant à nous encourager et nous équiper mutuellement dans notre vie chrétienne."
-    }
+const defaultFeatureDefinitions = [
+    { icon: ChatBubbleLeftRightIcon, iconColor: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400', key: 'communication' },
+    { icon: ShieldCheckIcon, iconColor: 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400', key: 'gdpr' },
+    { icon: CurrencyEuroIcon, iconColor: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-400', key: 'pricing' },
+    { icon: BoltIcon, iconColor: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400', key: 'flexibility' },
+    { icon: GlobeEuropeAfricaIcon, iconColor: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400', key: 'hosting' },
+    { icon: HandRaisedIcon, iconColor: 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400', key: 'partnership' },
+    { icon: CheckBadgeIcon, iconColor: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400', key: 'quality' },
+    { icon: MapPinIcon, iconColor: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400', key: 'location' },
 ];
 
 export default function FeaturesSection({ content, design }: FeaturesSectionProps = {}) {
     const appName = usePage<PageProps>().props.app.name;
+    const { t } = useTranslation();
     const resolved = resolveDesign(design);
 
-    const badge = content?.badge ?? 'Activités';
-    const heading = content?.heading ?? `Nos Activitités á ${appName}`;
-    const subtitle =
-        content?.subtitle ??
-        `Découvrez les diverses activités et ministères qui font de ${appName} une communauté vivante et engagée.`;
+    const badge = content?.badge ?? t('home.features.badge');
+    const heading = content?.heading ?? t('home.features.heading', { appName });
+    const subtitle = content?.subtitle ?? t('home.features.subtitle');
+
+    const defaultFeatures = defaultFeatureDefinitions.map((feature) => ({
+        icon: feature.icon,
+        iconColor: feature.iconColor,
+        title: t(`home.features.items.${feature.key}.title`),
+        description: t(`home.features.items.${feature.key}.desc`),
+    }));
 
     const items = content?.items
         ? content.items.map((item) => ({
-              icon: ICON_MAP[item.icon] ?? CalendarDaysIcon,
-              iconColor: item.iconColor ?? 'bg-icc-blue/10 text-icc-blue',
+              icon: ICON_MAP[item.icon] ?? ChatBubbleLeftRightIcon,
+              iconColor: item.iconColor ?? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
               title: item.title,
               description: item.description,
           }))
-        : features;
+        : defaultFeatures;
 
     return (
         <section
