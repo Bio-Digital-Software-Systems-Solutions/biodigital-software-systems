@@ -9,9 +9,11 @@ import ContactSection from '@/Components/LandingPage/ContactSection';
 import SectionRenderer, { type HomepageSectionData } from '@/Components/LandingPage/SectionRenderer';
 import Footer from '@/Components/LandingPage/Footer';
 import { Button } from '@/Components/ui/button';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import { Toaster } from 'sonner';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface GlobalStats {
     total_churches: number;
@@ -43,6 +45,7 @@ export default function Welcome({
     hasConfiguredSections = false,
 }: WelcomeProps) {
     const appName = usePage<PageProps>().props.app.name;
+    const { t } = useTranslation();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Fallback slides if no hero slides in database
@@ -50,10 +53,10 @@ export default function Welcome({
         {
             id: 1,
             title: "",
-            description: "Une eglise ordinaire oú l'amour de Dieu nous transforme en de vraies disciples de Christ",
+            description: t('home.hero.slide1.description'),
             media_type: 'image',
             media_url: "1.png",
-            cta_text: auth.user ? "Accéder au Dashboard" : "Commencer",
+            cta_text: auth.user ? t('home.hero.cta.dashboard') : t('home.hero.cta.start'),
             cta_link: auth.user ? "/dashboard" : "/register",
             overlay_opacity: 0.5,
         },
@@ -63,7 +66,7 @@ export default function Welcome({
             description: "",
             media_type: 'image',
             media_url: "2.png",
-            cta_text: "En savoir plus",
+            cta_text: t('home.hero.cta.learnMore'),
             cta_link: "#features",
             overlay_opacity: 0.5,
         },
@@ -73,7 +76,7 @@ export default function Welcome({
             description: "",
             media_type: 'image',
             media_url: "3.png",
-            cta_text: "Explorer",
+            cta_text: t('home.hero.cta.explore'),
             cta_link: "#features",
             overlay_opacity: 0.5,
         },
@@ -83,7 +86,7 @@ export default function Welcome({
             description: "",
             media_type: 'image',
             media_url: "4.png",
-            cta_text: "Explorer",
+            cta_text: t('home.hero.cta.explore'),
             cta_link: "#features",
             overlay_opacity: 0.5,
         },
@@ -93,7 +96,7 @@ export default function Welcome({
             description: "",
             media_type: 'image',
             media_url: "5.png",
-            cta_text: "Explorer",
+            cta_text: t('home.hero.cta.explore'),
             cta_link: "#features",
             overlay_opacity: 0.5,
         },
@@ -103,7 +106,7 @@ export default function Welcome({
             description: "",
             media_type: 'image',
             media_url: "11.png",
-            cta_text: "Explorer",
+            cta_text: t('home.hero.cta.explore'),
             cta_link: "#features",
             overlay_opacity: 0.5,
         },
@@ -113,7 +116,7 @@ export default function Welcome({
             description: "",
             media_type: 'image',
             media_url: "15.png",
-            cta_text: "Explorer",
+            cta_text: t('home.hero.cta.explore'),
             cta_link: "#features",
             overlay_opacity: 0.5,
         },
@@ -123,7 +126,7 @@ export default function Welcome({
             description: "",
             media_type: 'image',
             media_url: "17.png",
-            cta_text: "Explorer",
+            cta_text: t('home.hero.cta.explore'),
             cta_link: "#features",
             overlay_opacity: 0.5,
         },
@@ -133,17 +136,18 @@ export default function Welcome({
             description: "",
             media_type: 'image',
             media_url: "20.png",
-            cta_text: "Explorer",
+            cta_text: t('home.hero.cta.explore'),
             cta_link: "#features",
             overlay_opacity: 0.5,
         }
     ];
 
     const slides = heroSlides.length > 0 ? heroSlides : defaultSlides;
+    hasConfiguredSections = false; // Force fallback to hard-coded sections for now, until we seed some default sections in the DB
 
     return (
         <>
-            <Head title={`Bienvenue - ${appName}`} />
+            <Head title={`${t('home.meta.title')} - ${appName}`} />
             <div className="min-h-screen bg-background">
                 {/* Navigation Header */}
                 <nav className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50 sticky top-0 z-50">
@@ -159,49 +163,51 @@ export default function Welcome({
                                 {/* Desktop Navigation */}
                                 <div className="hidden lg:ml-10 lg:flex lg:space-x-2">
                                     <Button variant="ghost" asChild>
-                                        <a href="#about">À propos</a>
+                                        <a href="#about">{t('home.nav.about')}</a>
                                     </Button>
                                     <Button variant="ghost" asChild>
-                                        <a href="#features">Activitités</a>
+                                        <a href="#features">{t('home.nav.activities')}</a>
                                     </Button>
                                     <Button variant="ghost" asChild>
-                                        <a href="#trainings">Formations</a>
+                                        <a href="#trainings">{t('home.nav.trainings')}</a>
                                     </Button>
                                     <Button variant="ghost" asChild>
-                                        <a href="#contact">Contact</a>
+                                        <a href="#contact">{t('home.nav.contact')}</a>
                                     </Button>
                                 </div>
                             </div>
                             {/* Desktop Auth Buttons */}
                             <div className="hidden md:flex items-center gap-3">
+                                <LanguageSwitcher />
                                 {auth.user ? (
                                     <Button asChild>
                                         <Link href={route('dashboard')}>
-                                            Dashboard
+                                            {t('home.nav.dashboard')}
                                         </Link>
                                     </Button>
                                 ) : (
                                     <>
                                         <Button variant="ghost" asChild>
                                             <Link href={route('login')}>
-                                                Se connecter
+                                                {t('home.nav.login')}
                                             </Link>
                                         </Button>
                                         <Button asChild>
                                             <Link href={route('register')}>
-                                                S'inscrire
+                                                {t('home.nav.register')}
                                             </Link>
                                         </Button>
                                     </>
                                 )}
                             </div>
                             {/* Mobile Menu Button */}
-                            <div className="flex md:hidden items-center">
+                            <div className="flex md:hidden items-center gap-2">
+                                <LanguageSwitcher />
                                 <Button
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                    aria-label="Toggle menu"
+                                    aria-label={t('home.nav.toggleMenu')}
                                 >
                                     {mobileMenuOpen ? (
                                         <X className="h-6 w-6" />
@@ -222,7 +228,7 @@ export default function Welcome({
                                     asChild
                                 >
                                     <a href="#about" onClick={() => setMobileMenuOpen(false)}>
-                                        À propos
+                                        {t('home.nav.about')}
                                     </a>
                                 </Button>
                                 <Button
@@ -231,7 +237,7 @@ export default function Welcome({
                                     asChild
                                 >
                                     <a href="#features" onClick={() => setMobileMenuOpen(false)}>
-                                        Activitités
+                                        {t('home.nav.activities')}
                                     </a>
                                 </Button>
                                 <Button
@@ -240,7 +246,7 @@ export default function Welcome({
                                     asChild
                                 >
                                     <a href="#trainings" onClick={() => setMobileMenuOpen(false)}>
-                                        Formations
+                                        {t('home.nav.trainings')}
                                     </a>
                                 </Button>
                                 <Button
@@ -249,26 +255,26 @@ export default function Welcome({
                                     asChild
                                 >
                                     <a href="#contact" onClick={() => setMobileMenuOpen(false)}>
-                                        Contact
+                                        {t('home.nav.contact')}
                                     </a>
                                 </Button>
                                 <div className="pt-4 border-t mt-2 space-y-2">
                                     {auth.user ? (
                                         <Button className="w-full" asChild>
                                             <Link href={route('dashboard')}>
-                                                Dashboard
+                                                {t('home.nav.dashboard')}
                                             </Link>
                                         </Button>
                                     ) : (
                                         <>
                                             <Button variant="outline" className="w-full" asChild>
                                                 <Link href={route('login')}>
-                                                    Se connecter
+                                                    {t('home.nav.login')}
                                                 </Link>
                                             </Button>
                                             <Button className="w-full" asChild>
                                                 <Link href={route('register')}>
-                                                    S'inscrire
+                                                    {t('home.nav.register')}
                                                 </Link>
                                             </Button>
                                         </>
@@ -283,11 +289,12 @@ export default function Welcome({
                 <HeroCarousel slides={slides} />
 
                 {/* Our Values Section (always rendered above dynamic sections) */}
-                <OurValues />
+                {/* <OurValues /> */}
 
                 {/* Dynamic sections from DB.
                     - If the admin has configured sections (even if all inactive), respect that — render only the active ones.
                     - Only fall back to hard-coded defaults when the DB has zero sections at all (e.g. fresh install before seeding). */}
+                   
                 {hasConfiguredSections ? (
                     sections.map((section) => (
                         <SectionRenderer

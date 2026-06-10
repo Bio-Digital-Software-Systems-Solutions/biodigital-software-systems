@@ -14,6 +14,7 @@ import {
     MapPinIcon,
 } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 import { resolveDesign, type DesignSettings } from '@/lib/sectionDesign';
 
 export interface ContactContent {
@@ -32,13 +33,14 @@ interface ContactSectionProps {
 }
 
 export default function ContactSection({ isAuthenticated, content, design }: ContactSectionProps) {
+    const { t } = useTranslation();
     const resolved = resolveDesign(design);
-    const badge = content?.badge ?? 'Contact';
-    const heading = content?.heading ?? 'Contactez-nous';
-    const subtitle = content?.subtitle ?? "Une question, une suggestion ou besoin d'aide ? N'hésitez pas à nous contacter.";
+    const badge = content?.badge ?? t('home.contact.badge');
+    const heading = content?.heading ?? t('home.contact.heading');
+    const subtitle = content?.subtitle ?? t('home.contact.subtitle');
     const email = content?.email ?? 'contact@icc-munich.de';
     const phone = content?.phone ?? '+49 (0) 17673200275';
-    const address = content?.address ?? "Kapellenstraße 22\n82008 Unterhaching\nAllemagne";
+    const address = content?.address ?? `Kapellenstraße 22\n82008 Unterhaching\n${t('home.contact.country')}`;
     const [contactData, setContactData] = useState({
         name: '',
         email: '',
@@ -56,16 +58,16 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
 
         router.post(route('contacts.store'), contactData, {
             onSuccess: () => {
-                toast.success('Message envoyé avec succès !', {
-                    description: 'Nous vous répondrons dans les plus brefs délais.',
+                toast.success(t('home.contact.toast.success'), {
+                    description: t('home.contact.toast.successDesc'),
                     duration: 5000,
                 });
                 setContactData({ name: '', email: '', phone: '', subject: '', message: '' });
             },
             onError: (serverErrors) => {
                 setErrors(serverErrors as Record<string, string>);
-                toast.error('Erreur lors de l\'envoi du message', {
-                    description: 'Veuillez vérifier les champs et réessayer.',
+                toast.error(t('home.contact.toast.error'), {
+                    description: t('home.contact.toast.errorDesc'),
                     duration: 5000,
                 });
             },
@@ -100,14 +102,14 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <EnvelopeIcon className="h-5 w-5 text-icc-blue" />
-                                        Coordonnées
+                                        {t('home.contact.coordinates')}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="flex items-start gap-3">
                                         <EnvelopeIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
                                         <div>
-                                            <p className="font-medium">Email</p>
+                                            <p className="font-medium">{t('home.contact.email')}</p>
                                             <a href={`mailto:${email}`} className="text-sm text-icc-blue hover:underline">
                                                 {email}
                                             </a>
@@ -116,7 +118,7 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                                     <div className="flex items-start gap-3">
                                         <PhoneIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
                                         <div>
-                                            <p className="font-medium">Téléphone</p>
+                                            <p className="font-medium">{t('home.contact.phone')}</p>
                                             <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="text-sm text-icc-blue hover:underline">
                                                 {phone}
                                             </a>
@@ -125,19 +127,16 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                                     <div className="flex items-start gap-3">
                                         <ChatBubbleLeftRightIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
                                         <div>
-                                            <p className="font-medium">Horaires</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Lun - Jeu :  - <br />
-                                                Ven : 18h00 - 21h30<br />
-                                                Sam : 10h00 - 14h00<br />
-                                                Dim: 10h00 - 16h00
+                                            <p className="font-medium">{t('home.contact.hours')}</p>
+                                            <p className="text-sm text-muted-foreground whitespace-pre-line">
+                                                {t('home.contact.hoursValue')}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3">
                                         <MapPinIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
                                         <div>
-                                            <p className="font-medium">Adresse</p>
+                                            <p className="font-medium">{t('home.contact.address')}</p>
                                             <p className="text-sm text-muted-foreground whitespace-pre-line">
                                                 {address}
                                             </p>
@@ -149,20 +148,20 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                             {!isAuthenticated && (
                                 <Card className="bg-gradient-to-br from-icc-blue/10 to-icc-purple/10 border-icc-blue/20">
                                     <CardHeader>
-                                        <CardTitle>Rejoignez-nous</CardTitle>
+                                        <CardTitle>{t('home.contact.joinTitle')}</CardTitle>
                                         <CardDescription>
-                                            Découvrez tous les outils dont vous avez besoin
+                                            {t('home.contact.joinDesc')}
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="flex flex-col gap-3">
                                         <Button size="lg" asChild className="w-full">
                                             <Link href={route('register')}>
-                                                S'inscrire Gratuitement
+                                                {t('home.contact.registerFree')}
                                             </Link>
                                         </Button>
                                         <Button size="lg" variant="outline" asChild className="w-full">
                                             <Link href={route('login')}>
-                                                Se Connecter
+                                                {t('home.contact.signIn')}
                                             </Link>
                                         </Button>
                                     </CardContent>
@@ -172,15 +171,15 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                             {isAuthenticated && (
                                 <Card className="bg-gradient-to-br from-icc-blue/10 to-icc-purple/10 border-icc-blue/20">
                                     <CardHeader>
-                                        <CardTitle>Accéder au Dashboard</CardTitle>
+                                        <CardTitle>{t('home.contact.dashboardTitle')}</CardTitle>
                                         <CardDescription>
-                                            Gérez vos événements, articles et bien plus
+                                            {t('home.contact.dashboardDesc')}
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         <Button size="lg" asChild className="w-full">
                                             <Link href={route('dashboard')}>
-                                                Accéder au Dashboard
+                                                {t('home.contact.dashboardBtn')}
                                             </Link>
                                         </Button>
                                     </CardContent>
@@ -191,16 +190,16 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                         {/* Right Column - Contact Form */}
                         <Card className="shadow-lg">
                             <CardHeader>
-                                <CardTitle>Envoyez-nous un message</CardTitle>
+                                <CardTitle>{t('home.contact.formTitle')}</CardTitle>
                                 <CardDescription>
-                                    Remplissez le formulaire ci-dessous et nous vous répondrons rapidement.
+                                    {t('home.contact.formDesc')}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <form onSubmit={handleContactSubmit} className="space-y-6">
                                     <div className="space-y-2">
                                         <Label htmlFor="name">
-                                            Nom complet <span className="text-destructive">*</span>
+                                            {t('home.contact.fullName')} <span className="text-destructive">*</span>
                                         </Label>
                                         <div className="relative">
                                             <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -210,7 +209,7 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                                                 value={contactData.name}
                                                 onChange={(e) => setContactData({ ...contactData, name: e.target.value })}
                                                 className="pl-10"
-                                                placeholder="Jean Dupont"
+                                                placeholder={t('home.contact.namePlaceholder')}
                                                 required
                                             />
                                         </div>
@@ -221,7 +220,7 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
 
                                     <div className="space-y-2">
                                         <Label htmlFor="email">
-                                            Email <span className="text-destructive">*</span>
+                                            {t('home.contact.email')} <span className="text-destructive">*</span>
                                         </Label>
                                         <div className="relative">
                                             <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -231,7 +230,7 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                                                 value={contactData.email}
                                                 onChange={(e) => setContactData({ ...contactData, email: e.target.value })}
                                                 className="pl-10"
-                                                placeholder="jean.dupont@example.com"
+                                                placeholder={t('home.contact.emailPlaceholder')}
                                                 required
                                             />
                                         </div>
@@ -241,7 +240,7 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="phone">Téléphone</Label>
+                                        <Label htmlFor="phone">{t('home.contact.phone')}</Label>
                                         <div className="relative">
                                             <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                             <Input
@@ -260,14 +259,14 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
 
                                     <div className="space-y-2">
                                         <Label htmlFor="subject">
-                                            Sujet <span className="text-destructive">*</span>
+                                            {t('home.contact.subject')} <span className="text-destructive">*</span>
                                         </Label>
                                         <Input
                                             id="subject"
                                             type="text"
                                             value={contactData.subject}
                                             onChange={(e) => setContactData({ ...contactData, subject: e.target.value })}
-                                            placeholder="Comment puis-je vous aider ?"
+                                            placeholder={t('home.contact.subjectPlaceholder')}
                                             required
                                         />
                                         {errors.subject && (
@@ -277,13 +276,13 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
 
                                     <div className="space-y-2">
                                         <Label htmlFor="message">
-                                            Message <span className="text-destructive">*</span>
+                                            {t('home.contact.message')} <span className="text-destructive">*</span>
                                         </Label>
                                         <Textarea
                                             id="message"
                                             value={contactData.message}
                                             onChange={(e) => setContactData({ ...contactData, message: e.target.value })}
-                                            placeholder="Décrivez votre demande en détail..."
+                                            placeholder={t('home.contact.messagePlaceholder')}
                                             className="min-h-[150px]"
                                             required
                                         />
@@ -300,12 +299,12 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                                         {processing ? (
                                             <>
                                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                                Envoi en cours...
+                                                {t('home.contact.sending')}
                                             </>
                                         ) : (
                                             <>
                                                 <EnvelopeIcon className="h-5 w-5 mr-2" />
-                                                Envoyer le message
+                                                {t('home.contact.send')}
                                             </>
                                         )}
                                     </Button>

@@ -1,7 +1,17 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '../ui/badge';
-import WorldMap from './WorldMap';
 import { resolveDesign, type DesignSettings } from '@/lib/sectionDesign';
+
+export interface AboutContent {
+  badge?: string;
+  heading?: string;
+  paragraphs?: string[];
+  image_url?: string;
+  mission_blocks?: Array<{ title: string; body: string; color?: string }>;
+  stats?: Array<{ value: string; label: string; color?: string }>;
+  affiliations?: Array<{ label: string; color?: string }>;
+}
 
 interface GlobalStats {
   total_churches: number;
@@ -14,31 +24,24 @@ interface GlobalStats {
   oceania: number;
 }
 
-export interface AboutContent {
-  badge?: string;
-  heading?: string;
-  paragraphs?: string[];
-  image_url?: string;
-  mission_blocks?: Array<{ title: string; body: string; color?: string }>;
-  stats?: Array<{ value: string; label: string; color?: string }>;
-  affiliations?: Array<{ label: string; color?: string }>;
-}
-
 interface AboutSectionProps {
-  globalStats: GlobalStats;
+  globalStats?: GlobalStats;
   content?: AboutContent;
   design?: DesignSettings | null;
 }
 
-const AboutSection: React.FC<AboutSectionProps> = ({ globalStats, content, design }) => {
+const TECH_STACK = ['Laravel', 'React', 'TypeScript', 'GraphQL', 'Java', 'Python', 'Cloud-Infrastruktur'];
+
+const AboutSection: React.FC<AboutSectionProps> = ({ content, design }) => {
+  const { t } = useTranslation();
   const resolved = resolveDesign(design);
-  const badge = content?.badge ?? 'À propos';
-  const heading = content?.heading ?? "Une famille d'églises qui transforme des vies";
+  const badge = content?.badge ?? t('home.about.badge');
+  const heading = content?.heading ?? t('home.about.heading');
   const paragraphs = content?.paragraphs ?? [
-    "L'Impact Centre Chrétien (ICC) est une famille d'églises charismatiques fondées en France en 2002 par les pasteurs Yves et Yvan Castanou, qui vise à former des disciples pour qu'ils exercent une influence positive dans la société.",
-    "L'ICC diffuse son message par les médias et les nouvelles technologies, propose des formations pour le développement spirituel et met en œuvre des actions humanitaires via sa branche Impact Sans Frontières (ISF).",
+    t('home.about.p1'),
+    t('home.about.p2'),
   ];
-  const imageUrl = content?.image_url ?? '/vision_missions_icc.png';
+  const imageUrl = content?.image_url ?? '/pc.png';
 
   return (
     <div
@@ -53,7 +56,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ globalStats, content, desig
       </div>
       <div className="max-w-7xl mx-auto">
 
-        {/* Section 1: Notre Histoire */}
+        {/* Section 1: Geschäftsidee */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-24">
           {/* Left side - Text content */}
           <div className="space-y-6">
@@ -67,7 +70,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ globalStats, content, desig
             ))}
           </div>
 
-          {/* Right side - ICC Pillars Image */}
+          {/* Right side - Tech image */}
           <div className="flex items-center justify-center">
             <img
               src={imageUrl}
@@ -77,165 +80,194 @@ const AboutSection: React.FC<AboutSectionProps> = ({ globalStats, content, desig
           </div>
         </div>
 
-        {/* Section 2: Vision et Mission */}
+        {/* Section 2: Kernkompetenzen */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 mb-24">
-          {/* Left side - Mission text (2/3 width) */}
+          {/* Left side - Competencies (2/3 width) */}
           <div className="lg:col-span-2 space-y-8">
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
-              Notre Vision et Mission
+              {t('home.about.competencies.heading')}
             </h2>
             <div className="space-y-6 text-gray-500 dark:text-gray-400 text-lg leading-relaxed">
               <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-4 border-primary">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Former des disciples</h3>
-                <p>L'objectif principal est de former des chrétiens qui influencent leur environnement.</p>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.competencies.bioinfo.title')}</h3>
+                <p>{t('home.about.competencies.bioinfo.body')}</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-4 border-green-500">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">L'impact sur le monde</h3>
-                <p>L'ICC veut avoir un impact positif sur la société, en accord avec les plans de Dieu, en créant de bons résultats.</p>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.competencies.ai.title')}</h3>
+                <p>{t('home.about.competencies.ai.body')}</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-4 border-purple-500">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">L'église sans barrière</h3>
-                <p>La diffusion du message de l'église par les médias et les nouvelles technologies vise à toucher un large public, sans frontières.</p>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.competencies.fullstack.title')}</h3>
+                <p>{t('home.about.competencies.fullstack.body')}</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-4 border-blue-500">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.competencies.industry.title')}</h3>
+                <p>{t('home.about.competencies.industry.body')}</p>
               </div>
             </div>
           </div>
 
-          {/* Right side - Statistics (1/3 width) */}
+          {/* Right side - Key facts (1/3 width) */}
           <div className="space-y-12 text-center">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
-              <div className="text-4xl font-bold text-primary dark:text-blue-400 mb-2">2002</div>
-              <div className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">Année de fondation</div>
+              <div className="text-4xl font-bold text-primary dark:text-blue-400 mb-2">3x</div>
+              <div className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">{t('home.about.facts.faster')}</div>
             </div>
             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
-              <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">Global</div>
-              <div className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">Présence mondiale</div>
+              <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">GxP</div>
+              <div className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">{t('home.about.facts.gxp')}</div>
             </div>
             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
-              <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">FPF</div>
-              <div className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">Membre officiel</div>
+              <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">NGS</div>
+              <div className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">{t('home.about.facts.ngs')}</div>
             </div>
           </div>
         </div>
 
-        {/* Section 3: Activités et Programmes */}
+        {/* Section 3: Leistungsangebot */}
         <div className="mb-24">
           <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-12 text-center">
-            Nos Activités et Programmes
+            {t('home.about.services.heading')}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* PCNC */}
+            {/* Bio-MVP Turbo */}
             <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
               <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mb-6">
                 <svg className="w-8 h-8 text-primary dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Formations PCNC</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.services.mvp.title')}</h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Parcours de Croissance de la Nouvelle Création pour aider les membres à grandir dans leur foi et leur transformation personnelle.
+                {t('home.about.services.mvp.body')}
               </p>
             </div>
 
-            {/* Impact Sans Frontières */}
+            {/* Middleware-Lösungen */}
             <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mb-6">
                 <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Impact Sans Frontières</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.services.middleware.title')}</h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Une branche dédiée aux actions de compassion, de soutien et d'évangélisation à travers le monde.
+                {t('home.about.services.middleware.body')}
               </p>
             </div>
 
-            {/* Plateformes digitales */}
+            {/* SaaS-Plattform-Entwicklungen */}
             <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
               <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center mb-6">
                 <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 1.096A4.002 4.002 0 003 15z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Plateformes Digitales</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.services.saas.title')}</h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                Des outils comme l'application SmartICC et des plateformes pour toutes les générations, notamment la plateforme des femmes.
+                {t('home.about.services.saas.body')}
+              </p>
+            </div>
+
+            {/* Software im Kundenauftrag */}
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.services.custom.title')}</h3>
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                {t('home.about.services.custom.body')}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Section 4: World Map - Notre Présence Mondiale */}
+        {/* Section 4: Technologie-Stack */}
         <div className="mb-24">
           <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-            Notre Présence Mondiale
+            {t('home.about.tech.heading')}
           </h2>
           <p className="text-gray-500 dark:text-gray-400 text-lg text-center mb-12 max-w-3xl mx-auto">
-            L'ICC est présente sur plusieurs continents avec des églises dynamiques qui transforment des vies et impactent leurs communautés.
+            {t('home.about.tech.subtitle')}
           </p>
-          <div className="relative rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-2xl p-4">
-            <WorldMap globalStats={globalStats} />
+          <div className="relative rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-2xl p-10">
+            <div className="flex flex-wrap justify-center gap-4">
+              {TECH_STACK.map((tech) => (
+                <span
+                  key={tech}
+                  className="px-6 py-3 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold text-lg shadow-sm"
+                >
+                  {tech}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Section 5: Structure et Affiliations */}
+        {/* Section 5: Zielgruppen & Compliance */}
         <div className="max-w-6xl mb-8">
           <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
-            Structure et Affiliations
+            {t('home.about.audience.heading')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
             <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Famille d'Églises</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{t('home.about.audience.bridge.title')}</h3>
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                L'ICC est une famille d'églises multilocales implantées en France et dans le monde,
-                créant un réseau de communautés connectées par une vision commune.
+                {t('home.about.audience.bridge.body')}
               </p>
             </div>
             <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Affiliations Officielles</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{t('home.about.compliance.title')}</h3>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 bg-primary rounded-full"></div>
-                  <span className="text-gray-600 dark:text-gray-400">Membre de la Fédération protestante de France (FPF)</span>
+                  <span className="text-gray-600 dark:text-gray-400">{t('home.about.compliance.gmp')}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-600 dark:text-gray-400">Affilié à la Communauté des Églises d'expressions africaines en France (CEAF)</span>
+                  <span className="text-gray-600 dark:text-gray-400">{t('home.about.compliance.glp')}</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                  <span className="text-gray-600 dark:text-gray-400">{t('home.about.compliance.gcp')}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Diffusion du message */}
+          {/* So arbeiten wir */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-8 rounded-2xl mb-8">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Diffusion du Message</h3>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">{t('home.about.how.heading')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="w-12 h-12 bg-primary dark:bg-primary rounded-full flex items-center justify-center mx-auto mb-3">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10l1 1v16l-1 1H6l-1-1V5l1-1z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h4 className="font-bold text-gray-900 dark:text-white mb-2">Médias Sociaux</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Instagram, Facebook et autres plateformes pour toucher un large public</p>
+                <h4 className="font-bold text-gray-900 dark:text-white mb-2">{t('home.about.how.ttm.title')}</h4>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">{t('home.about.how.ttm.body')}</p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 bg-purple-500 dark:bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                 </div>
-                <h4 className="font-bold text-gray-900 dark:text-white mb-2">Site Web</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Plateforme centrale pour la diffusion de contenu et les ressources</p>
+                <h4 className="font-bold text-gray-900 dark:text-white mb-2">{t('home.about.how.interop.title')}</h4>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">{t('home.about.how.interop.body')}</p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 bg-green-500 dark:bg-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 1.096A4.002 4.002 0 003 15z" />
                   </svg>
                 </div>
-                <h4 className="font-bold text-gray-900 dark:text-white mb-2">Technologies</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Applications mobiles et outils numériques innovants</p>
+                <h4 className="font-bold text-gray-900 dark:text-white mb-2">{t('home.about.how.cloud.title')}</h4>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">{t('home.about.how.cloud.body')}</p>
               </div>
             </div>
           </div>

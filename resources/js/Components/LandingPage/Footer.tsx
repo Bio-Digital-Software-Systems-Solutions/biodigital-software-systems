@@ -1,31 +1,9 @@
 import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
+import { useTranslation } from 'react-i18next';
 import type { PageProps } from '@/Types';
 
-const navigation = {
-  formations: [
-    { name: 'Toutes les formations', href: '/trainings' },
-    { name: 'Formations débutant', href: '/trainings?level=beginner' },
-    { name: 'Formations intermédiaire', href: '/trainings?level=intermediate' },
-    { name: 'Formations avancé', href: '/trainings?level=advanced' },
-  ],
-  ressources: [
-    { name: 'Bibliothèque', href: '/books' },
-    { name: 'Articles', href: '/articles' },
-    { name: 'Événements', href: '/events' },
-    { name: 'Documentation', href: '#' },
-  ],
-  apropos: [
-    { name: 'Notre mission', href: '#mission' },
-    { name: 'Notre vision', href: '#vision' },
-    { name: 'Nous contacter', href: '/contact' },
-    { name: 'Rejoignez-nous', href: '#' },
-  ],
-  legal: [
-    { name: 'Conditions d\'utilisation', href: '#' },
-    { name: 'Politique de confidentialité', href: '#' },
-    { name: 'Mentions légales', href: '#' },
-  ],
+const socialLinks = {
   social: [
     // {
     //   name: 'Facebook',
@@ -89,6 +67,33 @@ const navigation = {
 
 const Footer: React.FC = () => {
   const appName = usePage<PageProps>().props.app.name;
+  const { t } = useTranslation();
+
+  const navigation = {
+    formations: [
+      { name: t('home.footer.allTrainings'), href: '/trainings' },
+      { name: t('home.footer.trainingsBeginner'), href: '/trainings?level=beginner' },
+      { name: t('home.footer.trainingsIntermediate'), href: '/trainings?level=intermediate' },
+      { name: t('home.footer.trainingsAdvanced'), href: '/trainings?level=advanced' },
+    ],
+    ressources: [
+      { name: t('home.footer.library'), href: '/books' },
+      { name: t('home.footer.articles'), href: '/articles' },
+      { name: t('home.footer.events'), href: '/events' },
+      { name: t('home.footer.documentation'), href: '#' },
+    ],
+    apropos: [
+      { name: t('home.footer.mission'), href: '#mission' },
+      { name: t('home.footer.vision'), href: '#vision' },
+      { name: t('home.footer.contactUs'), href: '/contact' },
+      { name: t('home.footer.joinUs'), href: '#' },
+    ],
+    legal: [
+      { name: t('home.footer.terms'), href: '#' },
+      { name: t('home.footer.privacy'), href: '#' },
+      { name: t('home.footer.legalNotice'), href: '#' },
+    ],
+  };
 
   return (
     <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
@@ -101,10 +106,10 @@ const Footer: React.FC = () => {
               </h3>
             </div>
             <p className="text-sm leading-6 text-balance text-gray-600 dark:text-gray-400">
-              Former et équiper les leaders de demain pour transformer le monde par l'excellence et l'intégrité chrétienne.
+              {t('home.footer.tagline')}
             </p>
             <div className="flex gap-x-6">
-              {navigation.social.map((item) => (
+              {socialLinks.social.map((item) => (
                 <a
                   key={item.name}
                   href={item.href}
@@ -120,7 +125,7 @@ const Footer: React.FC = () => {
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
                 <h3 className="text-sm font-semibold leading-6 text-gray-900 dark:text-white">
-                  Formations
+                  {t('home.footer.col.trainings')}
                 </h3>
                 <ul role="list" className="mt-6 space-y-4">
                   {navigation.formations.map((item) => (
@@ -137,7 +142,7 @@ const Footer: React.FC = () => {
               </div>
               <div className="mt-10 md:mt-0">
                 <h3 className="text-sm font-semibold leading-6 text-gray-900 dark:text-white">
-                  Ressources
+                  {t('home.footer.col.resources')}
                 </h3>
                 <ul role="list" className="mt-6 space-y-4">
                   {navigation.ressources.map((item) => (
@@ -156,7 +161,7 @@ const Footer: React.FC = () => {
             <div className="md:grid md:grid-cols-2 md:gap-8">
               <div>
                 <h3 className="text-sm font-semibold leading-6 text-gray-900 dark:text-white">
-                  À propos
+                  {t('home.footer.col.about')}
                 </h3>
                 <ul role="list" className="mt-6 space-y-4">
                   {navigation.apropos.map((item) => (
@@ -173,7 +178,7 @@ const Footer: React.FC = () => {
               </div>
               <div className="mt-10 md:mt-0">
                 <h3 className="text-sm font-semibold leading-6 text-gray-900 dark:text-white">
-                  Légal
+                  {t('home.footer.col.legal')}
                 </h3>
                 <ul role="list" className="mt-6 space-y-4">
                   {navigation.legal.map((item) => (
@@ -193,7 +198,7 @@ const Footer: React.FC = () => {
         </div>
         <div className="mt-16 border-t border-gray-900/10 pt-8 sm:mt-20 lg:mt-24 dark:border-white/10">
           <p className="text-sm leading-6 text-gray-600 dark:text-gray-400">
-            &copy; {new Date().getFullYear()} Impact Center Chrétien. Tous droits réservés.
+            &copy; {new Date().getFullYear()} Impact Center Chrétien. {t('home.footer.copyright')}
           </p>
         </div>
       </div>
