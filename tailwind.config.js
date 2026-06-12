@@ -28,6 +28,65 @@ export default {
                 ]
     		},
     		colors: {
+    			// ============================================================
+    			// REAGENT — palette de marque Bio-Digital Software Systems
+    			// Gammes OKLCH 50–950 dérivées d'Okabe-Ito (sûres daltonismes)
+    			// Ancres : blue-600 ≈ #0072B2 · vermillion-500 ≈ #D55E00
+    			//          sky-400 ≈ #56B4E9 · graphite-900 ≈ #1C2B33
+    			// `<alpha-value>` préserve le support des modificateurs d'opacité.
+    			// ============================================================
+    			graphite: {
+    				50: 'oklch(0.975 0.003 230 / <alpha-value>)',
+    				100: 'oklch(0.945 0.005 230 / <alpha-value>)',
+    				200: 'oklch(0.890 0.008 230 / <alpha-value>)',
+    				300: 'oklch(0.800 0.010 230 / <alpha-value>)',
+    				400: 'oklch(0.680 0.013 230 / <alpha-value>)',
+    				500: 'oklch(0.570 0.015 230 / <alpha-value>)',
+    				600: 'oklch(0.480 0.017 230 / <alpha-value>)',
+    				700: 'oklch(0.400 0.018 230 / <alpha-value>)',
+    				800: 'oklch(0.330 0.019 230 / <alpha-value>)',
+    				900: 'oklch(0.275 0.020 230 / <alpha-value>)',
+    				950: 'oklch(0.210 0.018 230 / <alpha-value>)',
+    			},
+    			blue: {
+    				50: 'oklch(0.970 0.012 237 / <alpha-value>)',
+    				100: 'oklch(0.930 0.028 237 / <alpha-value>)',
+    				200: 'oklch(0.870 0.055 237 / <alpha-value>)',
+    				300: 'oklch(0.780 0.085 237 / <alpha-value>)',
+    				400: 'oklch(0.660 0.110 237 / <alpha-value>)',
+    				500: 'oklch(0.580 0.122 237 / <alpha-value>)',
+    				600: 'oklch(0.520 0.124 237 / <alpha-value>)',
+    				700: 'oklch(0.450 0.110 237 / <alpha-value>)',
+    				800: 'oklch(0.380 0.090 237 / <alpha-value>)',
+    				900: 'oklch(0.320 0.072 237 / <alpha-value>)',
+    				950: 'oklch(0.240 0.052 237 / <alpha-value>)',
+    			},
+    			vermillion: {
+    				50: 'oklch(0.970 0.014 45 / <alpha-value>)',
+    				100: 'oklch(0.940 0.035 45 / <alpha-value>)',
+    				200: 'oklch(0.880 0.070 45 / <alpha-value>)',
+    				300: 'oklch(0.800 0.110 45 / <alpha-value>)',
+    				400: 'oklch(0.710 0.145 45 / <alpha-value>)',
+    				500: 'oklch(0.620 0.157 45 / <alpha-value>)',
+    				600: 'oklch(0.550 0.140 45 / <alpha-value>)',
+    				700: 'oklch(0.470 0.118 45 / <alpha-value>)',
+    				800: 'oklch(0.400 0.097 45 / <alpha-value>)',
+    				900: 'oklch(0.340 0.078 45 / <alpha-value>)',
+    				950: 'oklch(0.250 0.055 45 / <alpha-value>)',
+    			},
+    			sky: {
+    				50: 'oklch(0.975 0.010 235 / <alpha-value>)',
+    				100: 'oklch(0.940 0.025 235 / <alpha-value>)',
+    				200: 'oklch(0.890 0.050 235 / <alpha-value>)',
+    				300: 'oklch(0.810 0.080 235 / <alpha-value>)',
+    				400: 'oklch(0.730 0.105 235 / <alpha-value>)',
+    				500: 'oklch(0.640 0.110 235 / <alpha-value>)',
+    				600: 'oklch(0.550 0.105 235 / <alpha-value>)',
+    				700: 'oklch(0.470 0.090 235 / <alpha-value>)',
+    				800: 'oklch(0.390 0.072 235 / <alpha-value>)',
+    				900: 'oklch(0.330 0.058 235 / <alpha-value>)',
+    				950: 'oklch(0.250 0.042 235 / <alpha-value>)',
+    			},
     			border: 'hsl(var(--border))',
     			input: 'hsl(var(--input))',
     			ring: 'hsl(var(--ring))',
@@ -62,14 +121,15 @@ export default {
     				foreground: 'hsl(var(--card-foreground))'
     			},
     			icc: {
-    				blue: '#1e40af',
-    				red: '#dc2626',
-    				purple: '#a855f7',
+    				blue: 'oklch(0.520 0.124 237)',
+    				red: 'oklch(0.620 0.157 45)',
+    				purple: 'oklch(0.730 0.105 235)',
     				yellow: '#eab308',
     				lime: '#84cc16'
     			}
     		},
     		borderRadius: {
+    			card: '0.75rem',
     			lg: 'var(--radius)',
     			md: 'calc(var(--radius) - 2px)',
     			sm: 'calc(var(--radius) - 4px)'

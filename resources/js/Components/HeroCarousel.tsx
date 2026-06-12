@@ -89,7 +89,7 @@ export default function HeroCarousel({ slides, autoPlayInterval = 5000 }: HeroCa
                     {/* Overlay */}
                     <div
                         className="absolute inset-0 bg-black/50"
-                        style={{ opacity: slide.overlay_opacity || 0.5 }}
+                        style={{ opacity: slide.overlay_opacity || 0.0 }}
                     />
 
                     {/* Content */}

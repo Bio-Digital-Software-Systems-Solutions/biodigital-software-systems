@@ -41,7 +41,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ content, design }) => {
     t('home.about.p1'),
     t('home.about.p2'),
   ];
-  const imageUrl = content?.image_url ?? '/pc.png';
+  const imageUrl = content?.image_url ?? '/ecosystem.png';
 
   return (
     <div

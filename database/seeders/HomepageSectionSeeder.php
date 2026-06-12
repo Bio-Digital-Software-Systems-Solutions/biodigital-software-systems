@@ -14,41 +14,15 @@ class HomepageSectionSeeder extends Seeder
                 'key' => 'about',
                 'type' => 'about',
                 'order' => 1,
-                'title' => 'À propos',
+                'title' => 'Geschäftsidee',
                 'content' => [
                     'badge' => 'À propos',
-                    'heading' => "Une famille d'églises qui transforme des vies",
+                    'heading' => "Bio-Digital Software Systems Solutions",
                     'paragraphs' => [
-                        "L'Impact Centre Chrétien (ICC) est une famille d'églises charismatiques fondées en France en 2002 par les pasteurs Yves et Yvan Castanou, qui vise à former des disciples pour qu'ils exercent une influence positive dans la société.",
-                        "L'ICC diffuse son message par les médias et les nouvelles technologies, propose des formations pour le développement spirituel et met en œuvre des actions humanitaires via sa branche Impact Sans Frontières (ISF).",
+                        'Bio-Digital Software Systems Solutions steht für beschleunigte, KI-gestützte Softwareentwicklung, spezialisiert auf BioTech-Daten, Bioinformatik und Laborprozesse.',
+                        'Wir schließen die Lücke zwischen biologischer Forschung und marktfähiger Software durch die einzigartige Kombination aus tiefem bioinformatischem Fachwissen und modernster Fullstack-Softwareentwicklung.',
                     ],
-                    'image_url' => '/vision_missions_icc.png',
-                    'mission_blocks' => [
-                        [
-                            'title' => 'Former des disciples',
-                            'body' => "L'objectif principal est de former des chrétiens qui influencent leur environnement.",
-                            'color' => 'primary',
-                        ],
-                        [
-                            'title' => "L'impact sur le monde",
-                            'body' => "L'ICC veut avoir un impact positif sur la société, en accord avec les plans de Dieu, en créant de bons résultats.",
-                            'color' => 'green',
-                        ],
-                        [
-                            'title' => "L'église sans barrière",
-                            'body' => "La diffusion du message de l'église par les médias et les nouvelles technologies vise à toucher un large public, sans frontières.",
-                            'color' => 'purple',
-                        ],
-                    ],
-                    'stats' => [
-                        ['value' => '2002', 'label' => 'Année de fondation', 'color' => 'primary'],
-                        ['value' => 'Global', 'label' => 'Présence mondiale', 'color' => 'green'],
-                        ['value' => 'FPF', 'label' => 'Membre officiel', 'color' => 'purple'],
-                    ],
-                    'affiliations' => [
-                        ['label' => 'Membre de la Fédération protestante de France (FPF)', 'color' => 'primary'],
-                        ['label' => "Affilié à la Communauté des Églises d'expressions africaines en France (CEAF)", 'color' => 'green'],
-                    ],
+                    'image_url' => '/pc.png',
                 ],
             ],
             [

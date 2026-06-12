@@ -38,9 +38,9 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
     const badge = content?.badge ?? t('home.contact.badge');
     const heading = content?.heading ?? t('home.contact.heading');
     const subtitle = content?.subtitle ?? t('home.contact.subtitle');
-    const email = content?.email ?? 'contact@icc-munich.de';
-    const phone = content?.phone ?? '+49 (0) 17673200275';
-    const address = content?.address ?? `Kapellenstraße 22\n82008 Unterhaching\n${t('home.contact.country')}`;
+    const email = content?.email ?? 'elmarce.bounda.ndinga@gmail.com';
+    const phone = content?.phone ?? '';
+    const address = content?.address ?? `Van-Gogh-Straße 2\n85521 Ottobrunn\n${t('home.contact.country')}`;
     const [contactData, setContactData] = useState({
         name: '',
         email: '',
@@ -115,15 +115,17 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                                             </a>
                                         </div>
                                     </div>
-                                    <div className="flex items-start gap-3">
-                                        <PhoneIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
-                                        <div>
-                                            <p className="font-medium">{t('home.contact.phone')}</p>
-                                            <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="text-sm text-icc-blue hover:underline">
-                                                {phone}
-                                            </a>
+                                    {phone && (
+                                        <div className="flex items-start gap-3">
+                                            <PhoneIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
+                                            <div>
+                                                <p className="font-medium">{t('home.contact.phone')}</p>
+                                                <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="text-sm text-icc-blue hover:underline">
+                                                    {phone}
+                                                </a>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                     <div className="flex items-start gap-3">
                                         <ChatBubbleLeftRightIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
                                         <div>
@@ -249,7 +251,7 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                                                 value={contactData.phone}
                                                 onChange={(e) => setContactData({ ...contactData, phone: e.target.value })}
                                                 className="pl-10"
-                                                placeholder="+33 6 12 34 56 78"
+                                                placeholder="+49 151 23456789"
                                             />
                                         </div>
                                         {errors.phone && (

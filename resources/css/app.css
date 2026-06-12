@@ -9,88 +9,95 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    /* ============================================================
+       Identité Bio-Digital Software Systems — palette REAGENT
+       Tokens shadcn dérivés des ancres Okabe-Ito (HSL) :
+       primary ≈ science blue #0072B2 · accent visuel vermillion #D55E00
+       neutres = graphite (hue ~205) · ring = science blue
+       ============================================================ */
+    --background: 210 14% 98%;
+    --foreground: 200 29% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+    --card-foreground: 200 29% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 262.1 83.3% 57.8%;
-    --chart-1: 262.1 83.3% 57.8%;
-    --chart-2: 245 58% 51%;
-    --chart-3: 280 65% 60%;
-    --chart-4: 270 50% 40%;
-    --chart-5: 295 70% 50%;
+    --popover-foreground: 200 29% 15%;
+    --primary: 201 100% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 12% 94%;
+    --secondary-foreground: 200 25% 22%;
+    --muted: 210 12% 94%;
+    --muted-foreground: 201 13% 41%;
+    --accent: 210 12% 94%;
+    --accent-foreground: 200 25% 22%;
+    --destructive: 16 100% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 12% 89%;
+    --input: 210 12% 89%;
+    --ring: 201 100% 40%;
+    --chart-1: 201 100% 35%;
+    --chart-2: 27 100% 42%;
+    --chart-3: 201 77% 63%;
+    --chart-4: 200 12% 70%;
+    --chart-5: 201 100% 26%;
     --radius: 0.5rem;
 
-    /* SearchableSelect variables - Light mode */
+    /* SearchableSelect variables - Light mode (science blue) */
     --select-bg: #ffffff;
-    --select-text: #111827;
+    --select-text: #1c2b33;
     --select-placeholder: #9ca3af;
     --select-border: #d1d5db;
     --select-border-hover: #9ca3af;
-    --select-border-focus: #8b5cf6;
-    --select-ring: rgba(139, 92, 246, 0.2);
+    --select-border-focus: #0072b2;
+    --select-ring: rgba(0, 114, 178, 0.2);
     --select-indicator: #6b7280;
     --select-indicator-hover: #374151;
     --select-option-hover-bg: #f3f4f6;
-    --select-option-selected-bg: #8b5cf6;
+    --select-option-selected-bg: #0072b2;
     --select-option-selected-text: #ffffff;
     --select-option-active-bg: #e5e7eb;
   }
 
   .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 50.4%;
-    --chart-1: 263.4 70% 50.4%;
-    --chart-2: 245 58% 51%;
-    --chart-3: 280 65% 60%;
-    --chart-4: 270 50% 40%;
-    --chart-5: 295 70% 50%;
+    /* Mode sombre — fonds graphite, primaire science blue éclairci */
+    --background: 200 28% 11%;
+    --foreground: 210 12% 94%;
+    --card: 200 29% 15%;
+    --card-foreground: 210 12% 94%;
+    --popover: 200 29% 15%;
+    --popover-foreground: 210 12% 94%;
+    --primary: 201 70% 55%;
+    --primary-foreground: 200 28% 11%;
+    --secondary: 200 22% 20%;
+    --secondary-foreground: 210 12% 94%;
+    --muted: 200 22% 20%;
+    --muted-foreground: 201 11% 64%;
+    --accent: 200 22% 20%;
+    --accent-foreground: 210 12% 94%;
+    --destructive: 16 80% 45%;
+    --destructive-foreground: 210 12% 94%;
+    --border: 200 22% 20%;
+    --input: 200 22% 20%;
+    --ring: 201 70% 50%;
+    --chart-1: 201 70% 55%;
+    --chart-2: 27 90% 55%;
+    --chart-3: 201 77% 68%;
+    --chart-4: 200 12% 55%;
+    --chart-5: 201 70% 42%;
 
-    /* SearchableSelect variables - Dark mode */
-    --select-bg: #111827;
-    --select-text: #f3f4f6;
+    /* SearchableSelect variables - Dark mode (science blue) */
+    --select-bg: #1c2b33;
+    --select-text: #eef0f2;
     --select-placeholder: #6b7280;
-    --select-border: #374151;
-    --select-border-hover: #4b5563;
-    --select-border-focus: #8b5cf6;
-    --select-ring: rgba(139, 92, 246, 0.3);
+    --select-border: #2a3a42;
+    --select-border-hover: #3a4d56;
+    --select-border-focus: #3f9bd6;
+    --select-ring: rgba(63, 155, 214, 0.3);
     --select-indicator: #9ca3af;
     --select-indicator-hover: #d1d5db;
-    --select-option-hover-bg: #1f2937;
-    --select-option-selected-bg: #8b5cf6;
+    --select-option-hover-bg: #243640;
+    --select-option-selected-bg: #3f9bd6;
     --select-option-selected-text: #ffffff;
-    --select-option-active-bg: #374151;
+    --select-option-active-bg: #2a3a42;
   }
 }
 

@@ -53,12 +53,12 @@ export default function Welcome({
         {
             id: 1,
             title: "",
-            description: t('home.hero.slide1.description'),
+            description: "",
             media_type: 'image',
             media_url: "1.png",
             cta_text: auth.user ? t('home.hero.cta.dashboard') : t('home.hero.cta.start'),
             cta_link: auth.user ? "/dashboard" : "/register",
-            overlay_opacity: 0.5,
+            overlay_opacity: 0.0,
         },
         {
             id: 2,
@@ -68,7 +68,7 @@ export default function Welcome({
             media_url: "2.png",
             cta_text: t('home.hero.cta.learnMore'),
             cta_link: "#features",
-            overlay_opacity: 0.5,
+            overlay_opacity: 0.0,
         },
         {
             id: 3,
@@ -78,7 +78,7 @@ export default function Welcome({
             media_url: "3.png",
             cta_text: t('home.hero.cta.explore'),
             cta_link: "#features",
-            overlay_opacity: 0.5,
+            overlay_opacity: 0.0,
         },
         {
             id: 4,
@@ -88,7 +88,7 @@ export default function Welcome({
             media_url: "4.png",
             cta_text: t('home.hero.cta.explore'),
             cta_link: "#features",
-            overlay_opacity: 0.5,
+            overlay_opacity: 0.0,
         },
         {
             id: 5,
@@ -98,48 +98,8 @@ export default function Welcome({
             media_url: "5.png",
             cta_text: t('home.hero.cta.explore'),
             cta_link: "#features",
-            overlay_opacity: 0.5,
+            overlay_opacity: 0.0,
         },
-        {
-            id: 11,
-            title: "",
-            description: "",
-            media_type: 'image',
-            media_url: "11.png",
-            cta_text: t('home.hero.cta.explore'),
-            cta_link: "#features",
-            overlay_opacity: 0.5,
-        },
-        {
-            id: 15,
-            title: "",
-            description: "",
-            media_type: 'image',
-            media_url: "15.png",
-            cta_text: t('home.hero.cta.explore'),
-            cta_link: "#features",
-            overlay_opacity: 0.5,
-        },
-        {
-            id: 17,
-            title: "",
-            description: "",
-            media_type: 'image',
-            media_url: "17.png",
-            cta_text: t('home.hero.cta.explore'),
-            cta_link: "#features",
-            overlay_opacity: 0.5,
-        },
-        {
-            id: 20,
-            title: "",
-            description: "",
-            media_type: 'image',
-            media_url: "20.png",
-            cta_text: t('home.hero.cta.explore'),
-            cta_link: "#features",
-            overlay_opacity: 0.5,
-        }
     ];
 
     const slides = heroSlides.length > 0 ? heroSlides : defaultSlides;
@@ -156,7 +116,7 @@ export default function Welcome({
                             <div className="flex items-center">
                                 <Link className="flex-shrink-0 flex items-center gap-2 sm:gap-3" href="/">
                                     <img src="/Logo.png" alt={appName} className="h-8 w-8 sm:h-10 sm:w-10 object-contain" />
-                                    <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-icc-blue via-icc-purple to-icc-red bg-clip-text text-transparent">
+                                    <h1 className="text-lg sm:text-2xl font-bold text-[#033E69]">
                                         {appName}
                                     </h1>
                                 </Link>
