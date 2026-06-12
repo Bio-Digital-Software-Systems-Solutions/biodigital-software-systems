@@ -15,7 +15,7 @@ class TrainingSeeder extends Seeder
     public function run(): void
     {
         // Create 20 trainings with related data
-        Training::factory(20)->create()->each(function ($training): void {
+        Training::factory(3)->create()->each(function ($training): void {
             // Topics and Materials are now seeded separately by TrainingTopicSeeder and TrainingMaterialSeeder
             // Classes are now seeded separately by TrainingClassSeeder
 

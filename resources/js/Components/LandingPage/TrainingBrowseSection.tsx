@@ -596,13 +596,13 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
     return (
       <div
         id="trainings"
-        className={`bg-gray-50 dark:bg-gray-900 px-6 md:px-12 ${resolvedDesign.sectionClass} ${resolvedDesign.hasPadding ? '' : 'py-16'}`}
+        className={`bg-bd-bg px-5 sm:px-8 lg:px-10 ${resolvedDesign.sectionClass} ${resolvedDesign.hasPadding ? '' : 'py-16 sm:py-20 lg:py-24'}`}
         style={resolvedDesign.sectionStyle}
       >
-        <div className="max-w-7xl mx-auto">
-          <div className={`mb-12 ${resolvedDesign.alignmentClass || 'text-center'}`}>
-            <Badge variant="secondary" className="mb-4">{headerBadge}</Badge>
-            <h2 className={`font-bold text-gray-900 dark:text-white mb-4 ${resolvedDesign.headingClass || 'text-4xl'}`}>
+        <div className="max-w-[1140px] mx-auto">
+          <div className="mb-11 max-w-[62ch]">
+            <p className="mb-3.5 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-bd-brand-deep">{headerBadge}</p>
+            <h2 className="font-display text-[clamp(1.7rem,3.4vw,2.5rem)] font-semibold tracking-tight text-bd-ink">
               {headerHeading}
             </h2>
           </div>
@@ -619,16 +619,16 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
   return (
     <div
       id="trainings"
-      className={`bg-gray-50 dark:bg-gray-900 px-6 md:px-12 ${resolvedDesign.sectionClass} ${design?.padding ? '' : 'py-16'}`}
+      className={`bg-bd-bg px-5 sm:px-8 lg:px-10 ${resolvedDesign.sectionClass} ${design?.padding ? '' : 'py-16 sm:py-20 lg:py-24'}`}
       style={resolvedDesign.sectionStyle}
     >
-      <div className="max-w-7xl mx-auto">
-        <div className={`mb-12 ${resolvedDesign.alignmentClass || 'text-center'}`}>
-          <Badge variant="secondary" className="mb-4">{headerBadge}</Badge>
-          <h2 className={`font-bold text-gray-900 dark:text-white mb-4 ${resolvedDesign.headingClass || 'text-4xl'}`}>
+      <div className="max-w-[1140px] mx-auto">
+        <div className="mb-11 max-w-[62ch]">
+          <p className="mb-3.5 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-bd-brand-deep">{headerBadge}</p>
+          <h2 className="font-display text-[clamp(1.7rem,3.4vw,2.5rem)] font-semibold tracking-tight text-bd-ink">
             {headerHeading}
           </h2>
-          <p className={`text-gray-600 dark:text-gray-400 max-w-3xl mx-auto ${resolvedDesign.paragraphClass || 'text-lg'}`}>
+          <p className="mt-3.5 text-[1.05rem] text-bd-ink-2 max-w-3xl">
             {headerSubtitle}
           </p>
         </div>

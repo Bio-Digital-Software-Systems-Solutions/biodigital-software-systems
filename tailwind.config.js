@@ -25,7 +25,10 @@ export default {
     			sans: [
     				'Figtree',
                     ...defaultTheme.fontFamily.sans
-                ]
+                ],
+    			// Landing page typography (Bio-Digital proposal)
+    			display: ['Sora', ...defaultTheme.fontFamily.sans],
+    			body: ['Inter', ...defaultTheme.fontFamily.sans]
     		},
     		colors: {
     			// ============================================================
@@ -126,6 +129,23 @@ export default {
     				purple: 'oklch(0.730 0.105 235)',
     				yellow: '#eab308',
     				lime: '#84cc16'
+    			},
+    			// ============================================================
+    			// Bio-Digital landing page tokens (proposal palette, teal brand)
+    			// Light-only surface set used by the public homepage.
+    			// ============================================================
+    			bd: {
+    				bg: 'oklch(0.99 0.004 195 / <alpha-value>)',
+    				surface: 'oklch(1 0 0 / <alpha-value>)',
+    				'surface-2': 'oklch(0.975 0.006 200 / <alpha-value>)',
+    				line: 'oklch(0.91 0.008 200 / <alpha-value>)',
+    				ink: 'oklch(0.22 0.02 215 / <alpha-value>)',
+    				'ink-2': 'oklch(0.44 0.018 210 / <alpha-value>)',
+    				'ink-3': 'oklch(0.6 0.014 205 / <alpha-value>)',
+    				brand: 'oklch(0.62 0.12 200 / <alpha-value>)',
+    				'brand-deep': 'oklch(0.52 0.11 205 / <alpha-value>)',
+    				'brand-soft': 'oklch(0.95 0.03 200 / <alpha-value>)',
+    				accent: 'oklch(0.7 0.13 155 / <alpha-value>)'
     			}
     		},
     		borderRadius: {
