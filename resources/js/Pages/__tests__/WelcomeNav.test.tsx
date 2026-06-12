@@ -9,7 +9,7 @@ vi.mock('@/Components/LandingPage/HeroSlider', () => ({ default: () => <div data
 vi.mock('@/Components/LandingPage/ServicesSection', () => ({ default: () => null }));
 vi.mock('@/Components/LandingPage/TrainingBrowseSection', () => ({ default: () => null }));
 vi.mock('@/Components/LandingPage/ProcessSection', () => ({ default: () => null }));
-vi.mock('@/Components/LandingPage/CtaSection', () => ({ default: () => null }));
+vi.mock('@/Components/LandingPage/ContactSection', () => ({ default: () => null }));
 vi.mock('@/Components/LandingPage/SiteFooter', () => ({ default: () => null }));
 
 vi.mock('sonner', () => ({ Toaster: () => null }));

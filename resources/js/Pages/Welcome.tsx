@@ -7,7 +7,7 @@ import HeroSlider from '@/Components/LandingPage/HeroSlider';
 import ServicesSection from '@/Components/LandingPage/ServicesSection';
 import TrainingBrowseSection from '@/Components/LandingPage/TrainingBrowseSection';
 import ProcessSection from '@/Components/LandingPage/ProcessSection';
-import CtaSection from '@/Components/LandingPage/CtaSection';
+import ContactSection from '@/Components/LandingPage/ContactSection';
 import SiteFooter from '@/Components/LandingPage/SiteFooter';
 
 type WelcomeProps = PageProps;
@@ -35,7 +35,7 @@ export default function Welcome({ auth }: WelcomeProps) {
                     {/* Formations: the dynamic browser keeps real enrollment working. */}
                     <TrainingBrowseSection />
                     <ProcessSection />
-                    <CtaSection />
+                    <ContactSection isAuthenticated={!!auth.user} />
                 </main>
 
                 <SiteFooter />

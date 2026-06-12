@@ -1,11 +1,5 @@
 import { FormEventHandler, useState } from 'react';
 import { Link, router } from '@inertiajs/react';
-import { Badge } from '@/Components/ui/badge';
-import { Button } from '@/Components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
-import { Input } from '@/Components/ui/input';
-import { Label } from '@/Components/ui/label';
-import { Textarea } from '@/Components/ui/textarea';
 import {
     EnvelopeIcon,
     PhoneIcon,
@@ -31,6 +25,14 @@ interface ContactSectionProps {
     content?: ContactContent;
     design?: DesignSettings | null;
 }
+
+const fieldClass =
+    'w-full rounded-[10px] border border-bd-line bg-bd-surface px-3.5 py-2.5 text-[15px] text-bd-ink placeholder:text-bd-ink-3 transition-colors focus:border-bd-brand focus:outline-none focus:ring-2 focus:ring-bd-brand/20';
+const labelClass = 'block text-[13px] font-semibold text-bd-ink';
+const primaryButtonClass =
+    'inline-flex items-center justify-center rounded-[10px] bg-bd-brand px-5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-bd-brand-deep disabled:translate-y-0 disabled:opacity-60';
+const outlineButtonClass =
+    'inline-flex items-center justify-center rounded-[10px] border border-bd-line bg-bd-surface px-5 py-2.5 text-[14.5px] font-semibold text-bd-ink transition-colors hover:border-bd-brand hover:text-bd-brand-deep';
 
 export default function ContactSection({ isAuthenticated, content, design }: ContactSectionProps) {
     const { t } = useTranslation();
@@ -78,241 +80,217 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
     return (
         <section
             id="contact"
-            className={`bg-gradient-to-br from-icc-blue/5 via-icc-purple/5 to-icc-red/5 ${resolved.sectionClass} ${resolved.hasPadding ? '' : 'py-20'}`}
+            className={`border-t border-bd-line ${resolved.sectionClass} ${resolved.hasPadding ? '' : 'py-16 sm:py-20 lg:py-24'}`}
             style={resolved.sectionStyle}
         >
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="max-w-6xl mx-auto">
-                    <div className={`space-y-4 mb-12 ${resolved.alignmentClass || 'text-center'}`}>
-                        <Badge variant="secondary" className="mb-2">
-                            {badge}
-                        </Badge>
-                        <h2 className={`font-bold tracking-tight ${resolved.headingClass || 'text-3xl sm:text-4xl md:text-5xl'}`}>
-                            {heading}
-                        </h2>
-                        <p className={`mx-auto max-w-2xl text-muted-foreground ${resolved.paragraphClass || 'text-lg'}`}>
-                            {subtitle}
-                        </p>
-                    </div>
+            <div className="mx-auto max-w-[1140px] px-5 sm:px-8 lg:px-10">
+                <div className={`max-w-[62ch] ${resolved.alignmentClass}`}>
+                    <p className="mb-3.5 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-bd-brand-deep">
+                        {badge}
+                    </p>
+                    <h2
+                        className={`font-display font-semibold tracking-tight text-bd-ink ${resolved.headingClass || 'text-[clamp(1.7rem,3.4vw,2.5rem)]'}`}
+                    >
+                        {heading}
+                    </h2>
+                    <p className={`mt-3.5 text-bd-ink-2 ${resolved.paragraphClass || 'text-[1.05rem]'}`}>{subtitle}</p>
+                </div>
 
-                    <div className="grid gap-8 lg:grid-cols-2">
-                        {/* Left Column - Contact Info & CTA */}
-                        <div className="space-y-6">
-                            <Card className="border-icc-blue/20">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <EnvelopeIcon className="h-5 w-5 text-icc-blue" />
-                                        {t('home.contact.coordinates')}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
+                <div className="mt-11 grid gap-5 lg:grid-cols-2">
+                    {/* Left Column - Contact Info & CTA */}
+                    <div className="flex flex-col gap-5">
+                        <div className="rounded-2xl border border-bd-line bg-bd-surface p-7">
+                            <h3 className="flex items-center gap-2 font-display text-[1.25rem] font-semibold text-bd-ink">
+                                <EnvelopeIcon className="h-5 w-5 text-bd-brand" />
+                                {t('home.contact.coordinates')}
+                            </h3>
+                            <div className="mt-5 flex flex-col gap-4">
+                                <div className="flex items-start gap-3">
+                                    <EnvelopeIcon className="mt-0.5 h-5 w-5 text-bd-ink-3" />
+                                    <div>
+                                        <p className="text-[0.95rem] font-medium text-bd-ink">{t('home.contact.email')}</p>
+                                        <a
+                                            href={`mailto:${email}`}
+                                            className="text-sm text-bd-brand-deep transition-colors hover:text-bd-brand hover:underline"
+                                        >
+                                            {email}
+                                        </a>
+                                    </div>
+                                </div>
+                                {phone && (
                                     <div className="flex items-start gap-3">
-                                        <EnvelopeIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
+                                        <PhoneIcon className="mt-0.5 h-5 w-5 text-bd-ink-3" />
                                         <div>
-                                            <p className="font-medium">{t('home.contact.email')}</p>
-                                            <a href={`mailto:${email}`} className="text-sm text-icc-blue hover:underline">
-                                                {email}
+                                            <p className="text-[0.95rem] font-medium text-bd-ink">{t('home.contact.phone')}</p>
+                                            <a
+                                                href={`tel:${phone.replace(/[^+\d]/g, '')}`}
+                                                className="text-sm text-bd-brand-deep transition-colors hover:text-bd-brand hover:underline"
+                                            >
+                                                {phone}
                                             </a>
                                         </div>
                                     </div>
-                                    {phone && (
-                                        <div className="flex items-start gap-3">
-                                            <PhoneIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
-                                            <div>
-                                                <p className="font-medium">{t('home.contact.phone')}</p>
-                                                <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="text-sm text-icc-blue hover:underline">
-                                                    {phone}
-                                                </a>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div className="flex items-start gap-3">
-                                        <ChatBubbleLeftRightIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
-                                        <div>
-                                            <p className="font-medium">{t('home.contact.hours')}</p>
-                                            <p className="text-sm text-muted-foreground whitespace-pre-line">
-                                                {t('home.contact.hoursValue')}
-                                            </p>
-                                        </div>
+                                )}
+                                <div className="flex items-start gap-3">
+                                    <ChatBubbleLeftRightIcon className="mt-0.5 h-5 w-5 text-bd-ink-3" />
+                                    <div>
+                                        <p className="text-[0.95rem] font-medium text-bd-ink">{t('home.contact.hours')}</p>
+                                        <p className="whitespace-pre-line text-sm text-bd-ink-2">
+                                            {t('home.contact.hoursValue')}
+                                        </p>
                                     </div>
-                                    <div className="flex items-start gap-3">
-                                        <MapPinIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
-                                        <div>
-                                            <p className="font-medium">{t('home.contact.address')}</p>
-                                            <p className="text-sm text-muted-foreground whitespace-pre-line">
-                                                {address}
-                                            </p>
-                                        </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <MapPinIcon className="mt-0.5 h-5 w-5 text-bd-ink-3" />
+                                    <div>
+                                        <p className="text-[0.95rem] font-medium text-bd-ink">{t('home.contact.address')}</p>
+                                        <p className="whitespace-pre-line text-sm text-bd-ink-2">{address}</p>
                                     </div>
-                                </CardContent>
-                            </Card>
-
-                            {!isAuthenticated && (
-                                <Card className="bg-gradient-to-br from-icc-blue/10 to-icc-purple/10 border-icc-blue/20">
-                                    <CardHeader>
-                                        <CardTitle>{t('home.contact.joinTitle')}</CardTitle>
-                                        <CardDescription>
-                                            {t('home.contact.joinDesc')}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="flex flex-col gap-3">
-                                        <Button size="lg" asChild className="w-full">
-                                            <Link href={route('register')}>
-                                                {t('home.contact.registerFree')}
-                                            </Link>
-                                        </Button>
-                                        <Button size="lg" variant="outline" asChild className="w-full">
-                                            <Link href={route('login')}>
-                                                {t('home.contact.signIn')}
-                                            </Link>
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            )}
-
-                            {isAuthenticated && (
-                                <Card className="bg-gradient-to-br from-icc-blue/10 to-icc-purple/10 border-icc-blue/20">
-                                    <CardHeader>
-                                        <CardTitle>{t('home.contact.dashboardTitle')}</CardTitle>
-                                        <CardDescription>
-                                            {t('home.contact.dashboardDesc')}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Button size="lg" asChild className="w-full">
-                                            <Link href={route('dashboard')}>
-                                                {t('home.contact.dashboardBtn')}
-                                            </Link>
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            )}
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Right Column - Contact Form */}
-                        <Card className="shadow-lg">
-                            <CardHeader>
-                                <CardTitle>{t('home.contact.formTitle')}</CardTitle>
-                                <CardDescription>
-                                    {t('home.contact.formDesc')}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <form onSubmit={handleContactSubmit} className="space-y-6">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="name">
-                                            {t('home.contact.fullName')} <span className="text-destructive">*</span>
-                                        </Label>
-                                        <div className="relative">
-                                            <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                            <Input
-                                                id="name"
-                                                type="text"
-                                                value={contactData.name}
-                                                onChange={(e) => setContactData({ ...contactData, name: e.target.value })}
-                                                className="pl-10"
-                                                placeholder={t('home.contact.namePlaceholder')}
-                                                required
-                                            />
-                                        </div>
-                                        {errors.name && (
-                                            <p className="text-sm text-destructive">{errors.name}</p>
-                                        )}
-                                    </div>
+                        {!isAuthenticated && (
+                            <div className="rounded-2xl border border-bd-line bg-bd-brand-soft p-7">
+                                <h3 className="font-display text-[1.25rem] font-semibold text-bd-ink">
+                                    {t('home.contact.joinTitle')}
+                                </h3>
+                                <p className="mt-2 text-[0.97rem] text-bd-ink-2">{t('home.contact.joinDesc')}</p>
+                                <div className="mt-5 flex flex-col gap-3">
+                                    <Link href={route('register')} className={`${primaryButtonClass} w-full`}>
+                                        {t('home.contact.registerFree')}
+                                    </Link>
+                                    <Link href={route('login')} className={`${outlineButtonClass} w-full`}>
+                                        {t('home.contact.signIn')}
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">
-                                            {t('home.contact.email')} <span className="text-destructive">*</span>
-                                        </Label>
-                                        <div className="relative">
-                                            <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                            <Input
-                                                id="email"
-                                                type="email"
-                                                value={contactData.email}
-                                                onChange={(e) => setContactData({ ...contactData, email: e.target.value })}
-                                                className="pl-10"
-                                                placeholder={t('home.contact.emailPlaceholder')}
-                                                required
-                                            />
-                                        </div>
-                                        {errors.email && (
-                                            <p className="text-sm text-destructive">{errors.email}</p>
-                                        )}
-                                    </div>
+                        {isAuthenticated && (
+                            <div className="rounded-2xl border border-bd-line bg-bd-brand-soft p-7">
+                                <h3 className="font-display text-[1.25rem] font-semibold text-bd-ink">
+                                    {t('home.contact.dashboardTitle')}
+                                </h3>
+                                <p className="mt-2 text-[0.97rem] text-bd-ink-2">{t('home.contact.dashboardDesc')}</p>
+                                <div className="mt-5">
+                                    <Link href={route('dashboard')} className={`${primaryButtonClass} w-full`}>
+                                        {t('home.contact.dashboardBtn')}
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="phone">{t('home.contact.phone')}</Label>
-                                        <div className="relative">
-                                            <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                                            <Input
-                                                id="phone"
-                                                type="tel"
-                                                value={contactData.phone}
-                                                onChange={(e) => setContactData({ ...contactData, phone: e.target.value })}
-                                                className="pl-10"
-                                                placeholder="+49 151 23456789"
-                                            />
-                                        </div>
-                                        {errors.phone && (
-                                            <p className="text-sm text-destructive">{errors.phone}</p>
-                                        )}
-                                    </div>
+                    {/* Right Column - Contact Form */}
+                    <div className="rounded-2xl border border-bd-line bg-bd-surface p-7 shadow-[0_18px_40px_-28px_oklch(0.5_0.08_205_/_0.6)]">
+                        <h3 className="font-display text-[1.25rem] font-semibold text-bd-ink">
+                            {t('home.contact.formTitle')}
+                        </h3>
+                        <p className="mt-2 text-[0.97rem] text-bd-ink-2">{t('home.contact.formDesc')}</p>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="subject">
-                                            {t('home.contact.subject')} <span className="text-destructive">*</span>
-                                        </Label>
-                                        <Input
-                                            id="subject"
-                                            type="text"
-                                            value={contactData.subject}
-                                            onChange={(e) => setContactData({ ...contactData, subject: e.target.value })}
-                                            placeholder={t('home.contact.subjectPlaceholder')}
-                                            required
-                                        />
-                                        {errors.subject && (
-                                            <p className="text-sm text-destructive">{errors.subject}</p>
-                                        )}
-                                    </div>
+                        <form onSubmit={handleContactSubmit} className="mt-6 flex flex-col gap-5">
+                            <div className="flex flex-col gap-2">
+                                <label htmlFor="name" className={labelClass}>
+                                    {t('home.contact.fullName')} <span className="text-vermillion-600">*</span>
+                                </label>
+                                <div className="relative">
+                                    <UserIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-bd-ink-3" />
+                                    <input
+                                        id="name"
+                                        type="text"
+                                        value={contactData.name}
+                                        onChange={(e) => setContactData({ ...contactData, name: e.target.value })}
+                                        className={`${fieldClass} pl-10`}
+                                        placeholder={t('home.contact.namePlaceholder')}
+                                        required
+                                    />
+                                </div>
+                                {errors.name && <p className="text-sm text-vermillion-600">{errors.name}</p>}
+                            </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="message">
-                                            {t('home.contact.message')} <span className="text-destructive">*</span>
-                                        </Label>
-                                        <Textarea
-                                            id="message"
-                                            value={contactData.message}
-                                            onChange={(e) => setContactData({ ...contactData, message: e.target.value })}
-                                            placeholder={t('home.contact.messagePlaceholder')}
-                                            className="min-h-[150px]"
-                                            required
-                                        />
-                                        {errors.message && (
-                                            <p className="text-sm text-destructive">{errors.message}</p>
-                                        )}
-                                    </div>
+                            <div className="flex flex-col gap-2">
+                                <label htmlFor="email" className={labelClass}>
+                                    {t('home.contact.email')} <span className="text-vermillion-600">*</span>
+                                </label>
+                                <div className="relative">
+                                    <EnvelopeIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-bd-ink-3" />
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        value={contactData.email}
+                                        onChange={(e) => setContactData({ ...contactData, email: e.target.value })}
+                                        className={`${fieldClass} pl-10`}
+                                        placeholder={t('home.contact.emailPlaceholder')}
+                                        required
+                                    />
+                                </div>
+                                {errors.email && <p className="text-sm text-vermillion-600">{errors.email}</p>}
+                            </div>
 
-                                    <Button
-                                        type="submit"
-                                        className="w-full"
-                                        disabled={processing}
-                                    >
-                                        {processing ? (
-                                            <>
-                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                                {t('home.contact.sending')}
-                                            </>
-                                        ) : (
-                                            <>
-                                                <EnvelopeIcon className="h-5 w-5 mr-2" />
-                                                {t('home.contact.send')}
-                                            </>
-                                        )}
-                                    </Button>
-                                </form>
-                            </CardContent>
-                        </Card>
+                            <div className="flex flex-col gap-2">
+                                <label htmlFor="phone" className={labelClass}>
+                                    {t('home.contact.phone')}
+                                </label>
+                                <div className="relative">
+                                    <PhoneIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-bd-ink-3" />
+                                    <input
+                                        id="phone"
+                                        type="tel"
+                                        value={contactData.phone}
+                                        onChange={(e) => setContactData({ ...contactData, phone: e.target.value })}
+                                        className={`${fieldClass} pl-10`}
+                                        placeholder="+49 151 23456789"
+                                    />
+                                </div>
+                                {errors.phone && <p className="text-sm text-vermillion-600">{errors.phone}</p>}
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label htmlFor="subject" className={labelClass}>
+                                    {t('home.contact.subject')} <span className="text-vermillion-600">*</span>
+                                </label>
+                                <input
+                                    id="subject"
+                                    type="text"
+                                    value={contactData.subject}
+                                    onChange={(e) => setContactData({ ...contactData, subject: e.target.value })}
+                                    className={fieldClass}
+                                    placeholder={t('home.contact.subjectPlaceholder')}
+                                    required
+                                />
+                                {errors.subject && <p className="text-sm text-vermillion-600">{errors.subject}</p>}
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label htmlFor="message" className={labelClass}>
+                                    {t('home.contact.message')} <span className="text-vermillion-600">*</span>
+                                </label>
+                                <textarea
+                                    id="message"
+                                    value={contactData.message}
+                                    onChange={(e) => setContactData({ ...contactData, message: e.target.value })}
+                                    placeholder={t('home.contact.messagePlaceholder')}
+                                    className={`${fieldClass} min-h-[150px] resize-y`}
+                                    required
+                                />
+                                {errors.message && <p className="text-sm text-vermillion-600">{errors.message}</p>}
+                            </div>
+
+                            <button type="submit" className={`${primaryButtonClass} w-full`} disabled={processing}>
+                                {processing ? (
+                                    <>
+                                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                        {t('home.contact.sending')}
+                                    </>
+                                ) : (
+                                    <>
+                                        <EnvelopeIcon className="mr-2 h-5 w-5" />
+                                        {t('home.contact.send')}
+                                    </>
+                                )}
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
