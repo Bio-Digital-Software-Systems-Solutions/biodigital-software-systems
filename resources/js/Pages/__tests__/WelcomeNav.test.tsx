@@ -6,6 +6,7 @@ import Welcome from '@/Pages/Welcome';
 
 // Mock the heavy homepage sub-sections so this test focuses on the navigation bar.
 vi.mock('@/Components/LandingPage/HeroSlider', () => ({ default: () => <div data-testid="hero" /> }));
+vi.mock('@/Components/LandingPage/AboutSection', () => ({ default: () => null }));
 vi.mock('@/Components/LandingPage/ServicesSection', () => ({ default: () => null }));
 vi.mock('@/Components/LandingPage/TrainingBrowseSection', () => ({ default: () => null }));
 vi.mock('@/Components/LandingPage/ProcessSection', () => ({ default: () => null }));
@@ -39,6 +40,7 @@ describe('Welcome navigation bar', () => {
     it('renders the redesigned navigation links and guest CTA in French', () => {
         renderWelcome({ user: null });
 
+        expect(screen.getByRole('link', { name: 'À propos' })).toHaveAttribute('href', '#about');
         expect(screen.getByRole('link', { name: 'Services' })).toHaveAttribute('href', '#services');
         expect(screen.getByRole('link', { name: 'Formations' })).toHaveAttribute('href', '#trainings');
         expect(screen.getByRole('link', { name: 'Déroulé' })).toHaveAttribute('href', '#process');

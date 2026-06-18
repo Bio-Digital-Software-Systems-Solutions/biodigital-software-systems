@@ -26,11 +26,8 @@ export default function GuestLayout({ children, title }: GuestLayoutProps) {
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between h-16">
                             <div className="flex items-center">
-                                <Link className="flex-shrink-0 flex items-center gap-2 sm:gap-3" href="/">
-                                    <img src="/Logo.png" alt={appName} className="h-8 w-8 sm:h-10 sm:w-10 object-contain" />
-                                    <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-icc-blue via-icc-purple to-icc-red bg-clip-text text-transparent">
-                                        {appName}
-                                    </h1>
+                                <Link className="flex-shrink-0 flex items-center" href="/">
+                                    <img src="/Logo.png" alt={appName} className="h-9 sm:h-11 w-auto object-contain" />
                                 </Link>
                                 {/* Desktop Navigation */}
                                 <div className="hidden lg:ml-10 lg:flex lg:space-x-2">

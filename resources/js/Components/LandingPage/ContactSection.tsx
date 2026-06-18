@@ -83,7 +83,7 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
             className={`border-t border-bd-line ${resolved.sectionClass} ${resolved.hasPadding ? '' : 'py-16 sm:py-20 lg:py-24'}`}
             style={resolved.sectionStyle}
         >
-            <div className="mx-auto max-w-[1140px] px-5 sm:px-8 lg:px-10">
+            <div className="mx-auto max-w-none px-5 sm:px-8 lg:px-10">
                 <div className={`max-w-[62ch] ${resolved.alignmentClass}`}>
                     <p className="mb-3.5 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-bd-brand-deep">
                         {badge}

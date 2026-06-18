@@ -18,7 +18,7 @@ export default function SiteFooter() {
     const { t } = useTranslation();
 
     return (
-        <footer className="mx-auto max-w-[1140px] border-t border-bd-line px-5 pb-9 pt-12 sm:px-8 lg:px-10">
+        <footer className="mx-auto max-w-none border-t border-bd-line px-5 pb-9 pt-12 sm:px-8 lg:px-10">
             <div className="flex flex-wrap justify-between gap-8">
                 <div className="max-w-[32ch]">
                     <Link href="/" aria-label="Bio-Digital Software Systems">

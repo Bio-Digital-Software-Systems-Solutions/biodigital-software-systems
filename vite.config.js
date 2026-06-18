@@ -18,5 +18,11 @@ export default defineConfig({
             host: 'localhost', // Use localhost for HMR URLs in browser
             port: 5173,
         },
+        watch: {
+            // Native fs events don't cross the macOS host -> Linux container
+            // bind mount, so poll for changes to keep HMR/watch working.
+            usePolling: true,
+            interval: 300,
+        },
     },
 });

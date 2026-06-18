@@ -1,7 +1,6 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge } from '../ui/badge';
-import { resolveDesign, type DesignSettings } from '@/lib/sectionDesign';
+import { Dna, Sparkles, Layers, ShieldCheck, Rocket, Network, Cloud, type LucideIcon } from 'lucide-react';
+import type { DesignSettings } from '@/lib/sectionDesign';
 
 export interface AboutContent {
   badge?: string;
@@ -30,252 +29,181 @@ interface AboutSectionProps {
   design?: DesignSettings | null;
 }
 
+interface Competency {
+  icon: LucideIcon;
+  titleKey: string;
+  bodyKey: string;
+}
+
+const COMPETENCIES: Competency[] = [
+  { icon: Dna, titleKey: 'home.about.competencies.bioinfo.title', bodyKey: 'home.about.competencies.bioinfo.body' },
+  { icon: Sparkles, titleKey: 'home.about.competencies.ai.title', bodyKey: 'home.about.competencies.ai.body' },
+  { icon: Layers, titleKey: 'home.about.competencies.fullstack.title', bodyKey: 'home.about.competencies.fullstack.body' },
+  { icon: ShieldCheck, titleKey: 'home.about.competencies.industry.title', bodyKey: 'home.about.competencies.industry.body' },
+];
+
+const FACTS = [
+  { value: '3x', labelKey: 'home.about.facts.faster' },
+  { value: 'GxP', labelKey: 'home.about.facts.gxp' },
+  { value: 'NGS', labelKey: 'home.about.facts.ngs' },
+];
+
 const TECH_STACK = ['Laravel', 'React', 'TypeScript', 'GraphQL', 'Java', 'Python', 'Cloud-Infrastruktur'];
 
-const AboutSection: React.FC<AboutSectionProps> = ({ content, design }) => {
+const HOW_STEPS: Competency[] = [
+  { icon: Rocket, titleKey: 'home.about.how.ttm.title', bodyKey: 'home.about.how.ttm.body' },
+  { icon: Network, titleKey: 'home.about.how.interop.title', bodyKey: 'home.about.how.interop.body' },
+  { icon: Cloud, titleKey: 'home.about.how.cloud.title', bodyKey: 'home.about.how.cloud.body' },
+];
+
+const COMPLIANCE = [
+  'home.about.compliance.gmp',
+  'home.about.compliance.glp',
+  'home.about.compliance.gcp',
+];
+
+/**
+ * "À propos / About" band: company introduction, core competencies, key facts,
+ * technology stack and the regulatory-compliance audience block. Themed with the
+ * Bio-Digital landing tokens (bd-*) to match the public homepage.
+ */
+export default function AboutSection({ content }: AboutSectionProps) {
   const { t } = useTranslation();
-  const resolved = resolveDesign(design);
+
   const badge = content?.badge ?? t('home.about.badge');
   const heading = content?.heading ?? t('home.about.heading');
-  const paragraphs = content?.paragraphs ?? [
-    t('home.about.p1'),
-    t('home.about.p2'),
-  ];
+  const paragraphs = content?.paragraphs ?? [t('home.about.p1'), t('home.about.p2')];
   const imageUrl = content?.image_url ?? '/ecosystem.png';
 
   return (
-    <div
-      id="about"
-      className={`bg-gray-50 dark:bg-gray-900 px-6 md:px-12 ${resolved.sectionClass} ${resolved.hasPadding ? '' : 'py-16'}`}
-      style={resolved.sectionStyle}
-    >
-      <div className={`space-y-4 mb-16 ${resolved.alignmentClass || 'text-center'}`}>
-        <Badge variant="secondary" className="mb-2">
-          {badge}
-        </Badge>
-      </div>
-      <div className="max-w-7xl mx-auto">
-
-        {/* Section 1: Geschäftsidee */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-24">
-          {/* Left side - Text content */}
-          <div className="space-y-6">
-            <h1 className={`font-bold text-gray-900 dark:text-white leading-tight ${resolved.headingClass || 'text-5xl lg:text-6xl'}`}>
+    <section id="about" className="border-t border-bd-line py-16 sm:py-20 lg:py-24">
+      <div className="mx-auto max-w-none px-5 sm:px-8 lg:px-10">
+        {/* Intro */}
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
+          <div className="max-w-[62ch]">
+            <p className="mb-3.5 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-bd-brand-deep">
+              {badge}
+            </p>
+            <h2 className="font-display text-[clamp(1.7rem,3.4vw,2.5rem)] font-semibold tracking-tight text-bd-ink">
               {heading}
-            </h1>
-            {paragraphs.map((p, i) => (
-              <p key={i} className={`text-gray-500 dark:text-gray-400 leading-relaxed ${resolved.paragraphClass || 'text-lg'}`}>
-                {p}
+            </h2>
+            {paragraphs.map((paragraph, index) => (
+              <p key={index} className="mt-3.5 text-[1.05rem] leading-relaxed text-bd-ink-2">
+                {paragraph}
               </p>
             ))}
           </div>
 
-          {/* Right side - Tech image */}
           <div className="flex items-center justify-center">
             <img
               src={imageUrl}
               alt={heading}
-              className="w-full h-auto max-h-[32rem] object-contain rounded-lg"
+              className="h-auto max-h-[28rem] w-full rounded-2xl border border-bd-line bg-bd-surface object-contain p-2"
             />
           </div>
         </div>
 
-        {/* Section 2: Kernkompetenzen */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 mb-24">
-          {/* Left side - Competencies (2/3 width) */}
-          <div className="lg:col-span-2 space-y-8">
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
+        {/* Core competencies + key facts */}
+        <div className="mt-16 grid gap-10 lg:grid-cols-3 lg:gap-12">
+          <div className="lg:col-span-2">
+            <h3 className="font-display text-[clamp(1.35rem,2.4vw,1.75rem)] font-semibold tracking-tight text-bd-ink">
               {t('home.about.competencies.heading')}
-            </h2>
-            <div className="space-y-6 text-gray-500 dark:text-gray-400 text-lg leading-relaxed">
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-4 border-primary">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.competencies.bioinfo.title')}</h3>
-                <p>{t('home.about.competencies.bioinfo.body')}</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-4 border-green-500">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.competencies.ai.title')}</h3>
-                <p>{t('home.about.competencies.ai.body')}</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-4 border-purple-500">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.competencies.fullstack.title')}</h3>
-                <p>{t('home.about.competencies.fullstack.body')}</p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border-l-4 border-blue-500">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.competencies.industry.title')}</h3>
-                <p>{t('home.about.competencies.industry.body')}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right side - Key facts (1/3 width) */}
-          <div className="space-y-12 text-center">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
-              <div className="text-4xl font-bold text-primary dark:text-blue-400 mb-2">3x</div>
-              <div className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">{t('home.about.facts.faster')}</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
-              <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">GxP</div>
-              <div className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">{t('home.about.facts.gxp')}</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
-              <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">NGS</div>
-              <div className="text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wide">{t('home.about.facts.ngs')}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 3: Leistungsangebot */}
-        <div className="mb-24">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-12 text-center">
-            {t('home.about.services.heading')}
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Bio-MVP Turbo */}
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-primary dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.services.mvp.title')}</h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                {t('home.about.services.mvp.body')}
-              </p>
-            </div>
-
-            {/* Middleware-Lösungen */}
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.services.middleware.title')}</h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                {t('home.about.services.middleware.body')}
-              </p>
-            </div>
-
-            {/* SaaS-Plattform-Entwicklungen */}
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 1.096A4.002 4.002 0 003 15z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.services.saas.title')}</h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                {t('home.about.services.saas.body')}
-              </p>
-            </div>
-
-            {/* Software im Kundenauftrag */}
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{t('home.about.services.custom.title')}</h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                {t('home.about.services.custom.body')}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 4: Technologie-Stack */}
-        <div className="mb-24">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-            {t('home.about.tech.heading')}
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 text-lg text-center mb-12 max-w-3xl mx-auto">
-            {t('home.about.tech.subtitle')}
-          </p>
-          <div className="relative rounded-3xl overflow-hidden bg-white dark:bg-gray-800 shadow-2xl p-10">
-            <div className="flex flex-wrap justify-center gap-4">
-              {TECH_STACK.map((tech) => (
-                <span
-                  key={tech}
-                  className="px-6 py-3 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold text-lg shadow-sm"
+            </h3>
+            <div className="mt-7 grid gap-5 sm:grid-cols-2">
+              {COMPETENCIES.map(({ icon: Icon, titleKey, bodyKey }) => (
+                <article
+                  key={titleKey}
+                  className="rounded-2xl border border-bd-line bg-bd-surface p-7 transition-all duration-200 hover:-translate-y-0.5 hover:border-bd-brand hover:shadow-[0_18px_40px_-28px_oklch(0.5_0.08_205_/_0.6)]"
                 >
-                  {tech}
-                </span>
+                  <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-bd-brand-soft text-bd-brand-deep">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <h4 className="font-display text-[1.15rem] font-semibold text-bd-ink">{t(titleKey)}</h4>
+                  <p className="mt-2 text-[0.97rem] text-bd-ink-2">{t(bodyKey)}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid content-start gap-5">
+            {FACTS.map((fact) => (
+              <div
+                key={fact.value}
+                className="rounded-2xl border border-bd-line bg-bd-surface-2 p-6 text-center"
+              >
+                <div className="font-display text-4xl font-semibold text-bd-brand-deep">{fact.value}</div>
+                <div className="mt-2 text-[0.8rem] uppercase tracking-[0.1em] text-bd-ink-3">
+                  {t(fact.labelKey)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Technology stack */}
+        <div className="mt-16">
+          <h3 className="font-display text-[clamp(1.35rem,2.4vw,1.75rem)] font-semibold tracking-tight text-bd-ink">
+            {t('home.about.tech.heading')}
+          </h3>
+          <p className="mt-3 max-w-[62ch] text-[1.05rem] text-bd-ink-2">{t('home.about.tech.subtitle')}</p>
+          <div className="mt-7 flex flex-wrap gap-3 rounded-2xl border border-bd-line bg-bd-surface p-7">
+            {TECH_STACK.map((tech) => (
+              <span
+                key={tech}
+                className="rounded-full bg-bd-surface-2 px-5 py-2.5 text-[0.95rem] font-semibold text-bd-ink"
+              >
+                {tech}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Audience & compliance */}
+        <div className="mt-16">
+          <h3 className="font-display text-[clamp(1.35rem,2.4vw,1.75rem)] font-semibold tracking-tight text-bd-ink">
+            {t('home.about.audience.heading')}
+          </h3>
+          <div className="mt-7 grid gap-5 md:grid-cols-2">
+            <div className="rounded-2xl border border-bd-line bg-bd-surface p-7">
+              <h4 className="font-display text-[1.25rem] font-semibold text-bd-ink">
+                {t('home.about.audience.bridge.title')}
+              </h4>
+              <p className="mt-2 text-[0.97rem] text-bd-ink-2">{t('home.about.audience.bridge.body')}</p>
+            </div>
+            <div className="rounded-2xl border border-bd-line bg-bd-surface p-7">
+              <h4 className="font-display text-[1.25rem] font-semibold text-bd-ink">
+                {t('home.about.compliance.title')}
+              </h4>
+              <ul className="mt-3 space-y-2.5">
+                {COMPLIANCE.map((key) => (
+                  <li key={key} className="flex items-center gap-3 text-[0.97rem] text-bd-ink-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-bd-brand" aria-hidden="true" />
+                    {t(key)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* How we work */}
+          <div className="mt-5 rounded-2xl border border-bd-line bg-bd-surface-2 p-7 sm:p-9">
+            <h4 className="text-center font-display text-[1.25rem] font-semibold text-bd-ink">
+              {t('home.about.how.heading')}
+            </h4>
+            <div className="mt-7 grid gap-6 sm:grid-cols-3">
+              {HOW_STEPS.map(({ icon: Icon, titleKey, bodyKey }) => (
+                <div key={titleKey} className="text-center">
+                  <div className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl bg-bd-brand text-white">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <h5 className="font-display text-[1.02rem] font-semibold text-bd-ink">{t(titleKey)}</h5>
+                  <p className="mt-1.5 text-[0.9rem] text-bd-ink-3">{t(bodyKey)}</p>
+                </div>
               ))}
             </div>
           </div>
         </div>
-
-        {/* Section 5: Zielgruppen & Compliance */}
-        <div className="max-w-6xl mb-8">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
-            {t('home.about.audience.heading')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{t('home.about.audience.bridge.title')}</h3>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                {t('home.about.audience.bridge.body')}
-              </p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{t('home.about.compliance.title')}</h3>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-primary rounded-full"></div>
-                  <span className="text-gray-600 dark:text-gray-400">{t('home.about.compliance.gmp')}</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-600 dark:text-gray-400">{t('home.about.compliance.glp')}</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                  <span className="text-gray-600 dark:text-gray-400">{t('home.about.compliance.gcp')}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* So arbeiten wir */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-8 rounded-2xl mb-8">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">{t('home.about.how.heading')}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-primary dark:bg-primary rounded-full flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h4 className="font-bold text-gray-900 dark:text-white mb-2">{t('home.about.how.ttm.title')}</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">{t('home.about.how.ttm.body')}</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-purple-500 dark:bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                </div>
-                <h4 className="font-bold text-gray-900 dark:text-white mb-2">{t('home.about.how.interop.title')}</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">{t('home.about.how.interop.body')}</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-green-500 dark:bg-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 1.096A4.002 4.002 0 003 15z" />
-                  </svg>
-                </div>
-                <h4 className="font-bold text-gray-900 dark:text-white mb-2">{t('home.about.how.cloud.title')}</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">{t('home.about.how.cloud.body')}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
-    </div>
+    </section>
   );
-};
-
-export default AboutSection;
+}

@@ -538,14 +538,17 @@ setup: docker-check docker-clean docker-build
 	docker-compose exec app php artisan storage:link
 	@echo "Starting remaining services (queue, scheduler, ...)..."
 	docker-compose up -d
-	docker-compose --profile dev up -d node
+	@echo "Starting Vite dev server in watch mode (HMR)..."
+	docker-compose up -d node
 	@echo ""
 	@echo "${GREEN}Setup complete!${RESET}"
+	@echo "${GREEN}Vite tourne en mode watch : modifiez un fichier et rechargez — aucun rebuild nécessaire.${RESET}"
+	@echo "⚡ Vite HMR:     http://vite.bio-digital-software-systems.localhost"
 	@echo ""
 
 # Start application with all services (main command)
 start: docker-check
-	@echo "Starting ICC Munich application..."
+	@echo "Starting  application..."
 	@echo "Building and pulling images..."
 	@docker-compose build --pull
 	@docker-compose up -d
@@ -554,8 +557,11 @@ start: docker-check
 	@echo "Resetting database with fresh migrations and seeders..."
 	@docker-compose exec -T -e XDEBUG_MODE=off -e TELESCOPE_ENABLED=false app php artisan migrate:fresh --seed --force
 	@docker-compose restart queue
+	@echo "Starting Vite dev server in watch mode (HMR)..."
+	@docker-compose up -d node
 	@echo ""
 	@echo "✅ All services started!"
+	@echo "✅ Vite tourne en mode watch : modifiez un fichier et rechargez — aucun rebuild nécessaire."
 	@echo ""
 	@echo "📱 Application:  http://bio-digital-software-systems.localhost"
 	@echo "📧 Mailhog:      http://mail.bio-digital-software-systems.localhost"
@@ -570,7 +576,7 @@ start: docker-check
 
 # Stop all Docker containers
 stop:
-	@echo "Stopping ICC Munich application..."
+	@echo "Stopping application..."
 	@docker-compose down
 	@echo ""
 	@echo "✅ All services stopped!"

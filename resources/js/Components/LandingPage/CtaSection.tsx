@@ -9,7 +9,7 @@ export default function CtaSection() {
     const { t } = useTranslation();
 
     return (
-        <div className="mx-auto max-w-[1140px] px-5 sm:px-8 lg:px-10">
+        <div className="mx-auto max-w-none px-5 sm:px-8 lg:px-10">
             <section
                 id="contact"
                 className="my-16 rounded-2xl bg-bd-brand px-8 py-12 text-center text-white sm:my-20 sm:px-12 sm:py-16 lg:my-24"

@@ -10,6 +10,7 @@ interface GuestNavbarProps {
 }
 
 const NAV_LINKS = [
+    { href: '#about', key: 'home.nav.about' },
     { href: '#services', key: 'home.nav.services' },
     { href: '#trainings', key: 'home.nav.trainings' },
     { href: '#process', key: 'home.nav.process' },
@@ -27,7 +28,7 @@ export default function GuestNavbar({ isAuthenticated }: GuestNavbarProps) {
 
     return (
         <header className="sticky top-0 z-[60] border-b border-bd-line bg-bd-bg/80 backdrop-blur-md">
-            <div className="mx-auto flex h-[66px] max-w-[1140px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10">
+            <div className="mx-auto flex h-[66px] max-w-none items-center justify-between gap-4 px-5 sm:px-8 lg:px-10">
                 <Link href="/" aria-label="Bio-Digital Software Systems">
                     <BrandMark />
                 </Link>
@@ -87,7 +88,7 @@ export default function GuestNavbar({ isAuthenticated }: GuestNavbarProps) {
 
             {mobileMenuOpen && (
                 <div className="border-t border-bd-line bg-bd-bg lg:hidden">
-                    <nav className="mx-auto flex max-w-[1140px] flex-col gap-1 px-5 py-3 sm:px-8">
+                    <nav className="mx-auto flex max-w-none flex-col gap-1 px-5 py-3 sm:px-8">
                         {NAV_LINKS.map((link) => (
                             <a
                                 key={link.href}

@@ -140,7 +140,7 @@ export default function HeroSlider() {
     }, [start, stop]);
 
     return (
-        <section className="mx-auto max-w-[1140px] px-5 pb-12 pt-8 sm:px-8 lg:px-10 lg:pb-16">
+        <section className="mx-auto max-w-none px-5 pb-12 pt-8 sm:px-8 lg:px-10 lg:pb-16">
             <div
                 className="relative min-h-[420px] overflow-hidden rounded-2xl border border-bd-line bg-bd-surface sm:min-h-[460px] lg:min-h-[520px]"
                 aria-roledescription="carousel"

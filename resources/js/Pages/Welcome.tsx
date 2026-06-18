@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Toaster } from 'sonner';
 import GuestNavbar from '@/Components/LandingPage/GuestNavbar';
 import HeroSlider from '@/Components/LandingPage/HeroSlider';
+import AboutSection from '@/Components/LandingPage/AboutSection';
 import ServicesSection from '@/Components/LandingPage/ServicesSection';
 import TrainingBrowseSection from '@/Components/LandingPage/TrainingBrowseSection';
 import ProcessSection from '@/Components/LandingPage/ProcessSection';
@@ -31,6 +32,7 @@ export default function Welcome({ auth }: WelcomeProps) {
 
                 <main>
                     <HeroSlider />
+                    <AboutSection />
                     <ServicesSection />
                     {/* Formations: the dynamic browser keeps real enrollment working. */}
                     <TrainingBrowseSection />

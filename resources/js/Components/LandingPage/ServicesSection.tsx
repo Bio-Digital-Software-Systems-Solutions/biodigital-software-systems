@@ -23,7 +23,7 @@ export default function ServicesSection() {
 
     return (
         <section id="services" className="border-t border-bd-line py-16 sm:py-20 lg:py-24">
-            <div className="mx-auto max-w-[1140px] px-5 sm:px-8 lg:px-10">
+            <div className="mx-auto max-w-none px-5 sm:px-8 lg:px-10">
                 <div className="max-w-[62ch]">
                     <p className="mb-3.5 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-bd-brand-deep">
                         {t('home.services.kicker')}

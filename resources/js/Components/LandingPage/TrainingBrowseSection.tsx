@@ -599,7 +599,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
         className={`bg-bd-bg px-5 sm:px-8 lg:px-10 ${resolvedDesign.sectionClass} ${resolvedDesign.hasPadding ? '' : 'py-16 sm:py-20 lg:py-24'}`}
         style={resolvedDesign.sectionStyle}
       >
-        <div className="max-w-[1140px] mx-auto">
+        <div className="max-w-none mx-auto">
           <div className="mb-11 max-w-[62ch]">
             <p className="mb-3.5 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-bd-brand-deep">{headerBadge}</p>
             <h2 className="font-display text-[clamp(1.7rem,3.4vw,2.5rem)] font-semibold tracking-tight text-bd-ink">
@@ -622,7 +622,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
       className={`bg-bd-bg px-5 sm:px-8 lg:px-10 ${resolvedDesign.sectionClass} ${design?.padding ? '' : 'py-16 sm:py-20 lg:py-24'}`}
       style={resolvedDesign.sectionStyle}
     >
-      <div className="max-w-[1140px] mx-auto">
+      <div className="max-w-none mx-auto">
         <div className="mb-11 max-w-[62ch]">
           <p className="mb-3.5 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-bd-brand-deep">{headerBadge}</p>
           <h2 className="font-display text-[clamp(1.7rem,3.4vw,2.5rem)] font-semibold tracking-tight text-bd-ink">
