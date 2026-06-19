@@ -98,7 +98,7 @@ export default function AboutSection({ content }: AboutSectionProps) {
             <img
               src={imageUrl}
               alt={heading}
-              className="h-auto max-h-[28rem] w-full rounded-2xl border border-bd-line bg-bd-surface object-contain p-2"
+              className="h-auto w-full rounded-2xl border border-bd-line object-cover"
             />
           </div>
         </div>

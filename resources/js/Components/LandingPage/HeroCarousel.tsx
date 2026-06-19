@@ -23,7 +23,7 @@ interface HeroSlideDef {
 const SLIDES: HeroSlideDef[] = [
     {
         id: 1,
-        image: '/1.png',
+        image: '',
         eyebrow: 'home.hero.s1.eyebrow',
         title: 'home.hero.s1.title',
         desc: 'home.hero.s1.desc',
@@ -32,7 +32,7 @@ const SLIDES: HeroSlideDef[] = [
     },
     {
         id: 2,
-        image: '/2.png',
+        image: '',
         eyebrow: 'home.hero.s2.eyebrow',
         title: 'home.hero.s2.title',
         desc: 'home.hero.s2.desc',
@@ -41,7 +41,7 @@ const SLIDES: HeroSlideDef[] = [
     },
     {
         id: 3,
-        image: '/3.png',
+        image: '',
         eyebrow: 'home.hero.s3.eyebrow',
         title: 'home.hero.s3.title',
         desc: 'home.hero.s3.desc',
