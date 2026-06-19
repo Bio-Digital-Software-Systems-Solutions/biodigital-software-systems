@@ -9,6 +9,7 @@ vi.mock('@inertiajs/react', () => ({
     Link: ({ children, href }: any) => <a href={href}>{children}</a>,
     usePage: () => ({
         props: {
+            app: { name: 'BioDigital' },
             auth: {
                 user: {
                     id: 1,
@@ -22,6 +23,8 @@ vi.mock('@inertiajs/react', () => ({
         },
     }),
 }));
+
+(global as unknown as { route: (name: string) => string }).route = (name: string) => `/${name}`;
 
 describe('DashboardLayout', () => {
     describe('Rendering', () => {

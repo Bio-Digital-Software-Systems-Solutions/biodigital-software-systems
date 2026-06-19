@@ -73,7 +73,7 @@ export default function AboutSection({ content }: AboutSectionProps) {
   const badge = content?.badge ?? t('home.about.badge');
   const heading = content?.heading ?? t('home.about.heading');
   const paragraphs = content?.paragraphs ?? [t('home.about.p1'), t('home.about.p2')];
-  const imageUrl = content?.image_url ?? '/ecosystem.png';
+  const imageUrl = content?.image_url ?? '/3.png';
 
   return (
     <section id="about" className="border-t border-bd-line py-16 sm:py-20 lg:py-24">
@@ -113,7 +113,7 @@ export default function AboutSection({ content }: AboutSectionProps) {
               {COMPETENCIES.map(({ icon: Icon, titleKey, bodyKey }) => (
                 <article
                   key={titleKey}
-                  className="rounded-2xl border border-bd-line bg-bd-surface p-7 transition-all duration-200 hover:-translate-y-0.5 hover:border-bd-brand hover:shadow-[0_18px_40px_-28px_oklch(0.5_0.08_205_/_0.6)]"
+                  className="rounded-2xl border border-bd-line bg-bd-surface p-7 transition-all duration-200 hover:-translate-y-0.5 hover:border-bd-brand hover:shadow-[0_18px_40px_-28px_oklch(0.5_0.18_22_/_0.6)]"
                 >
                   <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-bd-brand-soft text-bd-brand-deep">
                     <Icon className="h-5 w-5" aria-hidden="true" />

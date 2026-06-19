@@ -43,6 +43,7 @@ import { useNotifications } from '@/Hooks/useNotifications';
 import { Role, isAdmin, hasRole } from '@/Enums/Role';
 import UnauthorizedModal from '@/Components/UnauthorizedModal';
 import PageHeader from '@/Components/PageHeader';
+import BrandMark from '@/Components/LandingPage/BrandMark';
 
 interface NavItem {
     name: string;
@@ -148,8 +149,8 @@ export default function DashboardLayout({ children, title, description, actions,
     const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
         <div className={`flex flex-col h-full ${mobile ? 'w-full' : 'w-64'}`}>
             <div className="flex items-center h-16 px-4 bg-primary">
-                <Link href="/" className="flex items-center">
-                    <img src="/Logo.png" alt={appName} className="h-10 w-auto object-contain" />
+                <Link href="/" className="flex items-center" aria-label={appName}>
+                    <BrandMark inverted />
                 </Link>
             </div>
             <nav

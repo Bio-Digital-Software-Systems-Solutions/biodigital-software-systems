@@ -3,7 +3,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import { Toaster } from 'sonner';
 import GuestNavbar from '@/Components/LandingPage/GuestNavbar';
-import HeroSlider from '@/Components/LandingPage/HeroSlider';
+import HeroCarousel from '@/Components/LandingPage/HeroCarousel';
 import AboutSection from '@/Components/LandingPage/AboutSection';
 import ServicesSection from '@/Components/LandingPage/ServicesSection';
 import TrainingBrowseSection from '@/Components/LandingPage/TrainingBrowseSection';
@@ -31,7 +31,7 @@ export default function Welcome({ auth }: WelcomeProps) {
                 <GuestNavbar isAuthenticated={!!auth.user} />
 
                 <main>
-                    <HeroSlider />
+                    <HeroCarousel />
                     <AboutSection />
                     <ServicesSection />
                     {/* Formations: the dynamic browser keeps real enrollment working. */}

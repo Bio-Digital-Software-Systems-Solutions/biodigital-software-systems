@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/Components/ui/button';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import Footer from '@/Components/LandingPage/Footer';
+import BrandMark from '@/Components/LandingPage/BrandMark';
 import { PageProps } from '@/Types';
 import { Menu, X } from 'lucide-react';
 
@@ -26,8 +27,8 @@ export default function GuestLayout({ children, title }: GuestLayoutProps) {
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between h-16">
                             <div className="flex items-center">
-                                <Link className="flex-shrink-0 flex items-center" href="/">
-                                    <img src="/Logo.png" alt={appName} className="h-9 sm:h-11 w-auto object-contain" />
+                                <Link className="flex-shrink-0 flex items-center" href="/" aria-label={appName}>
+                                    <BrandMark />
                                 </Link>
                                 {/* Desktop Navigation */}
                                 <div className="hidden lg:ml-10 lg:flex lg:space-x-2">

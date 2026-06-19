@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Com
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Textarea } from '@/Components/ui/textarea';
+import BrandMark from '@/Components/LandingPage/BrandMark';
 import {
     EnvelopeIcon,
     PhoneIcon,
@@ -70,11 +71,8 @@ export default function Create() {
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between h-16">
                             <div className="flex items-center">
-                                <div className="flex-shrink-0 flex items-center gap-3">
-                                    <img src="/Logo.png" alt={appName} className="h-10 w-10 object-contain" />
-                                    <h1 className="text-2xl font-bold bg-gradient-to-r from-icc-blue via-icc-purple to-icc-red bg-clip-text text-transparent">
-                                        {appName}
-                                    </h1>
+                                <div className="flex-shrink-0 flex items-center" aria-label={appName}>
+                                    <BrandMark />
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">

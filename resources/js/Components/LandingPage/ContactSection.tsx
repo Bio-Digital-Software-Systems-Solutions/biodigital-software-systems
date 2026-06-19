@@ -183,7 +183,7 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
                     </div>
 
                     {/* Right Column - Contact Form */}
-                    <div className="rounded-2xl border border-bd-line bg-bd-surface p-7 shadow-[0_18px_40px_-28px_oklch(0.5_0.08_205_/_0.6)]">
+                    <div className="rounded-2xl border border-bd-line bg-bd-surface p-7 shadow-[0_18px_40px_-28px_oklch(0.5_0.18_22_/_0.6)]">
                         <h3 className="font-display text-[1.25rem] font-semibold text-bd-ink">
                             {t('home.contact.formTitle')}
                         </h3>

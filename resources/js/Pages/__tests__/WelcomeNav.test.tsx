@@ -5,7 +5,7 @@ import i18n from '@/i18n';
 import Welcome from '@/Pages/Welcome';
 
 // Mock the heavy homepage sub-sections so this test focuses on the navigation bar.
-vi.mock('@/Components/LandingPage/HeroSlider', () => ({ default: () => <div data-testid="hero" /> }));
+vi.mock('@/Components/LandingPage/HeroCarousel', () => ({ default: () => <div data-testid="hero" /> }));
 vi.mock('@/Components/LandingPage/AboutSection', () => ({ default: () => null }));
 vi.mock('@/Components/LandingPage/ServicesSection', () => ({ default: () => null }));
 vi.mock('@/Components/LandingPage/TrainingBrowseSection', () => ({ default: () => null }));

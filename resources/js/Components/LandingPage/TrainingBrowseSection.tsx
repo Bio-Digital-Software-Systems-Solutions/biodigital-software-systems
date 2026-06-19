@@ -117,7 +117,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ training, onEnroll, onViewD
 
       <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg font-semibold line-clamp-2 group-hover:text-primary dark:group-hover:text-blue-400 transition-colors flex-1">
+          <CardTitle className="text-lg font-semibold line-clamp-2 group-hover:text-bd-brand transition-colors flex-1">
             {training.title}
           </CardTitle>
           <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 shrink-0">
@@ -202,7 +202,7 @@ const TrainingCard: React.FC<TrainingCardProps> = ({ training, onEnroll, onViewD
           <Button
             size="sm"
             onClick={() => onEnroll(training.id)}
-            className="bg-primary hover:bg-primary dark:bg-primary dark:hover:bg-primary"
+            className="bg-bd-brand hover:bg-bd-brand-deep dark:bg-bd-brand dark:hover:bg-bd-brand-deep text-white"
           >
             {t('home.training.enroll')}
           </Button>
@@ -240,7 +240,7 @@ const TrainingListItem: React.FC<TrainingCardProps> = ({ training, onEnroll, onV
         <div className="flex-1 space-y-2">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h3 className="text-xl font-semibold group-hover:text-primary dark:group-hover:text-blue-400 transition-colors">
+              <h3 className="text-xl font-semibold group-hover:text-bd-brand transition-colors">
                 {training.title}
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 line-clamp-2">
@@ -298,7 +298,7 @@ const TrainingListItem: React.FC<TrainingCardProps> = ({ training, onEnroll, onV
             <Button
               size="sm"
               onClick={() => onEnroll(training.id)}
-              className="bg-primary hover:bg-primary dark:bg-primary dark:hover:bg-primary"
+              className="bg-bd-brand hover:bg-bd-brand-deep dark:bg-bd-brand dark:hover:bg-bd-brand-deep text-white"
             >
               {t('home.training.enroll')}
             </Button>
@@ -641,7 +641,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
               placeholder={t('home.training.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 dark:bg-gray-700 dark:border-gray-600"
+              className="pl-10 !ring-bd-brand dark:bg-gray-700 dark:border-gray-600"
             />
           </div>
 
@@ -652,7 +652,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
             </div>
 
             <Select value={levelFilter} onValueChange={setLevelFilter}>
-              <SelectTrigger className="h-8 w-[140px] text-xs dark:bg-gray-700 dark:border-gray-600">
+              <SelectTrigger className="h-8 w-[140px] text-xs !ring-bd-brand dark:bg-gray-700 dark:border-gray-600">
                 <SelectValue placeholder={t('home.training.levelLabel')} />
               </SelectTrigger>
               <SelectContent>
@@ -665,7 +665,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
 
             {categories.length > 0 && (
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="h-8 w-[160px] text-xs dark:bg-gray-700 dark:border-gray-600">
+                <SelectTrigger className="h-8 w-[160px] text-xs !ring-bd-brand dark:bg-gray-700 dark:border-gray-600">
                   <SelectValue placeholder={t('home.training.category')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -680,7 +680,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
             )}
 
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-8 w-[150px] text-xs dark:bg-gray-700 dark:border-gray-600">
+              <SelectTrigger className="h-8 w-[150px] text-xs !ring-bd-brand dark:bg-gray-700 dark:border-gray-600">
                 <SelectValue placeholder={t('home.training.sort')} />
               </SelectTrigger>
               <SelectContent>
@@ -705,28 +705,28 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
 
             <div className="ml-auto flex items-center gap-0.5 border border-gray-200 dark:border-gray-600 rounded-md p-0.5">
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setViewMode('grid')}
-                className="h-7 w-7 p-0"
+                className={`h-7 w-7 p-0 ${viewMode === 'grid' ? 'bg-bd-brand text-white hover:bg-bd-brand-deep hover:text-white' : ''}`}
                 title={t('home.training.viewGrid')}
               >
                 <Grid className="h-3.5 w-3.5" />
               </Button>
               <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className="h-7 w-7 p-0"
+                className={`h-7 w-7 p-0 ${viewMode === 'list' ? 'bg-bd-brand text-white hover:bg-bd-brand-deep hover:text-white' : ''}`}
                 title={t('home.training.viewList')}
               >
                 <List className="h-3.5 w-3.5" />
               </Button>
               <Button
-                variant={viewMode === 'table' ? 'default' : 'ghost'}
+                variant="ghost"
                 size="sm"
                 onClick={() => setViewMode('table')}
-                className="h-7 w-7 p-0"
+                className={`h-7 w-7 p-0 ${viewMode === 'table' ? 'bg-bd-brand text-white hover:bg-bd-brand-deep hover:text-white' : ''}`}
                 title={t('home.training.viewTable')}
               >
                 <TableIcon className="h-3.5 w-3.5" />
@@ -740,7 +740,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
             <div className="text-gray-400 text-lg mb-2">{t('home.training.none')}</div>
             <p className="text-gray-600 dark:text-gray-400">
               {t('home.training.noneHint')}
-              <button onClick={resetFilters} className="text-primary hover:underline ml-1">
+              <button onClick={resetFilters} className="text-bd-brand hover:underline ml-1">
                 {t('home.training.resetFilters')}
               </button>
             </p>
@@ -786,7 +786,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                   <TableRow key={training.id} className="group">
                     <TableCell>
                       <div>
-                        <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-primary dark:group-hover:text-blue-400">
+                        <div className="font-medium text-gray-900 dark:text-gray-100 group-hover:text-bd-brand">
                           {training.title}
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
@@ -848,7 +848,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                         <Button
                           size="sm"
                           onClick={() => handleViewDetails(training.id)}
-                          className="bg-primary hover:bg-primary dark:bg-primary dark:hover:bg-primary"
+                          className="bg-bd-brand hover:bg-bd-brand-deep dark:bg-bd-brand dark:hover:bg-bd-brand-deep text-white"
                         >
                           {t('home.training.enroll')}
                         </Button>
@@ -956,14 +956,14 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                             }}
                             className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
                               isSelected
-                                ? 'bg-blue-100 dark:bg-blue-900/30 border-primary dark:border-primary'
-                                : 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-800/50 border-blue-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-gray-600'
+                                ? 'bg-bd-brand-soft border-bd-brand dark:border-bd-brand'
+                                : 'bg-gradient-to-br from-bd-brand-soft to-bd-surface-2 dark:from-gray-800 dark:to-gray-800/50 border-bd-line dark:border-gray-700 hover:border-bd-brand dark:hover:border-gray-600'
                             } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <div className="space-y-3">
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex items-center gap-2">
-                                  <Calendar className="h-5 w-5 text-primary dark:text-blue-400" />
+                                  <Calendar className="h-5 w-5 text-bd-brand" />
                                   <div>
                                     <div className="font-medium text-gray-900 dark:text-gray-100">
                                       {startDate.toLocaleDateString('fr-FR', {
@@ -996,12 +996,12 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                                 </div>
                               )}
 
-                              <div className="flex items-center justify-between pt-2 border-t border-blue-200 dark:border-gray-700">
+                              <div className="flex items-center justify-between pt-2 border-t border-bd-line dark:border-gray-700">
                                 <div className="text-sm text-gray-600 dark:text-gray-400">
                                   <span className="font-medium">{session.enrolled_count || 0}</span> / {session.max_participants || 0} {t('home.training.enrolledOf')}
                                 </div>
                                 {isSelected && !isDisabled && (
-                                  <div className="flex items-center gap-1 text-primary dark:text-blue-400 font-medium text-sm">
+                                  <div className="flex items-center gap-1 text-bd-brand font-medium text-sm">
                                     <CheckCircle className="h-4 w-4 fill-current" />
                                     <span>{t('home.training.selected')}</span>
                                   </div>
@@ -1019,7 +1019,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
             {/* Fixed Footer */}
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
               <div>
-                <div className={`text-3xl font-bold ${selectedTraining.price === 0 ? 'text-green-600 dark:text-green-400' : 'text-primary dark:text-blue-400'}`}>
+                <div className={`text-3xl font-bold ${selectedTraining.price === 0 ? 'text-green-600 dark:text-green-400' : 'text-bd-brand'}`}>
                   {selectedTraining.price === 0 ? t('home.training.free') : `${selectedTraining.price.toLocaleString('fr-FR')}€`}
                 </div>
                 {selectedTraining.price > 0 && (
@@ -1046,7 +1046,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                   setIsEnrollmentModalOpen(true);
                 }}
                 size="lg"
-                className="bg-primary hover:bg-primary text-lg px-8"
+                className="bg-bd-brand hover:bg-bd-brand-deep text-white text-lg px-8"
               >
                 {t('home.training.enrollNow')}
               </Button>
@@ -1103,7 +1103,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                     type="text"
                     value={enrollmentForm.firstName}
                     onChange={(e) => setEnrollmentForm({ ...enrollmentForm, firstName: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-bd-brand dark:bg-gray-700 dark:text-white"
                   />
                 </div>
                 <div>
@@ -1114,7 +1114,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                     type="text"
                     value={enrollmentForm.lastName}
                     onChange={(e) => setEnrollmentForm({ ...enrollmentForm, lastName: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-bd-brand dark:bg-gray-700 dark:text-white"
                   />
                 </div>
               </div>
@@ -1128,7 +1128,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                     type="email"
                     value={enrollmentForm.email}
                     onChange={(e) => setEnrollmentForm({ ...enrollmentForm, email: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-bd-brand dark:bg-gray-700 dark:text-white"
                   />
                 </div>
                 <div>
@@ -1139,7 +1139,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                     type="tel"
                     value={enrollmentForm.phone}
                     onChange={(e) => setEnrollmentForm({ ...enrollmentForm, phone: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-bd-brand dark:bg-gray-700 dark:text-white"
                   />
                 </div>
               </div>
@@ -1155,7 +1155,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                   rows={4}
                   required
                   minLength={50}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-bd-brand dark:bg-gray-700 dark:text-white"
                   placeholder={t('home.training.motivationPlaceholder')}
                 />
                 <div className="text-xs text-gray-500 mt-1">
@@ -1181,7 +1181,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                             key={session.id}
                             className={`flex items-start p-3 border rounded-lg cursor-pointer transition-colors ${
                               enrollmentForm.selectedSessionId === session.id
-                                ? 'border-primary bg-blue-50 dark:bg-blue-900/20'
+                                ? 'border-bd-brand bg-bd-brand-soft'
                                 : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                             } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
@@ -1198,7 +1198,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4 text-primary dark:text-blue-400" />
+                                  <Calendar className="h-4 w-4 text-bd-brand" />
                                   <span className="font-medium text-gray-900 dark:text-gray-100">
                                     {new Date(session.start_date).toLocaleDateString('fr-FR', {
                                       weekday: 'long',
@@ -1283,7 +1283,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                     className="mt-1 mr-2"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {t('home.training.acceptTermsPrefix')} <a href="#" className="text-primary hover:underline">{t('home.training.terms')}</a> <span className="text-red-500">*</span>
+                    {t('home.training.acceptTermsPrefix')} <a href="#" className="text-bd-brand hover:underline">{t('home.training.terms')}</a> <span className="text-red-500">*</span>
                   </span>
                 </label>
                 <label className="flex items-start">
@@ -1295,7 +1295,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                     className="mt-1 mr-2"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {t('home.training.acceptPrivacyPrefix')} <a href="#" className="text-primary hover:underline">{t('home.training.privacy')}</a> <span className="text-red-500">*</span>
+                    {t('home.training.acceptPrivacyPrefix')} <a href="#" className="text-bd-brand hover:underline">{t('home.training.privacy')}</a> <span className="text-red-500">*</span>
                   </span>
                 </label>
               </div>
@@ -1312,7 +1312,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-primary hover:bg-primary"
+                  className="bg-bd-brand hover:bg-bd-brand-deep text-white"
                   disabled={
                     !enrollmentForm.motivation ||
                     enrollmentForm.motivation.length < 50 ||

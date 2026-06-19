@@ -10,94 +10,121 @@
 @layer base {
   :root {
     /* ============================================================
-       Identité Bio-Digital Software Systems — palette REAGENT
-       Tokens shadcn dérivés des ancres Okabe-Ito (HSL) :
-       primary ≈ science blue #0072B2 · accent visuel vermillion #D55E00
-       neutres = graphite (hue ~205) · ring = science blue
+       Identité Bio-Digital Software Systems — palette CENTOGENE
+       Tokens shadcn (HSL) : primary = rouge cardinal #D41F32
+       neutres = gris purs · ring = rouge cardinal
        ============================================================ */
-    --background: 210 14% 98%;
-    --foreground: 200 29% 15%;
+    --background: 0 0% 98%;
+    --foreground: 0 0% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 200 29% 15%;
+    --card-foreground: 0 0% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 200 29% 15%;
-    --primary: 201 100% 35%;
+    --popover-foreground: 0 0% 15%;
+    --primary: 354 74% 48%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 12% 94%;
-    --secondary-foreground: 200 25% 22%;
-    --muted: 210 12% 94%;
-    --muted-foreground: 201 13% 41%;
-    --accent: 210 12% 94%;
-    --accent-foreground: 200 25% 22%;
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 22%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 41%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 22%;
     --destructive: 16 100% 42%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 12% 89%;
-    --input: 210 12% 89%;
-    --ring: 201 100% 40%;
-    --chart-1: 201 100% 35%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 354 74% 48%;
+    --chart-1: 354 74% 48%;
     --chart-2: 27 100% 42%;
-    --chart-3: 201 77% 63%;
-    --chart-4: 200 12% 70%;
-    --chart-5: 201 100% 26%;
+    --chart-3: 354 70% 64%;
+    --chart-4: 0 0% 70%;
+    --chart-5: 354 75% 34%;
     --radius: 0.5rem;
 
-    /* SearchableSelect variables - Light mode (science blue) */
+    /* Bio-Digital landing tokens (light) — see tailwind.config.js bd.* */
+    --bd-bg: 0.99 0 0;
+    --bd-surface: 1 0 0;
+    --bd-surface-2: 0.965 0 0;
+    --bd-line: 0.92 0 0;
+    --bd-ink: 0.27 0 0;
+    --bd-ink-2: 0.44 0 0;
+    --bd-ink-3: 0.6 0 0;
+    --bd-deep: 0.2 0 0;
+    --bd-brand: 212 31 50;
+    --bd-brand-deep: 168 24 42;
+    --bd-brand-soft: 251 233 235;
+    --bd-accent: 232 74 90;
+
+    /* SearchableSelect variables - Light mode (cardinal red) */
     --select-bg: #ffffff;
     --select-text: #1c2b33;
     --select-placeholder: #9ca3af;
     --select-border: #d1d5db;
     --select-border-hover: #9ca3af;
-    --select-border-focus: #0072b2;
-    --select-ring: rgba(0, 114, 178, 0.2);
+    --select-border-focus: #d41f32;
+    --select-ring: rgba(212, 31, 50, 0.2);
     --select-indicator: #6b7280;
     --select-indicator-hover: #374151;
     --select-option-hover-bg: #f3f4f6;
-    --select-option-selected-bg: #0072b2;
+    --select-option-selected-bg: #d41f32;
     --select-option-selected-text: #ffffff;
     --select-option-active-bg: #e5e7eb;
   }
 
   .dark {
-    /* Mode sombre — fonds graphite, primaire science blue éclairci */
-    --background: 200 28% 11%;
-    --foreground: 210 12% 94%;
-    --card: 200 29% 15%;
-    --card-foreground: 210 12% 94%;
-    --popover: 200 29% 15%;
-    --popover-foreground: 210 12% 94%;
-    --primary: 201 70% 55%;
-    --primary-foreground: 200 28% 11%;
-    --secondary: 200 22% 20%;
-    --secondary-foreground: 210 12% 94%;
-    --muted: 200 22% 20%;
-    --muted-foreground: 201 11% 64%;
-    --accent: 200 22% 20%;
-    --accent-foreground: 210 12% 94%;
-    --destructive: 16 80% 45%;
-    --destructive-foreground: 210 12% 94%;
-    --border: 200 22% 20%;
-    --input: 200 22% 20%;
-    --ring: 201 70% 50%;
-    --chart-1: 201 70% 55%;
+    /* Mode sombre — fonds gris neutres, primaire rouge cardinal éclairci */
+    --background: 0 0% 9%;
+    --foreground: 0 0% 94%;
+    --card: 0 0% 13%;
+    --card-foreground: 0 0% 94%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 0 0% 94%;
+    --primary: 354 78% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 94%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 18%;
+    --accent-foreground: 0 0% 94%;
+    --destructive: 16 80% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 22%;
+    --input: 0 0% 22%;
+    --ring: 354 78% 58%;
+    --chart-1: 354 78% 58%;
     --chart-2: 27 90% 55%;
-    --chart-3: 201 77% 68%;
-    --chart-4: 200 12% 55%;
-    --chart-5: 201 70% 42%;
+    --chart-3: 354 72% 70%;
+    --chart-4: 0 0% 55%;
+    --chart-5: 354 78% 46%;
 
-    /* SearchableSelect variables - Dark mode (science blue) */
-    --select-bg: #1c2b33;
+    /* Bio-Digital landing tokens (dark) — see tailwind.config.js bd.* */
+    --bd-bg: 0.16 0 0;
+    --bd-surface: 0.21 0 0;
+    --bd-surface-2: 0.25 0 0;
+    --bd-line: 0.32 0 0;
+    --bd-ink: 0.96 0 0;
+    --bd-ink-2: 0.76 0 0;
+    --bd-ink-3: 0.6 0 0;
+    --bd-deep: 0.2 0 0;
+    --bd-brand: 235 84 98;
+    --bd-brand-deep: 245 120 132;
+    --bd-brand-soft: 64 28 33;
+    --bd-accent: 240 100 112;
+
+    /* SearchableSelect variables - Dark mode (cardinal red) */
+    --select-bg: #1c1c1c;
     --select-text: #eef0f2;
     --select-placeholder: #6b7280;
-    --select-border: #2a3a42;
-    --select-border-hover: #3a4d56;
-    --select-border-focus: #3f9bd6;
-    --select-ring: rgba(63, 155, 214, 0.3);
+    --select-border: #333333;
+    --select-border-hover: #4d4d4d;
+    --select-border-focus: #e5556a;
+    --select-ring: rgba(232, 74, 90, 0.3);
     --select-indicator: #9ca3af;
     --select-indicator-hover: #d1d5db;
-    --select-option-hover-bg: #243640;
-    --select-option-selected-bg: #3f9bd6;
+    --select-option-hover-bg: #262626;
+    --select-option-selected-bg: #d41f32;
     --select-option-selected-text: #ffffff;
-    --select-option-active-bg: #2a3a42;
+    --select-option-active-bg: #333333;
   }
 }
 
