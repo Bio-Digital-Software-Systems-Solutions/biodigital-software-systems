@@ -10,8 +10,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (legacy peer deps required by this project's dependency tree)
+RUN npm ci --legacy-peer-deps
 
 # Copy source files needed for build
 COPY resources ./resources
@@ -31,18 +31,22 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 
 # Install dependencies without dev dependencies
+# Platform reqs are ignored here because this build stage runs on the composer
+# image's PHP (8.3); the production runtime stage uses PHP 8.4 with all required
+# extensions, so dependency resolution for the locked 8.4 packages is safe.
 RUN composer install \
     --no-dev \
     --no-interaction \
     --no-scripts \
     --no-autoloader \
-    --prefer-dist
+    --prefer-dist \
+    --ignore-platform-reqs
 
 # Copy application code
 COPY . .
 
 # Generate optimized autoloader
-RUN composer dump-autoload --optimize --no-dev
+RUN composer dump-autoload --optimize --no-dev --ignore-platform-reqs
 
 # ==========================================
 # Stage 3: Production PHP image
