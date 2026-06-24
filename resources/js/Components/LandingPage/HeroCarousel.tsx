@@ -161,14 +161,7 @@ export default function HeroCarousel() {
             </button>
 
             <div className="hero-pagination absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 justify-center gap-2" />
-
-            <div className="absolute inset-x-0 bottom-0 z-[5] flex flex-wrap items-center justify-center gap-x-8 gap-y-2 border-t border-white/10 bg-bd-deep/40 px-5 py-3.5 text-[13px] text-white/80 backdrop-blur-sm">
-                {TRUST.map((item) => (
-                    <span key={item.key}>
-                        <b className="font-display font-semibold text-white">{item.value}</b> {t(item.key)}
-                    </span>
-                ))}
-            </div>
+            
         </section>
     );
 }

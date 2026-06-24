@@ -25,7 +25,7 @@ export default function BrandMark({ className = '', inverted = false }: BrandMar
                     inverted ? 'text-white/70' : 'text-bd-ink-3'
                 }`}
             >
-                Software Systems Solutions
+                Software Systems Solutions UG (haftungsbeschränkt)
             </span>
         </span>
     );

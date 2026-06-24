@@ -19,7 +19,7 @@ vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: pageProps }),
 }));
 
-vi.mock('@/Components/LandingPage/Footer', () => ({ default: () => null }));
+vi.mock('@/Components/LandingPage/SiteFooter', () => ({ default: () => null }));
 
 (global as unknown as { route: (name: string) => string }).route = (name: string) => `/${name}`;
 
@@ -36,7 +36,7 @@ describe('GuestLayout navigation bar', () => {
         render(<GuestLayout>content</GuestLayout>);
 
         expect(screen.getByText('À propos')).toBeInTheDocument();
-        expect(screen.getByText('Activités')).toBeInTheDocument();
+        expect(screen.getByText('Services')).toBeInTheDocument();
         expect(screen.getByText('Formations')).toBeInTheDocument();
         expect(screen.getByText('Contact')).toBeInTheDocument();
 

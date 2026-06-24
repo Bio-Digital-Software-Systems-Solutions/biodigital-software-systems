@@ -344,7 +344,7 @@ const resources = {
 
       // Homepage - about
       "home.about.badge": "À propos",
-      "home.about.heading": "Bio-Digital Software Systems Solutions",
+      "home.about.heading": "Bio-Digital Software Systems Solutions UG (haftungsbeschränkt)",
       "home.about.p1": "Bio-Digital Software Systems Solutions, c'est le développement logiciel accéléré et assisté par IA, spécialisé dans les données BioTech, la bio-informatique et les processus de laboratoire.",
       "home.about.p2": "Nous comblons le fossé entre la recherche biologique et le logiciel commercialisable grâce à la combinaison unique d'une expertise bio-informatique pointue et d'un développement fullstack à la pointe.",
       "home.about.competencies.heading": "Compétences clés",
@@ -876,7 +876,7 @@ const resources = {
 
       // Homepage - about
       "home.about.badge": "About",
-      "home.about.heading": "Bio-Digital Software Systems Solutions",
+      "home.about.heading": "Bio-Digital Software Systems Solutions UG (haftungsbeschränkt)",
       "home.about.p1": "Bio-Digital Software Systems Solutions stands for accelerated, AI-assisted software development specialized in BioTech data, bioinformatics and laboratory processes.",
       "home.about.p2": "We bridge the gap between biological research and market-ready software through a unique combination of deep bioinformatics expertise and state-of-the-art fullstack development.",
       "home.about.competencies.heading": "Core competencies",
@@ -1408,7 +1408,7 @@ const resources = {
 
       // Homepage - about
       "home.about.badge": "Über uns",
-      "home.about.heading": "Bio-Digital Software Systems Solutions",
+      "home.about.heading": "Bio-Digital Software Systems Solutions UG (haftungsbeschränkt)",
       "home.about.p1": "Bio-Digital Software Systems Solutions steht für beschleunigte, KI-gestützte Softwareentwicklung, spezialisiert auf BioTech-Daten, Bioinformatik und Laborprozesse.",
       "home.about.p2": "Wir schließen die Lücke zwischen biologischer Forschung und marktfähiger Software durch die einzigartige Kombination aus tiefem bioinformatischem Fachwissen und modernster Fullstack-Softwareentwicklung.",
       "home.about.competencies.heading": "Kernkompetenzen",

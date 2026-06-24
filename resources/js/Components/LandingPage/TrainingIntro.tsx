@@ -4,6 +4,7 @@ interface TrainingIntroProps {
   badge: string;
   heading: string;
   subtitle: string;
+  keywords: string[];
   imageSrc?: string;
 }
 
@@ -11,6 +12,7 @@ const TrainingIntro: React.FC<TrainingIntroProps> = ({
   badge,
   heading,
   subtitle,
+  keywords,
   imageSrc = '/training-1.jpg',
 }) => {
   return (
@@ -23,6 +25,17 @@ const TrainingIntro: React.FC<TrainingIntroProps> = ({
           {heading}
         </h2>
         <p className="mt-3.5 text-[1.05rem] text-bd-ink-2">{subtitle}</p>
+
+        <div className="mt-6 flex flex-wrap gap-2.5">
+          {keywords.map((keyword) => (
+            <span
+              key={keyword}
+              className="rounded-full border border-bd-line bg-bd-brand-soft px-4 py-1.5 text-sm font-medium text-bd-brand-deep"
+            >
+              {keyword}
+            </span>
+          ))}
+        </div>
       </div>
       <div className="relative">
         <img

@@ -40,7 +40,7 @@ export default function SiteFooter() {
                                 Bio-<span className="text-bd-accent">Digital</span>
                             </span>
                             <span className="mt-1 block text-[11px] uppercase tracking-[0.2em] text-white/45">
-                                Software Systems Solutions
+                                Software Systems Solutions UG (haftungsbeschränkt)
                             </span>
                         </Link>
 

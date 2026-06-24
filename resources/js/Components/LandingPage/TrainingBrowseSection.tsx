@@ -637,6 +637,7 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
           badge={headerBadge}
           heading={headerHeading}
           subtitle={headerSubtitle}
+          keywords={trainingTags}
         />
 
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-8 space-y-4">
