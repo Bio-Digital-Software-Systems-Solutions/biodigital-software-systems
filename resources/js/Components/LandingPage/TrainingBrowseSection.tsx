@@ -33,6 +33,8 @@ import {
   MapPin
 } from 'lucide-react';
 import { resolveDesign, type DesignSettings } from '@/lib/sectionDesign';
+import TrainingIntro from '@/Components/LandingPage/TrainingIntro';
+import KeywordBubbles from '@/Components/LandingPage/KeywordBubbles';
 
 interface Topic {
   id: string;
@@ -326,6 +328,13 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
   const headerBadge = content?.badge ?? t('home.training.badge');
   const headerHeading = content?.heading ?? t('home.training.heading');
   const headerSubtitle = content?.subtitle ?? t('home.training.subtitle');
+  const trainingTags = [
+    t('home.training.tags.fullstack'),
+    t('home.training.tags.qa'),
+    t('home.training.tags.lims'),
+    t('home.training.tags.workflow'),
+    t('home.training.tags.bioinfo'),
+  ];
   const { auth } = usePage().props as { auth: { user?: any } };
   const [searchTerm, setSearchTerm] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
@@ -619,19 +628,16 @@ const TrainingBrowseSection: React.FC<TrainingBrowseSectionProps> = ({ content, 
   return (
     <div
       id="trainings"
-      className={`bg-bd-bg px-5 sm:px-8 lg:px-10 ${resolvedDesign.sectionClass} ${design?.padding ? '' : 'py-16 sm:py-20 lg:py-24'}`}
+      className={`relative overflow-hidden bg-bd-bg px-5 sm:px-8 lg:px-10 ${resolvedDesign.sectionClass} ${design?.padding ? '' : 'py-16 sm:py-20 lg:py-24'}`}
       style={resolvedDesign.sectionStyle}
     >
-      <div className="max-w-none mx-auto">
-        <div className="mb-11 max-w-[62ch]">
-          <p className="mb-3.5 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-bd-brand-deep">{headerBadge}</p>
-          <h2 className="font-display text-[clamp(1.7rem,3.4vw,2.5rem)] font-semibold tracking-tight text-bd-ink">
-            {headerHeading}
-          </h2>
-          <p className="mt-3.5 text-[1.05rem] text-bd-ink-2 max-w-3xl">
-            {headerSubtitle}
-          </p>
-        </div>
+      <KeywordBubbles keywords={trainingTags} />
+      <div className="relative z-10 max-w-none mx-auto">
+        <TrainingIntro
+          badge={headerBadge}
+          heading={headerHeading}
+          subtitle={headerSubtitle}
+        />
 
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-8 space-y-4">
           <div className="relative">
