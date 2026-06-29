@@ -12,9 +12,16 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
+      # vendor/ lives in a named volume on the VM's native fs instead of the
+      # slow sshfs bind mount. The autoloader reads thousands of files per
+      # request — this is the main cause of slow page loads in local dev.
+      - vendor:/var/www/html/vendor
       - ./docker/php/php-dev.ini:/usr/local/etc/php/conf.d/99-custom.ini
       - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
       - php-logs:/var/log/php
+    # Seed the vendor volume on first start (empty volume), then run php-fpm.
+    # When deps change, reinstall with: docker compose exec app composer install
+    command: sh -c "[ -f vendor/autoload.php ] || composer install --no-interaction --prefer-dist; exec php-fpm"
     environment:
       # Xdebug off by default for performance. Flip on when needed:
       # XDEBUG_MODE=debug docker compose up -d app   (or =coverage for test coverage)
@@ -138,6 +145,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
+      - vendor:/var/www/html/vendor
       - php-logs:/var/log/php
     environment:
       - DB_HOST=mysql
@@ -149,7 +157,8 @@ services:
       - REDIS_PORT=6379
       - MAIL_HOST=mailhog
       - MAIL_PORT=1025
-    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    # Wait for the app service to seed the shared vendor volume before starting.
+    command: sh -c "until [ -f vendor/autoload.php ]; do echo 'Waiting for vendor...'; sleep 2; done; exec php artisan queue:work --sleep=3 --tries=3 --max-time=3600"
     depends_on:
       mysql:
         condition: service_healthy
@@ -171,6 +180,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
+      - vendor:/var/www/html/vendor
       - php-logs:/var/log/php
     environment:
       - DB_HOST=mysql
@@ -182,7 +192,8 @@ services:
       - REDIS_PORT=6379
       - MAIL_HOST=mailhog
       - MAIL_PORT=1025
-    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    # Wait for the app service to seed the shared vendor volume before starting.
+    command: sh -c "until [ -f vendor/autoload.php ]; do echo 'Waiting for vendor...'; sleep 2; done; while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
     depends_on:
       mysql:
         condition: service_healthy
@@ -271,6 +282,8 @@ volumes:
   redis-data:
     driver: local
   node-modules:
+    driver: local
+  vendor:
     driver: local
   php-logs:
     driver: local
