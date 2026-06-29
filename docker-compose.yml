@@ -16,6 +16,9 @@ services:
       - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
       - php-logs:/var/log/php
     environment:
+      # Xdebug off by default for performance. Flip on when needed:
+      # XDEBUG_MODE=debug docker compose up -d app   (or =coverage for test coverage)
+      - XDEBUG_MODE=${XDEBUG_MODE:-off}
       - PHP_IDE_CONFIG=serverName=icc-munich
       - DB_HOST=mysql
       - DB_PORT=3306

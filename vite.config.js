@@ -45,7 +45,24 @@ export default defineConfig({
             // Native fs events don't cross the macOS host -> Linux container
             // bind mount, so poll for changes to keep HMR/watch working.
             usePolling: true,
-            interval: 300,
+            // Poll less aggressively: at 300ms over the slow macOS bind mount the
+            // single Node thread saturates polling thousands of files, starving the
+            // event loop until Vite stops answering requests (blank page).
+            interval: 1000,
+            binaryInterval: 1500,
+            // Never poll heavy or constantly-churning directories. The browser-logs
+            // file under .playwright-mcp is rewritten on every interaction, which
+            // otherwise triggers endless full reloads and polling churn.
+            ignored: [
+                '**/node_modules/**',
+                '**/vendor/**',
+                '**/.git/**',
+                '**/storage/**',
+                '**/public/build/**',
+                '**/.claude/**',
+                '**/.playwright-mcp/**',
+                '**/*.{jpg,jpeg,png,gif,webp,mp4}',
+            ],
         },
     },
 });

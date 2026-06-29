@@ -1,0 +1,365 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "Bio-Digital Software Systems" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e7]:
+            - generic [ref=e8]: Bio-Digital
+            - generic [ref=e9]: Software Systems Solutions UG (haftungsbeschränkt)
+        - generic [ref=e10]:
+          - navigation [ref=e11]:
+            - link "Über uns" [ref=e12] [cursor=pointer]:
+              - /url: "#about"
+            - link "Leistungen" [ref=e13] [cursor=pointer]:
+              - /url: "#services"
+            - link "Schulungen" [ref=e14] [cursor=pointer]:
+              - /url: "#trainings"
+            - link "Ablauf" [ref=e15] [cursor=pointer]:
+              - /url: "#process"
+            - link "Kontakt" [ref=e16] [cursor=pointer]:
+              - /url: "#contact"
+          - button "Deutsch" [ref=e18] [cursor=pointer]:
+            - img [ref=e19]
+            - generic [ref=e21]: 🇩🇪
+            - generic [ref=e22]: Deutsch
+            - img [ref=e23]
+          - generic [ref=e25]:
+            - link "Anmelden" [ref=e26] [cursor=pointer]:
+              - /url: http://bio-digital-software-systems.localhost/login
+            - link "Erstgespräch" [ref=e27] [cursor=pointer]:
+              - /url: "#contact"
+    - main [ref=e28]:
+      - generic [ref=e29]:
+        - generic [ref=e31]:
+          - generic [ref=e33]:
+            - img [ref=e34]
+            - generic [ref=e36]:
+              - generic [ref=e37]: Software-Entwicklung
+              - heading "Wo Forschung zu Software wird." [level=1] [ref=e39]:
+                - text: Wo Forschung zu
+                - emphasis [ref=e40]: Software
+                - text: wird.
+              - paragraph [ref=e41]: Bioinformatiker und Fullstack-Ingenieur in einer Person. Vom Konzept zum marktreifen MVP — KI-beschleunigt und DSGVO-konform.
+              - generic [ref=e42]:
+                - link "Projekt besprechen" [ref=e43] [cursor=pointer]:
+                  - /url: "#contact"
+                - link "Leistungen" [ref=e44] [cursor=pointer]:
+                  - /url: "#services"
+          - generic:
+            - generic:
+              - img
+              - generic:
+                - generic: Schulungen & Coaching
+                - heading "Wissen, das im Team bleibt." [level=1]:
+                  - text: Wissen, das im Team
+                  - emphasis: bleibt
+                  - text: .
+                - paragraph: Praxisnahe Schulungen in Testautomatisierung, Python und Java — von der ISTQB-Zertifizierung bis zur produktiven Pipeline.
+                - generic:
+                  - link "Schulungen ansehen":
+                    - /url: "#trainings"
+                  - link "Anfragen":
+                    - /url: "#contact"
+          - generic:
+            - generic:
+              - img
+              - generic:
+                - generic: Bioinformatik
+                - heading "Komplexe Daten, verständlich gemacht." [level=1]:
+                  - text: Komplexe Daten,
+                  - emphasis: verständlich
+                  - text: gemacht.
+                - paragraph: "NGS, Genomdaten, Laborpipelines: spezialisierte Lösungen für BioTech, MedTech und Forschung."
+                - generic:
+                  - link "Mehr erfahren":
+                    - /url: "#services"
+                  - link "Kontakt":
+                    - /url: "#contact"
+        - button "Previous slide" [ref=e45] [cursor=pointer]:
+          - img [ref=e46]
+        - button "Next slide" [ref=e48] [cursor=pointer]:
+          - img [ref=e49]
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - paragraph [ref=e59]: Über uns
+            - heading "Bio-Digital Software Systems Solutions UG (haftungsbeschränkt)" [level=2] [ref=e60]
+            - paragraph [ref=e61]: Bio-Digital Software Systems Solutions steht für beschleunigte, KI-gestützte Softwareentwicklung, spezialisiert auf BioTech-Daten, Bioinformatik und Laborprozesse.
+            - paragraph [ref=e62]: Wir schließen die Lücke zwischen biologischer Forschung und marktfähiger Software durch die einzigartige Kombination aus tiefem bioinformatischem Fachwissen und modernster Fullstack-Softwareentwicklung.
+          - img "Bio-Digital Software Systems Solutions UG (haftungsbeschränkt)" [ref=e64]
+        - generic [ref=e65]:
+          - generic [ref=e66]:
+            - heading "Kernkompetenzen" [level=3] [ref=e67]
+            - generic [ref=e68]:
+              - article [ref=e69]:
+                - img [ref=e71]
+                - heading "Bioinformatik-Expertise" [level=4] [ref=e83]
+                - paragraph [ref=e84]: Verständnis komplexer biologischer Datenstrukturen wie NGS- und Genomdaten.
+              - article [ref=e85]:
+                - img [ref=e87]
+                - heading "KI-gestützte Entwicklung" [level=4] [ref=e90]
+                - paragraph [ref=e91]: 3x schnellere Lieferung durch den systematischen Einsatz von KI-Tools im gesamten Entwicklungsprozess.
+              - article [ref=e92]:
+                - img [ref=e94]
+                - heading "Fullstack-Technologie" [level=4] [ref=e98]
+                - paragraph [ref=e99]: Laravel, React, TypeScript, GraphQL, Java, Python und moderne Cloud-Infrastruktur aus einer Hand.
+              - article [ref=e100]:
+                - img [ref=e102]
+                - heading "Branchen-Know-how" [level=4] [ref=e105]
+                - paragraph [ref=e106]: Kenntnis der regulatorischen Anforderungen im BioTech/MedTech-Bereich durch GxP-Richtlinien (GMP, GLP, GCP).
+          - generic [ref=e107]:
+            - generic [ref=e108]:
+              - generic [ref=e109]: 3x
+              - generic [ref=e110]: Schnellere Lieferung
+            - generic [ref=e111]:
+              - generic [ref=e112]: GxP
+              - generic [ref=e113]: Konforme Prozesse
+            - generic [ref=e114]:
+              - generic [ref=e115]: NGS
+              - generic [ref=e116]: Genomdaten-Expertise
+        - generic [ref=e117]:
+          - heading "Unser Technologie-Stack" [level=3] [ref=e118]
+          - paragraph [ref=e119]: Moderne, skalierbare Technologien für robuste und wartbare Softwarelösungen – von der Datenbank bis zur Cloud.
+          - generic [ref=e120]:
+            - generic [ref=e121]: Laravel
+            - generic [ref=e122]: React
+            - generic [ref=e123]: TypeScript
+            - generic [ref=e124]: GraphQL
+            - generic [ref=e125]: Java
+            - generic [ref=e126]: Python
+            - generic [ref=e127]: Cloud-Infrastruktur
+        - generic [ref=e128]:
+          - heading "Zielgruppen & Konformität" [level=3] [ref=e129]
+          - generic [ref=e130]:
+            - generic [ref=e131]:
+              - heading "Brücke zwischen Forschung & Software" [level=4] [ref=e132]
+              - paragraph [ref=e133]: Wir arbeiten mit BioTech-Startups, Forschungseinrichtungen und kleinen Laboren – und übersetzen wissenschaftliche Anforderungen in marktfähige, wartbare Software.
+            - generic [ref=e134]:
+              - heading "Regulatorische Konformität" [level=4] [ref=e135]
+              - list [ref=e136]:
+                - listitem [ref=e137]: GMP – Gute Herstellungspraxis
+                - listitem [ref=e139]: GLP – Gute Laborpraxis
+                - listitem [ref=e141]: GCP – Gute klinische Praxis
+          - generic [ref=e143]:
+            - heading "So arbeiten wir" [level=4] [ref=e144]
+            - generic [ref=e145]:
+              - generic [ref=e146]:
+                - img [ref=e148]
+                - heading "Time-to-Market" [level=5] [ref=e153]
+                - paragraph [ref=e154]: Schnelle Iterationen für Investorenpräsentationen und frühe Kundenvalidierung.
+              - generic [ref=e155]:
+                - img [ref=e157]
+                - heading "Interoperabilität" [level=5] [ref=e162]
+                - paragraph [ref=e163]: Nahtlose Integration zwischen verschiedenen Laborsystemen via GraphQL.
+              - generic [ref=e164]:
+                - img [ref=e166]
+                - heading "Cloud-native" [level=5] [ref=e168]
+                - paragraph [ref=e169]: Skalierbare, sichere Infrastruktur für wachsende Datenmengen.
+      - generic [ref=e171]:
+        - generic [ref=e172]:
+          - paragraph [ref=e173]: Leistungen
+          - heading "Software, die Ihre Wissenschaft versteht." [level=2] [ref=e174]
+          - paragraph [ref=e175]: Vier Schwerpunkte — von ersten Prototypen bis zur skalierbaren Plattform.
+        - generic [ref=e176]:
+          - article [ref=e177]:
+            - img [ref=e179]
+            - heading "Bio-MVP Turbo" [level=3] [ref=e181]
+            - paragraph [ref=e182]: Funktionale Prototypen (MVPs) für BioTech-Startups – schnelle Time-to-Market für Investorenpräsentationen und frühe Kundenvalidierung.
+          - article [ref=e183]:
+            - img [ref=e185]
+            - heading "Middleware-Lösungen" [level=3] [ref=e189]
+            - paragraph [ref=e190]: "GraphQL-Schnittstellen für Labor-Interoperabilität: Datenaustausch und Integration zwischen verschiedenen Laborsystemen, anpassbar an bestehende Infrastrukturen."
+          - article [ref=e191]:
+            - img [ref=e193]
+            - heading "SaaS-Plattform-Entwicklungen" [level=3] [ref=e196]
+            - paragraph [ref=e197]: Plattformen zur Visualisierung genomischer Daten mit intuitiver Oberfläche für Forscher und Kliniker. Abo-Modell mit monatlichen/jährlichen Lizenzgebühren.
+          - article [ref=e198]:
+            - img [ref=e200]
+            - heading "Software im Kundenauftrag" [level=3] [ref=e203]
+            - paragraph [ref=e204]: Kleine Labore mit klarer Vorstellung ihrer Anforderungen begleiten wir als Partner bei der Implementierung und Umsetzung – für eine bessere tägliche Routine.
+      - generic [ref=e207]:
+        - paragraph [ref=e208]: Schulungen
+        - heading "Unsere Schulungen" [level=2] [ref=e209]
+      - generic [ref=e215]:
+        - generic [ref=e216]:
+          - paragraph [ref=e217]: Ablauf
+          - heading "Vier Schritte zum Ergebnis." [level=2] [ref=e218]
+        - list [ref=e219]:
+          - listitem [ref=e220]:
+            - text: "01"
+            - heading "Erstgespräch" [level=4] [ref=e221]
+            - paragraph [ref=e222]: Kostenlos, 30–60 Min. Bedarf klären.
+          - listitem [ref=e223]:
+            - text: "02"
+            - heading "Angebot" [level=4] [ref=e224]
+            - paragraph [ref=e225]: Klare Meilensteine, fester Rahmen.
+          - listitem [ref=e226]:
+            - text: "03"
+            - heading "Umsetzung" [level=4] [ref=e227]
+            - paragraph [ref=e228]: Iterativ, mit wöchentlichen Updates.
+          - listitem [ref=e229]:
+            - text: "04"
+            - heading "Übergabe" [level=4] [ref=e230]
+            - paragraph [ref=e231]: Tests, Schulung und Support.
+      - generic [ref=e233]:
+        - generic [ref=e234]:
+          - paragraph [ref=e235]: Kontakt
+          - heading "Kontaktieren Sie uns" [level=2] [ref=e236]
+          - paragraph [ref=e237]: Ein BioTech-Softwareprojekt, eine Middleware-Anforderung oder eine SaaS-Plattform? Lassen Sie uns in einem kostenlosen, unverbindlichen Erstgespräch darüber sprechen.
+        - generic [ref=e238]:
+          - generic [ref=e239]:
+            - generic [ref=e240]:
+              - heading "Kontaktdaten" [level=3] [ref=e241]:
+                - img [ref=e242]
+                - text: Kontaktdaten
+              - generic [ref=e244]:
+                - generic [ref=e245]:
+                  - img [ref=e246]
+                  - generic [ref=e248]:
+                    - paragraph [ref=e249]: E-Mail
+                    - link "elmarce.bounda.ndinga@gmail.com" [ref=e250] [cursor=pointer]:
+                      - /url: mailto:elmarce.bounda.ndinga@gmail.com
+                - generic [ref=e251]:
+                  - img [ref=e252]
+                  - generic [ref=e254]:
+                    - paragraph [ref=e255]: Verfügbarkeit
+                    - paragraph [ref=e256]: Kostenlose Erstberatung (30–60 Min.) Antwort innerhalb von 24 Werktagsstunden Remote-Leistungen, Termine im Raum München möglich
+                - generic [ref=e257]:
+                  - img [ref=e258]
+                  - generic [ref=e261]:
+                    - paragraph [ref=e262]: Adresse
+                    - paragraph [ref=e263]: Van-Gogh-Straße 2 85521 Ottobrunn Deutschland
+            - generic [ref=e264]:
+              - heading "Ein Projekt im Kopf?" [level=3] [ref=e265]
+              - paragraph [ref=e266]: Buchen Sie ein kostenloses Erstgespräch, um Ihre Idee zu validieren und ein klares Angebot zu erhalten, oder legen Sie ein Konto an, um Ihr Projekt zu verfolgen.
+              - generic [ref=e267]:
+                - link "Beratung anfragen" [ref=e268] [cursor=pointer]:
+                  - /url: http://bio-digital-software-systems.localhost/register
+                - link "Anmelden" [ref=e269] [cursor=pointer]:
+                  - /url: http://bio-digital-software-systems.localhost/login
+          - generic [ref=e270]:
+            - heading "Senden Sie uns eine Nachricht" [level=3] [ref=e271]
+            - paragraph [ref=e272]: Füllen Sie das untenstehende Formular aus und wir antworten Ihnen schnell.
+            - generic [ref=e273]:
+              - generic [ref=e274]:
+                - generic [ref=e275]: Vollständiger Name *
+                - generic [ref=e276]:
+                  - img
+                  - textbox "Vollständiger Name *" [ref=e277]:
+                    - /placeholder: Max Mustermann
+              - generic [ref=e278]:
+                - generic [ref=e279]: E-Mail *
+                - generic [ref=e280]:
+                  - img
+                  - textbox "E-Mail *" [ref=e281]:
+                    - /placeholder: max.mustermann@example.com
+              - generic [ref=e282]:
+                - generic [ref=e283]: Telefon
+                - generic [ref=e284]:
+                  - img
+                  - textbox "Telefon" [ref=e285]:
+                    - /placeholder: +49 151 23456789
+              - generic [ref=e286]:
+                - generic [ref=e287]: Betreff *
+                - textbox "Betreff *" [ref=e288]:
+                  - /placeholder: Wie kann ich Ihnen helfen?
+              - generic [ref=e289]:
+                - generic [ref=e290]: Nachricht *
+                - textbox "Nachricht *" [ref=e291]:
+                  - /placeholder: Beschreiben Sie Ihr Anliegen im Detail...
+              - button "Nachricht senden" [ref=e292] [cursor=pointer]:
+                - img [ref=e293]
+                - text: Nachricht senden
+    - contentinfo [ref=e295]:
+      - generic [ref=e296]:
+        - generic [ref=e297]:
+          - generic [ref=e298]:
+            - link "Bio-Digital Software Systems" [ref=e299] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e300]: Bio-Digital
+              - generic [ref=e301]: Software Systems Solutions UG (haftungsbeschränkt)
+            - paragraph [ref=e302]: KI-beschleunigte Softwareentwicklung, spezialisiert auf BioTech-Daten, Bioinformatik und Laborprozesse. Wir schließen die Lücke zwischen biologischer Forschung und marktfähiger Software.
+            - generic [ref=e303]:
+              - link "elmarce.bounda.ndinga@gmail.com" [ref=e304] [cursor=pointer]:
+                - /url: mailto:elmarce.bounda.ndinga@gmail.com
+                - img [ref=e305]
+                - generic [ref=e308]: elmarce.bounda.ndinga@gmail.com
+              - generic [ref=e309]:
+                - img [ref=e310]
+                - generic [ref=e313]:
+                  - generic [ref=e314]: Van-Gogh-Straße 2
+                  - generic [ref=e315]: 85521 Ottobrunn
+          - generic [ref=e316]:
+            - heading "Navigation" [level=3] [ref=e317]
+            - list [ref=e318]:
+              - listitem [ref=e319]:
+                - link "Leistungen" [ref=e320] [cursor=pointer]:
+                  - /url: "#services"
+              - listitem [ref=e321]:
+                - link "Schulungen" [ref=e322] [cursor=pointer]:
+                  - /url: "#trainings"
+              - listitem [ref=e323]:
+                - link "Ablauf" [ref=e324] [cursor=pointer]:
+                  - /url: "#process"
+              - listitem [ref=e325]:
+                - link "Kontakt" [ref=e326] [cursor=pointer]:
+                  - /url: "#contact"
+          - generic [ref=e327]:
+            - heading "Leistungen" [level=3] [ref=e328]
+            - list [ref=e329]:
+              - listitem [ref=e330]:
+                - link "Bio-MVP Turbo" [ref=e331] [cursor=pointer]:
+                  - /url: "#services"
+              - listitem [ref=e332]:
+                - link "GraphQL-Middleware" [ref=e333] [cursor=pointer]:
+                  - /url: "#services"
+              - listitem [ref=e334]:
+                - link "SaaS-Plattformen" [ref=e335] [cursor=pointer]:
+                  - /url: "#services"
+              - listitem [ref=e336]:
+                - link "Individualentwicklung" [ref=e337] [cursor=pointer]:
+                  - /url: "#services"
+        - generic [ref=e338]:
+          - generic [ref=e339]: © 2026 Bio-Digital Software Systems · Elmarce Bounda Ndinga · Alle Rechte vorbehalten.
+          - generic [ref=e340]: Impressum · Datenschutz
+    - region "Notifications alt+T"
+  - generic [ref=e341]:
+    - generic [ref=e343]:
+      - generic [ref=e345]:
+        - generic [ref=e346] [cursor=pointer]:
+          - text: 
+          - generic: Request
+        - text: 
+        - generic [ref=e347] [cursor=pointer]:
+          - text: 
+          - generic: Timeline
+        - text: 
+        - generic [ref=e348] [cursor=pointer]:
+          - text: 
+          - generic: Views
+          - generic [ref=e349]: "1"
+        - generic [ref=e350] [cursor=pointer]:
+          - text: 
+          - generic: Queries
+          - generic [ref=e351]: "5"
+        - text:   
+      - generic [ref=e352]:
+        - generic [ref=e354] [cursor=pointer]:
+          - generic: 
+        - generic [ref=e357] [cursor=pointer]:
+          - generic: 
+        - generic [ref=e358] [cursor=pointer]:
+          - generic: 
+          - generic: 7.53s
+        - generic [ref=e359]:
+          - generic: 
+          - generic: 5MB
+        - generic [ref=e360]:
+          - generic: 
+          - generic: 12.x
+        - generic [ref=e361] [cursor=pointer]:
+          - generic: 
+          - generic: GET /
+    - text:                                          
+  - text: 
