@@ -2,13 +2,18 @@
 
 namespace App\Services;
 
+use App\Exports\CareServiceReportExport;
 use App\Models\CareService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\Shared\Converter;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CareServiceReportService
 {
@@ -92,9 +97,9 @@ class CareServiceReportService
             ])->values()->toArray(),
             'church' => [
                 'name' => config('app.church_name', config('app.name')),
-                'email' => config('app.church_email', 'contact@icc-munich.de'),
+                'email' => config('app.church_email', 'contact@bio-digital-sss.com'),
                 'phone' => config('app.church_phone', '+49 89 123456'),
-                'website' => config('app.url', 'https://icc-munich.de'),
+                'website' => config('app.url', 'https://www.bio-digital-sss.com'),
             ],
         ];
     }
@@ -157,7 +162,7 @@ class CareServiceReportService
         return collect($notes)->map(fn ($note): array => [
             'content' => $note['note'] ?? $note['content'] ?? '',
             'date' => isset($note['created_at'])
-                ? \Carbon\Carbon::parse($note['created_at'])->format('d/m/Y H:i')
+                ? Carbon::parse($note['created_at'])->format('d/m/Y H:i')
                 : null,
         ])->toArray();
     }
@@ -165,7 +170,7 @@ class CareServiceReportService
     /**
      * Generate PDF report
      */
-    public function generatePdf(): \Illuminate\Http\Response
+    public function generatePdf(): Response
     {
         $data = $this->getReportData();
 
@@ -180,7 +185,7 @@ class CareServiceReportService
     /**
      * Generate PDF report as stream (for inline viewing)
      */
-    public function streamPdf(): \Illuminate\Http\Response
+    public function streamPdf(): Response
     {
         $data = $this->getReportData();
 
@@ -193,13 +198,13 @@ class CareServiceReportService
     /**
      * Generate Excel report
      */
-    public function generateExcel(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function generateExcel(): BinaryFileResponse
     {
         $data = $this->getReportData();
         $filename = $this->generateFilename('xlsx');
 
         return Excel::download(
-            new \App\Exports\CareServiceReportExport($data),
+            new CareServiceReportExport($data),
             $filename
         );
     }
@@ -207,7 +212,7 @@ class CareServiceReportService
     /**
      * Generate Word report
      */
-    public function generateWord(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function generateWord(): StreamedResponse
     {
         $data = $this->getReportData();
         $filename = $this->generateFilename('docx');

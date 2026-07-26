@@ -6,7 +6,7 @@ import TermsOfService from './TermsOfService';
 vi.mock('@inertiajs/react', () => ({
     Head: ({ children }: any) => <>{children}</>,
     Link: ({ children, href, ...props }: any) => <a href={href} {...props}>{children}</a>,
-    usePage: () => ({ props: { app: { name: 'ICC Munich' } } }),
+    usePage: () => ({ props: { app: { name: 'Bio-Digital Software Systems Solutions UG' } } }),
 }));
 
 describe('TermsOfService Page', () => {
@@ -14,7 +14,7 @@ describe('TermsOfService Page', () => {
         render(<TermsOfService />);
 
         expect(screen.getByText('Conditions d\'utilisation')).toBeInTheDocument();
-        expect(screen.getByText('Bienvenue sur ICC Munich')).toBeInTheDocument();
+        expect(screen.getByText('Bienvenue sur Bio-Digital Software Systems Solutions UG')).toBeInTheDocument();
         expect(screen.getByText('Acceptation des conditions')).toBeInTheDocument();
         expect(screen.getByText('Utilisation du service')).toBeInTheDocument();
         expect(screen.getByText('Conduites interdites')).toBeInTheDocument();
@@ -57,9 +57,9 @@ describe('TermsOfService Page', () => {
     it('has contact information', () => {
         render(<TermsOfService />);
 
-        const contactLink = screen.getByText('legal@icc-munich.org');
+        const contactLink = screen.getByText('legal@bio-digital-sss.com');
         expect(contactLink).toBeInTheDocument();
-        expect(contactLink.closest('a')).toHaveAttribute('href', 'mailto:legal@icc-munich.org');
+        expect(contactLink.closest('a')).toHaveAttribute('href', 'mailto:legal@bio-digital-sss.com');
     });
 
     it('displays German law information', () => {
@@ -73,7 +73,7 @@ describe('TermsOfService Page', () => {
         render(<TermsOfService />);
 
         expect(screen.getByText('Par l\'utilisateur')).toBeInTheDocument();
-        expect(screen.getByText('Par ICC Munich')).toBeInTheDocument();
+        expect(screen.getByText('Par Bio-Digital Software Systems Solutions UG')).toBeInTheDocument();
         expect(screen.getByText('Vous pouvez fermer votre compte à tout moment')).toBeInTheDocument();
         expect(screen.getByText('Violation des conditions d\'utilisation')).toBeInTheDocument();
     });

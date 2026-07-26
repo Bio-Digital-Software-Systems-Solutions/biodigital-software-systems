@@ -128,8 +128,8 @@ export default function Create() {
                                             <EnvelopeIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
                                             <div>
                                                 <p className="font-medium">Email</p>
-                                                <a href="mailto:contact@icc-muenchen.de" className="text-sm text-icc-blue hover:underline">
-                                                    contact@icc-muenchen.de
+                                                <a href="mailto:contact@bio-digital-sss.com" className="text-sm text-icc-blue hover:underline">
+                                                    contact@bio-digital-sss.com
                                                 </a>
                                             </div>
                                         </div>

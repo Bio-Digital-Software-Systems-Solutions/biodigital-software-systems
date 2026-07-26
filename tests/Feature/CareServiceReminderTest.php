@@ -22,7 +22,7 @@ beforeEach(function (): void {
     $this->pastor = User::factory()->create([
         'first_name' => 'Jean',
         'last_name' => 'Dupont',
-        'email' => 'jean.dupont@icc-munich.de',
+        'email' => 'jean.dupont@bio-digital-sss.com',
     ]);
     $this->pastor->assignRole('pastor');
 });
@@ -591,7 +591,7 @@ it('command continues after individual email failure', function (): void {
     // Make the first email fail
     Mail::shouldReceive('to')
         ->once()
-        ->andThrow(new \Exception('SMTP error'));
+        ->andThrow(new Exception('SMTP error'));
 
     // Create appointment
     CareService::create([

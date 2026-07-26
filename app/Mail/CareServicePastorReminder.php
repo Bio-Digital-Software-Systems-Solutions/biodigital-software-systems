@@ -6,6 +6,7 @@ use App\Models\CareService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -29,7 +30,7 @@ class CareServicePastorReminder extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: config('mail.from.address', 'noreply@icc-munich.de'),
+            from: config('mail.from.address', 'noreply@bio-digital-sss.com'),
             subject: 'Rappel : Rendez-vous pastoral demain - '.$this->appointment->client_name,
         );
     }
@@ -45,7 +46,7 @@ class CareServicePastorReminder extends Mailable implements ShouldQueue
                 'appointment' => $this->appointment,
                 'pastor' => $this->appointment->pastor,
                 'churchName' => config('care_service.church_name', config('app.name')),
-                'churchEmail' => config('care_service.church_email', 'info@icc-munich.de'),
+                'churchEmail' => config('care_service.church_email', 'info@bio-digital-sss.com'),
                 'churchPhone' => config('care_service.church_phone', '+49 89 123456789'),
                 'appointmentUrl' => route('care-service.show', ['careService' => $this->appointment->uuid]),
             ],
@@ -55,7 +56,7 @@ class CareServicePastorReminder extends Mailable implements ShouldQueue
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

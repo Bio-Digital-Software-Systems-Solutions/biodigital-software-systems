@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Appointment;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -14,13 +15,15 @@ class AppointmentConfirmation extends Notification implements ShouldQueue
     use Queueable;
 
     /**
-     * @var \App\Models\Appointment
+     * @var Appointment
      */
     public $appointment;
+
     /**
-     * @var \App\Models\User
+     * @var User
      */
     public $participant;
+
     /**
      * @var string
      */
@@ -51,8 +54,8 @@ class AppointmentConfirmation extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $startDate = \Carbon\Carbon::parse($this->appointment->start_datetime);
-        $endDate = \Carbon\Carbon::parse($this->appointment->end_datetime);
+        $startDate = Carbon::parse($this->appointment->start_datetime);
+        $endDate = Carbon::parse($this->appointment->end_datetime);
 
         $statusText = $this->status === 'confirmed' ? 'confirmé sa participation' : 'décliné l\'invitation';
         $emoji = $this->status === 'confirmed' ? '✅' : '❌';
@@ -64,10 +67,10 @@ class AppointmentConfirmation extends Notification implements ShouldQueue
             ->line("**{$this->appointment->title}**")
             ->line("📅 **Date :** {$startDate->format('d/m/Y')}")
             ->line("🕐 **Heure :** {$startDate->format('H:i')} - {$endDate->format('H:i')}")
-            ->when($this->appointment->location, fn($message) => $message->line("📍 **Lieu :** {$this->appointment->location}"))
+            ->when($this->appointment->location, fn ($message) => $message->line("📍 **Lieu :** {$this->appointment->location}"))
             ->action('Voir les détails', url("/appointments/{$this->appointment->id}"))
             ->line('Vous pouvez consulter l\'état complet des participants dans les détails du rendez-vous.')
-            ->salutation('L\'équipe ICC München');
+            ->salutation('L\'équipe '.config('app.name'));
     }
 
     /**

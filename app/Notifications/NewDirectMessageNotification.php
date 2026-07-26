@@ -14,11 +14,12 @@ class NewDirectMessageNotification extends Notification implements ShouldQueue
     use Queueable;
 
     /**
-     * @var \App\Models\ChatMessage
+     * @var ChatMessage
      */
     public $chatMessage;
+
     /**
-     * @var \App\Models\User
+     * @var User
      */
     public $sender;
 
@@ -47,11 +48,11 @@ class NewDirectMessageNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $chatUrl = route('chat.index');
-        $senderName = $this->sender->first_name . ' ' . $this->sender->last_name;
+        $senderName = $this->sender->first_name.' '.$this->sender->last_name;
 
         // Truncate message content for email preview
         $messagePreview = strlen((string) $this->chatMessage->content) > 100
-            ? substr((string) $this->chatMessage->content, 0, 100) . '...'
+            ? substr((string) $this->chatMessage->content, 0, 100).'...'
             : $this->chatMessage->content;
 
         return (new MailMessage)
@@ -59,10 +60,10 @@ class NewDirectMessageNotification extends Notification implements ShouldQueue
             ->greeting("Bonjour {$notifiable->first_name},")
             ->line("Vous avez reçu un nouveau message de **{$senderName}** :")
             ->line("_{$messagePreview}_")
-            ->line("Connectez-vous à votre messagerie pour lire le message complet et répondre.")
+            ->line('Connectez-vous à votre messagerie pour lire le message complet et répondre.')
             ->action('📱 Ouvrir la messagerie', $chatUrl)
             ->line('Merci de consulter votre messagerie !')
-            ->salutation('L\'équipe ICC München');
+            ->salutation('L\'équipe '.config('app.name'));
     }
 
     /**
@@ -70,12 +71,12 @@ class NewDirectMessageNotification extends Notification implements ShouldQueue
      */
     public function toDatabase(object $notifiable): array
     {
-        $senderName = $this->sender->first_name . ' ' . $this->sender->last_name;
+        $senderName = $this->sender->first_name.' '.$this->sender->last_name;
 
         return [
             'type' => 'new_message',
             'title' => "Nouveau message de {$senderName}",
-            'message' => "Vous avez reçu un nouveau message dans votre messagerie.",
+            'message' => 'Vous avez reçu un nouveau message dans votre messagerie.',
             'sender_id' => $this->sender->id,
             'sender_name' => $senderName,
             'chat_message_id' => $this->chatMessage->id,

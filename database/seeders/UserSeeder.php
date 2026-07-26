@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserSeeder extends Seeder
 {
@@ -14,7 +15,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // ========================================
         // Super Admin
@@ -56,9 +57,9 @@ class UserSeeder extends Seeder
         // Pastors (3 pastors)
         // ========================================
         $pastors = [
-            ['first_name' => 'Jean', 'last_name' => 'Dupont', 'email' => 'jean.dupont@icc-munich.de', 'birth_date' => '1975-03-10'],
-            ['first_name' => 'Pierre', 'last_name' => 'Martin', 'email' => 'pierre.martin@icc-munich.de', 'birth_date' => '1968-11-25'],
-            ['first_name' => 'Marie', 'last_name' => 'Bernard', 'email' => 'marie.bernard@icc-munich.de', 'birth_date' => '1982-07-14'],
+            ['first_name' => 'Jean', 'last_name' => 'Dupont', 'email' => 'jean.dupont@bio-digital-sss.com', 'birth_date' => '1975-03-10'],
+            ['first_name' => 'Pierre', 'last_name' => 'Martin', 'email' => 'pierre.martin@bio-digital-sss.com', 'birth_date' => '1968-11-25'],
+            ['first_name' => 'Marie', 'last_name' => 'Bernard', 'email' => 'marie.bernard@bio-digital-sss.com', 'birth_date' => '1982-07-14'],
         ];
 
         foreach ($pastors as $pastorData) {
@@ -82,10 +83,10 @@ class UserSeeder extends Seeder
         // Teachers (4 teachers)
         // ========================================
         $teachers = [
-            ['first_name' => 'François', 'last_name' => 'Leclerc', 'email' => 'francois.leclerc@icc-munich.de', 'birth_date' => '1978-04-05'],
-            ['first_name' => 'Sophie', 'last_name' => 'Moreau', 'email' => 'sophie.moreau@icc-munich.de', 'birth_date' => '1983-09-18'],
-            ['first_name' => 'Antoine', 'last_name' => 'Petit', 'email' => 'antoine.petit@icc-munich.de', 'birth_date' => '1976-12-01'],
-            ['first_name' => 'Claire', 'last_name' => 'Dubois', 'email' => 'claire.dubois@icc-munich.de', 'birth_date' => '1990-02-28'],
+            ['first_name' => 'François', 'last_name' => 'Leclerc', 'email' => 'francois.leclerc@bio-digital-sss.com', 'birth_date' => '1978-04-05'],
+            ['first_name' => 'Sophie', 'last_name' => 'Moreau', 'email' => 'sophie.moreau@bio-digital-sss.com', 'birth_date' => '1983-09-18'],
+            ['first_name' => 'Antoine', 'last_name' => 'Petit', 'email' => 'antoine.petit@bio-digital-sss.com', 'birth_date' => '1976-12-01'],
+            ['first_name' => 'Claire', 'last_name' => 'Dubois', 'email' => 'claire.dubois@bio-digital-sss.com', 'birth_date' => '1990-02-28'],
         ];
 
         foreach ($teachers as $teacherData) {
@@ -109,14 +110,14 @@ class UserSeeder extends Seeder
         // Students (8 students)
         // ========================================
         $students = [
-            ['first_name' => 'Lucas', 'last_name' => 'Blanc', 'email' => 'lucas.blanc@icc-munich.de', 'birth_date' => '1998-05-12'],
-            ['first_name' => 'Emma', 'last_name' => 'Roux', 'email' => 'emma.roux@icc-munich.de', 'birth_date' => '2000-08-23'],
-            ['first_name' => 'Noah', 'last_name' => 'Garcia', 'email' => 'noah.garcia@icc-munich.de', 'birth_date' => '1999-01-07'],
-            ['first_name' => 'Léa', 'last_name' => 'Martinez', 'email' => 'lea.martinez@icc-munich.de', 'birth_date' => '2001-11-30'],
-            ['first_name' => 'Hugo', 'last_name' => 'Lopez', 'email' => 'hugo.lopez@icc-munich.de', 'birth_date' => '1997-06-15'],
-            ['first_name' => 'Chloé', 'last_name' => 'Girard', 'email' => 'chloe.girard@icc-munich.de', 'birth_date' => '2002-03-20'],
-            ['first_name' => 'Louis', 'last_name' => 'Andre', 'email' => 'louis.andre@icc-munich.de', 'birth_date' => '1996-09-08'],
-            ['first_name' => 'Jade', 'last_name' => 'Leroy', 'email' => 'jade.leroy@icc-munich.de', 'birth_date' => '2003-04-17'],
+            ['first_name' => 'Lucas', 'last_name' => 'Blanc', 'email' => 'lucas.blanc@bio-digital-sss.com', 'birth_date' => '1998-05-12'],
+            ['first_name' => 'Emma', 'last_name' => 'Roux', 'email' => 'emma.roux@bio-digital-sss.com', 'birth_date' => '2000-08-23'],
+            ['first_name' => 'Noah', 'last_name' => 'Garcia', 'email' => 'noah.garcia@bio-digital-sss.com', 'birth_date' => '1999-01-07'],
+            ['first_name' => 'Léa', 'last_name' => 'Martinez', 'email' => 'lea.martinez@bio-digital-sss.com', 'birth_date' => '2001-11-30'],
+            ['first_name' => 'Hugo', 'last_name' => 'Lopez', 'email' => 'hugo.lopez@bio-digital-sss.com', 'birth_date' => '1997-06-15'],
+            ['first_name' => 'Chloé', 'last_name' => 'Girard', 'email' => 'chloe.girard@bio-digital-sss.com', 'birth_date' => '2002-03-20'],
+            ['first_name' => 'Louis', 'last_name' => 'Andre', 'email' => 'louis.andre@bio-digital-sss.com', 'birth_date' => '1996-09-08'],
+            ['first_name' => 'Jade', 'last_name' => 'Leroy', 'email' => 'jade.leroy@bio-digital-sss.com', 'birth_date' => '2003-04-17'],
         ];
 
         foreach ($students as $studentData) {
@@ -140,11 +141,11 @@ class UserSeeder extends Seeder
         // Stars (Volunteers - 5 stars)
         // ========================================
         $stars = [
-            ['first_name' => 'Thomas', 'last_name' => 'Mercier', 'email' => 'thomas.mercier@icc-munich.de', 'birth_date' => '1992-07-22'],
-            ['first_name' => 'Camille', 'last_name' => 'Simon', 'email' => 'camille.simon@icc-munich.de', 'birth_date' => '1988-10-14'],
-            ['first_name' => 'Maxime', 'last_name' => 'Laurent', 'email' => 'maxime.laurent@icc-munich.de', 'birth_date' => '1995-02-05'],
-            ['first_name' => 'Julie', 'last_name' => 'Lefebvre', 'email' => 'julie.lefebvre@icc-munich.de', 'birth_date' => '1991-12-28'],
-            ['first_name' => 'Alexandre', 'last_name' => 'Michel', 'email' => 'alexandre.michel@icc-munich.de', 'birth_date' => '1987-08-03'],
+            ['first_name' => 'Thomas', 'last_name' => 'Mercier', 'email' => 'thomas.mercier@bio-digital-sss.com', 'birth_date' => '1992-07-22'],
+            ['first_name' => 'Camille', 'last_name' => 'Simon', 'email' => 'camille.simon@bio-digital-sss.com', 'birth_date' => '1988-10-14'],
+            ['first_name' => 'Maxime', 'last_name' => 'Laurent', 'email' => 'maxime.laurent@bio-digital-sss.com', 'birth_date' => '1995-02-05'],
+            ['first_name' => 'Julie', 'last_name' => 'Lefebvre', 'email' => 'julie.lefebvre@bio-digital-sss.com', 'birth_date' => '1991-12-28'],
+            ['first_name' => 'Alexandre', 'last_name' => 'Michel', 'email' => 'alexandre.michel@bio-digital-sss.com', 'birth_date' => '1987-08-03'],
         ];
 
         foreach ($stars as $starData) {
@@ -168,8 +169,8 @@ class UserSeeder extends Seeder
         // Event Managers (2 event managers)
         // ========================================
         $eventManagers = [
-            ['first_name' => 'Nicolas', 'last_name' => 'Fournier', 'email' => 'nicolas.fournier@icc-munich.de', 'birth_date' => '1986-05-19'],
-            ['first_name' => 'Isabelle', 'last_name' => 'Morel', 'email' => 'isabelle.morel@icc-munich.de', 'birth_date' => '1984-01-11'],
+            ['first_name' => 'Nicolas', 'last_name' => 'Fournier', 'email' => 'nicolas.fournier@bio-digital-sss.com', 'birth_date' => '1986-05-19'],
+            ['first_name' => 'Isabelle', 'last_name' => 'Morel', 'email' => 'isabelle.morel@bio-digital-sss.com', 'birth_date' => '1984-01-11'],
         ];
 
         foreach ($eventManagers as $managerData) {
@@ -193,8 +194,8 @@ class UserSeeder extends Seeder
         // Project Managers (2 project managers)
         // ========================================
         $projectManagers = [
-            ['first_name' => 'David', 'last_name' => 'Robert', 'email' => 'david.robert@icc-munich.de', 'birth_date' => '1981-09-25'],
-            ['first_name' => 'Nathalie', 'last_name' => 'Richard', 'email' => 'nathalie.richard@icc-munich.de', 'birth_date' => '1979-06-07'],
+            ['first_name' => 'David', 'last_name' => 'Robert', 'email' => 'david.robert@bio-digital-sss.com', 'birth_date' => '1981-09-25'],
+            ['first_name' => 'Nathalie', 'last_name' => 'Richard', 'email' => 'nathalie.richard@bio-digital-sss.com', 'birth_date' => '1979-06-07'],
         ];
 
         foreach ($projectManagers as $pmData) {
@@ -218,8 +219,8 @@ class UserSeeder extends Seeder
         // Writers / Content Editors (2 writers)
         // ========================================
         $writers = [
-            ['first_name' => 'Olivier', 'last_name' => 'Durand', 'email' => 'olivier.durand@icc-munich.de', 'birth_date' => '1989-04-16'],
-            ['first_name' => 'Céline', 'last_name' => 'Bonnet', 'email' => 'celine.bonnet@icc-munich.de', 'birth_date' => '1993-11-02'],
+            ['first_name' => 'Olivier', 'last_name' => 'Durand', 'email' => 'olivier.durand@bio-digital-sss.com', 'birth_date' => '1989-04-16'],
+            ['first_name' => 'Céline', 'last_name' => 'Bonnet', 'email' => 'celine.bonnet@bio-digital-sss.com', 'birth_date' => '1993-11-02'],
         ];
 
         foreach ($writers as $writerData) {
@@ -243,17 +244,17 @@ class UserSeeder extends Seeder
         // Members (Regular church members - 10 members)
         // ========================================
         $members = [
-            ['first_name' => 'Member', 'last_name' => 'Test', 'email' => 'member@icc-munich.de', 'birth_date' => '1990-01-01'],
-            ['first_name' => 'Philippe', 'last_name' => 'Garnier', 'email' => 'philippe.garnier@icc-munich.de', 'birth_date' => '1970-03-08'],
-            ['first_name' => 'Sandrine', 'last_name' => 'Faure', 'email' => 'sandrine.faure@icc-munich.de', 'birth_date' => '1985-07-21'],
-            ['first_name' => 'Julien', 'last_name' => 'Lemoine', 'email' => 'julien.lemoine@icc-munich.de', 'birth_date' => '1994-10-30'],
-            ['first_name' => 'Valérie', 'last_name' => 'Rousseau', 'email' => 'valerie.rousseau@icc-munich.de', 'birth_date' => '1978-05-14'],
-            ['first_name' => 'Sébastien', 'last_name' => 'Vincent', 'email' => 'sebastien.vincent@icc-munich.de', 'birth_date' => '1983-12-09'],
-            ['first_name' => 'Aurélie', 'last_name' => 'Muller', 'email' => 'aurelie.muller@icc-munich.de', 'birth_date' => '1991-02-18'],
-            ['first_name' => 'Mathieu', 'last_name' => 'Lefevre', 'email' => 'mathieu.lefevre@icc-munich.de', 'birth_date' => '1973-08-26'],
-            ['first_name' => 'Stéphanie', 'last_name' => 'Chevalier', 'email' => 'stephanie.chevalier@icc-munich.de', 'birth_date' => '1989-01-03'],
-            ['first_name' => 'Romain', 'last_name' => 'Francois', 'email' => 'romain.francois@icc-munich.de', 'birth_date' => '1996-06-11'],
-            ['first_name' => 'Marine', 'last_name' => 'Legrand', 'email' => 'marine.legrand@icc-munich.de', 'birth_date' => '2000-09-24'],
+            ['first_name' => 'Member', 'last_name' => 'Test', 'email' => 'member@bio-digital-sss.com', 'birth_date' => '1990-01-01'],
+            ['first_name' => 'Philippe', 'last_name' => 'Garnier', 'email' => 'philippe.garnier@bio-digital-sss.com', 'birth_date' => '1970-03-08'],
+            ['first_name' => 'Sandrine', 'last_name' => 'Faure', 'email' => 'sandrine.faure@bio-digital-sss.com', 'birth_date' => '1985-07-21'],
+            ['first_name' => 'Julien', 'last_name' => 'Lemoine', 'email' => 'julien.lemoine@bio-digital-sss.com', 'birth_date' => '1994-10-30'],
+            ['first_name' => 'Valérie', 'last_name' => 'Rousseau', 'email' => 'valerie.rousseau@bio-digital-sss.com', 'birth_date' => '1978-05-14'],
+            ['first_name' => 'Sébastien', 'last_name' => 'Vincent', 'email' => 'sebastien.vincent@bio-digital-sss.com', 'birth_date' => '1983-12-09'],
+            ['first_name' => 'Aurélie', 'last_name' => 'Muller', 'email' => 'aurelie.muller@bio-digital-sss.com', 'birth_date' => '1991-02-18'],
+            ['first_name' => 'Mathieu', 'last_name' => 'Lefevre', 'email' => 'mathieu.lefevre@bio-digital-sss.com', 'birth_date' => '1973-08-26'],
+            ['first_name' => 'Stéphanie', 'last_name' => 'Chevalier', 'email' => 'stephanie.chevalier@bio-digital-sss.com', 'birth_date' => '1989-01-03'],
+            ['first_name' => 'Romain', 'last_name' => 'Francois', 'email' => 'romain.francois@bio-digital-sss.com', 'birth_date' => '1996-06-11'],
+            ['first_name' => 'Marine', 'last_name' => 'Legrand', 'email' => 'marine.legrand@bio-digital-sss.com', 'birth_date' => '2000-09-24'],
         ];
 
         foreach ($members as $memberData) {
@@ -277,8 +278,8 @@ class UserSeeder extends Seeder
         // Department Leaders (2 department leaders)
         // ========================================
         $departmentLeaders = [
-            ['first_name' => 'Christophe', 'last_name' => 'Henry', 'email' => 'christophe.henry@icc-munich.de', 'birth_date' => '1977-11-17'],
-            ['first_name' => 'Véronique', 'last_name' => 'Masson', 'email' => 'veronique.masson@icc-munich.de', 'birth_date' => '1980-04-29'],
+            ['first_name' => 'Christophe', 'last_name' => 'Henry', 'email' => 'christophe.henry@bio-digital-sss.com', 'birth_date' => '1977-11-17'],
+            ['first_name' => 'Véronique', 'last_name' => 'Masson', 'email' => 'veronique.masson@bio-digital-sss.com', 'birth_date' => '1980-04-29'],
         ];
 
         foreach ($departmentLeaders as $leaderData) {
@@ -302,8 +303,8 @@ class UserSeeder extends Seeder
         // Group Leaders (2 group leaders)
         // ========================================
         $groupLeaders = [
-            ['first_name' => 'Patrick', 'last_name' => 'Brunet', 'email' => 'patrick.brunet@icc-munich.de', 'birth_date' => '1982-08-12'],
-            ['first_name' => 'Caroline', 'last_name' => 'Guerin', 'email' => 'caroline.guerin@icc-munich.de', 'birth_date' => '1986-03-25'],
+            ['first_name' => 'Patrick', 'last_name' => 'Brunet', 'email' => 'patrick.brunet@bio-digital-sss.com', 'birth_date' => '1982-08-12'],
+            ['first_name' => 'Caroline', 'last_name' => 'Guerin', 'email' => 'caroline.guerin@bio-digital-sss.com', 'birth_date' => '1986-03-25'],
         ];
 
         foreach ($groupLeaders as $leaderData) {
@@ -327,7 +328,7 @@ class UserSeeder extends Seeder
         // Library Manager (1)
         // ========================================
         $libraryManager = User::firstOrCreate(
-            ['email' => 'bibliotheque@icc-munich.de'],
+            ['email' => 'bibliotheque@bio-digital-sss.com'],
             [
                 'first_name' => 'Margot',
                 'last_name' => 'Dupuis',

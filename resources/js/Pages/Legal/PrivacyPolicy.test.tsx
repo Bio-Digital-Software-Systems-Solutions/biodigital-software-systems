@@ -33,7 +33,7 @@ describe('PrivacyPolicy Page', () => {
     it('displays contact information', () => {
         render(<PrivacyPolicy />);
 
-        expect(screen.getByText('privacy@icc-munich.org')).toBeInTheDocument();
+        expect(screen.getByText('privacy@bio-digital-sss.com')).toBeInTheDocument();
         expect(screen.getByText('+49 89 123 456 789')).toBeInTheDocument();
         expect(screen.getByText('Munich, Allemagne')).toBeInTheDocument();
     });

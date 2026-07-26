@@ -17,7 +17,7 @@ beforeEach(function (): void {
     $this->pastor = User::factory()->create([
         'first_name' => 'Marie',
         'last_name' => 'Bernard',
-        'email' => 'marie.bernard@icc-munich.de',
+        'email' => 'marie.bernard@bio-digital-sss.com',
     ]);
     $this->pastor->assignRole('pastor');
 
@@ -27,7 +27,7 @@ beforeEach(function (): void {
     $this->appointment = CareService::create([
         'pastor_id' => $this->pastor->id,
         'client_name' => 'Philippe Garnier',
-        'client_email' => 'philippe.garnier@icc-munich.de',
+        'client_email' => 'philippe.garnier@bio-digital-sss.com',
         'client_phone' => '1234567890',
         'appointment_date' => $appointmentDate->toDateString(),
         'appointment_time' => $appointmentDate->setHour(10)->setMinute(0),

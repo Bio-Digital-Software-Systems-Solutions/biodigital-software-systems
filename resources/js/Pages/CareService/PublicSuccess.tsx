@@ -178,8 +178,8 @@ export default function PublicSuccess({ action = 'booked', appointmentUuid }: Pr
                                     <p className="text-sm text-gray-600 dark:text-gray-400">
                                         Problèmes avec la réservation ?
                                     </p>
-                                    <a href="mailto:info@icc-munich.de" className="text-blue-600 dark:text-blue-400 hover:underline text-sm">
-                                        info@icc-munich.de
+                                    <a href="mailto:info@bio-digital-sss.com" className="text-blue-600 dark:text-blue-400 hover:underline text-sm">
+                                        info@bio-digital-sss.com
                                     </a>
                                 </div>
                                 <div>
@@ -197,7 +197,7 @@ export default function PublicSuccess({ action = 'booked', appointmentUuid }: Pr
                                 <h4 className="font-medium text-gray-900 dark:text-white mb-2">{appName}</h4>
                                 <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                                     <p>International Christian Community Munich</p>
-                                    <p>Site web : <a href="https://icc-munich.de" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">icc-munich.de</a></p>
+                                    <p>Site web : <a href="https://www.bio-digital-sss.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">bio-digital-sss.com</a></p>
                                     <p>Nos cultes, études bibliques et événements communautaires sont ouverts à tous.</p>
                                 </div>
                             </div>

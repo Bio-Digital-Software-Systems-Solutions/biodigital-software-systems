@@ -22,9 +22,9 @@ return [
     'enabled' => env('CARE_SERVICE_ENABLED', true),
 
     'church_name' => env('CHURCH_NAME', env('APP_NAME', 'Laravel')),
-    'church_email' => env('CHURCH_EMAIL', 'info@icc-munich.de'),
+    'church_email' => env('CHURCH_EMAIL', 'info@bio-digital-sss.com'),
     'church_phone' => env('CHURCH_PHONE', '+49 89 123456789'),
-    'church_website' => env('CHURCH_WEBSITE', 'https://icc-munich.de'),
+    'church_website' => env('CHURCH_WEBSITE', 'https://www.bio-digital-sss.com'),
 
     /*
     |--------------------------------------------------------------------------
@@ -204,7 +204,7 @@ return [
 
         // From email for care service notifications
         'from' => [
-            'address' => env('CARE_SERVICE_FROM_EMAIL', env('MAIL_FROM_ADDRESS', 'noreply@icc-munich.de')),
+            'address' => env('CARE_SERVICE_FROM_EMAIL', env('MAIL_FROM_ADDRESS', 'noreply@bio-digital-sss.com')),
             'name' => env('CARE_SERVICE_FROM_NAME', env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel').' - Soin Pastoral')),
         ],
     ],
@@ -336,7 +336,7 @@ return [
         'enabled' => true,
         'contact_info' => [
             'phone' => env('EMERGENCY_PASTORAL_PHONE', '+49 89 123456789'),
-            'email' => env('EMERGENCY_PASTORAL_EMAIL', 'urgence@icc-munich.de'),
+            'email' => env('EMERGENCY_PASTORAL_EMAIL', 'urgence@bio-digital-sss.com'),
             'message' => 'En cas d\'urgence spirituelle, contactez-nous immédiatement.',
         ],
         'show_on_booking_page' => true,

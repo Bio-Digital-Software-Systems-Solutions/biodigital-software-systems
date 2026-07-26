@@ -102,7 +102,7 @@ export default function ConfirmationAlready({ status, appointment }: Props) {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => window.location.href = 'mailto:contact@icc-muenchen.de?subject=Modification de réponse rendez-vous'}
+                                    onClick={() => window.location.href = 'mailto:contact@bio-digital-sss.com?subject=Modification de réponse rendez-vous'}
                                     className="w-full text-xs"
                                 >
                                     Contacter l'organisateur

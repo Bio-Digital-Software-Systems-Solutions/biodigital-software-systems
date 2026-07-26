@@ -16,7 +16,7 @@ beforeEach(function (): void {
     $this->organizer = User::factory()->create([
         'first_name' => 'Jean',
         'last_name' => 'Dupont',
-        'email' => 'jean.dupont@icc-munich.de',
+        'email' => 'jean.dupont@bio-digital-sss.com',
         'phone_number' => '+491701234567',
     ]);
 
@@ -65,7 +65,7 @@ it('finds appointments within the 24-hour reminder window', function (): void {
     Notification::assertSentTo(
         $this->organizer,
         AppointmentReminder::class,
-        fn($notification): bool => $notification->isOrganizer === true
+        fn ($notification): bool => $notification->isOrganizer === true
     );
 
     $appointment->refresh();
@@ -331,7 +331,7 @@ it('sends SMS reminder when enabled', function (): void {
 
     expect($result)->toBeTrue();
 
-    Http::assertSent(fn($request): bool => str_contains((string) $request->url(), 'api.twilio.com')
+    Http::assertSent(fn ($request): bool => str_contains((string) $request->url(), 'api.twilio.com')
         && $request['To'] === '+491709876543'
         && str_contains((string) $request['Body'], 'Rappel'));
 });
@@ -387,7 +387,7 @@ it('sends WhatsApp reminder when enabled', function (): void {
 
     expect($result)->toBeTrue();
 
-    Http::assertSent(fn($request): bool => str_contains((string) $request->url(), 'api.twilio.com')
+    Http::assertSent(fn ($request): bool => str_contains((string) $request->url(), 'api.twilio.com')
         && $request['To'] === 'whatsapp:+491709876543'
         && str_contains((string) $request['Body'], 'Rappel de rendez-vous'));
 });
@@ -418,7 +418,7 @@ it('normalizes German phone numbers correctly', function (): void {
 
     expect($result)->toBeTrue();
 
-    Http::assertSent(fn($request): bool => $request['To'] === '+491701234567');
+    Http::assertSent(fn ($request): bool => $request['To'] === '+491701234567');
 });
 
 it('handles Twilio API errors gracefully', function (): void {
@@ -659,7 +659,7 @@ it('sends SMS reminders when enabled in command', function (): void {
     Notification::assertSentTo($this->participant, AppointmentReminder::class);
 
     // Verify SMS API was called
-    Http::assertSent(fn($request): bool => str_contains((string) $request->url(), 'api.twilio.com'));
+    Http::assertSent(fn ($request): bool => str_contains((string) $request->url(), 'api.twilio.com'));
 });
 
 it('updates sms_reminder_sent_at when SMS is sent', function (): void {

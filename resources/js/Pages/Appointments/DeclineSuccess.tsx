@@ -98,7 +98,7 @@ export default function DeclineSuccess({ appointment, participant }: Props) {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => window.location.href = 'mailto:contact@icc-muenchen.de?subject=Changement de réponse rendez-vous'}
+                                    onClick={() => window.location.href = 'mailto:contact@bio-digital-sss.com?subject=Changement de réponse rendez-vous'}
                                     className="w-full text-xs"
                                 >
                                     Contacter l'organisateur

@@ -44,7 +44,7 @@ class CareServiceAvailabilitySelectedSlotsTest extends TestCase
             'slot_duration' => 60,
             'is_active' => true,
             'consultation_mode' => 'in_person',
-            'location' => 'Église ICC Munich',
+            'location' => 'Bureau Bio-Digital SSS',
             'room' => 'Bureau pastoral',
             'notes' => 'Test creation with selected slots',
             'selected_slots' => ['09:00', '10:00', '11:00', '14:00', '15:00'],
@@ -68,7 +68,7 @@ class CareServiceAvailabilitySelectedSlotsTest extends TestCase
         $this->assertEquals(60, $availability->slot_duration);
         $this->assertTrue($availability->is_active);
         $this->assertEquals('in_person', $availability->consultation_mode);
-        $this->assertEquals('Église ICC Munich', $availability->location);
+        $this->assertEquals('Bureau Bio-Digital SSS', $availability->location);
         $this->assertEquals('Bureau pastoral', $availability->room);
         $this->assertEquals('Test creation with selected slots', $availability->notes);
 

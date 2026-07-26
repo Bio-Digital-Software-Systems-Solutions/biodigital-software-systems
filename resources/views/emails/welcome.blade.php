@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenue à ICC München</title>
+    <title>Bienvenue à {{ config('app.name') }}</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -76,12 +76,12 @@
 <body>
     <div class="container">
         <div class="logo">
-            <h1>ICC München</h1>
+            <h1>{{ config('app.name') }}</h1>
         </div>
 
         <h2>Bienvenue, {{ $user->first_name }} {{ $user->last_name }} !</h2>
 
-        <p>Nous sommes ravis de vous accueillir dans la communauté ICC München. Votre inscription a été effectuée avec succès !</p>
+        <p>Nous sommes ravis de vous accueillir dans la communauté {{ config('app.name') }}. Votre inscription a été effectuée avec succès !</p>
 
         <div class="info-box">
             <strong>Informations de votre compte :</strong><br>
@@ -110,10 +110,10 @@
         <p>Si vous avez des questions, n'hésitez pas à nous contacter à tout moment.</p>
 
         <p>Cordialement,<br>
-        <strong>L'équipe ICC München</strong></p>
+        <strong>L'équipe {{ config('app.name') }}</strong></p>
 
         <div class="footer">
-            <p>© {{ date('Y') }} ICC München. Tous droits réservés.</p>
+            <p>© {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.</p>
             <p>Si vous avez des problèmes avec le bouton ci-dessus, copiez et collez ce lien dans votre navigateur :<br>
             <span style="color: #3b82f6; word-break: break-all;">{{ $verificationUrl }}</span></p>
         </div>

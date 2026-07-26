@@ -85,7 +85,7 @@ export default function ConfirmationError({ error, appointment }: Props) {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => window.location.href = 'mailto:contact@icc-muenchen.de?subject=Problème de confirmation de rendez-vous'}
+                                    onClick={() => window.location.href = 'mailto:contact@bio-digital-sss.com?subject=Problème de confirmation de rendez-vous'}
                                     className="w-full text-xs"
                                 >
                                     Contacter le support

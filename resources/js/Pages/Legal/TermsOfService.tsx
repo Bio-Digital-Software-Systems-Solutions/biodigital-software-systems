@@ -306,10 +306,10 @@ export default function TermsOfService() {
                                 <div className="flex items-center gap-2">
                                     <Mail className="h-4 w-4 text-primary" />
                                     <a
-                                        href="mailto:legal@icc-munich.org"
+                                        href="mailto:legal@bio-digital-sss.com"
                                         className="text-primary hover:text-primary/80 font-medium"
                                     >
-                                        legal@icc-munich.org
+                                        legal@bio-digital-sss.com
                                     </a>
                                 </div>
                             </div>

@@ -137,7 +137,7 @@
 <body>
     <div class="container">
         <div class="logo">
-            <h1>ICC M&uuml;nchen</h1>
+            <h1>{{ config('app.name') }}</h1>
         </div>
 
         <div class="reminder-header">
@@ -255,10 +255,10 @@
         <p>En cas d'emp&ecirc;chement, veuillez pr&eacute;venir l'organisateur d&egrave;s que possible.</p>
 
         <p>Cordialement,<br>
-        <strong>L'&eacute;quipe ICC M&uuml;nchen</strong></p>
+        <strong>L'&eacute;quipe {{ config('app.name') }}</strong></p>
 
         <div class="footer">
-            <p>&copy; {{ date('Y') }} ICC M&uuml;nchen. Tous droits r&eacute;serv&eacute;s.</p>
+            <p>&copy; {{ date('Y') }} {{ config('app.name') }}. Tous droits r&eacute;serv&eacute;s.</p>
             <p style="margin-top: 10px;">
                 Cet email concerne le rendez-vous : {{ $appointment->title }}<br>
                 Pr&eacute;vu pour le {{ $startDate->format('d/m/Y') }} &agrave; {{ $startDate->format('H:i') }}

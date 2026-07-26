@@ -740,7 +740,7 @@ export default function Edit({ availability }: Props) {
                                                 <Input
                                                     id="location"
                                                     type="text"
-                                                    placeholder="Ex: Église ICC Munich, 123 Rue de la Paix..."
+                                                    placeholder="Ex: Bureau Bio-Digital SSS, 123 Rue de la Paix..."
                                                     value={data.location}
                                                     onChange={(e) => setData('location', e.target.value)}
                                                 />

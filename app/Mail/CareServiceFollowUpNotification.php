@@ -6,6 +6,7 @@ use App\Models\CareService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -31,7 +32,7 @@ class CareServiceFollowUpNotification extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: config('mail.from.address', 'noreply@icc-munich.de'),
+            from: config('mail.from.address', 'noreply@bio-digital-sss.com'),
             replyTo: [$this->appointment->pastor->email],
             subject: 'Nouveau rendez-vous de suivi planifié - '.config('app.name'),
         );
@@ -55,8 +56,8 @@ class CareServiceFollowUpNotification extends Mailable implements ShouldQueue
                 'confirmUrl' => $confirmUrl,
                 'cancelUrl' => $cancelUrl,
                 'churchName' => config('app.name'),
-                'churchWebsite' => 'https://icc-munich.de',
-                'churchEmail' => 'info@icc-munich.de',
+                'churchWebsite' => 'https://www.bio-digital-sss.com',
+                'churchEmail' => 'info@bio-digital-sss.com',
             ],
         );
     }
@@ -64,7 +65,7 @@ class CareServiceFollowUpNotification extends Mailable implements ShouldQueue
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -44,7 +45,7 @@ class CareServiceTransferNotification extends Mailable implements ShouldQueue
         };
 
         return new Envelope(
-            from: config('mail.from.address', 'noreply@icc-munich.de'),
+            from: config('mail.from.address', 'noreply@bio-digital-sss.com'),
             subject: $subject.' - '.config('app.name'),
         );
     }
@@ -70,9 +71,9 @@ class CareServiceTransferNotification extends Mailable implements ShouldQueue
                 'recipientName' => $recipientName,
                 'transferReason' => $this->appointment->transfer_reason,
                 'churchName' => config('app.church_name', config('app.name')),
-                'churchEmail' => config('app.church_email', 'contact@icc-munich.de'),
+                'churchEmail' => config('app.church_email', 'contact@bio-digital-sss.com'),
                 'churchPhone' => config('app.church_phone', '+49 89 123456'),
-                'churchWebsite' => config('app.url', 'https://icc-munich.de'),
+                'churchWebsite' => config('app.url', 'https://www.bio-digital-sss.com'),
             ],
         );
     }
@@ -80,7 +81,7 @@ class CareServiceTransferNotification extends Mailable implements ShouldQueue
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

@@ -4,12 +4,18 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CareServiceStoreRequest;
+use App\Mail\CareServiceDualConfirmationNotification;
+use App\Mail\CareServiceFollowUpNotification;
 use App\Mail\CareServiceNewAppointmentNotification;
+use App\Mail\CareServicePartialConfirmationNotification;
+use App\Mail\CareServicePastorFollowUpNotification;
 use App\Mail\CareServiceStatusChangeNotification;
 use App\Models\CareService;
+use App\Models\CareServiceAvailability;
 use App\Models\CareServiceTheme;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\CareServiceReportService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -113,7 +119,7 @@ class CareServiceController extends Controller
         $availableDays = [];
 
         // Get pastor's availability settings
-        $availabilities = \App\Models\CareServiceAvailability::where('pastor_id', $validated['pastor_id'])
+        $availabilities = CareServiceAvailability::where('pastor_id', $validated['pastor_id'])
             ->active()
             ->get();
 
@@ -197,7 +203,7 @@ class CareServiceController extends Controller
         }
 
         // Get all availabilities for all pastors
-        $availabilities = \App\Models\CareServiceAvailability::whereIn('pastor_id', $pastors)
+        $availabilities = CareServiceAvailability::whereIn('pastor_id', $pastors)
             ->active()
             ->get();
 
@@ -340,10 +346,10 @@ class CareServiceController extends Controller
         );
 
         // Get consultation mode from pastor's availability for this date
-        $currentDate = \Carbon\Carbon::parse($validated['date']);
+        $currentDate = Carbon::parse($validated['date']);
         $dayOfWeek = $currentDate->dayOfWeek;
 
-        $availability = \App\Models\CareServiceAvailability::where('pastor_id', $validated['pastor_id'])
+        $availability = CareServiceAvailability::where('pastor_id', $validated['pastor_id'])
             ->active()
             ->where(function ($query) use ($currentDate, $dayOfWeek): void {
                 $query->where(function ($q) use ($dayOfWeek): void {
@@ -603,7 +609,7 @@ class CareServiceController extends Controller
 
         $appointment = CareService::findByClientToken($validated['token']);
 
-        if (! $appointment instanceof \App\Models\CareService) {
+        if (! $appointment instanceof CareService) {
             return response()->json([
                 'success' => false,
                 'message' => 'Rendez-vous introuvable ou token invalide',
@@ -653,7 +659,7 @@ class CareServiceController extends Controller
 
         $appointment = CareService::findByPastorToken($validated['token']);
 
-        if (! $appointment instanceof \App\Models\CareService) {
+        if (! $appointment instanceof CareService) {
             return response()->json([
                 'success' => false,
                 'message' => 'Rendez-vous introuvable ou token invalide',
@@ -953,7 +959,7 @@ class CareServiceController extends Controller
                 Mail::raw($clientContent, function ($message) use ($appointment, $clientSubject): void {
                     $message->to($appointment->client_email)
                         ->subject($clientSubject)
-                        ->from(config('mail.from.address', 'noreply@icc-munich.de'), config('app.name'));
+                        ->from(config('mail.from.address', 'noreply@bio-digital-sss.com'), config('app.name'));
                 });
 
                 // Track that the notification email was sent
@@ -1207,13 +1213,13 @@ class CareServiceController extends Controller
             // 1. Send email notification to client with their confirmation token
             if ($appointment->client_email) {
                 Mail::to($appointment->client_email)
-                    ->send(new \App\Mail\CareServiceFollowUpNotification($appointment, $parentAppointment));
+                    ->send(new CareServiceFollowUpNotification($appointment, $parentAppointment));
             }
 
             // 2. Send email notification to pastor with their confirmation token
             if ($pastor && $pastor->email) {
                 Mail::to($pastor->email)
-                    ->send(new \App\Mail\CareServicePastorFollowUpNotification($appointment, $parentAppointment));
+                    ->send(new CareServicePastorFollowUpNotification($appointment, $parentAppointment));
             }
 
             // 3. Send internal message to pastor
@@ -1300,7 +1306,7 @@ class CareServiceController extends Controller
         }
 
         try {
-            $reportService = new \App\Services\CareServiceReportService($appointment);
+            $reportService = new CareServiceReportService($appointment);
 
             return match ($format) {
                 'pdf' => $reportService->generatePdf(),
@@ -1328,13 +1334,13 @@ class CareServiceController extends Controller
             // Send final confirmation email to client
             if ($appointment->client_email) {
                 Mail::to($appointment->client_email)
-                    ->send(new \App\Mail\CareServiceDualConfirmationNotification($appointment, 'client'));
+                    ->send(new CareServiceDualConfirmationNotification($appointment, 'client'));
             }
 
             // Send final confirmation email to pastor
             if ($appointment->pastor && $appointment->pastor->email) {
                 Mail::to($appointment->pastor->email)
-                    ->send(new \App\Mail\CareServiceDualConfirmationNotification($appointment, 'pastor'));
+                    ->send(new CareServiceDualConfirmationNotification($appointment, 'pastor'));
             }
 
             // Send platform message to client if they have an account
@@ -1380,7 +1386,7 @@ class CareServiceController extends Controller
                 // Client confirmed - notify pastor
                 if ($appointment->pastor && $appointment->pastor->email) {
                     Mail::to($appointment->pastor->email)
-                        ->send(new \App\Mail\CareServicePartialConfirmationNotification($appointment, 'pastor', $confirmedBy));
+                        ->send(new CareServicePartialConfirmationNotification($appointment, 'pastor', $confirmedBy));
                 }
 
                 // Send platform message to pastor
@@ -1398,7 +1404,7 @@ class CareServiceController extends Controller
                 // Pastor confirmed - notify client
                 if ($appointment->client_email) {
                     Mail::to($appointment->client_email)
-                        ->send(new \App\Mail\CareServicePartialConfirmationNotification($appointment, 'client', $confirmedBy));
+                        ->send(new CareServicePartialConfirmationNotification($appointment, 'client', $confirmedBy));
                 }
 
                 // Send platform message to client if they have an account
@@ -1527,7 +1533,7 @@ class CareServiceController extends Controller
 
         $proposal = CareService::findByProposalToken($validated['token']);
 
-        if (! $proposal instanceof \App\Models\CareService) {
+        if (! $proposal instanceof CareService) {
             return response()->json([
                 'success' => false,
                 'message' => 'Proposition introuvable ou token invalide',
@@ -1744,7 +1750,7 @@ class CareServiceController extends Controller
 
         $proposal = CareService::findByProposalToken($validated['token']);
 
-        if (! $proposal instanceof \App\Models\CareService) {
+        if (! $proposal instanceof CareService) {
             return response()->json([
                 'success' => false,
                 'message' => 'Proposition introuvable ou token invalide',
@@ -1787,7 +1793,7 @@ class CareServiceController extends Controller
 
         $proposal = CareService::findByProposalToken($validated['token']);
 
-        if (! $proposal instanceof \App\Models\CareService) {
+        if (! $proposal instanceof CareService) {
             return response()->json([
                 'success' => false,
                 'message' => 'Proposition introuvable ou token invalide',
@@ -1850,7 +1856,7 @@ class CareServiceController extends Controller
                 Mail::raw($messageContent, function ($message) use ($agent, $proposal): void {
                     $message->to($agent->email)
                         ->subject('Nouvelle proposition de rendez-vous - '.$proposal->client_name)
-                        ->from(config('mail.from.address', 'noreply@icc-munich.de'), config('app.name'));
+                        ->from(config('mail.from.address', 'noreply@bio-digital-sss.com'), config('app.name'));
                 });
             }
 
@@ -1868,7 +1874,7 @@ class CareServiceController extends Controller
             Mail::raw($clientContent, function ($message) use ($proposal): void {
                 $message->to($proposal->client_email)
                     ->subject('Proposition de rendez-vous reçue - '.config('app.name'))
-                    ->from(config('mail.from.address', 'noreply@icc-munich.de'), config('app.name'));
+                    ->from(config('mail.from.address', 'noreply@bio-digital-sss.com'), config('app.name'));
             });
 
         } catch (\Exception $e) {
@@ -1898,7 +1904,7 @@ class CareServiceController extends Controller
             Mail::raw($clientContent, function ($message) use ($proposal): void {
                 $message->to($proposal->client_email)
                     ->subject('Votre proposition de rendez-vous a été acceptée - '.config('app.name'))
-                    ->from(config('mail.from.address', 'noreply@icc-munich.de'), config('app.name'));
+                    ->from(config('mail.from.address', 'noreply@bio-digital-sss.com'), config('app.name'));
             });
 
         } catch (\Exception $e) {
@@ -1925,7 +1931,7 @@ class CareServiceController extends Controller
             Mail::raw($clientContent, function ($message) use ($proposal): void {
                 $message->to($proposal->client_email)
                     ->subject('Votre proposition de rendez-vous n\'a pas pu être acceptée - '.config('app.name'))
-                    ->from(config('mail.from.address', 'noreply@icc-munich.de'), config('app.name'));
+                    ->from(config('mail.from.address', 'noreply@bio-digital-sss.com'), config('app.name'));
             });
 
         } catch (\Exception $e) {
@@ -1961,7 +1967,7 @@ class CareServiceController extends Controller
             Mail::raw($clientContent, function ($message) use ($proposal): void {
                 $message->to($proposal->client_email)
                     ->subject('Contre-proposition pour votre rendez-vous - '.config('app.name'))
-                    ->from(config('mail.from.address', 'noreply@icc-munich.de'), config('app.name'));
+                    ->from(config('mail.from.address', 'noreply@bio-digital-sss.com'), config('app.name'));
             });
 
         } catch (\Exception $e) {

@@ -255,7 +255,7 @@ export default function PrivacyPolicy() {
                                     <div className="flex items-center gap-2">
                                         <Mail className="h-4 w-4 text-primary" />
                                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                                            privacy@icc-munich.org
+                                            privacy@bio-digital-sss.com
                                         </span>
                                     </div>
 

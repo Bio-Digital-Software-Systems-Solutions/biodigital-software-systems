@@ -6,6 +6,7 @@ use App\Models\CareService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -32,7 +33,7 @@ class CareServiceDualConfirmationNotification extends Mailable implements Should
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: config('mail.from.address', 'noreply@icc-munich.de'),
+            from: config('mail.from.address', 'noreply@bio-digital-sss.com'),
             subject: 'Rendez-vous confirmé - Les deux parties ont validé - '.config('app.name'),
         );
     }
@@ -49,8 +50,8 @@ class CareServiceDualConfirmationNotification extends Mailable implements Should
                 'pastor' => $this->appointment->pastor,
                 'recipientType' => $this->recipientType,
                 'churchName' => config('app.name'),
-                'churchWebsite' => 'https://icc-munich.de',
-                'churchEmail' => 'info@icc-munich.de',
+                'churchWebsite' => 'https://www.bio-digital-sss.com',
+                'churchEmail' => 'info@bio-digital-sss.com',
             ],
         );
     }
@@ -58,7 +59,7 @@ class CareServiceDualConfirmationNotification extends Mailable implements Should
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

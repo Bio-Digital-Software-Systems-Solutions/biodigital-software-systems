@@ -186,7 +186,7 @@
 <body>
     <div class="container">
         <div class="logo">
-            <h1>ICC München</h1>
+            <h1>{{ config('app.name') }}</h1>
         </div>
 
         <div class="invitation-header">
@@ -299,10 +299,10 @@
         <p>Merci de répondre à cette invitation !</p>
 
         <p>Cordialement,<br>
-        <strong>L'équipe ICC München</strong></p>
+        <strong>L'équipe {{ config('app.name') }}</strong></p>
 
         <div class="footer">
-            <p>© {{ date('Y') }} ICC München. Tous droits réservés.</p>
+            <p>© {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.</p>
             <p style="margin-top: 10px;">
                 📧 Cet email concerne le rendez-vous : {{ $appointment->title }}<br>
                 📅 Prévu pour le {{ $startDate->format('d/m/Y à H:i') }}

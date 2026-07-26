@@ -53,8 +53,7 @@ export const iccChurchesComplete: Church[] = [
   { name: 'ICC Limoges', city: 'Limoges', country: 'France', coordinates: [1.2611, 45.8336], members: 140 },
   { name: 'ICC Orléans', city: 'Orléans', country: 'France', coordinates: [1.9093, 47.9029], members: 130 },
 
-  // ALLEMAGNE (10 églises)
-  { name: 'ICC München', city: 'Munich', country: 'Germany', coordinates: [11.5820, 48.1351], members: 100 },
+  // ALLEMAGNE (9 églises)
   { name: 'ICC Berlin', city: 'Berlin', country: 'Germany', coordinates: [13.4050, 52.5200], members: 350 },
   { name: 'ICC Frankfurt', city: 'Frankfurt', country: 'Germany', coordinates: [8.6821, 50.1109], members: 300 },
   { name: 'ICC Hamburg', city: 'Hamburg', country: 'Germany', coordinates: [9.9937, 53.5511], members: 280 },

@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -32,8 +33,8 @@ class AppointmentCreated extends Mailable
     {
         return new Envelope(
             subject: $this->isOrganizer
-                ? 'Confirmation de création de rendez-vous - ICC München'
-                : 'Nouveau rendez-vous - ICC München',
+                ? 'Confirmation de création de rendez-vous - '.config('app.name')
+                : 'Nouveau rendez-vous - '.config('app.name'),
         );
     }
 
@@ -50,7 +51,7 @@ class AppointmentCreated extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

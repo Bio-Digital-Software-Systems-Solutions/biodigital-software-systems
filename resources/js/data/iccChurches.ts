@@ -82,13 +82,6 @@ export const iccChurchesSimplified: Church[] = [
 
   // ALLEMAGNE
   {
-    name: 'ICC München',
-    city: 'Munich',
-    country: 'Germany',
-    coordinates: [11.5820, 48.1351],
-    members: 100,
-  },
-  {
     name: 'ICC Berlin',
     city: 'Berlin',
     country: 'Germany',

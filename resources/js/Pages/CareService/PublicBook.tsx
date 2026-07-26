@@ -1603,8 +1603,8 @@ export default function PublicBook({ auth, canSelectPastor = false }: Props) {
                     <div className="text-center mt-8 text-gray-600 dark:text-gray-400">
                         <p className="text-sm">
                             Besoin d'aide ? Contactez-nous à{' '}
-                            <a href="mailto:info@icc-munich.de" className="text-blue-600 hover:underline">
-                                contact@icc-munich.de
+                            <a href="mailto:contact@bio-digital-sss.com" className="text-blue-600 hover:underline">
+                                contact@bio-digital-sss.com
                             </a>
                             {' '}ou au{' '}
                             <a href="tel:+4917673200275" className="text-blue-600 hover:underline">

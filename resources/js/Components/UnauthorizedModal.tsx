@@ -102,10 +102,10 @@ export default function UnauthorizedModal({ open: controlledOpen, onOpenChange }
                             <span>
                                 <strong>Besoin d'aide ?</strong> Contactez votre administrateur système ou envoyez un email à{' '}
                                 <a
-                                    href="mailto:support@icc-muenchen.de"
+                                    href="mailto:support@bio-digital-sss.com"
                                     className="underline hover:text-amber-900 dark:hover:text-amber-100"
                                 >
-                                    support@icc-muenchen.de
+                                    support@bio-digital-sss.com
                                 </a>
                             </span>
                         </p>

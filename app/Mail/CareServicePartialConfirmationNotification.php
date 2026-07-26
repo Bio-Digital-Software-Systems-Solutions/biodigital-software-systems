@@ -6,6 +6,7 @@ use App\Models\CareService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -38,7 +39,7 @@ class CareServicePartialConfirmationNotification extends Mailable implements Sho
             : $this->appointment->pastor->first_name.' '.$this->appointment->pastor->last_name;
 
         return new Envelope(
-            from: config('mail.from.address', 'noreply@icc-munich.de'),
+            from: config('mail.from.address', 'noreply@bio-digital-sss.com'),
             subject: "Confirmation reçue de {$confirmerName} - En attente de votre confirmation - ".config('app.name'),
         );
     }
@@ -62,8 +63,8 @@ class CareServicePartialConfirmationNotification extends Mailable implements Sho
                 'confirmedBy' => $this->confirmedBy,
                 'confirmUrl' => $confirmUrl,
                 'churchName' => config('app.name'),
-                'churchWebsite' => 'https://icc-munich.de',
-                'churchEmail' => 'info@icc-munich.de',
+                'churchWebsite' => 'https://www.bio-digital-sss.com',
+                'churchEmail' => 'info@bio-digital-sss.com',
             ],
         );
     }
@@ -71,7 +72,7 @@ class CareServicePartialConfirmationNotification extends Mailable implements Sho
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

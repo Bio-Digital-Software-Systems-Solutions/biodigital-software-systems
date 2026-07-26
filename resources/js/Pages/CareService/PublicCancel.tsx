@@ -395,8 +395,8 @@ export default function PublicCancel({ appointment }: Props) {
                     <div className="text-center mt-8">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                             Besoin d'aide ? Contactez-nous à{' '}
-                            <a href="mailto:info@icc-munich.de" className="text-blue-600 dark:text-blue-400 hover:underline">
-                                info@icc-munich.de
+                            <a href="mailto:info@bio-digital-sss.com" className="text-blue-600 dark:text-blue-400 hover:underline">
+                                info@bio-digital-sss.com
                             </a>
                         </p>
                     </div>
