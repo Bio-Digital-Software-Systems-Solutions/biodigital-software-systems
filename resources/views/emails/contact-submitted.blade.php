@@ -13,19 +13,20 @@
                 <!-- Email Card -->
                 <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin: 0 auto;">
 
-                    <!-- Header with Gradient -->
+                    <!-- Brand Header -->
                     <tr>
-                        <td style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ef4444 100%); padding: 40px 30px; text-align: center;">
-                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">{{ config('app.name') }}</h1>
+                        <td class="brand-header" style="background-color: #171717; padding: 28px 40px; text-align: center;">
+                            <h1 class="brand-wordmark" style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; color: #ffffff;">Bio-<span class="brand-accent" style="color: #EB5462;">Digital</span></h1>
+                            <p class="brand-descriptor" style="margin: 6px 0 0; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 2.5px; color: rgba(255, 255, 255, 0.7);">Software Systems Solutions UG (haftungsbeschränkt)</p>
                         </td>
                     </tr>
 
                     <!-- Title Section -->
                     <tr>
                         <td style="padding: 40px 40px 20px 40px; text-align: center;">
-                            <div style="background-color: #dbeafe; border-radius: 50%; width: 80px; height: 80px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                            <div style="background-color: #FBE9EB; border-radius: 50%; width: 80px; height: 80px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
                                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M3 8L10.89 13.26C11.56 13.72 12.44 13.72 13.11 13.26L21 8M5 19H19C20.1 19 21 18.1 21 17V7C21 5.9 20.1 5 19 5H5C3.9 5 3 5.9 3 7V17C3 18.1 3.9 19 5 19Z" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M3 8L10.89 13.26C11.56 13.72 12.44 13.72 13.11 13.26L21 8M5 19H19C20.1 19 21 18.1 21 17V7C21 5.9 20.1 5 19 5H5C3.9 5 3 5.9 3 7V17C3 18.1 3.9 19 5 19Z" stroke="#D41F32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </div>
                             <h2 style="color: #111827; margin: 0 0 10px 0; font-size: 24px; font-weight: 700;">Nouveau message de contact</h2>
@@ -38,11 +39,11 @@
                         <td style="padding: 20px 40px;">
 
                             <!-- Name -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-left: 4px solid #3b82f6; border-radius: 8px; margin-bottom: 15px; padding: 15px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #FBE9EB; border-left: 4px solid #D41F32; border-radius: 8px; margin-bottom: 15px; padding: 15px;">
                                 <tr>
                                     <td style="width: 30px; vertical-align: top;">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-top: 2px;">
-                                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="#D41F32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                     </td>
                                     <td>
@@ -53,17 +54,17 @@
                             </table>
 
                             <!-- Email -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-left: 4px solid #8b5cf6; border-radius: 8px; margin-bottom: 15px; padding: 15px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #FBE9EB; border-left: 4px solid #D41F32; border-radius: 8px; margin-bottom: 15px; padding: 15px;">
                                 <tr>
                                     <td style="width: 30px; vertical-align: top;">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-top: 2px;">
-                                            <path d="M3 8L10.89 13.26C11.56 13.72 12.44 13.72 13.11 13.26L21 8M5 19H19C20.1 19 21 18.1 21 17V7C21 5.9 20.1 5 19 5H5C3.9 5 3 5.9 3 7V17C3 18.1 3.9 19 5 19Z" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M3 8L10.89 13.26C11.56 13.72 12.44 13.72 13.11 13.26L21 8M5 19H19C20.1 19 21 18.1 21 17V7C21 5.9 20.1 5 19 5H5C3.9 5 3 5.9 3 7V17C3 18.1 3.9 19 5 19Z" stroke="#D41F32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                     </td>
                                     <td>
                                         <p style="margin: 0; color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Email</p>
                                         <p style="margin: 5px 0 0 0; color: #111827; font-size: 16px; font-weight: 600;">
-                                            <a href="mailto:{{ $contact->email }}" style="color: #8b5cf6; text-decoration: none;">{{ $contact->email }}</a>
+                                            <a href="mailto:{{ $contact->email }}" style="color: #D41F32; text-decoration: none;">{{ $contact->email }}</a>
                                         </p>
                                     </td>
                                 </tr>
@@ -136,7 +137,7 @@
                     <!-- CTA Button -->
                     <tr>
                         <td style="padding: 0 40px 40px 40px; text-align: center;">
-                            <a href="{{ route('contacts.show', $contact) }}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); transition: transform 0.2s;">
+                            <a href="{{ route('contacts.show', $contact) }}" style="display: inline-block; background-color: #D41F32; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(212, 31, 50, 0.3); transition: transform 0.2s;">
                                 Voir le message complet
                             </a>
                         </td>

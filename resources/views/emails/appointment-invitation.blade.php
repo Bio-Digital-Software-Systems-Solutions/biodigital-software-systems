@@ -17,28 +17,41 @@
         .container {
             background-color: #ffffff;
             border-radius: 12px;
-            padding: 40px;
+            overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .logo {
+        .brand-header {
+            background-color: #171717;
             text-align: center;
-            margin-bottom: 30px;
+            padding: 28px 40px;
         }
-        .logo h1 {
-            background: linear-gradient(to right, #3b82f6, #8b5cf6, #ef4444);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 32px;
+        .brand-wordmark {
             margin: 0;
-            font-weight: bold;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+        .brand-wordmark .brand-accent {
+            color: #EB5462;
+        }
+        .brand-descriptor {
+            margin: 6px 0 0;
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .content {
+            padding: 40px;
         }
         h2 {
             color: #1f2937;
             margin-top: 0;
         }
         .invitation-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #D41F32;
             color: white;
             padding: 20px;
             border-radius: 8px;
@@ -81,7 +94,7 @@
             font-weight: 500;
         }
         .actions-section {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background-color: #D41F32;
             border-radius: 12px;
             padding: 30px;
             margin: 30px 0;
@@ -136,15 +149,15 @@
             box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
         }
         .organizer-info {
-            background-color: #eff6ff;
-            border-left: 4px solid #3b82f6;
+            background-color: #FBE9EB;
+            border-left: 4px solid #D41F32;
             padding: 20px;
             margin: 20px 0;
             border-radius: 4px;
         }
         .organizer-info h4 {
             margin: 0 0 10px 0;
-            color: #1e40af;
+            color: #A8182A;
             font-size: 16px;
         }
         .fallback-links {
@@ -160,7 +173,7 @@
             font-size: 14px;
         }
         .fallback-links a {
-            color: #3b82f6;
+            color: #D41F32;
             word-break: break-all;
             font-size: 12px;
         }
@@ -185,128 +198,131 @@
 </head>
 <body>
     <div class="container">
-        <div class="logo">
-            <h1>{{ config('app.name') }}</h1>
+        <div class="brand-header">
+            <h1 class="brand-wordmark">Bio-<span class="brand-accent">Digital</span></h1>
+            <p class="brand-descriptor">Software Systems Solutions UG (haftungsbeschränkt)</p>
         </div>
 
-        <div class="invitation-header">
-            <h3>📅 Invitation au rendez-vous</h3>
-        </div>
-
-        <h2>Bonjour {{ $participant->first_name }},</h2>
-
-        <p>Vous êtes invité(e) au rendez-vous suivant :</p>
-
-        <div class="appointment-card">
-            <h3 style="margin: 0 0 15px 0; color: #1e293b; font-size: 20px;">{{ $appointment->title }}</h3>
-
-            @if($appointment->description)
-            <p style="margin: 0 0 20px 0; padding: 15px; background-color: #f0f9ff; border-radius: 6px; color: #0c4a6e; border-left: 3px solid #0ea5e9;">
-                <strong>📝 Description :</strong><br>
-                {{ $appointment->description }}
-            </p>
-            @endif
-
-            <div class="appointment-details">
-                <div class="detail-row">
-                    <span class="detail-icon">📅</span>
-                    <span class="detail-label">Date :</span>
-                    <span class="detail-value">{{ $startDate->format('l j F Y') }}</span>
-                </div>
-
-                <div class="detail-row">
-                    <span class="detail-icon">🕐</span>
-                    <span class="detail-label">Heure :</span>
-                    <span class="detail-value">{{ $startDate->format('H:i') }} - {{ $endDate->format('H:i') }}</span>
-                </div>
-
-                @if($appointment->location)
-                <div class="detail-row">
-                    <span class="detail-icon">📍</span>
-                    <span class="detail-label">Lieu :</span>
-                    <span class="detail-value">{{ $appointment->location }}</span>
-                </div>
-                @endif
-
-                <div class="detail-row">
-                    <span class="detail-icon">🏷️</span>
-                    <span class="detail-label">Type :</span>
-                    <span class="detail-value">{{ ucfirst($appointment->type) }}</span>
-                </div>
-
-                @if($appointment->meeting_mode && $appointment->meeting_mode !== 'in_person')
-                <div class="detail-row">
-                    <span class="detail-icon">🎥</span>
-                    <span class="detail-label">Mode :</span>
-                    <span class="detail-value">
-                        @if($appointment->meeting_mode === 'online')
-                            En ligne
-                        @else
-                            Hybride
-                        @endif
-                    </span>
-                </div>
-                @endif
+        <div class="content">
+            <div class="invitation-header">
+                <h3>📅 Invitation au rendez-vous</h3>
             </div>
 
-            @if($appointment->meeting_link && in_array($appointment->meeting_mode, ['online', 'hybrid']))
-            <div style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%); border-radius: 8px; border: 1px solid #667eea40;">
-                <p style="margin: 0 0 10px 0; font-weight: 600; color: #4c1d95;">
-                    🎥 Rejoindre la réunion en ligne
-                    @if($appointment->meeting_platform)
-                        ({{ $appointment->meeting_platform === 'google_meet' ? 'Google Meet' : ($appointment->meeting_platform === 'ms_teams' ? 'Microsoft Teams' : ucfirst($appointment->meeting_platform)) }})
+            <h2>Bonjour {{ $participant->first_name }},</h2>
+
+            <p>Vous êtes invité(e) au rendez-vous suivant :</p>
+
+            <div class="appointment-card">
+                <h3 style="margin: 0 0 15px 0; color: #1e293b; font-size: 20px;">{{ $appointment->title }}</h3>
+
+                @if($appointment->description)
+                <p style="margin: 0 0 20px 0; padding: 15px; background-color: #f0f9ff; border-radius: 6px; color: #0c4a6e; border-left: 3px solid #0ea5e9;">
+                    <strong>📝 Description :</strong><br>
+                    {{ $appointment->description }}
+                </p>
+                @endif
+
+                <div class="appointment-details">
+                    <div class="detail-row">
+                        <span class="detail-icon">📅</span>
+                        <span class="detail-label">Date :</span>
+                        <span class="detail-value">{{ $startDate->format('l j F Y') }}</span>
+                    </div>
+
+                    <div class="detail-row">
+                        <span class="detail-icon">🕐</span>
+                        <span class="detail-label">Heure :</span>
+                        <span class="detail-value">{{ $startDate->format('H:i') }} - {{ $endDate->format('H:i') }}</span>
+                    </div>
+
+                    @if($appointment->location)
+                    <div class="detail-row">
+                        <span class="detail-icon">📍</span>
+                        <span class="detail-label">Lieu :</span>
+                        <span class="detail-value">{{ $appointment->location }}</span>
+                    </div>
                     @endif
-                </p>
-                <a href="{{ $appointment->meeting_link }}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
-                    🔗 Cliquer ici pour rejoindre
-                </a>
-                <p style="margin: 10px 0 0 0; font-size: 12px; color: #6b7280; word-break: break-all;">
-                    {{ $appointment->meeting_link }}
+
+                    <div class="detail-row">
+                        <span class="detail-icon">🏷️</span>
+                        <span class="detail-label">Type :</span>
+                        <span class="detail-value">{{ ucfirst($appointment->type) }}</span>
+                    </div>
+
+                    @if($appointment->meeting_mode && $appointment->meeting_mode !== 'in_person')
+                    <div class="detail-row">
+                        <span class="detail-icon">🎥</span>
+                        <span class="detail-label">Mode :</span>
+                        <span class="detail-value">
+                            @if($appointment->meeting_mode === 'online')
+                                En ligne
+                            @else
+                                Hybride
+                            @endif
+                        </span>
+                    </div>
+                    @endif
+                </div>
+
+                @if($appointment->meeting_link && in_array($appointment->meeting_mode, ['online', 'hybrid']))
+                <div style="margin-top: 20px; padding: 15px; background-color: #FBE9EB; border-radius: 8px; border: 1px solid #D41F3240;">
+                    <p style="margin: 0 0 10px 0; font-weight: 600; color: #A8182A;">
+                        🎥 Rejoindre la réunion en ligne
+                        @if($appointment->meeting_platform)
+                            ({{ $appointment->meeting_platform === 'google_meet' ? 'Google Meet' : ($appointment->meeting_platform === 'ms_teams' ? 'Microsoft Teams' : ucfirst($appointment->meeting_platform)) }})
+                        @endif
+                    </p>
+                    <a href="{{ $appointment->meeting_link }}" style="display: inline-block; background-color: #D41F32; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
+                        🔗 Cliquer ici pour rejoindre
+                    </a>
+                    <p style="margin: 10px 0 0 0; font-size: 12px; color: #6b7280; word-break: break-all;">
+                        {{ $appointment->meeting_link }}
+                    </p>
+                </div>
+                @endif
+            </div>
+
+            <div class="organizer-info">
+                <h4>👤 Organisateur</h4>
+                <p style="margin: 0;">
+                    <strong>{{ $appointment->organizer->first_name }} {{ $appointment->organizer->last_name }}</strong><br>
+                    📧 {{ $appointment->organizer->email }}
                 </p>
             </div>
-            @endif
-        </div>
 
-        <div class="organizer-info">
-            <h4>👤 Organisateur</h4>
-            <p style="margin: 0;">
-                <strong>{{ $appointment->organizer->first_name }} {{ $appointment->organizer->last_name }}</strong><br>
-                📧 {{ $appointment->organizer->email }}
-            </p>
-        </div>
+            <div class="actions-section">
+                <h3 class="actions-title">⚡ Actions rapides</h3>
+                <p class="actions-subtitle">Merci de confirmer votre participation en cliquant sur l'un des boutons ci-dessous :</p>
 
-        <div class="actions-section">
-            <h3 class="actions-title">⚡ Actions rapides</h3>
-            <p class="actions-subtitle">Merci de confirmer votre participation en cliquant sur l'un des boutons ci-dessous :</p>
-
-            <div class="buttons-container">
-                <a href="{{ $confirmUrl }}" class="btn btn-confirm">
-                    ✅ Confirmer ma participation
-                </a>
-                <a href="{{ $declineUrl }}" class="btn btn-decline">
-                    ❌ Décliner l'invitation
-                </a>
+                <div class="buttons-container">
+                    <a href="{{ $confirmUrl }}" class="btn btn-confirm">
+                        ✅ Confirmer ma participation
+                    </a>
+                    <a href="{{ $declineUrl }}" class="btn btn-decline">
+                        ❌ Décliner l'invitation
+                    </a>
+                </div>
             </div>
-        </div>
 
-        <div class="fallback-links">
-            <h4>🔗 Liens alternatifs</h4>
-            <p style="margin: 5px 0;">Si vous ne pouvez pas cliquer sur les boutons, copiez et collez les liens suivants dans votre navigateur :</p>
-            <p style="margin: 10px 0 5px 0;"><strong>Confirmer :</strong><br><a href="{{ $confirmUrl }}">{{ $confirmUrl }}</a></p>
-            <p style="margin: 5px 0;"><strong>Décliner :</strong><br><a href="{{ $declineUrl }}">{{ $declineUrl }}</a></p>
-        </div>
+            <div class="fallback-links">
+                <h4>🔗 Liens alternatifs</h4>
+                <p style="margin: 5px 0;">Si vous ne pouvez pas cliquer sur les boutons, copiez et collez les liens suivants dans votre navigateur :</p>
+                <p style="margin: 10px 0 5px 0;"><strong>Confirmer :</strong><br><a href="{{ $confirmUrl }}">{{ $confirmUrl }}</a></p>
+                <p style="margin: 5px 0;"><strong>Décliner :</strong><br><a href="{{ $declineUrl }}">{{ $declineUrl }}</a></p>
+            </div>
 
-        <p>Merci de répondre à cette invitation !</p>
+            <p>Merci de répondre à cette invitation !</p>
 
-        <p>Cordialement,<br>
-        <strong>L'équipe {{ config('app.name') }}</strong></p>
+            <p>Cordialement,<br>
+            <strong>L'équipe {{ config('app.name') }}</strong></p>
 
-        <div class="footer">
-            <p>© {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.</p>
-            <p style="margin-top: 10px;">
-                📧 Cet email concerne le rendez-vous : {{ $appointment->title }}<br>
-                📅 Prévu pour le {{ $startDate->format('d/m/Y à H:i') }}
-            </p>
+            <div class="footer">
+                <p>© {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.</p>
+                <p style="margin-top: 10px;">
+                    📧 Cet email concerne le rendez-vous : {{ $appointment->title }}<br>
+                    📅 Prévu pour le {{ $startDate->format('d/m/Y à H:i') }}
+                </p>
+            </div>
         </div>
     </div>
 </body>

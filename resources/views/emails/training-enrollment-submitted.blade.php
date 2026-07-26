@@ -21,22 +21,44 @@
             overflow: hidden;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .header {
-            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-            color: #ffffff;
-            padding: 30px;
+        .brand-header {
+            background-color: #171717;
             text-align: center;
+            padding: 28px 40px;
         }
-        .header h1 {
+        .brand-wordmark {
             margin: 0;
-            font-size: 24px;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+        .brand-wordmark .brand-accent {
+            color: #EB5462;
+        }
+        .brand-descriptor {
+            margin: 6px 0 0;
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: rgba(255, 255, 255, 0.7);
         }
         .content {
             padding: 30px;
         }
+        .intro-title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .intro-title h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #18181b;
+        }
         .greeting {
             font-size: 18px;
-            color: #2563eb;
+            color: #D41F32;
             margin-bottom: 20px;
         }
         .message {
@@ -44,21 +66,21 @@
             color: #555;
         }
         .training-info {
-            background-color: #f9fafb;
-            border-left: 4px solid #2563eb;
+            background-color: #FBE9EB;
+            border-left: 4px solid #D41F32;
             padding: 15px;
             margin: 20px 0;
         }
         .training-info h3 {
             margin-top: 0;
-            color: #2563eb;
+            color: #D41F32;
         }
         .training-info p {
             margin: 8px 0;
         }
         .status-box {
-            background-color: #eff6ff;
-            border: 1px solid #bfdbfe;
+            background-color: #FBE9EB;
+            border: 1px solid #D41F32;
             border-radius: 6px;
             padding: 15px;
             margin: 20px 0;
@@ -66,17 +88,20 @@
         }
         .status-box p {
             margin: 0;
-            color: #1e40af;
+            color: #A8182A;
             font-weight: bold;
         }
         .button {
             display: inline-block;
-            background-color: #2563eb;
+            background-color: #D41F32;
             color: #ffffff;
             padding: 12px 30px;
             text-decoration: none;
             border-radius: 5px;
             margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #A8182A;
         }
         .footer {
             background-color: #f9fafb;
@@ -94,12 +119,17 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="info-icon">📩</div>
-            <h1>Demande d'inscription soumise</h1>
+        <div class="brand-header">
+            <h1 class="brand-wordmark">Bio-<span class="brand-accent">Digital</span></h1>
+            <p class="brand-descriptor">Software Systems Solutions UG (haftungsbeschränkt)</p>
         </div>
 
         <div class="content">
+            <div class="intro-title">
+                <div class="info-icon">📩</div>
+                <h1>Demande d'inscription soumise</h1>
+            </div>
+
             <p class="greeting">Bonjour {{ $userName }},</p>
 
             <p class="message">
