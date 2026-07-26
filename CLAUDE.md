@@ -107,7 +107,7 @@ php artisan optimize
 - **student**: Espace étudiant
 - **member**: Accès de base (voir, participer, louer)
 - **employee**: Employé
-- **star**: Membre star
+- **volunteer**: Bénévole (volontaire)
 - **care-service-agent**: Agent du service de soin
 
 ### Key Permissions

@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Enums\Star\StarCategory;
+use App\Enums\Volunteer\VolunteerCategory;
 use App\Models\Department;
-use App\Models\Star;
+use App\Models\Volunteer;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
-class StarSeeder extends Seeder
+class VolunteerSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -22,8 +22,8 @@ class StarSeeder extends Seeder
         // Get a user to be the nominator
         $nominator = User::first();
 
-        // Create featured stars (visible on homepage/public)
-        Star::factory(3)
+        // Create featured volunteers (visible on homepage/public)
+        Volunteer::factory(3)
             ->active()
             ->featured()
             ->leader()
@@ -33,7 +33,7 @@ class StarSeeder extends Seeder
             ]);
 
         // Regular active volunteers
-        Star::factory(8)
+        Volunteer::factory(8)
             ->active()
             ->volunteer()
             ->create([
@@ -41,7 +41,7 @@ class StarSeeder extends Seeder
             ]);
 
         // Leaders
-        Star::factory(3)
+        Volunteer::factory(3)
             ->active()
             ->leader()
             ->publicProfile()
@@ -50,7 +50,7 @@ class StarSeeder extends Seeder
             ]);
 
         // Mentors (experienced volunteers)
-        Star::factory(2)
+        Volunteer::factory(2)
             ->active()
             ->mentor()
             ->publicProfile()
@@ -60,7 +60,7 @@ class StarSeeder extends Seeder
             ]);
 
         // Coordinators
-        Star::factory(2)
+        Volunteer::factory(2)
             ->active()
             ->coordinator()
             ->create([
@@ -68,7 +68,7 @@ class StarSeeder extends Seeder
             ]);
 
         // Ambassador (top-level volunteer)
-        Star::factory(1)
+        Volunteer::factory(1)
             ->active()
             ->ambassador()
             ->featured()
@@ -78,16 +78,16 @@ class StarSeeder extends Seeder
                 'title' => 'Ambassadeur de l\'année',
             ]);
 
-        // Stars on break
-        Star::factory(2)
+        // Volunteers on break
+        Volunteer::factory(2)
             ->onBreak()
             ->volunteer()
             ->create([
                 'department_id' => $defaultDepartment?->id,
             ]);
 
-        // Recently recognized stars
-        Star::factory(3)
+        // Recently recognized volunteers
+        Volunteer::factory(3)
             ->active()
             ->volunteer()
             ->recentlyRecognized()
@@ -95,8 +95,8 @@ class StarSeeder extends Seeder
                 'department_id' => $defaultDepartment?->id,
             ]);
 
-        // Stars expiring soon (need renewal)
-        Star::factory(2)
+        // Volunteers expiring soon (need renewal)
+        Volunteer::factory(2)
             ->active()
             ->volunteer()
             ->expiringSoon(15)
@@ -104,15 +104,15 @@ class StarSeeder extends Seeder
                 'department_id' => $defaultDepartment?->id,
             ]);
 
-        // Graduated stars (completed their service)
-        Star::factory(2)
+        // Graduated volunteers (completed their service)
+        Volunteer::factory(2)
             ->graduated()
             ->create([
                 'department_id' => $defaultDepartment?->id,
             ]);
 
-        // High-level experienced stars
-        Star::factory(2)
+        // High-level experienced volunteers
+        Volunteer::factory(2)
             ->active()
             ->highLevel()
             ->publicProfile()
@@ -121,16 +121,16 @@ class StarSeeder extends Seeder
                 'total_hours_served' => fake()->numberBetween(500, 1000),
             ]);
 
-        // Inactive star
-        Star::factory(1)
+        // Inactive volunteer
+        Volunteer::factory(1)
             ->inactive()
             ->create([
                 'department_id' => $defaultDepartment?->id,
             ]);
 
-        // Stars in different categories
-        foreach (StarCategory::cases() as $category) {
-            Star::factory(1)
+        // Volunteers in different categories
+        foreach (VolunteerCategory::cases() as $category) {
+            Volunteer::factory(1)
                 ->active()
                 ->volunteer()
                 ->inCategory($category)

@@ -113,7 +113,7 @@ interface Assignable {
     uuid: string;
     name: string;
     email: string;
-    type: 'user' | 'employee' | 'star';
+    type: 'user' | 'employee' | 'volunteer';
     position?: string;
     title?: string;
 }
@@ -171,7 +171,7 @@ interface Props {
     department: Department;
     availableUsers: Assignable[];
     availableEmployees: Assignable[];
-    availableStars: Assignable[];
+    availableVolunteers: Assignable[];
     canManage: boolean;
     canViewStatistics: boolean;
     workflows?: DepartmentWorkflow[];
@@ -407,11 +407,11 @@ function NominationForm({ departmentUuid, positions, members }: { departmentUuid
     );
 }
 
-export default function ShowDepartment({ department, availableUsers, availableEmployees = [], availableStars = [], canManage, canViewStatistics, workflows = [], forms = [], needs = [], appointments = [], meetings = [], documentsTree = [], documentsCount = 0, positions = [], nominations = [], statistics }: Props) {
+export default function ShowDepartment({ department, availableUsers, availableEmployees = [], availableVolunteers = [], canManage, canViewStatistics, workflows = [], forms = [], needs = [], appointments = [], meetings = [], documentsTree = [], documentsCount = 0, positions = [], nominations = [], statistics }: Props) {
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<string | number | null>(null);
-    const [memberFilter, setMemberFilter] = useState<'all' | 'user' | 'employee' | 'star'>('all');
+    const [memberFilter, setMemberFilter] = useState<'all' | 'user' | 'employee' | 'volunteer'>('all');
     const [activeTab, setActiveTab] = useState('overview');
     const [statsViewMode, setStatsViewMode] = useState<'operational' | 'analytical'>('operational');
     const [showPositionForm, setShowPositionForm] = useState(false);
@@ -429,8 +429,8 @@ export default function ShowDepartment({ department, availableUsers, availableEm
         if (memberFilter === 'all' || memberFilter === 'employee') {
             combined.push(...availableEmployees);
         }
-        if (memberFilter === 'all' || memberFilter === 'star') {
-            combined.push(...availableStars);
+        if (memberFilter === 'all' || memberFilter === 'volunteer') {
+            combined.push(...availableVolunteers);
         }
 
         // Remove duplicates by user id
@@ -440,12 +440,12 @@ export default function ShowDepartment({ department, availableUsers, availableEm
             seen.add(a.id);
             return true;
         });
-    }, [availableUsers, availableEmployees, availableStars, memberFilter]);
+    }, [availableUsers, availableEmployees, availableVolunteers, memberFilter]);
 
     // Convert to options for SearchableSelect
     const selectOptions = React.useMemo(() => {
         return filteredAssignees.map(a => {
-            const typeLabel = a.type === 'user' ? 'Utilisateur' : a.type === 'employee' ? 'Employé' : 'Star';
+            const typeLabel = a.type === 'user' ? 'Utilisateur' : a.type === 'employee' ? 'Employé' : 'Volunteer';
             const extra = a.position || a.title || '';
             return {
                 value: a.id,
@@ -1589,7 +1589,7 @@ export default function ShowDepartment({ department, availableUsers, availableEm
                                         size="sm"
                                         onClick={() => setMemberFilter('all')}
                                     >
-                                        Tous ({availableUsers.length + availableEmployees.length + availableStars.length})
+                                        Tous ({availableUsers.length + availableEmployees.length + availableVolunteers.length})
                                     </Button>
                                     <Button
                                         type="button"
@@ -1602,12 +1602,12 @@ export default function ShowDepartment({ department, availableUsers, availableEm
                                     </Button>
                                     <Button
                                         type="button"
-                                        variant={memberFilter === 'star' ? 'default' : 'outline'}
+                                        variant={memberFilter === 'volunteer' ? 'default' : 'outline'}
                                         size="sm"
-                                        onClick={() => setMemberFilter('star')}
-                                        className={memberFilter === 'star' ? '' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50'}
+                                        onClick={() => setMemberFilter('volunteer')}
+                                        className={memberFilter === 'volunteer' ? '' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50'}
                                     >
-                                        Stars ({availableStars.length})
+                                        Volunteers ({availableVolunteers.length})
                                     </Button>
                                 </div>
 

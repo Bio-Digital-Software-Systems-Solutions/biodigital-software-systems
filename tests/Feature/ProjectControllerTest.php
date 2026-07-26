@@ -3,11 +3,11 @@
 namespace Tests\Feature;
 
 use App\Enums\Employee\EmployeeStatus;
-use App\Enums\Star\StarStatus;
+use App\Enums\Volunteer\VolunteerStatus;
 use App\Models\Employee;
 use App\Models\Project;
-use App\Models\Star;
 use App\Models\User;
+use App\Models\Volunteer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -68,11 +68,11 @@ class ProjectControllerTest extends TestCase
             ->component('Projects/Create')
             ->has('users')
             ->has('employees')
-            ->has('stars')
+            ->has('volunteers')
         );
     }
 
-    public function test_create_page_loads_users_employees_and_stars(): void
+    public function test_create_page_loads_users_employees_and_volunteers(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
@@ -88,11 +88,11 @@ class ProjectControllerTest extends TestCase
             'position' => 'Developer',
         ]);
 
-        // Create an active star
-        $starUser = User::factory()->create();
-        Star::factory()->create([
-            'user_id' => $starUser->id,
-            'status' => StarStatus::ACTIVE,
+        // Create an active volunteer
+        $volunteerUser = User::factory()->create();
+        Volunteer::factory()->create([
+            'user_id' => $volunteerUser->id,
+            'status' => VolunteerStatus::ACTIVE,
             'title' => 'Guest Speaker',
         ]);
 
@@ -101,11 +101,11 @@ class ProjectControllerTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
             ->component('Projects/Create')
-            ->has('users', 4) // user, otherUser, employeeUser, starUser
+            ->has('users', 4) // user, otherUser, employeeUser, volunteerUser
             ->has('employees', 1)
-            ->has('stars', 1)
+            ->has('volunteers', 1)
             ->where('employees.0.type', 'employee')
-            ->where('stars.0.type', 'star')
+            ->where('volunteers.0.type', 'volunteer')
         );
     }
 
@@ -550,23 +550,23 @@ class ProjectControllerTest extends TestCase
         );
     }
 
-    public function test_create_page_only_loads_active_stars(): void
+    public function test_create_page_only_loads_active_volunteers(): void
     {
         $user = User::factory()->create();
         $user->assignRole('admin');
 
-        // Create an active star
-        $activeStarUser = User::factory()->create();
-        Star::factory()->create([
-            'user_id' => $activeStarUser->id,
-            'status' => StarStatus::ACTIVE,
+        // Create an active volunteer
+        $activeVolunteerUser = User::factory()->create();
+        Volunteer::factory()->create([
+            'user_id' => $activeVolunteerUser->id,
+            'status' => VolunteerStatus::ACTIVE,
         ]);
 
-        // Create an inactive star
-        $inactiveStarUser = User::factory()->create();
-        Star::factory()->create([
-            'user_id' => $inactiveStarUser->id,
-            'status' => StarStatus::INACTIVE,
+        // Create an inactive volunteer
+        $inactiveVolunteerUser = User::factory()->create();
+        Volunteer::factory()->create([
+            'user_id' => $inactiveVolunteerUser->id,
+            'status' => VolunteerStatus::INACTIVE,
         ]);
 
         $response = $this->actingAs($user)->get('/projects/create');
@@ -574,8 +574,8 @@ class ProjectControllerTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
             ->component('Projects/Create')
-            ->has('stars', 1)
-            ->where('stars.0.id', $activeStarUser->id)
+            ->has('volunteers', 1)
+            ->where('volunteers.0.id', $activeVolunteerUser->id)
         );
     }
 

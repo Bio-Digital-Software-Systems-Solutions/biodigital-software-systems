@@ -138,9 +138,9 @@ class UserSeeder extends Seeder
         }
 
         // ========================================
-        // Stars (Volunteers - 5 stars)
+        // Volunteers (Volunteers - 5 volunteers)
         // ========================================
-        $stars = [
+        $volunteers = [
             ['first_name' => 'Thomas', 'last_name' => 'Mercier', 'email' => 'thomas.mercier@bio-digital-sss.com', 'birth_date' => '1992-07-22'],
             ['first_name' => 'Camille', 'last_name' => 'Simon', 'email' => 'camille.simon@bio-digital-sss.com', 'birth_date' => '1988-10-14'],
             ['first_name' => 'Maxime', 'last_name' => 'Laurent', 'email' => 'maxime.laurent@bio-digital-sss.com', 'birth_date' => '1995-02-05'],
@@ -148,20 +148,20 @@ class UserSeeder extends Seeder
             ['first_name' => 'Alexandre', 'last_name' => 'Michel', 'email' => 'alexandre.michel@bio-digital-sss.com', 'birth_date' => '1987-08-03'],
         ];
 
-        foreach ($stars as $starData) {
-            $star = User::firstOrCreate(
-                ['email' => $starData['email']],
+        foreach ($volunteers as $volunteerData) {
+            $volunteer = User::firstOrCreate(
+                ['email' => $volunteerData['email']],
                 [
-                    'first_name' => $starData['first_name'],
-                    'last_name' => $starData['last_name'],
+                    'first_name' => $volunteerData['first_name'],
+                    'last_name' => $volunteerData['last_name'],
                     'uuid' => Str::uuid(),
                     'email_verified_at' => now(),
                     'password' => bcrypt('password'),
-                    'birth_date' => $starData['birth_date'],
+                    'birth_date' => $volunteerData['birth_date'],
                 ]
             );
-            if (! $star->hasRole('star')) {
-                $star->assignRole('star');
+            if (! $volunteer->hasRole('volunteer')) {
+                $volunteer->assignRole('volunteer');
             }
         }
 
@@ -351,7 +351,7 @@ class UserSeeder extends Seeder
         $this->command->info('   - 3 Pastors');
         $this->command->info('   - 4 Teachers');
         $this->command->info('   - 8 Students');
-        $this->command->info('   - 5 Stars (Volunteers)');
+        $this->command->info('   - 5 Volunteers (Volunteers)');
         $this->command->info('   - 2 Event Managers');
         $this->command->info('   - 2 Project Managers');
         $this->command->info('   - 2 Writers');

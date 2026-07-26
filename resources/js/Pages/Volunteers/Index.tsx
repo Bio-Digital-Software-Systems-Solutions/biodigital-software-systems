@@ -19,10 +19,10 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
-interface Star {
+interface Volunteer {
     id: number;
     uuid: string;
-    star_number: string;
+    volunteer_number: string;
     full_name: string;
     title: string | null;
     status: {
@@ -87,8 +87,8 @@ interface Department {
 }
 
 interface Props {
-    stars: {
-        data: Star[];
+    volunteers: {
+        data: Volunteer[];
         current_page: number;
         last_page: number;
         per_page: number;
@@ -116,8 +116,8 @@ interface Props {
     };
 }
 
-export default function StarsIndex({
-    stars,
+export default function VolunteersIndex({
+    volunteers,
     filters,
     statuses,
     types,
@@ -129,11 +129,11 @@ export default function StarsIndex({
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/stars', { ...filters, search }, { preserveState: true });
+        router.get('/volunteers', { ...filters, search }, { preserveState: true });
     };
 
     const handleFilterChange = (key: string, value: string) => {
-        router.get('/stars', { ...filters, [key]: value || undefined }, { preserveState: true });
+        router.get('/volunteers', { ...filters, [key]: value || undefined }, { preserveState: true });
     };
 
     const getStatusBadgeClass = (color: string) => {
@@ -182,23 +182,23 @@ export default function StarsIndex({
 
     return (
         <DashboardLayout>
-            <Head title="Stars" />
+            <Head title="Volontaires" />
 
             <div className="p-6 space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            Stars
+                            Volunteers
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">
                             Gérez les bénévoles et leurs reconnaissances
                         </p>
                     </div>
                     <Button asChild>
-                        <Link href="/stars/create">
+                        <Link href="/volunteers/create">
                             <PlusIcon className="h-4 w-4 mr-2" />
-                            Nouvelle Star
+                            Nouveau Volontaire
                         </Link>
                     </Button>
                 </div>
@@ -342,17 +342,17 @@ export default function StarsIndex({
                     </CardContent>
                 </Card>
 
-                {/* Stars List */}
+                {/* Volunteers List */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Liste des stars ({stars.total})</CardTitle>
+                        <CardTitle>Liste des volunteers ({volunteers.total})</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b dark:border-gray-700">
-                                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Star</th>
+                                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Volontaire</th>
                                         <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Type</th>
                                         <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Catégorie</th>
                                         <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Département</th>
@@ -363,67 +363,67 @@ export default function StarsIndex({
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {stars.data.length === 0 ? (
+                                    {volunteers.data.length === 0 ? (
                                         <tr>
                                             <td colSpan={8} className="text-center py-8 text-gray-500">
-                                                Aucune star trouvée
+                                                Aucune volunteer trouvée
                                             </td>
                                         </tr>
                                     ) : (
-                                        stars.data.map((star) => (
+                                        volunteers.data.map((volunteer) => (
                                             <tr
-                                                key={star.uuid}
+                                                key={volunteer.uuid}
                                                 className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                                             >
                                                 <td className="py-3 px-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className="relative">
                                                             <Avatar>
-                                                                {star.avatar || star.user?.avatar ? (
-                                                                    <AvatarImage src={star.avatar || star.user?.avatar || ''} />
+                                                                {volunteer.avatar || volunteer.user?.avatar ? (
+                                                                    <AvatarImage src={volunteer.avatar || volunteer.user?.avatar || ''} />
                                                                 ) : null}
                                                                 <AvatarFallback className="bg-yellow-100 text-yellow-600">
-                                                                    {getInitials(star.full_name)}
+                                                                    {getInitials(volunteer.full_name)}
                                                                 </AvatarFallback>
                                                             </Avatar>
-                                                            {star.is_featured && (
+                                                            {volunteer.is_featured && (
                                                                 <StarIconSolid className="absolute -top-1 -right-1 h-4 w-4 text-yellow-400" />
                                                             )}
                                                         </div>
                                                         <div>
                                                             <Link
-                                                                href={`/stars/${star.uuid}`}
+                                                                href={`/volunteers/${volunteer.uuid}`}
                                                                 className="font-medium hover:text-yellow-600"
                                                             >
-                                                                {star.full_name}
+                                                                {volunteer.full_name}
                                                             </Link>
                                                             <p className="text-xs text-gray-500">
-                                                                {star.star_number}
+                                                                {volunteer.volunteer_number}
                                                             </p>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="py-3 px-4">
-                                                    <Badge className={getTypeColor(star.type.color)}>
-                                                        {star.type.label}
+                                                    <Badge className={getTypeColor(volunteer.type.color)}>
+                                                        {volunteer.type.label}
                                                     </Badge>
                                                 </td>
                                                 <td className="py-3 px-4">
-                                                    {star.category ? (
-                                                        <Badge variant="outline" className={getTypeColor(star.category.color)}>
-                                                            {star.category.label}
+                                                    {volunteer.category ? (
+                                                        <Badge variant="outline" className={getTypeColor(volunteer.category.color)}>
+                                                            {volunteer.category.label}
                                                         </Badge>
                                                     ) : (
                                                         <span className="text-gray-400">-</span>
                                                     )}
                                                 </td>
                                                 <td className="py-3 px-4">
-                                                    {star.department ? (
+                                                    {volunteer.department ? (
                                                         <Link
-                                                            href={`/departments/${star.department.uuid}`}
+                                                            href={`/departments/${volunteer.department.uuid}`}
                                                             className="text-blue-600 hover:underline"
                                                         >
-                                                            {star.department.name}
+                                                            {volunteer.department.name}
                                                         </Link>
                                                     ) : (
                                                         <span className="text-gray-400">-</span>
@@ -431,22 +431,22 @@ export default function StarsIndex({
                                                 </td>
                                                 <td className="py-3 px-4">
                                                     <div className="flex items-center gap-1">
-                                                        <StarIconSolid className={`h-4 w-4 ${getLevelColor(star.level)}`} />
-                                                        <span className="text-sm font-medium">{star.level_title}</span>
+                                                        <StarIconSolid className={`h-4 w-4 ${getLevelColor(volunteer.level)}`} />
+                                                        <span className="text-sm font-medium">{volunteer.level_title}</span>
                                                     </div>
                                                 </td>
                                                 <td className="py-3 px-4">
-                                                    <span className="font-medium">{star.points}</span>
+                                                    <span className="font-medium">{volunteer.points}</span>
                                                     <span className="text-xs text-gray-500 ml-1">pts</span>
                                                 </td>
                                                 <td className="py-3 px-4">
-                                                    <Badge className={getStatusBadgeClass(star.status.color)}>
-                                                        {star.status.label}
+                                                    <Badge className={getStatusBadgeClass(volunteer.status.color)}>
+                                                        {volunteer.status.label}
                                                     </Badge>
                                                 </td>
                                                 <td className="py-3 px-4 text-right">
                                                     <Button variant="outline" size="sm" asChild>
-                                                        <Link href={`/stars/${star.uuid}`}>
+                                                        <Link href={`/volunteers/${volunteer.uuid}`}>
                                                             Voir
                                                         </Link>
                                                     </Button>
@@ -459,38 +459,38 @@ export default function StarsIndex({
                         </div>
 
                         {/* Pagination */}
-                        {stars.last_page > 1 && (
+                        {volunteers.last_page > 1 && (
                             <div className="flex items-center justify-between mt-4 pt-4 border-t dark:border-gray-700">
                                 <p className="text-sm text-gray-500">
-                                    Affichage de {(stars.current_page - 1) * stars.per_page + 1} à{' '}
-                                    {Math.min(stars.current_page * stars.per_page, stars.total)} sur{' '}
-                                    {stars.total} résultats
+                                    Affichage de {(volunteers.current_page - 1) * volunteers.per_page + 1} à{' '}
+                                    {Math.min(volunteers.current_page * volunteers.per_page, volunteers.total)} sur{' '}
+                                    {volunteers.total} résultats
                                 </p>
                                 <div className="flex items-center gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        disabled={stars.current_page === 1}
+                                        disabled={volunteers.current_page === 1}
                                         onClick={() =>
-                                            router.get('/stars', {
+                                            router.get('/volunteers', {
                                                 ...filters,
-                                                page: stars.current_page - 1,
+                                                page: volunteers.current_page - 1,
                                             })
                                         }
                                     >
                                         <ChevronLeftIcon className="h-4 w-4" />
                                     </Button>
                                     <span className="text-sm">
-                                        Page {stars.current_page} / {stars.last_page}
+                                        Page {volunteers.current_page} / {volunteers.last_page}
                                     </span>
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        disabled={stars.current_page === stars.last_page}
+                                        disabled={volunteers.current_page === volunteers.last_page}
                                         onClick={() =>
-                                            router.get('/stars', {
+                                            router.get('/volunteers', {
                                                 ...filters,
-                                                page: stars.current_page + 1,
+                                                page: volunteers.current_page + 1,
                                             })
                                         }
                                     >

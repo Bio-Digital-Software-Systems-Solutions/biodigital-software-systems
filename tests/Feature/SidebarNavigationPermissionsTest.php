@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -11,7 +13,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Run the seeder to create all roles and permissions
-    $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+    $this->seed(RolesAndPermissionsSeeder::class);
 });
 
 /**
@@ -90,7 +92,7 @@ it('super admin has all permissions including user management', function (): voi
 
     $response->assertInertia(fn ($page) => $page
         ->where('auth.user.roles', function ($roles): bool {
-            $rolesArray = $roles instanceof \Illuminate\Support\Collection ? $roles->toArray() : (array) $roles;
+            $rolesArray = $roles instanceof Collection ? $roles->toArray() : (array) $roles;
 
             return in_array('super-admin', $rolesArray);
         })
@@ -505,17 +507,17 @@ it('writer has content management access', function (): void {
 });
 
 // ============================================
-// Star (Volunteer) Role Tests
+// Volunteer (Volunteer) Role Tests
 // ============================================
 
-it('star volunteer has basic needs submission access', function (): void {
+it('volunteer volunteer has basic needs submission access', function (): void {
     $user = User::factory()->create();
-    $user->assignRole('star');
+    $user->assignRole('volunteer');
 
     $response = $this->actingAs($user)->get('/events');
     $response->assertStatus(200);
 
-    // Star specific permissions
+    // Volunteer specific permissions
     $shouldHave = [
         'view needs',
         'create needs',
@@ -525,10 +527,10 @@ it('star volunteer has basic needs submission access', function (): void {
 
     foreach ($shouldHave as $permission) {
         expect(userHasPermissionInProps($response, $permission))
-            ->toBeTrue("Star should have permission: {$permission}");
+            ->toBeTrue("Volunteer should have permission: {$permission}");
     }
 
-    // Star should NOT have management permissions
+    // Volunteer should NOT have management permissions
     $shouldNotHave = [
         'view projects',
         'view programs',
@@ -539,7 +541,7 @@ it('star volunteer has basic needs submission access', function (): void {
 
     foreach ($shouldNotHave as $permission) {
         expect(userHasPermissionInProps($response, $permission))
-            ->toBeFalse("Star should NOT have permission: {$permission}");
+            ->toBeFalse("Volunteer should NOT have permission: {$permission}");
     }
 });
 

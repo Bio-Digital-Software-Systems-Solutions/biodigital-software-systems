@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Enums\Star\StarCategory;
-use App\Enums\Star\StarStatus;
-use App\Enums\Star\StarType;
+use App\Enums\Volunteer\VolunteerCategory;
+use App\Enums\Volunteer\VolunteerStatus;
+use App\Enums\Volunteer\VolunteerType;
 use App\Traits\ClearsCache;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,12 +22,12 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property int $user_id
  * @property int|null $department_id
  * @property int|null $nominated_by
- * @property string $star_number
+ * @property string $volunteer_number
  * @property string|null $title
  * @property string|null $description
- * @property StarStatus $status
- * @property StarType $type
- * @property StarCategory|null $category
+ * @property VolunteerStatus $status
+ * @property VolunteerType $type
+ * @property VolunteerCategory|null $category
  * @property int $points
  * @property int $level
  * @property \Illuminate\Support\Carbon|null $recognition_date
@@ -69,79 +69,79 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * @property-read float|null $service_duration
  * @property-read \App\Models\User|null $nominator
  * @property-read \App\Models\User $user
- * @method static Builder<static>|Star active()
- * @method static Builder<static>|Star ambassadors()
- * @method static Builder<static>|Star availableOn(string $day)
- * @method static Builder<static>|Star byCategory(\App\Enums\Star\StarCategory $category)
- * @method static Builder<static>|Star byStatus(\App\Enums\Star\StarStatus $status)
- * @method static Builder<static>|Star byType(\App\Enums\Star\StarType $type)
- * @method static Builder<static>|Star contactable()
- * @method static Builder<static>|Star expiringSoon(int $days = 30)
- * @method static \Database\Factories\StarFactory factory($count = null, $state = [])
- * @method static Builder<static>|Star featured()
- * @method static Builder<static>|Star graduated()
- * @method static Builder<static>|Star inDepartment(int $departmentId)
- * @method static Builder<static>|Star inactive()
- * @method static Builder<static>|Star leaders()
- * @method static Builder<static>|Star mentors()
- * @method static Builder<static>|Star minLevel(int $level)
- * @method static Builder<static>|Star newModelQuery()
- * @method static Builder<static>|Star newQuery()
- * @method static Builder<static>|Star notExpired()
- * @method static Builder<static>|Star onBreak()
- * @method static Builder<static>|Star onlyTrashed()
- * @method static Builder<static>|Star publicProfile()
- * @method static Builder<static>|Star query()
- * @method static Builder<static>|Star recognizedAfter(\Carbon\Carbon $date)
- * @method static Builder<static>|Star recognizedBefore(\Carbon\Carbon $date)
- * @method static Builder<static>|Star search(string $search)
- * @method static Builder<static>|Star suspended()
- * @method static Builder<static>|Star volunteers()
- * @method static Builder<static>|Star whereAchievements($value)
- * @method static Builder<static>|Star whereAreasOfService($value)
- * @method static Builder<static>|Star whereAvailableDays($value)
- * @method static Builder<static>|Star whereAvailableFrom($value)
- * @method static Builder<static>|Star whereAvailableTo($value)
- * @method static Builder<static>|Star whereAvatar($value)
- * @method static Builder<static>|Star whereBadges($value)
- * @method static Builder<static>|Star whereBio($value)
- * @method static Builder<static>|Star whereCategory($value)
- * @method static Builder<static>|Star whereCoverImage($value)
- * @method static Builder<static>|Star whereCreatedAt($value)
- * @method static Builder<static>|Star whereDeletedAt($value)
- * @method static Builder<static>|Star whereDepartmentId($value)
- * @method static Builder<static>|Star whereDescription($value)
- * @method static Builder<static>|Star whereDisplayOrder($value)
- * @method static Builder<static>|Star whereExpiryDate($value)
- * @method static Builder<static>|Star whereFavoriteVerse($value)
- * @method static Builder<static>|Star whereHoursPerWeek($value)
- * @method static Builder<static>|Star whereId($value)
- * @method static Builder<static>|Star whereInternalNotes($value)
- * @method static Builder<static>|Star whereIsContactable($value)
- * @method static Builder<static>|Star whereIsFeatured($value)
- * @method static Builder<static>|Star whereIsPublicProfile($value)
- * @method static Builder<static>|Star whereLevel($value)
- * @method static Builder<static>|Star whereNominatedBy($value)
- * @method static Builder<static>|Star whereNotes($value)
- * @method static Builder<static>|Star wherePoints($value)
- * @method static Builder<static>|Star wherePreferredContactMethod($value)
- * @method static Builder<static>|Star whereReceiveNotifications($value)
- * @method static Builder<static>|Star whereRecognitionDate($value)
- * @method static Builder<static>|Star whereSkills($value)
- * @method static Builder<static>|Star whereStarNumber($value)
- * @method static Builder<static>|Star whereStatus($value)
- * @method static Builder<static>|Star whereTestimonial($value)
- * @method static Builder<static>|Star whereTitle($value)
- * @method static Builder<static>|Star whereTotalHoursServed($value)
- * @method static Builder<static>|Star whereType($value)
- * @method static Builder<static>|Star whereUpdatedAt($value)
- * @method static Builder<static>|Star whereUserId($value)
- * @method static Builder<static>|Star whereUuid($value)
- * @method static Builder<static>|Star withTrashed(bool $withTrashed = true)
- * @method static Builder<static>|Star withoutTrashed()
+ * @method static Builder<static>|Volunteer active()
+ * @method static Builder<static>|Volunteer ambassadors()
+ * @method static Builder<static>|Volunteer availableOn(string $day)
+ * @method static Builder<static>|Volunteer byCategory(\App\Enums\Volunteer\VolunteerCategory $category)
+ * @method static Builder<static>|Volunteer byStatus(\App\Enums\Volunteer\VolunteerStatus $status)
+ * @method static Builder<static>|Volunteer byType(\App\Enums\Volunteer\VolunteerType $type)
+ * @method static Builder<static>|Volunteer contactable()
+ * @method static Builder<static>|Volunteer expiringSoon(int $days = 30)
+ * @method static \Database\Factories\VolunteerFactory factory($count = null, $state = [])
+ * @method static Builder<static>|Volunteer featured()
+ * @method static Builder<static>|Volunteer graduated()
+ * @method static Builder<static>|Volunteer inDepartment(int $departmentId)
+ * @method static Builder<static>|Volunteer inactive()
+ * @method static Builder<static>|Volunteer leaders()
+ * @method static Builder<static>|Volunteer mentors()
+ * @method static Builder<static>|Volunteer minLevel(int $level)
+ * @method static Builder<static>|Volunteer newModelQuery()
+ * @method static Builder<static>|Volunteer newQuery()
+ * @method static Builder<static>|Volunteer notExpired()
+ * @method static Builder<static>|Volunteer onBreak()
+ * @method static Builder<static>|Volunteer onlyTrashed()
+ * @method static Builder<static>|Volunteer publicProfile()
+ * @method static Builder<static>|Volunteer query()
+ * @method static Builder<static>|Volunteer recognizedAfter(\Carbon\Carbon $date)
+ * @method static Builder<static>|Volunteer recognizedBefore(\Carbon\Carbon $date)
+ * @method static Builder<static>|Volunteer search(string $search)
+ * @method static Builder<static>|Volunteer suspended()
+ * @method static Builder<static>|Volunteer volunteers()
+ * @method static Builder<static>|Volunteer whereAchievements($value)
+ * @method static Builder<static>|Volunteer whereAreasOfService($value)
+ * @method static Builder<static>|Volunteer whereAvailableDays($value)
+ * @method static Builder<static>|Volunteer whereAvailableFrom($value)
+ * @method static Builder<static>|Volunteer whereAvailableTo($value)
+ * @method static Builder<static>|Volunteer whereAvatar($value)
+ * @method static Builder<static>|Volunteer whereBadges($value)
+ * @method static Builder<static>|Volunteer whereBio($value)
+ * @method static Builder<static>|Volunteer whereCategory($value)
+ * @method static Builder<static>|Volunteer whereCoverImage($value)
+ * @method static Builder<static>|Volunteer whereCreatedAt($value)
+ * @method static Builder<static>|Volunteer whereDeletedAt($value)
+ * @method static Builder<static>|Volunteer whereDepartmentId($value)
+ * @method static Builder<static>|Volunteer whereDescription($value)
+ * @method static Builder<static>|Volunteer whereDisplayOrder($value)
+ * @method static Builder<static>|Volunteer whereExpiryDate($value)
+ * @method static Builder<static>|Volunteer whereFavoriteVerse($value)
+ * @method static Builder<static>|Volunteer whereHoursPerWeek($value)
+ * @method static Builder<static>|Volunteer whereId($value)
+ * @method static Builder<static>|Volunteer whereInternalNotes($value)
+ * @method static Builder<static>|Volunteer whereIsContactable($value)
+ * @method static Builder<static>|Volunteer whereIsFeatured($value)
+ * @method static Builder<static>|Volunteer whereIsPublicProfile($value)
+ * @method static Builder<static>|Volunteer whereLevel($value)
+ * @method static Builder<static>|Volunteer whereNominatedBy($value)
+ * @method static Builder<static>|Volunteer whereNotes($value)
+ * @method static Builder<static>|Volunteer wherePoints($value)
+ * @method static Builder<static>|Volunteer wherePreferredContactMethod($value)
+ * @method static Builder<static>|Volunteer whereReceiveNotifications($value)
+ * @method static Builder<static>|Volunteer whereRecognitionDate($value)
+ * @method static Builder<static>|Volunteer whereSkills($value)
+ * @method static Builder<static>|Volunteer whereVolunteerNumber($value)
+ * @method static Builder<static>|Volunteer whereStatus($value)
+ * @method static Builder<static>|Volunteer whereTestimonial($value)
+ * @method static Builder<static>|Volunteer whereTitle($value)
+ * @method static Builder<static>|Volunteer whereTotalHoursServed($value)
+ * @method static Builder<static>|Volunteer whereType($value)
+ * @method static Builder<static>|Volunteer whereUpdatedAt($value)
+ * @method static Builder<static>|Volunteer whereUserId($value)
+ * @method static Builder<static>|Volunteer whereUuid($value)
+ * @method static Builder<static>|Volunteer withTrashed(bool $withTrashed = true)
+ * @method static Builder<static>|Volunteer withoutTrashed()
  * @mixin \Eloquent
  */
-class Star extends Model
+class Volunteer extends Model
 {
     use ClearsCache, HasFactory, LogsActivity, SoftDeletes;
 
@@ -150,7 +150,7 @@ class Star extends Model
         'user_id',
         'department_id',
         'nominated_by',
-        'star_number',
+        'volunteer_number',
         'title',
         'description',
         'status',
@@ -185,9 +185,9 @@ class Star extends Model
     ];
 
     protected $casts = [
-        'status' => StarStatus::class,
-        'type' => StarType::class,
-        'category' => StarCategory::class,
+        'status' => VolunteerStatus::class,
+        'type' => VolunteerType::class,
+        'category' => VolunteerCategory::class,
         'recognition_date' => 'date',
         'expiry_date' => 'date',
         'achievements' => 'array',
@@ -223,8 +223,8 @@ class Star extends Model
             if (empty($model->uuid)) {
                 $model->uuid = Str::uuid()->toString();
             }
-            if (empty($model->star_number)) {
-                $model->star_number = self::generateStarNumber();
+            if (empty($model->volunteer_number)) {
+                $model->volunteer_number = self::generateVolunteerNumber();
             }
         });
     }
@@ -340,62 +340,62 @@ class Star extends Model
 
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('status', StarStatus::ACTIVE);
+        return $query->where('status', VolunteerStatus::ACTIVE);
     }
 
     public function scopeInactive(Builder $query): Builder
     {
-        return $query->where('status', StarStatus::INACTIVE);
+        return $query->where('status', VolunteerStatus::INACTIVE);
     }
 
     public function scopeOnBreak(Builder $query): Builder
     {
-        return $query->where('status', StarStatus::ON_BREAK);
+        return $query->where('status', VolunteerStatus::ON_BREAK);
     }
 
     public function scopeGraduated(Builder $query): Builder
     {
-        return $query->where('status', StarStatus::GRADUATED);
+        return $query->where('status', VolunteerStatus::GRADUATED);
     }
 
     public function scopeSuspended(Builder $query): Builder
     {
-        return $query->where('status', StarStatus::SUSPENDED);
+        return $query->where('status', VolunteerStatus::SUSPENDED);
     }
 
-    public function scopeByStatus(Builder $query, StarStatus $status): Builder
+    public function scopeByStatus(Builder $query, VolunteerStatus $status): Builder
     {
         return $query->where('status', $status);
     }
 
-    public function scopeByType(Builder $query, StarType $type): Builder
+    public function scopeByType(Builder $query, VolunteerType $type): Builder
     {
         return $query->where('type', $type);
     }
 
-    public function scopeByCategory(Builder $query, StarCategory $category): Builder
+    public function scopeByCategory(Builder $query, VolunteerCategory $category): Builder
     {
         return $query->where('category', $category);
     }
 
     public function scopeVolunteers(Builder $query): Builder
     {
-        return $query->where('type', StarType::VOLUNTEER);
+        return $query->where('type', VolunteerType::VOLUNTEER);
     }
 
     public function scopeLeaders(Builder $query): Builder
     {
-        return $query->where('type', StarType::LEADER);
+        return $query->where('type', VolunteerType::LEADER);
     }
 
     public function scopeMentors(Builder $query): Builder
     {
-        return $query->where('type', StarType::MENTOR);
+        return $query->where('type', VolunteerType::MENTOR);
     }
 
     public function scopeAmbassadors(Builder $query): Builder
     {
-        return $query->where('type', StarType::AMBASSADOR);
+        return $query->where('type', VolunteerType::AMBASSADOR);
     }
 
     public function scopeInDepartment(Builder $query, int $departmentId): Builder
@@ -455,7 +455,7 @@ class Star extends Model
     public function scopeSearch(Builder $query, string $search): Builder
     {
         return $query->where(function ($q) use ($search): void {
-            $q->where('star_number', 'like', "%{$search}%")
+            $q->where('volunteer_number', 'like', "%{$search}%")
                 ->orWhere('title', 'like', "%{$search}%")
                 ->orWhere('description', 'like', "%{$search}%")
                 ->orWhereHas('user', function ($userQuery) use ($search): void {
@@ -470,17 +470,17 @@ class Star extends Model
     // Methods
     // ==========================================
 
-    public static function generateStarNumber(): string
+    public static function generateVolunteerNumber(): string
     {
-        $prefix = 'STR';
+        $prefix = 'VOL';
         $year = date('Y');
-        $lastStar = self::withTrashed()
-            ->where('star_number', 'like', "{$prefix}{$year}%")
-            ->orderBy('star_number', 'desc')
+        $lastVolunteer = self::withTrashed()
+            ->where('volunteer_number', 'like', "{$prefix}{$year}%")
+            ->orderBy('volunteer_number', 'desc')
             ->first();
 
-        if ($lastStar) {
-            $lastNumber = (int) substr((string) $lastStar->star_number, -4);
+        if ($lastVolunteer) {
+            $lastNumber = (int) substr((string) $lastVolunteer->volunteer_number, -4);
             $newNumber = $lastNumber + 1;
         } else {
             $newNumber = 1;
@@ -491,7 +491,7 @@ class Star extends Model
 
     public function canServe(): bool
     {
-        return $this->status === StarStatus::ACTIVE && ! $this->is_expired;
+        return $this->status === VolunteerStatus::ACTIVE && ! $this->is_expired;
     }
 
     public function isAvailableOn(Carbon $date): bool
@@ -512,28 +512,28 @@ class Star extends Model
     public function activate(): void
     {
         $this->update([
-            'status' => StarStatus::ACTIVE,
+            'status' => VolunteerStatus::ACTIVE,
         ]);
     }
 
     public function deactivate(): void
     {
         $this->update([
-            'status' => StarStatus::INACTIVE,
+            'status' => VolunteerStatus::INACTIVE,
         ]);
     }
 
     public function setOnBreak(): void
     {
         $this->update([
-            'status' => StarStatus::ON_BREAK,
+            'status' => VolunteerStatus::ON_BREAK,
         ]);
     }
 
     public function graduate(): void
     {
         $this->update([
-            'status' => StarStatus::GRADUATED,
+            'status' => VolunteerStatus::GRADUATED,
             'expiry_date' => Carbon::now(),
         ]);
     }
@@ -541,7 +541,7 @@ class Star extends Model
     public function suspend(): void
     {
         $this->update([
-            'status' => StarStatus::SUSPENDED,
+            'status' => VolunteerStatus::SUSPENDED,
         ]);
     }
 
@@ -659,7 +659,7 @@ class Star extends Model
     {
         $this->update([
             'expiry_date' => Carbon::now()->addMonths($months),
-            'status' => StarStatus::ACTIVE,
+            'status' => VolunteerStatus::ACTIVE,
         ]);
     }
 }

@@ -1,9 +1,12 @@
 <?php
 
 use App\Models\Employee;
-use App\Models\Star;
 use App\Models\User;
+use App\Models\Volunteer;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+
+uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
     // Enable query logging
@@ -14,24 +17,24 @@ afterEach(function (): void {
     DB::disableQueryLog();
 });
 
-it('eager loads user relation when fetching stars', function (): void {
-    // Create 5 stars with users
+it('eager loads user relation when fetching volunteers', function (): void {
+    // Create 5 volunteers with users
     $users = User::factory()->count(5)->create();
     foreach ($users as $user) {
-        Star::factory()->create(['user_id' => $user->id]);
+        Volunteer::factory()->create(['user_id' => $user->id]);
     }
 
     DB::flushQueryLog();
 
-    // Fetch all stars and access full_name (which triggers user relation)
-    $stars = Star::all();
-    foreach ($stars as $star) {
-        $star->full_name; // Access the appended attribute
+    // Fetch all volunteers and access full_name (which triggers user relation)
+    $volunteers = Volunteer::all();
+    foreach ($volunteers as $volunteer) {
+        $volunteer->full_name; // Access the appended attribute
     }
 
     $queries = DB::getQueryLog();
 
-    // Should be 2 queries max: one for stars, one for users (eager loaded)
+    // Should be 2 queries max: one for volunteers, one for users (eager loaded)
     // Without eager loading, it would be 1 + 5 = 6 queries
     expect(count($queries))->toBeLessThanOrEqual(2);
 });
@@ -58,18 +61,18 @@ it('eager loads user relation when fetching employees', function (): void {
     expect(count($queries))->toBeLessThanOrEqual(2);
 });
 
-it('includes user data when serializing star to array', function (): void {
+it('includes user data when serializing volunteer to array', function (): void {
     $user = User::factory()->create([
         'first_name' => 'John',
         'last_name' => 'Doe',
     ]);
-    $star = Star::factory()->create(['user_id' => $user->id]);
+    $volunteer = Volunteer::factory()->create(['user_id' => $user->id]);
 
     // Refresh to load from database
-    $star = Star::find($star->id);
+    $volunteer = Volunteer::find($volunteer->id);
 
-    expect($star->full_name)->toBe('John Doe');
-    expect($star->relationLoaded('user'))->toBeTrue();
+    expect($volunteer->full_name)->toBe('John Doe');
+    expect($volunteer->relationLoaded('user'))->toBeTrue();
 });
 
 it('includes user data when serializing employee to array', function (): void {

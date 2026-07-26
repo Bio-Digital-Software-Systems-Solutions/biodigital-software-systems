@@ -6,6 +6,7 @@ use App\Services\CacheService;
 use Illuminate\Console\Command;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class UpdateRolesAndPermissions extends Command
 {
@@ -48,7 +49,7 @@ class UpdateRolesAndPermissions extends Command
 
         // Clear permission cache first
         if (! $dryRun) {
-            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+            app()[PermissionRegistrar::class]->forgetCachedPermissions();
             $this->info('✅ Permission cache cleared');
         }
 
@@ -174,7 +175,7 @@ class UpdateRolesAndPermissions extends Command
         $roles = [
             'admin', 'writer', 'project-manager', 'event-manager', 'library-manager',
             'group-leader', 'department-leader', 'impact-family-leader', 'member',
-            'student', 'teacher', 'pastor', 'employee', 'star',
+            'student', 'teacher', 'pastor', 'employee', 'volunteer',
             // Standardized kebab-case roles
             'super-admin', 'care-service-agent',
         ];

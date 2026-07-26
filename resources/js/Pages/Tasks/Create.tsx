@@ -25,7 +25,7 @@ interface Assignable {
     first_name: string;
     last_name: string;
     email: string;
-    type: 'user' | 'employee' | 'star';
+    type: 'user' | 'employee' | 'volunteer';
     position?: string;
     title?: string;
 }
@@ -35,12 +35,12 @@ interface Props extends PageProps {
     statuses: Status[];
     users: Assignable[];
     employees: Assignable[];
-    stars: Assignable[];
+    volunteers: Assignable[];
     projectId?: string;
 }
 
-export default function Create({ projects, statuses, users, employees = [], stars = [], projectId }: Props) {
-    const [assigneeType, setAssigneeType] = useState<'all' | 'user' | 'employee' | 'star'>('all');
+export default function Create({ projects, statuses, users, employees = [], volunteers = [], projectId }: Props) {
+    const [assigneeType, setAssigneeType] = useState<'all' | 'user' | 'employee' | 'volunteer'>('all');
     const [dueDateOpen, setDueDateOpen] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -71,8 +71,8 @@ export default function Create({ projects, statuses, users, employees = [], star
         if (assigneeType === 'all' || assigneeType === 'employee') {
             combined.push(...employees);
         }
-        if (assigneeType === 'all' || assigneeType === 'star') {
-            combined.push(...stars);
+        if (assigneeType === 'all' || assigneeType === 'volunteer') {
+            combined.push(...volunteers);
         }
 
         // Remove duplicates by user id
@@ -82,12 +82,12 @@ export default function Create({ projects, statuses, users, employees = [], star
             seen.add(a.id);
             return true;
         });
-    }, [users, employees, stars, assigneeType]);
+    }, [users, employees, volunteers, assigneeType]);
 
     // Convert to options for SearchableSelect
     const assigneeOptions = useMemo(() => {
         return filteredAssignees.map(a => {
-            const typeLabel = a.type === 'user' ? 'Utilisateur' : a.type === 'employee' ? 'Employé' : 'Star';
+            const typeLabel = a.type === 'user' ? 'Utilisateur' : a.type === 'employee' ? 'Employé' : 'Volunteer';
             const extra = a.position || a.title || '';
             return {
                 value: a.id,
@@ -247,12 +247,12 @@ export default function Create({ projects, statuses, users, employees = [], star
                                                 </Button>
                                                 <Button
                                                     type="button"
-                                                    variant={assigneeType === 'star' ? 'default' : 'outline'}
+                                                    variant={assigneeType === 'volunteer' ? 'default' : 'outline'}
                                                     size="sm"
-                                                    className={`h-6 px-2 text-xs ${assigneeType === 'star' ? '' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20'}`}
-                                                    onClick={() => setAssigneeType('star')}
+                                                    className={`h-6 px-2 text-xs ${assigneeType === 'volunteer' ? '' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20'}`}
+                                                    onClick={() => setAssigneeType('volunteer')}
                                                 >
-                                                    Stars
+                                                    Volunteers
                                                 </Button>
                                             </div>
                                         </div>

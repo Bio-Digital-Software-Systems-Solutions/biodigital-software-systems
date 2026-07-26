@@ -3,16 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Employee\EmployeeStatus;
-use App\Enums\Star\StarStatus;
+use App\Enums\Volunteer\VolunteerStatus;
 use App\Models\Employee;
 use App\Models\Project;
-use App\Models\Star;
+use App\Models\ProjectAttachment;
+use App\Models\ProjectParticipant;
+use App\Models\Sprint;
 use App\Models\Status;
+use App\Models\Task;
 use App\Models\User;
+use App\Models\Volunteer;
 use App\Services\ProjectStatisticsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Spatie\Activitylog\Models\Activity;
 
 class ProjectController extends Controller
 {
@@ -66,11 +72,11 @@ class ProjectController extends Controller
             'in_progress_tasks' => $projects->sum('in_progress_tasks_count'),
             'overdue_tasks' => $projects->sum('overdue_tasks_count'),
             'total_epics' => $projects->sum('epic_tasks_count'),
-            'active_sprints' => \App\Models\Sprint::whereIn('project_id', $projectIds)
+            'active_sprints' => Sprint::whereIn('project_id', $projectIds)
                 ->where('start_date', '<=', now())
                 ->where('end_date', '>=', now())
                 ->count(),
-            'upcoming_sprints' => \App\Models\Sprint::whereIn('project_id', $projectIds)
+            'upcoming_sprints' => Sprint::whereIn('project_id', $projectIds)
                 ->where('start_date', '>', now())
                 ->count(),
         ];
@@ -78,7 +84,7 @@ class ProjectController extends Controller
         // Derive recent projects from already-loaded collection (no extra query)
         $recentProjects = $projects->sortByDesc('created_at')
             ->take(5)
-            ->map(function ($project): \App\Models\Project {
+            ->map(function ($project): Project {
                 $project->progress = $project->tasks_count > 0
                     ? round(($project->completed_tasks_count / $project->tasks_count) * 100)
                     : 0;
@@ -130,7 +136,7 @@ class ProjectController extends Controller
                 $query->latest();
             })
             ->get()
-            ->map(function ($project): \App\Models\Project {
+            ->map(function ($project): Project {
                 $project->progress = $project->tasks_count > 0
                     ? round(($project->completed_tasks_count / $project->tasks_count) * 100)
                     : 0;
@@ -178,24 +184,24 @@ class ProjectController extends Controller
                 'type' => 'employee',
             ]);
 
-        // Get active stars
-        $stars = Star::with('user')
-            ->where('status', StarStatus::ACTIVE)
+        // Get active volunteers
+        $volunteers = Volunteer::with('user')
+            ->where('status', VolunteerStatus::ACTIVE)
             ->get()
-            ->map(fn ($star): array => [
-                'id' => $star->user_id,
-                'uuid' => $star->uuid,
-                'first_name' => $star->user->first_name ?? '',
-                'last_name' => $star->user->last_name ?? '',
-                'email' => $star->user->email ?? '',
-                'title' => $star->title,
-                'type' => 'star',
+            ->map(fn ($volunteer): array => [
+                'id' => $volunteer->user_id,
+                'uuid' => $volunteer->uuid,
+                'first_name' => $volunteer->user->first_name ?? '',
+                'last_name' => $volunteer->user->last_name ?? '',
+                'email' => $volunteer->user->email ?? '',
+                'title' => $volunteer->title,
+                'type' => 'volunteer',
             ]);
 
         return Inertia::render('Projects/Create', [
             'users' => $users,
             'employees' => $employees,
-            'stars' => $stars,
+            'volunteers' => $volunteers,
         ]);
     }
 
@@ -242,7 +248,7 @@ class ProjectController extends Controller
         // Create participants in project_participants table
         foreach ($participants as $participantId) {
             if ($participantId != $validated['project_manager_id']) {
-                \App\Models\ProjectParticipant::create([
+                ProjectParticipant::create([
                     'project_id' => $project->id,
                     'user_id' => $participantId,
                     'role' => 'member',
@@ -274,7 +280,7 @@ class ProjectController extends Controller
             ->get();
 
         // Get all users for participant selection
-        $users = \App\Models\User::select('id', 'first_name', 'last_name', 'email')
+        $users = User::select('id', 'first_name', 'last_name', 'email')
             ->orderBy('first_name')
             ->get();
 
@@ -311,7 +317,7 @@ class ProjectController extends Controller
     /**
      * Get all activities for a project including related models.
      */
-    private function getProjectActivities(Project $project): \Illuminate\Support\Collection
+    private function getProjectActivities(Project $project): Collection
     {
         // Get project's own activities
         $projectActivities = $project->activities()
@@ -321,8 +327,8 @@ class ProjectController extends Controller
 
         // Get participant activities
         $participantIds = $project->participants()->pluck('id');
-        $participantActivities = \Spatie\Activitylog\Models\Activity::query()
-            ->where('subject_type', \App\Models\ProjectParticipant::class)
+        $participantActivities = Activity::query()
+            ->where('subject_type', ProjectParticipant::class)
             ->whereIn('subject_id', $participantIds)
             ->with('causer')
             ->get()
@@ -330,8 +336,8 @@ class ProjectController extends Controller
 
         // Get attachment activities
         $attachmentIds = $project->attachments()->pluck('id');
-        $attachmentActivities = \Spatie\Activitylog\Models\Activity::query()
-            ->where('subject_type', \App\Models\ProjectAttachment::class)
+        $attachmentActivities = Activity::query()
+            ->where('subject_type', ProjectAttachment::class)
             ->whereIn('subject_id', $attachmentIds)
             ->with('causer')
             ->get()
@@ -339,8 +345,8 @@ class ProjectController extends Controller
 
         // Get task activities (only created/deleted for project tasks)
         $taskIds = $project->tasks()->pluck('id');
-        $taskActivities = \Spatie\Activitylog\Models\Activity::query()
-            ->where('subject_type', \App\Models\Task::class)
+        $taskActivities = Activity::query()
+            ->where('subject_type', Task::class)
             ->whereIn('subject_id', $taskIds)
             ->whereIn('description', ['created', 'deleted'])
             ->with('causer')
@@ -545,22 +551,22 @@ class ProjectController extends Controller
         // Group tasks by status name (convert to array for JavaScript)
         $tasksByStatus = [
             'pending' => $tasks->filter(fn ($task): bool => $task->status && in_array($task->status->name, ['pending', 'new']))
-                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
+                ->values()->map(fn (Task $task): array => $this->formatTaskForKanban($task))->toArray(),
             'todo' => $tasks->filter(fn ($task): bool => $task->status && $task->status->name === 'todo')
-                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
+                ->values()->map(fn (Task $task): array => $this->formatTaskForKanban($task))->toArray(),
             'in_progress' => $tasks->filter(fn ($task): bool => $task->status && $task->status->name === 'in_progress')
-                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
+                ->values()->map(fn (Task $task): array => $this->formatTaskForKanban($task))->toArray(),
             'under_review' => $tasks->filter(fn ($task): bool => $task->status && $task->status->name === 'under_review')
-                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
+                ->values()->map(fn (Task $task): array => $this->formatTaskForKanban($task))->toArray(),
             'blocked' => $tasks->filter(fn ($task): bool => $task->status && $task->status->name === 'blocked')
-                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
+                ->values()->map(fn (Task $task): array => $this->formatTaskForKanban($task))->toArray(),
             'completed' => $tasks->filter(fn ($task): bool => $task->status && $task->status->name === 'completed')
-                ->values()->map(fn (\App\Models\Task $task): array => $this->formatTaskForKanban($task))->toArray(),
+                ->values()->map(fn (Task $task): array => $this->formatTaskForKanban($task))->toArray(),
         ];
 
         // Get filter data
-        $users = \App\Models\User::select('id', 'first_name', 'last_name')->orderBy('first_name')->get();
-        $sprints = \App\Models\Sprint::where('project_id', $project->id)
+        $users = User::select('id', 'first_name', 'last_name')->orderBy('first_name')->get();
+        $sprints = Sprint::where('project_id', $project->id)
             ->select('id', 'name', 'start_date', 'end_date')
             ->orderBy('start_date')
             ->get();
@@ -579,7 +585,7 @@ class ProjectController extends Controller
         ]);
     }
 
-    private function formatTaskForKanban(\App\Models\Task $task): array
+    private function formatTaskForKanban(Task $task): array
     {
         return [
             'id' => $task->id,

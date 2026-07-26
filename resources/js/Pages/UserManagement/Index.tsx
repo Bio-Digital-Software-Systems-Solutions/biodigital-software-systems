@@ -24,7 +24,7 @@ interface Teacher {
     user: User;
 }
 
-interface Star {
+interface Volunteer {
     id: number;
     uuid: string;
     user_id: number;
@@ -64,7 +64,7 @@ interface Props {
     roles: RoleWithPermissions[];
     permissions: Permission[];
     teachers: Teacher[];
-    stars: Star[];
+    volunteers: Volunteer[];
     employees: Employee[];
     unacknowledgedBlockedAttempts: number;
     filters: Filters;
@@ -81,10 +81,10 @@ interface RoleWithPermissions extends Role {
     permissions: Permission[];
 }
 
-export default function Index({ users, roles, permissions, teachers, stars, employees, unacknowledgedBlockedAttempts, filters }: Props) {
+export default function Index({ users, roles, permissions, teachers, volunteers, employees, unacknowledgedBlockedAttempts, filters }: Props) {
     const [selectedUser, setSelectedUser] = useState<UserWithRelations | null>(null);
     const [selectedRole, setSelectedRole] = useState<RoleWithPermissions | null>(null);
-    const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'permissions' | 'matrix' | 'teachers' | 'stars' | 'employees' | 'blocked-attempts'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'roles' | 'permissions' | 'matrix' | 'teachers' | 'volunteers' | 'employees' | 'blocked-attempts'>('users');
     const [showUserRoleDialog, setShowUserRoleDialog] = useState(false);
     const [showUserPermissionDialog, setShowUserPermissionDialog] = useState(false);
     const [showRoleDialog, setShowRoleDialog] = useState(false);
@@ -148,8 +148,8 @@ export default function Index({ users, roles, permissions, teachers, stars, empl
     const [selectedModels, setSelectedModels] = useState<string[]>([]);
     const [teacherSearch, setTeacherSearch] = useState('');
     const [nonTeacherSearch, setNonTeacherSearch] = useState('');
-    const [starSearch, setStarSearch] = useState('');
-    const [nonStarSearch, setNonStarSearch] = useState('');
+    const [volunteerSearch, setVolunteerSearch] = useState('');
+    const [nonVolunteerSearch, setNonVolunteerSearch] = useState('');
     const [employeeSearch, setEmployeeSearch] = useState('');
     const [nonEmployeeSearch, setNonEmployeeSearch] = useState('');
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -705,36 +705,36 @@ export default function Index({ users, roles, permissions, teachers, stars, empl
         });
     }, [teachers, teacherSearch]);
 
-    // Get star user IDs for filtering
-    const starUserIds = useMemo(() => {
-        return new Set(stars.map(s => s.user_id));
-    }, [stars]);
+    // Get volunteer user IDs for filtering
+    const volunteerUserIds = useMemo(() => {
+        return new Set(volunteers.map(s => s.user_id));
+    }, [volunteers]);
 
-    // Filtered non-stars (users who are NOT stars)
-    const filteredNonStars = useMemo(() => {
+    // Filtered non-volunteers (users who are NOT volunteers)
+    const filteredNonVolunteers = useMemo(() => {
         return users.data.filter(user => {
-            const isNotStar = !starUserIds.has(user.id);
+            const isNotVolunteer = !volunteerUserIds.has(user.id);
             const matchesSearch =
-                user.first_name.toLowerCase().includes(nonStarSearch.toLowerCase()) ||
-                user.last_name.toLowerCase().includes(nonStarSearch.toLowerCase()) ||
-                user.email.toLowerCase().includes(nonStarSearch.toLowerCase());
+                user.first_name.toLowerCase().includes(nonVolunteerSearch.toLowerCase()) ||
+                user.last_name.toLowerCase().includes(nonVolunteerSearch.toLowerCase()) ||
+                user.email.toLowerCase().includes(nonVolunteerSearch.toLowerCase());
 
-            return isNotStar && matchesSearch;
+            return isNotVolunteer && matchesSearch;
         });
-    }, [users.data, starUserIds, nonStarSearch]);
+    }, [users.data, volunteerUserIds, nonVolunteerSearch]);
 
-    // Filtered stars
-    const filteredStars = useMemo(() => {
-        return stars.filter(star => {
-            const user = star.user;
+    // Filtered volunteers
+    const filteredVolunteers = useMemo(() => {
+        return volunteers.filter(volunteer => {
+            const user = volunteer.user;
             const matchesSearch =
-                user.first_name.toLowerCase().includes(starSearch.toLowerCase()) ||
-                user.last_name.toLowerCase().includes(starSearch.toLowerCase()) ||
-                user.email.toLowerCase().includes(starSearch.toLowerCase());
+                user.first_name.toLowerCase().includes(volunteerSearch.toLowerCase()) ||
+                user.last_name.toLowerCase().includes(volunteerSearch.toLowerCase()) ||
+                user.email.toLowerCase().includes(volunteerSearch.toLowerCase());
 
             return matchesSearch;
         });
-    }, [stars, starSearch]);
+    }, [volunteers, volunteerSearch]);
 
     // Get employee user IDs for filtering
     const employeeUserIds = useMemo(() => {
@@ -791,25 +791,25 @@ export default function Index({ users, roles, permissions, teachers, stars, empl
         }
     };
 
-    // Add user as star
-    const handleAddStar = async (user: UserWithRelations) => {
+    // Add user as volunteer
+    const handleAddVolunteer = async (user: UserWithRelations) => {
         try {
-            await axios.post(route('user-management.add-star', user.uuid), {});
-            toast.success(`${user.first_name} ${user.last_name} a été ajouté comme Star`);
-            router.reload({ only: ['users', 'stars'] });
+            await axios.post(route('user-management.add-volunteer', user.uuid), {});
+            toast.success(`${user.first_name} ${user.last_name} a été ajouté comme Volontaire`);
+            router.reload({ only: ['users', 'volunteers'] });
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Erreur lors de l\'ajout du Star');
+            toast.error(error.response?.data?.message || 'Erreur lors de l\'ajout du Volontaire');
         }
     };
 
-    // Remove star
-    const handleRemoveStar = async (star: Star) => {
+    // Remove volunteer
+    const handleRemoveVolunteer = async (volunteer: Volunteer) => {
         try {
-            await axios.delete(route('user-management.remove-star', star.uuid));
-            toast.success(`${star.user.first_name} ${star.user.last_name} a été retiré des Stars`);
-            router.reload({ only: ['users', 'stars'] });
+            await axios.delete(route('user-management.remove-volunteer', volunteer.uuid));
+            toast.success(`${volunteer.user.first_name} ${volunteer.user.last_name} a été retiré des Volontaires`);
+            router.reload({ only: ['users', 'volunteers'] });
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Erreur lors de la suppression du Star');
+            toast.error(error.response?.data?.message || 'Erreur lors de la suppression du Volontaire');
         }
     };
 
@@ -893,13 +893,13 @@ export default function Index({ users, roles, permissions, teachers, stars, empl
                                 Enseignants ({teachers.length})
                             </button>
                             <button
-                                onClick={() => setActiveTab('stars')}
-                                className={`${activeTab === 'stars'
+                                onClick={() => setActiveTab('volunteers')}
+                                className={`${activeTab === 'volunteers'
                                     ? 'border-violet-500 text-violet-600 dark:text-violet-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                     } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                             >
-                                Stars ({stars.length})
+                                Volunteers ({volunteers.length})
                             </button>
                             <button
                                 onClick={() => setActiveTab('employees')}
@@ -1869,42 +1869,42 @@ export default function Index({ users, roles, permissions, teachers, stars, empl
                         </div>
                     )}
 
-                    {/* Stars Tab */}
-                    {activeTab === 'stars' && (
+                    {/* Volunteers Tab */}
+                    {activeTab === 'volunteers' && (
                         <div>
                             <div className="mb-6">
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    Gérez les Stars (bénévoles) de votre organisation. Vous pouvez ajouter des utilisateurs comme Stars ou les retirer.
+                                    Gérez les Volontaires (bénévoles) de votre organisation. Vous pouvez ajouter des utilisateurs comme Volontaires ou les retirer.
                                 </p>
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-6">
-                                {/* Left Column - Non-Stars (Users to Add) */}
+                                {/* Left Column - Non-Volunteers (Users to Add) */}
                                 <div className="border rounded-lg dark:border-gray-700 overflow-hidden">
                                     <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b dark:border-gray-700">
                                         <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
-                                            Utilisateurs disponibles ({filteredNonStars.length})
+                                            Utilisateurs disponibles ({filteredNonVolunteers.length})
                                         </h3>
                                         <div className="relative">
                                             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                             <input
                                                 type="text"
                                                 placeholder="Rechercher un utilisateur..."
-                                                value={nonStarSearch}
-                                                onChange={(e) => setNonStarSearch(e.target.value)}
+                                                value={nonVolunteerSearch}
+                                                onChange={(e) => setNonVolunteerSearch(e.target.value)}
                                                 className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
                                             />
                                         </div>
                                     </div>
                                     <div className="p-4 max-h-[600px] overflow-y-auto">
-                                        {filteredNonStars.length === 0 ? (
+                                        {filteredNonVolunteers.length === 0 ? (
                                             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                                                 <UserIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
                                                 <p className="text-sm">Aucun utilisateur disponible</p>
                                             </div>
                                         ) : (
                                             <div className="space-y-2">
-                                                {filteredNonStars.map((user) => (
+                                                {filteredNonVolunteers.map((user) => (
                                                     <div
                                                         key={user.id}
                                                         className="flex items-center justify-between p-3 border rounded-lg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -1925,10 +1925,10 @@ export default function Index({ users, roles, permissions, teachers, stars, empl
                                                             </div>
                                                         </div>
                                                         <Button
-                                                            onClick={() => handleAddStar(user)}
+                                                            onClick={() => handleAddVolunteer(user)}
                                                             size="sm"
                                                             className="ml-3 flex-shrink-0"
-                                                            title="Ajouter comme Star"
+                                                            title="Ajouter comme Volontaire"
                                                         >
                                                             <ArrowRightIcon className="h-5 w-5" />
                                                         </Button>
@@ -1939,68 +1939,68 @@ export default function Index({ users, roles, permissions, teachers, stars, empl
                                     </div>
                                 </div>
 
-                                {/* Right Column - Stars (Can Remove) */}
+                                {/* Right Column - Volunteers (Can Remove) */}
                                 <div className="border rounded-lg dark:border-gray-700 overflow-hidden">
                                     <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border-b dark:border-gray-700">
                                         <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
-                                            Stars actuels ({filteredStars.length})
+                                            Volunteers actuels ({filteredVolunteers.length})
                                         </h3>
                                         <div className="relative">
                                             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                             <input
                                                 type="text"
-                                                placeholder="Rechercher un Star..."
-                                                value={starSearch}
-                                                onChange={(e) => setStarSearch(e.target.value)}
+                                                placeholder="Rechercher un Volunteer..."
+                                                value={volunteerSearch}
+                                                onChange={(e) => setVolunteerSearch(e.target.value)}
                                                 className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
                                             />
                                         </div>
                                     </div>
                                     <div className="p-4 max-h-[600px] overflow-y-auto">
-                                        {filteredStars.length === 0 ? (
+                                        {filteredVolunteers.length === 0 ? (
                                             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                                                 <UserIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                                <p className="text-sm">Aucun Star</p>
+                                                <p className="text-sm">Aucun Volunteer</p>
                                             </div>
                                         ) : (
                                             <div className="space-y-2">
-                                                {filteredStars.map((star) => (
+                                                {filteredVolunteers.map((volunteer) => (
                                                     <div
-                                                        key={star.uuid}
+                                                        key={volunteer.uuid}
                                                         className="p-3 border rounded-lg dark:border-gray-700 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors"
                                                     >
                                                         <div className="flex items-start justify-between mb-2">
                                                             <div className="flex-1 min-w-0">
                                                                 <p className="font-medium text-gray-900 dark:text-white truncate">
-                                                                    {star.user.first_name} {star.user.last_name}
+                                                                    {volunteer.user.first_name} {volunteer.user.last_name}
                                                                 </p>
                                                                 <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                                                    {star.user.email}
+                                                                    {volunteer.user.email}
                                                                 </p>
                                                             </div>
                                                             <button
-                                                                onClick={() => handleRemoveStar(star)}
+                                                                onClick={() => handleRemoveVolunteer(volunteer)}
                                                                 className="ml-3 text-red-600 hover:text-red-900 dark:text-red-400 flex-shrink-0"
-                                                                title="Retirer le Star"
+                                                                title="Retirer le Volunteer"
                                                             >
                                                                 <TrashIcon className="h-5 w-5" />
                                                             </button>
                                                         </div>
-                                                        {(star.title || star.type || star.level) && (
+                                                        {(volunteer.title || volunteer.type || volunteer.level) && (
                                                             <div className="mt-2 pt-2 border-t dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                                                                {star.title && (
+                                                                {volunteer.title && (
                                                                     <p>
-                                                                        <span className="font-medium">Titre:</span> {star.title}
+                                                                        <span className="font-medium">Titre:</span> {volunteer.title}
                                                                     </p>
                                                                 )}
-                                                                {star.type && (
+                                                                {volunteer.type && (
                                                                     <p>
-                                                                        <span className="font-medium">Type:</span> {star.type}
+                                                                        <span className="font-medium">Type:</span> {volunteer.type}
                                                                     </p>
                                                                 )}
-                                                                {star.level && (
+                                                                {volunteer.level && (
                                                                     <p>
-                                                                        <span className="font-medium">Niveau:</span> {star.level}
+                                                                        <span className="font-medium">Niveau:</span> {volunteer.level}
                                                                     </p>
                                                                 )}
                                                             </div>

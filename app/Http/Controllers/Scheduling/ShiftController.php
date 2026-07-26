@@ -7,7 +7,7 @@ use App\Enums\Scheduling\ScheduleStatus;
 use App\Enums\Scheduling\ShiftStatus;
 use App\Enums\Scheduling\ShiftType;
 use App\Enums\Scheduling\TodoPriority;
-use App\Enums\Star\StarStatus;
+use App\Enums\Volunteer\VolunteerStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Employee;
@@ -15,8 +15,8 @@ use App\Models\Scheduling\DepartmentTodo;
 use App\Models\Scheduling\Shift;
 use App\Models\Scheduling\ShiftSeries;
 use App\Models\Scheduling\WeeklySchedule;
-use App\Models\Star;
 use App\Models\User;
+use App\Models\Volunteer;
 use App\Notifications\Scheduling\ShiftAssigned;
 use App\Notifications\Scheduling\ShiftUnassigned;
 use App\Notifications\Scheduling\ShiftUpdated;
@@ -102,18 +102,18 @@ class ShiftController extends Controller
                 'type' => 'employee',
             ]);
 
-        // Get active stars (volunteers)
-        $stars = Star::with('user')
-            ->where('status', StarStatus::ACTIVE)
+        // Get active volunteers (volunteers)
+        $volunteers = Volunteer::with('user')
+            ->where('status', VolunteerStatus::ACTIVE)
             ->get()
-            ->map(fn ($star): array => [
-                'id' => $star->user_id ?? $star->id,
-                'uuid' => $star->uuid,
-                'first_name' => $star->user->first_name ?? $star->title ?? '',
-                'last_name' => $star->user->last_name ?? '',
-                'email' => $star->user->email ?? '',
-                'title' => $star->title,
-                'type' => 'star',
+            ->map(fn ($volunteer): array => [
+                'id' => $volunteer->user_id ?? $volunteer->id,
+                'uuid' => $volunteer->uuid,
+                'first_name' => $volunteer->user->first_name ?? $volunteer->title ?? '',
+                'last_name' => $volunteer->user->last_name ?? '',
+                'email' => $volunteer->user->email ?? '',
+                'title' => $volunteer->title,
+                'type' => 'volunteer',
             ]);
 
         $positions = $department->activePositions()->get()->map(fn ($p): array => [
@@ -130,7 +130,7 @@ class ShiftController extends Controller
             'schedule' => $schedule,
             'users' => $users,
             'employees' => $employees,
-            'stars' => $stars,
+            'volunteers' => $volunteers,
             'positions' => $positions,
             'shiftTypes' => collect(ShiftType::cases())->map(fn ($t): array => [
                 'value' => $t->value,
@@ -392,18 +392,18 @@ class ShiftController extends Controller
                 'type' => 'employee',
             ]);
 
-        // Get active stars (volunteers)
-        $stars = Star::with('user')
-            ->where('status', StarStatus::ACTIVE)
+        // Get active volunteers (volunteers)
+        $volunteers = Volunteer::with('user')
+            ->where('status', VolunteerStatus::ACTIVE)
             ->get()
-            ->map(fn ($star): array => [
-                'id' => $star->user_id ?? $star->id,
-                'uuid' => $star->uuid,
-                'first_name' => $star->user->first_name ?? $star->title ?? '',
-                'last_name' => $star->user->last_name ?? '',
-                'email' => $star->user->email ?? '',
-                'title' => $star->title,
-                'type' => 'star',
+            ->map(fn ($volunteer): array => [
+                'id' => $volunteer->user_id ?? $volunteer->id,
+                'uuid' => $volunteer->uuid,
+                'first_name' => $volunteer->user->first_name ?? $volunteer->title ?? '',
+                'last_name' => $volunteer->user->last_name ?? '',
+                'email' => $volunteer->user->email ?? '',
+                'title' => $volunteer->title,
+                'type' => 'volunteer',
             ]);
 
         $positions = $department->activePositions()->get()->map(fn ($p): array => [
@@ -421,7 +421,7 @@ class ShiftController extends Controller
             'shift' => $shift,
             'users' => $users,
             'employees' => $employees,
-            'stars' => $stars,
+            'volunteers' => $volunteers,
             'positions' => $positions,
             'shiftTypes' => collect(ShiftType::cases())->map(fn ($t): array => [
                 'value' => $t->value,

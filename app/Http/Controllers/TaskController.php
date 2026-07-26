@@ -3,21 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Employee\EmployeeStatus;
-use App\Enums\Star\StarStatus;
+use App\Enums\Volunteer\VolunteerStatus;
 use App\Models\Employee;
 use App\Models\Program;
-use App\Models\Star;
+use App\Models\Project;
 use App\Models\Status;
 use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\TaskComment;
 use App\Models\TaskParticipant;
 use App\Models\User;
+use App\Models\Volunteer;
 use App\Notifications\TaskCreated;
 use App\Notifications\UserMentionedInComment;
 use App\Services\Comment\MentionService;
 use App\Services\ProjectStatisticsService;
 use App\Services\TaskActivityService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -109,7 +112,7 @@ class TaskController extends Controller
 
     public function create(Request $request)
     {
-        $projects = \App\Models\Project::where('status', '!=', 'cancelled')->get();
+        $projects = Project::where('status', '!=', 'cancelled')->get();
         $programs = Program::active()->get();
         $statuses = Status::all();
 
@@ -137,18 +140,18 @@ class TaskController extends Controller
                 'type' => 'employee',
             ]);
 
-        // Get active stars
-        $stars = Star::with('user')
-            ->where('status', StarStatus::ACTIVE)
+        // Get active volunteers
+        $volunteers = Volunteer::with('user')
+            ->where('status', VolunteerStatus::ACTIVE)
             ->get()
-            ->map(fn ($star): array => [
-                'id' => $star->user_id,
-                'uuid' => $star->uuid,
-                'first_name' => $star->user->first_name ?? '',
-                'last_name' => $star->user->last_name ?? '',
-                'email' => $star->user->email ?? '',
-                'title' => $star->title,
-                'type' => 'star',
+            ->map(fn ($volunteer): array => [
+                'id' => $volunteer->user_id,
+                'uuid' => $volunteer->uuid,
+                'first_name' => $volunteer->user->first_name ?? '',
+                'last_name' => $volunteer->user->last_name ?? '',
+                'email' => $volunteer->user->email ?? '',
+                'title' => $volunteer->title,
+                'type' => 'volunteer',
             ]);
 
         return Inertia::render('Tasks/Create', [
@@ -157,7 +160,7 @@ class TaskController extends Controller
             'statuses' => $statuses,
             'users' => $users,
             'employees' => $employees,
-            'stars' => $stars,
+            'volunteers' => $volunteers,
             'projectId' => $request->query('project'),
             'taskableType' => $request->query('taskable_type'),
             'taskableId' => $request->query('taskable_id'),
@@ -183,11 +186,11 @@ class TaskController extends Controller
 
         // Backward compatibility: if project_id or program_id is provided, set taskable
         if ($request->filled('project_id')) {
-            $validated['taskable_type'] = \App\Models\Project::class;
+            $validated['taskable_type'] = Project::class;
             $validated['taskable_id'] = $request->input('project_id');
             $validated['project_id'] = $request->input('project_id');
         } elseif ($request->filled('program_id')) {
-            $validated['taskable_type'] = \App\Models\Program::class;
+            $validated['taskable_type'] = Program::class;
             $validated['taskable_id'] = $request->input('program_id');
             $validated['program_id'] = $request->input('program_id');
         }
@@ -208,8 +211,8 @@ class TaskController extends Controller
         $this->notifyProjectMembersOfNewTask($task, $validated);
 
         // Redirect to project if task was created from a project page
-        if (isset($validated['taskable_type']) && $validated['taskable_type'] === \App\Models\Project::class && $request->has('from_project')) {
-            $project = \App\Models\Project::find($validated['taskable_id']);
+        if (isset($validated['taskable_type']) && $validated['taskable_type'] === Project::class && $request->has('from_project')) {
+            $project = Project::find($validated['taskable_id']);
             if ($project) {
                 return redirect()->route('projects.show', $project->uuid)
                     ->with('success', 'Task created successfully.');
@@ -304,7 +307,7 @@ class TaskController extends Controller
     {
         $task->load(['status', 'program', 'project', 'assignedUser', 'taskable']);
         $programs = Program::active()->get();
-        $projects = \App\Models\Project::where('status', '!=', 'cancelled')->get();
+        $projects = Project::where('status', '!=', 'cancelled')->get();
         $statuses = Status::all();
         $users = User::all();
 
@@ -337,11 +340,11 @@ class TaskController extends Controller
 
         // Backward compatibility: if project_id or program_id is provided, set taskable
         if ($request->filled('project_id')) {
-            $validated['taskable_type'] = \App\Models\Project::class;
+            $validated['taskable_type'] = Project::class;
             $validated['taskable_id'] = $request->input('project_id');
             $validated['project_id'] = $request->input('project_id');
         } elseif ($request->filled('program_id')) {
-            $validated['taskable_type'] = \App\Models\Program::class;
+            $validated['taskable_type'] = Program::class;
             $validated['taskable_id'] = $request->input('program_id');
             $validated['program_id'] = $request->input('program_id');
         }
@@ -389,7 +392,7 @@ class TaskController extends Controller
         return back()->with('success', 'Task status updated successfully.');
     }
 
-    public function toggleComplete(Request $request, Task $task): \Illuminate\Http\RedirectResponse
+    public function toggleComplete(Request $request, Task $task): RedirectResponse
     {
         $completedStatus = Status::where('name', 'completed')->first();
         $pendingStatus = Status::where('name', 'pending')->first();
@@ -429,7 +432,7 @@ class TaskController extends Controller
     /**
      * Inline update a single field of a task.
      */
-    public function inlineUpdate(Request $request, Task $task): \Illuminate\Http\JsonResponse
+    public function inlineUpdate(Request $request, Task $task): JsonResponse
     {
         $field = $request->input('field');
         $value = $request->input('value');
@@ -665,11 +668,11 @@ class TaskController extends Controller
     private function notifyProjectMembersOfNewTask(Task $task, array $validated): void
     {
         // Only notify if task is associated with a project
-        if (! isset($validated['taskable_type']) || $validated['taskable_type'] !== \App\Models\Project::class) {
+        if (! isset($validated['taskable_type']) || $validated['taskable_type'] !== Project::class) {
             return;
         }
 
-        $project = \App\Models\Project::find($validated['taskable_id']);
+        $project = Project::find($validated['taskable_id']);
         if (! $project) {
             return;
         }

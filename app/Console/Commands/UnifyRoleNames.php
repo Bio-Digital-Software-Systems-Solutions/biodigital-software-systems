@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class UnifyRoleNames extends Command
 {
@@ -39,7 +40,8 @@ class UnifyRoleNames extends Command
         'EventManager' => 'event-manager',
         'Editor' => 'writer',         // Map to existing 'writer' role
         'Employee' => 'employee',     // Keep as lowercase (already exists)
-        'Star' => 'star',             // Keep as lowercase (already exists)
+        'Star' => 'volunteer',        // Legacy 'Star' role renamed to 'volunteer'
+        'star' => 'volunteer',        // Legacy 'star' role renamed to 'volunteer'
 
         // snake_case to kebab-case conversions
         'mlr_agent' => 'care-service-agent',
@@ -63,7 +65,7 @@ class UnifyRoleNames extends Command
         }
 
         // Clear permission cache
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Step 1: Show current state
         $this->showCurrentRoles();
@@ -286,7 +288,7 @@ class UnifyRoleNames extends Command
         }
 
         // Clear permission cache after changes
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 
     /**

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -14,7 +15,7 @@ class RolesAndPermissionsSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create permissions
         $permissions = [
@@ -210,12 +211,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit employees',
             'delete employees',
             'manage employees',
-            // Stars (Volunteers)
-            'view stars',
-            'create stars',
-            'edit stars',
-            'delete stars',
-            'manage stars',
+            // Volunteers (Volunteers)
+            'view volunteers',
+            'create volunteers',
+            'edit volunteers',
+            'delete volunteers',
+            'manage volunteers',
             // Availabilities (Mes Disponibilités)
             'view availabilities',
             'create availabilities',
@@ -429,12 +430,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit employees',
             'delete employees',
             'manage employees',
-            // Stars (Volunteers)
-            'view stars',
-            'create stars',
-            'edit stars',
-            'delete stars',
-            'manage stars',
+            // Volunteers (Volunteers)
+            'view volunteers',
+            'create volunteers',
+            'edit volunteers',
+            'delete volunteers',
+            'manage volunteers',
             // Availabilities
             'view availabilities',
             'create availabilities',
@@ -929,9 +930,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete availabilities',
         ]);
 
-        // Star - Volunteer with specific access
-        $star = Role::firstOrCreate(['name' => 'star']);
-        $star->syncPermissions([
+        // Volunteer - Volunteer with specific access
+        $volunteer = Role::firstOrCreate(['name' => 'volunteer']);
+        $volunteer->syncPermissions([
             // Viewing permissions
             'view articles',
             'view trainings',

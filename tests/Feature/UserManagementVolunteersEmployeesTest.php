@@ -4,17 +4,17 @@ namespace Tests\Feature;
 
 use App\Enums\Employee\EmployeeStatus;
 use App\Enums\Employee\EmploymentType;
-use App\Enums\Star\StarCategory;
-use App\Enums\Star\StarStatus;
-use App\Enums\Star\StarType;
+use App\Enums\Volunteer\VolunteerCategory;
+use App\Enums\Volunteer\VolunteerStatus;
+use App\Enums\Volunteer\VolunteerType;
 use App\Models\Employee;
-use App\Models\Star;
+use App\Models\Volunteer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
-class UserManagementStarsEmployeesTest extends TestCase
+class UserManagementVolunteersEmployeesTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -38,17 +38,17 @@ class UserManagementStarsEmployeesTest extends TestCase
         // Create a regular user (non-admin)
         $this->regularUser = User::factory()->create();
 
-        // Create a target user for adding as Star/Employee
+        // Create a target user for adding as Volunteer/Employee
         $this->targetUser = User::factory()->create();
     }
 
     /**
-     * Test that the user management page loads with stars and employees data.
+     * Test that the user management page loads with volunteers and employees data.
      */
-    public function test_index_page_includes_stars_and_employees(): void
+    public function test_index_page_includes_volunteers_and_employees(): void
     {
-        // Create some stars and employees
-        Star::factory()->create(['user_id' => $this->targetUser->id]);
+        // Create some volunteers and employees
+        Volunteer::factory()->create(['user_id' => $this->targetUser->id]);
         Employee::factory()->create(['user_id' => $this->superAdmin->id]);
 
         $response = $this->actingAs($this->superAdmin)
@@ -58,92 +58,92 @@ class UserManagementStarsEmployeesTest extends TestCase
         $response->assertInertia(
             fn ($page) => $page
                 ->component('UserManagement/Index')
-                ->has('stars')
+                ->has('volunteers')
                 ->has('employees')
                 ->has('teachers')
         );
     }
 
     /**
-     * Test that SuperAdmin can add a user as a Star.
+     * Test that SuperAdmin can add a user as a Volunteer.
      */
-    public function test_superadmin_can_add_star(): void
+    public function test_superadmin_can_add_volunteer(): void
     {
         $response = $this->actingAs($this->superAdmin)
-            ->postJson(route('user-management.add-star', $this->targetUser->uuid), [
+            ->postJson(route('user-management.add-volunteer', $this->targetUser->uuid), [
                 'title' => 'New Volunteer',
             ]);
 
         $response->assertStatus(200);
         $response->assertJson([
-            'message' => 'Star added successfully',
+            'message' => 'Volunteer added successfully',
         ]);
 
-        // Verify the star was created
-        $this->assertDatabaseHas('stars', [
+        // Verify the volunteer was created
+        $this->assertDatabaseHas('volunteers', [
             'user_id' => $this->targetUser->id,
             'title' => 'New Volunteer',
-            'status' => StarStatus::ACTIVE->value,
+            'status' => VolunteerStatus::ACTIVE->value,
         ]);
     }
 
     /**
-     * Test that SuperAdmin can add a user as a Star with default values.
+     * Test that SuperAdmin can add a user as a Volunteer with default values.
      */
-    public function test_superadmin_can_add_star_with_defaults(): void
+    public function test_superadmin_can_add_volunteer_with_defaults(): void
     {
         $response = $this->actingAs($this->superAdmin)
-            ->postJson(route('user-management.add-star', $this->targetUser->uuid), []);
+            ->postJson(route('user-management.add-volunteer', $this->targetUser->uuid), []);
 
         $response->assertStatus(200);
 
-        // Verify the star was created with default values
-        $this->assertDatabaseHas('stars', [
+        // Verify the volunteer was created with default values
+        $this->assertDatabaseHas('volunteers', [
             'user_id' => $this->targetUser->id,
-            'type' => StarType::VOLUNTEER->value,
-            'category' => StarCategory::SERVICE->value,
-            'status' => StarStatus::ACTIVE->value,
+            'type' => VolunteerType::VOLUNTEER->value,
+            'category' => VolunteerCategory::SERVICE->value,
+            'status' => VolunteerStatus::ACTIVE->value,
             'level' => 1,
             'points' => 0,
         ]);
     }
 
     /**
-     * Test that cannot add a user as Star if they already are a Star.
+     * Test that cannot add a user as Volunteer if they already are a Volunteer.
      */
-    public function test_cannot_add_duplicate_star(): void
+    public function test_cannot_add_duplicate_volunteer(): void
     {
-        // First add the user as star
-        Star::factory()->create(['user_id' => $this->targetUser->id]);
+        // First add the user as volunteer
+        Volunteer::factory()->create(['user_id' => $this->targetUser->id]);
 
         // Try to add again
         $response = $this->actingAs($this->superAdmin)
-            ->postJson(route('user-management.add-star', $this->targetUser->uuid), []);
+            ->postJson(route('user-management.add-volunteer', $this->targetUser->uuid), []);
 
         $response->assertStatus(422);
         $response->assertJson([
-            'message' => 'User is already a star',
+            'message' => 'User is already a volunteer',
         ]);
     }
 
     /**
-     * Test that SuperAdmin can remove a Star.
+     * Test that SuperAdmin can remove a Volunteer.
      */
-    public function test_superadmin_can_remove_star(): void
+    public function test_superadmin_can_remove_volunteer(): void
     {
-        $star = Star::factory()->create(['user_id' => $this->targetUser->id]);
+        $volunteer = Volunteer::factory()->create(['user_id' => $this->targetUser->id]);
 
         $response = $this->actingAs($this->superAdmin)
-            ->deleteJson(route('user-management.remove-star', $star->uuid));
+            ->deleteJson(route('user-management.remove-volunteer', $volunteer->uuid));
 
         $response->assertStatus(200);
         $response->assertJson([
-            'message' => 'Star removed successfully',
+            'message' => 'Volunteer removed successfully',
         ]);
 
-        // Verify the star was soft deleted
-        $this->assertSoftDeleted('stars', [
-            'id' => $star->id,
+        // Verify the volunteer was soft deleted
+        $this->assertSoftDeleted('volunteers', [
+            'id' => $volunteer->id,
         ]);
     }
 
@@ -233,25 +233,25 @@ class UserManagementStarsEmployeesTest extends TestCase
     }
 
     /**
-     * Test that non-SuperAdmin cannot add a Star.
+     * Test that non-SuperAdmin cannot add a Volunteer.
      */
-    public function test_non_superadmin_cannot_add_star(): void
+    public function test_non_superadmin_cannot_add_volunteer(): void
     {
         $response = $this->actingAs($this->regularUser)
-            ->postJson(route('user-management.add-star', $this->targetUser->uuid), []);
+            ->postJson(route('user-management.add-volunteer', $this->targetUser->uuid), []);
 
         $response->assertStatus(403);
     }
 
     /**
-     * Test that non-SuperAdmin cannot remove a Star.
+     * Test that non-SuperAdmin cannot remove a Volunteer.
      */
-    public function test_non_superadmin_cannot_remove_star(): void
+    public function test_non_superadmin_cannot_remove_volunteer(): void
     {
-        $star = Star::factory()->create(['user_id' => $this->targetUser->id]);
+        $volunteer = Volunteer::factory()->create(['user_id' => $this->targetUser->id]);
 
         $response = $this->actingAs($this->regularUser)
-            ->deleteJson(route('user-management.remove-star', $star->uuid));
+            ->deleteJson(route('user-management.remove-volunteer', $volunteer->uuid));
 
         $response->assertStatus(403);
     }
@@ -281,11 +281,11 @@ class UserManagementStarsEmployeesTest extends TestCase
     }
 
     /**
-     * Test that Stars and Employees are correctly loaded with user relationships.
+     * Test that Volunteers and Employees are correctly loaded with user relationships.
      */
-    public function test_stars_and_employees_include_user_relationship(): void
+    public function test_volunteers_and_employees_include_user_relationship(): void
     {
-        Star::factory()->create(['user_id' => $this->targetUser->id]);
+        Volunteer::factory()->create(['user_id' => $this->targetUser->id]);
         Employee::factory()->create(['user_id' => $this->superAdmin->id]);
 
         $response = $this->actingAs($this->superAdmin)
@@ -294,18 +294,18 @@ class UserManagementStarsEmployeesTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(
             fn ($page) => $page
-                ->has('stars.0.user')
+                ->has('volunteers.0.user')
                 ->has('employees.0.user')
         );
     }
 
     /**
-     * Test adding Star validates input types.
+     * Test adding Volunteer validates input types.
      */
-    public function test_add_star_validates_title_length(): void
+    public function test_add_volunteer_validates_title_length(): void
     {
         $response = $this->actingAs($this->superAdmin)
-            ->postJson(route('user-management.add-star', $this->targetUser->uuid), [
+            ->postJson(route('user-management.add-volunteer', $this->targetUser->uuid), [
                 'title' => str_repeat('a', 256), // Exceeds max:255
             ]);
 
@@ -328,17 +328,17 @@ class UserManagementStarsEmployeesTest extends TestCase
     }
 
     /**
-     * Test that unauthenticated users cannot access star/employee endpoints.
+     * Test that unauthenticated users cannot access volunteer/employee endpoints.
      */
-    public function test_unauthenticated_cannot_add_star(): void
+    public function test_unauthenticated_cannot_add_volunteer(): void
     {
-        $response = $this->postJson(route('user-management.add-star', $this->targetUser->uuid), []);
+        $response = $this->postJson(route('user-management.add-volunteer', $this->targetUser->uuid), []);
 
         $response->assertStatus(401);
     }
 
     /**
-     * Test that unauthenticated users cannot access star/employee endpoints.
+     * Test that unauthenticated users cannot access volunteer/employee endpoints.
      */
     public function test_unauthenticated_cannot_add_employee(): void
     {

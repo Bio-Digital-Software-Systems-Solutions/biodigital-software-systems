@@ -18,7 +18,7 @@ enum Role: string
     case STUDENT = 'student';
     case TEACHER = 'teacher';
     case EMPLOYEE = 'employee';
-    case STAR = 'star';
+    case VOLUNTEER = 'volunteer';
     case CARE_SERVICE_AGENT = 'care-service-agent';
     case ACCOUNTANT = 'accountant';
     case PRODUCT_OWNER = 'product-owner';

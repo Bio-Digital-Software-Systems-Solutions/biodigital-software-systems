@@ -19,7 +19,7 @@ interface Assignable {
     first_name: string;
     last_name: string;
     email: string;
-    type: 'user' | 'employee' | 'star';
+    type: 'user' | 'employee' | 'volunteer';
     position?: string;
     title?: string;
 }
@@ -27,12 +27,12 @@ interface Assignable {
 interface Props {
     users: Assignable[];
     employees: Assignable[];
-    stars: Assignable[];
+    volunteers: Assignable[];
 }
 
-export default function CreateProject({ users = [], employees = [], stars = [] }: Props) {
-    const [managerType, setManagerType] = useState<'all' | 'user' | 'employee' | 'star'>('all');
-    const [participantType, setParticipantType] = useState<'all' | 'user' | 'employee' | 'star'>('all');
+export default function CreateProject({ users = [], employees = [], volunteers = [] }: Props) {
+    const [managerType, setManagerType] = useState<'all' | 'user' | 'employee' | 'volunteer'>('all');
+    const [participantType, setParticipantType] = useState<'all' | 'user' | 'employee' | 'volunteer'>('all');
     const [startDateOpen, setStartDateOpen] = useState(false);
     const [endDateOpen, setEndDateOpen] = useState(false);
 
@@ -64,8 +64,8 @@ export default function CreateProject({ users = [], employees = [], stars = [] }
         if (managerType === 'all' || managerType === 'employee') {
             combined.push(...employees);
         }
-        if (managerType === 'all' || managerType === 'star') {
-            combined.push(...stars);
+        if (managerType === 'all' || managerType === 'volunteer') {
+            combined.push(...volunteers);
         }
 
         // Remove duplicates by user id
@@ -75,7 +75,7 @@ export default function CreateProject({ users = [], employees = [], stars = [] }
             seen.add(a.id);
             return true;
         });
-    }, [users, employees, stars, managerType]);
+    }, [users, employees, volunteers, managerType]);
 
     // Combine and filter assignees based on selected type for participants
     const filteredParticipants = useMemo(() => {
@@ -87,8 +87,8 @@ export default function CreateProject({ users = [], employees = [], stars = [] }
         if (participantType === 'all' || participantType === 'employee') {
             combined.push(...employees);
         }
-        if (participantType === 'all' || participantType === 'star') {
-            combined.push(...stars);
+        if (participantType === 'all' || participantType === 'volunteer') {
+            combined.push(...volunteers);
         }
 
         // Remove duplicates by user id
@@ -98,12 +98,12 @@ export default function CreateProject({ users = [], employees = [], stars = [] }
             seen.add(a.id);
             return true;
         });
-    }, [users, employees, stars, participantType]);
+    }, [users, employees, volunteers, participantType]);
 
     // Convert to options for SearchableSelect (manager)
     const managerOptions = useMemo(() => {
         return filteredManagers.map(a => {
-            const typeLabel = a.type === 'user' ? 'Utilisateur' : a.type === 'employee' ? 'Employé' : 'Star';
+            const typeLabel = a.type === 'user' ? 'Utilisateur' : a.type === 'employee' ? 'Employé' : 'Volunteer';
             const extra = a.position || a.title || '';
             return {
                 value: a.id,
@@ -115,7 +115,7 @@ export default function CreateProject({ users = [], employees = [], stars = [] }
     // Convert to options for SearchableMultiSelect (participants)
     const participantOptions = useMemo(() => {
         return filteredParticipants.map(a => {
-            const typeLabel = a.type === 'user' ? 'Utilisateur' : a.type === 'employee' ? 'Employé' : 'Star';
+            const typeLabel = a.type === 'user' ? 'Utilisateur' : a.type === 'employee' ? 'Employé' : 'Volunteer';
             const extra = a.position || a.title || '';
             return {
                 value: a.id,
@@ -167,8 +167,8 @@ export default function CreateProject({ users = [], employees = [], stars = [] }
         type,
         setType,
     }: {
-        type: 'all' | 'user' | 'employee' | 'star';
-        setType: (t: 'all' | 'user' | 'employee' | 'star') => void;
+        type: 'all' | 'user' | 'employee' | 'volunteer';
+        setType: (t: 'all' | 'user' | 'employee' | 'volunteer') => void;
     }) => (
         <div className="flex flex-wrap gap-1">
             <Button
@@ -191,12 +191,12 @@ export default function CreateProject({ users = [], employees = [], stars = [] }
             </Button>
             <Button
                 type="button"
-                variant={type === 'star' ? 'default' : 'outline'}
+                variant={type === 'volunteer' ? 'default' : 'outline'}
                 size="sm"
-                className={`h-7 sm:h-6 px-2 sm:px-2 text-xs ${type === 'star' ? '' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20'}`}
-                onClick={() => setType('star')}
+                className={`h-7 sm:h-6 px-2 sm:px-2 text-xs ${type === 'volunteer' ? '' : 'border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20'}`}
+                onClick={() => setType('volunteer')}
             >
-                Stars
+                Volunteers
             </Button>
         </div>
     );

@@ -90,8 +90,8 @@ class SyncRolesAndPermissions extends Command
             'view needs', 'create needs', 'edit needs', 'delete needs', 'approve needs', 'manage needs',
             // Employees (HR)
             'view employees', 'create employees', 'edit employees', 'delete employees', 'manage employees',
-            // Stars (Volunteers)
-            'view stars', 'create stars', 'edit stars', 'delete stars', 'manage stars',
+            // Volunteers (Volunteers)
+            'view volunteers', 'create volunteers', 'edit volunteers', 'delete volunteers', 'manage volunteers',
             // Availabilities (Mes Disponibilités)
             'view availabilities', 'create availabilities', 'edit availabilities', 'delete availabilities', 'manage availabilities',
         ];
@@ -160,8 +160,8 @@ class SyncRolesAndPermissions extends Command
                 'view needs', 'create needs', 'edit needs', 'delete needs', 'approve needs', 'manage needs',
                 // Employees
                 'view employees', 'create employees', 'edit employees', 'delete employees', 'manage employees',
-                // Stars (Volunteers)
-                'view stars', 'create stars', 'edit stars', 'delete stars', 'manage stars',
+                // Volunteers (Volunteers)
+                'view volunteers', 'create volunteers', 'edit volunteers', 'delete volunteers', 'manage volunteers',
                 // Availabilities
                 'view availabilities', 'create availabilities', 'edit availabilities', 'delete availabilities', 'manage availabilities',
             ],
@@ -344,7 +344,7 @@ class SyncRolesAndPermissions extends Command
                 'view availabilities', 'create availabilities', 'edit availabilities', 'delete availabilities',
             ],
 
-            'star' => [
+            'volunteer' => [
                 // Viewing permissions
                 'view articles', 'view trainings', 'view events', 'attend events', 'view videos', 'view books',
                 'view groups', 'view departments',

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Enums\Star;
+namespace App\Enums\Volunteer;
 
-enum StarStatus: string
+enum VolunteerStatus: string
 {
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';

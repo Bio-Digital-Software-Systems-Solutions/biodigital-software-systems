@@ -56,7 +56,7 @@ const DAYS_OF_WEEK = [
     { value: 'sunday', label: 'Dimanche' },
 ];
 
-export default function StarCreate({
+export default function VolunteerCreate({
     users,
     departments,
     nominators,
@@ -104,10 +104,10 @@ export default function StarCreate({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/stars', {
+        post('/volunteers', {
             forceFormData: true,
             onSuccess: () => {
-                toast.success('Star créé avec succès');
+                toast.success('Volunteer créé avec succès');
             },
             onError: () => {
                 toast.error('Erreur lors de la création');
@@ -147,20 +147,20 @@ export default function StarCreate({
 
     return (
         <DashboardLayout>
-            <Head title="Nouvelle Star" />
+            <Head title="Nouveau Volontaire" />
 
             <div className="p-6 max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="mb-6">
                     <Link
-                        href="/stars"
+                        href="/volunteers"
                         className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
                     >
                         <ArrowLeftIcon className="h-4 w-4 mr-1" />
                         Retour à la liste
                     </Link>
                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        Nouvelle Star
+                        Nouveau Volontaire
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">
                         Créez un nouveau profil de bénévole
@@ -173,7 +173,7 @@ export default function StarCreate({
                         <CardHeader>
                             <CardTitle>Utilisateur</CardTitle>
                             <CardDescription>
-                                Sélectionnez l'utilisateur à associer à ce profil star
+                                Sélectionnez l'utilisateur à associer à ce profil volunteer
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -236,7 +236,7 @@ export default function StarCreate({
                                         id="title"
                                         value={data.title}
                                         onChange={(e) => setData('title', e.target.value)}
-                                        placeholder="Ex: Bénévole du mois, Star de l'accueil..."
+                                        placeholder="Ex: Bénévole du mois, Volontaire de l'accueil..."
                                         className={errors.title ? 'border-red-500' : ''}
                                     />
                                     {errors.title && (
@@ -753,10 +753,10 @@ export default function StarCreate({
                     {/* Submit */}
                     <div className="flex items-center justify-end gap-4">
                         <Button variant="outline" asChild>
-                            <Link href="/stars">Annuler</Link>
+                            <Link href="/volunteers">Annuler</Link>
                         </Button>
                         <Button type="submit" disabled={processing}>
-                            {processing ? 'Création...' : 'Créer la star'}
+                            {processing ? 'Création...' : 'Créer la volunteer'}
                         </Button>
                     </div>
                 </form>

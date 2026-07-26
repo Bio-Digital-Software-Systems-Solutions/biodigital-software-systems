@@ -6,7 +6,7 @@ use App\Enums\Employee\EmployeeStatus;
 use App\Enums\Scheduling\AbsenceStatus;
 use App\Enums\Scheduling\ShiftTaskStatus;
 use App\Enums\Scheduling\SwapRequestStatus;
-use App\Enums\Star\StarStatus;
+use App\Enums\Volunteer\VolunteerStatus;
 use App\Models\Department;
 use App\Models\DepartmentDocument;
 use App\Models\DepartmentForm;
@@ -18,8 +18,9 @@ use App\Models\Scheduling\Absence;
 use App\Models\Scheduling\DepartmentTodo;
 use App\Models\Scheduling\Shift;
 use App\Models\Scheduling\ShiftSwapRequest;
-use App\Models\Star;
 use App\Models\User;
+use App\Models\Volunteer;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -174,18 +175,18 @@ class DepartmentController extends Controller
                 'type' => 'employee',
             ]);
 
-        // Get active stars not already in the department
-        $stars = Star::with('user')
-            ->where('status', StarStatus::ACTIVE)
+        // Get active volunteers not already in the department
+        $volunteers = Volunteer::with('user')
+            ->where('status', VolunteerStatus::ACTIVE)
             ->whereNotIn('user_id', $existingUserIds)
             ->get()
-            ->map(fn ($star): array => [
-                'id' => $star->user_id,
-                'uuid' => $star->uuid,
-                'name' => $star->user->name ?? '',
-                'email' => $star->user->email ?? '',
-                'title' => $star->title,
-                'type' => 'star',
+            ->map(fn ($volunteer): array => [
+                'id' => $volunteer->user_id,
+                'uuid' => $volunteer->uuid,
+                'name' => $volunteer->user->name ?? '',
+                'email' => $volunteer->user->email ?? '',
+                'title' => $volunteer->title,
+                'type' => 'volunteer',
             ]);
 
         return Inertia::render('Departments/Show', [
@@ -235,7 +236,7 @@ class DepartmentController extends Controller
             ],
             'availableUsers' => $allUsers,
             'availableEmployees' => $employees,
-            'availableStars' => $stars,
+            'availableVolunteers' => $volunteers,
             'canManage' => $user->can('manage departments'),
             'canViewStatistics' => $canViewStatistics,
             'workflows' => DepartmentWorkflow::where('department_id', $department->id)
@@ -853,7 +854,7 @@ class DepartmentController extends Controller
         $memberships = \DB::table('department_user')
             ->where('department_id', $departmentId)
             ->pluck('created_at')
-            ->map(fn ($date) => \Carbon\Carbon::parse($date));
+            ->map(fn ($date) => Carbon::parse($date));
 
         // Quarterly data (last 4 quarters)
         $quarterlyData = [];

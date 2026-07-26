@@ -2,12 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Employee\EmployeeStatus;
+use App\Enums\Employee\EmploymentType;
 use App\Enums\Role as RoleEnum;
+use App\Enums\Volunteer\VolunteerCategory;
+use App\Enums\Volunteer\VolunteerStatus;
+use App\Enums\Volunteer\VolunteerType;
+use App\Helpers\UserAgentHelper;
 use App\Models\BlockedLoginAttempt;
+use App\Models\Employee;
+use App\Models\Teacher;
 use App\Models\User;
+use App\Models\Volunteer;
 use App\Services\CacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Permission;
@@ -37,7 +47,7 @@ class UserManagementController extends Controller
         $roleFilter = $request->get('role', '');
 
         // Build query with filters - no caching for real-time filtering
-        $query = User::with(['roles', 'permissions', 'teacher', 'star', 'employee']);
+        $query = User::with(['roles', 'permissions', 'teacher', 'volunteer', 'employee']);
 
         // Apply search filter
         if ($search) {
@@ -74,15 +84,15 @@ class UserManagementController extends Controller
         // Cache teachers list (5 minutes cache)
         $teachers = CacheService::remember(
             'user_management.teachers',
-            fn () => \App\Models\Teacher::with('user')->get(),
+            fn () => Teacher::with('user')->get(),
             CacheService::SHORT_CACHE
         );
 
-        // Fetch stars with user relation (no cache to avoid N+1 from serialization)
-        $stars = \App\Models\Star::with('user')->get();
+        // Fetch volunteers with user relation (no cache to avoid N+1 from serialization)
+        $volunteers = Volunteer::with('user')->get();
 
         // Fetch employees with user relation (no cache to avoid N+1 from serialization)
-        $employees = \App\Models\Employee::with('user')->get();
+        $employees = Employee::with('user')->get();
 
         // Get count of unacknowledged blocked login attempts
         $unacknowledgedBlockedAttempts = BlockedLoginAttempt::unacknowledged()->count();
@@ -92,7 +102,7 @@ class UserManagementController extends Controller
             'roles' => $roles,
             'permissions' => $permissions,
             'teachers' => $teachers,
-            'stars' => $stars,
+            'volunteers' => $volunteers,
             'employees' => $employees,
             'unacknowledgedBlockedAttempts' => $unacknowledgedBlockedAttempts,
             'filters' => [
@@ -246,7 +256,7 @@ class UserManagementController extends Controller
             $request->validate([
                 'name' => 'required|string|unique:permissions,name',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             \Log::error('Permission validation failed', [
                 'errors' => $e->errors(),
                 'request_data' => $request->all(),
@@ -394,7 +404,7 @@ class UserManagementController extends Controller
         // Parse user agent
         $loginInfo = null;
         if ($user->last_login_at) {
-            $userAgentData = \App\Helpers\UserAgentHelper::parse($user->last_login_user_agent);
+            $userAgentData = UserAgentHelper::parse($user->last_login_user_agent);
             $loginInfo = [
                 'last_login_at' => $user->last_login_at,
                 'last_login_ip' => $user->last_login_ip,
@@ -440,7 +450,7 @@ class UserManagementController extends Controller
             ], 422);
         }
 
-        $teacher = \App\Models\Teacher::create([
+        $teacher = Teacher::create([
             'user_id' => $user->id,
             'specialization' => $request->specialization,
             'experience_years' => $request->experience_years,
@@ -462,7 +472,7 @@ class UserManagementController extends Controller
     /**
      * Remove a teacher
      */
-    public function removeTeacher(\App\Models\Teacher $teacher): JsonResponse
+    public function removeTeacher(Teacher $teacher): JsonResponse
     {
         $teacher->delete();
 
@@ -477,7 +487,7 @@ class UserManagementController extends Controller
     /**
      * Update teacher information
      */
-    public function updateTeacher(Request $request, \App\Models\Teacher $teacher): JsonResponse
+    public function updateTeacher(Request $request, Teacher $teacher): JsonResponse
     {
         $request->validate([
             'specialization' => 'nullable|string|max:255',
@@ -507,9 +517,9 @@ class UserManagementController extends Controller
     }
 
     /**
-     * Add a user as a star (volunteer)
+     * Add a user as a volunteer (volunteer)
      */
-    public function addStar(Request $request, User $user): JsonResponse
+    public function addVolunteer(Request $request, User $user): JsonResponse
     {
         $request->validate([
             'title' => 'nullable|string|max:255',
@@ -518,20 +528,20 @@ class UserManagementController extends Controller
             'category' => 'nullable|string',
         ]);
 
-        // Check if user is already a star
-        if ($user->star) {
+        // Check if user is already a volunteer
+        if ($user->volunteer) {
             return response()->json([
-                'message' => 'User is already a star',
+                'message' => 'User is already a volunteer',
             ], 422);
         }
 
-        $star = \App\Models\Star::create([
+        $volunteer = Volunteer::create([
             'user_id' => $user->id,
             'title' => $request->title,
             'description' => $request->description,
-            'type' => $request->type ?? \App\Enums\Star\StarType::VOLUNTEER,
-            'category' => $request->category ?? \App\Enums\Star\StarCategory::SERVICE,
-            'status' => \App\Enums\Star\StarStatus::ACTIVE,
+            'type' => $request->type ?? VolunteerType::VOLUNTEER,
+            'category' => $request->category ?? VolunteerCategory::SERVICE,
+            'status' => VolunteerStatus::ACTIVE,
             'recognition_date' => now(),
             'level' => 1,
             'points' => 0,
@@ -541,23 +551,23 @@ class UserManagementController extends Controller
         CacheService::forgetPattern('user_management');
 
         return response()->json([
-            'message' => 'Star added successfully',
-            'star' => $star->load('user'),
+            'message' => 'Volunteer added successfully',
+            'volunteer' => $volunteer->load('user'),
         ]);
     }
 
     /**
-     * Remove a star
+     * Remove a volunteer
      */
-    public function removeStar(\App\Models\Star $star): JsonResponse
+    public function removeVolunteer(Volunteer $volunteer): JsonResponse
     {
-        $star->delete();
+        $volunteer->delete();
 
         // Invalidate user management cache
         CacheService::forgetPattern('user_management');
 
         return response()->json([
-            'message' => 'Star removed successfully',
+            'message' => 'Volunteer removed successfully',
         ]);
     }
 
@@ -580,12 +590,12 @@ class UserManagementController extends Controller
             ], 422);
         }
 
-        $employee = \App\Models\Employee::create([
+        $employee = Employee::create([
             'user_id' => $user->id,
             'position' => $request->position,
             'job_title' => $request->job_title,
-            'employment_type' => $request->employment_type ?? \App\Enums\Employee\EmploymentType::FULL_TIME,
-            'status' => \App\Enums\Employee\EmployeeStatus::ACTIVE,
+            'employment_type' => $request->employment_type ?? EmploymentType::FULL_TIME,
+            'status' => EmployeeStatus::ACTIVE,
             'hire_date' => $request->hire_date ?? now(),
             'annual_leave_days' => 25,
             'remaining_leave_days' => 25,
@@ -604,7 +614,7 @@ class UserManagementController extends Controller
     /**
      * Remove an employee
      */
-    public function removeEmployee(\App\Models\Employee $employee): JsonResponse
+    public function removeEmployee(Employee $employee): JsonResponse
     {
         $employee->delete();
 

@@ -12,13 +12,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
 import { ArrowLeftIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { toast } from 'sonner';
 
-interface Star {
+interface Volunteer {
     id: number;
     uuid: string;
     user_id: number;
     department_id: number | null;
     nominated_by: number | null;
-    star_number: string;
+    volunteer_number: string;
     title: string | null;
     description: string | null;
     status: string;
@@ -75,7 +75,7 @@ interface SelectOption {
 }
 
 interface Props {
-    star: Star;
+    volunteer: Volunteer;
     departments: Department[];
     nominators: Nominator[];
     statuses: SelectOption[];
@@ -93,8 +93,8 @@ const DAYS_OF_WEEK = [
     { value: 'sunday', label: 'Dimanche' },
 ];
 
-export default function StarEdit({
-    star,
+export default function VolunteerEdit({
+    volunteer,
     departments,
     nominators,
     statuses,
@@ -106,46 +106,46 @@ export default function StarEdit({
 
     const { data, setData, post, processing, errors } = useForm({
         _method: 'PUT',
-        department_id: star.department_id?.toString() || '',
-        nominated_by: star.nominated_by?.toString() || '',
-        title: star.title || '',
-        description: star.description || '',
-        status: star.status,
-        type: star.type,
-        category: star.category || '',
-        points: star.points.toString(),
-        level: star.level.toString(),
-        recognition_date: star.recognition_date || '',
-        expiry_date: star.expiry_date || '',
-        achievements: star.achievements || [],
-        badges: star.badges || [],
-        skills: star.skills || [],
-        areas_of_service: star.areas_of_service || [],
-        available_days: star.available_days || [],
-        available_from: star.available_from || '',
-        available_to: star.available_to || '',
-        hours_per_week: star.hours_per_week?.toString() || '',
-        total_hours_served: star.total_hours_served.toString(),
-        is_contactable: star.is_contactable,
-        preferred_contact_method: star.preferred_contact_method || 'email',
-        receive_notifications: star.receive_notifications,
-        bio: star.bio || '',
-        is_public_profile: star.is_public_profile,
-        is_featured: star.is_featured,
-        testimonial: star.testimonial || '',
-        favorite_verse: star.favorite_verse || '',
-        notes: star.notes || '',
-        internal_notes: star.internal_notes || '',
+        department_id: volunteer.department_id?.toString() || '',
+        nominated_by: volunteer.nominated_by?.toString() || '',
+        title: volunteer.title || '',
+        description: volunteer.description || '',
+        status: volunteer.status,
+        type: volunteer.type,
+        category: volunteer.category || '',
+        points: volunteer.points.toString(),
+        level: volunteer.level.toString(),
+        recognition_date: volunteer.recognition_date || '',
+        expiry_date: volunteer.expiry_date || '',
+        achievements: volunteer.achievements || [],
+        badges: volunteer.badges || [],
+        skills: volunteer.skills || [],
+        areas_of_service: volunteer.areas_of_service || [],
+        available_days: volunteer.available_days || [],
+        available_from: volunteer.available_from || '',
+        available_to: volunteer.available_to || '',
+        hours_per_week: volunteer.hours_per_week?.toString() || '',
+        total_hours_served: volunteer.total_hours_served.toString(),
+        is_contactable: volunteer.is_contactable,
+        preferred_contact_method: volunteer.preferred_contact_method || 'email',
+        receive_notifications: volunteer.receive_notifications,
+        bio: volunteer.bio || '',
+        is_public_profile: volunteer.is_public_profile,
+        is_featured: volunteer.is_featured,
+        testimonial: volunteer.testimonial || '',
+        favorite_verse: volunteer.favorite_verse || '',
+        notes: volunteer.notes || '',
+        internal_notes: volunteer.internal_notes || '',
         avatar: null as File | null,
         cover_image: null as File | null,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/stars/${star.uuid}`, {
+        post(`/volunteers/${volunteer.uuid}`, {
             forceFormData: true,
             onSuccess: () => {
-                toast.success('Star mis à jour avec succès');
+                toast.success('Volunteer mis à jour avec succès');
             },
             onError: () => {
                 toast.error('Erreur lors de la mise à jour');
@@ -194,13 +194,13 @@ export default function StarEdit({
 
     return (
         <DashboardLayout>
-            <Head title={`Modifier ${star.user?.name || 'Star'}`} />
+            <Head title={`Modifier ${volunteer.user?.name || 'Volontaire'}`} />
 
             <div className="p-6 max-w-5xl mx-auto">
                 {/* Header */}
                 <div className="mb-6">
                     <Link
-                        href={`/stars/${star.uuid}`}
+                        href={`/volunteers/${volunteer.uuid}`}
                         className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
                     >
                         <ArrowLeftIcon className="h-4 w-4 mr-1" />
@@ -208,19 +208,19 @@ export default function StarEdit({
                     </Link>
                     <div className="flex items-center gap-4">
                         <Avatar className="h-12 w-12">
-                            {star.avatar ? (
-                                <AvatarImage src={star.avatar} />
+                            {volunteer.avatar ? (
+                                <AvatarImage src={volunteer.avatar} />
                             ) : null}
                             <AvatarFallback className="bg-yellow-100 text-yellow-600">
-                                {star.user ? getInitials(star.user.name) : 'ST'}
+                                {volunteer.user ? getInitials(volunteer.user.name) : 'ST'}
                             </AvatarFallback>
                         </Avatar>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                Modifier {star.user?.name || 'Star'}
+                                Modifier {volunteer.user?.name || 'Volontaire'}
                             </h1>
                             <p className="text-sm text-gray-500">
-                                {star.star_number}
+                                {volunteer.volunteer_number}
                             </p>
                         </div>
                     </div>
@@ -240,7 +240,7 @@ export default function StarEdit({
                                         id="title"
                                         value={data.title}
                                         onChange={(e) => setData('title', e.target.value)}
-                                        placeholder="Ex: Bénévole du mois, Star de l'accueil..."
+                                        placeholder="Ex: Bénévole du mois, Volontaire de l'accueil..."
                                         className={errors.title ? 'border-red-500' : ''}
                                     />
                                     {errors.title && (
@@ -748,10 +748,10 @@ export default function StarEdit({
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <Label htmlFor="avatar">Photo de profil</Label>
-                                    {star.avatar && (
+                                    {volunteer.avatar && (
                                         <div className="mb-2">
                                             <img
-                                                src={star.avatar}
+                                                src={volunteer.avatar}
                                                 alt="Current avatar"
                                                 className="h-20 w-20 rounded-full object-cover"
                                             />
@@ -775,10 +775,10 @@ export default function StarEdit({
 
                                 <div>
                                     <Label htmlFor="cover_image">Image de couverture</Label>
-                                    {star.cover_image && (
+                                    {volunteer.cover_image && (
                                         <div className="mb-2">
                                             <img
-                                                src={star.cover_image}
+                                                src={volunteer.cover_image}
                                                 alt="Current cover"
                                                 className="h-20 w-full rounded object-cover"
                                             />
@@ -806,7 +806,7 @@ export default function StarEdit({
                     {/* Submit */}
                     <div className="flex items-center justify-end gap-4">
                         <Button variant="outline" asChild>
-                            <Link href={`/stars/${star.uuid}`}>Annuler</Link>
+                            <Link href={`/volunteers/${volunteer.uuid}`}>Annuler</Link>
                         </Button>
                         <Button type="submit" disabled={processing}>
                             {processing ? 'Mise à jour...' : 'Enregistrer les modifications'}

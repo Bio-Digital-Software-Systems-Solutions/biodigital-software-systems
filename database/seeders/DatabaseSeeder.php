@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
         // Third: All other data in the correct order
         $this->call([
             EmployeeSeeder::class,
-            StarSeeder::class,
+            VolunteerSeeder::class,
             CategorySeeder::class,
             TagSeeder::class,
             StatusSeeder::class,
@@ -63,7 +63,7 @@ class DatabaseSeeder extends Seeder
             IfrsAccountSeeder::class,
             GroupMemberSeeder::class,
             VisitorSeeder::class,
-            //HomepageSectionSeeder::class,
+            // HomepageSectionSeeder::class,
         ]);
     }
 }

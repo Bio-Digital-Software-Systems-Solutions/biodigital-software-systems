@@ -2,18 +2,34 @@
 
 namespace App\Models;
 
+use App\Models\Pivots\GroupUser;
+use App\Models\Scheduling\Absence;
+use App\Models\Scheduling\EmployeeAvailability;
+use App\Models\Scheduling\EmployeeWorkPreferences;
+use App\Models\Scheduling\LeaveBalance;
+use App\Models\Scheduling\Shift;
+use App\Models\Scheduling\ShiftSwapRequest;
+use App\Models\Scheduling\Skill;
+use App\Models\Scheduling\TimeEntry;
 use App\Traits\ClearsCache;
 use App\Traits\HasUuid;
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Laravel\Sanctum\PersonalAccessToken;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -26,28 +42,28 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $phone_number
  * @property string|null $telegram_chat_id
  * @property string|null $telegram_username
- * @property \Illuminate\Support\Carbon|null $birth_date
+ * @property Carbon|null $birth_date
  * @property string|null $avatar
  * @property string|null $bio
  * @property string|null $position
  * @property string|null $address
  * @property bool $is_calendar_public
  * @property array<array-key, mixed>|null $privacy_settings
- * @property \Illuminate\Support\Carbon|null $email_verified_at
- * @property \Illuminate\Support\Carbon|null $last_login_at
+ * @property Carbon|null $email_verified_at
+ * @property Carbon|null $last_login_at
  * @property string|null $last_login_ip
  * @property string|null $last_login_user_agent
  * @property bool $is_active
  * @property bool $is_blocked
  * @property string|null $status_reason
- * @property \Illuminate\Support\Carbon|null $status_changed_at
+ * @property Carbon|null $status_changed_at
  * @property int|null $status_changed_by
  * @property string $password
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property string|null $two_factor_confirmed_at
  * @property string|null $email_two_factor_code
- * @property \Illuminate\Support\Carbon|null $email_two_factor_expires_at
+ * @property Carbon|null $email_two_factor_expires_at
  * @property bool $email_two_factor_enabled
  * @property string|null $preferred_two_factor_method
  * @property string|null $remember_token
@@ -56,107 +72,107 @@ use Spatie\Permission\Traits\HasRoles;
  * @property bool $push_notifications
  * @property bool $telegram_notifications
  * @property bool $newsletter
- * @property \Illuminate\Support\Carbon|null $terms_accepted_at
+ * @property Carbon|null $terms_accepted_at
  * @property bool $event_reminders
  * @property bool $training_updates
  * @property bool $message_notifications
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property string|null $deleted_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Absence> $absences
+ * @property-read Collection<int, Absence> $absences
  * @property-read int|null $absences_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CareServiceAvailability> $activeAvailability
+ * @property-read Collection<int, CareServiceAvailability> $activeAvailability
  * @property-read int|null $active_availability_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Activitylog\Models\Activity> $activities
+ * @property-read Collection<int, Activity> $activities
  * @property-read int|null $activities_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\StepApproval> $approvals
+ * @property-read Collection<int, StepApproval> $approvals
  * @property-read int|null $approvals_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Article> $articles
+ * @property-read Collection<int, Article> $articles
  * @property-read int|null $articles_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentNeed> $assignedNeeds
+ * @property-read Collection<int, DepartmentNeed> $assignedNeeds
  * @property-read int|null $assigned_needs_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowStepInstance> $assignedStepInstances
+ * @property-read Collection<int, WorkflowStepInstance> $assignedStepInstances
  * @property-read int|null $assigned_step_instances_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $assignedTasks
+ * @property-read Collection<int, Task> $assignedTasks
  * @property-read int|null $assigned_tasks_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CareServiceAvailability> $availability
+ * @property-read Collection<int, CareServiceAvailability> $availability
  * @property-read int|null $availability_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BookRental> $bookRentals
+ * @property-read Collection<int, BookRental> $bookRentals
  * @property-read int|null $book_rentals_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ChatMessage> $chatMessages
+ * @property-read Collection<int, ChatMessage> $chatMessages
  * @property-read int|null $chat_messages_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ChatRoom> $chatRooms
+ * @property-read Collection<int, ChatRoom> $chatRooms
  * @property-read int|null $chat_rooms_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $createdEvents
+ * @property-read Collection<int, Event> $createdEvents
  * @property-read int|null $created_events_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentForm> $createdForms
+ * @property-read Collection<int, DepartmentForm> $createdForms
  * @property-read int|null $created_forms_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentWorkflow> $createdWorkflows
+ * @property-read Collection<int, DepartmentWorkflow> $createdWorkflows
  * @property-read int|null $created_workflows_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Department> $departments
+ * @property-read Collection<int, Department> $departments
  * @property-read int|null $departments_count
- * @property-read \App\Models\Employee|null $employee
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\EmployeeAvailability> $employeeAvailabilities
+ * @property-read Employee|null $employee
+ * @property-read Collection<int, EmployeeAvailability> $employeeAvailabilities
  * @property-read int|null $employee_availabilities_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $events
+ * @property-read Collection<int, Event> $events
  * @property-read int|null $events_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentFormSubmission> $formSubmissions
+ * @property-read Collection<int, DepartmentFormSubmission> $formSubmissions
  * @property-read int|null $form_submissions_count
  * @property-read string $full_name
  * @property-read string $name
- * @property-read \App\Models\Pivots\GroupUser|null $pivot
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Group> $groups
+ * @property-read GroupUser|null $pivot
+ * @property-read Collection<int, Group> $groups
  * @property-read int|null $groups_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Interest> $interests
+ * @property-read Collection<int, Interest> $interests
  * @property-read int|null $interests_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\LeaveBalance> $leaveBalances
+ * @property-read Collection<int, LeaveBalance> $leaveBalances
  * @property-read int|null $leave_balances_count
- * @property-read \App\Models\CareServiceAgent|null $careServiceAgent
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\NeedComment> $needComments
+ * @property-read CareServiceAgent|null $careServiceAgent
+ * @property-read Collection<int, NeedComment> $needComments
  * @property-read int|null $need_comments_count
- * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $participatedEvents
+ * @property-read Collection<int, Event> $participatedEvents
  * @property-read int|null $participated_events_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Event> $participatingEvents
+ * @property-read Collection<int, Event> $participatingEvents
  * @property-read int|null $participating_events_count
- * @property-read \App\Models\Pastor|null $pastor
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\StepApproval> $pendingApprovals
+ * @property-read Pastor|null $pastor
+ * @property-read Collection<int, StepApproval> $pendingApprovals
  * @property-read int|null $pending_approvals_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Permission> $permissions
+ * @property-read Collection<int, Permission> $permissions
  * @property-read int|null $permissions_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProfileSkill> $profileSkills
+ * @property-read Collection<int, ProfileSkill> $profileSkills
  * @property-read int|null $profile_skills_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Program> $programs
+ * @property-read Collection<int, Program> $programs
  * @property-read int|null $programs_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Message> $receivedMessages
+ * @property-read Collection<int, Message> $receivedMessages
  * @property-read int|null $received_messages_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DepartmentNeed> $requestedNeeds
+ * @property-read Collection<int, DepartmentNeed> $requestedNeeds
  * @property-read int|null $requested_needs_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Role> $roles
+ * @property-read Collection<int, Role> $roles
  * @property-read int|null $roles_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Message> $sentMessages
+ * @property-read Collection<int, Message> $sentMessages
  * @property-read int|null $sent_messages_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\ShiftSwapRequest> $shiftSwapRequests
+ * @property-read Collection<int, ShiftSwapRequest> $shiftSwapRequests
  * @property-read int|null $shift_swap_requests_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Shift> $shifts
+ * @property-read Collection<int, Shift> $shifts
  * @property-read int|null $shifts_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\Skill> $skills
+ * @property-read Collection<int, Skill> $skills
  * @property-read int|null $skills_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SpokenLanguage> $spokenLanguages
+ * @property-read Collection<int, SpokenLanguage> $spokenLanguages
  * @property-read int|null $spoken_languages_count
- * @property-read \App\Models\Star|null $star
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkflowInstance> $startedWorkflowInstances
+ * @property-read Volunteer|null $volunteer
+ * @property-read Collection<int, WorkflowInstance> $startedWorkflowInstances
  * @property-read int|null $started_workflow_instances_count
- * @property-read \App\Models\Student|null $student
- * @property-read \App\Models\Teacher|null $teacher
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Scheduling\TimeEntry> $timeEntries
+ * @property-read Student|null $student
+ * @property-read Teacher|null $teacher
+ * @property-read Collection<int, TimeEntry> $timeEntries
  * @property-read int|null $time_entries_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
+ * @property-read Collection<int, PersonalAccessToken> $tokens
  * @property-read int|null $tokens_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Training> $trainings
+ * @property-read Collection<int, Training> $trainings
  * @property-read int|null $trainings_count
- * @property-read \App\Models\Scheduling\EmployeeWorkPreferences|null $workPreferences
+ * @property-read EmployeeWorkPreferences|null $workPreferences
  *
  * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
@@ -216,7 +232,7 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use ClearsCache, HasApiTokens, HasFactory, HasRoles, HasUuid, LogsActivity, Notifiable, TwoFactorAuthenticatable;
 
     /**
@@ -448,7 +464,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function groups(): BelongsToMany
     {
         return $this->belongsToMany(Group::class, 'group_user')
-            ->using(\App\Models\Pivots\GroupUser::class)
+            ->using(GroupUser::class)
             ->withPivot('joined_at')
             ->withTimestamps();
     }
@@ -574,11 +590,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * User's star (volunteer) profile.
+     * User's volunteer (volunteer) profile.
      */
-    public function star(): HasOne
+    public function volunteer(): HasOne
     {
-        return $this->hasOne(Star::class);
+        return $this->hasOne(Volunteer::class);
     }
 
     /**
@@ -723,7 +739,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function shifts(): HasMany
     {
-        return $this->hasMany(\App\Models\Scheduling\Shift::class);
+        return $this->hasMany(Shift::class);
     }
 
     /**
@@ -731,7 +747,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function employeeAvailabilities(): HasMany
     {
-        return $this->hasMany(\App\Models\Scheduling\EmployeeAvailability::class);
+        return $this->hasMany(EmployeeAvailability::class);
     }
 
     /**
@@ -739,7 +755,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function absences(): HasMany
     {
-        return $this->hasMany(\App\Models\Scheduling\Absence::class);
+        return $this->hasMany(Absence::class);
     }
 
     /**
@@ -747,7 +763,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function leaveBalances(): HasMany
     {
-        return $this->hasMany(\App\Models\Scheduling\LeaveBalance::class);
+        return $this->hasMany(LeaveBalance::class);
     }
 
     /**
@@ -755,7 +771,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function workPreferences(): HasOne
     {
-        return $this->hasOne(\App\Models\Scheduling\EmployeeWorkPreferences::class);
+        return $this->hasOne(EmployeeWorkPreferences::class);
     }
 
     /**
@@ -763,7 +779,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function timeEntries(): HasMany
     {
-        return $this->hasMany(\App\Models\Scheduling\TimeEntry::class);
+        return $this->hasMany(TimeEntry::class);
     }
 
     /**
@@ -771,7 +787,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function shiftSwapRequests(): HasMany
     {
-        return $this->hasMany(\App\Models\Scheduling\ShiftSwapRequest::class, 'requester_id');
+        return $this->hasMany(ShiftSwapRequest::class, 'requester_id');
     }
 
     /**
@@ -779,7 +795,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function skills(): BelongsToMany
     {
-        return $this->belongsToMany(\App\Models\Scheduling\Skill::class, 'employee_skills')
+        return $this->belongsToMany(Skill::class, 'employee_skills')
             ->withPivot(['proficiency_level', 'acquired_date', 'certified_until'])
             ->withTimestamps();
     }

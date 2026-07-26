@@ -38,7 +38,7 @@ interface Assignable {
     first_name: string;
     last_name: string;
     email: string;
-    type: 'user' | 'employee' | 'star';
+    type: 'user' | 'employee' | 'volunteer';
     position?: string;
     title?: string;
 }
@@ -54,7 +54,7 @@ interface Props {
     shift: Shift;
     users: Assignable[];
     employees: Assignable[];
-    stars: Assignable[];
+    volunteers: Assignable[];
     positions: Position[];
     shiftTypes: EnumOption<ShiftType>[];
     shiftStatuses: EnumOption<ShiftStatus>[];
@@ -77,12 +77,12 @@ export default function ShiftEdit({
     shift,
     users,
     employees,
-    stars,
+    volunteers,
     positions,
     shiftTypes,
     shiftStatuses,
 }: Props) {
-    const [assigneeType, setAssigneeType] = useState<'all' | 'user' | 'employee' | 'star'>('all');
+    const [assigneeType, setAssigneeType] = useState<'all' | 'user' | 'employee' | 'volunteer'>('all');
     const [showScopeDialog, setShowScopeDialog] = useState(false);
 
     const initialUserIds = useMemo(() => {
@@ -139,8 +139,8 @@ export default function ShiftEdit({
         });
     };
 
-    const getAssigneeTypeLabel = (type: 'user' | 'employee' | 'star') => {
-        const labels = { user: 'Membre', employee: 'Employé', star: 'Star' };
+    const getAssigneeTypeLabel = (type: 'user' | 'employee' | 'volunteer') => {
+        const labels = { user: 'Membre', employee: 'Employé', volunteer: 'Volunteer' };
         return labels[type];
     };
 
@@ -148,7 +148,7 @@ export default function ShiftEdit({
         const combined: Assignable[] = [];
         if (assigneeType === 'all' || assigneeType === 'user') combined.push(...users);
         if (assigneeType === 'all' || assigneeType === 'employee') combined.push(...employees);
-        if (assigneeType === 'all' || assigneeType === 'star') combined.push(...stars);
+        if (assigneeType === 'all' || assigneeType === 'volunteer') combined.push(...volunteers);
 
         const seen = new Set<number>();
         return combined.filter(a => {
@@ -156,7 +156,7 @@ export default function ShiftEdit({
             seen.add(a.id);
             return true;
         });
-    }, [users, employees, stars, assigneeType]);
+    }, [users, employees, volunteers, assigneeType]);
 
     const assigneeOptions: SelectOption[] = useMemo(() => {
         return allAssignees.map(assignee => ({
@@ -339,19 +339,19 @@ export default function ShiftEdit({
                                         Personnes assignées
                                     </Label>
                                     <div className="flex flex-wrap gap-2 mb-2">
-                                        {(['all', 'user', 'employee', 'star'] as const).map(type => (
+                                        {(['all', 'user', 'employee', 'volunteer'] as const).map(type => (
                                             <Button
                                                 key={type}
                                                 type="button"
                                                 variant={assigneeType === type ? 'default' : 'outline'}
                                                 size="sm"
                                                 onClick={() => setAssigneeType(type)}
-                                                className={assigneeType === type ? '' : type === 'user' ? 'border-blue-300 text-blue-700 hover:bg-blue-50' : type === 'employee' ? 'border-green-300 text-green-700 hover:bg-green-50' : type === 'star' ? 'border-yellow-300 text-yellow-700 hover:bg-yellow-50' : ''}
+                                                className={assigneeType === type ? '' : type === 'user' ? 'border-blue-300 text-blue-700 hover:bg-blue-50' : type === 'employee' ? 'border-green-300 text-green-700 hover:bg-green-50' : type === 'volunteer' ? 'border-yellow-300 text-yellow-700 hover:bg-yellow-50' : ''}
                                             >
-                                                {type === 'all' && `Tous (${users.length + employees.length + stars.length})`}
+                                                {type === 'all' && `Tous (${users.length + employees.length + volunteers.length})`}
                                                 {type === 'user' && `Membres (${users.length})`}
                                                 {type === 'employee' && `Employés (${employees.length})`}
-                                                {type === 'star' && `Stars (${stars.length})`}
+                                                {type === 'volunteer' && `Volontaires (${volunteers.length})`}
                                             </Button>
                                         ))}
                                     </div>

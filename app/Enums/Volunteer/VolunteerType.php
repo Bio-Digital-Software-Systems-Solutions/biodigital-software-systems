@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Enums\Star;
+namespace App\Enums\Volunteer;
 
-enum StarType: string
+enum VolunteerType: string
 {
     case VOLUNTEER = 'volunteer';
     case LEADER = 'leader';

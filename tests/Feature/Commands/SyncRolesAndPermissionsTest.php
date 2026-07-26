@@ -89,7 +89,7 @@ class SyncRolesAndPermissionsTest extends TestCase
             'teacher',
             'pastor',
             'employee',
-            'star',
+            'volunteer',
             'care-service-agent',
         ];
 
@@ -470,7 +470,7 @@ class SyncRolesAndPermissionsTest extends TestCase
             'super-admin', 'admin', 'writer', 'project-manager', 'event-manager',
             'library-manager', 'group-leader', 'department-leader',
             'impact-family-leader', 'member', 'student', 'teacher', 'pastor',
-            'employee', 'star', 'care-service-agent',
+            'employee', 'volunteer', 'care-service-agent',
         ];
 
         foreach ($standardizedRoles as $role) {

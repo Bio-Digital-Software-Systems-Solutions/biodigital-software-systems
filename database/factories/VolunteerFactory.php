@@ -2,20 +2,20 @@
 
 namespace Database\Factories;
 
-use App\Enums\Star\StarCategory;
-use App\Enums\Star\StarStatus;
-use App\Enums\Star\StarType;
+use App\Enums\Volunteer\VolunteerCategory;
+use App\Enums\Volunteer\VolunteerStatus;
+use App\Enums\Volunteer\VolunteerType;
 use App\Models\Department;
-use App\Models\Star;
+use App\Models\Volunteer;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Star>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Volunteer>
  */
-class StarFactory extends Factory
+class VolunteerFactory extends Factory
 {
-    protected $model = Star::class;
+    protected $model = Volunteer::class;
 
     /**
      * Define the model's default state.
@@ -32,15 +32,15 @@ class StarFactory extends Factory
             'nominated_by' => null,
             'title' => $this->faker->randomElement([
                 'Bénévole du mois',
-                'Star de l\'accueil',
+                'Volunteer de l\'accueil',
                 'Champion du service',
                 'Leader inspirant',
                 'Mentor dévoué',
             ]),
             'description' => $this->faker->paragraph(),
-            'status' => StarStatus::ACTIVE,
-            'type' => StarType::VOLUNTEER,
-            'category' => $this->faker->randomElement(StarCategory::cases()),
+            'status' => VolunteerStatus::ACTIVE,
+            'type' => VolunteerType::VOLUNTEER,
+            'category' => $this->faker->randomElement(VolunteerCategory::cases()),
             'points' => $this->faker->numberBetween(0, 500),
             'level' => $this->faker->numberBetween(1, 3),
             'recognition_date' => $recognitionDate,
@@ -108,117 +108,117 @@ class StarFactory extends Factory
     }
 
     /**
-     * Indicate that the star is active.
+     * Indicate that the volunteer is active.
      */
     public function active(): static
     {
         return $this->state(fn(array $attributes): array => [
-            'status' => StarStatus::ACTIVE,
+            'status' => VolunteerStatus::ACTIVE,
         ]);
     }
 
     /**
-     * Indicate that the star is inactive.
+     * Indicate that the volunteer is inactive.
      */
     public function inactive(): static
     {
         return $this->state(fn(array $attributes): array => [
-            'status' => StarStatus::INACTIVE,
+            'status' => VolunteerStatus::INACTIVE,
         ]);
     }
 
     /**
-     * Indicate that the star is on break.
+     * Indicate that the volunteer is on break.
      */
     public function onBreak(): static
     {
         return $this->state(fn(array $attributes): array => [
-            'status' => StarStatus::ON_BREAK,
+            'status' => VolunteerStatus::ON_BREAK,
         ]);
     }
 
     /**
-     * Indicate that the star has graduated.
+     * Indicate that the volunteer has graduated.
      */
     public function graduated(): static
     {
         return $this->state(fn(array $attributes): array => [
-            'status' => StarStatus::GRADUATED,
+            'status' => VolunteerStatus::GRADUATED,
             'expiry_date' => $this->faker->dateTimeBetween('-6 months', 'now'),
         ]);
     }
 
     /**
-     * Indicate that the star is suspended.
+     * Indicate that the volunteer is suspended.
      */
     public function suspended(): static
     {
         return $this->state(fn(array $attributes): array => [
-            'status' => StarStatus::SUSPENDED,
+            'status' => VolunteerStatus::SUSPENDED,
         ]);
     }
 
     /**
-     * Indicate that the star is a volunteer.
+     * Indicate that the volunteer is a volunteer.
      */
     public function volunteer(): static
     {
         return $this->state(fn(array $attributes): array => [
-            'type' => StarType::VOLUNTEER,
+            'type' => VolunteerType::VOLUNTEER,
             'level' => $this->faker->numberBetween(1, 2),
         ]);
     }
 
     /**
-     * Indicate that the star is a leader.
+     * Indicate that the volunteer is a leader.
      */
     public function leader(): static
     {
         return $this->state(fn(array $attributes): array => [
-            'type' => StarType::LEADER,
+            'type' => VolunteerType::LEADER,
             'level' => $this->faker->numberBetween(3, 4),
             'points' => $this->faker->numberBetween(500, 1000),
         ]);
     }
 
     /**
-     * Indicate that the star is a mentor.
+     * Indicate that the volunteer is a mentor.
      */
     public function mentor(): static
     {
         return $this->state(fn(array $attributes): array => [
-            'type' => StarType::MENTOR,
+            'type' => VolunteerType::MENTOR,
             'level' => $this->faker->numberBetween(4, 5),
             'points' => $this->faker->numberBetween(1000, 2000),
         ]);
     }
 
     /**
-     * Indicate that the star is an ambassador.
+     * Indicate that the volunteer is an ambassador.
      */
     public function ambassador(): static
     {
         return $this->state(fn(array $attributes): array => [
-            'type' => StarType::AMBASSADOR,
+            'type' => VolunteerType::AMBASSADOR,
             'level' => 5,
             'points' => $this->faker->numberBetween(2000, 5000),
         ]);
     }
 
     /**
-     * Indicate that the star is a coordinator.
+     * Indicate that the volunteer is a coordinator.
      */
     public function coordinator(): static
     {
         return $this->state(fn(array $attributes): array => [
-            'type' => StarType::COORDINATOR,
+            'type' => VolunteerType::COORDINATOR,
             'level' => $this->faker->numberBetween(2, 3),
             'points' => $this->faker->numberBetween(250, 500),
         ]);
     }
 
     /**
-     * Indicate that the star is featured.
+     * Indicate that the volunteer is featured.
      */
     public function featured(): static
     {
@@ -229,7 +229,7 @@ class StarFactory extends Factory
     }
 
     /**
-     * Indicate that the star has a public profile.
+     * Indicate that the volunteer has a public profile.
      */
     public function publicProfile(): static
     {
@@ -249,7 +249,7 @@ class StarFactory extends Factory
     }
 
     /**
-     * Expired star.
+     * Expired volunteer.
      */
     public function expired(): static
     {
@@ -259,7 +259,7 @@ class StarFactory extends Factory
     }
 
     /**
-     * High level star.
+     * High level volunteer.
      */
     public function highLevel(): static
     {
@@ -282,7 +282,7 @@ class StarFactory extends Factory
     /**
      * With specific category.
      */
-    public function inCategory(StarCategory $category): static
+    public function inCategory(VolunteerCategory $category): static
     {
         return $this->state(fn(array $attributes): array => [
             'category' => $category,
@@ -300,7 +300,7 @@ class StarFactory extends Factory
     }
 
     /**
-     * Configure the star with a specific user.
+     * Configure the volunteer with a specific user.
      */
     public function forUser(User $user): static
     {
