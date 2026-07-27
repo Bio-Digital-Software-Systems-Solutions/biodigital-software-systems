@@ -10,6 +10,7 @@ import {
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { resolveDesign, type DesignSettings } from '@/lib/sectionDesign';
+import { SITE_CONTACT } from '@/Components/LandingPage/siteContact';
 
 export interface ContactContent {
     badge?: string;
@@ -40,9 +41,9 @@ export default function ContactSection({ isAuthenticated, content, design }: Con
     const badge = content?.badge ?? t('home.contact.badge');
     const heading = content?.heading ?? t('home.contact.heading');
     const subtitle = content?.subtitle ?? t('home.contact.subtitle');
-    const email = content?.email ?? 'elmarce.bounda.ndinga@gmail.com';
+    const email = content?.email ?? SITE_CONTACT.email;
     const phone = content?.phone ?? '';
-    const address = content?.address ?? `Van-Gogh-Straße 2\n85521 Ottobrunn\n${t('home.contact.country')}`;
+    const address = content?.address ?? `${SITE_CONTACT.addressLines.join('\n')}\n${t('home.contact.country')}`;
     const [contactData, setContactData] = useState({
         name: '',
         email: '',

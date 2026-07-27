@@ -341,6 +341,9 @@ const resources = {
       "home.footer.navigation": "Navigation",
       "home.footer.contactHeading": "Contact",
       "home.footer.legal": "Mentions légales · Confidentialité",
+      "home.footer.taxNumber": "Numéro fiscal (Steuernummer) : {{value}}",
+      "home.footer.vatId": "N° TVA intracommunautaire : {{value}}",
+      "home.footer.register": "Registre du commerce : {{value}}",
 
       // Homepage - about
       "home.about.badge": "À propos",
@@ -873,6 +876,9 @@ const resources = {
       "home.footer.navigation": "Navigation",
       "home.footer.contactHeading": "Contact",
       "home.footer.legal": "Imprint · Privacy",
+      "home.footer.taxNumber": "Tax number (Steuernummer): {{value}}",
+      "home.footer.vatId": "VAT ID: {{value}}",
+      "home.footer.register": "Commercial register: {{value}}",
 
       // Homepage - about
       "home.about.badge": "About",
@@ -1405,6 +1411,9 @@ const resources = {
       "home.footer.navigation": "Navigation",
       "home.footer.contactHeading": "Kontakt",
       "home.footer.legal": "Impressum · Datenschutz",
+      "home.footer.taxNumber": "Steuernummer: {{value}}",
+      "home.footer.vatId": "USt-IdNr.: {{value}}",
+      "home.footer.register": "Handelsregister: {{value}}",
 
       // Homepage - about
       "home.about.badge": "Über uns",

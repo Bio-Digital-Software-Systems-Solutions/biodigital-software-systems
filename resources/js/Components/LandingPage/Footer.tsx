@@ -2,8 +2,9 @@ import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
 import type { PageProps } from '@/Types';
+import { SITE_CONTACT } from '@/Components/LandingPage/siteContact';
 
-const CONTACT_EMAIL = 'elmarce.bounda.ndinga@gmail.com';
+const CONTACT_EMAIL = SITE_CONTACT.email;
 
 const socialLinks = {
   social: [
@@ -73,9 +74,9 @@ const Footer: React.FC = () => {
       { name: t('home.footer.contactUs'), href: '/contact' },
     ],
     legal: [
-      { name: t('home.footer.terms'), href: '#' },
-      { name: t('home.footer.privacy'), href: '#' },
-      { name: t('home.footer.legalNotice'), href: '#' },
+      { name: t('home.footer.terms'), href: '/terms-of-service' },
+      { name: t('home.footer.privacy'), href: '/privacy-policy' },
+      { name: t('home.footer.legalNotice'), href: '/imprint' },
     ],
   };
 
@@ -93,7 +94,7 @@ const Footer: React.FC = () => {
               {t('home.footer.tagline')}
             </p>
             <address className="not-italic text-sm leading-6 text-gray-600 dark:text-gray-400">
-              <p>Van-Gogh-Straße 2, 85521 Ottobrunn</p>
+              <p>{SITE_CONTACT.addressLines.join(', ')}</p>
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="hover:text-gray-900 dark:hover:text-gray-300 transition-colors"

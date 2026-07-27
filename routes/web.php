@@ -109,6 +109,12 @@ Route::get('/', function () {
 
 // Legal pages (public access)
 Route::get('/privacy-policy', fn () => Inertia::render('Legal/PrivacyPolicy'))->name('privacy-policy');
+Route::redirect('/datenschutz', '/privacy-policy');
+Route::redirect('/politique-de-confidentialite', '/privacy-policy');
+
+Route::get('/imprint', fn () => Inertia::render('Legal/Imprint'))->name('imprint');
+Route::redirect('/impressum', '/imprint');
+Route::redirect('/mentions-legales', '/imprint');
 
 Route::get('/terms-of-service', fn () => Inertia::render('Legal/TermsOfService'))->name('terms-of-service');
 

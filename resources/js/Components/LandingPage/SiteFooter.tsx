@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { useTranslation } from 'react-i18next';
-import { Mail, MapPin } from 'lucide-react';
+import { FileText, Mail, MapPin } from 'lucide-react';
 import { SITE_CONTACT, mailtoHref } from '@/Components/LandingPage/siteContact';
 
 const NAV_LINKS = [
@@ -63,6 +63,20 @@ export default function SiteFooter() {
                                     ))}
                                 </address>
                             </div>
+                            <div className="flex items-start gap-3 text-white/70">
+                                <FileText className="mt-0.5 h-5 w-5 shrink-0 text-bd-accent" aria-hidden="true" />
+                                <div className="space-y-1 text-[0.92rem]">
+                                    <p>{t('home.footer.taxNumber', { value: SITE_CONTACT.taxNumber })}</p>
+                                    <p>{t('home.footer.vatId', { value: SITE_CONTACT.vatId })}</p>
+                                    {SITE_CONTACT.registerCourt && SITE_CONTACT.registerNumber && (
+                                        <p>
+                                            {t('home.footer.register', {
+                                                value: `${SITE_CONTACT.registerCourt}, ${SITE_CONTACT.registerNumber}`,
+                                            })}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -98,7 +112,15 @@ export default function SiteFooter() {
                         © {SITE_CONTACT.copyrightYear} Bio-Digital Software Systems · {SITE_CONTACT.owner} ·{' '}
                         {t('home.footer.copyright')}
                     </span>
-                    <span>{t('home.footer.legal')}</span>
+                    <span className="flex items-center gap-2">
+                        <Link href="/imprint" className="transition-colors hover:text-white">
+                            {t('home.footer.legalNotice')}
+                        </Link>
+                        <span aria-hidden="true">·</span>
+                        <Link href="/privacy-policy" className="transition-colors hover:text-white">
+                            {t('home.footer.privacy')}
+                        </Link>
+                    </span>
                 </div>
             </div>
         </footer>

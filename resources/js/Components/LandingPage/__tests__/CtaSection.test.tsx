@@ -2,6 +2,7 @@ import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import i18n from '@/i18n';
 import CtaSection from '@/Components/LandingPage/CtaSection';
+import { SITE_CONTACT } from '@/Components/LandingPage/siteContact';
 
 beforeEach(async () => {
     await act(async () => {
@@ -17,11 +18,11 @@ describe('CtaSection', () => {
         expect(screen.getByText('Parlons-en.')).toBeInTheDocument();
 
         const requestLink = screen.getByRole('link', { name: 'Demander un échange' });
-        expect(requestLink.getAttribute('href')).toMatch(/^mailto:elmarce\.bounda\.ndinga@gmail\.com\?subject=/);
+        expect(requestLink.getAttribute('href')).toContain(`mailto:${SITE_CONTACT.email}?subject=`);
 
         expect(
-            screen.getByRole('link', { name: 'elmarce.bounda.ndinga@gmail.com' }),
-        ).toHaveAttribute('href', 'mailto:elmarce.bounda.ndinga@gmail.com');
+            screen.getByRole('link', { name: SITE_CONTACT.email }),
+        ).toHaveAttribute('href', `mailto:${SITE_CONTACT.email}`);
     });
 
     it('translates the heading to German', async () => {
