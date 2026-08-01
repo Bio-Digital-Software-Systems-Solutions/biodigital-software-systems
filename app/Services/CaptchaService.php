@@ -207,11 +207,16 @@ class CaptchaService
      * Resolve the TTF font used to render the CAPTCHA characters.
      *
      * Looks in storage/app/captcha/fonts first, then falls back to the
-     * DejaVu font bundled with dompdf. Returns null when neither is
-     * available (bitmap fallback is used in that case).
+     * DejaVu font bundled with dompdf. Returns null when no font is
+     * available or when GD lacks FreeType support (bitmap fallback is
+     * used in that case).
      */
     public function getFontPath(): ?string
     {
+        if (! function_exists('imagettftext')) {
+            return null;
+        }
+
         $fonts = glob(storage_path('app/captcha/fonts/*.ttf')) ?: [];
 
         if ($fonts !== []) {
