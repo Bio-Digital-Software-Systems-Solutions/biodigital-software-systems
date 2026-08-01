@@ -98,8 +98,13 @@ class ContactController extends Controller
     {
         $contact->load('assignedTo');
 
+        $users = User::permission('manage contacts')
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name']);
+
         return Inertia::render('Contacts/Edit', [
             'contact' => $contact,
+            'users' => $users,
         ]);
     }
 

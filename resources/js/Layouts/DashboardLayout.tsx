@@ -33,6 +33,7 @@ import {
     BanknotesIcon,
     RocketLaunchIcon,
     BookmarkIcon,
+    InboxArrowDownIcon,
 } from '@heroicons/react/24/outline';
 import Dropdown from '@/Components/Dropdown';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
@@ -107,6 +108,7 @@ export default function DashboardLayout({ children, title, description, actions,
         { name: 'Programmes', href: '/programs', icon: ClipboardDocumentListIcon, permission: 'view programs' },
         { name: 'Stocks', href: '/stocks', icon: BeakerIcon, permission: 'view stocks' },
         { name: 'Messages', href: '/messages', icon: EnvelopeIcon, permission: 'view messages' },
+        { name: 'Messages de contact', href: '/contacts', icon: InboxArrowDownIcon, permission: 'manage contacts' },
         { name: 'Gestion Utilisateurs', href: '/user-management', icon: ShieldCheckIcon, requireRole: Role.SUPER_ADMIN },
         { name: 'Workflows', href: '/workflows', icon: ArrowPathIcon, permission: 'view workflows' },
         { name: 'Formulaires', href: '/forms', icon: DocumentTextIcon, permission: 'view forms' },

@@ -7,6 +7,9 @@ services:
       context: .
       dockerfile: Dockerfile
       target: development
+    # Single source of the dev image: queue and scheduler reuse this tag
+    # instead of running the same heavy build three times in parallel.
+    image: bio-digital-software-systems-dev:latest
     container_name: bio-digital-software-systems-app
     restart: unless-stopped
     working_dir: /var/www/html
@@ -136,10 +139,7 @@ services:
   # Laravel Queue Worker
   # ==========================================
   queue:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
+    image: bio-digital-software-systems-dev:latest
     container_name: bio-digital-software-systems-queue
     restart: unless-stopped
     working_dir: /var/www/html
@@ -171,10 +171,7 @@ services:
   # Laravel Scheduler (Cron)
   # ==========================================
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
+    image: bio-digital-software-systems-dev:latest
     container_name: bio-digital-software-systems-scheduler
     restart: unless-stopped
     working_dir: /var/www/html

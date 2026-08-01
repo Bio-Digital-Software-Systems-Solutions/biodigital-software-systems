@@ -63,6 +63,7 @@ class DatabaseSeeder extends Seeder
             IfrsAccountSeeder::class,
             GroupMemberSeeder::class,
             VisitorSeeder::class,
+            ContactSeeder::class,
             // HomepageSectionSeeder::class,
         ]);
     }

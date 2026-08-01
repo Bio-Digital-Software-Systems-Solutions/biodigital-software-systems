@@ -301,6 +301,190 @@ class ContactControllerTest extends TestCase
     }
 
     /** @test */
+    public function admin_can_view_contact_edit_page(): void
+    {
+        $contact = Contact::factory()->create();
+
+        $response = $this->actingAs($this->admin)->get(route('contacts.edit', $contact));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Contacts/Edit')
+            ->has('contact')
+            ->where('contact.id', $contact->id)
+            ->has('users')
+        );
+    }
+
+    /** @test */
+    public function edit_page_lists_only_users_with_manage_contacts_permission(): void
+    {
+        $contact = Contact::factory()->create();
+
+        $response = $this->actingAs($this->admin)->get(route('contacts.edit', $contact));
+
+        $response->assertInertia(fn ($page) => $page->component('Contacts/Edit')
+            ->has('users', 1)
+            ->where('users.0.id', $this->admin->id)
+        );
+    }
+
+    /** @test */
+    public function guest_cannot_view_contact_edit_page(): void
+    {
+        $contact = Contact::factory()->create();
+
+        $response = $this->get(route('contacts.edit', $contact));
+
+        $response->assertRedirect(route('login'));
+    }
+
+    /** @test */
+    public function member_without_permission_cannot_view_contact_edit_page(): void
+    {
+        $contact = Contact::factory()->create();
+
+        $response = $this->actingAs($this->member)->get(route('contacts.edit', $contact));
+
+        $this->assertTrue(
+            $response->isForbidden() || $response->isRedirect(),
+            'Expected 403 Forbidden or redirect'
+        );
+    }
+
+    /** @test */
+    public function admin_can_unassign_contact(): void
+    {
+        $contact = Contact::factory()->create([
+            'status' => 'in_progress',
+            'assigned_to' => $this->admin->id,
+        ]);
+
+        $response = $this->actingAs($this->admin)->put(route('contacts.update', $contact), [
+            'status' => 'in_progress',
+            'assigned_to' => null,
+        ]);
+
+        $response->assertRedirect(route('contacts.index'));
+        $this->assertDatabaseHas('contacts', [
+            'id' => $contact->id,
+            'assigned_to' => null,
+        ]);
+    }
+
+    /** @test */
+    public function guest_cannot_view_contact_details(): void
+    {
+        $contact = Contact::factory()->create();
+
+        $response = $this->get(route('contacts.show', $contact));
+
+        $response->assertRedirect(route('login'));
+    }
+
+    /** @test */
+    public function member_without_permission_cannot_view_contact_details(): void
+    {
+        $contact = Contact::factory()->create();
+
+        $response = $this->actingAs($this->member)->get(route('contacts.show', $contact));
+
+        $this->assertTrue(
+            $response->isForbidden() || $response->isRedirect(),
+            'Expected 403 Forbidden or redirect'
+        );
+    }
+
+    /** @test */
+    public function viewing_already_read_contact_keeps_original_read_timestamp(): void
+    {
+        $readAt = now()->subDay();
+        $contact = Contact::factory()->create(['read_at' => $readAt]);
+
+        $this->actingAs($this->admin)->get(route('contacts.show', $contact));
+
+        $this->assertSame(
+            $readAt->toDateTimeString(),
+            $contact->fresh()->read_at->toDateTimeString()
+        );
+    }
+
+    /** @test */
+    public function contact_details_are_accessible_via_uuid(): void
+    {
+        $contact = Contact::factory()->create();
+
+        $response = $this->actingAs($this->admin)->get("/contacts/{$contact->uuid}");
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Contacts/Show')
+            ->where('contact.id', $contact->id)
+        );
+    }
+
+    /** @test */
+    public function contact_details_are_not_accessible_via_numeric_id(): void
+    {
+        $contact = Contact::factory()->create();
+
+        $response = $this->actingAs($this->admin)->get("/contacts/{$contact->id}");
+
+        $response->assertNotFound();
+    }
+
+    /** @test */
+    public function generated_contact_routes_use_uuid(): void
+    {
+        $contact = Contact::factory()->create();
+
+        $this->assertSame(
+            url("/contacts/{$contact->uuid}"),
+            route('contacts.show', $contact)
+        );
+    }
+
+    /** @test */
+    public function contact_can_be_updated_via_uuid(): void
+    {
+        $contact = Contact::factory()->create(['status' => 'new']);
+
+        $response = $this->actingAs($this->admin)->put("/contacts/{$contact->uuid}", [
+            'status' => 'resolved',
+            'assigned_to' => null,
+        ]);
+
+        $response->assertRedirect(route('contacts.index'));
+        $this->assertDatabaseHas('contacts', [
+            'id' => $contact->id,
+            'status' => 'resolved',
+        ]);
+    }
+
+    /** @test */
+    public function contact_can_be_deleted_via_uuid(): void
+    {
+        $contact = Contact::factory()->create();
+
+        $response = $this->actingAs($this->admin)->delete("/contacts/{$contact->uuid}");
+
+        $response->assertRedirect(route('contacts.index'));
+        $this->assertDatabaseMissing('contacts', ['id' => $contact->id]);
+    }
+
+    /** @test */
+    public function contacts_index_is_paginated(): void
+    {
+        Contact::factory()->count(25)->create();
+
+        $response = $this->actingAs($this->admin)->get(route('contacts.index'));
+
+        $response->assertInertia(fn ($page) => $page->component('Contacts/Index')
+            ->has('contacts.data', 20)
+            ->where('contacts.total', 25)
+            ->where('contacts.last_page', 2)
+        );
+    }
+
+    /** @test */
     public function contact_submission_sends_email_to_admins_with_permission(): void
     {
         Mail::fake();
@@ -323,9 +507,9 @@ class ContactControllerTest extends TestCase
         $response->assertSessionHas('success');
 
         // Assert that email was queued to both admins
-        Mail::assertQueued(ContactSubmitted::class, fn($mail) => $mail->hasTo($this->admin->email));
+        Mail::assertQueued(ContactSubmitted::class, fn ($mail) => $mail->hasTo($this->admin->email));
 
-        Mail::assertQueued(ContactSubmitted::class, fn($mail) => $mail->hasTo($anotherAdmin->email));
+        Mail::assertQueued(ContactSubmitted::class, fn ($mail) => $mail->hasTo($anotherAdmin->email));
 
         // Assert that email was queued twice (once to each admin)
         Mail::assertQueued(ContactSubmitted::class, 2);
@@ -370,7 +554,7 @@ class ContactControllerTest extends TestCase
 
         $this->post(route('contacts.store'), $data);
 
-        Mail::assertQueued(ContactSubmitted::class, fn($mail) => $mail->hasReplyTo($data['email']));
+        Mail::assertQueued(ContactSubmitted::class, fn ($mail) => $mail->hasReplyTo($data['email']));
     }
 
     /** @test */
@@ -381,8 +565,8 @@ class ContactControllerTest extends TestCase
         // Remove all permissions from admin
         $this->admin->roles()->detach();
 
-        // Update config to have a default email
-        config(['mail.from.address' => 'default@example.com']);
+        // Update config to have a default contact email (the fallback used by the controller)
+        config(['mail.from.contact' => 'default@example.com']);
 
         $data = [
             'name' => $this->faker->name,
@@ -393,7 +577,7 @@ class ContactControllerTest extends TestCase
 
         $this->post(route('contacts.store'), $data);
 
-        Mail::assertQueued(ContactSubmitted::class, fn($mail) => $mail->hasTo('default@example.com'));
+        Mail::assertQueued(ContactSubmitted::class, fn ($mail) => $mail->hasTo('default@example.com'));
     }
 
     /** @test */
@@ -404,8 +588,8 @@ class ContactControllerTest extends TestCase
         // Remove all permissions from admin
         $this->admin->roles()->detach();
 
-        // Clear default email
-        config(['mail.from.address' => null]);
+        // Clear default contact email (the fallback used by the controller)
+        config(['mail.from.contact' => null]);
 
         $data = [
             'name' => $this->faker->name,
@@ -416,7 +600,7 @@ class ContactControllerTest extends TestCase
 
         $this->post(route('contacts.store'), $data);
 
-        Mail::assertNothingSent();
+        Mail::assertNothingOutgoing();
     }
 
     /** @test */

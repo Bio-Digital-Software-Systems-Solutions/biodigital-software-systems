@@ -16,6 +16,8 @@ class CaptchaService
 
     private const IMAGE_HEIGHT = 80;
 
+    private const TTF_FONT_SIZE = 32;
+
     /**
      * Generate a new CAPTCHA with image.
      */
@@ -130,22 +132,22 @@ class CaptchaService
     }
 
     /**
-     * Draw characters with random colors and positions.
+     * Draw characters with random colors, rotation and positions.
      */
     private function drawCharacters(\GdImage $image, string $code): void
     {
         $colors = [
-            [220, 38, 38],   // Red
-            [34, 197, 94],   // Green
-            [59, 130, 246],  // Blue
-            [168, 85, 247],  // Purple
-            [234, 179, 8],   // Yellow/Orange
-            [236, 72, 153],  // Pink
-            [20, 184, 166],  // Teal
+            [185, 28, 28],   // Red
+            [21, 128, 61],   // Green
+            [29, 78, 216],   // Blue
+            [126, 34, 206],  // Purple
+            [180, 83, 9],    // Orange
+            [190, 24, 93],   // Pink
+            [15, 118, 110],  // Teal
         ];
 
+        $fontPath = $this->getFontPath();
         $charWidth = (self::IMAGE_WIDTH - 40) / strlen($code);
-        $fontSize = 5; // Built-in font size (1-5)
 
         for ($i = 0; $i < strlen($code); $i++) {
             $char = $code[$i];
@@ -155,21 +157,70 @@ class CaptchaService
             $rgb = $colors[$colorIndex];
             $color = imagecolorallocate($image, $rgb[0], $rgb[1], $rgb[2]);
 
-            // Calculate position with some randomness
-            $x = 20 + ($i * $charWidth) + random_int(-5, 5);
-            $y = random_int(20, 40);
+            $x = 20 + ($i * $charWidth) + random_int(-4, 4);
 
-            // Draw character multiple times at slightly different positions for a bolder effect
-            for ($dx = 0; $dx <= 2; $dx++) {
-                for ($dy = 0; $dy <= 2; $dy++) {
-                    imagestring($image, $fontSize, (int) $x + $dx, $y + $dy, $char, $color);
-                }
+            if ($fontPath !== null) {
+                $this->drawTtfCharacter($image, $char, (int) $x, $color, $rgb, $fontPath);
+            } else {
+                $this->drawBitmapCharacter($image, $char, (int) $x, $color, $rgb);
             }
-
-            // Add a slight shadow for depth
-            $shadowColor = imagecolorallocatealpha($image, $rgb[0], $rgb[1], $rgb[2], 80);
-            imagestring($image, $fontSize, (int) $x + 3, $y + 3, $char, $shadowColor);
         }
+    }
+
+    /**
+     * Draw a large, slightly rotated character with a TTF font.
+     *
+     * @param  array{0: int, 1: int, 2: int}  $rgb
+     */
+    private function drawTtfCharacter(\GdImage $image, string $char, int $x, int $color, array $rgb, string $fontPath): void
+    {
+        $angle = random_int(-12, 12);
+        $y = random_int(52, 62);
+
+        $shadowColor = imagecolorallocatealpha($image, $rgb[0], $rgb[1], $rgb[2], 90);
+        imagettftext($image, self::TTF_FONT_SIZE, $angle, $x + 2, $y + 2, $shadowColor, $fontPath, $char);
+
+        imagettftext($image, self::TTF_FONT_SIZE, $angle, $x, $y, $color, $fontPath, $char);
+    }
+
+    /**
+     * Fallback rendering with the GD built-in font when no TTF font is available.
+     *
+     * @param  array{0: int, 1: int, 2: int}  $rgb
+     */
+    private function drawBitmapCharacter(\GdImage $image, string $char, int $x, int $color, array $rgb): void
+    {
+        $fontSize = 5; // Built-in font size (1-5)
+        $y = random_int(20, 40);
+
+        for ($dx = 0; $dx <= 2; $dx++) {
+            for ($dy = 0; $dy <= 2; $dy++) {
+                imagestring($image, $fontSize, $x + $dx, $y + $dy, $char, $color);
+            }
+        }
+
+        $shadowColor = imagecolorallocatealpha($image, $rgb[0], $rgb[1], $rgb[2], 80);
+        imagestring($image, $fontSize, $x + 3, $y + 3, $char, $shadowColor);
+    }
+
+    /**
+     * Resolve the TTF font used to render the CAPTCHA characters.
+     *
+     * Looks in storage/app/captcha/fonts first, then falls back to the
+     * DejaVu font bundled with dompdf. Returns null when neither is
+     * available (bitmap fallback is used in that case).
+     */
+    public function getFontPath(): ?string
+    {
+        $fonts = glob(storage_path('app/captcha/fonts/*.ttf')) ?: [];
+
+        if ($fonts !== []) {
+            return $fonts[array_rand($fonts)];
+        }
+
+        $bundledFont = base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans-Bold.ttf');
+
+        return is_file($bundledFont) ? $bundledFont : null;
     }
 
     /**

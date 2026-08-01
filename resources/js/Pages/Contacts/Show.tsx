@@ -17,6 +17,7 @@ import { DeleteConfirmationDialog } from '@/Components/ui/delete-confirmation-di
 
 interface Contact {
     id: number;
+    uuid: string;
     name: string;
     email: string;
     phone: string | null;
@@ -52,7 +53,7 @@ export default function Show({ contact }: Props) {
 
     const confirmDelete = () => {
         setDeleting(true);
-        router.delete(route('contacts.destroy', contact.id), {
+        router.delete(route('contacts.destroy', contact.uuid), {
             onSuccess: () => {
                 setDeleteDialogOpen(false);
                 setDeleting(false);
@@ -195,7 +196,7 @@ export default function Show({ contact }: Props) {
                         </CardHeader>
                         <CardContent>
                             <Button variant="outline" asChild>
-                                <Link href={route('contacts.edit', contact.id)}>
+                                <Link href={route('contacts.edit', contact.uuid)}>
                                     Modifier le statut
                                 </Link>
                             </Button>

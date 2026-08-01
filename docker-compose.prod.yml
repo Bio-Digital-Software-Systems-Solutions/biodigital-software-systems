@@ -10,6 +10,9 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
+    # Single source of the prod image: queue and scheduler reuse this tag
+    # instead of running the same heavy build three times in parallel.
+    image: bio-digital-software-systems-prod:latest
     container_name: bio-digital-software-systems-app
     restart: always
     working_dir: /var/www/html
@@ -130,10 +133,7 @@ services:
   # Laravel Queue Worker (Production)
   # ==========================================
   queue:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
+    image: bio-digital-software-systems-prod:latest
     container_name: bio-digital-software-systems-queue
     restart: always
     working_dir: /var/www/html
@@ -159,10 +159,7 @@ services:
   # Laravel Scheduler (Production)
   # ==========================================
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
+    image: bio-digital-software-systems-prod:latest
     container_name: bio-digital-software-systems-scheduler
     restart: always
     working_dir: /var/www/html

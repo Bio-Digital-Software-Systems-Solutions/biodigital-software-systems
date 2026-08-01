@@ -12,6 +12,7 @@ import {
 
 interface Contact {
     id: number;
+    uuid: string;
     name: string;
     email: string;
     phone: string | null;
@@ -109,7 +110,7 @@ export default function Index({ contacts }: Props) {
                                         </CardDescription>
                                     </div>
                                     <Button asChild variant="outline" size="sm">
-                                        <Link href={route('contacts.show', contact.id)}>
+                                        <Link href={route('contacts.show', contact.uuid)}>
                                             <EyeIcon className="h-4 w-4 mr-2" />
                                             Voir
                                         </Link>
